@@ -33,8 +33,7 @@ export default () => (
       </div>
       <div className="bullets">
         <p>
-          Ethereum&nbsp;Data&nbsp;API&nbsp;• Dapp&nbsp;Analytics&nbsp;•
-          Cryptocurrency&nbsp;Intelligence&nbsp;• Custom&nbsp;Solutions
+          Beneath is a full Ethereum data science platform. Explore other people's analytics or start building your own.
         </p>
       </div>
       <div className="button-row">
@@ -47,27 +46,21 @@ export default () => (
       </div>
     </div>
     <style jsx>{`
-      div.section {
-        padding-left: 0 10px;
-        flex-direction: column;
-        flex-grow: 1;
-        align-items: center;
-        justify-content: center;
-      }
       div {
+        align-items: center;
         display: flex;
-        text-align: center;
         margin: 0px;
         margin-bottom: 30px;
-        align-items: center;
+        text-align: center;
       }
-      button {
-        margin: 0 auto;
+      div.section {
+        flex-direction: column;
+        flex-grow: 1;
+        justify-content: center;
+        padding: 0 10px;
       }
-      h1,
-      p {
+      h1, p {
         margin: 0px;
-        margin-bottom: 0px;
       }
       @media ${devices.tabletOrLarger} {
         h1 {

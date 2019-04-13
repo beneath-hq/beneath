@@ -22,5 +22,4 @@ class BeneathApp extends App {
   }
 }
 
-export default withApollo(withUser(withGA("UA-118362426-2", Router)(BeneathApp))
-);
+export default withApollo(withUser(withGA("UA-118362426-2", Router)(BeneathApp)));
