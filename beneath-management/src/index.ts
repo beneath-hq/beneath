@@ -1,34 +1,28 @@
-import { ApolloServer } from "apollo-server-express";
-import express from "express";
-import { GraphQLError } from "graphql";
 import "reflect-metadata";
-
+import express from "express";
 import { createConnection } from "typeorm";
 
 import logger from "./lib/logger";
-import { resolvers, typeDefs } from "./schema";
-import { Project } from "./entities/Project";
-import { User } from "./entities/User";
+import apollo from "./middleware/apollo";
+import health from "./middleware/health";
+import security from "./middleware/security";
+import session from "./middleware/session";
 
-const path = "/graphql";
 const port: number = parseInt(process.env.PORT, 10) || 4000;
 const app = express();
-// app.use(path, jwtCheck);
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  formatError: (error: GraphQLError) => {
-    logger.error(error);
-    return error;
-  },
-});
-server.applyMiddleware({ app, path });
+health.apply(app);
+security.apply(app);
+session.apply(app);
+apollo.apply(app);
 
 (async () => {
   logger.info(`Connecting to db`);
   const connection = await createConnection();
   
+  // import { Project } from "./entities/Project";
+  // import { User } from "./entities/User";
+
   // const user = new User();
   // user.username = "bem";
   // user.email = "benjamin@beneath.network";

@@ -1,6 +1,7 @@
 __pycache__
 .cache
 .DS_Store
+.env
 .history
 .idea
 .ipynb_checkpoints
