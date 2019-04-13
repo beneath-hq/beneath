@@ -1,0 +1,41 @@
+{
+  "name": "beneath-frontend",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "main": "server.js",
+  "scripts": {
+    "dev": "NODE_ENV=development node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js"
+  },
+  "dependencies": {
+    "apollo-cache-inmemory": "^1.5.1",
+    "apollo-client": "^2.5.1",
+    "apollo-link": "^1.2.11",
+    "apollo-link-context": "^1.0.12",
+    "apollo-link-error": "^1.1.10",
+    "apollo-link-http": "^1.5.14",
+    "apollo-link-ws": "^1.0.12",
+    "auth0-js": "^9.8.2",
+    "compression": "^1.7.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "express-http-to-https": "^1.1.4",
+    "graphql": "^14.0.2",
+    "graphql-tag": "^2.10.1",
+    "helmet": "^3.15.0",
+    "isomorphic-unfetch": "^3.0.0",
+    "js-cookie": "^2.2.0",
+    "jwt-decode": "^2.2.0",
+    "lodash": "^4.17.11",
+    "moment": "^2.23.0",
+    "next": "^7.0.2",
+    "next-ga": "^2.3.4",
+    "next-with-apollo": "^3.3.2",
+    "prop-types": "^15.6.2",
+    "react": "^16.7.0",
+    "react-apollo": "^2.1.11",
+    "react-dom": "^16.7.0",
+    "subscriptions-transport-ws": "^0.9.15"
+  }
+}
