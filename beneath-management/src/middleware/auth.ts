@@ -18,7 +18,9 @@ export const apply = (app: express.Express) => {
   app.use(passport.initialize());
   applyGithub(app);
   applyGoogle(app);
+  app.use(passport.session());
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
+    logger.info(`Logout user ${JSON.stringify(req.user)}`);
     req.logout();
     res.redirect(logoutRedirect);
   });
@@ -36,6 +38,7 @@ const applyGithub = (app: express.Express) => {
 
   passport.use(new GitHubStrategy(options, (accessToken: any, refreshToken: any, profile: any, done: any) => {
     handleProfile("github", profile, done);
+    logger.info(`Login with Github ID <${profile.id}>`);
   }));
 
   app.get("/auth/github", passport.authenticate("github"));
@@ -50,7 +53,8 @@ const applyGoogle = (app: express.Express) => {
   };
 
   passport.use(new GoogleStrategy(options, (accessToken: any, refreshToken: any, profile: any, done: any) => {
-    handleProfile("github", profile, done);
+    handleProfile("google", profile, done);
+    logger.info(`Login with Google ID <${profile.id}>`);
   }));
 
   const scope = ["https://www.googleapis.com/auth/plus.login", "email"];
@@ -66,7 +70,7 @@ const deserializeUser = (userId, done) => {
   done(undefined, { userId, kind: "session" });
 };
 
-const handleProfile = async (serviceName: "google"|"github", profile: any, done: any) => {
+const handleProfile = async (serviceName: "github"|"google", profile: any, done: any) => {
   try {
     // read profile data
     const id = profile.id;

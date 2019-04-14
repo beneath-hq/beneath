@@ -4,6 +4,7 @@ import {
   ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
+import logger from "../lib/logger";
 import { Project } from "./Project";
 
 @Entity("users")
@@ -49,6 +50,7 @@ export class User extends BaseEntity {
 
   public static async createOrUpdate({ githubId, googleId, email, name, photoUrl }) {
     let user = null;
+    let created = false;
     if (githubId) {
       user = await User.findOne({ githubId });
     } else if (googleId) {
@@ -59,6 +61,7 @@ export class User extends BaseEntity {
     }
     if (!user) {
       user = new User();
+      created = true;
     }
 
     user.githubId = user.githubId || githubId;
@@ -68,6 +71,11 @@ export class User extends BaseEntity {
     user.photoUrl = photoUrl;
 
     await user.save();
+    if (created) {
+      logger.info(`Created userId <${user.userId}>`);
+    } else {
+      logger.info(`Updated userId <${user.userId}>`);
+    }
     return user;
   }
 }

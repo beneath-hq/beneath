@@ -4,6 +4,7 @@ import { GraphQLError } from "graphql";
 
 import logger from "../lib/logger";
 import { resolvers, typeDefs } from "../schema";
+import { IAuthenticatedRequest } from "../types";
 
 export const apply = (app: express.Express) => {
   const path = "/graphql";
@@ -13,6 +14,17 @@ export const apply = (app: express.Express) => {
     formatError: (error: GraphQLError) => {
       logger.error(error);
       return error;
+    },
+    context: ({ req }: { req: IAuthenticatedRequest }) => {
+      return {
+        user: req.user
+      };
+    },
+    introspection: true,
+    playground: {
+      settings: {
+        "request.credentials": "include",
+      },
     },
   });
   server.applyMiddleware({ app, path });

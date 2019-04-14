@@ -4,7 +4,7 @@
    "main": "src/index.ts",
    "license": "UNLICENSED",
    "scripts": {
-      "start": "nodemon --exec ts-node -r dotenv/config src/index.ts"
+      "dev": "nodemon --exec ts-node -r dotenv/config src/index.ts"
    },
    "dependencies": {
       "@types/lodash": "^4.14.123",
@@ -19,6 +19,7 @@
       "lodash": "^4.17.11",
       "mysql": "^2.14.1",
       "passport": "^0.4.0",
+      "passport-anonymous": "^1.0.1",
       "passport-github2": "^0.1.11",
       "passport-google-oauth": "^2.0.0",
       "pg": "^7.9.0",

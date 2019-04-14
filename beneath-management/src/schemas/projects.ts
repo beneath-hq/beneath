@@ -2,6 +2,7 @@ import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { Project } from "../entities/Project";
+import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
   extend type Query {
@@ -22,7 +23,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    project: async (root: any, args: any, ctx: any, info: GraphQLResolveInfo) => {
+    project: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       return await Project.findOne(args, { relations: ["users"] });
     },
   },
