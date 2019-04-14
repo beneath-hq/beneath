@@ -1,6 +1,6 @@
 import express from "express";
-import helmet from "helmet";
 import { redirectToHTTPS } from "express-http-to-https";
+import helmet from "helmet";
 
 export const apply = (app: express.Express) => {
   // force https

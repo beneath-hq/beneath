@@ -11,11 +11,11 @@ const healthCheck = (req: express.Request, res: express.Response) => {
     logger.error(`Health check failed`);
     res.sendStatus(500);
   }
-}
+};
 
 export const apply = (app: express.Express) => {
   app.get("/", healthCheck);
-  app.get("/healthz", healthCheck);  
+  app.get("/healthz", healthCheck);
 };
 
 export default { apply };

@@ -13,7 +13,13 @@
       "always"
     ],
     "object-literal-sort-keys": [
-      false,
+      false
+    ],
+    "member-ordering": [
+      true,
+      {
+        "order": "fields-first"
+      }
     ]
   },
   "rulesDirectory": []

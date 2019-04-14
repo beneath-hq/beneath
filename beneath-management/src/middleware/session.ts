@@ -8,7 +8,7 @@ import redis from "../lib/redis";
 
 export const apply = (app: express.Express) => {
   app.use(session({
-    secret: 'nrh327fh289fhd238hd0931alo10nvuw',
+    secret: "nrh327fh289fhd238hd0931alo10nvuw",
     cookie: {
       secure: process.env.NODE_ENV === "production",
     },

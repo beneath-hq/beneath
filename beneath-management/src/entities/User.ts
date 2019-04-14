@@ -1,4 +1,4 @@
-import { IsEmail, IsLowercase, Length } from "class-validator";
+import { IsEmail, IsFQDN, IsLowercase, Length } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, JoinTable,
   ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -12,7 +12,7 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid", { name: "user_id" })
   public userId: string;
 
-  @Column({ length: 16, unique: true })
+  @Column({ length: 16, unique: true, nullable: true  })
   @IsLowercase()
   @Length(3, 16)
   public username: string;
@@ -25,8 +25,18 @@ export class User extends BaseEntity {
   @Length(4, 50)
   public name: string;
 
-  @Column({ length: 256 })
+  @Column({ length: 256, nullable: true  })
   public bio: string;
+
+  @Column({ length: 256, name: "photo_url", nullable: true })
+  @IsFQDN()
+  public photoUrl: string;
+
+  @Column({ length: 256, name: "google_id", unique: true, nullable: true })
+  public googleId: string;
+
+  @Column({ length: 256, name: "github_id", unique: true, nullable: true })
+  public githubId: string;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
@@ -37,4 +47,27 @@ export class User extends BaseEntity {
   @ManyToMany((type) => Project, (project) => project.users)
   public projects: Project[];
 
+  public static async createOrUpdate({ githubId, googleId, email, name, photoUrl }) {
+    let user = null;
+    if (githubId) {
+      user = await User.findOne({ githubId });
+    } else if (googleId) {
+      user = await User.findOne({ googleId });
+    }
+    if (!user) {
+      user = await User.findOne({ email });
+    }
+    if (!user) {
+      user = new User();
+    }
+
+    user.githubId = user.githubId || githubId;
+    user.googleId = user.googleId || googleId;
+    user.email = email;
+    user.name = name;
+    user.photoUrl = photoUrl;
+
+    await user.save();
+    return user;
+  }
 }

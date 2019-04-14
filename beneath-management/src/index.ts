@@ -1,9 +1,12 @@
 import "reflect-metadata";
+
 import express from "express";
 import { createConnection } from "typeorm";
 
 import logger from "./lib/logger";
+
 import apollo from "./middleware/apollo";
+import auth from "./middleware/auth";
 import health from "./middleware/health";
 import security from "./middleware/security";
 import session from "./middleware/session";
@@ -14,12 +17,13 @@ const app = express();
 health.apply(app);
 security.apply(app);
 session.apply(app);
+auth.apply(app);
 apollo.apply(app);
 
 (async () => {
   logger.info(`Connecting to db`);
   const connection = await createConnection();
-  
+
   // import { Project } from "./entities/Project";
   // import { User } from "./entities/User";
 

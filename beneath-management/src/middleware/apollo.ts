@@ -1,5 +1,5 @@
-import express from "express";
 import { ApolloServer } from "apollo-server-express";
+import express from "express";
 import { GraphQLError } from "graphql";
 
 import logger from "../lib/logger";
