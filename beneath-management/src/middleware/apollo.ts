@@ -1,6 +1,7 @@
 import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import { GraphQLError } from "graphql";
+import graphqlDepthLimit from "graphql-depth-limit";
 
 import logger from "../lib/logger";
 import { resolvers, typeDefs } from "../schema";
@@ -21,11 +22,15 @@ export const apply = (app: express.Express) => {
       };
     },
     introspection: true,
+    tracing: process.env.NODE_ENV !== "production",
     playground: {
       settings: {
         "request.credentials": "include",
       },
     },
+    validationRules: [
+      graphqlDepthLimit(3)
+    ],
   });
   server.applyMiddleware({ app, path });
 };

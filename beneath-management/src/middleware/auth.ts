@@ -1,8 +1,10 @@
 import express from "express";
 import _ from "lodash";
 import passport from "passport";
+import { Strategy as AnonymousStrategy } from "passport-anonymous";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
+import { Strategy as BearerStrategy } from "passport-http-bearer";
 
 import { User } from "../entities/User";
 import logger from "../lib/logger";
@@ -13,12 +15,30 @@ const failureRedirect = `${process.env.CLIENT_HOST}/auth`;
 const logoutRedirect = `${process.env.CLIENT_HOST}/`;
 
 export const apply = (app: express.Express) => {
+  // config
+  app.use(passport.initialize());
   passport.serializeUser(serializeUser);
   passport.deserializeUser(deserializeUser);
-  app.use(passport.initialize());
+
+  // apply strategies
   applyGithub(app);
   applyGoogle(app);
-  app.use(passport.session());
+  applyBearer(app);
+  passport.use(new AnonymousStrategy());
+
+  // First check bearer; if doesn't set user, trigger session handler
+  // Why the complexity? I'm afraid the session handler is so dumb it stores a new session for each API call
+  const sessionHandler = passport.session();
+  app.use(passport.authenticate(["bearer", "anonymous"], { session: false }));
+  app.use((req: IAuthenticatedRequest, res, next) => {
+    if (!req.user) {
+      return sessionHandler(req, res, next);
+    } else {
+      next();
+    }
+  });
+
+  // logout endpoint
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
     logger.info(`Logout user ${JSON.stringify(req.user)}`);
     req.logout();
@@ -27,6 +47,23 @@ export const apply = (app: express.Express) => {
 };
 
 export default { apply };
+
+const applyBearer = (app: express.Express) => {
+  passport.use(new BearerStrategy(async (token: string, done: any) => {
+    try {
+      let user: any = false;
+      if (token === "howdy") {
+        user = {
+          userId: "68926735-1923-488b-bcb1-68cbc766a8ed",
+          kind: "secret",
+        };
+      }
+      done(null, user);
+    } catch (err) {
+      done(err, null);
+    }
+  }));
+};
 
 const applyGithub = (app: express.Express) => {
   const options = {
