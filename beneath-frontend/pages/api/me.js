@@ -4,11 +4,11 @@ import gql from "graphql-tag";
 
 // Queries
 const ME_QUERY = gql`
-  {
+  query {
     me {
-      user_id
-      user_type
-      api_key
+      userId
+      name
+      email
     }
   }
 `;

@@ -28,22 +28,23 @@ const getApolloClient = (options) => {
 }
 
 function createApolloClient({ initialState, token }) {
+  let linkOptions = {
+    uri: `${API_URL}/graphql`,
+    credentials: "include",
+  };
+
+  if (token) {
+    linkOptions.headers = {
+      "Authorization": `Bearer ${token}`,
+    };
+  }
+
   let apolloOptions = {
     connectToDevTools: process.browser && !IS_PRODUCTION,
     ssrMode: !process.browser,
     cache: new InMemoryCache().restore(initialState || {}),
+    link: new HttpLink(linkOptions),
   };
-
-  apolloOptions.link = new HttpLink({
-    uri: `${API_URL}/graphql`,
-    credentials: "include",
-  });
-  
-  if (token) {
-    apolloOptions.headers = {
-      "Authorization": `Bearer ${token}`,
-    };
-  }
 
   return new ApolloClient(apolloOptions);
 }

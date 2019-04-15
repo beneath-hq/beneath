@@ -60,7 +60,10 @@ export const withUser = (App) => {
 
     static async getInitialProps(ctx) {
       let token = readTokenFromCookie(ctx.ctx ? ctx.ctx.req : null);
-      let user = { token };
+      let user = null;
+      if (token) {
+        user = { token };
+      }
 
       let appProps = {};
       if (App.getInitialProps) {
