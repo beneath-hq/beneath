@@ -17,9 +17,15 @@ export const apply = (app: express.Express) => {
       return error;
     },
     context: ({ req }: { req: IAuthenticatedRequest }) => {
-      return {
-        user: req.user
-      };
+      let user = req.user;
+      if (!user) {
+        user = {
+          userId: null,
+          kind: "anonymous",
+          scopes: [],
+        };
+      }
+      return { user };
     },
     introspection: true,
     tracing: process.env.NODE_ENV !== "production",

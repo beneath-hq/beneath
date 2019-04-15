@@ -104,7 +104,7 @@ const serializeUser = (user, done) => {
 };
 
 const deserializeUser = (userId, done) => {
-  done(undefined, { userId, kind: "session" });
+  done(undefined, { userId, kind: "session", scopes: ["modify"] });
 };
 
 const handleProfile = async (serviceName: "github"|"google", profile: any, done: any) => {
@@ -134,6 +134,7 @@ const handleProfile = async (serviceName: "github"|"google", profile: any, done:
     done(undefined, {
       userId: user.userId,
       kind: "session",
+      scopes: ["modify"],
     });
   } catch (err) {
     done(err, undefined);

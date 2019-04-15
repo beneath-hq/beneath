@@ -18,7 +18,6 @@
       "graphql-depth-limit": "^1.1.0",
       "helmet": "^3.16.0",
       "lodash": "^4.17.11",
-      "mysql": "^2.14.1",
       "passport": "^0.4.0",
       "passport-anonymous": "^1.0.1",
       "passport-github2": "^0.1.11",
@@ -28,6 +27,7 @@
       "redis": "^2.8.0",
       "reflect-metadata": "^0.1.10",
       "typeorm": "0.2.16",
+      "uuid": "^3.3.2",
       "winston": "^3.2.1"
    },
    "devDependencies": {

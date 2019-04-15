@@ -8,6 +8,12 @@ module.exports = {
   "synchronize": true,
   "logging": ["error"],
   // "logger": , // try out with winston
+  "cache": !process.env.REDIS_URL ? undefined : {
+    "type": "redis",
+    "options": {
+      "url": process.env.REDIS_URL,
+    }
+  },
   "entities": [
     "src/entities/**/*.ts"
   ],

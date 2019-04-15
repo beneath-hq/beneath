@@ -1,10 +1,16 @@
 import { Request } from "express";
 
+export interface IAuthenticatedUser {
+  userId: string;
+  kind: "anonymous" | "secret" | "session";
+  scopes: string[];
+}
+
 export interface IAuthenticatedRequest extends Request {
-  user: { userId: string, kind: "session"|"secret" };
+  user: IAuthenticatedUser;
   logout: () => void;
 }
 
 export interface IApolloContext {
-  user: { userId: string, kind: "session" | "secret" };
+  user: IAuthenticatedUser;
 }
