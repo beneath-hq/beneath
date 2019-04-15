@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { withRouter } from "next/router";
 import { AuthConsumer } from "../hocs/auth";
+import { API_URL } from "../lib/connection";
 import { devices } from "../lib/theme";
 
 const Nav = props => {
@@ -160,7 +161,7 @@ const Header = ({ router: { pathname } }) => (
       <AuthConsumer>
         {({ user }) => {
           let authText = user ? "Log out" : "Log in";
-          let authHref = user ? "/auth/logout" : "/auth/login";
+          let authHref = user ? `${API_URL}/auth/logout` : "/auth";
           return (
             <NavRight>
               {user && (

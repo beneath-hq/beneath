@@ -1,7 +1,6 @@
 import { gql } from "apollo-server";
-import { GraphQLScalarType } from 'graphql';
-import { Kind } from 'graphql/language';
-import { makeExecutableSchema } from "graphql-tools";
+import { GraphQLScalarType } from "graphql";
+import { Kind } from "graphql/language";
 import { merge } from "lodash";
 
 const schemas = [
@@ -15,6 +14,7 @@ const schemasResolvers = schemas.map((schema) => schema.resolvers);
 const baseTypeDefs = gql`
   type Query {
     _empty: String
+    ping: String!
   }
   type Mutation {
     _empty: String
@@ -22,11 +22,15 @@ const baseTypeDefs = gql`
   type Subscription {
     _empty: String
   }
-
   scalar Date
 `;
 
 const baseResolvers = {
+  Query: {
+    ping: () => {
+      return "pong";
+    }
+  },
   Date: new GraphQLScalarType({
     name: "Date",
     description: "Date custom scalar type",
@@ -46,4 +50,4 @@ const baseResolvers = {
 };
 
 export const typeDefs = [baseTypeDefs, ...schemasTypeDefs];
-export const resolvers = merge({}, ...schemasResolvers);
+export const resolvers = merge(baseResolvers, ...schemasResolvers);

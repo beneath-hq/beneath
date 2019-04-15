@@ -31,6 +31,22 @@ app.prepare().then(() => {
   // CORS
   server.use(cors());
 
+  // Auth callbacks
+  server.get("/auth/callback/login", (req, res) => {
+    let token = req.query.token;
+    if (token) {
+      res.cookie("token", token);
+    } else {
+      res.clearCookie("token");
+    }
+    res.redirect("/");
+  });
+  server.get("/auth/callback/logout", (req, res) => {
+    let token = req.query.token;
+    res.clearCookie("token");
+    res.redirect("/");
+  });
+
   // Next.js handlers
   server.get("*", (req, res) => {
     return handle(req, res);

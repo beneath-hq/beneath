@@ -1,10 +1,10 @@
-import React from "react";
-import PropTypes from "prop-types";
+import Cookies from "js-cookie";
 import Error from "../pages/_error";
+import PropTypes from "prop-types";
+import React from "react";
 
 const AuthContext = React.createContext({
-  user: null,
-  setUser: () => {},
+  user: null
 });
 
 export class AuthProvider extends React.Component {
@@ -14,14 +14,8 @@ export class AuthProvider extends React.Component {
 
   constructor(props) {
     super(props);
-
-    this.setUser = user => {
-      this.setState({ user });
-    };
-
     this.state = {
-      user: props.user,
-      setUser: this.setUser,
+      user: props.user
     };
   }
 
@@ -59,3 +53,49 @@ export class AuthRequired extends React.Component {
     );
   }
 }
+
+export const withUser = (App) => {
+  return class Auth extends React.Component {
+    static displayName = "withAuth(App)";
+
+    static async getInitialProps(ctx) {
+      let token = readTokenFromCookie(ctx.ctx ? ctx.ctx.req : null);
+      let user = { token };
+
+      let appProps = {};
+      if (App.getInitialProps) {
+        appProps = await App.getInitialProps({ ...ctx, user });
+      }
+      return { ...appProps, user };
+    }
+
+    constructor(props) {
+      super(props);
+      this.user = this.props.user;
+    }
+
+    render() {
+      return <App {...this.props} user={this.user} />;
+    }
+  };
+};
+
+const readTokenFromCookie = (maybeReq) => {
+  let token = null;
+  let cookie = null;
+  if (maybeReq) {
+    cookie = maybeReq.headers.cookie;
+  } else if (document) {
+    cookie = document.cookie;
+  }
+  if (cookie) {
+    cookie = cookie.split(";").find((c) => c.trim().startsWith("token="));
+    if (cookie) {
+      token = cookie.split("=")[1];
+      if (token.length == 0) {
+        token = null;
+      }
+    }
+  }
+  return token;
+};

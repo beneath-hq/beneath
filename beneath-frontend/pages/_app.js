@@ -2,24 +2,23 @@ import App, { Container } from "next/app";
 import Router from "next/router";
 import withGA from "next-ga";
 import React from "react";
-import withUser from "../hocs/withUser";
-import withApollo from "../hocs/withApollo";
-import { AuthProvider } from "../hocs/auth";
+import { withApolloClient } from "../hocs/apollo";
+import { AuthProvider, withUser } from "../hocs/auth";
 import { ApolloProvider } from "react-apollo";
 
 class BeneathApp extends App {
   render() {
-    const { Component, pageProps, apollo, user } = this.props;
+    const { Component, pageProps, apolloClient, user } = this.props;
     return (
       <Container>
-        <ApolloProvider client={apollo}>
-          <AuthProvider user={user}>
+        <AuthProvider user={user}>
+          <ApolloProvider client={apolloClient}>
             <Component {...pageProps} />
-          </AuthProvider>
-        </ApolloProvider>
+          </ApolloProvider>
+        </AuthProvider>
       </Container>
     );
   }
 }
 
-export default withApollo(withUser(withGA("UA-118362426-2", Router)(BeneathApp)));
+export default withUser(withApolloClient(withGA("UA-118362426-2", Router)(BeneathApp)));

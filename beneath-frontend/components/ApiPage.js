@@ -69,7 +69,7 @@ const ApiPageHeaderWithRouter = withRouter(ApiPageHeader);
 
 const ApiPage = props => {
   return (
-    <AuthRequired>
+    <div>
       <App>
         <PageTitle subtitle="API" />
         <div className="api-container">
@@ -111,7 +111,7 @@ const ApiPage = props => {
           }
         }
       `}</style>
-    </AuthRequired>
+    </div>
   );
 };
 
