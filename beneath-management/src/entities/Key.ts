@@ -3,10 +3,11 @@ import uuidv4 from "uuid/v4"; // the secure random uuid
 
 import {
   BaseEntity, Column, CreateDateColumn, Entity, JoinColumn,
-  ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn,
+  ManyToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
 } from "typeorm";
 
 import logger from "../lib/logger";
+import { IAuthenticatedUser } from "../types";
 import { User } from "./User";
 
 @Entity("keys")
@@ -18,9 +19,12 @@ export class Key extends BaseEntity {
   @Column({ length: 32, nullable: true })
   public name: string;
 
-  @ManyToOne((type) => User, (user) => user.keys)
+  @ManyToOne((type) => User, (user) => user.keys, { nullable: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
   public user: User;
+
+  @RelationId((key: Key) => key.user)
+  public userId: string;
 
   @Column({ length: 8 })
   public prefix: string;
@@ -51,9 +55,11 @@ export class Key extends BaseEntity {
     return crypto.createHash("sha256").update(key).digest("hex");
   }
 
-  public static async authenticateKey(keyString) {
+  public static async authenticateKey(keyString): Promise<IAuthenticatedUser> {
     const hashedKey = this.hashKey(keyString);
-    const key: Key = await this.findOne({ hashedKey }, { cache: { id: "keys", milliseconds: 60000 } });
+    const key: Key = await this.findOne({ hashedKey }, {
+      cache: { id: `key:findOne:${hashedKey}`, milliseconds: 60000 }
+    });
 
     if (!key || key.revoked) {
       return null;
@@ -66,7 +72,8 @@ export class Key extends BaseEntity {
 
     return {
       scopes,
-      userId: key.user.userId,
+      kind: "secret",
+      userId: key.userId,
     };
   }
 

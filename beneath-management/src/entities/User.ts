@@ -5,7 +5,7 @@ import {
 } from "typeorm";
 
 import logger from "../lib/logger";
-import { Key } from "./Keys";
+import { Key } from "./Key";
 import { Project } from "./Project";
 
 @Entity("users")

@@ -6,6 +6,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { Strategy as BearerStrategy } from "passport-http-bearer";
 
+import { Key } from "../entities/Key";
 import { User } from "../entities/User";
 import logger from "../lib/logger";
 import { IAuthenticatedRequest } from "../types";
@@ -51,13 +52,7 @@ export default { apply };
 const applyBearer = (app: express.Express) => {
   passport.use(new BearerStrategy(async (token: string, done: any) => {
     try {
-      let user: any = false;
-      if (token === "howdy") {
-        user = {
-          userId: "68926735-1923-488b-bcb1-68cbc766a8ed",
-          kind: "secret",
-        };
-      }
+      const user = await Key.authenticateKey(token);
       done(null, user);
     } catch (err) {
       done(err, null);

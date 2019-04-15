@@ -56,7 +56,7 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.kind !== "session") {
+      if (ctx.user.kind !== "session" && ctx.user.kind !== "secret") { // TOOD: Only session in production
         return null;
       }
       return await User.findOne({ userId: ctx.user.userId }, { relations: ["keys", "projects"] });
