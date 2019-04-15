@@ -1,8 +1,9 @@
 import { ForbiddenError, gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
+import { Key } from "../entities/Key";
 import { User } from "../entities/User";
-import { IApolloContext } from "../types";
+import { IApolloContext, KeyRole } from "../types";
 
 export const typeDefs = gql`
   extend type Query {
@@ -11,7 +12,7 @@ export const typeDefs = gql`
   }
 
   extend type Mutation {
-    issueKey(name: String!, modifyScope: Boolean!): NewKey!
+    issueKey(name: String!, readonly: Boolean!): NewKey!
   }
 
   type User {
@@ -41,8 +42,7 @@ export const typeDefs = gql`
     keyId: ID!
     name: String
     prefix: String
-    modifyScope: Boolean
-    revoked: Boolean
+    role: Boolean
     createdOn: Date
     updatedOn: Date
   }
@@ -56,10 +56,10 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.kind !== "session" && ctx.user.kind !== "secret") { // TOOD: Only session in production
+      if (ctx.user.anonymous || ctx.user.key.role !== "personal") {
         return null;
       }
-      return await User.findOne({ userId: ctx.user.userId }, { relations: ["keys", "projects"] });
+      return await User.findOne({ userId: ctx.user.key.userId }, { relations: ["keys", "projects"] });
     },
     user: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       return await User.findOne(args, { relations: ["projects"] });
@@ -67,12 +67,11 @@ export const resolvers = {
   },
   Mutation: {
     issueKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.kind !== "session") {
+      if (ctx.user.anonymous || ctx.user.key.role !== "personal") {
         throw new ForbiddenError("Only logged-in users can issue keys");
       }
-      const user = new User();
-      user.userId = ctx.user.userId;
-      const key = await user.issueKey({ name: args.name, modifyScope: args.modifyScope });
+      const role: KeyRole = args.readonly ? "readonly" : "readwrite";
+      const key = await Key.issueKey({ name: args.name, role, userId: ctx.user.key.userId });
       return {
         key,
         keyString: key.keyString,

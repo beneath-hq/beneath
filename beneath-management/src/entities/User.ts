@@ -83,17 +83,4 @@ export class User extends BaseEntity {
     return user;
   }
 
-  public async issueKey({ name, modifyScope }: { name: string, modifyScope: boolean }) {
-    const keyString = Key.generateKey();
-    const key = new Key();
-    key.name = name;
-    key.user = this;
-    key.prefix = keyString.slice(0, 8);
-    key.hashedKey = Key.hashKey(keyString);
-    key.modifyScope = modifyScope;
-    await key.save();
-    key.keyString = keyString;
-    return key;
-  }
-
 }

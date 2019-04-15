@@ -6,8 +6,7 @@ import {
   ManyToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
 } from "typeorm";
 
-import logger from "../lib/logger";
-import { IAuthenticatedUser } from "../types";
+import { KeyRole } from "../types";
 import { User } from "./User";
 
 @Entity("keys")
@@ -26,17 +25,14 @@ export class Key extends BaseEntity {
   @RelationId((key: Key) => key.user)
   public userId: string;
 
-  @Column({ length: 8 })
+  @Column({ length: 4 })
   public prefix: string;
 
   @Column({ length: 64, unique: true })
   public hashedKey: string;
 
-  @Column({ nullable: false, default: false })
-  public modifyScope: boolean;
-
-  @Column({ nullable: false, default: false })
-  public revoked: boolean;
+  @Column({ nullable: false })
+  public role: string;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
@@ -55,26 +51,31 @@ export class Key extends BaseEntity {
     return crypto.createHash("sha256").update(key).digest("hex");
   }
 
-  public static async authenticateKey(keyString): Promise<IAuthenticatedUser> {
+  public static async issueKey({ name, role, userId }: { name: string, role: KeyRole, userId: string }) {
+    const keyString = Key.generateKey();
+    const key = new Key();
+    key.name = name;
+    key.user = new User();
+    key.user.userId = userId;
+    key.prefix = keyString.slice(0, 4);
+    key.hashedKey = Key.hashKey(keyString);
+    key.role = role;
+    await key.save();
+    key.keyString = keyString;
+    return key;
+  }
+
+  public static async authenticateKey(keyString): Promise<Key> {
     const hashedKey = this.hashKey(keyString);
     const key: Key = await this.findOne({ hashedKey }, {
-      cache: { id: `key:findOne:${hashedKey}`, milliseconds: 60000 }
+      cache: { id: `key:${hashedKey}`, milliseconds: 3600000 }
     });
 
-    if (!key || key.revoked) {
+    if (!key) {
       return null;
     }
 
-    const scopes = [];
-    if (key.modifyScope) {
-      scopes.push("modify");
-    }
-
-    return {
-      scopes,
-      kind: "secret",
-      userId: key.userId,
-    };
+    return key;
   }
 
 }

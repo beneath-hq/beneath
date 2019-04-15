@@ -11,38 +11,38 @@ import { User } from "../entities/User";
 import logger from "../lib/logger";
 import { IAuthenticatedRequest } from "../types";
 
-const successRedirect = `${process.env.CLIENT_HOST}/`;
+const successRedirect = `${process.env.CLIENT_HOST}/auth/callback/login`;
 const failureRedirect = `${process.env.CLIENT_HOST}/auth`;
-const logoutRedirect = `${process.env.CLIENT_HOST}/`;
+const logoutRedirect = `${process.env.CLIENT_HOST}/auth/callback/logout`;
 
 export const apply = (app: express.Express) => {
   // config
   app.use(passport.initialize());
-  passport.serializeUser(serializeUser);
-  passport.deserializeUser(deserializeUser);
 
   // apply strategies
   applyGithub(app);
   applyGoogle(app);
   applyBearer(app);
   passport.use(new AnonymousStrategy());
-
-  // First check bearer; if doesn't set user, trigger session handler
-  // Why the complexity? I'm afraid the session handler is so dumb it stores a new session for each API call
-  const sessionHandler = passport.session();
   app.use(passport.authenticate(["bearer", "anonymous"], { session: false }));
+
+  // Middleware to mark unauthenticated users anonymous
   app.use((req: IAuthenticatedRequest, res, next) => {
     if (!req.user) {
-      return sessionHandler(req, res, next);
-    } else {
-      next();
+      req.user = {
+        anonymous: true,
+        key: null,
+      };
     }
+    next();
   });
 
   // logout endpoint
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
-    logger.info(`Logout user ${JSON.stringify(req.user)}`);
-    req.logout();
+    if (!req.user.anonymous) {
+      logger.info(`Logout user ${JSON.stringify(req.user)}`);
+      req.user.key.remove();
+    }
     res.redirect(logoutRedirect);
   });
 };
@@ -52,8 +52,11 @@ export default { apply };
 const applyBearer = (app: express.Express) => {
   passport.use(new BearerStrategy(async (token: string, done: any) => {
     try {
-      const user = await Key.authenticateKey(token);
-      done(null, user);
+      const key = await Key.authenticateKey(token);
+      done(null, {
+        anonymous: false,
+        key,
+      });
     } catch (err) {
       done(err, null);
     }
@@ -74,7 +77,11 @@ const applyGithub = (app: express.Express) => {
   }));
 
   app.get("/auth/github", passport.authenticate("github"));
-  app.get("/auth/github/callback", passport.authenticate("github", { successRedirect, failureRedirect }));
+  app.get(
+    "/auth/github/callback",
+    passport.authenticate("github", { session: false, failureRedirect }),
+    handleSuccessRedirect
+  );
 };
 
 const applyGoogle = (app: express.Express) => {
@@ -91,15 +98,17 @@ const applyGoogle = (app: express.Express) => {
 
   const scope = ["https://www.googleapis.com/auth/plus.login", "email"];
   app.get("/auth/google", passport.authenticate("google", { scope }));
-  app.get("/auth/google/callback", passport.authenticate("google", { successRedirect, failureRedirect }));
+  app.get(
+    "/auth/google/callback",
+    passport.authenticate("google", { session: false, failureRedirect }),
+    handleSuccessRedirect
+  );
 };
 
-const serializeUser = (user, done) => {
-  done(undefined, user.userId);
-};
-
-const deserializeUser = (userId, done) => {
-  done(undefined, { userId, kind: "session", scopes: ["modify"] });
+const handleSuccessRedirect = (req: IAuthenticatedRequest, res) => {
+  // TODO: Get token
+  const token = req.user.key.keyString;
+  res.redirect(`${successRedirect}/?token=${token}`);
 };
 
 const handleProfile = async (serviceName: "github"|"google", profile: any, done: any) => {
@@ -126,10 +135,10 @@ const handleProfile = async (serviceName: "github"|"google", profile: any, done:
     });
 
     // done
+    const key = await Key.issueKey({ name: `${serviceName} login`, role: "personal", userId: user.userId });
     done(undefined, {
-      userId: user.userId,
-      kind: "session",
-      scopes: ["modify"],
+      anonymous: false,
+      key,
     });
   } catch (err) {
     done(err, undefined);

@@ -1,11 +1,12 @@
 import { Request } from "express";
 
-export type AuthenticatedUserScope = "modify";
+import { Key } from "./entities/Key";
+
+export type KeyRole = "personal" | "readwrite" | "readonly";
 
 export interface IAuthenticatedUser {
-  userId: string;
-  kind: "anonymous" | "secret" | "session";
-  scopes: AuthenticatedUserScope[];
+  anonymous: boolean;
+  key: Key;
 }
 
 export interface IAuthenticatedRequest extends Request {

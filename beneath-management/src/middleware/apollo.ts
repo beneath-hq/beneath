@@ -19,11 +19,7 @@ export const apply = (app: express.Express) => {
     context: ({ req }: { req: IAuthenticatedRequest }) => {
       let user = req.user;
       if (!user) {
-        user = {
-          userId: null,
-          kind: "anonymous",
-          scopes: [],
-        };
+        throw Error(`req.user must be set when Apollo is called`);
       }
       return { user };
     },
