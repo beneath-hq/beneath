@@ -8,7 +8,7 @@ import { ApolloProvider } from "react-apollo";
 
 class BeneathApp extends App {
   render() {
-    const { Component, pageProps, apolloClient, user } = this.props;
+    const { Component, apolloClient, user, pageProps } = this.props;
     return (
       <Container>
         <AuthProvider user={user}>
