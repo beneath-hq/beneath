@@ -1,10 +1,7 @@
 module.exports = {
   "port": 5432,
   "type": "postgres",
-  "host": "localhost",
-  "database": "benjamin",
-  "username": "benjamin",
-  "password": "",
+  "url": process.env.POSTGRES_URL,
   "synchronize": true,
   "logging": ["error"],
   // "logger": , // try out with winston
