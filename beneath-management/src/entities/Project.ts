@@ -1,4 +1,4 @@
-import { IsFQDN, IsLowercase, Length } from "class-validator";
+import { IsFQDN, IsLowercase, Length, Matches } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, JoinTable,
   ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -15,6 +15,7 @@ export class Project extends BaseEntity {
   @Column({ length: 16, unique: true })
   @IsLowercase()
   @Length(3, 16)
+  @Matches(/[_a-zA-Z][_\-a-zA-Z0-9]*/)
   public name: string;
 
   @Column({ length: 16, unique: true })
