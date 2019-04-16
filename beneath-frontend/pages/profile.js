@@ -1,7 +1,8 @@
 import Page from "../components/Page";
+import { MainSidebar } from "../components/Sidebar";
 
 export default () => (
-  <Page title="Profile">
+  <Page title="Profile" sidebar={<MainSidebar />}>
     <div className="section">
       <div className="title">
         <h1>Profile</h1>
