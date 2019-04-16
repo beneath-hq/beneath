@@ -42,7 +42,7 @@ export const typeDefs = gql`
     keyId: ID!
     name: String
     prefix: String
-    role: Boolean
+    role: String
     createdOn: Date
     updatedOn: Date
   }
