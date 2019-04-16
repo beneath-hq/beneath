@@ -1,5 +1,4 @@
-import App from "../components/App";
-import PageTitle from "../components/PageTitle";
+import Page from "../components/Page";
 import { devices } from "../lib/theme";
 
 const Button = props => {
@@ -25,8 +24,7 @@ const Button = props => {
 };
 
 export default () => (
-  <App>
-    <PageTitle subtitle="Home" />
+  <Page title="Home">
     <div className="section">
       <div className="title">
         <h1>Data Science for the Decentralised Economy</h1>
@@ -91,5 +89,5 @@ export default () => (
         }
       }
     `}</style>
-  </App>
+  </Page>
 );

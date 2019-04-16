@@ -1,5 +1,4 @@
-import App from "../components/App";
-import PageTitle from "../components/PageTitle";
+import Page from "../components/Page";
 import connection from "../lib/connection";
 import { devices } from "../lib/theme";
 
@@ -29,8 +28,7 @@ const ConnectButton = (props) => {
 };
 
 export default (props) => (
-  <App>
-    <PageTitle subtitle="Sign Up or Log In" />
+  <Page title="Sign Up or Log In">
     <div className="section">
       <div className="button-row">
         <ConnectButton service="github" />
@@ -84,5 +82,5 @@ export default (props) => (
         }
       }
     `}</style>
-  </App>
+  </Page>
 );
