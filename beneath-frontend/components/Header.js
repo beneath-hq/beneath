@@ -166,11 +166,6 @@ const Header = ({ router: { pathname } }) => (
             <NavRight>
               {user && (
                 <NavItem>
-                  <NavItemLink pathname={pathname} href="/api" text="API" />
-                </NavItem>
-              )}
-              {user && (
-                <NavItem>
                   <NavItemLink href="https://lab.beneath.network/" text="Lab" />
                 </NavItem>
               )}
