@@ -1,7 +1,7 @@
 module.exports = {
+  "port": 5432,
   "type": "postgres",
   "host": "localhost",
-  "port": 5432,
   "database": "benjamin",
   "username": "benjamin",
   "password": "",
@@ -9,23 +9,23 @@ module.exports = {
   "logging": ["error"],
   // "logger": , // try out with winston
   "cache": !process.env.REDIS_URL ? undefined : {
-    "type": "redis",
     "options": {
       "url": process.env.REDIS_URL,
-    }
+    },
+    "type": "redis",
   },
   "entities": [
-    "src/entities/**/*.ts"
+    "src/entities/**/*.ts",
   ],
   "migrations": [
-    "src/migration/**/*.ts"
+    "src/migration/**/*.ts",
   ],
   "subscribers": [
-    "src/subscriber/**/*.ts"
+    "src/subscriber/**/*.ts",
   ],
   "cli": {
     "entitiesDir": "src/entities",
     "migrationsDir": "src/migration",
-    "subscribersDir": "src/subscriber"
-  }
+    "subscribersDir": "src/subscriber",
+  },
 };
