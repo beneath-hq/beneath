@@ -1,4 +1,4 @@
-import ApiPage from "../../components/ApiPage";
+import Page from "../../components/Page";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
@@ -10,7 +10,7 @@ const PING_QUERY = gql`
 `;
 
 export default props => (
-  <ApiPage>
+  <Page>
     <article>
       <Query query={PING_QUERY}>
         {({ loading, error, data }) => {
@@ -33,5 +33,5 @@ export default props => (
         }
       `}</style>
     </article>
-  </ApiPage>
+  </Page>
 );

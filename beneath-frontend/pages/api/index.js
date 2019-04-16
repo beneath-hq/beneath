@@ -1,9 +1,9 @@
-import ApiPage from "../../components/ApiPage";
+import Page from "../../components/Page";
 
 export default props => (
-  <ApiPage>
+  <Page>
     <article>
       <p>This is the Dashboard!!</p>
     </article>
-  </ApiPage>
+  </Page>
 );

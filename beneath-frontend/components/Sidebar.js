@@ -70,10 +70,9 @@ export const Sidebar = withRouter(({ router: { pathname }, children }) => (
   <NavList>{children}</NavList>
 ));
 
-export const ApiSidebar = props => (
+export const MainSidebar = props => (
   <Sidebar>
-    <SidebarLink href="/api" text="Dashboard" />
-    <SidebarLink href="/api/ping" text="Ping" />
-    <SidebarLink href="/api/me" text="Me" />
+    <SidebarLink href="/explore" text="Explore" />
+    <SidebarLink href="/profile" text="Profile" />
   </Sidebar>
 );

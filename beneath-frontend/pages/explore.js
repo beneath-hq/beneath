@@ -1,14 +1,12 @@
-import App from "../components/App";
-import PageTitle from "../components/PageTitle";
-import { devices } from "../lib/theme";
+import { MainSidebar } from "../components/Sidebar";
+import Page from "../components/Page";
 
 export default () => (
-  <App>
-    <PageTitle subtitle="Explore" />
+  <Page title="Explore" sidebar={<MainSidebar />} >
     <div className="section">
       <div className="title">
         <h1>Explore</h1>
       </div>
     </div>
-  </App>
+  </Page>
 );

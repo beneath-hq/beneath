@@ -1,4 +1,4 @@
-import ApiPage from "../../components/ApiPage";
+import Page from "../../components/Page";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
@@ -42,11 +42,11 @@ const MyData = props => (
 );
 
 export default props => (
-  <ApiPage>
+  <Page>
     <article>
       <h1>My data</h1>
       <MyData />
       <p>That's what we know about you!</p>
     </article>
-  </ApiPage>
+  </Page>
 );
