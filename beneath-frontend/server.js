@@ -42,7 +42,6 @@ app.prepare().then(() => {
     res.redirect("/");
   });
   server.get("/auth/callback/logout", (req, res) => {
-    let token = req.query.token;
     res.clearCookie("token");
     res.redirect("/");
   });
