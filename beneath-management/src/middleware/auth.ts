@@ -38,9 +38,11 @@ export const apply = (app: express.Express) => {
 
   // logout endpoint
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
-    if (!req.user.anonymous) {
-      logger.info(`Logout user ${JSON.stringify(req.user)}`);
+    if (!req.user.anonymous && req.user.key.role === "personal") {
+      logger.info(`Logout user ${JSON.stringify(req.user.key)}`);
       req.user.key.remove();
+    } else {
+      logger.error(`Can't logout user: ${JSON.stringify(req.user)}`);
     }
     res.status(200);
     res.end();
