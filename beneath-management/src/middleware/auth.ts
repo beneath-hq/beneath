@@ -53,14 +53,11 @@ const applyBearer = (app: express.Express) => {
   passport.use(new BearerStrategy(async (token: string, done: any) => {
     try {
       const key = await Key.authenticateKey(token);
-      if (!key) {
-        logger.info(`Invalid Bearer token <${token}>`);
-        throw Error("Bearer token invalid");
+      if (key) {
+        done(null, { key, anonymous: false });
+      } else {
+        done(null, false);
       }
-      done(null, {
-        anonymous: false,
-        key,
-      });
     } catch (err) {
       done(err, null);
     }
