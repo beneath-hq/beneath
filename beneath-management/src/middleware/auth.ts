@@ -13,7 +13,6 @@ import { IAuthenticatedRequest } from "../types";
 
 const successRedirect = `${process.env.CLIENT_HOST}/auth/callback/login`;
 const failureRedirect = `${process.env.CLIENT_HOST}/auth`;
-const logoutRedirect = `${process.env.CLIENT_HOST}/auth/callback/logout`;
 
 export const apply = (app: express.Express) => {
   // config
@@ -43,7 +42,8 @@ export const apply = (app: express.Express) => {
       logger.info(`Logout user ${JSON.stringify(req.user)}`);
       req.user.key.remove();
     }
-    res.redirect(logoutRedirect);
+    res.status(200);
+    res.end();
   });
 };
 
@@ -110,7 +110,6 @@ const applyGoogle = (app: express.Express) => {
 };
 
 const handleSuccessRedirect = (req: IAuthenticatedRequest, res) => {
-  // TODO: Get token
   const token = req.user.key.keyString;
   res.redirect(`${successRedirect}/?token=${token}`);
 };
