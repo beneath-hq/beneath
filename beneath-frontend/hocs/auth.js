@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import Error from "../pages/_error";
 import PropTypes from "prop-types";
 import React from "react";

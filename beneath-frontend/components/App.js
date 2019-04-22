@@ -7,7 +7,7 @@ export default ({ children }) => (
   <div className="main">
     <Header />
     {children}
-    <style jsx global>
+    {/* <style jsx global>
       {global}
     </style>
     <style jsx>{`
@@ -17,7 +17,7 @@ export default ({ children }) => (
         height: 100vh;
         flex-grow: 1;
       }
-    `}</style>
+    `}</style> */}
   </div>
 );
 
