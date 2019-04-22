@@ -159,22 +159,15 @@ const Header = ({ router }) => (
 
       <AuthConsumer>
         {({ user }) => {
-          let authText = user ? "Log out" : "Log in";
-          let authHref = user ? `/auth/logout` : "/auth";
           return (
             <NavRight>
-              {user && (
-                <NavItem>
-                  <NavItemLink pathname={router.pathname} href="/api" text="API" />
-                </NavItem>
-              )}
               {user && (
                 <NavItem>
                   <NavItemLink href="https://lab.beneath.network/" text="Lab" />
                 </NavItem>
               )}
               <NavItem>
-                <NavItemLink href={authHref} text={authText} />
+                <NavItemLink href={user ? `/auth/logout` : "/auth"} text={user ? "Log out" : "Log in"} />
               </NavItem>
             </NavRight>
           );

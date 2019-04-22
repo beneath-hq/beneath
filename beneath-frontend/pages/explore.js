@@ -1,5 +1,5 @@
-import { MainSidebar } from "../components/Sidebar";
 import Page from "../components/Page";
+import { MainSidebar } from "../components/Sidebar";
 
 export default () => (
   <Page title="Explore" sidebar={<MainSidebar />} >
