@@ -17,7 +17,7 @@ export default class MyDocument extends Document {
 
           {/* Meta tags */}
           <meta name="robots" content="index, follow" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
           <meta
             name="description"
             content="Blockchain data science, Ethereum data API, cryptocurrency investigations, dapp analytics"
