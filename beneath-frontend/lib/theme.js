@@ -1,3 +1,5 @@
+import { createMuiTheme } from "@material-ui/core/styles";
+
 const screenWidths = {
   mobileS: 320,
   mobileM: 375,
@@ -26,3 +28,13 @@ export const devices = {
   smallerThanDesktop: `screen and (max-width: ${screenWidths.desktop - 1}px)`,
   smallerThanDesktopL: `screen and (max-width: ${screenWidths.desktop - 1}px)`,
 };
+
+export const muiTheme = createMuiTheme({
+  palette: {
+    type: "dark",
+  },
+  typography: {
+    useNextVariants: true,
+    fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
+  },
+});
