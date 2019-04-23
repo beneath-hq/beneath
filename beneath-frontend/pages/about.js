@@ -1,93 +1,44 @@
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import { withStyles } from '@material-ui/core/styles';
+
 import Page from "../components/Page";
-import { devices } from "../lib/theme";
 
-const Button = props => {
-  return (
-    <div>
-      <a href={props.href}>
-        <button>
-          <span>{props.text}</span>
-        </button>
-      </a>
-      <style jsx>{`
-        button {
-          margin: 0px 35px;
-          min-width: 250px;
-        }
-        span {
-          text-align: center;
-          width: 100%;
-        }
-      `}</style>
-    </div>
-  );
-};
+const styles = (theme) => ({
+  heroContainer: {
+    maxWidth: 900,
+    margin: '0 auto',
+    padding: `${theme.spacing.unit * 8}px 0 ${theme.spacing.unit * 6}px`,
+  },
+  heroButtonsContainer: {
+    marginTop: theme.spacing.unit * 2,
+  },
+});
 
-export default () => (
+export default withStyles(styles)(({ classes }) => (
   <Page title="Home">
-    <div className="section">
-      <div className="title">
-        <h1>Data Science for the Decentralised Economy</h1>
-      </div>
-      <div className="bullets">
-        <p>
-          Beneath is a full Ethereum data science platform. Explore other people's analytics or start building your own.
-        </p>
-      </div>
-      <div className="button-row">
-        <Button
-          href="https://network.us18.list-manage.com/subscribe?u=ead8c956abac88f03b662cf03&id=466a1d05d9"
-          text="Get the newsletter"
-        />
-        <aside>OR</aside>
-        <Button href="mailto:contact@beneath.network" text="Get in touch" />
+    <div className={classes.heroContainer}>
+      <Typography component="h1" variant="h4" align="center" gutterBottom>
+        Data Science for the Decentralised Economy
+      </Typography>
+      <Typography component="h2" variant="subtitle1" align="center" gutterBottom>
+        Beneath is a full Ethereum data science platform. Explore other people's analytics or start building your own.
+      </Typography>
+      <div className={classes.heroButtonsContainer}>
+        <Grid container spacing={16} justify="center">
+          <Grid item>
+            <Button size="large" color="primary" variant="outlined" href="https://network.us18.list-manage.com/subscribe?u=ead8c956abac88f03b662cf03&id=466a1d05d9">
+              Get the newsletter
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button size="large" color="primary" variant="outlined" href="mailto:contact@beneath.network">
+              Get in touch
+            </Button>    
+          </Grid>
+        </Grid>
       </div>
     </div>
-    <style jsx>{`
-      div {
-        align-items: center;
-        display: flex;
-        margin: 0px;
-        margin-bottom: 30px;
-        text-align: center;
-      }
-      div.section {
-        flex-direction: column;
-        flex-grow: 1;
-        justify-content: center;
-        padding: 0 10px;
-      }
-      h1, p {
-        margin: 0px;
-      }
-      @media ${devices.tabletOrLarger} {
-        h1 {
-          font-size: 3rem;
-        }
-      }
-      @media ${devices.smallerThanTablet} {
-        h1 {
-          font-size: 1.5rem;
-        }
-      }
-      /* Button row */
-      .button-row {
-        display: flex;
-        align-items: stretch;
-        justify-content: center;
-        align-items: center;
-      }
-      @media ${devices.smallerThanTablet} {
-        .button-row {
-          flex-wrap: wrap;
-        }
-        .button-row * {
-          width: 100%;
-        }
-        .button-row aside {
-          margin: 10px 0;
-        }
-      }
-    `}</style>
   </Page>
-);
+));
