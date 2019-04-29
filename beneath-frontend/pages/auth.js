@@ -1,86 +1,49 @@
-import Page from "../components/Page";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import { withStyles } from '@material-ui/core/styles';
+
 import connection from "../lib/connection";
-import { devices } from "../lib/theme";
+import Page from "../components/Page";
+import { GoogleIcon, GithubIcon } from "../components/Icons";
 
-const ConnectButton = (props) => {
-  return (
-    <div>
-      <a href={`${connection.API_URL}/auth/${props.service}`}>
-        <button>
-          <span className="icon">
-            <i className={`fab fa-${props.service}`}></i>
-          </span>
-          <span>{`Connect with ${props.service}`}</span>
-        </button>
-      </a>
-      <style jsx>{`
-        button {
-          margin: 0px 35px;
-          min-width: 250px;
-        }
-        span {
-          text-align: center;
-          width: 100%;
-        }
-      `}</style>
-    </div>
-  );
-};
+const styles = (theme) => ({
+  authContainer: {
+    maxWidth: 900,
+    margin: '0 auto',
+    paddingTop: theme.spacing.unit * 8,
+  },
+  authButtonsContainer: {
+    paddingTop: theme.spacing.unit * 4,
+  },
+  icon: {
+    fontSize: 24,
+    marginRight: theme.spacing.unit,
+  },
+});
 
-export default (props) => (
+export default withStyles(styles)(({ classes }) => (
   <Page title="Sign Up or Log In">
-    <div className="section">
-      <div className="button-row">
-        <ConnectButton service="github" />
-        <aside>OR</aside>
-        <ConnectButton service="google" />
+    <div className={ classes.authContainer }>
+      <Typography component="h2" variant="h5" align="center" gutterBottom>
+        Sign Up or Log In
+      </Typography>
+      <div className={classes.authButtonsContainer}>
+        <Grid container spacing={16} justify="center">
+          <Grid item>
+            <Button size="large" color="primary" variant="outlined" href={`${connection.API_URL}/auth/github`}>
+              <GithubIcon className={classes.icon} />
+              Connect with Github
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button size="large" color="primary" variant="outlined" href={`${connection.API_URL}/auth/google`}>
+              <GoogleIcon className={classes.icon} />
+              Connect with Google
+            </Button>
+          </Grid>
+        </Grid>
       </div>
     </div>
-    <style jsx>{`
-      div {
-        align-items: center;
-        display: flex;
-        margin: 0px;
-        margin-bottom: 30px;
-        text-align: center;
-      }
-      div.section {
-        flex-direction: column;
-        flex-grow: 1;
-        justify-content: center;
-        padding: 0 10px;
-      }
-      h1, p {
-        margin: 0px;
-      }
-      @media ${devices.tabletOrLarger} {
-        h1 {
-          font-size: 3rem;
-        }
-      }
-      @media ${devices.smallerThanTablet} {
-        h1 {
-          font-size: 1.5rem;
-        }
-      }
-      /* Button row */
-      .button-row {
-        display: flex;
-        align-items: stretch;
-        justify-content: center;
-        align-items: center;
-      }
-      @media ${devices.smallerThanTablet} {
-        .button-row {
-          flex-wrap: wrap;
-        }
-        .button-row * {
-          width: 100%;
-        }
-        .button-row aside {
-          margin: 10px 0;
-        }
-      }
-    `}</style>
   </Page>
-);
+));
