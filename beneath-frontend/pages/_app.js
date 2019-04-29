@@ -2,10 +2,9 @@ import App, { Container } from "next/app";
 import Router from "next/router";
 import withGA from "next-ga";
 import React from "react";
-import { MuiThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
-import JssProvider from "react-jss/lib/JssProvider";
-import getPageContext from "../lib/getPageContext";
+import { muiTheme } from "../lib/theme";
 import { withApolloClient } from "../hocs/apollo";
 import { AuthProvider, withUser } from "../hocs/auth";
 import { ApolloProvider } from "react-apollo";
@@ -13,7 +12,6 @@ import { ApolloProvider } from "react-apollo";
 class BeneathApp extends App {
   constructor() {
     super();
-    this.pageContext = getPageContext();
   }
 
   componentDidMount() {
@@ -26,17 +24,15 @@ class BeneathApp extends App {
 
   render() {
     const { Component, apolloClient, user, pageProps } = this.props;
-    const { generateClassName, sheetsManager, sheetsRegistry, theme } = this.pageContext;
+
     return (
       <Container>
         <AuthProvider user={user}>
           <ApolloProvider client={apolloClient}>
-            <JssProvider registry={sheetsRegistry} generateClassName={generateClassName}>
-              <MuiThemeProvider theme={theme} sheetsManager={sheetsManager}>
-                <CssBaseline />
-                <Component pageContext={this.pageContext} {...pageProps} />
-              </MuiThemeProvider>
-            </JssProvider>
+            <ThemeProvider theme={muiTheme}>
+              <CssBaseline />
+              <Component {...pageProps} />
+            </ThemeProvider>
           </ApolloProvider>
         </AuthProvider>
       </Container>

@@ -2,47 +2,32 @@
 // You should really only use it to change Head
 
 import Document, { Head, Main, NextScript } from "next/document";
-import PropTypes from "prop-types";
 import React from "react";
 import flush from "styled-jsx/server";
+import { ServerStyleSheets } from '@material-ui/styles';
+
+import { muiTheme } from "../lib/theme";
 
 export default class MyDocument extends Document {
-  static async getInitialProps(ctx) {
+  static async getInitialProps(ctx) {    
     // For MUI + Next.js, see https://github.com/mui-org/material-ui/blob/master/examples/nextjs/pages/_document.js
     // Render app and page and get the context of the page with collected side effects.
-    let pageContext;
-    const page = ctx.renderPage((Component) => {
-      const WrappedComponent = props => {
-        pageContext = props.pageContext;
-        return <Component {...props} />;
-      };
+    const sheets = new ServerStyleSheets();
+    const originalRenderPage = ctx.renderPage;
 
-      WrappedComponent.propTypes = {
-        pageContext: PropTypes.object.isRequired,
-      };
-
-      return WrappedComponent;
-    });
-
-    let css;
-    if (pageContext) {
-      css = pageContext.sheetsRegistry.toString();
-    }
+    ctx.renderPage = () =>
+      originalRenderPage({
+        enhanceApp: App => props => sheets.collect(<App {...props} />),
+      });
 
     const initialProps = await Document.getInitialProps(ctx);
 
     return {
       ...initialProps,
-      ...page,
-      pageContext,
       // Styles fragment is rendered after the app and page rendering finish.
       styles: (
         <React.Fragment>
-          <style
-            id="jss-server-side"
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: css }}
-          />
+          {sheets.getStyleElement()}
           {flush() || null}
         </React.Fragment>
       ),
@@ -50,8 +35,6 @@ export default class MyDocument extends Document {
   }
 
   render() {
-    const { pageContext } = this.props;
-
     return (
       <html>
         <Head>
@@ -60,7 +43,7 @@ export default class MyDocument extends Document {
           {/* Meta tags */}
           <meta name="robots" content="index, follow" />
           <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
-          <meta name="theme-color" content={pageContext ? pageContext.theme.palette.primary.main : null} />
+          <meta name="theme-color" content={muiTheme.palette.primary.main} />
 
           {/* Description tag */}
           <meta
