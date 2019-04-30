@@ -28,8 +28,8 @@ const Header = withRouter((({ router }) => {
         </Typography>
         <div className={classes.grow} />
         <Tabs value={router.pathname}>
-          <Tab label="About" value="/about" component={NextMuiLink} href="/about" />
           <Tab label="Explore" value="/explore" component={NextMuiLink} href="/explore" />
+          <Tab label="About" value="/about" component={NextMuiLink} href="/about" />
         </Tabs>
         <AuthConsumer>
           {({ user }) => {
