@@ -105,5 +105,10 @@ export const muiTheme = createMuiTheme({
         borderRadius: 0,
       },
     },
+    MuiAppBar: {
+      colorPrimary: {
+        backgroundColor: "rgba(16, 24, 46, 1)",
+      }
+    },
   },
 });
