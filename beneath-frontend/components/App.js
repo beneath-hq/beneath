@@ -24,7 +24,7 @@ const Header = withRouter((({ router }) => {
     <AppBar position="relative" colorPrimary="rgba(16, 24, 46, 1)">
       <Toolbar variant="dense">
         <Typography variant="h6" color="inherit" noWrap>
-          Material-UI
+          BENEATH
         </Typography>
         <div className={classes.grow} />
         <Tabs value={router.pathname}>
