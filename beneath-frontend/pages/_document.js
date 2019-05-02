@@ -6,7 +6,7 @@ import React from "react";
 import flush from "styled-jsx/server";
 import { ServerStyleSheets } from '@material-ui/styles';
 
-import { muiTheme } from "../lib/theme";
+import theme from "../lib/theme";
 
 export default class MyDocument extends Document {
   static async getInitialProps(ctx) {    
@@ -43,7 +43,7 @@ export default class MyDocument extends Document {
           {/* Meta tags */}
           <meta name="robots" content="index, follow" />
           <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no" />
-          <meta name="theme-color" content={muiTheme.palette.primary.main} />
+          <meta name="theme-color" content={theme.palette.primary.main} />
 
           {/* Description tag */}
           <meta

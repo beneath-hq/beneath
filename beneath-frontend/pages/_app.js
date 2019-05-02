@@ -4,7 +4,7 @@ import withGA from "next-ga";
 import React from "react";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
-import { muiTheme } from "../lib/theme";
+import theme from "../lib/theme";
 import { withApolloClient } from "../hocs/apollo";
 import { AuthProvider, withUser } from "../hocs/auth";
 import { ApolloProvider } from "react-apollo";
@@ -29,7 +29,7 @@ class BeneathApp extends App {
       <Container>
         <AuthProvider user={user}>
           <ApolloProvider client={apolloClient}>
-            <ThemeProvider theme={muiTheme}>
+            <ThemeProvider theme={theme}>
               <CssBaseline />
               <Component {...pageProps} />
             </ThemeProvider>

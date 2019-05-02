@@ -1,5 +1,5 @@
 import React from "react";
-import App from "../components/App";
+import Page from "../components/Page";
 
 /**
  * Produces a suitable error message for statusCode
@@ -32,7 +32,7 @@ export default class Error extends React.Component {
 
   render() {
     return (
-      <App>
+      <Page title="Error">
         <div>
           <p>
             {this.props.message
@@ -46,7 +46,7 @@ export default class Error extends React.Component {
             text-align: center;
           }
         `}</style>
-      </App>
+      </Page>
     );
   }
 }

@@ -65,6 +65,16 @@ app.prepare().then(() => {
     res.redirect("/");
   });
 
+  // Redirect "/" based on whether user logged in
+  server.get("/", (req, res) => {
+    let loggedIn = !!req.cookies["token"];
+    if (loggedIn) {
+      res.redirect("/explore");
+    } else {
+      res.redirect("/about");
+    }
+  });
+
   // Next.js handlers
   server.get("*", (req, res) => {
     return handle(req, res);

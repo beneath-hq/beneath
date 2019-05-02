@@ -16,7 +16,7 @@ const styles = (theme) => ({
 });
 
 export default withStyles(styles)(({ classes }) => (
-  <Page title="Home">
+  <Page>
     <div className={classes.heroContent}>
       <Container maxWidth="lg">
         <Typography component="h1" variant="h4" align="center" gutterBottom>

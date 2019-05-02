@@ -1,27 +1,27 @@
 import React, { Component } from "react";
 import Router from "next/router";
 
-import App from "../components/App";
+import Page from "../components/Page";
 import { AuthConsumer } from "../hocs/auth";
 
 class Index extends Component {
   componentDidMount() {
     if (this.user) {
-      Router.push("/explore");
+      Router.replace("/explore");
     } else {
-      Router.push("/about");
+      Router.replace("/about");
     }
   }
 
   render() {
     return (
-      <App>
+      <Page>
         <AuthConsumer>
           {({ user }) => {
             this.user = user;
           }}
         </AuthConsumer>
-      </App>
+      </Page>
     );
   }
 }
