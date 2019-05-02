@@ -3,8 +3,9 @@ import React from "react";
 import Head from "next/head";
 import { makeStyles } from "@material-ui/core/styles";
 
-import Header from "./Header";
 import Drawer from "./Drawer";
+import Header from "./Header";
+import Subheader from "./Subheader";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -37,9 +38,12 @@ const Page = (props) => {
             {props.sidebar}
           </Drawer>
         )}
-        <main className={classes.content}>
-          {props.children}
-        </main>
+        <div className={classes.content}>
+          { props.sidebar && <Subheader /> }
+          <main>
+            {props.children}
+          </main>
+        </div>
       </div>
     </div>
   );
