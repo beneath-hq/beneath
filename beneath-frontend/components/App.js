@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
 const Header = withRouter((({ router }) => {
   const classes = useStyles();
   return (
-    <AppBar position="relative" colorPrimary="rgba(16, 24, 46, 1)">
+    <AppBar position="relative">
       <Toolbar variant="dense">
         <Typography variant="h6" color="inherit" noWrap>
           BENEATH
