@@ -4,7 +4,7 @@ if (!process.browser) {
   global.fetch = fetch
 }
 
-import { ApolloClient, InMemoryCache, HttpLink } from 'apollo-boost'
+import { ApolloClient, HttpLink, InMemoryCache, defaultDataIdFromObject } from 'apollo-boost'
 import Head from 'next/head'
 import React from 'react'
 import { getDataFromTree } from 'react-apollo'
@@ -25,10 +25,10 @@ const getApolloClient = (options) => {
   }
 
   return apolloClient;
-}
+};
 
-function createApolloClient({ initialState, token }) {
-  let linkOptions = {
+const createApolloClient = ({ initialState, token }) => {
+  const linkOptions = {
     uri: `${API_URL}/graphql`,
     credentials: "include",
   };
@@ -39,15 +39,24 @@ function createApolloClient({ initialState, token }) {
     };
   }
 
-  let apolloOptions = {
+  // returns ID for objects for caching/automatic state update
+  const dataIdFromObject = (object) => {
+    switch (object.__typename) {
+      case "User": return object.userId;
+      case "Me": return `me:${object.userId}`;
+      default: return defaultDataIdFromObject(object);
+    }
+  };
+
+  const apolloOptions = {
     connectToDevTools: process.browser && !IS_PRODUCTION,
     ssrMode: !process.browser,
-    cache: new InMemoryCache().restore(initialState || {}),
+    cache: new InMemoryCache({ dataIdFromObject }).restore(initialState || {}),
     link: new HttpLink(linkOptions),
   };
 
   return new ApolloClient(apolloOptions);
-}
+};
 
 export const withApolloClient = (App) => {
   return class Apollo extends React.Component {
@@ -117,4 +126,4 @@ export const withApolloClient = (App) => {
       return <App {...this.props} apolloClient={this.apolloClient} />
     }
   }
-}
+};
