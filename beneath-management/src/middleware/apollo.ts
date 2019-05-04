@@ -17,7 +17,7 @@ export const apply = (app: express.Express) => {
       return error;
     },
     context: ({ req }: { req: IAuthenticatedRequest }) => {
-      let user = req.user;
+      const user = req.user;
       if (!user) {
         throw Error(`req.user must be set when Apollo is called`);
       }
@@ -34,7 +34,7 @@ export const apply = (app: express.Express) => {
       graphqlDepthLimit(3)
     ],
   });
-  server.applyMiddleware({ app, path });
+  server.applyMiddleware({ app, path, cors: false });
 };
 
 export default { apply };

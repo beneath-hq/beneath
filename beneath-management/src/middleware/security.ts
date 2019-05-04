@@ -9,7 +9,10 @@ export const apply = (app: express.Express) => {
   app.use(redirectToHTTPS([/localhost:(\d+)/], [], 301));
 
   // headers security
-  app.use(cors());
+  app.use(cors({
+    origin: true,
+    credentials: true,
+  }));
   app.use(helmet());
 };
 
