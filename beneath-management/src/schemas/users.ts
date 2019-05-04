@@ -12,7 +12,7 @@ export const typeDefs = gql`
   }
 
   extend type Mutation {
-    issueKey(name: String!, readonly: Boolean!): NewKey!
+    issueKey(description: String!, readonly: Boolean!): NewKey!
   }
 
   type User {
@@ -40,7 +40,7 @@ export const typeDefs = gql`
 
   type Key {
     keyId: ID!
-    name: String
+    description: String
     prefix: String
     role: String
     createdOn: Date
@@ -71,7 +71,7 @@ export const resolvers = {
         throw new ForbiddenError("Only logged-in users can issue keys");
       }
       const role: KeyRole = args.readonly ? "readonly" : "readwrite";
-      const key = await Key.issueKey({ name: args.name, role, userId: ctx.user.key.userId });
+      const key = await Key.issueKey({ description: args.description, role, userId: ctx.user.key.userId });
       return {
         key,
         keyString: key.keyString,

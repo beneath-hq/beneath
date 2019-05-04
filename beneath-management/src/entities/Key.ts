@@ -16,7 +16,7 @@ export class Key extends BaseEntity {
   public keyId: string;
 
   @Column({ length: 32, nullable: true })
-  public name: string;
+  public description: string;
 
   @ManyToOne((type) => User, (user) => user.keys, { nullable: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
@@ -51,10 +51,10 @@ export class Key extends BaseEntity {
     return crypto.createHash("sha256").update(key).digest("hex");
   }
 
-  public static async issueKey({ name, role, userId }: { name: string, role: KeyRole, userId: string }) {
+  public static async issueKey({ description, role, userId }: { description: string, role: KeyRole, userId: string }) {
     const keyString = Key.generateKey();
     const key = new Key();
-    key.name = name;
+    key.description = description;
     key.user = new User();
     key.user.userId = userId;
     key.prefix = keyString.slice(0, 4);
