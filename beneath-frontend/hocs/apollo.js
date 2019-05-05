@@ -45,6 +45,7 @@ const createApolloClient = ({ initialState, token, res }) => {
     switch (object.__typename) {
       case "User": return object.userId;
       case "Me": return `me:${object.userId}`;
+      case "Key": return `m${object.keyId}`;
       default: {
         console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
         return defaultDataIdFromObject(object);

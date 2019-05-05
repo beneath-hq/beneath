@@ -28,11 +28,6 @@ import Loading from "../components/Loading";
 import Page from "../components/Page";
 import { AuthRequired } from "../hocs/auth";
 
-// TODO
-/*
-  Section 1: Edit name and bio
-*/
-
 const QUERY_ME = gql`
   query {
     me {
@@ -51,6 +46,16 @@ const QUERY_ME = gql`
         role
         createdOn
       }
+    }
+  }
+`;
+
+const UPDATE_ME = gql`
+  mutation UpdateMe($name: String, $bio: String) {
+    updateMe(name: $name, bio: $bio) {
+      userId
+      name
+      bio
     }
   }
 `;
@@ -82,6 +87,9 @@ const useStyles = makeStyles((theme) => ({
   },
   section: {
     paddingBottom: theme.spacing(6),
+  },
+  submitButton: {
+    marginTop: theme.spacing(3),
   },
   issueKeyButton: {
     display: "block",
@@ -124,10 +132,21 @@ export default () => {
 };
 
 const EditProfile = ({ me }) => {
+  const [values, setValues] = React.useState({
+    email: me.email || "",
+    name: me.name || "",
+    bio: me.bio || "",
+    photoUrl: me.photoUrl || "",
+  });
+
+  const handleChange = (name) => (event) => {
+    setValues({ ...values, [name]: event.target.value });
+  };
+
   const classes = useStyles();
   return (
-    // <Mutation mutation={MUTATE_ME} key={me.userId}>
-    //   {(updateMe) => (
+    <Mutation mutation={UPDATE_ME}>
+      {(updateMe, { loading, error }) => (
         <div className={classes.section}>
           <Typography component="h3" variant="h4" gutterBottom>
             Edit profile
@@ -138,17 +157,40 @@ const EditProfile = ({ me }) => {
           </Typography>
           <form onSubmit={(e) => {
               e.preventDefault();
-              // username, name, bio
-              // updateMe({ variables: {
-              //   id, type: input.value
-              // } });
-              // input.value = "";
+              updateMe({ variables: { name: values.name, bio: values.bio } });
             }}
           >
+            <TextField id="name" label="Name" value={values.name}
+              margin="normal" fullWidth required
+              onChange={handleChange("name")} 
+            />
+            <TextField id="bio" label="Bio" value={values.bio}
+              margin="normal" fullWidth multiline rows={1} rowsMax={3}
+              onChange={handleChange("bio")} 
+            />
+            <TextField id="email" label="Email" value={values.email}
+              margin="normal" fullWidth disabled
+              onChange={handleChange("email")} 
+            />
+            <TextField id="photo-url" label="Photo URL" value={values.photoUrl || ""}
+              margin="normal" fullWidth disabled
+              onChange={handleChange("photoUrl")} 
+            />
+            <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
+              disabled={
+                loading
+                || !(values.name && values.name.length >= 4 && values.name.length <= 50)
+                || !(values.bio === "" || values.bio.length < 256)
+              }>
+              Save changes
+            </Button>
+            { error && (
+              <Typography variant="body1" color="error">An error occurred</Typography>
+            )}
           </form>
         </div>
-    //   )}
-    // </Mutation>
+      )}
+    </Mutation>
   );
 };
 

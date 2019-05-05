@@ -12,6 +12,7 @@ export const typeDefs = gql`
   }
 
   extend type Mutation {
+    updateMe(name: String, bio: String): Me
     issueKey(description: String!, readonly: Boolean!): NewKey!
     revokeKey(keyId: ID!): Boolean
   }
@@ -69,6 +70,22 @@ export const resolvers = {
     },
   },
   Mutation: {
+    updateMe: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
+      if (ctx.user.anonymous) {
+        throw new AuthenticationError("Must be authenticated");
+      } else if (ctx.user.key.role !== "personal") {
+        throw new ForbiddenError("Only permitted with personal login");
+      }
+      const user = await User.findOne({ userId: ctx.user.key.userId });
+      if (args.name) {
+        user.name = args.name;
+      }
+      if (args.bio) {
+        user.bio = args.bio;
+      }
+      await user.save();
+      return user;
+    },
     issueKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       if (ctx.user.anonymous) {
         throw new AuthenticationError("Must be authenticated");
