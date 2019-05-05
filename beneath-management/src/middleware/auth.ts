@@ -42,7 +42,7 @@ export const apply = (app: express.Express) => {
       logger.info(`Logout user ${JSON.stringify(req.user.key)}`);
       req.user.key.remove();
     } else {
-      logger.error(`Can't logout user: ${JSON.stringify(req.user)}`);
+      logger.error(`Can't logout user: ${JSON.stringify(req.user)} (Authorization: ${req.header("Authorization")})`);
     }
     res.status(200);
     res.end();
@@ -137,7 +137,7 @@ const handleProfile = async (serviceName: "github"|"google", profile: any, done:
     });
 
     // done
-    const key = await Key.issueKey({ name: `${serviceName} login`, role: "personal", userId: user.userId });
+    const key = await Key.issueKey({ description: `Browser session`, role: "personal", userId: user.userId });
     done(undefined, {
       anonymous: false,
       key,
