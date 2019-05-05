@@ -4,7 +4,8 @@ if (!process.browser) {
   global.fetch = fetch
 }
 
-import { ApolloClient, HttpLink, InMemoryCache, defaultDataIdFromObject } from 'apollo-boost'
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, defaultDataIdFromObject } from 'apollo-boost'
+import { ErrorLink } from 'apollo-link-error'
 import Head from 'next/head'
 import React from 'react'
 import { getDataFromTree } from 'react-apollo'
@@ -27,7 +28,7 @@ const getApolloClient = (options) => {
   return apolloClient;
 };
 
-const createApolloClient = ({ initialState, token }) => {
+const createApolloClient = ({ initialState, token, res }) => {
   const linkOptions = {
     uri: `${API_URL}/graphql`,
     credentials: "include",
@@ -51,11 +52,28 @@ const createApolloClient = ({ initialState, token }) => {
     }
   };
 
+  const errorHook = ({graphQLErrors, networkError}) => {
+    // redirect to /auth/logout if error is `UNAUTHENTICATED` and `token` is set
+    // (probably means the user logged out in another window)
+    if (graphQLErrors && graphQLErrors.length > 0) {
+      let error = graphQLErrors[0];
+      if (error.extensions && error.extensions.code === "UNAUTHENTICATED") {
+        if (token) {
+          if (process.browser) {
+            document.location.href = "/auth/logout";
+          } else {
+            res.redirect("/auth/logout");
+          }
+        }
+      }
+    }
+  };
+
   const apolloOptions = {
     connectToDevTools: process.browser && !IS_PRODUCTION,
     ssrMode: !process.browser,
     cache: new InMemoryCache({ dataIdFromObject }).restore(initialState || {}),
-    link: new HttpLink(linkOptions),
+    link: ApolloLink.from([new ErrorLink(errorHook), new HttpLink(linkOptions)]),
   };
 
   return new ApolloClient(apolloOptions);
@@ -65,7 +83,7 @@ export const withApolloClient = (App) => {
   return class Apollo extends React.Component {
     static displayName = 'withApollo(App)'
     static async getInitialProps(ctx) {
-      const { Component, router, user } = ctx
+      const { Component, router, user, ctx: { res } } = ctx
 
       // Get app props to pass on
       let appProps = {}
@@ -80,7 +98,7 @@ export const withApolloClient = (App) => {
       }
       
       // Get apollo client
-      const apollo = getApolloClient({ token })
+      const apollo = getApolloClient({ token, res })
       
       // Run all GraphQL queries in the component tree
       // and extract the resulting data

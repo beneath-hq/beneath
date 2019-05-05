@@ -6,12 +6,19 @@ import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Container from "@material-ui/core/Container";
+import DeleteIcon from "@material-ui/icons/Delete";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
 import Grid from "@material-ui/core/Grid";
+import IconButton from "@material-ui/core/IconButton";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Moment from "react-moment";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
@@ -19,6 +26,7 @@ import { makeStyles } from "@material-ui/core";
 
 import Loading from "../components/Loading";
 import Page from "../components/Page";
+import { AuthRequired } from "../hocs/auth";
 
 // TODO
 /*
@@ -64,6 +72,12 @@ const ISSUE_KEY = gql`
   }
 `;
 
+const REVOKE_KEY = gql`
+  mutation RevokeKey($keyId: ID!) {
+    revokeKey(keyId: $keyId)
+  }
+`;
+
 const useStyles = makeStyles((theme) => ({
   profileContent: {
     padding: theme.spacing(8, 0, 6),
@@ -73,7 +87,7 @@ const useStyles = makeStyles((theme) => ({
   },
   issueKeyButton: {
     display: "block",
-    height: theme.spacing(10),
+    minHeight: theme.spacing(10),
     textAlign: "left",
     textTransform: "none",
   },
@@ -82,29 +96,32 @@ const useStyles = makeStyles((theme) => ({
 export default () => {
   const classes = useStyles();
   return (
-    <Page title="Profile">
-      <div className={classes.profileContent}>
-        <Container maxWidth="md">
-          <Query query={QUERY_ME}>
-            {({ loading, error, data: { me } }) => {
-              if (loading) return <Loading justify="center" />;
-              if (error) return <p>Error: {JSON.stringify(error)}</p>;
-              return (
-                <React.Fragment>
-                  <div className={classes.section}>
-                    <Button size="large" color="primary" variant="outlined" fullWidth href="/auth/logout">
-                      Logout
-                    </Button>
-                  </div>
-                  <EditProfile me={me} />
-                  <ManageKeys me={me} />
-                </React.Fragment>
-              );
-            }}
-          </Query>
-        </Container>
-      </div>
-    </Page>
+    <AuthRequired>
+      <Page title="Profile">
+        <div className={classes.profileContent}>
+          <Container maxWidth="md">
+            <Query query={QUERY_ME}>
+              {({ loading, error, data }) => {
+                if (loading) return <Loading justify="center" />;
+                if (error) return <p>Error: {JSON.stringify(error)}</p>;
+                let { me } = data;
+                return (
+                  <React.Fragment>
+                    <div className={classes.section}>
+                      <Button size="large" color="primary" variant="outlined" fullWidth href="/auth/logout">
+                        Logout
+                      </Button>
+                    </div>
+                    <EditProfile me={me} />
+                    <ManageKeys me={me} />
+                  </React.Fragment>
+                );
+              }}
+            </Query>
+          </Container>
+        </div>
+      </Page>
+    </AuthRequired>
   );
 };
 
@@ -246,10 +263,54 @@ const IssueKey = ({ me }) => {
   );
 };
 
+const prettyRoles = {
+  "personal": "Browser login",
+  "readonly": "Read-only",
+  "readwrite": "Read/write",
+};
+
 const ViewKeys = ({ me }) => {
   return (
-    <Typography>
-      {JSON.stringify(me.keys)}
-    </Typography>
+    <List dense={true}>
+      { me.keys.map(({ createdOn, description, keyId, prefix, role }) => (
+        <ListItem key={keyId}>
+          <ListItemIcon>
+            
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <React.Fragment>
+                {description || <emph>No description</emph>}
+                {" "}(starts with <strong>{prefix}</strong>)
+              </React.Fragment>
+            }
+            secondary={
+              <React.Fragment>
+                {prettyRoles[role]} key issued <Moment fromNow date={createdOn} />
+              </React.Fragment>
+            }
+          />
+          <ListItemSecondaryAction>
+            <Mutation mutation={REVOKE_KEY} update={(cache, { data: { revokeKey } }) => {
+              if (revokeKey) {
+                const { me } = cache.readQuery({ query: QUERY_ME });
+                cache.writeQuery({
+                  query: QUERY_ME,
+                  data: { me: { ...me, keys: me.keys.filter((key) => key.keyId !== keyId) } },
+                });
+              }
+            }}>
+              {(revokeKey, { loading, error }) => (
+                <IconButton edge="end" aria-label="Delete" onClick={() => {
+                  revokeKey({ variables: { keyId } });
+                }}>
+                  {loading ? <Loading size={20} /> : <DeleteIcon />}
+                </IconButton>
+              )}
+            </Mutation>
+          </ListItemSecondaryAction>
+        </ListItem>
+      ))}
+    </List>
   );
 };

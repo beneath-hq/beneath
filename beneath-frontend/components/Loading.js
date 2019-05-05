@@ -4,7 +4,7 @@ import Grid from "@material-ui/core/Grid";
 const Loading = (props) => (
   <Grid container justify={props.justify}>
     <Grid item>
-      <CircularProgress />
+      <CircularProgress size={props.size} />
     </Grid>
   </Grid>
 );
