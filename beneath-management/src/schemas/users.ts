@@ -1,4 +1,4 @@
-import { ForbiddenError, gql } from "apollo-server";
+import { AuthenticationError, ForbiddenError, gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { Key } from "../entities/Key";
@@ -13,6 +13,7 @@ export const typeDefs = gql`
 
   extend type Mutation {
     issueKey(description: String!, readonly: Boolean!): NewKey!
+    revokeKey(keyId: ID!): Boolean
   }
 
   type User {
@@ -56,8 +57,10 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous || ctx.user.key.role !== "personal") {
-        return null;
+      if (ctx.user.anonymous) {
+        throw new AuthenticationError("Must be authenticated");
+      } else if (ctx.user.key.role !== "personal") {
+        throw new ForbiddenError("Only permitted with personal login");
       }
       return await User.findOne({ userId: ctx.user.key.userId }, { relations: ["keys", "projects"] });
     },
@@ -67,8 +70,10 @@ export const resolvers = {
   },
   Mutation: {
     issueKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous || ctx.user.key.role !== "personal") {
-        throw new ForbiddenError("Only logged-in users can issue keys");
+      if (ctx.user.anonymous) {
+        throw new AuthenticationError("Must be authenticated");
+      } else if (ctx.user.key.role !== "personal") {
+        throw new ForbiddenError("Only permitted with personal login");
       }
       const role: KeyRole = args.readonly ? "readonly" : "readwrite";
       const key = await Key.issueKey({ description: args.description, role, userId: ctx.user.key.userId });
@@ -76,6 +81,16 @@ export const resolvers = {
         key,
         keyString: key.keyString,
       };
+    },
+    revokeKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
+      if (ctx.user.anonymous) {
+        throw new AuthenticationError("Must be authenticated");
+      } else if (ctx.user.key.role !== "personal") {
+        throw new ForbiddenError("Only permitted with personal login");
+      }
+      const key = await Key.findOneOrFail({ keyId: args.keyId, userId: ctx.user.key.userId });
+      await key.remove();
+      return true;
     },
   },
 };
