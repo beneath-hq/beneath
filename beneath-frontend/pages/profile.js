@@ -31,8 +31,6 @@ import { AuthRequired } from "../hocs/auth";
 // TODO
 /*
   Section 1: Edit name and bio
-  Section 2: Create new API key -- readonly (green) or readwrite (red)
-  Section 3: View all API keys (show type)
 */
 
 const QUERY_ME = gql`
@@ -178,9 +176,6 @@ const IssueKey = ({ me }) => {
   };
   const closeDialog = (data) => {
     setDialogOpen(false);
-    if (data) {
-      setNewKeyString(data.issueKey.keyString);
-    }
   };
 
   let input = null;
@@ -230,13 +225,19 @@ const IssueKey = ({ me }) => {
           </Grid>
         )}
       </Grid>
-      <Mutation mutation={ISSUE_KEY} onCompleted={closeDialog} update={(cache, { data: { issueKey } }) => {
-        const { me } = cache.readQuery({ query: QUERY_ME });
-        cache.writeQuery({
-          query: QUERY_ME,
-          data: { me: { ...me, keys: me.keys.concat([issueKey.key]) } },
-        });
-      }}>
+      <Mutation mutation={ISSUE_KEY}
+        onCompleted={({ issueKey }) => {
+          setNewKeyString(issueKey.keyString);
+          closeDialog();
+        }}
+        update={(cache, { data: { issueKey } }) => {
+          const { me } = cache.readQuery({ query: QUERY_ME });
+          cache.writeQuery({
+            query: QUERY_ME,
+            data: { me: { ...me, keys: me.keys.concat([issueKey.key]) } },
+          });
+        }}
+      >
         {(issueKey, { loading, error }) => (
           <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
             <DialogTitle id="form-dialog-title">Issue key</DialogTitle>
@@ -273,10 +274,7 @@ const ViewKeys = ({ me }) => {
   return (
     <List dense={true}>
       { me.keys.map(({ createdOn, description, keyId, prefix, role }) => (
-        <ListItem key={keyId}>
-          <ListItemIcon>
-            
-          </ListItemIcon>
+        <ListItem key={keyId} disableGutters>
           <ListItemText
             primary={
               <React.Fragment>
