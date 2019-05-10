@@ -18,7 +18,7 @@ export class Project extends BaseEntity {
   @Matches(/[_a-zA-Z][_\-a-zA-Z0-9]*/)
   public name: string;
 
-  @Column({ length: 16, unique: true })
+  @Column({ length: 16, unique: true, name: "display_name" })
   public displayName: string;
 
   @Column({ length: 255 })
