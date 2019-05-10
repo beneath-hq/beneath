@@ -75,6 +75,15 @@ app.prepare().then(() => {
     }
   });
 
+  // Routes
+  const addRoute = (route, page) => {
+    server.get(route, (req, res) => {
+      app.render(req, res, page, req.params);
+    });
+  };
+
+  addRoute("/projects/:name", "/project");
+
   // Next.js handlers
   server.get("*", (req, res) => {
     return handle(req, res);
