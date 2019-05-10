@@ -2,7 +2,9 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import Link from "@material-ui/core/Link";
+import Menu from "@material-ui/core/Menu";
 import MenuIcon from "@material-ui/icons/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 import Person from "@material-ui/icons/Person";
 import Toolbar from "@material-ui/core/Toolbar";
 import Tabs from "@material-ui/core/Tabs";
@@ -33,8 +35,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Header = (({ router, toggleMobileDrawer }) => {
-  const classes = useStyles();
+  // prepare profile menu
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState(null);
+  const isMenuOpen = !!menuAnchorEl;
+  const openMenu = (event) => setMenuAnchorEl(event.currentTarget);
+  const closeMenu = () => setMenuAnchorEl(null);
+
+  // compute selected tab
   const selectedTab = tabs.find((tab) => router.pathname.startsWith(tab.value));
+
+  const classes = useStyles();
   return (
     <AppBar position="relative" className={classes.appBar}>
       <Toolbar variant="dense">
@@ -61,9 +71,18 @@ const Header = (({ router, toggleMobileDrawer }) => {
                   <Button color="inherit" component={NextMuiLink} size="small" href="/auth">Login</Button>
                 )}
                 {user && (
-                  <IconButton color="inherit" component={NextMuiLink} href="/profile">
-                    <Person />
-                  </IconButton>
+                  <React.Fragment>
+                    <IconButton edge="end" aria-haspopup="true" onClick={openMenu} color="inherit">
+                      <Person />
+                    </IconButton>
+                    <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={closeMenu}
+                      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                      transformOrigin={{ vertical: "top", horizontal: "right" }}
+                    >
+                      <MenuItem onClick={closeMenu} component={NextMuiLink} href="/profile">Profile</MenuItem>
+                      <MenuItem component={NextMuiLink} href="/auth/logout">Logout</MenuItem>
+                    </Menu>
+                  </React.Fragment>
                 )}
               </React.Fragment>
             );

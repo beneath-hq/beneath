@@ -113,11 +113,6 @@ export default () => {
                 let { me } = data;
                 return (
                   <React.Fragment>
-                    <div className={classes.section}>
-                      <Button size="large" color="primary" variant="outlined" fullWidth href="/auth/logout">
-                        Logout
-                      </Button>
-                    </div>
                     <EditProfile me={me} />
                     <ManageKeys me={me} />
                   </React.Fragment>

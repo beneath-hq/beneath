@@ -83,8 +83,8 @@ export default createMuiTheme({
     },
   },
   zIndex: {
-    appBar: 1300,
     drawer: 1100,
-    modal: 1200,
+    appBar: 1200,
+    modal: 1300,
   },
 });
