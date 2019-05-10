@@ -1,10 +1,10 @@
 import React from "react";
+import Container from "@material-ui/core/Container";
+import Typography from "@material-ui/core/Typography";
+import { withStyles } from "@material-ui/core/styles";
+
 import Page from "../components/Page";
 
-/**
- * Produces a suitable error message for statusCode
- * @param {*} statusCode 
- */
 const makeErrorMessage = (statusCode) => {
   if (!statusCode) {
     return "An unknown error occurred";
@@ -21,32 +21,34 @@ const makeErrorMessage = (statusCode) => {
   return `An error with status ${this.props.statusCode} occurred`;
 };
 
-/**
- * Nextjs page that displays an error message
- */
-export default class Error extends React.Component {
+const styles = (theme) => ({
+  errorContent: {
+    padding: theme.spacing(8, 0, 6),
+  },
+});
+
+class Error extends React.Component {
   static getInitialProps({ res, err }) {
     const statusCode = res ? res.statusCode : (err ? err.statusCode : null);
     return { statusCode };
   }
 
   render() {
+    const { classes, message, statusCode } = this.props;
     return (
       <Page title="Error">
-        <div>
-          <p>
-            {this.props.message
-              ? this.props.message
-              : makeErrorMessage(this.props.statusCode)}
-          </p>
+        <div className={classes.errorContent}>
+          <Container maxWidth="lg">
+            <Typography component="h2" variant="h4" align="center" gutterBottom>
+              {message
+                ? message
+                : makeErrorMessage(statusCode)}
+            </Typography>
+          </Container>
         </div>
-        <style jsx>{`
-          p {
-            margin-top: 50px;
-            text-align: center;
-          }
-        `}</style>
       </Page>
     );
   }
 }
+
+export default withStyles(styles)(Error);
