@@ -16,6 +16,10 @@ const useStyles = makeStyles((theme) => ({
   drawerPaper: {
     width: drawerWidth,
   },
+  // appBarOffset: theme.mixins.toolbar, // doesn't work for variant="dense"
+  appBarOffset: {
+    height: 48, // see https://github.com/mui-org/material-ui/blob/next/packages/material-ui/src/Toolbar/Toolbar.js
+  },
 }));
 
 const ResponsivePermanentDrawer = (props) => {
@@ -24,6 +28,7 @@ const ResponsivePermanentDrawer = (props) => {
     <nav className={classes.drawer}>
       <Hidden xsDown implementation="css"> {/* Desktop variant */}
         <Drawer open variant="permanent" classes={{ paper: classes.drawerPaper }}>
+          <div className={classes.appBarOffset} />
           {props.children}
         </Drawer>
       </Hidden>
