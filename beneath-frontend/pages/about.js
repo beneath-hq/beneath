@@ -19,7 +19,7 @@ export default withStyles(styles)(({ classes }) => (
   <Page>
     <div className={classes.heroContent}>
       <Container maxWidth="lg">
-        <Typography component="h1" variant="h4" align="center" gutterBottom>
+        <Typography component="h1" variant="h1" align="center" gutterBottom>
           Data Science for the Decentralised Economy
         </Typography>
         <Typography component="h2" variant="subtitle1" align="center" gutterBottom>

@@ -105,21 +105,19 @@ export default () => {
     <AuthRequired>
       <Page title="Profile">
         <div className={classes.profileContent}>
-          <Container maxWidth="md">
-            <Query query={QUERY_ME}>
-              {({ loading, error, data }) => {
-                if (loading) return <Loading justify="center" />;
-                if (error) return <p>Error: {JSON.stringify(error)}</p>;
-                let { me } = data;
-                return (
-                  <React.Fragment>
-                    <EditProfile me={me} />
-                    <ManageKeys me={me} />
-                  </React.Fragment>
-                );
-              }}
-            </Query>
-          </Container>
+          <Query query={QUERY_ME}>
+            {({ loading, error, data }) => {
+              if (loading) return <Loading justify="center" />;
+              if (error) return <p>Error: {JSON.stringify(error)}</p>;
+              let { me } = data;
+              return (
+                <React.Fragment>
+                  <EditProfile me={me} />
+                  <ManageKeys me={me} />
+                </React.Fragment>
+              );
+            }}
+          </Query>
         </div>
       </Page>
     </AuthRequired>
@@ -143,7 +141,7 @@ const EditProfile = ({ me }) => {
     <Mutation mutation={UPDATE_ME}>
       {(updateMe, { loading, error }) => (
         <div className={classes.section}>
-          <Typography component="h3" variant="h4" gutterBottom>
+          <Typography component="h2" variant="h2" gutterBottom>
             Edit profile
           </Typography>
           <Typography variant="subtitle1" gutterBottom>
@@ -193,7 +191,7 @@ const ManageKeys = ({ me }) => {
   const classes = useStyles();
   return (
     <div className={classes.section}>
-      <Typography component="h3" variant="h4" gutterBottom>
+      <Typography component="h2" variant="h2" gutterBottom>
         Manage keys
       </Typography>
       <IssueKey me={me} />
