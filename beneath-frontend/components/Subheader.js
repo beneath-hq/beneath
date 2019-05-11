@@ -22,9 +22,11 @@ const Subheader = withRouter(({ router }) => {
   const classes = useStyles();
   return (
     <div className={classes.content}>
-      <Breadcrumbs className={classes.breadcrumbs} separator={<NavigateNextIcon fontSize="small" />} aria-label="Breadcrumb">
+      <Breadcrumbs aria-label="Breadcrumb" className={classes.breadcrumbs}
+        separator={<NavigateNextIcon fontSize="small" />}
+      >
         { router.pathname.split("/").slice(1).map((crumb, idx) => (
-          <Typography key={idx} color="textPrimary">{crumb}</Typography>
+          <Typography key={idx} color="textPrimary" variant="body2">{crumb}</Typography>
         )) }
       </Breadcrumbs>
       <Divider className={classes.divider} />

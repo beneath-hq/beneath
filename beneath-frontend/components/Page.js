@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 import Head from "next/head";
+import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
 
 import Drawer from "./Drawer";
@@ -39,9 +40,11 @@ const Page = (props) => {
           </Drawer>
         )}
         <div className={classes.content}>
-          { props.sidebar && <Subheader /> }
           <main>
-            {props.children}
+            <Container maxWidth="lg">
+              { props.sidebar && <Subheader /> }
+              {props.children}
+            </Container>
           </main>
         </div>
       </div>
