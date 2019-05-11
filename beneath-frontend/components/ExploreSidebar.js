@@ -1,30 +1,37 @@
+import { withRouter } from "next/router";
+
 import Divider from '@material-ui/core/Divider';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import MailIcon from '@material-ui/icons/Mail';
+import { makeStyles } from "@material-ui/core/styles";
 
-const ExploreSidebar = () => (
+import NextMuiLink from "./NextMuiLink";
+
+const entries = [
+  { label: "Explore", href: "/explore", selectRegex: /\/explore/ },
+  { label: "Maker DAO", href: "/project?name=maker", as: "/projects/maker", selectRegex: /\/projects\/maker/ },
+];
+
+const useStyles = makeStyles((theme) => ({
+}));
+
+const ListEntry = ({ href, as, label, selected }) => {
+  return (
+    <ListItem button selected={selected} component={NextMuiLink} as={as} href={href}>
+      <ListItemText primary={label} />
+    </ListItem>
+  );
+};
+
+const ExploreSidebar = ({ router }) => (
   <div>
-    <List>
-      {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-        <ListItem button key={text}>
-          <ListItemIcon><MailIcon /></ListItemIcon>
-          <ListItemText primary={text} />
-        </ListItem>
-      ))}
-    </List>
-    <Divider />
-    <List>
-      {['All mail', 'Trash', 'Spam'].map((text, index) => (
-        <ListItem button key={text}>
-          <ListItemIcon><MailIcon /></ListItemIcon>
-          <ListItemText primary={text} />
-        </ListItem>
+    <List dense>
+      {entries.map(({ label, href, as, selectRegex }) => (
+        <ListEntry key={href} href={href} as={as} label={label} selected={!!router.asPath.match(selectRegex)} />
       ))}
     </List>
   </div>
 );
 
-export default ExploreSidebar;
+export default withRouter(ExploreSidebar);
