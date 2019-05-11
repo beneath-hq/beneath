@@ -6,6 +6,7 @@ import Tab from "@material-ui/core/Tab";
 import Divider from "@material-ui/core/Divider";
 
 import NextMuiLink from "./NextMuiLink";
+import VSpace from "./VSpace";
 
 const SubrouteTabs = ({ router, tabs, defaultValue }) => {
   let selectedValue = router.query.tab || defaultValue || tabs[0].value;
@@ -39,6 +40,7 @@ const SubrouteTabs = ({ router, tabs, defaultValue }) => {
         ))}
       </Tabs>
       <Divider />
+      <VSpace units={4} />
       {tabs.find((tab) => tab.value === selectedValue).render()}
     </React.Fragment>
   );
