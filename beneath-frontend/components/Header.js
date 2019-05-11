@@ -17,8 +17,8 @@ import NextMuiLink from "./NextMuiLink";
 import { AuthConsumer } from "../hocs/auth";
 
 const tabs = [
-  { label: "Explore", value: "/explore", href: "/explore" },
-  { label: "About", value: "/about", href: "/about" },
+  { label: "Explore", href: "/explore", selectRegex: "/(explore|project).*" },
+  { label: "About", href: "/about", selectRegex: "/about.*" },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -42,8 +42,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
   const closeMenu = () => setMenuAnchorEl(null);
 
   // compute selected tab
-  const selectedTab = tabs.find((tab) => router.pathname.startsWith(tab.value));
-
+  const selectedTab = tabs.find((tab) => !!router.pathname.match(tab.selectRegex));
   const classes = useStyles();
   return (
     <AppBar position="relative" className={classes.appBar}>
@@ -59,8 +58,10 @@ const Header = (({ router, toggleMobileDrawer }) => {
           BENEATH
         </Link>
         <div className={classes.grow} />
-        <Tabs value={selectedTab ? selectedTab.value : false}>
-          {tabs.map((tab) => <Tab key={tab.value} component={NextMuiLink} {...tab} />)}
+        <Tabs value={selectedTab ? selectedTab.href : false}>
+          {tabs.map(({ href, label }) => (
+            <Tab key={href} label={label} value={href} component={NextMuiLink} href={href} />
+          ))}
         </Tabs>
         {/* Login-specific stuff */}
         <AuthConsumer>
