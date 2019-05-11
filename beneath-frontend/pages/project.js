@@ -7,6 +7,7 @@ import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import ProfileHero from "../components/ProfileHero";
+import SubrouteTabs from "../components/SubrouteTabs";
 
 const QUERY_PROJECT = gql`
   query Project($name: String) {
@@ -34,9 +35,15 @@ const ProjectPage = ({ router }) => (
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
         let { project } = data;
         return (
-          <ProfileHero name={project.displayName} site={project.site}
-            description={project.description} avatarUrl={null}
-          />
+          <React.Fragment>
+            <ProfileHero name={project.displayName} site={project.site}
+              description={project.description} avatarUrl={null}
+            />
+            <SubrouteTabs defaultValue="models" tabs={[
+              { value: "models", label: "Models", render: () => (<p>The models...</p>) },
+              { value: "keys", label: "Keys", render: () => (<p>The keys...</p>) },
+            ]} />
+          </React.Fragment>
         );
       }}
     </Query>
