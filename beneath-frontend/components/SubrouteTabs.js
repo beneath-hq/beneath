@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { withRouter } from "next/router";
 import Tabs from "@material-ui/core/Tabs";
@@ -41,6 +42,17 @@ const SubrouteTabs = ({ router, tabs, defaultValue }) => {
       {tabs.find((tab) => tab.value === selectedValue).render()}
     </React.Fragment>
   );
+};
+
+SubrouteTabs.propTypes = {
+  defaultValue: PropTypes.string,
+  tabs: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      render: PropTypes.func.isRequired,
+    }).isRequired
+  ).isRequired,
 };
 
 export default withRouter(SubrouteTabs);
