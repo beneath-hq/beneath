@@ -84,6 +84,8 @@ app.prepare().then(() => {
 
   addRoute("/projects/:name", "/project");
   addRoute("/projects/:name/:tab", "/project");
+  addRoute("/users/:id", "/user");
+  addRoute("/users/:id/:tab", "/user");
 
   // Next.js handlers
   server.get("*", (req, res) => {

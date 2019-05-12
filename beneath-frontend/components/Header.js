@@ -80,7 +80,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
                       anchorOrigin={{ vertical: "top", horizontal: "right" }}
                       transformOrigin={{ vertical: "top", horizontal: "right" }}
                     >
-                      <MenuItem onClick={closeMenu} component={NextMuiLink} href="/profile">Profile</MenuItem>
+                      <MenuItem onClick={closeMenu} component={NextMuiLink} href="/users/me">Profile</MenuItem>
                       <MenuItem component={NextMuiLink} href="/auth/logout">Logout</MenuItem>
                     </Menu>
                   </React.Fragment>

@@ -1,6 +1,6 @@
 import React from "react";
 import gql from "graphql-tag";
-import { Mutation } from "react-apollo";
+import { Query, Mutation } from "react-apollo";
 
 import Button from "@material-ui/core/Button";
 import Moment from "react-moment";
@@ -8,14 +8,37 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
+import Loading from "../../Loading";
 import VSpace from "../../VSpace";
+import { AuthRequired } from "../../../hocs/auth";
+
+const QUERY_ME = gql`
+  query {
+    me {
+      userId
+      user {
+        userId
+        username
+        name
+        bio
+        photoUrl
+        createdOn
+      }
+      email
+      updatedOn
+    }
+  }
+`;
 
 const UPDATE_ME = gql`
   mutation UpdateMe($name: String, $bio: String) {
     updateMe(name: $name, bio: $bio) {
       userId
-      name
-      bio
+      user {
+        userId
+        name
+        bio
+      }
       updatedOn
     }
   }
@@ -27,12 +50,30 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const EditProfile = ({ me }) => {
+const EditMe = () => {
+  return (
+    <AuthRequired>
+      <Query query={QUERY_ME}>
+        {({ loading, error, data }) => {
+          if (loading) return <Loading justify="center" />;
+          if (error) return <p>Error: {JSON.stringify(error)}</p>;
+
+          let { me } = data;
+          return <EditMeForm me={me} />;
+        }}
+      </Query>
+    </AuthRequired>
+  );
+};
+
+export default EditMe;
+
+const EditMeForm = ({ me }) => {
   const [values, setValues] = React.useState({
     email: me.email || "",
-    name: me.name || "",
-    bio: me.bio || "",
-    photoUrl: me.photoUrl || "",
+    name: me.user.name || "",
+    bio: me.user.bio || "",
+    photoUrl: me.user.photoUrl || "",
   });
 
   const handleChange = (name) => (event) => {
@@ -78,8 +119,8 @@ const EditProfile = ({ me }) => {
             )}
           </form>
           <VSpace units={2} />
-          <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-            You signed up <Moment fromNow date={me.createdOn} /> and
+          <Typography variant="subtitle1" color="textSecondary">
+            You signed up <Moment fromNow date={me.user.createdOn} /> and
             last updated your profile <Moment fromNow date={me.updatedOn} />.
           </Typography>
         </div>
@@ -87,5 +128,3 @@ const EditProfile = ({ me }) => {
     </Mutation>
   );
 };
-
-export default EditProfile;
