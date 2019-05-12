@@ -6,7 +6,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { Strategy as BearerStrategy } from "passport-http-bearer";
 
-import { Key } from "../entities/Key";
+import { Key, KeyRole } from "../entities/Key";
 import { User } from "../entities/User";
 import logger from "../lib/logger";
 import { IAuthenticatedRequest } from "../types";
@@ -38,7 +38,7 @@ export const apply = (app: express.Express) => {
 
   // logout endpoint
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
-    if (!req.user.anonymous && req.user.key.role === "personal") {
+    if (!req.user.anonymous && req.user.key.role === KeyRole.Manage) {
       logger.info(`Logout user ${JSON.stringify(req.user.key)}`);
       req.user.key.remove();
     } else {
@@ -137,7 +137,7 @@ const handleProfile = async (serviceName: "github"|"google", profile: any, done:
     });
 
     // done
-    const key = await Key.issueKey({ description: `Browser session`, role: "personal", userId: user.userId });
+    const key = await Key.issueUserKey(user.userId, KeyRole.Manage, `Browser session`);
     done(undefined, {
       anonymous: false,
       key,

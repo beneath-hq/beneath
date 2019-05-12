@@ -1,9 +1,10 @@
 import { IsFQDN, IsLowercase, Length, Matches } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, JoinTable,
-  ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn,
+  ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
+import { Key } from "./Key";
 import { User } from "./User";
 
 @Entity("projects")
@@ -33,6 +34,9 @@ export class Project extends BaseEntity {
 
   @UpdateDateColumn({ name: "updated_on" })
   public updatedOn: Date;
+
+  @OneToMany((type) => Key, (key) => key.project)
+  public keys: Key[];
 
   @ManyToMany((type) => User, (user) => user.projects)
   @JoinTable({

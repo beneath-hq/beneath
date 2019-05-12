@@ -1,4 +1,6 @@
+import { IsEmpty, ValidateIf } from "class-validator";
 import crypto from "crypto";
+import { getConnection } from "typeorm";
 import uuidv4 from "uuid/v4"; // the secure random uuid
 
 import {
@@ -6,8 +8,14 @@ import {
   ManyToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
 } from "typeorm";
 
-import { KeyRole } from "../types";
+import { Project } from "./Project";
 import { User } from "./User";
+
+export enum KeyRole {
+    Readonly = "r",
+    Readwrite = "rw",
+    Manage = "m",
+}
 
 @Entity("keys")
 export class Key extends BaseEntity {
@@ -18,13 +26,6 @@ export class Key extends BaseEntity {
   @Column({ length: 32, nullable: true })
   public description: string;
 
-  @ManyToOne((type) => User, (user) => user.keys, { nullable: false, onDelete: "CASCADE" })
-  @JoinColumn({ name: "user_id" })
-  public user: User;
-
-  @RelationId((key: Key) => key.user)
-  public userId: string;
-
   @Column({ length: 4 })
   public prefix: string;
 
@@ -32,7 +33,25 @@ export class Key extends BaseEntity {
   public hashedKey: string;
 
   @Column({ nullable: false })
-  public role: string;
+  public role: KeyRole;
+
+  @RelationId((key: Key) => key.user)
+  @ValidateIf((key) => !!key.projectId)
+  @IsEmpty()
+  public userId: string;
+
+  @RelationId((key: Key) => key.project)
+  @ValidateIf((key) => !!key.userId)
+  @IsEmpty()
+  public projectId: string;
+
+  @ManyToOne((type) => User, (user) => user.keys, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "user_id" })
+  public user: User;
+
+  @ManyToOne((type) => Project, (project) => project.keys, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "project_id" })
+  public project: Project;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
@@ -51,31 +70,51 @@ export class Key extends BaseEntity {
     return crypto.createHash("sha256").update(key).digest("hex");
   }
 
-  public static async issueKey({ description, role, userId }: { description: string, role: KeyRole, userId: string }) {
-    const keyString = Key.generateKey();
+  public static newKey() {
     const key = new Key();
-    key.description = description;
-    key.user = new User();
-    key.user.userId = userId;
-    key.prefix = keyString.slice(0, 4);
-    key.hashedKey = Key.hashKey(keyString);
-    key.role = role;
-    await key.save();
-    key.keyString = keyString;
+    key.keyString = Key.generateKey();
+    key.hashedKey = Key.hashKey(key.keyString);
+    key.prefix = key.keyString.slice(0, 4);
     return key;
   }
 
-  public static async authenticateKey(keyString): Promise<Key> {
+  public static async issueUserKey(userId: string, role: KeyRole, description: string) {
+    const key = this.newKey();
+    key.description = description;
+    key.role = role;
+    key.user = new User();
+    key.user.userId = userId;
+    await key.save();
+    return key;
+  }
+
+  public static async issueProjectKey(projectId: string, role: KeyRole, description: string) {
+    const key = this.newKey();
+    key.description = description;
+    key.role = role;
+    key.project = new Project();
+    key.project.projectId = projectId;
+    await key.save();
+    return key;
+  }
+
+  public static async authenticateKey(keyString: string): Promise<Key> {
     const hashedKey = this.hashKey(keyString);
     const key: Key = await this.findOne({ hashedKey }, {
       cache: { id: `key:${hashedKey}`, milliseconds: 3600000 }
     });
-
     if (!key) {
       return null;
     }
-
     return key;
+  }
+
+  public async revoke() {
+    await this.remove();
+    const cache = getConnection().queryResultCache;
+    if (cache) {
+      await cache.remove([`key:${this.hashedKey}`]);
+    }
   }
 
 }

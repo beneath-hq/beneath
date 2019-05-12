@@ -2,8 +2,6 @@ import { Request } from "express";
 
 import { Key } from "./entities/Key";
 
-export type KeyRole = "personal" | "readwrite" | "readonly";
-
 export interface IAuthenticatedUser {
   anonymous: boolean;
   key: Key;

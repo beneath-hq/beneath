@@ -1,8 +1,9 @@
 import { AuthenticationError, ForbiddenError, gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
+import { KeyRole } from "../entities/Key";
 import { User } from "../entities/User";
-import { IApolloContext, KeyRole } from "../types";
+import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
   extend type Query {
@@ -56,7 +57,7 @@ export const resolvers = {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       if (ctx.user.anonymous) {
         throw new AuthenticationError("Must be authenticated");
-      } else if (ctx.user.key.role !== "personal") {
+      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
         throw new ForbiddenError("Only permitted with personal login");
       }
       const user = await User.findOne({ userId: ctx.user.key.userId }, { relations: ["keys", "projects"] });
@@ -67,7 +68,7 @@ export const resolvers = {
       if (userId === "me") {
         if (ctx.user.anonymous) {
           throw new AuthenticationError("Must be authenticated");
-        } else if (ctx.user.key.role !== "personal") {
+        } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
           throw new ForbiddenError("Only permitted with personal login");
         }
         userId = ctx.user.key.userId;
@@ -79,7 +80,7 @@ export const resolvers = {
     updateMe: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       if (ctx.user.anonymous) {
         throw new AuthenticationError("Must be authenticated");
-      } else if (ctx.user.key.role !== "personal") {
+      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
         throw new ForbiddenError("Only permitted with personal login");
       }
       const user = await User.findOne({ userId: ctx.user.key.userId });
