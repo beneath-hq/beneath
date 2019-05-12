@@ -10,6 +10,7 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import ViewKeys from "../components/pages/shared/ViewKeys";
+import IssueKey from "../components/pages/shared/IssueKey";
 
 const QUERY_PROJECT = gql`
   query Project($name: String) {
@@ -45,6 +46,7 @@ const ProjectPage = ({ router }) => (
               { value: "models", label: "Models", render: () => (<p>The models...</p>) },
               { value: "keys", label: "Keys", render: () => (
                 <React.Fragment>
+                  <IssueKey projectId={project.projectId} />
                   <ViewKeys projectId={project.projectId} />
                 </React.Fragment>
               )}

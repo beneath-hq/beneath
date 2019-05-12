@@ -5,50 +5,21 @@ import { Mutation } from "react-apollo";
 import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import DeleteIcon from "@material-ui/icons/Delete";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
 import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import Moment from "react-moment";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import Loading from "../../Loading";
-
-const QUERY_ME = gql`
-  query {
-    me {
-      userId
-      email
-      username
-      name
-      bio
-      photoUrl
-      createdOn
-      updatedOn
-      keys {
-        keyId
-        description
-        prefix
-        role
-        createdOn
-      }
-    }
-  }
-`;
+import { QUERY_KEYS } from "./ViewKeys";
 
 const ISSUE_KEY = gql`
-  mutation IssueKey($description: String!, $readonly: Boolean!) {
-    issueKey(description: $description, readonly: $readonly) {
+  mutation IssueKey($userId: ID, $projectId: ID, $readonly: Boolean!, $description: String) {
+    issueKey(userId: $userId, projectId: $projectId, readonly: $readonly, description: $description) {
       keyString
       key {
         keyId
@@ -61,12 +32,6 @@ const ISSUE_KEY = gql`
   }
 `;
 
-const REVOKE_KEY = gql`
-  mutation RevokeKey($keyId: ID!) {
-    revokeKey(keyId: $keyId)
-  }
-`;
-
 const useStyles = makeStyles((theme) => ({
   issueKeyButton: {
     display: "block",
@@ -76,22 +41,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ManageKeys = ({ me }) => {
-  const classes = useStyles();
-  return (
-    <div>
-      <Typography component="h2" variant="h2" gutterBottom>
-        Manage keys
-      </Typography>
-      <IssueKey me={me} />
-      <ViewKeys me={me} />
-    </div>
-  );
-};
-
-export default ManageKeys;
-
-const IssueKey = ({ me }) => {
+const IssueKey = ({ userId, projectId }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [readonlyKey, setReadonlyKey] = React.useState(false);
   const [newKeyString, setNewKeyString] = React.useState(null);
@@ -105,9 +55,7 @@ const IssueKey = ({ me }) => {
   };
 
   let input = null;
-
   const classes = useStyles();
-
   return (
     <div>
       <Grid container spacing={2}>
@@ -157,10 +105,11 @@ const IssueKey = ({ me }) => {
           closeDialog();
         }}
         update={(cache, { data: { issueKey } }) => {
-          const { me } = cache.readQuery({ query: QUERY_ME });
+          const { keys } = cache.readQuery({ query: QUERY_KEYS, variables: { userId, projectId } });
           cache.writeQuery({
-            query: QUERY_ME,
-            data: { me: { ...me, keys: me.keys.concat([issueKey.key]) } },
+            query: QUERY_KEYS,
+            variables: { userId, projectId },
+            data: { keys: keys.concat([issueKey.key]) },
           });
         }}
       >
@@ -178,7 +127,7 @@ const IssueKey = ({ me }) => {
                 Cancel
               </Button>
               <Button color="primary" disabled={loading} error={error} onClick={() => {
-                issueKey({ variables: { description: input.value, readonly: readonlyKey } });
+                issueKey({ variables: { userId, projectId, description: input.value, readonly: readonlyKey } });
               }}>
                 Issue key
               </Button>
@@ -190,51 +139,4 @@ const IssueKey = ({ me }) => {
   );
 };
 
-const prettyRoles = {
-  "personal": "Browser login",
-  "readonly": "Read-only",
-  "readwrite": "Read/write",
-};
-
-const ViewKeys = ({ me }) => {
-  return (
-    <List dense={true}>
-      {me.keys.map(({ createdOn, description, keyId, prefix, role }) => (
-        <ListItem key={keyId} disableGutters>
-          <ListItemText
-            primary={
-              <React.Fragment>
-                {description || <emph>No description</emph>}
-                {" "}(starts with <strong>{prefix}</strong>)
-              </React.Fragment>
-            }
-            secondary={
-              <React.Fragment>
-                {prettyRoles[role]} key issued <Moment fromNow date={createdOn} />
-              </React.Fragment>
-            }
-          />
-          <ListItemSecondaryAction>
-            <Mutation mutation={REVOKE_KEY} update={(cache, { data: { revokeKey } }) => {
-              if (revokeKey) {
-                const { me } = cache.readQuery({ query: QUERY_ME });
-                cache.writeQuery({
-                  query: QUERY_ME,
-                  data: { me: { ...me, keys: me.keys.filter((key) => key.keyId !== keyId) } },
-                });
-              }
-            }}>
-              {(revokeKey, { loading, error }) => (
-                <IconButton edge="end" aria-label="Delete" onClick={() => {
-                  revokeKey({ variables: { keyId } });
-                }}>
-                  {loading ? <Loading size={20} /> : <DeleteIcon />}
-                </IconButton>
-              )}
-            </Mutation>
-          </ListItemSecondaryAction>
-        </ListItem>
-      ))}
-    </List>
-  );
-};
+export default IssueKey;

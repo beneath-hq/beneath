@@ -12,7 +12,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/pages/user/EditMe";
 import ViewKeys from "../components/pages/shared/ViewKeys";
-// import ManageKeys from "../components/pages/shared/ManageKeys";
+import IssueKey from "../components/pages/shared/IssueKey";
 
 const QUERY_USER = gql`
   query User($userId: ID!) {
@@ -48,6 +48,7 @@ const UserPage = ({ router }) => {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
               tabs.push({ value: "keys", label: "Keys", render: () => (
                 <React.Fragment>
+                  <IssueKey userId={user.userId} />
                   <ViewKeys userId={user.userId} />
                 </React.Fragment>
               ) });

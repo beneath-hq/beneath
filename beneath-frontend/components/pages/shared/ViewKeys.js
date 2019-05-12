@@ -12,7 +12,7 @@ import Moment from "react-moment";
 
 import Loading from "../../Loading";
 
-const QUERY_KEYS = gql`
+export const QUERY_KEYS = gql`
   query Keys($userId: ID, $projectId: ID) {
     keys(userId: $userId, projectId: $projectId) {
       keyId
