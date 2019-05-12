@@ -4,6 +4,7 @@ import { Kind } from "graphql/language";
 import { merge } from "lodash";
 
 const schemas = [
+  "./schemas/keys",
   "./schemas/projects",
   "./schemas/users",
 ].map(require);
