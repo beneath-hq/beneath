@@ -11,7 +11,8 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/pages/user/EditMe";
-import ManageKeys from "../components/pages/shared/ManageKeys";
+import ViewKeys from "../components/pages/shared/ViewKeys";
+// import ManageKeys from "../components/pages/shared/ManageKeys";
 
 const QUERY_USER = gql`
   query User($userId: ID!) {
@@ -45,7 +46,11 @@ const UserPage = ({ router }) => {
             ];
             if (userId === "me") {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-              // tabs.push({ value: "keys", label: "Keys", render: () => <ManageKeys /> });
+              tabs.push({ value: "keys", label: "Keys", render: () => (
+                <React.Fragment>
+                  <ViewKeys userId={user.userId} />
+                </React.Fragment>
+              ) });
             }
 
             return (
