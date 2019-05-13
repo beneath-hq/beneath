@@ -15,22 +15,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import { QUERY_KEYS } from "./ViewKeys";
-
-const ISSUE_KEY = gql`
-  mutation IssueKey($userId: ID, $projectId: ID, $readonly: Boolean!, $description: String) {
-    issueKey(userId: $userId, projectId: $projectId, readonly: $readonly, description: $description) {
-      keyString
-      key {
-        keyId
-        description
-        prefix
-        role
-        createdOn
-      }
-    }
-  }
-`;
+import { QUERY_KEYS, ISSUE_KEY } from "../../../queries/key";
 
 const useStyles = makeStyles((theme) => ({
   issueKeyButton: {

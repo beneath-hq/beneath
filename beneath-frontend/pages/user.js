@@ -13,17 +13,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 import EditMe from "../components/pages/user/EditMe";
 import ManageKeys from "../components/pages/shared/ManageKeys";
 
-const QUERY_USER = gql`
-  query User($userId: ID!) {
-    user(userId: $userId) {
-      userId
-      name
-      bio
-      photoUrl
-      createdOn
-    }
-  }
-`;
+import { QUERY_USER } from "../queries/user";
 
 const useStyles = makeStyles((theme) => ({
 }));

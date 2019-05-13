@@ -12,37 +12,7 @@ import Loading from "../../Loading";
 import VSpace from "../../VSpace";
 import { AuthRequired } from "../../../hocs/auth";
 
-const QUERY_ME = gql`
-  query {
-    me {
-      userId
-      user {
-        userId
-        username
-        name
-        bio
-        photoUrl
-        createdOn
-      }
-      email
-      updatedOn
-    }
-  }
-`;
-
-const UPDATE_ME = gql`
-  mutation UpdateMe($name: String, $bio: String) {
-    updateMe(name: $name, bio: $bio) {
-      userId
-      user {
-        userId
-        name
-        bio
-      }
-      updatedOn
-    }
-  }
-`;
+import { QUERY_ME, UPDATE_ME } from "../../../queries/user";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

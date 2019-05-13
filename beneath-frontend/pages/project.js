@@ -13,26 +13,8 @@ import EditProject from "../components/pages/project/EditProject";
 import ViewMembers from "../components/pages/project/ViewMembers";
 import ManageKeys from "../components/pages/shared/ManageKeys";
 
-export const QUERY_PROJECT = gql`
-  query Project($name: String) {
-    project(name: $name) {
-      projectId
-      name
-      displayName
-      site
-      description
-      createdOn
-      updatedOn
-      users {
-        userId
-        name
-        username
-        photoUrl
-      }
-      canEdit
-    }
-  }
-`;
+import { QUERY_PROJECT } from "../queries/project";
+
 // TODO: Get rid of canEdit
 
 const ProjectPage = ({ router }) => (
@@ -56,7 +38,7 @@ const ProjectPage = ({ router }) => (
             <ProfileHero name={project.displayName} site={project.site}
               description={project.description} avatarUrl={null}
             />
-            <SubrouteTabs defaultValue="models" tabs={tabs} />
+            <SubrouteTabs defaultValue="members" tabs={tabs} />
           </React.Fragment>
         );
       }}

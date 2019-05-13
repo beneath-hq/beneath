@@ -12,23 +12,7 @@ import Moment from "react-moment";
 
 import Loading from "../../Loading";
 
-export const QUERY_KEYS = gql`
-  query Keys($userId: ID, $projectId: ID) {
-    keys(userId: $userId, projectId: $projectId) {
-      keyId
-      description
-      prefix
-      role
-      createdOn
-    }
-  }
-`;
-
-const REVOKE_KEY = gql`
-  mutation RevokeKey($keyId: ID!) {
-    revokeKey(keyId: $keyId)
-  }
-`;
+import { QUERY_KEYS, REVOKE_KEY } from "../../../queries/key";
 
 const prettyRoles = {
   "r": "Read-only",

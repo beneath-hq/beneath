@@ -1,5 +1,4 @@
 import React from "react";
-import gql from "graphql-tag";
 import { Mutation } from "react-apollo";
 
 import Avatar from "@material-ui/core/Avatar";
@@ -13,13 +12,7 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 
 import Loading from "../../Loading";
 
-import { QUERY_PROJECT } from "../../../pages/project";
-
-const REMOVE_MEMBER = gql`
-  mutation RemoveUserFromProject($userId: ID!, $projectId: ID!) {
-    removeUserFromProject(userId: $userId, projectId: $projectId)
-  }
-`;
+import { QUERY_PROJECT, REMOVE_MEMBER } from "../../../queries/project";
 
 const ViewMembers = ({ project, canEdit }) => (
   <List>
