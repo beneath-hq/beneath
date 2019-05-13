@@ -9,8 +9,9 @@ import Page from "../components/Page";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
-import ViewKeys from "../components/pages/shared/ViewKeys";
-import IssueKey from "../components/pages/shared/IssueKey";
+import EditProject from "../components/pages/project/EditProject";
+import ViewMembers from "../components/pages/project/ViewMembers";
+import ManageKeys from "../components/pages/shared/ManageKeys";
 
 const QUERY_PROJECT = gql`
   query Project($name: String) {
@@ -26,6 +27,7 @@ const QUERY_PROJECT = gql`
         name
         photoUrl
       }
+      canEdit
     }
   }
 `;
@@ -36,21 +38,22 @@ const ProjectPage = ({ router }) => (
       {({ loading, error, data }) => {
         if (loading) return <Loading justify="center" />;
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
+
         let { project } = data;
+        let tabs = [
+          { value: "members", label: "Members", render: () => (<ViewMembers project={project} />) },
+        ];
+        if (project.canEdit) {
+          tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject projectId={project.projectId} />) });
+          tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys projectId={project.projectId} />) });
+        }
+
         return (
           <React.Fragment>
             <ProfileHero name={project.displayName} site={project.site}
               description={project.description} avatarUrl={null}
             />
-            <SubrouteTabs defaultValue="models" tabs={[
-              { value: "models", label: "Models", render: () => (<p>The models...</p>) },
-              { value: "keys", label: "Keys", render: () => (
-                <React.Fragment>
-                  <IssueKey projectId={project.projectId} />
-                  <ViewKeys projectId={project.projectId} />
-                </React.Fragment>
-              )}
-            ]} />
+            <SubrouteTabs defaultValue="models" tabs={tabs} />
           </React.Fragment>
         );
       }}

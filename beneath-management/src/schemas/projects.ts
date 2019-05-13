@@ -1,5 +1,6 @@
 import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
+import _ from "lodash";
 
 import { Project } from "../entities/Project";
 import { canEditProject, canReadProject } from "../lib/guards";
@@ -19,6 +20,7 @@ export const typeDefs = gql`
     createdOn: Date
     updatedOn: Date
     users: [User]
+    canEdit: Boolean
   }
 `;
 
@@ -26,8 +28,23 @@ export const resolvers = {
   Query: {
     project: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       const project = await Project.findOne(args, { relations: ["users"] });
+
       await canReadProject(ctx, project.projectId);
-      return project;
+
+      const meUserId = _.get(ctx, "user.key.userId");
+      const canEdit = project.users.some((user) => user.userId === meUserId);
+
+      return {
+        projectId: project.projectId,
+        name: project.name,
+        displayName: project.displayName,
+        site: project.site,
+        description: project.description,
+        createdOn: project.createdOn,
+        updatedOn: project.updatedOn,
+        users: project.users,
+        canEdit,
+      };
     },
   },
 };
