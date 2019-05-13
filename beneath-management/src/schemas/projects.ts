@@ -24,7 +24,6 @@ export const typeDefs = gql`
     createdOn: Date
     updatedOn: Date
     users: [User]
-    canEdit: Boolean
   }
 `;
 
@@ -32,35 +31,22 @@ export const resolvers = {
   Query: {
     project: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       const project = await Project.findOne(args, { relations: ["users"] });
-
       await canReadProject(ctx, project.projectId);
-
-      const meUserId = _.get(ctx, "user.key.userId"); // TODO: extract
-      const canEdit = project.users.some((user) => user.userId === meUserId);
-
-      return {
-        projectId: project.projectId,
-        name: project.name,
-        displayName: project.displayName,
-        site: project.site,
-        description: project.description,
-        createdOn: project.createdOn,
-        updatedOn: project.updatedOn,
-        users: project.users,
-        canEdit,
-      };
+      return project;
     },
   },
   Mutation: {
     removeUserFromProject: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       const { projectId, userId } = args;
       await canEditProject(ctx, projectId);
-      // TODO: Only if not removing self
 
-      const project = await Project.findOne({ projectId });
-      await project.removeUserById(userId);
-
-      return true;
+      const project = await Project.findOne({ projectId }, { relations: ["users"] });
+      if (project.users.length > 1) {
+        await project.removeUserById(userId);
+        return true;
+      } else {
+        return false;
+      }
     },
   },
 };

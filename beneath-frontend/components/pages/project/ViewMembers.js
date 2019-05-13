@@ -14,13 +14,13 @@ import Loading from "../../Loading";
 
 import { QUERY_PROJECT, REMOVE_MEMBER } from "../../../queries/project";
 
-const ViewMembers = ({ project, canEdit }) => (
+const ViewMembers = ({ project, editable }) => (
   <List>
     {project.users.map(({ userId, username, name, photoUrl }) => (
       <ListItem key={userId} disableGutters>
         <ListItemAvatar><Avatar alt={name} src={photoUrl} /></ListItemAvatar>
         <ListItemText primary={name} secondary={username} />
-        {canEdit && ( // TODO: Can't edit yourself
+        {editable && (project.users.length > 1) && (
           <ListItemSecondaryAction>
             <Mutation mutation={REMOVE_MEMBER} update={(cache, { data: { removeUserFromProject } }) => {
               const projectName = project.name;

@@ -1,5 +1,4 @@
 import React from "react";
-import gql from "graphql-tag";
 import { withRouter } from "next/router";
 import { Query } from "react-apollo";
 import { makeStyles } from "@material-ui/core/styles";

@@ -16,7 +16,6 @@ export const QUERY_PROJECT = gql`
         username
         photoUrl
       }
-      canEdit
     }
   }
 `;

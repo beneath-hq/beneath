@@ -1,4 +1,3 @@
-import gql from "graphql-tag";
 import React, { Component } from "react";
 import { withRouter } from "next/router";
 import { Query } from "react-apollo";
@@ -13,11 +12,10 @@ import EditProject from "../components/pages/project/EditProject";
 import ViewMembers from "../components/pages/project/ViewMembers";
 import ManageKeys from "../components/pages/shared/ManageKeys";
 
+import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../queries/project";
 
-// TODO: Get rid of canEdit
-
-const ProjectPage = ({ router }) => (
+const ProjectPage = ({ router, me }) => (
   <Page title="Project" sidebar={<ExploreSidebar />}>
     <Query query={QUERY_PROJECT} variables={{ name: router.query.name }}>
       {({ loading, error, data }) => {
@@ -25,10 +23,12 @@ const ProjectPage = ({ router }) => (
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
         let { project } = data;
+        let isProjectMember = project.users.some((user) => user.userId === me.userId);
+
         let tabs = [
-          { value: "members", label: "Members", render: () => (<ViewMembers project={project} canEdit={project.canEdit} />) },
+          { value: "members", label: "Members", render: () => (<ViewMembers project={project} editable={isProjectMember} />) },
         ];
-        if (project.canEdit) {
+        if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject projectId={project.projectId} />) });
           tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys projectId={project.projectId} />) });
         }
@@ -46,4 +46,4 @@ const ProjectPage = ({ router }) => (
   </Page>
 );
 
-export default withRouter(ProjectPage);
+export default withMe(withRouter(ProjectPage));
