@@ -54,6 +54,11 @@ export default createMuiTheme({
         backgroundColor: "rgba(16, 24, 46, 1)",
       }
     },
+    MuiAvatar: {
+      root: {
+        borderRadius: "10%",
+      },
+    },
   },
   transitions: {
     duration: {
