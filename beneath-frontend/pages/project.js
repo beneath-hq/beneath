@@ -13,7 +13,7 @@ import EditProject from "../components/pages/project/EditProject";
 import ViewMembers from "../components/pages/project/ViewMembers";
 import ManageKeys from "../components/pages/shared/ManageKeys";
 
-const QUERY_PROJECT = gql`
+export const QUERY_PROJECT = gql`
   query Project($name: String) {
     project(name: $name) {
       projectId
@@ -24,13 +24,16 @@ const QUERY_PROJECT = gql`
       createdOn
       updatedOn
       users {
+        userId
         name
+        username
         photoUrl
       }
       canEdit
     }
   }
 `;
+// TODO: Get rid of canEdit
 
 const ProjectPage = ({ router }) => (
   <Page title="Project" sidebar={<ExploreSidebar />}>
@@ -41,7 +44,7 @@ const ProjectPage = ({ router }) => (
 
         let { project } = data;
         let tabs = [
-          { value: "members", label: "Members", render: () => (<ViewMembers project={project} />) },
+          { value: "members", label: "Members", render: () => (<ViewMembers project={project} canEdit={project.canEdit} />) },
         ];
         if (project.canEdit) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject projectId={project.projectId} />) });

@@ -11,6 +11,10 @@ export const typeDefs = gql`
     project(name: String, projectId: ID): Project
   }
 
+  extend type Mutation {
+    removeUserFromProject(userId: ID!, projectId: ID!): Boolean
+  }
+
   type Project {
     projectId: ID!
     name: String
@@ -31,7 +35,7 @@ export const resolvers = {
 
       await canReadProject(ctx, project.projectId);
 
-      const meUserId = _.get(ctx, "user.key.userId");
+      const meUserId = _.get(ctx, "user.key.userId"); // TODO: extract
       const canEdit = project.users.some((user) => user.userId === meUserId);
 
       return {
@@ -45,6 +49,18 @@ export const resolvers = {
         users: project.users,
         canEdit,
       };
+    },
+  },
+  Mutation: {
+    removeUserFromProject: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
+      const { projectId, userId } = args;
+      await canEditProject(ctx, projectId);
+      // TODO: Only if not removing self
+
+      const project = await Project.findOne({ projectId });
+      await project.removeUserById(userId);
+
+      return true;
     },
   },
 };

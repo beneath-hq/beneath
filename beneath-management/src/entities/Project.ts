@@ -69,7 +69,11 @@ export class Project extends BaseEntity {
   }
 
   public async removeUserById(userId: string) {
-    // TODO
+    await Project.createQueryBuilder()
+      .relation("users")
+      .of({ projectId: this.projectId })
+      .remove({ userId });
+
     const cache = getConnection().queryResultCache;
     if (cache) {
       await cache.remove([`projects_users:${this.projectId}:${userId}`]);
