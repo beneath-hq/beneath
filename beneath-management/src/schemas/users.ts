@@ -2,7 +2,6 @@ import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { User } from "../entities/User";
-import { isPersonalUser } from "../lib/guards";
 import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
@@ -55,23 +54,23 @@ const userToMe = (user) => {
 export const resolvers = {
   Query: {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      isPersonalUser(ctx);
-      const user = await User.findOne({ userId: ctx.user.key.userId }, { relations: ["keys", "projects"] });
+      ctx.auth.requirePersonalUser();
+      const user = await User.findOne({ userId: ctx.auth.getUserId() }, { relations: ["keys", "projects"] });
       return userToMe(user);
     },
     user: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       let userId = args.userId;
       if (userId === "me") {
-        isPersonalUser(ctx);
-        userId = ctx.user.key.userId;
+        ctx.auth.requirePersonalUser();
+        userId = ctx.auth.getUserId();
       }
       return await User.findOne({ userId }, { relations: ["projects"] });
     },
   },
   Mutation: {
     updateMe: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      isPersonalUser(ctx);
-      const user = await User.findOne({ userId: ctx.user.key.userId });
+      ctx.auth.requirePersonalUser();
+      const user = await User.findOne({ userId: ctx.auth.getUserId() });
       if (args.name) {
         user.name = args.name;
       }

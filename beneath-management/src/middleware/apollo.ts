@@ -17,11 +17,10 @@ export const apply = (app: express.Express) => {
       return error;
     },
     context: ({ req }: { req: IAuthenticatedRequest }) => {
-      const user = req.user;
-      if (!user) {
-        throw Error(`req.user must be set when Apollo is called`);
+      if (!req.auth) {
+        throw Error(`req.auth must be set when Apollo is called`);
       }
-      return { user };
+      return { auth: req.auth };
     },
     introspection: true,
     tracing: process.env.NODE_ENV !== "production",

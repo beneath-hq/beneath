@@ -1,17 +1,10 @@
 import { Request } from "express";
-
-import { Key } from "./entities/Key";
-
-export interface IAuthenticatedUser {
-  anonymous: boolean;
-  key: Key;
-}
+import { Auth } from "./lib/auth";
 
 export interface IAuthenticatedRequest extends Request {
-  user: IAuthenticatedUser;
-  logout: () => void;
+  auth: Auth;
 }
 
 export interface IApolloContext {
-  user: IAuthenticatedUser;
+  auth: Auth;
 }

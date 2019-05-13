@@ -2,7 +2,7 @@ import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { Key, KeyRole } from "../entities/Key";
-import { canEditProject, canEditUser, exclusiveArgs } from "../lib/guards";
+import { requireExclusiveArgs } from "../lib/guards";
 import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
@@ -33,14 +33,14 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     keys: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      exclusiveArgs(args, ["projectId", "userId"]);
+      requireExclusiveArgs(args, ["projectId", "userId"]);
 
       const findConditions: any = {};
       if (args.userId) {
-        canEditUser(ctx, args.userId);
+        ctx.auth.requireCanEditUser(args.userId);
         findConditions.user = { userId: args.userId };
       } else if (args.projectId) {
-        await canEditProject(ctx, args.projectId);
+        await ctx.auth.requireCanEditProject(args.projectId);
         findConditions.project = { projectId: args.projectId };
       }
 
@@ -49,16 +49,16 @@ export const resolvers = {
   },
   Mutation: {
     issueKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      exclusiveArgs(args, ["projectId", "userId"]);
+      requireExclusiveArgs(args, ["projectId", "userId"]);
 
       const role: KeyRole = args.readonly ? KeyRole.Readonly : KeyRole.Readwrite;
 
       let key = null;
       if (args.userId) {
-        canEditUser(ctx, args.userId);
+        ctx.auth.requireCanEditUser(args.userId);
         key = await Key.issueUserKey(args.userId, role, args.description);
       } else if (args.projectId) {
-        await canEditProject(ctx, args.projectId);
+        await ctx.auth.requireCanEditProject(args.projectId);
         key = await Key.issueProjectKey(args.projectId, role, args.description);
       }
 
@@ -71,9 +71,9 @@ export const resolvers = {
       const key = await Key.findOneOrFail({ keyId: args.keyId });
 
       if (key.userId) {
-        canEditUser(ctx, key.userId);
+        ctx.auth.requireCanEditUser(key.userId);
       } else if (key.projectId) {
-        await canEditProject(ctx, key.projectId);
+        await ctx.auth.requireCanEditProject(key.projectId);
       }
 
       await key.revoke();

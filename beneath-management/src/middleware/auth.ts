@@ -8,6 +8,7 @@ import { Strategy as BearerStrategy } from "passport-http-bearer";
 
 import { Key, KeyRole } from "../entities/Key";
 import { User } from "../entities/User";
+import { Auth } from "../lib/auth";
 import logger from "../lib/logger";
 import { IAuthenticatedRequest } from "../types";
 
@@ -16,7 +17,9 @@ const failureRedirect = `${process.env.CLIENT_HOST}/auth`;
 
 export const apply = (app: express.Express) => {
   // config
-  app.use(passport.initialize());
+  app.use(passport.initialize({
+    userProperty: "auth",
+  }));
 
   // apply strategies
   applyGithub(app);
@@ -25,24 +28,21 @@ export const apply = (app: express.Express) => {
   passport.use(new AnonymousStrategy());
   app.use(passport.authenticate(["bearer", "anonymous"], { session: false }));
 
-  // Middleware to mark unauthenticated users anonymous
+  // Middleware to set req.auth even for unauthenticated users
   app.use((req: IAuthenticatedRequest, res, next) => {
-    if (!req.user) {
-      req.user = {
-        anonymous: true,
-        key: null,
-      };
+    if (!req.auth) {
+      req.auth = new Auth(null);
     }
     next();
   });
 
   // logout endpoint
   app.get("/auth/logout", (req: IAuthenticatedRequest, res) => {
-    if (!req.user.anonymous && req.user.key.role === KeyRole.Manage) {
-      logger.info(`Logout user ${JSON.stringify(req.user.key)}`);
-      req.user.key.remove();
+    if (req.auth.isPersonalUser()) {
+      logger.info(`Logout user with key ${JSON.stringify(req.auth.key)}`);
+      req.auth.key.remove();
     } else {
-      logger.error(`Can't logout user: ${JSON.stringify(req.user)} (Authorization: ${req.header("Authorization")})`);
+      logger.error(`Can't logout user: ${JSON.stringify(req.auth)} (Authorization: ${req.header("Authorization")})`);
     }
     res.status(200);
     res.end();
@@ -56,7 +56,7 @@ const applyBearer = (app: express.Express) => {
     try {
       const key = await Key.authenticateKey(token);
       if (key) {
-        done(null, { key, anonymous: false });
+        done(null, new Auth(key));
       } else {
         done(null, false);
       }
@@ -109,7 +109,7 @@ const applyGoogle = (app: express.Express) => {
 };
 
 const handleSuccessRedirect = (req: IAuthenticatedRequest, res) => {
-  const token = req.user.key.keyString;
+  const token = req.auth.key.keyString;
   res.redirect(`${successRedirect}/?token=${token}`);
 };
 
@@ -138,10 +138,7 @@ const handleProfile = async (serviceName: "github"|"google", profile: any, done:
 
     // done
     const key = await Key.issueUserKey(user.userId, KeyRole.Manage, `Browser session`);
-    done(undefined, {
-      anonymous: false,
-      key,
-    });
+    done(undefined, new Auth(key));
   } catch (err) {
     done(err, undefined);
   }
