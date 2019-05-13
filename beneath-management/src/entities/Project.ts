@@ -1,6 +1,6 @@
 import { IsFQDN, IsLowercase, Length, Matches } from "class-validator";
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, JoinTable,
+  BaseEntity, Column, CreateDateColumn, Entity, getConnection, JoinTable,
   ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
@@ -51,5 +51,29 @@ export class Project extends BaseEntity {
     }
   })
   public users: User[];
+
+  public static async isUserInProject(userId: string, projectId: string) {
+    const result = await getConnection()
+      .createQueryBuilder(Project, "project")
+      .innerJoin("project.users", "user")
+      .where("user.userId = :userId", { userId })
+      .andWhere("project.projectId = :projectId", { projectId })
+      .select(["project.projectId"])
+      .cache(`projects_users:${projectId}:${userId}`, 300000)
+      .getOne();
+    return !!result;
+  }
+
+  public async addUserByEmail(email: string) {
+    // TODO
+  }
+
+  public async removeUserById(userId: string) {
+    // TODO
+    const cache = getConnection().queryResultCache;
+    if (cache) {
+      await cache.remove([`projects_users:${this.projectId}:${userId}`]);
+    }
+  }
 
 }

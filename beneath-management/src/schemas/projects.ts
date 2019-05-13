@@ -26,7 +26,7 @@ export const resolvers = {
   Query: {
     project: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       const project = await Project.findOne(args, { relations: ["users"] });
-      canReadProject(ctx, project.projectId);
+      await canReadProject(ctx, project.projectId);
       return project;
     },
   },

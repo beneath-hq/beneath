@@ -40,7 +40,7 @@ export const resolvers = {
         canEditUser(ctx, args.userId);
         findConditions.user = { userId: args.userId };
       } else if (args.projectId) {
-        canEditProject(ctx, args.projectId);
+        await canEditProject(ctx, args.projectId);
         findConditions.project = { projectId: args.projectId };
       }
 
@@ -58,7 +58,7 @@ export const resolvers = {
         canEditUser(ctx, args.userId);
         key = await Key.issueUserKey(args.userId, role, args.description);
       } else if (args.projectId) {
-        canEditProject(ctx, args.projectId);
+        await canEditProject(ctx, args.projectId);
         key = await Key.issueProjectKey(args.projectId, role, args.description);
       }
 
@@ -73,7 +73,7 @@ export const resolvers = {
       if (key.userId) {
         canEditUser(ctx, key.userId);
       } else if (key.projectId) {
-        canEditProject(ctx, key.projectId);
+        await canEditProject(ctx, key.projectId);
       }
 
       await key.revoke();

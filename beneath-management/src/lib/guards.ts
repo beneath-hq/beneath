@@ -1,5 +1,6 @@
 import { AuthenticationError, ForbiddenError } from "apollo-server";
 import { KeyRole } from "../entities/Key";
+import { Project } from "../entities/Project";
 import { ArgsError } from "../lib/errors";
 import { IApolloContext } from "../types";
 
@@ -23,12 +24,14 @@ export const canEditUser = (ctx: IApolloContext, userId: string) => {
   }
 };
 
-export const canReadProject = (ctx: IApolloContext, projectId: string) => {
+export const canReadProject = async (ctx: IApolloContext, projectId: string) => {
   // TODO
+  return true;
 };
 
-export const canEditProject = (ctx: IApolloContext, projectId: string) => {
-  // TODO
+export const canEditProject = async (ctx: IApolloContext, projectId: string) => {
+  isPersonalUser(ctx);
+  return await Project.isUserInProject(ctx.user.key.userId, projectId);
 };
 
 export const exclusiveArgs = (args: any, keys: string[]) => {
