@@ -23,7 +23,7 @@ const ProjectPage = ({ router, me }) => (
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
         let { project } = data;
-        let isProjectMember = project.users.some((user) => user.userId === me.userId);
+        let isProjectMember = me && project.users.some((user) => user.userId === me.userId);
 
         let tabs = [
           { value: "members", label: "Members", render: () => (<ViewMembers project={project} editable={isProjectMember} />) },
