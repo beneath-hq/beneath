@@ -12,12 +12,13 @@ import SubrouteTabs from "../components/SubrouteTabs";
 import EditMe from "../components/pages/user/EditMe";
 import ManageKeys from "../components/pages/shared/ManageKeys";
 
+import withMe from "../hocs/withMe";
 import { QUERY_USER } from "../queries/user";
 
 const useStyles = makeStyles((theme) => ({
 }));
 
-const UserPage = ({ router }) => {
+const UserPage = ({ router, me }) => {
   const classes = useStyles();
   const userId = router.query.id;
   return (
@@ -29,10 +30,11 @@ const UserPage = ({ router }) => {
             if (error) return <p>Error: {JSON.stringify(error)}</p>;
             
             let { user } = data;
+            let isMe = userId === "me" || userId === me.userId;
             let tabs = [
               { value: "projects", label: "Projects", render: () => (<p>The projects</p>) },
             ];
-            if (userId === "me") {
+            if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
               tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys userId={user.userId} />)});
             }
@@ -50,4 +52,4 @@ const UserPage = ({ router }) => {
   );
 };
 
-export default withRouter(UserPage);
+export default withMe(withRouter(UserPage));
