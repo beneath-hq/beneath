@@ -1,8 +1,8 @@
-import { AuthenticationError, ForbiddenError, gql } from "apollo-server";
+import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { Key, KeyRole } from "../entities/Key";
-import { ArgsError } from "../lib/errors";
+import { canEditProject, canEditUser, exclusiveArgs } from "../lib/guards";
 import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
@@ -33,22 +33,14 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     keys: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous) {
-        throw new AuthenticationError("Must be authenticated");
-      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-        throw new ForbiddenError("Only permitted with manage login");
-      }
-
-      if (!!args.userId === !!args.projectId) {
-        throw new ArgsError("Pass userId xor projectId");
-      }
-
-      // TODO: Check that ctx.user.key.userId has permissions (for project)
+      exclusiveArgs(args, ["projectId", "userId"]);
 
       const findConditions: any = {};
       if (args.userId) {
+        canEditUser(ctx, args.userId);
         findConditions.user = { userId: args.userId };
       } else if (args.projectId) {
+        canEditProject(ctx, args.projectId);
         findConditions.project = { projectId: args.projectId };
       }
 
@@ -57,26 +49,16 @@ export const resolvers = {
   },
   Mutation: {
     issueKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous) {
-        throw new AuthenticationError("Must be authenticated");
-      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-        throw new ForbiddenError("Only permitted with manage login");
-      }
-
-      if (!!args.userId === !!args.projectId) {
-        throw new ArgsError("Pass userId xor projectId");
-      }
-
-      if (args.userId && args.userId !== ctx.user.key.userId) {
-        throw new ArgsError("Can only issue keys for yourself");
-      }
+      exclusiveArgs(args, ["projectId", "userId"]);
 
       const role: KeyRole = args.readonly ? KeyRole.Readonly : KeyRole.Readwrite;
+
       let key = null;
       if (args.userId) {
+        canEditUser(ctx, args.userId);
         key = await Key.issueUserKey(args.userId, role, args.description);
       } else if (args.projectId) {
-        // TODO: Check that ctx.user.key.userId has permissions (for project)
+        canEditProject(ctx, args.projectId);
         key = await Key.issueProjectKey(args.projectId, role, args.description);
       }
 
@@ -86,16 +68,16 @@ export const resolvers = {
       };
     },
     revokeKey: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous) {
-        throw new AuthenticationError("Must be authenticated");
-      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-        throw new ForbiddenError("Only permitted with personal login");
+      const key = await Key.findOneOrFail({ keyId: args.keyId });
+
+      if (key.userId) {
+        canEditUser(ctx, key.userId);
+      } else if (key.projectId) {
+        canEditProject(ctx, key.projectId);
       }
 
-      // TODO: Check that ctx.user.key.userId has permissions (user or project) for args.keyId
-
-      const key = await Key.findOneOrFail({ keyId: args.keyId });
       await key.revoke();
+
       return true;
     },
   },

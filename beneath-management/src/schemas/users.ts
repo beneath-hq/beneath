@@ -1,8 +1,8 @@
-import { AuthenticationError, ForbiddenError, gql } from "apollo-server";
+import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
-import { KeyRole } from "../entities/Key";
 import { User } from "../entities/User";
+import { isPersonalUser } from "../lib/guards";
 import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
@@ -55,22 +55,14 @@ const userToMe = (user) => {
 export const resolvers = {
   Query: {
     me: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous) {
-        throw new AuthenticationError("Must be authenticated");
-      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-        throw new ForbiddenError("Only permitted with personal login");
-      }
+      isPersonalUser(ctx);
       const user = await User.findOne({ userId: ctx.user.key.userId }, { relations: ["keys", "projects"] });
       return userToMe(user);
     },
     user: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       let userId = args.userId;
       if (userId === "me") {
-        if (ctx.user.anonymous) {
-          throw new AuthenticationError("Must be authenticated");
-        } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-          throw new ForbiddenError("Only permitted with personal login");
-        }
+        isPersonalUser(ctx);
         userId = ctx.user.key.userId;
       }
       return await User.findOne({ userId }, { relations: ["projects"] });
@@ -78,11 +70,7 @@ export const resolvers = {
   },
   Mutation: {
     updateMe: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      if (ctx.user.anonymous) {
-        throw new AuthenticationError("Must be authenticated");
-      } else if (!ctx.user.key.userId || ctx.user.key.role !== KeyRole.Manage) {
-        throw new ForbiddenError("Only permitted with personal login");
-      }
+      isPersonalUser(ctx);
       const user = await User.findOne({ userId: ctx.user.key.userId });
       if (args.name) {
         user.name = args.name;
