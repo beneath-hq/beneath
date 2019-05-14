@@ -2,6 +2,7 @@ import { gql } from "apollo-server";
 import { GraphQLResolveInfo } from "graphql";
 
 import { User } from "../entities/User";
+import { requireValidates } from "../lib/guards";
 import { IApolloContext } from "../types";
 
 export const typeDefs = gql`
@@ -71,12 +72,13 @@ export const resolvers = {
     updateMe: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       ctx.auth.requirePersonalUser();
       const user = await User.findOne({ userId: ctx.auth.getUserId() });
-      if (args.name) {
+      if (args.name !== undefined) {
         user.name = args.name;
       }
-      if (args.bio) {
+      if (args.bio !== undefined) {
         user.bio = args.bio;
       }
+      await requireValidates(user);
       await user.save();
       return userToMe(user);
     },
