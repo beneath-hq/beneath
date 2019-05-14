@@ -96,7 +96,7 @@ const AddMember = ({ project }) => {
           addUserToProject({ variables: { email, projectId: project.projectId } });
         }}>
           <Grid container alignItems={"center"} spacing={2}>
-            <Grid item sm={true}>
+            <Grid item xs={true}>
               <TextField id="email" type="email" label="Email" value={email}
                 fullWidth disabled={loading} error={!!error} helperText={error && error.graphQLErrors[0].message}
                 onChange={(event) => setEmail(event.target.value)}
