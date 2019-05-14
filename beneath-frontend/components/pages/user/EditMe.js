@@ -9,7 +9,6 @@ import { makeStyles } from "@material-ui/core";
 
 import Loading from "../../Loading";
 import VSpace from "../../VSpace";
-import { AuthRequired } from "../../../hocs/auth";
 
 import { QUERY_ME, UPDATE_ME } from "../../../queries/user";
 
@@ -21,17 +20,15 @@ const useStyles = makeStyles((theme) => ({
 
 const EditMe = () => {
   return (
-    <AuthRequired>
-      <Query query={QUERY_ME}>
-        {({ loading, error, data }) => {
-          if (loading) return <Loading justify="center" />;
-          if (error) return <p>Error: {JSON.stringify(error)}</p>;
+    <Query query={QUERY_ME}>
+      {({ loading, error, data }) => {
+        if (loading) return <Loading justify="center" />;
+        if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
-          let { me } = data;
-          return <EditMeForm me={me} />;
-        }}
-      </Query>
-    </AuthRequired>
+        let { me } = data;
+        return <EditMeForm me={me} />;
+      }}
+    </Query>
   );
 };
 
