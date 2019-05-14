@@ -1,4 +1,4 @@
-import { IsFQDN, IsLowercase, Length, Matches } from "class-validator";
+import { IsUrl, IsLowercase, Length, Matches, ValidateIf } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, getConnection, JoinTable,
   ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -19,15 +19,22 @@ export class Project extends BaseEntity {
   @Matches(/[_a-zA-Z][_\-a-zA-Z0-9]*/)
   public name: string;
 
-  @Column({ length: 16, unique: true, name: "display_name" })
+  @Column({ length: 40, unique: true, name: "display_name" })
+  @Length(3, 40)
   public displayName: string;
 
   @Column({ length: 255 })
-  @IsFQDN()
+  @ValidateIf((project) => (!!project.site))
+  @IsUrl()
   public site: string;
 
   @Column({ length: 256 })
   public description: string;
+
+  @Column({ length: 256, name: "photo_url", nullable: true })
+  @ValidateIf((project) => (!!project.photoUrl))
+  @IsUrl()
+  public photoUrl: string;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;

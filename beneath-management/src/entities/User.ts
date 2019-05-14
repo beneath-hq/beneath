@@ -1,4 +1,4 @@
-import { IsEmail, IsFQDN, IsLowercase, Length } from "class-validator";
+import { IsEmail, IsUrl, IsLowercase, Length } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, getConnection, ManyToMany,
   OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -31,7 +31,7 @@ export class User extends BaseEntity {
   public bio: string;
 
   @Column({ length: 256, name: "photo_url", nullable: true })
-  @IsFQDN()
+  @IsUrl()
   public photoUrl: string;
 
   @Column({ length: 256, name: "google_id", unique: true, nullable: true })
