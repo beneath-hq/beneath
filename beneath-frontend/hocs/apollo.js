@@ -69,6 +69,9 @@ const createApolloClient = ({ initialState, token, res }) => {
           }
         }
       }
+      if (error.extensions && error.extensions.code === "VALIDATION_ERROR") {
+        console.log("Validation error", error.extensions.exception);
+      }
     }
   };
 
