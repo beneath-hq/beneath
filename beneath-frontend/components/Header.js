@@ -65,13 +65,13 @@ const Header = (({ router, toggleMobileDrawer }) => {
         </Tabs>
         {/* Login-specific stuff */}
         <AuthConsumer>
-          {({ user }) => {
+          {({ token }) => {
             return (
               <React.Fragment>
-                {!user && (
+                {!token && (
                   <Button color="inherit" component={NextMuiLink} size="small" href="/auth">Login</Button>
                 )}
-                {user && (
+                {token && (
                   <React.Fragment>
                     <IconButton edge="end" aria-haspopup="true" onClick={openMenu} color="inherit">
                       <Person />

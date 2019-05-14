@@ -86,18 +86,12 @@ export const withApolloClient = (App) => {
   return class Apollo extends React.Component {
     static displayName = 'withApollo(App)'
     static async getInitialProps(ctx) {
-      const { Component, router, user, ctx: { res } } = ctx
+      const { Component, router, token, ctx: { res } } = ctx
 
       // Get app props to pass on
       let appProps = {}
       if (App.getInitialProps) {
         appProps = await App.getInitialProps({ ...ctx })
-      }
-
-      // Get token from user
-      let token = null;
-      if (user) {
-        token = user.token;
       }
       
       // Get apollo client
@@ -114,6 +108,7 @@ export const withApolloClient = (App) => {
               Component={Component}
               router={router}
               apolloClient={apollo}
+              token={token}
             />
           )
         } catch (error) {

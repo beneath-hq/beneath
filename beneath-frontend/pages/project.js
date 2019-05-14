@@ -49,5 +49,5 @@ const ProjectPage = ({ router, me }) => (
 export default withMe(withRouter(ProjectPage));
 
 // TODO:
-// Add members
 // Edit project
+// The flash

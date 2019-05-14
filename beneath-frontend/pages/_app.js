@@ -6,7 +6,7 @@ import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import theme from "../lib/theme";
 import { withApolloClient } from "../hocs/apollo";
-import { AuthProvider, withUser } from "../hocs/auth";
+import { AuthProvider, withToken } from "../hocs/auth";
 import { ApolloProvider } from "react-apollo";
 
 class BeneathApp extends App {
@@ -23,11 +23,11 @@ class BeneathApp extends App {
   }
 
   render() {
-    const { Component, apolloClient, user, pageProps } = this.props;
+    const { Component, apolloClient, token, pageProps } = this.props;
 
     return (
       <Container>
-        <AuthProvider user={user}>
+        <AuthProvider token={token}>
           <ApolloProvider client={apolloClient}>
             <ThemeProvider theme={theme}>
               <CssBaseline />
@@ -40,4 +40,4 @@ class BeneathApp extends App {
   }
 }
 
-export default withUser(withApolloClient(withGA("UA-118362426-2", Router)(BeneathApp)));
+export default withToken(withApolloClient(withGA("UA-118362426-2", Router)(BeneathApp)));

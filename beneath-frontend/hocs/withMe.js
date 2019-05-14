@@ -6,8 +6,8 @@ import { QUERY_ME } from "../queries/user";
 const withMe = (Component) => {
   return (props) => (
     <AuthConsumer>
-      {({ user }) => {
-        if (user && user.token) {
+      {({ token }) => {
+        if (token) {
           return (
             <Query query={QUERY_ME}>
               {({ loading, error, data }) => {

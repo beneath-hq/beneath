@@ -6,7 +6,7 @@ import { AuthConsumer } from "../hocs/auth";
 
 class Index extends Component {
   componentDidMount() {
-    if (this.user) {
+    if (this.token) {
       Router.replace("/explore");
     } else {
       Router.replace("/about");
@@ -17,8 +17,8 @@ class Index extends Component {
     return (
       <Page>
         <AuthConsumer>
-          {({ user }) => {
-            this.user = user;
+          {({ token }) => {
+            this.token = token;
           }}
         </AuthConsumer>
       </Page>

@@ -3,18 +3,18 @@ import PropTypes from "prop-types";
 import React from "react";
 
 const AuthContext = React.createContext({
-  user: null
+  token: null
 });
 
 export class AuthProvider extends React.Component {
   static propTypes = {
-    user: PropTypes.object,
+    token: PropTypes.string,
   };
 
   constructor(props) {
     super(props);
     this.state = {
-      user: props.user
+      token: props.token
     };
   }
 
@@ -41,8 +41,8 @@ export class AuthRequired extends React.Component {
   render() {
     return (
       <AuthConsumer>
-        {({ user }) => {
-          if (user) {
+        {({ token }) => {
+          if (token) {
             return this.props.children;
           } else {
             return <Error statusCode={401} />;
@@ -53,31 +53,27 @@ export class AuthRequired extends React.Component {
   }
 }
 
-export const withUser = (App) => {
+export const withToken = (App) => {
   return class Auth extends React.Component {
-    static displayName = "withAuth(App)";
+    static displayName = "withToken(App)";
 
     static async getInitialProps(ctx) {
       let token = readTokenFromCookie(ctx.ctx ? ctx.ctx.req : null);
-      let user = null;
-      if (token) {
-        user = { token };
-      }
 
       let appProps = {};
       if (App.getInitialProps) {
-        appProps = await App.getInitialProps({ ...ctx, user });
+        appProps = await App.getInitialProps({ ...ctx, token });
       }
-      return { ...appProps, user };
+      return { ...appProps, token };
     }
 
     constructor(props) {
       super(props);
-      this.user = this.props.user;
+      this.token = props.token;
     }
 
     render() {
-      return <App {...this.props} user={this.user} />;
+      return <App {...this.props} token={this.token} />;
     }
   };
 };
