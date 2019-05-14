@@ -20,7 +20,8 @@
       {
         "order": "fields-first"
       }
-    ]
+    ],
+    "max-classes-per-file": false,
   },
   "rulesDirectory": []
 }
