@@ -1,6 +1,6 @@
 import { IsEmail, IsFQDN, IsLowercase, Length } from "class-validator";
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, ManyToMany,
+  BaseEntity, Column, CreateDateColumn, Entity, getConnection, ManyToMany,
   OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
@@ -51,6 +51,13 @@ export class User extends BaseEntity {
 
   @OneToMany((type) => Key, (key) => key.user)
   public keys: Key[];
+
+  public static async findOneByEmail(email: string) {
+    return await getConnection()
+      .createQueryBuilder(User, "user")
+      .where("lower(user.email) = lower(:email)", { email })
+      .getOne();
+  }
 
   public static async createOrUpdate({ githubId, googleId, email, name, photoUrl }) {
     let user = null;

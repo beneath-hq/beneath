@@ -9,7 +9,7 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/pages/project/EditProject";
-import ViewMembers from "../components/pages/project/ViewMembers";
+import ManageMembers from "../components/pages/project/ManageMembers";
 import ManageKeys from "../components/pages/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
@@ -26,7 +26,7 @@ const ProjectPage = ({ router, me }) => (
         let isProjectMember = me && project.users.some((user) => user.userId === me.userId);
 
         let tabs = [
-          { value: "members", label: "Members", render: () => (<ViewMembers project={project} editable={isProjectMember} />) },
+          { value: "members", label: "Members", render: () => (<ManageMembers project={project} editable={isProjectMember} />) },
         ];
         if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject projectId={project.projectId} />) });

@@ -64,8 +64,9 @@ export class Project extends BaseEntity {
     return !!result;
   }
 
-  public async addUserByEmail(email: string) {
-    // TODO
+  public async addUser(user: User) {
+    this.users.push(user);
+    await this.save();
   }
 
   public async removeUserById(userId: string) {

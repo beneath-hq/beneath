@@ -20,6 +20,17 @@ export const QUERY_PROJECT = gql`
   }
 `;
 
+export const ADD_MEMBER = gql`
+  mutation AddUserToProject($email: String!, $projectId: ID!) {
+    addUserToProject(email: $email, projectId: $projectId) {
+      userId
+      name
+      username
+      photoUrl
+    }
+  }
+`;
+
 export const REMOVE_MEMBER = gql`
   mutation RemoveUserFromProject($userId: ID!, $projectId: ID!) {
     removeUserFromProject(userId: $userId, projectId: $projectId)
