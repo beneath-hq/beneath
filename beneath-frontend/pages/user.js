@@ -6,6 +6,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
+import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
@@ -41,6 +42,7 @@ const UserPage = ({ router, me }) => {
 
             return (
               <React.Fragment>
+                <PageTitle title={user.name} />
                 <ProfileHero name={user.name} description={user.bio} avatarUrl={user.photoUrl} />
                 <SubrouteTabs defaultValue="projects" tabs={tabs} />
               </React.Fragment>

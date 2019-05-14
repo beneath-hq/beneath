@@ -1,11 +1,11 @@
 import PropTypes from "prop-types";
 import React from "react";
-import Head from "next/head";
 import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
 
 import Drawer from "./Drawer";
 import Header from "./Header";
+import PageTitle from "./PageTitle";
 import Subheader from "./Subheader";
 
 const useStyles = makeStyles((theme) => ({
@@ -27,11 +27,7 @@ const Page = (props) => {
   const classes = useStyles();
   return (
     <div>
-      <Head>
-        <title>
-          {props.title ? props.title + " | " : ""} Beneath – Data Science for the Decentralised Economy
-        </title>
-      </Head>
+      <PageTitle title={props.title} />
       <Header toggleMobileDrawer={props.sidebar && toggleMobileDrawer} />
       <div className={classes.root}>
         { props.sidebar && (

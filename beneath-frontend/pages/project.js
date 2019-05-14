@@ -5,6 +5,7 @@ import { Query } from "react-apollo";
 import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
+import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
@@ -35,6 +36,7 @@ const ProjectPage = ({ router, me }) => (
 
         return (
           <React.Fragment>
+            <PageTitle title={project.displayName} />
             <ProfileHero name={project.displayName} site={project.site}
               description={project.description} avatarUrl={null}
             />
@@ -47,7 +49,3 @@ const ProjectPage = ({ router, me }) => (
 );
 
 export default withMe(withRouter(ProjectPage));
-
-// TODO:
-// Edit project
-// The flash
