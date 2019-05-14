@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import Router from "next/router";
 
 import Page from "../components/Page";
-import { AuthConsumer } from "../hocs/auth";
+import { TokenConsumer } from "../hocs/auth";
 
 class Index extends Component {
   componentDidMount() {
@@ -16,11 +16,11 @@ class Index extends Component {
   render() {
     return (
       <Page>
-        <AuthConsumer>
+        <TokenConsumer>
           {({ token }) => {
             this.token = token;
           }}
-        </AuthConsumer>
+        </TokenConsumer>
       </Page>
     );
   }

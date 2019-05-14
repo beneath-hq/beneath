@@ -2,11 +2,11 @@ import Error from "../pages/_error";
 import PropTypes from "prop-types";
 import React from "react";
 
-const AuthContext = React.createContext({
+const TokenContext = React.createContext({
   token: null
 });
 
-export class AuthProvider extends React.Component {
+export class TokenProvider extends React.Component {
   static propTypes = {
     token: PropTypes.string,
   };
@@ -20,27 +20,27 @@ export class AuthProvider extends React.Component {
 
   render() {
     return (
-      <AuthContext.Provider value={this.state}>
+      <TokenContext.Provider value={this.state}>
         {this.props.children}
-      </AuthContext.Provider>
+      </TokenContext.Provider>
     );
   }
 }
 
-export class AuthConsumer extends React.Component {
+export class TokenConsumer extends React.Component {
   static propTypes = {
     children: PropTypes.func.isRequired,
   };
 
   render() {
-    return <AuthContext.Consumer>{this.props.children}</AuthContext.Consumer>;
+    return <TokenContext.Consumer>{this.props.children}</TokenContext.Consumer>;
   }
 }
 
 export class AuthRequired extends React.Component {
   render() {
     return (
-      <AuthConsumer>
+      <TokenConsumer>
         {({ token }) => {
           if (token) {
             return this.props.children;
@@ -48,7 +48,7 @@ export class AuthRequired extends React.Component {
             return <Error statusCode={401} />;
           }
         }}
-      </AuthConsumer>
+      </TokenConsumer>
     );
   }
 }

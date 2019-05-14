@@ -14,7 +14,7 @@ import { withRouter } from "next/router";
 import PropTypes from "prop-types";
 
 import NextMuiLink from "./NextMuiLink";
-import { AuthConsumer } from "../hocs/auth";
+import { TokenConsumer } from "../hocs/auth";
 
 const tabs = [
   { label: "Explore", href: "/explore", selectRegex: "/(explore|project).*" },
@@ -64,7 +64,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
           ))}
         </Tabs>
         {/* Login-specific stuff */}
-        <AuthConsumer>
+        <TokenConsumer>
           {({ token }) => {
             return (
               <React.Fragment>
@@ -88,7 +88,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
               </React.Fragment>
             );
           }}
-        </AuthConsumer>
+        </TokenConsumer>
       </Toolbar>
     </AppBar>
   );

@@ -1,11 +1,11 @@
 import { Query } from "react-apollo";
 
-import { AuthConsumer } from "./auth";
+import { TokenConsumer } from "./auth";
 import { QUERY_ME } from "../queries/user";
 
 const withMe = (Component) => {
   return (props) => (
-    <AuthConsumer>
+    <TokenConsumer>
       {({ token }) => {
         if (token) {
           return (
@@ -27,7 +27,7 @@ const withMe = (Component) => {
           )
         }
       }}
-    </AuthConsumer>
+    </TokenConsumer>
   );
 }
 
