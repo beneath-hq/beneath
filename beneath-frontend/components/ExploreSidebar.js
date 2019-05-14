@@ -10,6 +10,7 @@ import NextMuiLink from "./NextMuiLink";
 
 const entries = [
   { label: "Explore", href: "/explore", selectRegex: /\/explore/ },
+  { label: "New project", href: "/new/project", selectRegex: /\/new\/project/ },
   { label: "Maker DAO", href: "/project?name=maker", as: "/projects/maker", selectRegex: /\/projects\/maker/ },
 ];
 
