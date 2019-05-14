@@ -8,6 +8,13 @@ export const QUERY_USER = gql`
       bio
       photoUrl
       createdOn
+      projects {
+        projectId
+        name
+        displayName
+        description
+        photoUrl
+      }
     }
   }
 `;

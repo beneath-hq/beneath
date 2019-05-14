@@ -23,12 +23,12 @@ export class Project extends BaseEntity {
   @Length(3, 40)
   public displayName: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, nullable: true })
   @ValidateIf((project) => (!!project.site))
   @IsUrl()
   public site: string;
 
-  @Column({ length: 256 })
+  @Column({ length: 256, nullable: true })
   public description: string;
 
   @Column({ length: 256, name: "photo_url", nullable: true })

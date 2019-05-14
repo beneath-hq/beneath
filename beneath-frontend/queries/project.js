@@ -21,6 +21,27 @@ export const QUERY_PROJECT = gql`
   }
 `;
 
+export const NEW_PROJECT = gql`
+  mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoUrl: String) {
+    createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoUrl: $photoUrl) {
+      projectId
+      name
+      displayName
+      site
+      description
+      photoUrl
+      createdOn
+      updatedOn
+      users {
+        userId
+        name
+        username
+        photoUrl
+      }
+    }
+  }
+`;
+
 export const UPDATE_PROJECT = gql`
   mutation UpdateProject($projectId: ID!, $displayName: String, $site: String, $description: String, $photoUrl: String) {
     updateProject(projectId: $projectId, displayName: $displayName, site: $site, description: $description, photoUrl: $photoUrl) {

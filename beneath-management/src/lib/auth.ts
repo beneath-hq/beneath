@@ -2,6 +2,7 @@ import { AuthenticationError, ForbiddenError } from "apollo-server";
 
 import { Key, KeyRole } from "../entities/Key";
 import { Project } from "../entities/Project";
+import { User } from "../entities/User";
 
 export class Auth {
   public key: Key;
@@ -13,6 +14,17 @@ export class Auth {
   public getUserId(): string {
     if (this.key && this.key.userId) {
       return this.key.userId;
+    }
+    return undefined;
+  }
+
+  public getShallowUser(): User {
+    if (this.key && this.key.user) {
+      return this.key.user;
+    } else if (this.key && this.key.userId) {
+      const user = new User();
+      user.userId = this.key.userId;
+      return user;
     }
     return undefined;
   }

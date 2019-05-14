@@ -45,6 +45,17 @@ export const resolvers = {
   },
   Mutation: {
     createProject: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
+      ctx.auth.requirePersonalUser();
+      const project = new Project();
+      project.name = args.name;
+      project.displayName = args.displayName;
+      project.site = args.site;
+      project.description = args.description;
+      project.photoUrl = args.photoUrl;
+      project.users = [ctx.auth.getShallowUser()];
+      await requireValidates(project);
+      await project.save();
+      return project;
     },
     updateProject: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
       const { projectId, displayName, site, description, photoUrl } = args;
