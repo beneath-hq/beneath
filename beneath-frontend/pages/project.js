@@ -10,7 +10,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/pages/project/EditProject";
 import ViewMembers from "../components/pages/project/ViewMembers";
-import ManageKeys from "../components/pages/shared/ManageKeys";
+import ManageKeys from "../components/pages/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../queries/project";
@@ -47,3 +47,7 @@ const ProjectPage = ({ router, me }) => (
 );
 
 export default withMe(withRouter(ProjectPage));
+
+// TODO:
+// Add members
+// Edit project
