@@ -8,6 +8,7 @@ export const QUERY_PROJECT = gql`
       displayName
       site
       description
+      photoUrl
       createdOn
       updatedOn
       users {
@@ -16,6 +17,19 @@ export const QUERY_PROJECT = gql`
         username
         photoUrl
       }
+    }
+  }
+`;
+
+export const UPDATE_PROJECT = gql`
+  mutation UpdateProject($projectId: ID!, $displayName: String, $site: String, $description: String, $photoUrl: String) {
+    updateProject(projectId: $projectId, displayName: $displayName, site: $site, description: $description, photoUrl: $photoUrl) {
+      projectId
+      displayName
+      site
+      description
+      photoUrl
+      updatedOn
     }
   }
 `;

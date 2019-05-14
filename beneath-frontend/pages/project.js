@@ -30,7 +30,7 @@ const ProjectPage = ({ router, me }) => (
           { value: "members", label: "Members", render: () => (<ManageMembers project={project} editable={isProjectMember} />) },
         ];
         if (isProjectMember) {
-          tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject projectId={project.projectId} />) });
+          tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject project={project} />) });
           tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys projectId={project.projectId} />) });
         }
 
@@ -38,7 +38,7 @@ const ProjectPage = ({ router, me }) => (
           <React.Fragment>
             <PageTitle title={project.displayName} />
             <ProfileHero name={project.displayName} site={project.site}
-              description={project.description} avatarUrl={null}
+              description={project.description} avatarUrl={project.photoUrl}
             />
             <SubrouteTabs defaultValue="members" tabs={tabs} />
           </React.Fragment>
