@@ -11,6 +11,7 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/pages/user/EditMe";
+import ViewProjects from "../components/pages/user/ViewProjects";
 import ManageKeys from "../components/pages/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
@@ -33,7 +34,7 @@ const UserPage = ({ router, me }) => {
             let { user } = data;
             let isMe = userId === "me" || userId === me.userId;
             let tabs = [
-              { value: "projects", label: "Projects", render: () => (<p>The projects</p>) },
+              { value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> },
             ];
             if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
