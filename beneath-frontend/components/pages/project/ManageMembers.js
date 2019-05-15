@@ -22,6 +22,11 @@ import VSpace from "../../VSpace";
 import { QUERY_PROJECT, ADD_MEMBER, REMOVE_MEMBER } from "../../../queries/project";
 
 const useStyles = makeStyles((theme) => ({
+  addMemberContainer: {
+    [theme.breakpoints.up("md")]: {
+      width: theme.breakpoints.values.sm,
+    },
+  },
 }));
 
 const ManageMembers = ({ project, editable }) => {
@@ -95,9 +100,9 @@ const AddMember = ({ project }) => {
           e.preventDefault();
           addUserToProject({ variables: { email, projectId: project.projectId } });
         }}>
-          <Grid container alignItems={"center"} spacing={2}>
+          <Grid container alignItems={"center"} spacing={2} className={classes.addMemberContainer}>
             <Grid item xs={true}>
-              <TextField id="email" type="email" label="Email" value={email}
+              <TextField id="email" type="email" label="Add Member" placeholder="Email" value={email}
                 fullWidth disabled={loading} error={!!error} helperText={error && error.graphQLErrors[0].message}
                 onChange={(event) => setEmail(event.target.value)}
               />

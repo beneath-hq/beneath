@@ -37,7 +37,7 @@ const Page = (props) => {
         )}
         <div className={classes.content}>
           <main>
-            <Container maxWidth="lg">
+            <Container maxWidth={props.maxWidth || "lg"}>
               { props.sidebar && <Subheader /> }
               {props.children}
             </Container>
@@ -51,6 +51,7 @@ const Page = (props) => {
 Page.propTypes = {
   title: PropTypes.string,
   sidebar: PropTypes.object,
+  maxWidth: PropTypes.oneOf([false, "xs", "sm", "md", "lg", "xl"]),
 };
 
 export default Page;

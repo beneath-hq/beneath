@@ -35,7 +35,7 @@ const NewProjectPage = () => {
 
   const classes = useStyles();
   return (
-    <Page title="New Project" sidebar={<ExploreSidebar />}>
+    <Page title="New Project" maxWidth="md" sidebar={<ExploreSidebar />}>
       <Mutation mutation={NEW_PROJECT} 
         update={(cache, { data: { createProject } }) => {
           // TODO: Update QUERY_USER (not very important). The below should work, but fails
@@ -88,7 +88,7 @@ const NewProjectPage = () => {
                 onChange={handleChange("displayName")}
               />
               <TextField id="description" label="Description" value={values.description}
-                margin="normal" fullWidth required
+                margin="normal" fullWidth multiline required
                 onChange={handleChange("description")}
               />
               <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
