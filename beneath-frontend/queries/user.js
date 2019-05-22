@@ -30,6 +30,13 @@ export const QUERY_ME = gql`
         bio
         photoUrl
         createdOn
+        projects {
+          projectId
+          name
+          displayName
+          description
+          photoUrl
+        }
       }
       email
       updatedOn
