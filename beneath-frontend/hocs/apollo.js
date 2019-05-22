@@ -48,6 +48,7 @@ const createApolloClient = ({ initialState, token, res }) => {
       case "Key": return `${object.keyId}`;
       case "NewKey": return `${object.keyString}`;
       case "Project": return `${object.projectId}`;
+      case "Stream": return `${object.streamId}`;
       default: {
         console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
         return defaultDataIdFromObject(object);

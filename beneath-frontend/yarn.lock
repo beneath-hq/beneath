@@ -1338,6 +1338,11 @@ autodll-webpack-plugin@0.4.2:
     webpack-merge "^4.1.0"
     webpack-sources "^1.0.1"
 
+avsc@^5.4.10:
+  version "5.4.10"
+  resolved "https://registry.yarnpkg.com/avsc/-/avsc-5.4.10.tgz#18f82d93d92ed6842d9e61cff25b51c284c3e932"
+  integrity sha512-6/s4d/o0EshemF2UlVbdMabOQ3Mavcd2okWmhfQlfOFVMq1kFaGtIlIYK4WPtc69EfkdcjElIti951bdRLdBNA==
+
 babel-core@7.0.0-bridge.0:
   version "7.0.0-bridge.0"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-7.0.0-bridge.0.tgz#95a492ddd90f9b4e9a4a1da14eb335b87b634ece"

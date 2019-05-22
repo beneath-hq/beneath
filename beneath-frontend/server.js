@@ -82,6 +82,8 @@ app.prepare().then(() => {
     });
   };
 
+  addRoute("/projects/:project_name/streams/:name", "/stream");
+  addRoute("/projects/:project_name/streams/:name/:tab", "/stream");
   addRoute("/projects/:name", "/project");
   addRoute("/projects/:name/:tab", "/project");
   addRoute("/users/:id", "/user");
