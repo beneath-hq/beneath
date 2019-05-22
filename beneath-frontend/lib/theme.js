@@ -45,6 +45,12 @@ export default createMuiTheme({
     MuiInputLabel: {
       shrink: true,
     },
+    MuiTextField: {
+      autoComplete: "off",
+      inputProps: {
+        spellCheck: false,
+      },
+    },
   },
   overrides: {
     MuiButton: {
