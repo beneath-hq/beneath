@@ -9,6 +9,7 @@
    "dependencies": {
       "@types/lodash": "^4.14.123",
       "apollo-server": "^2.4.8",
+      "avsc": "^5.4.10",
       "class-validator": "^0.9.1",
       "connect-redis": "^3.4.1",
       "dotenv": "^7.0.0",

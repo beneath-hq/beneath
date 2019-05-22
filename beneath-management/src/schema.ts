@@ -6,6 +6,7 @@ import { merge } from "lodash";
 const schemas = [
   "./schemas/keys",
   "./schemas/projects",
+  "./schemas/streams",
   "./schemas/users",
 ].map(require);
 

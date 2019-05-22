@@ -482,6 +482,11 @@ atob@^2.1.1:
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
+avsc@^5.4.10:
+  version "5.4.10"
+  resolved "https://registry.yarnpkg.com/avsc/-/avsc-5.4.10.tgz#18f82d93d92ed6842d9e61cff25b51c284c3e932"
+  integrity sha512-6/s4d/o0EshemF2UlVbdMabOQ3Mavcd2okWmhfQlfOFVMq1kFaGtIlIYK4WPtc69EfkdcjElIti951bdRLdBNA==
+
 babel-code-frame@^6.22.0:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-code-frame/-/babel-code-frame-6.26.0.tgz#63fd43f7dc1e3bb7ce35947db8fe369a3f58c74b"

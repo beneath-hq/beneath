@@ -6,6 +6,7 @@ import {
 
 import { Key } from "./Key";
 import { User } from "./User";
+import { Stream } from "./Stream";
 
 @Entity("projects")
 export class Project extends BaseEntity {
@@ -16,7 +17,7 @@ export class Project extends BaseEntity {
   @Column({ length: 16, unique: true })
   @IsLowercase()
   @Length(3, 16)
-  @Matches(/[_a-zA-Z][_\-a-zA-Z0-9]*/)
+  @Matches(/^[_a-zA-Z][_\-a-zA-Z0-9]*$/)
   public name: string;
 
   @Column({ length: 40, unique: true, name: "display_name" })
@@ -44,6 +45,9 @@ export class Project extends BaseEntity {
 
   @OneToMany((type) => Key, (key) => key.project)
   public keys: Key[];
+  
+  @OneToMany((type) => Stream, (stream) => stream.project)
+  public streams: Stream[];
 
   @ManyToMany((type) => User, (user) => user.projects)
   @JoinTable({
