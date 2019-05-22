@@ -1,4 +1,4 @@
-import { IsEmail, IsUrl, IsLowercase, Length } from "class-validator";
+import { IsEmail, IsUrl, IsLowercase, Length, Matches } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, getConnection, ManyToMany,
   OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -17,6 +17,7 @@ export class User extends BaseEntity {
   @Column({ length: 16, unique: true, nullable: true  })
   @IsLowercase()
   @Length(3, 16)
+  @Matches(/^[_a-zA-Z][_\-a-zA-Z0-9]*$/)
   public username: string;
 
   @Column({ length: 320, unique: true })
