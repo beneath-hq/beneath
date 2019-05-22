@@ -11,12 +11,12 @@ const withMe = (Component) => {
           return (
             <Query query={QUERY_ME}>
               {({ loading, error, data }) => {
-                if (data) {
+                if (error) {
+                  console.log("withMe error: ", error);
+                } else if (!loading && data) {
                   let { me } = data;
                   return <Component {...props} me={me} />
-                } else if (error) {
-                  console.log("withMe error: ", error);
-                }
+                } 
                 return null;
               }}
             </Query>
