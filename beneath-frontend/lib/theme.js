@@ -42,6 +42,9 @@ export default createMuiTheme({
     MuiButtonBase: {
       disableRipple: true,
     },
+    MuiInputLabel: {
+      shrink: true,
+    },
   },
   overrides: {
     MuiButton: {
@@ -98,33 +101,3 @@ export default createMuiTheme({
     modal: 1300,
   },
 });
-
-// 1: Object
-// fontFamily: ""Roboto", "Helvetica", "Arial", sans-serif"
-// fontWeight: 300
-
-// lineHeight: 1
-// letterSpacing: "-0.01562em"
-// h2: Object
-// fontFamily: ""Roboto", "Helvetica", "Arial", sans-serif"
-// fontWeight: 300
-// fontSize: "3.75rem"
-// lineHeight: 1
-// letterSpacing: "-0.00833em"
-// h3: Object
-// fontFamily: ""Roboto", "Helvetica", "Arial", sans-serif"
-// fontWeight: 400
-// fontSize: "3rem"
-// lineHeight: 1.04
-// letterSpacing: "0em"
-// h4: Object
-// fontFamily: ""Roboto", "Helvetica", "Arial", sans-serif"
-// fontWeight: 400
-// fontSize: "2.125rem"
-// lineHeight: 1.17
-// letterSpacing: "0.00735em"
-// h5: Object
-// fontFamily: ""Roboto", "Helvetica", "Arial", sans-serif"
-// fontWeight: 400
-// fontSize: "1.5rem"
-// lineHeight: 1.33
