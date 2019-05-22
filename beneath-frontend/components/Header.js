@@ -17,7 +17,7 @@ import NextMuiLink from "./NextMuiLink";
 import { TokenConsumer } from "../hocs/auth";
 
 const tabs = [
-  { label: "Explore", href: "/explore", selectRegex: "/(explore|project).*" },
+  { label: "Explore", href: "/explore", selectRegex: "^/(explore|new|project|stream|user).*$" },
   { label: "About", href: "/about", selectRegex: "/about.*" },
 ];
 

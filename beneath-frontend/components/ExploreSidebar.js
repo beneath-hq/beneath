@@ -44,7 +44,7 @@ const ExploreSidebar = ({ me, router }) => {
       <List dense>
         <ListSubheader>Home</ListSubheader>
         <ListEntry key={"/explore"} href={"/explore"} label={"Explore"} selected={selected(/\/explore/)} />
-        <ListEntry key={"/users/me"} href={"/users/me"} label={"My profile"} selected={selected(/\/users\/me/)} />
+        <ListEntry key={"/users/me"} href={"/user?id=me"} as={"/users/me"} label={"My profile"} selected={selected(/\/users\/me/)} />
         
         <ListSubheader>Create</ListSubheader>
         <ListEntry key={"/new/project"} href={"/new/project"} label={"New project"} selected={selected(/\/new\/project/)} />
