@@ -55,3 +55,13 @@ export const CREATE_EXTERNAL_STREAM = gql`
     }
   }
 `;
+
+export const UPDATE_STREAM = gql`
+  mutation UpdateStream($streamId: ID!, $description: String!, $manual: Boolean!) {
+    updateStream(streamId: $streamId, description: $description, manual: $manual) {
+      streamId
+      description
+      manual
+    }
+  }
+`;

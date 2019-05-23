@@ -21,6 +21,7 @@ export const typeDefs = gql`
       batch: Boolean!,
       manual: Boolean!
     ): Stream!
+    updateStream(streamId: ID!, description: String, manual: Boolean): Stream!
   }
 
   type Stream {
@@ -63,6 +64,19 @@ export const resolvers = {
       stream.external = true;
       stream.manual = args.manual;
       console.log(stream);
+      await requireValidates(stream);
+      await stream.save();
+      return stream;
+    },
+    updateStream: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
+      const stream = await Stream.findOne({ streamId: args.streamId }, { relations: ["project"] });
+      await ctx.auth.requireCanEditProject(stream.projectId);
+      if (args.description !== undefined) {
+        stream.description = args.description;
+      }
+      if (args.manual !== undefined) {
+        stream.manual = args.manual;
+      }
       await requireValidates(stream);
       await stream.save();
       return stream;
