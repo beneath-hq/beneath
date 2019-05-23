@@ -29,13 +29,14 @@ export const typeDefs = gql`
     createdOn: Date
     updatedOn: Date
     users: [User]
+    streams: [Stream]
   }
 `;
 
 export const resolvers = {
   Query: {
     project: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
-      const project = await Project.findOne(args, { relations: ["users"] });
+      const project = await Project.findOne(args, { relations: ["streams", "users"] });
       if (!project) {
         throw new NotFoundError("Project not found");
       }

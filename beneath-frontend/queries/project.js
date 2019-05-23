@@ -17,6 +17,12 @@ export const QUERY_PROJECT = gql`
         username
         photoUrl
       }
+      streams {
+        streamId
+        name
+        description
+        external
+      }
     }
   }
 `;

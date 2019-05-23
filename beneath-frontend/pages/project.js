@@ -12,6 +12,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 import EditProject from "../components/pages/project/EditProject";
 import ManageMembers from "../components/pages/project/ManageMembers";
 import ManageKeys from "../components/pages/key/ManageKeys";
+import ViewStreams from "../components/pages/project/ViewStreams";
 
 import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../queries/project";
@@ -27,6 +28,7 @@ const ProjectPage = ({ router, me }) => (
         let isProjectMember = me && project.users.some((user) => user.userId === me.userId);
 
         let tabs = [
+          { value: "streams", label: "Streams", render: () => (<ViewStreams project={project} />) },
           { value: "members", label: "Members", render: () => (<ManageMembers project={project} editable={isProjectMember} />) },
         ];
         if (isProjectMember) {
@@ -40,7 +42,7 @@ const ProjectPage = ({ router, me }) => (
             <ProfileHero name={project.displayName} site={project.site}
               description={project.description} avatarUrl={project.photoUrl}
             />
-            <SubrouteTabs defaultValue="members" tabs={tabs} />
+            <SubrouteTabs defaultValue="streams" tabs={tabs} />
           </React.Fragment>
         );
       }}
