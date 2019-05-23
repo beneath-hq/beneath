@@ -2,7 +2,6 @@ import React from "react";
 import isEmail from "validator/lib/isEmail";
 import { Mutation } from "react-apollo";
 
-import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import DeleteIcon from "@material-ui/icons/Delete";
 import Grid from "@material-ui/core/Grid";
@@ -15,6 +14,7 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/core";
 
+import Avatar from "../../Avatar";
 import Loading from "../../Loading";
 import NextMuiLink from "../../NextMuiLink";
 import VSpace from "../../VSpace";
@@ -51,7 +51,7 @@ const ViewMembers = ({ project, editable }) => {
           component={NextMuiLink} as={`/users/${userId}`} href={`/user?id=${userId}`}
           disableGutters button
         >
-          <ListItemAvatar><Avatar alt={name} src={photoUrl} /></ListItemAvatar>
+          <ListItemAvatar><Avatar size="list" label={name} src={photoUrl} /></ListItemAvatar>
           <ListItemText primary={name} secondary={username} />
           {editable && (project.users.length > 1) && (
             <ListItemSecondaryAction>

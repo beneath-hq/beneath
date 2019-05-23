@@ -1,16 +1,15 @@
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 
-import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Link from "@material-ui/core/Link";
 import Typography from "@material-ui/core/Typography";
 
+import Avatar from "./Avatar";
+
 const useStyles = makeStyles((theme) => ({
   avatar: {
-    width: theme.spacing(8),
-    height: theme.spacing(8),
-    marginRight: theme.spacing(2),
+    marginRight: theme.spacing(3),
   },
   container: {
     marginTop: theme.spacing(4),
@@ -24,10 +23,9 @@ const useStyles = makeStyles((theme) => ({
 const ProfileHero = ({ name, description, site, avatarUrl }) => {
   const classes = useStyles();
   return (
-    <Grid container wrap="nowrap" spacing={1} className={classes.container}>
-      <Grid item>
-        <Avatar className={classes.avatar} src={avatarUrl} alt={name}>
-        </Avatar>
+    <Grid container wrap="nowrap" spacing={0} className={classes.container}>
+      <Grid className={classes.avatar} item>
+        <Avatar size="hero" label={name} src={avatarUrl} />
       </Grid>
       <Grid item>
         <Typography component="h1" variant="h1" gutterBottom>{name}</Typography>

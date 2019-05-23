@@ -1,11 +1,11 @@
 import React from "react";
 
-import Avatar from "@material-ui/core/Avatar";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 
+import Avatar from "../../Avatar";
 import NextMuiLink from "../../NextMuiLink";
 
 const ViewStreams = ({ project }) => {
@@ -18,7 +18,7 @@ const ViewStreams = ({ project }) => {
           button
           disableGutters
         >
-          <ListItemAvatar><Avatar>{external ? "E" : "I"}</Avatar></ListItemAvatar>
+          <ListItemAvatar><Avatar size="list" label={external ? "External" : "Internal"} /></ListItemAvatar>
           <ListItemText primary={name} secondary={description} />
         </ListItem>
       ))}

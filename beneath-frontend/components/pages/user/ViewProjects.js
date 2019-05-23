@@ -1,11 +1,11 @@
 import React from "react";
 
-import Avatar from "@material-ui/core/Avatar";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemText from "@material-ui/core/ListItemText";
 
+import Avatar from "../../Avatar";
 import NextMuiLink from "../../NextMuiLink";
 
 const ViewProjects = ({ user }) => {
@@ -17,7 +17,7 @@ const ViewProjects = ({ user }) => {
           component={NextMuiLink} as={`/projects/${name}`} href={`/project?name=${name}`}
           disableGutters button
         >
-          {photoUrl && <ListItemAvatar><Avatar alt={displayName} src={photoUrl} /></ListItemAvatar>}
+          <ListItemAvatar><Avatar size="list" label={displayName} src={photoUrl} /></ListItemAvatar>
           <ListItemText primary={displayName} secondary={description} />
         </ListItem>
       ))}
