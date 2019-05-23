@@ -9,9 +9,6 @@ import Page from "../components/Page";
 import { GoogleIcon, GithubIcon } from "../components/Icons";
 
 const styles = (theme) => ({
-  authContent: {
-    padding: theme.spacing(8, 0, 6),
-  },
   authButtons: {
     marginTop: theme.spacing(4),
   },
@@ -22,8 +19,8 @@ const styles = (theme) => ({
 });
 
 export default withStyles(styles)(({ classes }) => (
-  <Page title="Sign Up or Log In">
-    <div className={classes.authContent}>
+  <Page title="Sign Up or Log In" contentMarginTop="normal">
+    <div>
       <Container maxWidth="lg">
         <Typography component="h2" variant="h5" align="center" gutterBottom>
           Sign Up or Log In

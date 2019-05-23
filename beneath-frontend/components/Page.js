@@ -9,13 +9,24 @@ import PageTitle from "./PageTitle";
 import Subheader from "./Subheader";
 
 const useStyles = makeStyles((theme) => ({
-  root: {
+  sidebarSubheaderAndContent: {
     display: "flex"
   },
-  content: {
+  subheaderAndContent: {
     flexGrow: 1,
     padding: theme.spacing(3),
   },
+  content: ({ contentMarginTop }) => ({
+    marginTop: (
+      contentMarginTop === "normal"
+        ? theme.spacing(6)
+        : contentMarginTop === "dense"
+        ? theme.spacing(3)
+        : contentMarginTop === "hero"
+        ? theme.spacing(10)
+        : theme.spacing(0)
+    ),
+  }),
 }));
 
 const Page = (props) => {
@@ -24,24 +35,24 @@ const Page = (props) => {
     setMobileDrawerOpen(!mobileDrawerOpen);
   };
 
-  const classes = useStyles();
+  const classes = useStyles({ contentMarginTop: props.contentMarginTop });
   return (
     <div>
       <PageTitle title={props.title} />
       <Header toggleMobileDrawer={props.sidebar && toggleMobileDrawer} />
-      <div className={classes.root}>
+      <div className={classes.sidebarSubheaderAndContent}>
         { props.sidebar && (
           <Drawer mobileOpen={mobileDrawerOpen} toggleMobileOpen={toggleMobileDrawer}>
             {props.sidebar}
           </Drawer>
         )}
-        <div className={classes.content}>
-          <main>
-            <Container maxWidth={props.maxWidth || "lg"}>
-              { props.sidebar && <Subheader /> }
+        <div className={classes.subheaderAndContent}>
+          <Container maxWidth={props.maxWidth || "lg"}>
+            { props.sidebar && <Subheader /> }
+            <main className={classes.content}>
               {props.children}
-            </Container>
-          </main>
+            </main>
+          </Container>
         </div>
       </div>
     </div>
@@ -52,6 +63,7 @@ Page.propTypes = {
   title: PropTypes.string,
   sidebar: PropTypes.object,
   maxWidth: PropTypes.oneOf([false, "xs", "sm", "md", "lg", "xl"]),
+  contentMarginTop: PropTypes.oneOf([null, "dense", "normal"]),
 };
 
 export default Page;

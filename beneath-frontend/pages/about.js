@@ -7,17 +7,14 @@ import { withStyles } from "@material-ui/styles";
 import Page from "../components/Page";
 
 const styles = (theme) => ({
-  heroContent: {
-    padding: theme.spacing(8, 0, 6),
-  },
   heroButtons: {
     marginTop: theme.spacing(4),
   },
 });
 
 export default withStyles(styles)(({ classes }) => (
-  <Page>
-    <div className={classes.heroContent}>
+  <Page contentMarginTop="hero">
+    <div>
       <Container maxWidth="lg">
         <Typography component="h1" variant="h1" align="center" gutterBottom>
           Data Science for the Decentralised Economy

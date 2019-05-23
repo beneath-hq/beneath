@@ -22,9 +22,6 @@ const makeErrorMessage = (statusCode) => {
 };
 
 const styles = (theme) => ({
-  errorContent: {
-    padding: theme.spacing(8, 0, 6),
-  },
 });
 
 class Error extends React.Component {
@@ -36,8 +33,8 @@ class Error extends React.Component {
   render() {
     const { classes, message, statusCode } = this.props;
     return (
-      <Page title="Error">
-        <div className={classes.errorContent}>
+      <Page title="Error" contentMarginTop="normal">
+        <div>
           <Container maxWidth="lg">
             <Typography component="h2" variant="h4" align="center" gutterBottom>
               {message

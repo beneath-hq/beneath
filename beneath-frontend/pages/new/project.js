@@ -14,9 +14,6 @@ import { NEW_PROJECT } from "../../queries/project";
 import { QUERY_USER } from "../../queries/user";
 
 const useStyles = makeStyles((theme) => ({
-  title: {
-    marginTop: theme.spacing(6),
-  },
   submitButton: {
     marginTop: theme.spacing(3),
   },
@@ -35,7 +32,7 @@ const NewProjectPage = () => {
 
   const classes = useStyles();
   return (
-    <Page title="New Project" maxWidth="md" sidebar={<ExploreSidebar />}>
+    <Page title="New Project" sidebar={<ExploreSidebar />} maxWidth="md" contentMarginTop="normal">
       <Mutation mutation={NEW_PROJECT} 
         update={(cache, { data: { createProject } }) => {
           // TODO: Update QUERY_USER (not very important). The below should work, but fails
@@ -77,7 +74,7 @@ const NewProjectPage = () => {
 
           return (
             <form onSubmit={onSubmit}>
-              <Typography component="h2" variant="h2" gutterBottom className={classes.title}>Create project</Typography>
+              <Typography component="h2" variant="h2" gutterBottom>Create project</Typography>
               <TextField id="name" label="Name" value={values.name}
                 margin="normal" fullWidth required
                 error={isNameError} helperText={isNameError && "Project name already taken"}
