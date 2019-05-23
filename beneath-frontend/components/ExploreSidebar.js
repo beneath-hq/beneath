@@ -43,12 +43,12 @@ const ExploreSidebar = ({ me, router }) => {
     <div>
       <List dense>
         <ListSubheader>Home</ListSubheader>
-        <ListEntry key={"/explore"} href={"/explore"} label={"Explore"} selected={selected(/\/explore/)} />
-        <ListEntry key={"/users/me"} href={"/user?id=me"} as={"/users/me"} label={"My profile"} selected={selected(/\/users\/me/)} />
+        <ListEntry key={"/explore"} href={"/explore"} label={"Explore"} selected={selected(/^\/explore/)} />
+        <ListEntry key={"/users/me"} href={"/user?id=me"} as={"/users/me"} label={"My profile"} selected={selected(/^\/users\/me/)} />
         
         <ListSubheader>Create</ListSubheader>
-        <ListEntry key={"/new/project"} href={"/new/project"} label={"New project"} selected={selected(/\/new\/project/)} />
-        <ListEntry key={"/new/stream"} href={"/new/stream"} label={"New stream"} selected={selected(/\/new\/stream/)} />
+        <ListEntry key={"/new/project"} href={"/new/project"} label={"New project"} selected={selected(/^\/new\/project/)} />
+        <ListEntry key={"/new/external-stream"} href={"/new/external-stream"} label={"New external stream"} selected={selected(/^\/new\/external-stream/)} />
 
         <ListSubheader>My projects</ListSubheader>
         {me.user.projects.map((project) => (
@@ -57,7 +57,7 @@ const ExploreSidebar = ({ me, router }) => {
             href={`/project?name=${project.name}`}
             as={`/projects/${project.name}`}
             label={project.displayName}
-            selected={selected(`/projects/${project.name}`)}
+            selected={selected(`^/projects/${project.name}`)}
             photoUrl={project.photoUrl}
           />
         ))}

@@ -75,7 +75,7 @@ const NewStreamPage = ({ me }) => {
 
   const classes = useStyles();
   return (
-    <Page title="New Stream" maxWidth="md" sidebar={<ExploreSidebar />}>
+    <Page title="New External Stream" maxWidth="md" sidebar={<ExploreSidebar />}>
       <Mutation mutation={CREATE_EXTERNAL_STREAM}
         update={(cache, { data: { createExternalStream } }) => {
         }}
@@ -93,11 +93,11 @@ const NewStreamPage = ({ me }) => {
             newStream({ variables: values });
           };
 
-          const isNameError = !!(error && error.message.match(/STREAM_PROJECT_NAME_UNIQUE/));
+          const isNameError = !!(error && error.message.match(/IDX_UQ_STREAMS_NAME_PROJECT/));
 
           return (
             <form onSubmit={onSubmit}>
-              <Typography component="h2" variant="h2" gutterBottom className={classes.title}>Create stream</Typography>
+              <Typography component="h2" variant="h2" gutterBottom className={classes.title}>Create external stream</Typography>
               <SelectField id="project" label="Project" value={values.projectId} required
                 helperText="Cannot be changed after creation" 
                 onChange={handleChange("projectId")}

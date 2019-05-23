@@ -73,7 +73,7 @@ const NewProjectPage = () => {
             newProject({ variables: values });
           };
 
-          const isNameError = error && error.message.match(/duplicate key/);
+          const isNameError = error && error.message.match(/IDX_UQ_PROJECTS_NAME/);
 
           return (
             <form onSubmit={onSubmit}>
@@ -94,7 +94,7 @@ const NewProjectPage = () => {
               <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
                 disabled={
                   loading
-                  || !(values.name.match(/[_a-z][_\-a-z0-9]*/)) 
+                  || !(values.name.match(/^[_a-z][_\-a-z0-9]*$/))
                   || !(values.name && values.name.length >= 3 && values.name.length <= 16)
                   || !(values.displayName && values.displayName.length >= 3 && values.displayName.length <= 40)
                   || !(values.description !== "" && values.description.length <= 255)

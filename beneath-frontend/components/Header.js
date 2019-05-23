@@ -18,7 +18,7 @@ import { TokenConsumer } from "../hocs/auth";
 
 const tabs = [
   { label: "Explore", href: "/explore", selectRegex: "^/(explore|new|project|stream|user).*$" },
-  { label: "About", href: "/about", selectRegex: "/about.*" },
+  { label: "About", href: "/about", selectRegex: "^/about.*$" },
 ];
 
 const useStyles = makeStyles((theme) => ({
