@@ -1,7 +1,7 @@
 import { IsEmail, IsUrl, IsLowercase, Length, Matches } from "class-validator";
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, getConnection, ManyToMany,
-  OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
+  BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index,
+  ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
 import logger from "../lib/logger";
@@ -14,31 +14,37 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid", { name: "user_id" })
   public userId: string;
 
-  @Column({ length: 16, unique: true, nullable: true  })
+  @Column({ length: 16, nullable: true  })
+  @Index("IDX_UQ_USERS_USERNAME", { unique: true })
   @IsLowercase()
   @Length(3, 16)
-  @Matches(/^[_a-zA-Z][_\-a-zA-Z0-9]*$/)
+  @Matches(/^[_a-z][_\-a-z0-9]*$/)
   public username: string;
 
-  @Column({ length: 320, unique: true })
+  @Column({ length: 320, nullable: false })
+  @Index("IDX_UQ_USERS_EMAIL", { unique: true })
   @IsEmail()
   public email: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: false })
   @Length(4, 50)
   public name: string;
 
-  @Column({ length: 256, nullable: true  })
+  @Column({ length: 255, nullable: true })
+  @Length(0, 255)
   public bio: string;
 
-  @Column({ length: 256, name: "photo_url", nullable: true })
+  @Column({ length: 255, name: "photo_url", nullable: true })
   @IsUrl()
+  @Length(0, 255)
   public photoUrl: string;
 
-  @Column({ length: 256, name: "google_id", unique: true, nullable: true })
+  @Column({ length: 256, name: "google_id", nullable: true })
+  @Index("IDX_UQ_USERS_GOOGLE_ID", { unique: true })
   public googleId: string;
 
-  @Column({ length: 256, name: "github_id", unique: true, nullable: true })
+  @Column({ length: 256, name: "github_id", nullable: true })
+  @Index("IDX_UQ_USERS_GITHUB_ID", { unique: true })
   public githubId: string;
 
   @CreateDateColumn({ name: "created_on" })

@@ -4,7 +4,7 @@ import { getConnection } from "typeorm";
 import uuidv4 from "uuid/v4"; // the secure random uuid
 
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, JoinColumn,
+  BaseEntity, Column, CreateDateColumn, Entity, Index, JoinColumn,
   ManyToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
 } from "typeorm";
 
@@ -26,32 +26,33 @@ export class Key extends BaseEntity {
   @Column({ length: 32, nullable: true })
   public description: string;
 
-  @Column({ length: 4 })
+  @Column({ length: 4, nullable: false })
   public prefix: string;
 
-  @Column({ length: 64, unique: true })
+  @Column({ length: 64, nullable: false })
+  @Index("IDX_UQ_KEYS_HASHED_KEY", { unique: true })
   public hashedKey: string;
 
   @Column({ nullable: false })
   public role: KeyRole;
 
-  @RelationId((key: Key) => key.user)
-  @ValidateIf((key) => !!key.projectId)
-  @IsEmpty()
-  public userId: string;
-
-  @RelationId((key: Key) => key.project)
-  @ValidateIf((key) => !!key.userId)
-  @IsEmpty()
-  public projectId: string;
-
-  @ManyToOne((type) => User, (user) => user.keys, { onDelete: "CASCADE" })
+  @ManyToOne((type) => User, (user) => user.keys, { nullable: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
+  @ValidateIf((key) => !!key.project || !!key.projectId)
+  @IsEmpty()
   public user: User;
 
-  @ManyToOne((type) => Project, (project) => project.keys, { onDelete: "CASCADE" })
+  @RelationId((key: Key) => key.user)
+  public userId: string;
+
+  @ManyToOne((type) => Project, (project) => project.keys, { nullable: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "project_id" })
+  @ValidateIf((key) => !!key.user || !!key.userId)
+  @IsEmpty()
   public project: Project;
+
+  @RelationId((key: Key) => key.project)
+  public projectId: string;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;

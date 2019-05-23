@@ -1,7 +1,7 @@
 import { IsUrl, IsLowercase, Length, Matches, ValidateIf } from "class-validator";
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, getConnection, JoinTable,
-  ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
+  BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index, 
+  JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from "typeorm";
 
 import { Key } from "./Key";
@@ -14,13 +14,14 @@ export class Project extends BaseEntity {
   @PrimaryGeneratedColumn("uuid", { name: "project_id" })
   public projectId: string;
 
-  @Column({ length: 16, unique: true })
+  @Column({ length: 16, nullable: false })
+  @Index("IDX_UQ_PROJECTS_NAME", { unique: true })
   @IsLowercase()
   @Length(3, 16)
-  @Matches(/^[_a-zA-Z][_\-a-zA-Z0-9]*$/)
+  @Matches(/^[_a-z][_\-a-z0-9]*$/)
   public name: string;
 
-  @Column({ length: 40, unique: true, name: "display_name" })
+  @Column({ length: 40, nullable: false, name: "display_name" })
   @Length(3, 40)
   public displayName: string;
 
@@ -29,12 +30,14 @@ export class Project extends BaseEntity {
   @IsUrl()
   public site: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ length: 255, nullable: true })
+  @Length(0, 255)
   public description: string;
 
-  @Column({ length: 256, name: "photo_url", nullable: true })
+  @Column({ length: 255, name: "photo_url", nullable: true })
   @ValidateIf((project) => (!!project.photoUrl))
   @IsUrl()
+  @Length(0, 255)
   public photoUrl: string;
 
   @CreateDateColumn({ name: "created_on" })

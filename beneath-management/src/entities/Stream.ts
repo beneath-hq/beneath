@@ -1,4 +1,4 @@
-import { IsNotEmpty, Matches, ValidateIf } from "class-validator";
+import { IsNotEmpty, Length, Matches } from "class-validator";
 
 import {
   BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index, 
@@ -14,46 +14,48 @@ export enum SchemaType {
 }
 
 @Entity("streams")
-@Index("STREAM_PROJECT_NAME_UNIQUE", ["project", "name"], { unique: true })
+@Index("IDX_UQ_STREAMS_NAME_PROJECT", ["project", "name"], { unique: true })
 export class Stream extends BaseEntity {
 
   @PrimaryGeneratedColumn("uuid", { name: "stream_id" })
   public streamId: string;
 
-  @Column({ length: 40, nullable: true })
+  @Column({ length: 40, nullable: false })
+  // See unique index definition above class
   @Matches(/^[_a-z][_\-a-z0-9]*$/)
+  @Length(1, 40)
   public name: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ length: 255, nullable: true })
+  @Length(0, 255)
   public description: string;
 
-  @Column()
+  @Column({ nullable: false })
   public schema: string;
 
-  @Column({ name: "schema_type" })
+  @Column({ name: "schema_type", nullable: false })
   public schemaType: SchemaType;
 
-  @Column({ type: "json" })
+  @Column({ nullable: false, type: "json" })
   @IsAvroSchema()
   public compiledAvroSchema: any;
 
-  @Column()
+  @Column({ nullable: false })
   public batch: boolean;
 
-  @Column()
+  @Column({ nullable: false })
   public manual: boolean;
 
-  @Column()
+  @Column({ nullable: false })
   public external: boolean;
-
-  @RelationId((stream: Stream) => stream.project)
-  // @Column({ name: "project_id" })
-  public projectId: string;
   
   @ManyToOne((type) => Project, (project) => project.streams, { nullable: false, onDelete: "SET NULL" })
   @JoinColumn({ name: "project_id" })
   @IsNotEmpty()
   public project: Project;
+
+  @RelationId((stream: Stream) => stream.project)
+  public projectId: string;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
