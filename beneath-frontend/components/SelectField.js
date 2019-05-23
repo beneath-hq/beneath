@@ -11,10 +11,10 @@ import Select from "@material-ui/core/Select";
 const useStyles = makeStyles((theme) => ({
 }));
 
-const SelectField = ({ id, label, value, required, onChange, helperText, options }) => {
+const SelectField = ({ id, label, value, required, onChange, helperText, options, ...other }) => {
   const classes = useStyles();
   return (
-    <FormControl>
+    <FormControl {...other}>
       <InputLabel htmlFor={id} required={required}>{label}</InputLabel>
       <Select value={value} onChange={onChange} input={<Input id={id} name={id} />}>
         {options.map((option) => (
@@ -38,7 +38,8 @@ SelectField.propTypes = {
       value: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
     })
-  )
+  ),
+  // all other properties supplied to FormControl
 };
 
 export default SelectField;
