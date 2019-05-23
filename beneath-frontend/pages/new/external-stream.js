@@ -15,6 +15,7 @@ import SelectField from "../../components/SelectField";
 import CheckboxField from "../../components/CheckboxField";
 import Page from "../../components/Page";
 import withMe from "../../hocs/withMe";
+import { QUERY_PROJECT } from "../../queries/project";
 import { CREATE_EXTERNAL_STREAM } from "../../queries/stream";
 
 const validateAvroSchema = (value) => {  
@@ -75,7 +76,9 @@ const NewStreamPage = ({ me }) => {
   return (
     <Page title="New External Stream" sidebar={<ExploreSidebar />} maxWidth="md" contentMarginTop="normal">
       <Mutation mutation={CREATE_EXTERNAL_STREAM}
-        update={(cache, { data: { createExternalStream } }) => {
+        refetchQueries={({ data: { createExternalStream } }) => {
+          const stream = createExternalStream;
+          return [{ query: QUERY_PROJECT, variables: { name: stream.project.name } }];
         }}
         onCompleted={({ createExternalStream }) => {
           const stream = createExternalStream;

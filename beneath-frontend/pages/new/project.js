@@ -11,7 +11,7 @@ import ExploreSidebar from "../../components/ExploreSidebar";
 import Page from "../../components/Page";
 
 import { NEW_PROJECT } from "../../queries/project";
-import { QUERY_USER } from "../../queries/user";
+import { QUERY_ME } from "../../queries/user";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {
@@ -34,31 +34,7 @@ const NewProjectPage = () => {
   return (
     <Page title="New Project" sidebar={<ExploreSidebar />} maxWidth="md" contentMarginTop="normal">
       <Mutation mutation={NEW_PROJECT} 
-        update={(cache, { data: { createProject } }) => {
-          // TODO: Update QUERY_USER (not very important). The below should work, but fails
-          // const project = createProject;
-          // const userId = project.users[0].userId;
-          // console.log(cache);
-          // const query = cache.readQuery({ query: QUERY_USER, variables: { userId } });
-          // if (query) {
-          //   cache.writeQuery({
-          //     query: QUERY_USER,
-          //     variables: { userId },
-          //     data: {
-          //       user: {
-          //         ...query.user,
-          //         projects: query.user.projects.concat([{
-          //           projectId: project.projectId,
-          //           name: project.name,
-          //           displayName: project.displayName,
-          //           description: project.description,
-          //           photoUrl: project.photoUrl,
-          //         }])
-          //       }
-          //     },
-          //   });
-          // }
-        }}
+        refetchQueries={[{ query: QUERY_ME }]}
         onCompleted={({ createProject }) => {
           const project = createProject;
           Router.push(`/project?name=${project.name}`, `/projects/${project.name}`);
