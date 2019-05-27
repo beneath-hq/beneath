@@ -14,6 +14,8 @@ type ConfigSpecification struct {
 	StreamsPlatform   string `envconfig:"STREAMS_PLATFORM" required:"true"`
 	TablesPlatform    string `envconfig:"TABLES_PLATFORM" required:"true"`
 	WarehousePlatform string `envconfig:"WAREHOUSE_PLATFORM" required:"true"`
+	RedisURL          string `envconfig:"REDIS_URL" required:"true"`
+	PostgresURL       string `envconfig:"POSTGRES_URL" required:"true"`
 }
 
 var (
