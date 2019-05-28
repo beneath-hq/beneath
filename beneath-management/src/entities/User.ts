@@ -1,4 +1,4 @@
-import { IsEmail, IsUrl, IsLowercase, Length, Matches } from "class-validator";
+import { IsEmail, IsUrl, IsLowercase, Length, Matches, ValidateIf } from "class-validator";
 import {
   BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index,
   ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
@@ -16,6 +16,7 @@ export class User extends BaseEntity {
 
   @Column({ length: 16, nullable: true  })
   @Index("IDX_UQ_USERS_USERNAME", { unique: true })
+  @ValidateIf((user) => !!user.username)
   @IsLowercase()
   @Length(3, 16)
   @Matches(/^[_a-z][_\-a-z0-9]*$/)
@@ -31,10 +32,12 @@ export class User extends BaseEntity {
   public name: string;
 
   @Column({ length: 255, nullable: true })
+  @ValidateIf((user) => !!user.bio)
   @Length(0, 255)
   public bio: string;
 
   @Column({ length: 255, name: "photo_url", nullable: true })
+  @ValidateIf((user) => !!user.photoUrl)
   @IsUrl()
   @Length(0, 255)
   public photoUrl: string;

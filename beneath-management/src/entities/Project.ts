@@ -31,6 +31,7 @@ export class Project extends BaseEntity {
   public site: string;
 
   @Column({ length: 255, nullable: true })
+  @ValidateIf((project) => !!project.description)
   @Length(0, 255)
   public description: string;
 
