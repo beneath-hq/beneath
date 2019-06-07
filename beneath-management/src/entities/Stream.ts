@@ -1,11 +1,12 @@
 import { IsNotEmpty, Length, Matches } from "class-validator";
 
 import {
-  BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index, 
-  JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
+  BaseEntity, Column, CreateDateColumn, Entity, getConnection, Index, JoinColumn, 
+  ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn,
 } from "typeorm";
 
 import { Project } from "./Project";
+import { StreamVersion } from "./StreamVersion";
 import { IsAvroSchema } from "../lib/validators";
 
 export enum SchemaType {
@@ -56,6 +57,13 @@ export class Stream extends BaseEntity {
 
   @RelationId((stream: Stream) => stream.project)
   public projectId: string;
+
+  @OneToMany((type) => StreamVersion, (streamVersion) => streamVersion.stream)
+  public streamVersions: StreamVersion[];
+
+  @OneToOne((type) => StreamVersion, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "current_stream_version_id" })
+  public currentStreamVersion: StreamVersion;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;

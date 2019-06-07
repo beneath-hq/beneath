@@ -3,6 +3,7 @@ import { GraphQLResolveInfo } from "graphql";
 
 import { Project } from "../entities/Project";
 import { Stream, SchemaType } from "../entities/Stream";
+import { StreamVersion } from "../entities/StreamVersion";
 import { NotFoundError } from "../lib/errors";
 import { requireValidates } from "../lib/guards";
 import { IApolloContext } from "../types";
@@ -63,9 +64,20 @@ export const resolvers = {
       stream.batch = args.batch;
       stream.external = true;
       stream.manual = args.manual;
-      console.log(stream);
+      
       await requireValidates(stream);
       await stream.save();
+      
+      if (!stream.batch) {
+        const streamVersion = new StreamVersion();
+        streamVersion.stream = stream;
+        await streamVersion.save()
+
+        stream.streamVersions = [streamVersion];
+        stream.currentStreamVersion = streamVersion;
+        await stream.save();
+      }
+
       return stream;
     },
     updateStream: async (root: any, args: any, ctx: IApolloContext, info: GraphQLResolveInfo) => {
