@@ -3,8 +3,8 @@ package beneath
 import (
 	"log"
 
-	"github.com/beneath-core/beneath-gateway/pkg/beneath/platforms/bigtable"
-	"github.com/beneath-core/beneath-gateway/pkg/beneath/platforms/pubsub"
+	"github.com/beneath-core/beneath-gateway/pkg/beneath/platform/bigtable"
+	"github.com/beneath-core/beneath-gateway/pkg/beneath/platform/pubsub"
 )
 
 // StreamsPlatform defines the functions necessary to encapsulate Beneath's streaming data needs
