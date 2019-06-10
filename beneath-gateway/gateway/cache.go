@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/beneath-gateway/pkg/beneath"
+	"github.com/beneath-core/beneath-gateway/beneath"
 	"github.com/go-redis/cache"
 	"github.com/vmihailenco/msgpack"
 )

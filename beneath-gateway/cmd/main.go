@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beneath-core/beneath-gateway/pkg/beneath"
-	"github.com/beneath-core/beneath-gateway/pkg/gateway"
+	"github.com/beneath-core/beneath-gateway/beneath"
+	"github.com/beneath-core/beneath-gateway/gateway"
 )
 
 func main() {
