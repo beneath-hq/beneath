@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	uuid "github.com/satori/go.uuid"
 )
 
 // GetHandler returns a HTTP handler
@@ -30,11 +31,16 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	instanceID := chi.URLParam(r, "instanceID")
-	if instanceID == "" {
+	var instanceID uuid.UUID
+	instanceIDStr := chi.URLParam(r, "instanceID")
+	if instanceIDStr != "" {
+		instanceID, err = uuid.FromString(instanceIDStr)
+		if err != nil {
+			return NewHTTPError(404, "instance not found -- malformed ID")
+		}
+	} else {
 		projectName := chi.URLParam(r, "projectName")
 		streamName := chi.URLParam(r, "streamName")
-
 		instanceID, err = lookupCurrentInstanceID(projectName, streamName)
 		if err != nil {
 			return err
@@ -69,7 +75,10 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	instanceID := chi.URLParam(r, "instanceID")
+	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
+	if err != nil {
+		return NewHTTPError(404, "instance not found -- malformed ID")
+	}
 
 	instance, err := lookupInstance(instanceID)
 	if err != nil {
@@ -81,7 +90,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if !role.write && !(instance.manual && role.manage) {
+	if !role.write && !(instance.Manual && role.manage) {
 		return NewHTTPError(403, "token doesn't grant right to write to this stream")
 	}
 
