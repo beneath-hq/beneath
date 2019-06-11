@@ -18,7 +18,7 @@ func parseAuth(r *http.Request) (string, error) {
 		return "", NewHTTPError(400, "bearer authorization header required")
 	}
 
-	token := header[7:]
+	token := strings.TrimSpace(header[6:])
 	if len(token) != 44 {
 		return "", NewHTTPError(400, "invalid authorization token format")
 	}
