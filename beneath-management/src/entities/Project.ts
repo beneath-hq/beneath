@@ -41,6 +41,9 @@ export class Project extends BaseEntity {
   @Length(0, 255)
   public photoUrl: string;
 
+  @Column({ nullable: false, default: true })
+  public public: boolean;
+
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
 
