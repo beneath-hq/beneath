@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-gateway/beneath"
+	"github.com/go-pg/pg"
 	"github.com/go-redis/cache"
 	"github.com/vmihailenco/msgpack"
 )
@@ -39,11 +40,23 @@ func lookupCurrentInstanceID(projectName string, streamName string) (string, err
 		Object:     &instanceID,
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
-			// TODO
-			return "temp", nil
+			res := ""
+			_, err := beneath.DB.Query(pg.Scan(&res), `
+				select s.current_stream_instance_id
+				from streams s
+				join projects p on s.project_id = p.project_id
+				where s.name = lower(?) and p.name = lower(?)
+			`, streamName, projectName)
+			return res, err
 		},
 	})
-	return instanceID, NewHTTPError(500, err.Error())
+	if err != nil {
+		return "", NewHTTPError(500, err.Error())
+	}
+	if instanceID == "" {
+		return "", NewHTTPError(404, "stream not found")
+	}
+	return instanceID, nil
 }
 
 type cachedInstance struct {
@@ -64,7 +77,10 @@ func lookupInstance(instanceID string) (*cachedInstance, error) {
 			return &cachedInstance{true, true, "hey", "{}"}, nil
 		},
 	})
-	return res, NewHTTPError(500, err.Error())
+	if err != nil {
+		return nil, NewHTTPError(500, err.Error())
+	}
+	return res, nil
 }
 
 type cachedRole struct {
@@ -84,5 +100,8 @@ func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
 			return &cachedRole{true, false, false}, nil
 		},
 	})
-	return res, NewHTTPError(500, err.Error())
+	if err != nil {
+		return nil, NewHTTPError(500, err.Error())
+	}
+	return res, nil
 }
