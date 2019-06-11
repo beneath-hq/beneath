@@ -7,18 +7,18 @@ import {
 
 import { Stream } from "./Stream";
 
-@Entity("stream_versions")
-export class StreamVersion extends BaseEntity {
+@Entity("stream_instances")
+export class StreamInstance extends BaseEntity {
 
-  @PrimaryGeneratedColumn("uuid", { name: "stream_version_id" })
-  public streamVersionId: string;
+  @PrimaryGeneratedColumn("uuid", { name: "stream_instance_id" })
+  public streamInstanceId: string;
 
-  @ManyToOne((type) => Stream, (stream) => stream.streamVersions, { nullable: false, onDelete: "CASCADE" })
+  @ManyToOne((type) => Stream, (stream) => stream.streamInstances, { nullable: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "stream_id" })
   @IsNotEmpty()
   public stream: Stream;
 
-  @RelationId((streamVersion: StreamVersion) => streamVersion.stream)
+  @RelationId((streamInstance: StreamInstance) => streamInstance.stream)
   public streamId: string;
 
   @CreateDateColumn({ name: "created_on" })

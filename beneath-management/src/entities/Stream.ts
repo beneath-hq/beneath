@@ -6,7 +6,7 @@ import {
 } from "typeorm";
 
 import { Project } from "./Project";
-import { StreamVersion } from "./StreamVersion";
+import { StreamInstance } from "./StreamInstance";
 import { IsAvroSchema } from "../lib/validators";
 
 export enum SchemaType {
@@ -58,12 +58,12 @@ export class Stream extends BaseEntity {
   @RelationId((stream: Stream) => stream.project)
   public projectId: string;
 
-  @OneToMany((type) => StreamVersion, (streamVersion) => streamVersion.stream)
-  public streamVersions: StreamVersion[];
+  @OneToMany((type) => StreamInstance, (streamInstance) => streamInstance.stream)
+  public streamInstances: StreamInstance[];
 
-  @OneToOne((type) => StreamVersion, { nullable: true, onDelete: "SET NULL" })
-  @JoinColumn({ name: "current_stream_version_id" })
-  public currentStreamVersion: StreamVersion;
+  @OneToOne((type) => StreamInstance, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "current_stream_instance_id" })
+  public currentStreamInstance: StreamInstance;
 
   @CreateDateColumn({ name: "created_on" })
   public createdOn: Date;
