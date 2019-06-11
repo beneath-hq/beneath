@@ -37,9 +37,9 @@ export class Stream extends BaseEntity {
   @Column({ name: "schema_type", nullable: false })
   public schemaType: SchemaType;
 
-  @Column({ nullable: false, type: "json" })
+  @Column({ name: "avro_schema", nullable: false, type: "json" })
   @IsAvroSchema()
-  public compiledAvroSchema: any;
+  public avroSchema: any;
 
   @Column({ nullable: false })
   public batch: boolean;
