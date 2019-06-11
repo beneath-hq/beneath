@@ -41,7 +41,7 @@ func lookupCurrentInstanceID(projectName string, streamName string) (uuid.UUID, 
 		Object:     &instanceID,
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
-			res := ""
+			res := uuid.Nil
 			_, err := beneath.DB.Query(pg.Scan(&res), `
 				select s.current_stream_instance_id
 				from streams s
@@ -95,9 +95,9 @@ func lookupInstance(instanceID uuid.UUID) (*cachedInstance, error) {
 }
 
 type cachedRole struct {
-	read   bool
-	write  bool
-	manage bool
+	Read   bool
+	Write  bool
+	Manage bool
 }
 
 func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
@@ -107,8 +107,35 @@ func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
 		Object:     &res,
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
-			// TODO
-			return &cachedRole{true, false, false}, nil
+			res := ""
+			_, err := beneath.DB.Query(pg.Scan(&res), `
+				select coalesce(
+					(select k.role
+						from keys k
+						where k.hashed_key = ?0 and k.project_id = ?1
+					),
+					(select 'm' as role
+						from keys k
+						join projects_users pu on k.user_id is not null and k.user_id = pu.user_id
+						where k.hashed_key = ?0 and pu.project_id = ?1
+					),
+					(select '-' as role
+						from keys k
+						where k.hashed_key = ?0
+					),
+					''
+				)
+			`, auth, inst.ProjectID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			return &cachedRole{
+				Read:   res == "r" || res == "rw" || (res == "-" && inst.Public),
+				Write:  res == "rw",
+				Manage: res == "m",
+			}, nil
 		},
 	})
 	if err != nil {

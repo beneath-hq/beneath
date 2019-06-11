@@ -57,7 +57,7 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if !role.read {
+	if !role.Read {
 		return NewHTTPError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -65,7 +65,7 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 	// Read from BT in accordance with how we end up writing it
 	// Support filter, limit, page (see https://docs.hasura.io/1.0/graphql/manual/queries/query-filters.html)
 
-	w.Write([]byte(fmt.Sprintf("Hello Stream Instance %s", instanceID)))
+	w.Write([]byte(fmt.Sprintf("Hello Stream Instance %s", instanceID.String())))
 	return nil
 }
 
@@ -90,7 +90,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if !role.write && !(instance.Manual && role.manage) {
+	if !role.Write && !(instance.Manual && role.Manage) {
 		return NewHTTPError(403, "token doesn't grant right to write to this stream")
 	}
 
@@ -122,6 +122,6 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	*/
 
-	w.Write([]byte(fmt.Sprintf("Wrote Stream Instance %s", instanceID)))
+	w.Write([]byte(fmt.Sprintf("Wrote Stream Instance %s", instanceID.String())))
 	return nil
 }
