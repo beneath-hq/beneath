@@ -7,7 +7,6 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	math "math"
 )
@@ -54,53 +53,59 @@ func (m *WriteRecordResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_WriteRecordResponse proto.InternalMessageInfo
 
-type UUID struct {
-	Value                []byte   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type WriteRecordsRequest struct {
+	InstanceId           []byte    `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	Records              []*Record `protobuf:"bytes,2,rep,name=records,proto3" json:"records,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
-func (m *UUID) Reset()         { *m = UUID{} }
-func (m *UUID) String() string { return proto.CompactTextString(m) }
-func (*UUID) ProtoMessage()    {}
-func (*UUID) Descriptor() ([]byte, []int) {
+func (m *WriteRecordsRequest) Reset()         { *m = WriteRecordsRequest{} }
+func (m *WriteRecordsRequest) String() string { return proto.CompactTextString(m) }
+func (*WriteRecordsRequest) ProtoMessage()    {}
+func (*WriteRecordsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f1a937782ebbded5, []int{1}
 }
 
-func (m *UUID) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UUID.Unmarshal(m, b)
+func (m *WriteRecordsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteRecordsRequest.Unmarshal(m, b)
 }
-func (m *UUID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UUID.Marshal(b, m, deterministic)
+func (m *WriteRecordsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteRecordsRequest.Marshal(b, m, deterministic)
 }
-func (m *UUID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UUID.Merge(m, src)
+func (m *WriteRecordsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteRecordsRequest.Merge(m, src)
 }
-func (m *UUID) XXX_Size() int {
-	return xxx_messageInfo_UUID.Size(m)
+func (m *WriteRecordsRequest) XXX_Size() int {
+	return xxx_messageInfo_WriteRecordsRequest.Size(m)
 }
-func (m *UUID) XXX_DiscardUnknown() {
-	xxx_messageInfo_UUID.DiscardUnknown(m)
+func (m *WriteRecordsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteRecordsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UUID proto.InternalMessageInfo
+var xxx_messageInfo_WriteRecordsRequest proto.InternalMessageInfo
 
-func (m *UUID) GetValue() []byte {
+func (m *WriteRecordsRequest) GetInstanceId() []byte {
 	if m != nil {
-		return m.Value
+		return m.InstanceId
+	}
+	return nil
+}
+
+func (m *WriteRecordsRequest) GetRecords() []*Record {
+	if m != nil {
+		return m.Records
 	}
 	return nil
 }
 
 type Record struct {
-	InstanceId           *UUID                `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	Time                 *timestamp.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
-	SeqNo                uint64               `protobuf:"varint,3,opt,name=seq_no,json=seqNo,proto3" json:"seq_no,omitempty"`
-	AvroData             []byte               `protobuf:"bytes,4,opt,name=avro_data,json=avroData,proto3" json:"avro_data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	SequenceNumber       []byte   `protobuf:"bytes,2,opt,name=sequence_number,json=sequenceNumber,proto3" json:"sequence_number,omitempty"`
+	AvroData             []byte   `protobuf:"bytes,3,opt,name=avro_data,json=avroData,proto3" json:"avro_data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Record) Reset()         { *m = Record{} }
@@ -128,25 +133,11 @@ func (m *Record) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Record proto.InternalMessageInfo
 
-func (m *Record) GetInstanceId() *UUID {
+func (m *Record) GetSequenceNumber() []byte {
 	if m != nil {
-		return m.InstanceId
+		return m.SequenceNumber
 	}
 	return nil
-}
-
-func (m *Record) GetTime() *timestamp.Timestamp {
-	if m != nil {
-		return m.Time
-	}
-	return nil
-}
-
-func (m *Record) GetSeqNo() uint64 {
-	if m != nil {
-		return m.SeqNo
-	}
-	return 0
 }
 
 func (m *Record) GetAvroData() []byte {
@@ -158,32 +149,30 @@ func (m *Record) GetAvroData() []byte {
 
 func init() {
 	proto.RegisterType((*WriteRecordResponse)(nil), "proto.WriteRecordResponse")
-	proto.RegisterType((*UUID)(nil), "proto.UUID")
+	proto.RegisterType((*WriteRecordsRequest)(nil), "proto.WriteRecordsRequest")
 	proto.RegisterType((*Record)(nil), "proto.Record")
 }
 
 func init() { proto.RegisterFile("gateway.proto", fileDescriptor_f1a937782ebbded5) }
 
 var fileDescriptor_f1a937782ebbded5 = []byte{
-	// 282 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x90, 0x41, 0x4b, 0xfb, 0x40,
-	0x10, 0xc5, 0xff, 0xf9, 0x9b, 0x46, 0x9d, 0xb4, 0x97, 0xd5, 0x62, 0x88, 0x82, 0x25, 0xa7, 0x0a,
-	0xb2, 0x85, 0x7a, 0xf3, 0x58, 0x2a, 0xd2, 0x8b, 0x94, 0xc5, 0xe2, 0x31, 0x4c, 0x9a, 0x31, 0x06,
-	0xdb, 0xdd, 0x34, 0xbb, 0x6d, 0xf1, 0xab, 0xf8, 0x69, 0x25, 0xbb, 0x09, 0x78, 0xf0, 0xb4, 0xbc,
-	0x9d, 0x37, 0x8f, 0xdf, 0x3c, 0x18, 0x14, 0x68, 0xe8, 0x88, 0x5f, 0xbc, 0xaa, 0x95, 0x51, 0xac,
-	0x67, 0x9f, 0xf8, 0xb6, 0x50, 0xaa, 0xd8, 0xd0, 0xc4, 0xaa, 0x6c, 0xff, 0x3e, 0x31, 0xe5, 0x96,
-	0xb4, 0xc1, 0x6d, 0xe5, 0x7c, 0xc9, 0x10, 0x2e, 0xde, 0xea, 0xd2, 0x90, 0xa0, 0xb5, 0xaa, 0x73,
-	0x41, 0xba, 0x52, 0x52, 0x53, 0x72, 0x03, 0xfe, 0x6a, 0xb5, 0x98, 0xb3, 0x4b, 0xe8, 0x1d, 0x70,
-	0xb3, 0xa7, 0xc8, 0x1b, 0x79, 0xe3, 0xbe, 0x70, 0x22, 0xf9, 0xf6, 0x20, 0x70, 0x0b, 0xec, 0x1e,
-	0xc2, 0x52, 0x6a, 0x83, 0x72, 0x4d, 0x69, 0x99, 0x5b, 0x5b, 0x38, 0x0d, 0x5d, 0x38, 0x6f, 0x22,
-	0x04, 0x74, 0xf3, 0x45, 0xce, 0x38, 0xf8, 0x0d, 0x40, 0xf4, 0xdf, 0xda, 0x62, 0xee, 0xe8, 0x78,
-	0x47, 0xc7, 0x5f, 0x3b, 0x3a, 0x61, 0x7d, 0x6c, 0x08, 0x81, 0xa6, 0x5d, 0x2a, 0x55, 0x74, 0x32,
-	0xf2, 0xc6, 0xbe, 0xe8, 0x69, 0xda, 0xbd, 0x28, 0x76, 0x0d, 0xe7, 0x78, 0xa8, 0x55, 0x9a, 0xa3,
-	0xc1, 0xc8, 0xb7, 0x64, 0x67, 0xcd, 0xc7, 0x1c, 0x0d, 0x4e, 0x9f, 0xe0, 0xf4, 0xd9, 0x55, 0xc1,
-	0x1e, 0x21, 0xfc, 0x75, 0x1c, 0x1b, 0xb4, 0x58, 0x4e, 0xc6, 0x71, 0x2b, 0xff, 0xba, 0xff, 0xdf,
-	0xec, 0x0e, 0xae, 0x24, 0x99, 0xa3, 0xaa, 0x3f, 0x79, 0x46, 0x92, 0xd0, 0x7c, 0xf0, 0xb6, 0xe1,
-	0x59, 0xbf, 0xcd, 0x5f, 0x36, 0xeb, 0x4b, 0x2f, 0x0b, 0x6c, 0xce, 0xc3, 0x4f, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0xaf, 0xdb, 0x6f, 0xc8, 0x83, 0x01, 0x00, 0x00,
+	// 243 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x90, 0xcf, 0x4a, 0x03, 0x31,
+	0x10, 0x87, 0xdd, 0x16, 0x5b, 0x9d, 0x6e, 0x15, 0x22, 0xe2, 0x52, 0x0f, 0x96, 0xbd, 0xb4, 0x5e,
+	0xf6, 0x50, 0xdf, 0xa0, 0x08, 0xea, 0xa5, 0x94, 0x78, 0xf0, 0xb8, 0xcc, 0x36, 0x83, 0x2e, 0x62,
+	0x52, 0x93, 0xa9, 0xc5, 0xb7, 0x97, 0xfc, 0x59, 0x51, 0xe8, 0x29, 0xf0, 0x4d, 0xe6, 0x9b, 0x99,
+	0x1f, 0x8c, 0x5f, 0x91, 0x69, 0x8f, 0xdf, 0xd5, 0xd6, 0x1a, 0x36, 0xe2, 0x38, 0x3c, 0xe5, 0x25,
+	0x5c, 0xbc, 0xd8, 0x96, 0x49, 0xd2, 0xc6, 0x58, 0x25, 0xc9, 0x6d, 0x8d, 0x76, 0x54, 0xd6, 0xff,
+	0xb0, 0x93, 0xf4, 0xb9, 0x23, 0xc7, 0xe2, 0x06, 0x46, 0xad, 0x76, 0x8c, 0x7a, 0x43, 0x75, 0xab,
+	0x8a, 0x6c, 0x9a, 0xcd, 0x73, 0x09, 0x1d, 0x7a, 0x52, 0x62, 0x06, 0x43, 0x1b, 0x5b, 0x8a, 0xde,
+	0xb4, 0x3f, 0x1f, 0x2d, 0xc6, 0x71, 0x5c, 0x95, 0xfc, 0x5d, 0xb5, 0x5c, 0xc1, 0x20, 0x22, 0x31,
+	0x83, 0x73, 0xe7, 0xf5, 0xde, 0xa9, 0x77, 0x1f, 0x0d, 0xd9, 0xa2, 0x17, 0xbc, 0x67, 0x1d, 0x5e,
+	0x05, 0x2a, 0xae, 0xe1, 0x14, 0xbf, 0xac, 0xa9, 0x15, 0x32, 0x16, 0xfd, 0xf0, 0xe5, 0xc4, 0x83,
+	0x7b, 0x64, 0x5c, 0x3c, 0xc3, 0xf0, 0x21, 0xde, 0x27, 0x1e, 0x21, 0xff, 0xbb, 0xbb, 0x98, 0xa4,
+	0x15, 0x0e, 0x1c, 0x34, 0x39, 0x50, 0xfb, 0xcd, 0xe0, 0x68, 0x79, 0x0b, 0x57, 0x9a, 0x78, 0x6f,
+	0xec, 0x7b, 0xd5, 0x90, 0x26, 0xe4, 0xb7, 0x2a, 0x85, 0xb8, 0xcc, 0xd3, 0xb4, 0xb5, 0x6f, 0x5f,
+	0x67, 0xcd, 0x20, 0x78, 0xee, 0x7e, 0x02, 0x00, 0x00, 0xff, 0xff, 0x99, 0x0d, 0xf6, 0xa1, 0x66,
+	0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -198,7 +187,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type GatewayClient interface {
-	WriteRecord(ctx context.Context, in *Record, opts ...grpc.CallOption) (*WriteRecordResponse, error)
+	WriteRecords(ctx context.Context, in *WriteRecordsRequest, opts ...grpc.CallOption) (*WriteRecordResponse, error)
 }
 
 type gatewayClient struct {
@@ -209,9 +198,9 @@ func NewGatewayClient(cc *grpc.ClientConn) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) WriteRecord(ctx context.Context, in *Record, opts ...grpc.CallOption) (*WriteRecordResponse, error) {
+func (c *gatewayClient) WriteRecords(ctx context.Context, in *WriteRecordsRequest, opts ...grpc.CallOption) (*WriteRecordResponse, error) {
 	out := new(WriteRecordResponse)
-	err := c.cc.Invoke(ctx, "/proto.Gateway/WriteRecord", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.Gateway/WriteRecords", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -220,27 +209,27 @@ func (c *gatewayClient) WriteRecord(ctx context.Context, in *Record, opts ...grp
 
 // GatewayServer is the server API for Gateway service.
 type GatewayServer interface {
-	WriteRecord(context.Context, *Record) (*WriteRecordResponse, error)
+	WriteRecords(context.Context, *WriteRecordsRequest) (*WriteRecordResponse, error)
 }
 
 func RegisterGatewayServer(s *grpc.Server, srv GatewayServer) {
 	s.RegisterService(&_Gateway_serviceDesc, srv)
 }
 
-func _Gateway_WriteRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Record)
+func _Gateway_WriteRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteRecordsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).WriteRecord(ctx, in)
+		return srv.(GatewayServer).WriteRecords(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Gateway/WriteRecord",
+		FullMethod: "/proto.Gateway/WriteRecords",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).WriteRecord(ctx, req.(*Record))
+		return srv.(GatewayServer).WriteRecords(ctx, req.(*WriteRecordsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -250,8 +239,8 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "WriteRecord",
-			Handler:    _Gateway_WriteRecord_Handler,
+			MethodName: "WriteRecords",
+			Handler:    _Gateway_WriteRecords_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

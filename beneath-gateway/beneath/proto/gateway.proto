@@ -6,22 +6,19 @@ option java_outer_classname = "GatewayProto";
 
 package proto;
 
-import "google/protobuf/timestamp.proto";
-
 service Gateway {
-  rpc WriteRecord(Record) returns (WriteRecordResponse) {}
+  rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordResponse) {}
 }
 
 message WriteRecordResponse {
 }
 
-message UUID {
-  bytes value = 1;
+message WriteRecordsRequest {
+  bytes instance_id = 1;
+  repeated Record records = 2;
 }
 
 message Record {
-  UUID instance_id = 1;
-  google.protobuf.Timestamp time = 2;
-  uint64 seq_no = 3;
-  bytes avro_data = 4;
+  bytes sequence_number = 2;
+  bytes avro_data = 3;
 }

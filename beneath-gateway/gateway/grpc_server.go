@@ -18,12 +18,15 @@ func ListenAndServeGRPC(port int) error {
 
 	server := grpc.NewServer()
 	proto.RegisterGatewayServer(server, &gRPCServer{})
+
+	// TODO: Authentication
+
 	return server.Serve(lis)
 }
 
 // gRPCServer implements proto.GatewayServer
 type gRPCServer struct{}
 
-func (s *gRPCServer) WriteRecord(ctx context.Context, in *proto.Record) (*proto.WriteRecordResponse, error) {
+func (s *gRPCServer) WriteRecords(ctx context.Context, in *proto.WriteRecordsRequest) (*proto.WriteRecordResponse, error) {
 	return &proto.WriteRecordResponse{}, nil
 }
