@@ -64,7 +64,7 @@ Page.propTypes = {
   title: PropTypes.string,
   sidebar: PropTypes.object,
   maxWidth: PropTypes.oneOf([false, "xs", "sm", "md", "lg", "xl"]),
-  contentMarginTop: PropTypes.oneOf([null, "dense", "normal"]),
+  contentMarginTop: PropTypes.oneOf([null, "dense", "normal", "hero"]),
 };
 
 export default Page;
