@@ -54,7 +54,7 @@ func lookupCurrentInstanceID(projectName string, streamName string) (uuid.UUID, 
 		},
 	})
 	if err != nil {
-		log.Panic("lookupCurrentInstanceID error: %v", err)
+		log.Panicf("lookupCurrentInstanceID error: %v", err)
 	}
 	if instanceID == uuid.Nil {
 		return uuid.Nil, errors.New("stream not found")
@@ -88,7 +88,7 @@ func lookupInstance(instanceID uuid.UUID) (*cachedInstance, error) {
 		},
 	})
 	if err != nil {
-		log.Panic("lookupInstance error: %v", err)
+		log.Panicf("lookupInstance error: %v", err)
 	}
 	if instance.ProjectID == uuid.Nil {
 		return nil, errors.New("instance not found")
@@ -102,10 +102,10 @@ type cachedRole struct {
 	Manage bool
 }
 
-func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
+func lookupRole(auth Auth, inst *cachedInstance) (*cachedRole, error) {
 	res := &cachedRole{}
 	err := codec.Once(&cache.Item{
-		Key:        fmt.Sprintf("gw:r:%s:%s", auth, inst.ProjectID),
+		Key:        fmt.Sprintf("gw:r:%s:%s", string(auth), inst.ProjectID),
 		Object:     &res,
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
@@ -127,7 +127,7 @@ func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
 					),
 					''
 				)
-			`, auth, inst.ProjectID)
+			`, string(auth), inst.ProjectID)
 
 			if err != nil {
 				return nil, err
@@ -141,7 +141,7 @@ func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
 		},
 	})
 	if err != nil {
-		log.Panic("lookupRole error: %v", err)
+		log.Panicf("lookupRole error: %v", err)
 	}
 	return res, nil
 }

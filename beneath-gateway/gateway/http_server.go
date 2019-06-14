@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -15,6 +16,11 @@ func ListenAndServeHTTP(port int) error {
 
 func httpHandler() http.Handler {
 	handler := chi.NewRouter()
+
+	// handler.Use(middleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	handler.Use(middleware.Logger)
+	handler.Use(middleware.Recoverer)
+	handler.Use(authMiddleware)
 
 	// TODO: Add graphql
 	// GraphQL endpoints
@@ -30,12 +36,10 @@ func httpHandler() http.Handler {
 }
 
 func getFromInstance(w http.ResponseWriter, r *http.Request) error {
-	auth, err := parseAuth(r)
-	if err != nil {
-		return err
-	}
+	auth := getAuth(r.Context())
 
 	var instanceID uuid.UUID
+	var err error
 	instanceIDStr := chi.URLParam(r, "instanceID")
 	if instanceIDStr != "" {
 		instanceID, err = uuid.FromString(instanceIDStr)
@@ -74,10 +78,7 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 }
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
-	auth, err := parseAuth(r)
-	if err != nil {
-		return err
-	}
+	auth := getAuth(r.Context())
 
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
 	if err != nil {

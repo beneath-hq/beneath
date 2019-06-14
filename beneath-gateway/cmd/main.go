@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/beneath-core/beneath-gateway/beneath"
@@ -19,13 +18,13 @@ func main() {
 
 	// http server
 	group.Go(func() error {
-		fmt.Printf("HTTP server running on port %d\n", httpPort)
+		log.Printf("HTTP server running on port %d\n", httpPort)
 		return gateway.ListenAndServeHTTP(httpPort)
 	})
 
 	// gRPC server
 	group.Go(func() error {
-		fmt.Printf("gRPC server running on port %d\n", grpcPort)
+		log.Printf("gRPC server running on port %d\n", grpcPort)
 		return gateway.ListenAndServeGRPC(grpcPort)
 	})
 

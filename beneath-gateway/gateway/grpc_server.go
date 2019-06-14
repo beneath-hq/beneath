@@ -5,8 +5,15 @@ import (
 	"fmt"
 	"net"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+
 	"github.com/beneath-core/beneath-gateway/beneath/proto"
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ListenAndServeGRPC serves a gRPC API
@@ -16,10 +23,17 @@ func ListenAndServeGRPC(port int) error {
 		return err
 	}
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(
+			grpc_auth.UnaryServerInterceptor(authInterceptor),
+			grpc_recovery.UnaryServerInterceptor(),
+		),
+		grpc_middleware.WithStreamServerChain(
+			grpc_auth.StreamServerInterceptor(authInterceptor),
+			grpc_recovery.StreamServerInterceptor(),
+		),
+	)
 	proto.RegisterGatewayServer(server, &gRPCServer{})
-
-	// TODO: Authentication
 
 	return server.Serve(lis)
 }
@@ -27,6 +41,27 @@ func ListenAndServeGRPC(port int) error {
 // gRPCServer implements proto.GatewayServer
 type gRPCServer struct{}
 
-func (s *gRPCServer) WriteRecords(ctx context.Context, in *proto.WriteRecordsRequest) (*proto.WriteRecordResponse, error) {
+func (s *gRPCServer) WriteRecords(ctx context.Context, req *proto.WriteRecordsRequest) (*proto.WriteRecordResponse, error) {
+	auth := getAuth(ctx)
+
+	instanceID, err := uuid.FromBytes(req.InstanceId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "InstanceId not valid UUID")
+	}
+
+	instance, err := lookupInstance(instanceID)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	role, err := lookupRole(auth, instance)
+	if err != nil {
+		return nil, grpc.Errorf(codes.NotFound, err.Error())
+	}
+
+	if !role.Write {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
+	}
+
 	return &proto.WriteRecordResponse{}, nil
 }
