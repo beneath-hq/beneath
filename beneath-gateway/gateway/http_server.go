@@ -8,8 +8,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// HTTPServer returns a HTTP handler
-func HTTPServer() http.Handler {
+// ListenAndServeHTTP serves a HTTP API
+func ListenAndServeHTTP(port int) error {
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), httpHandler())
+}
+
+func httpHandler() http.Handler {
 	handler := chi.NewRouter()
 
 	// TODO: Add graphql
