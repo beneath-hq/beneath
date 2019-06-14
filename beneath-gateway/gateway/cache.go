@@ -1,7 +1,9 @@
 package gateway
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/beneath-core/beneath-gateway/beneath"
@@ -52,10 +54,10 @@ func lookupCurrentInstanceID(projectName string, streamName string) (uuid.UUID, 
 		},
 	})
 	if err != nil {
-		return uuid.Nil, NewHTTPError(500, err.Error())
+		log.Panic("lookupCurrentInstanceID error: %v", err)
 	}
 	if instanceID == uuid.Nil {
-		return uuid.Nil, NewHTTPError(404, "stream not found")
+		return uuid.Nil, errors.New("stream not found")
 	}
 	return instanceID, nil
 }
@@ -86,10 +88,10 @@ func lookupInstance(instanceID uuid.UUID) (*cachedInstance, error) {
 		},
 	})
 	if err != nil {
-		return nil, NewHTTPError(500, err.Error())
+		log.Panic("lookupInstance error: %v", err)
 	}
 	if instance.ProjectID == uuid.Nil {
-		return nil, NewHTTPError(404, "instance not found")
+		return nil, errors.New("instance not found")
 	}
 	return instance, nil
 }
@@ -139,7 +141,7 @@ func lookupRole(auth string, inst *cachedInstance) (*cachedRole, error) {
 		},
 	})
 	if err != nil {
-		return nil, NewHTTPError(500, err.Error())
+		log.Panic("lookupRole error: %v", err)
 	}
 	return res, nil
 }

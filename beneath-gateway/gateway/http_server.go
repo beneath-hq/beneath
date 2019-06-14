@@ -47,18 +47,18 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 		streamName := chi.URLParam(r, "streamName")
 		instanceID, err = lookupCurrentInstanceID(projectName, streamName)
 		if err != nil {
-			return err
+			return NewHTTPError(404, err.Error())
 		}
 	}
 
 	instance, err := lookupInstance(instanceID)
 	if err != nil {
-		return err
+		return NewHTTPError(404, err.Error())
 	}
 
 	role, err := lookupRole(auth, instance)
 	if err != nil {
-		return err
+		return NewHTTPError(404, err.Error())
 	}
 
 	if !role.Read {
@@ -86,12 +86,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	instance, err := lookupInstance(instanceID)
 	if err != nil {
-		return err
+		return NewHTTPError(404, err.Error())
 	}
 
 	role, err := lookupRole(auth, instance)
 	if err != nil {
-		return err
+		return NewHTTPError(404, err.Error())
 	}
 
 	if !role.Write && !(instance.Manual && role.Manage) {
