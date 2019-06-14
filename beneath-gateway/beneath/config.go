@@ -10,7 +10,8 @@ import (
 // ConfigSpecification defines the config variables to load from ENV
 // See https://github.com/kelseyhightower/envconfig
 type ConfigSpecification struct {
-	Port              int    `envconfig:"PORT" default:"5000"`
+	HTTPPort          int    `envconfig:"HTTP_PORT" default:"5000"`
+	GRPCPort          int    `envconfig:"GRPC_PORT" default:"50051"`
 	StreamsPlatform   string `envconfig:"STREAMS_PLATFORM" required:"true"`
 	TablesPlatform    string `envconfig:"TABLES_PLATFORM" required:"true"`
 	WarehousePlatform string `envconfig:"WAREHOUSE_PLATFORM" required:"true"`

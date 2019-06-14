@@ -8,8 +8,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// GetHandler returns a HTTP handler
-func GetHandler() http.Handler {
+// HTTPServer returns a HTTP handler
+func HTTPServer() http.Handler {
 	handler := chi.NewRouter()
 
 	// TODO: Add graphql
@@ -94,6 +94,25 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return NewHTTPError(403, "token doesn't grant right to write to this stream")
 	}
 
+	return nil
+
+	// var body interface{}
+	// err = json.NewDecoder(r.Body).Decode(&body)
+	// if err != nil {
+	// 	return NewHTTPError(400, "request body must be json")
+	// }
+
+	//
+
+	// err = beneath.WriteItem(instanceID, schema, data, eventTime, seqNo)
+	// if err != nil {
+	// 	if inputerr, ok := err.(*beneath.WriteInputError); ok {
+	// 		return NewHTTPError(400, inputerr.Error())
+	// 	} else {
+	// 		return NewHTTPError(500, err.Error())
+	// 	}
+	// }
+
 	// SPEC
 	// - Get schema for stream
 	// - Read payload (JSON) and encode with schema
@@ -105,6 +124,9 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		- data (json)
 		- timestamp: default now
 		- seq no: default random
+
+		- eventTime
+		- seqNo
 
 		PAYLOAD TO PUBSUB
 		- streamInstanceId
@@ -121,7 +143,4 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		- ksuid, updated_on, fields_in_data (on bigger than previous ksuid)
 
 	*/
-
-	w.Write([]byte(fmt.Sprintf("Wrote Stream Instance %s", instanceID.String())))
-	return nil
 }
