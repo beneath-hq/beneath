@@ -9,7 +9,7 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
-	"github.com/beneath-core/beneath-gateway/beneath/proto"
+	pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -38,10 +38,10 @@ func ListenAndServeGRPC(port int) error {
 	return server.Serve(lis)
 }
 
-// gRPCServer implements proto.GatewayServer
+// gRPCServer implements pb.GatewayServer
 type gRPCServer struct{}
 
-func (s *gRPCServer) WriteRecords(ctx context.Context, req *proto.WriteRecordsRequest) (*proto.WriteRecordResponse, error) {
+func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordResponse, error) {
 	auth := getAuth(ctx)
 
 	instanceID, err := uuid.FromBytes(req.InstanceId)
@@ -63,5 +63,5 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *proto.WriteRecordsRe
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
-	return &proto.WriteRecordResponse{}, nil
+	return &pb.WriteRecordResponse{}, nil
 }
