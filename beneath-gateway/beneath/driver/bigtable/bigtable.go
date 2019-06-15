@@ -13,7 +13,7 @@ type configSpecification struct {
 	InstanceID string `envconfig:"INSTANCE_ID" required:"true"`
 }
 
-// Bigtable contains the connection info for the platform
+// Bigtable implements beneath.TablesDriver
 type Bigtable struct {
 	name string
 }
@@ -33,7 +33,17 @@ func New() *Bigtable {
 	return p
 }
 
-// GetName identifies the platform
+// GetName implements beneath.TablesDriver
 func (p *Bigtable) GetName() string {
 	return p.name
+}
+
+// GetMaxKeySize implements beneath.TablesDriver
+func (p *Bigtable) GetMaxKeySize() int {
+	return 2048
+}
+
+// GetMaxDataSize implements beneath.TablesDriver
+func (p *Bigtable) GetMaxDataSize() int {
+	return 1000000
 }

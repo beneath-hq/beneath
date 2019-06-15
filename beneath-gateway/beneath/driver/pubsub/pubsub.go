@@ -13,7 +13,7 @@ type configSpecification struct {
 	InstanceID string `envconfig:"INSTANCE_ID" required:"true"`
 }
 
-// Pubsub contains the connection info for the platform
+// Pubsub implements beneath.StreamsDriver
 type Pubsub struct {
 	name string
 }
@@ -33,7 +33,18 @@ func New() *Pubsub {
 	return p
 }
 
-// GetName identifies the platform
+// GetName implements beneath.StreamsDriver
 func (p *Pubsub) GetName() string {
 	return p.name
+}
+
+// GetMaxMessageSize implements beneath.StreamsDriver
+func (p *Pubsub) GetMaxMessageSize() int {
+	return 10000000
+}
+
+// PushWriteRequest implements beneath.StreamsDriver
+func (p *Pubsub) PushWriteRequest(data []byte) error {
+	// TODO
+	return nil
 }
