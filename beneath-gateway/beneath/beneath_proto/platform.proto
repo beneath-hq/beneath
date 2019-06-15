@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "network.beneath.proto";
+option java_outer_classname = "BeneathProto";
+
+package beneath_proto;
+
+message EncodedRecord {
+  bytes sequence_number = 1;
+  bytes key = 2;
+  bytes data = 3;
+}
+
+message WriteEncodedRecordsRequest {
+  bytes instance_id = 1;
+  repeated EncodedRecord records = 2;
+}

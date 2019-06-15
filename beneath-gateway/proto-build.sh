@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-protoc -I beneath/proto/ beneath/proto/gateway.proto --go_out=plugins=grpc:beneath/proto
+protoc -I beneath/beneath_proto/ beneath/beneath_proto/*.proto --go_out=plugins=grpc:beneath/beneath_proto
