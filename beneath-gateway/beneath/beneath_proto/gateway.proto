@@ -6,9 +6,10 @@ option java_outer_classname = "BeneathProto";
 
 package beneath_proto;
 
-import "platform.proto";
+import "engine.proto";
 
 service Gateway {
+
   rpc WriteEncodedRecords(WriteEncodedRecordsRequest) returns (WriteEncodedRecordsResponse) {}
 }
 
