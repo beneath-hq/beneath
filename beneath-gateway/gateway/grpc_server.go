@@ -33,7 +33,7 @@ func ListenAndServeGRPC(port int) error {
 			grpc_recovery.StreamServerInterceptor(),
 		),
 	)
-	proto.RegisterGatewayServer(server, &gRPCServer{})
+	pb.RegisterGatewayServer(server, &gRPCServer{})
 
 	return server.Serve(lis)
 }
@@ -41,7 +41,7 @@ func ListenAndServeGRPC(port int) error {
 // gRPCServer implements pb.GatewayServer
 type gRPCServer struct{}
 
-func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordResponse, error) {
+func (s *gRPCServer) WriteEncodedRecords(ctx context.Context, req *pb.WriteEncodedRecordsRequest) (*pb.WriteEncodedRecordsResponse, error) {
 	auth := getAuth(ctx)
 
 	instanceID, err := uuid.FromBytes(req.InstanceId)
@@ -63,5 +63,10 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
-	return &pb.WriteRecordResponse{}, nil
+	err = engine.QueueWrite(req)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	return &pb.WriteEncodedRecordsResponse{}, nil
 }
