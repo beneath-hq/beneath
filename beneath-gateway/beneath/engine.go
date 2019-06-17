@@ -48,7 +48,7 @@ func NewEngine() *Engine {
 }
 
 // QueueWrite todo
-func (e *Engine) QueueWrite(req *pb.WriteEncodedRecordsRequest) error {
+func (e *Engine) QueueWrite(req *pb.WriteInternalRecordsRequest) error {
 	// validate instanceID
 	if uuid.FromBytesOrNil(req.InstanceId) == uuid.Nil {
 		return errors.New("invalid instanceId")
@@ -65,18 +65,18 @@ func (e *Engine) QueueWrite(req *pb.WriteEncodedRecordsRequest) error {
 		}
 
 		// check encoded key length
-		if len(record.Key) == 0 || len(record.Key) > e.Tables.GetMaxKeySize() {
+		if len(record.EncodedKey) == 0 || len(record.EncodedKey) > e.Tables.GetMaxKeySize() {
 			return fmt.Errorf(
 				"record at index %d has invalid key size <%d bytes> (max key size is <%d bytes>)",
-				idx, len(record.Key), e.Tables.GetMaxKeySize(),
+				idx, len(record.EncodedKey), e.Tables.GetMaxKeySize(),
 			)
 		}
 
 		// check encoded data length
-		if len(record.Data) > e.Tables.GetMaxDataSize() {
+		if len(record.EncodedData) > e.Tables.GetMaxDataSize() {
 			return fmt.Errorf(
 				"record at index %d has invalid size <%d bytes> (max key size is <%d bytes>)",
-				idx, len(record.Data), e.Tables.GetMaxDataSize(),
+				idx, len(record.EncodedData), e.Tables.GetMaxDataSize(),
 			)
 		}
 	}
@@ -84,7 +84,7 @@ func (e *Engine) QueueWrite(req *pb.WriteEncodedRecordsRequest) error {
 	// encode message
 	encoded, err := proto.Marshal(req)
 	if err != nil {
-		log.Panicf("error marshalling WriteEncodedRecordsRequest: %v", err)
+		log.Panicf("error marshalling WriteInternalRecordsRequest: %v", err)
 	}
 
 	// check encoded message size

@@ -41,7 +41,12 @@ func ListenAndServeGRPC(port int) error {
 // gRPCServer implements pb.GatewayServer
 type gRPCServer struct{}
 
-func (s *gRPCServer) WriteEncodedRecords(ctx context.Context, req *pb.WriteEncodedRecordsRequest) (*pb.WriteEncodedRecordsResponse, error) {
+func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
+	// TODO
+	return &pb.WriteRecordsResponse{}, nil
+}
+
+func (s *gRPCServer) WriteInternalRecords(ctx context.Context, req *pb.WriteInternalRecordsRequest) (*pb.WriteInternalRecordsResponse, error) {
 	auth := getAuth(ctx)
 
 	instanceID, err := uuid.FromBytes(req.InstanceId)
@@ -68,5 +73,5 @@ func (s *gRPCServer) WriteEncodedRecords(ctx context.Context, req *pb.WriteEncod
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	return &pb.WriteEncodedRecordsResponse{}, nil
+	return &pb.WriteInternalRecordsResponse{}, nil
 }

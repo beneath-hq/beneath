@@ -6,13 +6,25 @@ option java_outer_classname = "BeneathProto";
 
 package beneath_proto;
 
-message EncodedRecord {
-  bytes sequence_number = 1;
-  bytes key = 2;
-  bytes data = 3;
+import "google/protobuf/struct.proto";
+
+message Record {
+  google.protobuf.Struct data = 1;
+  uint64 sequence_number = 2;
 }
 
-message WriteEncodedRecordsRequest {
+message WriteRecordsRequest {
   bytes instance_id = 1;
-  repeated EncodedRecord records = 2;
+  repeated Record records = 2;
+}
+
+message InternalRecord {
+  bytes encoded_key = 1;
+  bytes encoded_data = 2;
+  bytes sequence_number = 3;
+}
+
+message WriteInternalRecordsRequest {
+  bytes instance_id = 1;
+  repeated InternalRecord records = 2;
 }

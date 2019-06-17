@@ -9,9 +9,12 @@ package beneath_proto;
 import "engine.proto";
 
 service Gateway {
-
-  rpc WriteEncodedRecords(WriteEncodedRecordsRequest) returns (WriteEncodedRecordsResponse) {}
+  rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
+  rpc WriteInternalRecords(WriteInternalRecordsRequest) returns (WriteInternalRecordsResponse) {}
 }
 
-message WriteEncodedRecordsResponse {
+message WriteRecordsResponse {
+}
+
+message WriteInternalRecordsResponse {
 }

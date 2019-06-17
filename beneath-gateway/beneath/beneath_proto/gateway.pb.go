@@ -22,55 +22,89 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type WriteEncodedRecordsResponse struct {
+type WriteRecordsResponse struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *WriteEncodedRecordsResponse) Reset()         { *m = WriteEncodedRecordsResponse{} }
-func (m *WriteEncodedRecordsResponse) String() string { return proto.CompactTextString(m) }
-func (*WriteEncodedRecordsResponse) ProtoMessage()    {}
-func (*WriteEncodedRecordsResponse) Descriptor() ([]byte, []int) {
+func (m *WriteRecordsResponse) Reset()         { *m = WriteRecordsResponse{} }
+func (m *WriteRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*WriteRecordsResponse) ProtoMessage()    {}
+func (*WriteRecordsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f1a937782ebbded5, []int{0}
 }
 
-func (m *WriteEncodedRecordsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_WriteEncodedRecordsResponse.Unmarshal(m, b)
+func (m *WriteRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteRecordsResponse.Unmarshal(m, b)
 }
-func (m *WriteEncodedRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_WriteEncodedRecordsResponse.Marshal(b, m, deterministic)
+func (m *WriteRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteRecordsResponse.Marshal(b, m, deterministic)
 }
-func (m *WriteEncodedRecordsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WriteEncodedRecordsResponse.Merge(m, src)
+func (m *WriteRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteRecordsResponse.Merge(m, src)
 }
-func (m *WriteEncodedRecordsResponse) XXX_Size() int {
-	return xxx_messageInfo_WriteEncodedRecordsResponse.Size(m)
+func (m *WriteRecordsResponse) XXX_Size() int {
+	return xxx_messageInfo_WriteRecordsResponse.Size(m)
 }
-func (m *WriteEncodedRecordsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_WriteEncodedRecordsResponse.DiscardUnknown(m)
+func (m *WriteRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteRecordsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_WriteEncodedRecordsResponse proto.InternalMessageInfo
+var xxx_messageInfo_WriteRecordsResponse proto.InternalMessageInfo
+
+type WriteInternalRecordsResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteInternalRecordsResponse) Reset()         { *m = WriteInternalRecordsResponse{} }
+func (m *WriteInternalRecordsResponse) String() string { return proto.CompactTextString(m) }
+func (*WriteInternalRecordsResponse) ProtoMessage()    {}
+func (*WriteInternalRecordsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f1a937782ebbded5, []int{1}
+}
+
+func (m *WriteInternalRecordsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteInternalRecordsResponse.Unmarshal(m, b)
+}
+func (m *WriteInternalRecordsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteInternalRecordsResponse.Marshal(b, m, deterministic)
+}
+func (m *WriteInternalRecordsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteInternalRecordsResponse.Merge(m, src)
+}
+func (m *WriteInternalRecordsResponse) XXX_Size() int {
+	return xxx_messageInfo_WriteInternalRecordsResponse.Size(m)
+}
+func (m *WriteInternalRecordsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteInternalRecordsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteInternalRecordsResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*WriteEncodedRecordsResponse)(nil), "beneath_proto.WriteEncodedRecordsResponse")
+	proto.RegisterType((*WriteRecordsResponse)(nil), "beneath_proto.WriteRecordsResponse")
+	proto.RegisterType((*WriteInternalRecordsResponse)(nil), "beneath_proto.WriteInternalRecordsResponse")
 }
 
 func init() { proto.RegisterFile("gateway.proto", fileDescriptor_f1a937782ebbded5) }
 
 var fileDescriptor_f1a937782ebbded5 = []byte{
-	// 157 bytes of a gzipped FileDescriptorProto
+	// 187 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4d, 0x4f, 0x2c, 0x49,
 	0x2d, 0x4f, 0xac, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x4d, 0x4a, 0xcd, 0x4b, 0x4d,
 	0x2c, 0xc9, 0x88, 0x07, 0x73, 0xa5, 0x78, 0x52, 0xf3, 0xd2, 0x33, 0xf3, 0x52, 0x21, 0x92, 0x4a,
-	0xb2, 0x5c, 0xd2, 0xe1, 0x45, 0x99, 0x25, 0xa9, 0xae, 0x79, 0xc9, 0xf9, 0x29, 0xa9, 0x29, 0x41,
-	0xa9, 0xc9, 0xf9, 0x45, 0x29, 0xc5, 0x41, 0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x46, 0x95,
-	0x5c, 0xec, 0xee, 0x10, 0xc3, 0x84, 0xf2, 0xb8, 0x84, 0xb1, 0xa8, 0x14, 0xd2, 0xd4, 0x43, 0x31,
-	0x5e, 0x0f, 0xab, 0x69, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x52, 0x5a, 0xc4, 0x28, 0x85, 0x58, 0xac,
-	0xc4, 0xe0, 0xa4, 0xce, 0x25, 0x9a, 0x97, 0x5a, 0x52, 0x9e, 0x5f, 0x94, 0x0d, 0xd3, 0x06, 0x71,
-	0xb2, 0x13, 0x8f, 0x13, 0x84, 0x1b, 0x00, 0xe2, 0x05, 0x30, 0x26, 0xb1, 0x81, 0x85, 0x8d, 0x01,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0x11, 0xfd, 0x86, 0x22, 0xf7, 0x00, 0x00, 0x00,
+	0x62, 0x5c, 0x22, 0xe1, 0x45, 0x99, 0x25, 0xa9, 0x41, 0xa9, 0xc9, 0xf9, 0x45, 0x29, 0xc5, 0x41,
+	0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x4a, 0x72, 0x5c, 0x32, 0x60, 0x71, 0xcf, 0xbc, 0x92,
+	0xd4, 0xa2, 0xbc, 0xc4, 0x1c, 0x34, 0x79, 0xa3, 0xeb, 0x8c, 0x5c, 0xec, 0xee, 0x10, 0x6b, 0x84,
+	0x22, 0xb9, 0x78, 0x90, 0xcd, 0x10, 0x52, 0xd2, 0x43, 0xb1, 0x51, 0x0f, 0xd5, 0x82, 0xc2, 0xd2,
+	0xd4, 0xe2, 0x12, 0x29, 0x65, 0xbc, 0x6a, 0xa0, 0x8e, 0x60, 0x10, 0x2a, 0x84, 0x3a, 0x0f, 0xcd,
+	0x19, 0x42, 0x5a, 0xd8, 0xb4, 0x63, 0xb8, 0x15, 0x62, 0x95, 0x36, 0x51, 0x6a, 0x61, 0x56, 0x3a,
+	0xa9, 0x73, 0x89, 0xe6, 0xa5, 0x96, 0x94, 0xe7, 0x17, 0x65, 0xc3, 0xf4, 0x41, 0x82, 0xca, 0x89,
+	0xc7, 0x09, 0xc2, 0x0d, 0x00, 0xf1, 0x02, 0x18, 0x93, 0xd8, 0xc0, 0xc2, 0xc6, 0x80, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x41, 0xa8, 0x48, 0xb5, 0x6f, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -85,7 +119,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type GatewayClient interface {
-	WriteEncodedRecords(ctx context.Context, in *WriteEncodedRecordsRequest, opts ...grpc.CallOption) (*WriteEncodedRecordsResponse, error)
+	WriteRecords(ctx context.Context, in *WriteRecordsRequest, opts ...grpc.CallOption) (*WriteRecordsResponse, error)
+	WriteInternalRecords(ctx context.Context, in *WriteInternalRecordsRequest, opts ...grpc.CallOption) (*WriteInternalRecordsResponse, error)
 }
 
 type gatewayClient struct {
@@ -96,9 +131,18 @@ func NewGatewayClient(cc *grpc.ClientConn) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) WriteEncodedRecords(ctx context.Context, in *WriteEncodedRecordsRequest, opts ...grpc.CallOption) (*WriteEncodedRecordsResponse, error) {
-	out := new(WriteEncodedRecordsResponse)
-	err := c.cc.Invoke(ctx, "/beneath_proto.Gateway/WriteEncodedRecords", in, out, opts...)
+func (c *gatewayClient) WriteRecords(ctx context.Context, in *WriteRecordsRequest, opts ...grpc.CallOption) (*WriteRecordsResponse, error) {
+	out := new(WriteRecordsResponse)
+	err := c.cc.Invoke(ctx, "/beneath_proto.Gateway/WriteRecords", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) WriteInternalRecords(ctx context.Context, in *WriteInternalRecordsRequest, opts ...grpc.CallOption) (*WriteInternalRecordsResponse, error) {
+	out := new(WriteInternalRecordsResponse)
+	err := c.cc.Invoke(ctx, "/beneath_proto.Gateway/WriteInternalRecords", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,27 +151,46 @@ func (c *gatewayClient) WriteEncodedRecords(ctx context.Context, in *WriteEncode
 
 // GatewayServer is the server API for Gateway service.
 type GatewayServer interface {
-	WriteEncodedRecords(context.Context, *WriteEncodedRecordsRequest) (*WriteEncodedRecordsResponse, error)
+	WriteRecords(context.Context, *WriteRecordsRequest) (*WriteRecordsResponse, error)
+	WriteInternalRecords(context.Context, *WriteInternalRecordsRequest) (*WriteInternalRecordsResponse, error)
 }
 
 func RegisterGatewayServer(s *grpc.Server, srv GatewayServer) {
 	s.RegisterService(&_Gateway_serviceDesc, srv)
 }
 
-func _Gateway_WriteEncodedRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WriteEncodedRecordsRequest)
+func _Gateway_WriteRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteRecordsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).WriteEncodedRecords(ctx, in)
+		return srv.(GatewayServer).WriteRecords(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/beneath_proto.Gateway/WriteEncodedRecords",
+		FullMethod: "/beneath_proto.Gateway/WriteRecords",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).WriteEncodedRecords(ctx, req.(*WriteEncodedRecordsRequest))
+		return srv.(GatewayServer).WriteRecords(ctx, req.(*WriteRecordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_WriteInternalRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteInternalRecordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).WriteInternalRecords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/beneath_proto.Gateway/WriteInternalRecords",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).WriteInternalRecords(ctx, req.(*WriteInternalRecordsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -137,8 +200,12 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "WriteEncodedRecords",
-			Handler:    _Gateway_WriteEncodedRecords_Handler,
+			MethodName: "WriteRecords",
+			Handler:    _Gateway_WriteRecords_Handler,
+		},
+		{
+			MethodName: "WriteInternalRecords",
+			Handler:    _Gateway_WriteInternalRecords_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
