@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golang/protobuf/proto"
 	uuid "github.com/satori/go.uuid"
 
 	pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
@@ -56,14 +55,6 @@ func (e *Engine) QueueWrite(req *pb.WriteInternalRecordsRequest) error {
 
 	// validate records
 	for idx, record := range req.Records {
-		// check sequence number
-		if len(record.SequenceNumber) > sequenceNumberSize {
-			return fmt.Errorf(
-				"record at index %d has invalid sequence number <%x>",
-				record.SequenceNumber, idx,
-			)
-		}
-
 		// check encoded key length
 		if len(record.EncodedKey) == 0 || len(record.EncodedKey) > e.Tables.GetMaxKeySize() {
 			return fmt.Errorf(
@@ -81,21 +72,7 @@ func (e *Engine) QueueWrite(req *pb.WriteInternalRecordsRequest) error {
 		}
 	}
 
-	// encode message
-	encoded, err := proto.Marshal(req)
-	if err != nil {
-		log.Panicf("error marshalling WriteInternalRecordsRequest: %v", err)
-	}
-
-	// check encoded message size
-	if len(encoded) > e.Streams.GetMaxMessageSize() {
-		return fmt.Errorf(
-			"write request has invalid size <%d> (max message size is <%d bytes>)",
-			len(encoded), e.Streams.GetMaxMessageSize(),
-		)
-	}
-
 	// push to queue
-	err = e.Streams.PushWriteRequest(encoded)
+	err := e.Streams.PushWriteRequest(req)
 	return err
 }
