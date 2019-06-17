@@ -89,7 +89,8 @@ const readTokenFromCookie = (maybeReq) => {
   if (cookie) {
     cookie = cookie.split(";").find((c) => c.trim().startsWith("token="));
     if (cookie) {
-      token = cookie.split("=")[1];
+      token = cookie.replace(/^\s*token=/, "");
+      token = decodeURIComponent(token);
       if (token.length == 0) {
         token = null;
       }

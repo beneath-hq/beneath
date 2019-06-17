@@ -110,7 +110,7 @@ const applyGoogle = (app: express.Express) => {
 
 const handleSuccessRedirect = (req: IAuthenticatedRequest, res) => {
   const token = req.auth.key.keyString;
-  res.redirect(`${successRedirect}/?token=${token}`);
+  res.redirect(`${successRedirect}/?token=${encodeURIComponent(token)}`);
 };
 
 const handleProfile = async (serviceName: "github"|"google", profile: any, done: any) => {

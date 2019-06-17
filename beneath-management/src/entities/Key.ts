@@ -29,7 +29,7 @@ export class Key extends BaseEntity {
   @Column({ length: 4, nullable: false })
   public prefix: string;
 
-  @Column({ length: 64, name: "hashed_key", nullable: false })
+  @Column({ length: 44, name: "hashed_key", nullable: false })
   @Index("IDX_UQ_KEYS_HASHED_KEY", { unique: true })
   public hashedKey: string;
 
@@ -71,8 +71,8 @@ export class Key extends BaseEntity {
     return buffer.toString("base64");
   }
 
-  public static hashKey(key) {
-    return crypto.createHash("sha256").update(key).digest("base64");
+  public static hashKey(key: string) {
+    return crypto.createHash("sha256").update(new Buffer(key, "base64")).digest().toString("base64");
   }
 
   public static newKey() {
