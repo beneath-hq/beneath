@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.40.0
+	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg v8.0.4+incompatible
 	github.com/go-redis/cache v6.4.0+incompatible

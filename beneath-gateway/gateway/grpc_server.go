@@ -56,17 +56,17 @@ func (s *gRPCServer) WriteInternalRecords(ctx context.Context, req *pb.WriteInte
 		return nil, status.Error(codes.InvalidArgument, "InstanceId not valid UUID")
 	}
 
-	instance, err := lookupInstance(instanceID)
+	stream, err := StreamCache.Get(instanceID)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	role, err := lookupRole(auth, instance)
+	role, err := RoleCache.Get(string(auth), stream.ProjectID)
 	if err != nil {
 		return nil, grpc.Errorf(codes.NotFound, err.Error())
 	}
 
-	if !role.Write {
+	if !role.Write && !(stream.Manual && role.Manage) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 

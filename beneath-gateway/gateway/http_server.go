@@ -51,23 +51,23 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 	} else {
 		projectName := chi.URLParam(r, "projectName")
 		streamName := chi.URLParam(r, "streamName")
-		instanceID, err = lookupCurrentInstanceID(projectName, streamName)
+		instanceID, err = InstanceCache.Get(projectName, streamName)
 		if err != nil {
 			return NewHTTPError(404, err.Error())
 		}
 	}
 
-	instance, err := lookupInstance(instanceID)
+	stream, err := StreamCache.Get(instanceID)
 	if err != nil {
 		return NewHTTPError(404, err.Error())
 	}
 
-	role, err := lookupRole(auth, instance)
+	role, err := RoleCache.Get(string(auth), stream.ProjectID)
 	if err != nil {
 		return NewHTTPError(404, err.Error())
 	}
 
-	if !role.Read {
+	if !role.Read || !(stream.Public && role.ReadPublic) {
 		return NewHTTPError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -87,17 +87,17 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return NewHTTPError(404, "instance not found -- malformed ID")
 	}
 
-	instance, err := lookupInstance(instanceID)
+	stream, err := StreamCache.Get(instanceID)
 	if err != nil {
 		return NewHTTPError(404, err.Error())
 	}
 
-	role, err := lookupRole(auth, instance)
+	role, err := RoleCache.Get(string(auth), stream.ProjectID)
 	if err != nil {
 		return NewHTTPError(404, err.Error())
 	}
 
-	if !role.Write && !(instance.Manual && role.Manage) {
+	if !role.Write && !(stream.Manual && role.Manage) {
 		return NewHTTPError(403, "token doesn't grant right to write to this stream")
 	}
 
