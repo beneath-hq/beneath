@@ -6,9 +6,9 @@ import (
 	"log"
 
 	"cloud.google.com/go/pubsub"
-	pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
+	"github.com/beneath-core/beneath-gateway/beneath/core"
+	pb "github.com/beneath-core/beneath-gateway/beneath/proto"
 	"github.com/golang/protobuf/proto"
-	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -31,10 +31,7 @@ type Pubsub struct {
 func New() *Pubsub {
 	// parse config from env
 	var config configSpecification
-	err := envconfig.Process("beneath_pubsub", &config)
-	if err != nil {
-		log.Fatalf("pubsub: %s", err.Error())
-	}
+	core.LoadConfig("beneath_pubsub", &config)
 
 	// prepare pubsub client
 	client, err := pubsub.NewClient(context.Background(), config.ProjectID)

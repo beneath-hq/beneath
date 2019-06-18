@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -11,6 +12,7 @@ import (
 
 // ListenAndServeHTTP serves a HTTP API
 func ListenAndServeHTTP(port int) error {
+	log.Printf("HTTP server running on port %d\n", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), httpHandler())
 }
 

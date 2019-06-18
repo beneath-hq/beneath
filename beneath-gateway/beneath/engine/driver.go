@@ -1,6 +1,6 @@
-package beneath
+package engine
 
-import pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
+import pb "github.com/beneath-core/beneath-gateway/beneath/proto"
 
 // StreamsDriver defines the functions necessary to encapsulate Beneath's streaming data needs
 type StreamsDriver interface {

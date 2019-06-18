@@ -3,13 +3,14 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
-	pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
+	pb "github.com/beneath-core/beneath-gateway/beneath/proto"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -35,6 +36,7 @@ func ListenAndServeGRPC(port int) error {
 	)
 	pb.RegisterGatewayServer(server, &gRPCServer{})
 
+	log.Printf("gRPC server running on port %d\n", port)
 	return server.Serve(lis)
 }
 
@@ -68,7 +70,7 @@ func (s *gRPCServer) WriteInternalRecords(ctx context.Context, req *pb.WriteInte
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
-	err = engine.QueueWrite(req)
+	err = Engine.QueueWrite(req)
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}

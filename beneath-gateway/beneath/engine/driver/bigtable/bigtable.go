@@ -1,10 +1,6 @@
 package bigtable
 
-import (
-	"log"
-
-	"github.com/kelseyhightower/envconfig"
-)
+import "github.com/beneath-core/beneath-gateway/beneath/core"
 
 // configSpecification defines the config variables to load from ENV
 // See https://github.com/kelseyhightower/envconfig
@@ -22,10 +18,7 @@ type Bigtable struct {
 func New() *Bigtable {
 	// parse config from env
 	var config configSpecification
-	err := envconfig.Process("beneath_bigtable", &config)
-	if err != nil {
-		log.Fatalf("bigtable: %s", err.Error())
-	}
+	core.LoadConfig("beneath_bigtable", &config)
 
 	// create instance
 	p := &Bigtable{}

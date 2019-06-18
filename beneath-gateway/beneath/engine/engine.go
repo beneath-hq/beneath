@@ -1,4 +1,4 @@
-package beneath
+package engine
 
 import (
 	"errors"
@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	pb "github.com/beneath-core/beneath-gateway/beneath/beneath_proto"
-	"github.com/beneath-core/beneath-gateway/beneath/driver/bigtable"
-	"github.com/beneath-core/beneath-gateway/beneath/driver/pubsub"
+	"github.com/beneath-core/beneath-gateway/beneath/engine/driver/bigtable"
+	"github.com/beneath-core/beneath-gateway/beneath/engine/driver/pubsub"
+	pb "github.com/beneath-core/beneath-gateway/beneath/proto"
 )
 
 const (
@@ -23,23 +23,23 @@ type Engine struct {
 }
 
 // NewEngine creates a new Engine instance
-func NewEngine() *Engine {
+func NewEngine(streamsDriver string, tablesDriver string) *Engine {
 	engine := &Engine{}
 
 	// init Streams
-	switch Config.StreamsPlatform {
+	switch streamsDriver {
 	case "pubsub":
 		engine.Streams = pubsub.New()
 	default:
-		log.Fatalf("invalid streams platform %s", Config.StreamsPlatform)
+		log.Fatalf("invalid streams platform %s", streamsDriver)
 	}
 
 	// init Tables
-	switch Config.TablesPlatform {
+	switch tablesDriver {
 	case "bigtable":
 		engine.Tables = bigtable.New()
 	default:
-		log.Fatalf("invalid tables platform %s", Config.TablesPlatform)
+		log.Fatalf("invalid tables platform %s", tablesDriver)
 	}
 
 	// done

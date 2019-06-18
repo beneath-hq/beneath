@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/beneath-core/beneath-gateway/beneath"
+	"github.com/beneath-core/beneath-gateway/beneath/management"
 	"github.com/go-pg/pg"
 	"github.com/go-redis/cache"
 	uuid "github.com/satori/go.uuid"
@@ -25,7 +25,7 @@ var (
 
 func init() {
 	codec = &cache.Codec{
-		Redis: beneath.Redis,
+		Redis: management.Redis,
 		Marshal: func(v interface{}) ([]byte, error) {
 			return msgpack.Marshal(v)
 		},
@@ -44,7 +44,7 @@ func lookupCurrentInstanceID(projectName string, streamName string) (uuid.UUID, 
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
 			res := uuid.Nil
-			_, err := beneath.DB.Query(pg.Scan(&res), `
+			_, err := management.DB.Query(pg.Scan(&res), `
 				select s.current_stream_instance_id
 				from streams s
 				join projects p on s.project_id = p.project_id
@@ -77,7 +77,7 @@ func lookupInstance(instanceID uuid.UUID) (*cachedInstance, error) {
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
 			res := &cachedInstance{}
-			_, err := beneath.DB.Query(res, `
+			_, err := management.DB.Query(res, `
 				select p.public, s.manual, s.project_id, s.avro_schema
 				from stream_instances si
 				join streams s on si.stream_id = s.stream_id
@@ -110,7 +110,7 @@ func lookupRole(auth Auth, inst *cachedInstance) (*cachedRole, error) {
 		Expiration: cacheTime,
 		Func: func() (interface{}, error) {
 			res := ""
-			_, err := beneath.DB.Query(pg.Scan(&res), `
+			_, err := management.DB.Query(pg.Scan(&res), `
 				select coalesce(
 					(select k.role
 						from keys k
