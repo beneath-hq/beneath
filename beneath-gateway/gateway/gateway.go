@@ -3,6 +3,7 @@ package gateway
 import (
 	"github.com/beneath-core/beneath-gateway/beneath/core"
 	"github.com/beneath-core/beneath-gateway/beneath/engine"
+	"github.com/beneath-core/beneath-gateway/beneath/management"
 )
 
 type configSpecification struct {
@@ -26,4 +27,5 @@ var (
 func init() {
 	core.LoadConfig("beneath", &Config)
 	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver)
+	management.Init(Config.PostgresURL, Config.RedisURL)
 }
