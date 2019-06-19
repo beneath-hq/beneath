@@ -2,9 +2,9 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "network.beneath.proto";
-option java_outer_classname = "BeneathProto";
+option java_outer_classname = "Proto";
 
-package beneath_proto;
+package proto;
 
 import "google/protobuf/struct.proto";
 
@@ -21,7 +21,7 @@ message WriteRecordsRequest {
 message InternalRecord {
   bytes encoded_key = 1;
   bytes encoded_data = 2;
-  bytes sequence_number = 3;
+  uint64 sequence_number = 3;
 }
 
 message WriteInternalRecordsRequest {

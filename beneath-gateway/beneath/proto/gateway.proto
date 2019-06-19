@@ -4,7 +4,7 @@ option java_multiple_files = true;
 option java_package = "network.beneath.proto";
 option java_outer_classname = "BeneathProto";
 
-package beneath_proto;
+package proto;
 
 import "engine.proto";
 
