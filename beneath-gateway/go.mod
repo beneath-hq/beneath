@@ -4,11 +4,13 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.40.0
+	github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg v8.0.4+incompatible
 	github.com/go-redis/cache v6.4.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
+	github.com/go-test/deep v1.0.1
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0 // indirect
@@ -24,6 +26,7 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/stretchr/testify v1.3.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/arch v0.0.0-20190312162104-788fe5ffcd8c // indirect
