@@ -10,7 +10,7 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
-	pb "github.com/beneath-core/beneath-gateway/beneath/proto"
+	pb "github.com/beneath-core/beneath-gateway/proto"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

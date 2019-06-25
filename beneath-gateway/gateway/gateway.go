@@ -1,9 +1,9 @@
 package gateway
 
 import (
-	"github.com/beneath-core/beneath-gateway/beneath/core"
-	"github.com/beneath-core/beneath-gateway/beneath/engine"
-	"github.com/beneath-core/beneath-gateway/beneath/management"
+	"github.com/beneath-core/beneath-gateway/core"
+	"github.com/beneath-core/beneath-gateway/engine"
+	"github.com/beneath-core/beneath-gateway/management"
 )
 
 type configSpecification struct {

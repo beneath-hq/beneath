@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/beneath-gateway/beneath/engine/driver/bigtable"
-	"github.com/beneath-core/beneath-gateway/beneath/engine/driver/pubsub"
-	pb "github.com/beneath-core/beneath-gateway/beneath/proto"
+	"github.com/beneath-core/beneath-gateway/engine/driver/bigtable"
+	"github.com/beneath-core/beneath-gateway/engine/driver/pubsub"
+	pb "github.com/beneath-core/beneath-gateway/proto"
 )
 
 const (

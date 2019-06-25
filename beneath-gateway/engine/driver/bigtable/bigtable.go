@@ -1,6 +1,6 @@
 package bigtable
 
-import "github.com/beneath-core/beneath-gateway/beneath/core"
+import "github.com/beneath-core/beneath-gateway/core"
 
 // configSpecification defines the config variables to load from ENV
 // See https://github.com/kelseyhightower/envconfig
