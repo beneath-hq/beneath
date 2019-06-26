@@ -4,6 +4,9 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.40.0
+	github.com/alecthomas/kong v0.2.0
+	github.com/alecthomas/participle v0.3.0
+	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1
 	github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -11,6 +14,7 @@ require (
 	github.com/go-redis/cache v6.4.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-test/deep v1.0.1
+	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.1
 	github.com/google/btree v1.0.0 // indirect
