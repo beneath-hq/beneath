@@ -8,6 +8,7 @@ import (
 
 var globalParser *participle.Parser
 
+// GetParser returns a concurrency-safe global SDL parser
 func GetParser() *participle.Parser {
 	if globalParser == nil {
 		globalParser = NewParser()
@@ -15,6 +16,7 @@ func GetParser() *participle.Parser {
 	return globalParser
 }
 
+// NewParser creates a new SDL parser
 func NewParser() *participle.Parser {
 	sdlLexer := lexer.Must(ebnf.New(`
 		Comment = ("#" | "//") { "\u0000"…"\uffff"-"\n"-"\r" } .
@@ -39,21 +41,25 @@ func NewParser() *participle.Parser {
 	)
 }
 
+// File is top-level input
 type File struct {
 	Declarations []*Declaration `@@*`
 }
 
+// Declaration is a "type ..." or "enum ..."
 type Declaration struct {
 	Pos  lexer.Position
 	Enum *Enum `  @@`
 	Type *Type `| @@`
 }
 
+// Enum declaration
 type Enum struct {
 	Name    string   `"enum" @Ident`
 	Members []string `"{" @Ident* "}"`
 }
 
+// Type declaration
 type Type struct {
 	Doc         string        "@String?"
 	Name        string        `"type" @Ident`
@@ -61,22 +67,26 @@ type Type struct {
 	Fields      []*Field      `"{" @@* "}"`
 }
 
+// Field is member of Type
 type Field struct {
 	Name string   `@Ident`
 	Type *TypeRef `":" @@`
 }
 
+// Annotation on Type
 type Annotation struct {
 	Name      string      `"@" @Ident`
 	Arguments []*Argument `("(" (@@ ("," @@)*)? ")")?`
 }
 
+// Argument to an Annotation
 type Argument struct {
 	Pos   lexer.Position
 	Name  string `@Ident`
 	Value *Value `":" @@`
 }
 
+// TypeRef is type of Field
 type TypeRef struct {
 	Pos      lexer.Position
 	Array    *TypeRef `(   "[" @@ "]"`
@@ -84,6 +94,7 @@ type TypeRef struct {
 	Required bool     `@"!"?`
 }
 
+// Value is passed to an Argument in an Annotation
 type Value struct {
 	String string   "  @String"
 	Number float64  "| @Number"

@@ -7,28 +7,33 @@ import (
 	"github.com/golang-collections/collections/set"
 )
 
+// Compiler represents a single compilation input
 type Compiler struct {
 	input        string
 	ast          *File
 	declarations map[string]*Declaration
-	streams      map[string]*stream
+	streams      map[string]*streamInfo
 }
 
-func NewCompiler(schema string) Compiler {
-	return Compiler{
+// NewCompiler creates a new Compiler for schema -- don't forget to call Compile()
+func NewCompiler(schema string) *Compiler {
+	return &Compiler{
 		input:        schema,
 		ast:          &File{},
 		declarations: make(map[string]*Declaration),
-		streams:      make(map[string]*stream),
+		streams:      make(map[string]*streamInfo),
 	}
 }
 
-type stream struct {
+type streamInfo struct {
 	name        string
+	typeName    string
 	key         []string
+	external    bool
 	declaration *Declaration
 }
 
+// Compile parses the schema (given in NewCompiler)
 func (c *Compiler) Compile() error {
 	// parse ast
 	err := GetParser().ParseString(c.input, c.ast)
@@ -62,7 +67,7 @@ func (c *Compiler) Compile() error {
 		// parse stream and save
 		s, err := c.parseStream(declaration)
 		if s != nil {
-			c.streams[s.name] = s
+			c.streams[s.typeName] = s
 		}
 		if err != nil {
 			return err
@@ -72,6 +77,15 @@ func (c *Compiler) Compile() error {
 	// check there's at least one stream
 	if len(c.streams) == 0 {
 		return fmt.Errorf("no streams declared in input")
+	}
+
+	// check no stream names are declared twice
+	streamNamesSeen := make(map[string]bool, len(c.streams))
+	for _, s := range c.streams {
+		if streamNamesSeen[s.name] {
+			return fmt.Errorf("stream name '%v' used twice", s.name)
+		}
+		streamNamesSeen[s.name] = true
 	}
 
 	// type check declarations
@@ -84,16 +98,78 @@ func (c *Compiler) Compile() error {
 		}
 	}
 
+	// check field names of types and enums
+	for _, declaration := range c.declarations {
+		// check enum names not declared twice
+		if declaration.Enum != nil {
+			members := make(map[string]bool)
+			for _, name := range declaration.Enum.Members {
+				if members[name] {
+					return fmt.Errorf("member '%v' declared twice in enum '%v'", name, declaration.Enum.Name)
+				}
+				members[name] = true
+			}
+		}
+
+		// check type field names and stream keys
+		if declaration.Type != nil {
+			// check not declared twice
+			fields := make(map[string]*TypeRef, len(declaration.Type.Fields))
+			for _, field := range declaration.Type.Fields {
+				if fields[field.Name] != nil {
+					return fmt.Errorf("field '%v' declared twice in type '%v'", field.Name, declaration.Type.Name)
+				}
+				fields[field.Name] = field.Type
+			}
+
+			// if it's a stream, check key fields a) exist, b) not used twice, c) are primitive, d) not optional
+			stream := c.streams[declaration.Type.Name]
+			if stream != nil {
+				keysSeen := make(map[string]bool, len(stream.key))
+				for _, key := range stream.key {
+					// check it exists
+					if fields[key] == nil {
+						return fmt.Errorf("field '%v' in key doesn't exist in type '%v'", key, declaration.Type.Name)
+					}
+
+					// check not used twice
+					if keysSeen[key] {
+						return fmt.Errorf("field '%v' used twice in key for type '%v'", key, declaration.Type.Name)
+					}
+					keysSeen[key] = true
+
+					// check it has a primitive type
+					if !c.isIndexableType(fields[key]) {
+						return fmt.Errorf("field '%v' in type '%v' cannot be used as key", key, declaration.Type.Name)
+					}
+
+					// check not optional
+					if !fields[key].Required {
+						return fmt.Errorf("field '%v' in type '%v' cannot be used as key because it is optional", key, declaration.Type.Name)
+					}
+				}
+			}
+		}
+	}
+
 	// done
 	return nil
 }
 
 // type checks declaration
 func (c *Compiler) checkDeclaration(d *Declaration, seen map[string]bool, path *set.Set) error {
-	// no checks for enums
-	if d.Type == nil {
+	// separate check for enum
+	if d.Enum != nil {
+		// check has more than one member
+		if len(d.Enum.Members) == 0 {
+			return fmt.Errorf("enum '%v' must have at least one member", d.Enum.Name)
+		}
+
+		// done for enums
 		return nil
 	}
+
+	// proceeding means d.Type != nil
 
 	// check circular type
 	if path.Has(d.Type.Name) {
@@ -105,6 +181,11 @@ func (c *Compiler) checkDeclaration(d *Declaration, seen map[string]bool, path *
 		return nil
 	}
 	seen[d.Type.Name] = true
+
+	// check fields not empty
+	if len(d.Type.Fields) == 0 {
+		return fmt.Errorf("type '%v' does not define any fields", d.Type.Name)
+	}
 
 	// check types
 	path.Insert(d.Type.Name)
@@ -128,15 +209,7 @@ func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set
 	}
 
 	// if primitive, approve
-	if tr.Type == "Boolean" ||
-		tr.Type == "Int" ||
-		tr.Type == "Int32" ||
-		tr.Type == "Int64" ||
-		tr.Type == "Float" ||
-		tr.Type == "Float32" ||
-		tr.Type == "Float64" ||
-		tr.Type == "Bytes" ||
-		tr.Type == "String" {
+	if c.isPrimitiveType(tr) {
 		return nil
 	}
 
@@ -149,8 +222,38 @@ func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set
 	return c.checkDeclaration(c.declarations[tr.Type], seen, path)
 }
 
+// returns true iff primitive
+func (c *Compiler) isPrimitiveType(tr *TypeRef) bool {
+	if tr.Array != nil {
+		return false
+	}
+
+	return (tr.Type == "Boolean" ||
+		tr.Type == "Int" ||
+		tr.Type == "Int32" ||
+		tr.Type == "Int64" ||
+		tr.Type == "Float" ||
+		tr.Type == "Float32" ||
+		tr.Type == "Float64" ||
+		tr.Type == "Numeric" ||
+		tr.Type == "Timestamp" ||
+		tr.Type == "Bytes" ||
+		tr.Type == "Bytes20" ||
+		tr.Type == "String")
+}
+
+// returns true iff can be used in an index or as a key
+func (c *Compiler) isIndexableType(tr *TypeRef) bool {
+	return c.isPrimitiveType(tr) && (tr.Type == "Int" ||
+		tr.Type == "Int32" ||
+		tr.Type == "Int64" ||
+		tr.Type == "Timestamp" ||
+		tr.Type == "Bytes" ||
+		tr.Type == "String")
+}
+
 // parse declaration as stream if it has a stream annotation
-func (c *Compiler) parseStream(declaration *Declaration) (*stream, error) {
+func (c *Compiler) parseStream(declaration *Declaration) (*streamInfo, error) {
 	// if not a stream, return empty
 	if declaration.Type == nil || len(declaration.Type.Annotations) == 0 {
 		return nil, nil
@@ -171,6 +274,7 @@ func (c *Compiler) parseStream(declaration *Declaration) (*stream, error) {
 	// read params
 	var streamName string
 	var streamKey []string
+	var streamExternal bool
 	for _, arg := range a.Arguments {
 		switch arg.Name {
 		case "name":
@@ -193,6 +297,14 @@ func (c *Compiler) parseStream(declaration *Declaration) (*stream, error) {
 			} else {
 				return nil, err
 			}
+		case "external":
+			if arg.Value.Symbol == "true" {
+				streamExternal = true
+			} else if arg.Value.Symbol == "false" {
+				streamExternal = false
+			} else {
+				return nil, fmt.Errorf("stream arg 'external' at %v is not a bool", arg.Pos.String())
+			}
 		default:
 			return nil, fmt.Errorf("unknown @stream arg '%v' at %v", arg.Name, arg.Pos.String())
 		}
@@ -207,9 +319,11 @@ func (c *Compiler) parseStream(declaration *Declaration) (*stream, error) {
 	}
 
 	// done
-	return &stream{
+	return &streamInfo{
 		name:        streamName,
+		typeName:    declaration.Type.Name,
 		key:         streamKey,
+		external:    streamExternal,
 		declaration: declaration,
 	}, nil
 }
