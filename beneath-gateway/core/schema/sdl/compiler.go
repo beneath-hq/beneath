@@ -9,40 +9,32 @@ import (
 
 // Compiler represents a single compilation input
 type Compiler struct {
-	input        string
-	ast          *File
-	declarations map[string]*Declaration
-	streams      map[string]*streamInfo
+	Input        string
+	AST          *File
+	Declarations map[string]*Declaration
+	Streams      map[string]*streamInfo
 }
 
 // NewCompiler creates a new Compiler for schema -- don't forget to call Compile()
 func NewCompiler(schema string) *Compiler {
 	return &Compiler{
-		input:        schema,
-		ast:          &File{},
-		declarations: make(map[string]*Declaration),
-		streams:      make(map[string]*streamInfo),
+		Input:        schema,
+		AST:          &File{},
+		Declarations: make(map[string]*Declaration),
+		Streams:      make(map[string]*streamInfo),
 	}
-}
-
-type streamInfo struct {
-	name        string
-	typeName    string
-	key         []string
-	external    bool
-	declaration *Declaration
 }
 
 // Compile parses the schema (given in NewCompiler)
 func (c *Compiler) Compile() error {
 	// parse ast
-	err := GetParser().ParseString(c.input, c.ast)
+	err := GetParser().ParseString(c.Input, c.AST)
 	if err != nil {
 		return fmt.Errorf("parse error: %v", err.Error())
 	}
 
 	// extract type declarations
-	for _, declaration := range c.ast.Declarations {
+	for _, declaration := range c.AST.Declarations {
 		// get name
 		var name string
 		if declaration.Enum != nil {
@@ -57,17 +49,17 @@ func (c *Compiler) Compile() error {
 		}
 
 		// check doesn't exist
-		if c.declarations[name] != nil {
+		if c.Declarations[name] != nil {
 			return fmt.Errorf("name '%v' at %v has already been declared", name, declaration.Pos.String())
 		}
 
 		// save declaration
-		c.declarations[name] = declaration
+		c.Declarations[name] = declaration
 
 		// parse stream and save
 		s, err := c.parseStream(declaration)
 		if s != nil {
-			c.streams[s.typeName] = s
+			c.Streams[s.typeName] = s
 		}
 		if err != nil {
 			return err
@@ -75,13 +67,13 @@ func (c *Compiler) Compile() error {
 	}
 
 	// check there's at least one stream
-	if len(c.streams) == 0 {
+	if len(c.Streams) == 0 {
 		return fmt.Errorf("no streams declared in input")
 	}
 
 	// check no stream names are declared twice
-	streamNamesSeen := make(map[string]bool, len(c.streams))
-	for _, s := range c.streams {
+	streamNamesSeen := make(map[string]bool, len(c.Streams))
+	for _, s := range c.Streams {
 		if streamNamesSeen[s.name] {
 			return fmt.Errorf("stream name '%v' used twice", s.name)
 		}
@@ -91,7 +83,7 @@ func (c *Compiler) Compile() error {
 	// type check declarations
 	seen := make(map[string]bool)
 	path := set.New()
-	for _, declaration := range c.declarations {
+	for _, declaration := range c.Declarations {
 		err := c.checkDeclaration(declaration, seen, path)
 		if err != nil {
 			return err
@@ -99,7 +91,7 @@ func (c *Compiler) Compile() error {
 	}
 
 	// check field names of types and enums
-	for _, declaration := range c.declarations {
+	for _, declaration := range c.Declarations {
 		// check enum names not declared twice
 		if declaration.Enum != nil {
 			members := make(map[string]bool)
@@ -123,7 +115,7 @@ func (c *Compiler) Compile() error {
 			}
 
 			// if it's a stream, check key fields a) exist, b) not used twice, c) are primitive, d) not optional
-			stream := c.streams[declaration.Type.Name]
+			stream := c.Streams[declaration.Type.Name]
 			if stream != nil {
 				keysSeen := make(map[string]bool, len(stream.key))
 				for _, key := range stream.key {
@@ -139,7 +131,7 @@ func (c *Compiler) Compile() error {
 					keysSeen[key] = true
 
 					// check it has a primitive type
-					if !c.isIndexableType(fields[key]) {
+					if !isIndexableType(fields[key]) {
 						return fmt.Errorf("field '%v' in type '%v' cannot be used as key", key, declaration.Type.Name)
 					}
 
@@ -209,49 +201,17 @@ func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set
 	}
 
 	// if primitive, approve
-	if c.isPrimitiveType(tr) {
+	if isPrimitiveType(tr) {
 		return nil
 	}
 
 	// if not custom declared type, error
-	if c.declarations[tr.Type] == nil {
+	if c.Declarations[tr.Type] == nil {
 		return fmt.Errorf("unknown type '%v' at %v", tr.Type, tr.Pos.String())
 	}
 
 	// recurse on type
-	return c.checkDeclaration(c.declarations[tr.Type], seen, path)
-}
-
-// returns true iff primitive
-func (c *Compiler) isPrimitiveType(tr *TypeRef) bool {
-	if tr.Array != nil {
-		return false
-	}
-
-	// TODO
-
-	return (tr.Type == "Boolean" ||
-		tr.Type == "Int" ||
-		tr.Type == "Int32" ||
-		tr.Type == "Int64" ||
-		tr.Type == "Float" ||
-		tr.Type == "Float32" ||
-		tr.Type == "Float64" ||
-		tr.Type == "Numeric" ||
-		tr.Type == "Timestamp" ||
-		tr.Type == "Bytes" ||
-		tr.Type == "Bytes20" ||
-		tr.Type == "String")
-}
-
-// returns true iff can be used in an index or as a key
-func (c *Compiler) isIndexableType(tr *TypeRef) bool {
-	return c.isPrimitiveType(tr) && (tr.Type == "Int" ||
-		tr.Type == "Int32" ||
-		tr.Type == "Int64" ||
-		tr.Type == "Timestamp" ||
-		tr.Type == "Bytes" ||
-		tr.Type == "String")
+	return c.checkDeclaration(c.Declarations[tr.Type], seen, path)
 }
 
 // parse declaration as stream if it has a stream annotation
