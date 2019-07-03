@@ -228,6 +228,8 @@ func (c *Compiler) isPrimitiveType(tr *TypeRef) bool {
 		return false
 	}
 
+	// TODO
+
 	return (tr.Type == "Boolean" ||
 		tr.Type == "Int" ||
 		tr.Type == "Int32" ||
@@ -298,13 +300,7 @@ func (c *Compiler) parseStream(declaration *Declaration) (*streamInfo, error) {
 				return nil, err
 			}
 		case "external":
-			if arg.Value.Symbol == "true" {
-				streamExternal = true
-			} else if arg.Value.Symbol == "false" {
-				streamExternal = false
-			} else {
-				return nil, fmt.Errorf("stream arg 'external' at %v is not a bool", arg.Pos.String())
-			}
+			streamExternal = (arg.Value.Symbol == "true")
 		default:
 			return nil, fmt.Errorf("unknown @stream arg '%v' at %v", arg.Name, arg.Pos.String())
 		}

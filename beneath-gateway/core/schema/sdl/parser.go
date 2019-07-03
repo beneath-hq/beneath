@@ -24,6 +24,7 @@ func NewParser() *participle.Parser {
 				("'" { "\u0000"…"\uffff"-"\\"-"'" | "\\" any } "'")
 			| ("\"" { "\u0000"…"\uffff"-"\\"-"\"" | "\\" any } "\"")
 			.
+		Bool = "true" | "false" .
 		Ident = (alpha | "_") { "_" | alpha | digit } .
 		Number = [ "-" | "+" ] ("." | digit) { "." | digit } .
 		Punct = "!"…"/" | ":"…"@" | "["…` + "\"`\"" + ` | "{"…"~" .
@@ -98,6 +99,6 @@ type TypeRef struct {
 type Value struct {
 	String string   "  @String"
 	Number float64  "| @Number"
-	Symbol string   `| @Ident`
+	Symbol string   `| @Bool`
 	Array  []*Value `| "[" @@ ("," @@)* "]"`
 }

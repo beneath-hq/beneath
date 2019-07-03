@@ -123,7 +123,7 @@ func TestSDL10(t *testing.T) {
 		}
 	`).Compile()
 	assert.NotNil(t, err)
-	assert.Regexp(t, "stream arg 'external' at .* is not a bool", err.Error())
+	assert.Regexp(t, "parse error: .* unexpected \"whatever\" \\(expected .*\\)", err.Error())
 }
 
 func TestSDL11(t *testing.T) {
