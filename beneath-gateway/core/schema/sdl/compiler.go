@@ -12,7 +12,7 @@ type Compiler struct {
 	Input        string
 	AST          *File
 	Declarations map[string]*Declaration
-	Streams      map[string]*streamInfo
+	Streams      map[string]*StreamDef
 }
 
 // NewCompiler creates a new Compiler for schema -- don't forget to call Compile()
@@ -21,8 +21,17 @@ func NewCompiler(schema string) *Compiler {
 		Input:        schema,
 		AST:          &File{},
 		Declarations: make(map[string]*Declaration),
-		Streams:      make(map[string]*streamInfo),
+		Streams:      make(map[string]*StreamDef),
 	}
+}
+
+// GetStream returns the stream found during compilation (must call Compile() first)
+// (will refactor when adding support for multiple stream definitions in one file)
+func (c *Compiler) GetStream() *StreamDef {
+	for _, s := range c.Streams {
+		return s
+	}
+	return nil
 }
 
 // Compile parses the schema (given in NewCompiler)
@@ -59,7 +68,7 @@ func (c *Compiler) Compile() error {
 		// parse stream and save
 		s, err := c.parseStream(declaration)
 		if s != nil {
-			c.Streams[s.typeName] = s
+			c.Streams[s.TypeName] = s
 		}
 		if err != nil {
 			return err
@@ -71,13 +80,18 @@ func (c *Compiler) Compile() error {
 		return fmt.Errorf("no streams declared in input")
 	}
 
+	// (TEMPORARY) require that there's only one stream in the input
+	if len(c.Streams) != 1 {
+		return fmt.Errorf("more than one schema declared in input")
+	}
+
 	// check no stream names are declared twice
 	streamNamesSeen := make(map[string]bool, len(c.Streams))
 	for _, s := range c.Streams {
-		if streamNamesSeen[s.name] {
-			return fmt.Errorf("stream name '%v' used twice", s.name)
+		if streamNamesSeen[s.Name] {
+			return fmt.Errorf("stream name '%v' used twice", s.Name)
 		}
-		streamNamesSeen[s.name] = true
+		streamNamesSeen[s.Name] = true
 	}
 
 	// type check declarations
@@ -117,8 +131,8 @@ func (c *Compiler) Compile() error {
 			// if it's a stream, check key fields a) exist, b) not used twice, c) are primitive, d) not optional
 			stream := c.Streams[declaration.Type.Name]
 			if stream != nil {
-				keysSeen := make(map[string]bool, len(stream.key))
-				for _, key := range stream.key {
+				keysSeen := make(map[string]bool, len(stream.KeyFields))
+				for _, key := range stream.KeyFields {
 					// check it exists
 					if fields[key] == nil {
 						return fmt.Errorf("field '%v' in key doesn't exist in type '%v'", key, declaration.Type.Name)
@@ -215,7 +229,7 @@ func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set
 }
 
 // parse declaration as stream if it has a stream annotation
-func (c *Compiler) parseStream(declaration *Declaration) (*streamInfo, error) {
+func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 	// if not a stream, return empty
 	if declaration.Type == nil || len(declaration.Type.Annotations) == 0 {
 		return nil, nil
@@ -275,11 +289,11 @@ func (c *Compiler) parseStream(declaration *Declaration) (*streamInfo, error) {
 	}
 
 	// done
-	return &streamInfo{
-		name:        streamName,
-		typeName:    declaration.Type.Name,
-		key:         streamKey,
-		external:    streamExternal,
-		declaration: declaration,
+	return &StreamDef{
+		Name:      streamName,
+		TypeName:  declaration.Type.Name,
+		KeyFields: streamKey,
+		External:  streamExternal,
+		Compiler:  c,
 	}, nil
 }
