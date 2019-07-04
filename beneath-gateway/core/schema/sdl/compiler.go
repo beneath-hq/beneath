@@ -80,11 +80,6 @@ func (c *Compiler) Compile() error {
 		return fmt.Errorf("no streams declared in input")
 	}
 
-	// (TEMPORARY) require that there's only one stream in the input
-	if len(c.Streams) != 1 {
-		return fmt.Errorf("more than one schema declared in input")
-	}
-
 	// check no stream names are declared twice
 	streamNamesSeen := make(map[string]bool, len(c.Streams))
 	for _, s := range c.Streams {
@@ -94,10 +89,15 @@ func (c *Compiler) Compile() error {
 		streamNamesSeen[s.Name] = true
 	}
 
+	// (TEMPORARY) require that there's only one stream in the input
+	if len(c.Streams) != 1 {
+		return fmt.Errorf("more than one schema declared in input")
+	}
+
 	// type check declarations
 	seen := make(map[string]bool)
 	path := set.New()
-	for _, declaration := range c.Declarations {
+	for _, declaration := range c.AST.Declarations { // not c.Declarations to ensure deterministic order
 		err := c.checkDeclaration(declaration, seen, path)
 		if err != nil {
 			return err
@@ -209,8 +209,11 @@ func (c *Compiler) checkDeclaration(d *Declaration, seen map[string]bool, path *
 
 // type checks typeRef
 func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set) error {
-	// if array, recurse
+	// if array, check for double-optional, then recurse
 	if tr.Array != nil {
+		if !tr.Array.Required {
+			return fmt.Errorf("type wrapped by list cannot be optional at %v", tr.Pos.String())
+		}
 		return c.checkTypeRef(tr.Array, seen, path)
 	}
 

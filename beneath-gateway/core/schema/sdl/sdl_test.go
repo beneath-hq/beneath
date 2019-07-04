@@ -11,7 +11,7 @@ func TestSDL1(t *testing.T) {
 		type TestA @stream(name: "test-example-1", key: ["aAaa", "aBbb"]) {
 			aAaa: String!
 			aBbb: Timestamp!
-			aCcc: [TestB]
+			aCcc: [TestB!]
 		}
 		type TestB {
 			bAaa: Int
@@ -23,10 +23,10 @@ func TestSDL1(t *testing.T) {
 			Bbb
 			Ccc
 		}
-		type TestD @stream(name: "test-example-2", key: ["aAaa", "aBbb"]) {
+		type TestD {
 			aAaa: String!
 			aBbb: Timestamp!
-			aCcc: [TestA]
+			aCcc: [TestA!]
 		}
 	`).Compile()
 	assert.Nil(t, err)
@@ -194,7 +194,7 @@ func TestSDL16(t *testing.T) {
 	err := NewCompiler(`
 		type TestA @stream(name: "test", key: ["a", "b"]) {
 			a: Int!
-			b: [Int]
+			b: [Int!]
 		}
 	`).Compile()
 	assert.NotNil(t, err)
@@ -279,4 +279,15 @@ func TestSDL23(t *testing.T) {
 	`).Compile()
 	assert.NotNil(t, err)
 	assert.Regexp(t, "member 'TestA' declared twice in enum 'TestE'", err.Error())
+}
+
+func TestSDL24(t *testing.T) {
+	err := NewCompiler(`
+		type TestA @stream(name: "test", key: "a") {
+			a: Int!
+			b: [Int]!
+		}
+	`).Compile()
+	assert.NotNil(t, err)
+	assert.Regexp(t, "type wrapped by list cannot be optional at .*", err.Error())
 }
