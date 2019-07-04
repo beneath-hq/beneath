@@ -57,6 +57,11 @@ func (c *Compiler) Compile() error {
 			return fmt.Errorf("type name '%v' should start with an uppercase letter", name)
 		}
 
+		// check it's not a primitive type name
+		if isPrimitiveTypeName(name) {
+			return fmt.Errorf("declaration of '%v' at %v overlaps with primitive type name", name, declaration.Pos.String())
+		}
+
 		// check doesn't exist
 		if c.Declarations[name] != nil {
 			return fmt.Errorf("name '%v' at %v has already been declared", name, declaration.Pos.String())

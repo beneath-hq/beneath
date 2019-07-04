@@ -291,3 +291,17 @@ func TestSDL24(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Regexp(t, "type wrapped by list cannot be optional at .*", err.Error())
 }
+
+func TestSDL25(t *testing.T) {
+	err := NewCompiler(`
+		type TestA @stream(name: "test", key: "a") {
+			a: Int!
+		}
+		enum Bytes20 {
+			Aa
+			Bb
+		}
+	`).Compile()
+	assert.NotNil(t, err)
+	assert.Regexp(t, "declaration of 'Bytes20' at .* overlaps with primitive type name", err.Error())
+}
