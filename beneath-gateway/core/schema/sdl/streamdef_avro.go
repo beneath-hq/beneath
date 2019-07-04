@@ -70,7 +70,7 @@ func (s *StreamDef) buildAvroTypeRef(tr *TypeRef, definedNames map[string]bool) 
 		avro = s.buildAvroTypeName(tr.Type, definedNames)
 	}
 
-	if tr.Required {
+	if !tr.Required {
 		return []interface{}{
 			"null",
 			avro,
