@@ -1,15 +1,20 @@
 package sdl
 
-import "regexp"
+import (
+	"regexp"
+	"strconv"
+)
 
 var (
 	primitiveRegex *regexp.Regexp
 	indexableRegex *regexp.Regexp
+	splitRegex     *regexp.Regexp
 )
 
 func init() {
 	primitiveRegex = regexp.MustCompile(makePrimitiveRegex())
 	indexableRegex = regexp.MustCompile(makeIndexableRegex())
+	splitRegex = regexp.MustCompile(makeSplitRegex())
 }
 
 func makePrimitiveRegex() string {
@@ -41,12 +46,21 @@ func makeIndexableRegex() string {
 		")$")
 }
 
+func makeSplitRegex() string {
+	return "^([a-zA-Z]+)([1-9][0-9]*)?$"
+}
+
 // returns true iff primitive
 func isPrimitiveType(tr *TypeRef) bool {
 	if tr.Array != nil {
 		return false
 	}
-	return primitiveRegex.MatchString(tr.Type)
+	return isPrimitiveTypeName(tr.Type)
+}
+
+// same as isPrimitiveType, but for type string
+func isPrimitiveTypeName(n string) bool {
+	return primitiveRegex.MatchString(n)
 }
 
 // returns true iff can be used in an index or as a key
@@ -54,5 +68,19 @@ func isIndexableType(tr *TypeRef) bool {
 	if tr.Array != nil {
 		return false
 	}
-	return indexableRegex.MatchString(tr.Type)
+	return isIndexableTypeName(tr.Type)
+}
+
+// same as isIndexableType, but for type string
+func isIndexableTypeName(n string) bool {
+	return indexableRegex.MatchString(n)
+}
+
+func splitPrimitiveName(name string) (base string, arg int) {
+	matches := splitRegex.FindStringSubmatch(name)
+	if len(matches) == 3 {
+		base = matches[1]
+		arg, _ = strconv.Atoi(matches[2])
+	}
+	return base, arg
 }
