@@ -7,22 +7,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Note: use fixed20 twice and see if name causes error
+
 func TestAvro1(t *testing.T) {
 	c := NewCompiler(`
-		type TestA @stream(name: "test-example-1", key: ["aAaa", "aBbb"]) {
-			aAaa: String!
-			aBbb: Timestamp!
-			aCcc: [TestB]
+		type TestA @stream(name: "test", key: ["a", "b"]) {
+			a: String!
+			b: Timestamp!
+			c: [TestB!]
+			d: TestC!
+			e: Bytes20
 		}
 		type TestB {
-			bAaa: Int
-			bBbb: Bytes
-			bCcc: TestC!
+			a: Int
+			b: Bytes
+			c: TestC!
+			d: Bytes20
 		}
 		enum TestC {
-			Aaa
-			Bbb
-			Ccc
+			Aa
+			Bb
+			Cc
 		}
 	`)
 
@@ -33,6 +38,7 @@ func TestAvro1(t *testing.T) {
 	assert.NotNil(t, s)
 
 	avro, err := s.BuildAvroSchema(true)
+	// log.Printf(avro)
 	assert.Nil(t, err)
 	assert.NotNil(t, avro)
 
