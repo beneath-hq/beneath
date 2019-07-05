@@ -1,0 +1,16 @@
+{
+  "editor.formatOnPaste": true,
+  "editor.tabSize": 2,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/venv": true
+  },
+  "go.formatTool": "goimports",
+  "go.testFlags": [
+    "-v"
+  ],
+  "go.vetFlags": [
+    "-structtag=false"
+  ],
+  "tslint.jsEnable": true
+}

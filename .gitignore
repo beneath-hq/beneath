@@ -8,7 +8,6 @@ __pycache__
 .next
 .Python
 .tox
-.vscode
 *.code-workspace
 *.egg-info
 *.pyc
@@ -25,3 +24,4 @@ tmp
 TODO
 venv
 yarn-error.log
+.vscode/launch.json
