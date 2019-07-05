@@ -1,7 +1,6 @@
 package sdl
 
 import (
-	"log"
 	"testing"
 
 	"cloud.google.com/go/bigquery"
@@ -48,7 +47,6 @@ func TestBigQuery1(t *testing.T) {
 	json, err := s.BuildBigQuerySchema()
 	assert.Nil(t, err)
 	assert.NotNil(t, json)
-	log.Printf("%v", json)
 
 	schema, err := bigquery.SchemaFromJSON([]byte(json))
 	assert.Nil(t, err)
