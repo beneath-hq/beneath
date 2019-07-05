@@ -15,21 +15,18 @@ type Codec struct {
 }
 
 // NewCodec creates a new Codec
-func NewCodec(schemaJSON string) (*Codec, error) {
+func NewCodec(avroSchema string, indexes [][]string) (*Codec, error) {
 	codec := &Codec{}
+	codec.indexes = indexes
 
-	err := json.Unmarshal([]byte(schemaJSON), &codec.avroSchema)
+	// parse avro schema
+	err := json.Unmarshal([]byte(avroSchema), &codec.avroSchema)
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal schema: %v", err.Error())
 	}
 
-	ValidateSchema(codec.avroSchema)
-
-	indexes := codec.avroSchema["indexes"].([][]string)
-	codec.indexes = indexes
-	delete(codec.avroSchema, "indexes")
-
-	codec.avroCodec, err = goavro.NewCodec(schemaJSON)
+	// create avro codec
+	codec.avroCodec, err = goavro.NewCodec(avroSchema)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create avro codec: %v", err.Error())
 	}

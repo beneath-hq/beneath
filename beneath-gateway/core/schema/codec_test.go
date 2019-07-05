@@ -12,15 +12,12 @@ func TestSimple(t *testing.T) {
 	codec, err := NewCodec(`{
 		"name": "test",
 		"type": "record",
-		"indexes": [
-			["key_one"]
-		],
 		"fields": [
 			{"name": "key_one", "type": "string"},
 			{"name": "val_one", "type": "string"},
 			{"name": "val_two", "type": "long"}
 		]
-	}`)
+	}`, [][]string{[]string{"key_one"}})
 	assert.Nil(t, err)
 
 	valueJSON := []byte(`{
@@ -49,9 +46,6 @@ func TestComplex(t *testing.T) {
 	codec, err := NewCodec(`{
 		"name": "test",
 		"type": "record",
-		"indexes": [
-			["key_one", "key_two", "key_three"]
-		],
 		"fields": [
 			{"name": "key_one", "type": "string"},
 			{"name": "key_two", "type": "fixed", "size": 20},
@@ -68,7 +62,7 @@ func TestComplex(t *testing.T) {
 				]
 			}}
 		]
-	}`)
+	}`, [][]string{[]string{"key_one", "key_two", "key_three"}})
 	assert.Nil(t, err)
 
 	valueJSON := `{
