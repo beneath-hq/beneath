@@ -21,14 +21,18 @@ func TestAvroJson1(t *testing.T) {
 				{"name": "one", "type": "bytes"},
 				{"name": "two", "type": "bytes", "logicalType": "decimal"},
 				{"name": "three", "type": ["null", "int"]},
-				{"name": "four", "type": "array", "items": [
+				{"name": "four", "type": ["null", {
+					"type": "array",
+					"items": "int"
+				}]},
+				{"name": "five", "type": "array", "items": [
 					"null",
 					{"type": "fixed", "size": 10}
 				]},
-				{"name": "five", "type": [
+				{"name": "six", "type": [
 					"null",
-					{"name": "four_type", "type": "record", "fields": [
-						{"type": "int", "name": "four_one"}
+					{"name": "six_type", "type": "record", "fields": [
+						{"type": "int", "name": "six_one"}
 					]}
 				]}
 			]}
@@ -44,12 +48,16 @@ func TestAvroJson1(t *testing.T) {
 			"two": "12345678901234567890123456789012345678901234567890",
 			"three": null,
 			"four": [
+				100,
+				200
+			],
+			"five": [
 				"0x00112233445566778899",
 				null,
 				"0x99887766554433221100"
 			],
-			"five": {
-				"four_one": 31
+			"six": {
+				"six_one": 31
 			}
 		}
 	}`
