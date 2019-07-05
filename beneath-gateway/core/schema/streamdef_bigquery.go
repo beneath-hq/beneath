@@ -1,4 +1,4 @@
-package sdl
+package schema
 
 import (
 	"encoding/json"

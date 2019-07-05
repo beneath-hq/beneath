@@ -1,4 +1,4 @@
-package schema
+package codec
 
 import (
 	"encoding/json"
@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSimple(t *testing.T) {
-	codec, err := NewCodec(`{
+func TestAvroSimple(t *testing.T) {
+	codec, err := NewAvro(`{
 		"name": "test",
 		"type": "record",
 		"fields": [
@@ -17,7 +17,7 @@ func TestSimple(t *testing.T) {
 			{"name": "val_one", "type": "string"},
 			{"name": "val_two", "type": "long"}
 		]
-	}`, [][]string{[]string{"key_one"}})
+	}`)
 	assert.Nil(t, err)
 
 	valueJSON := []byte(`{
@@ -42,8 +42,8 @@ func TestSimple(t *testing.T) {
 	}
 }
 
-func TestComplex(t *testing.T) {
-	codec, err := NewCodec(`{
+func TestAvroComplex(t *testing.T) {
+	codec, err := NewAvro(`{
 		"name": "test",
 		"type": "record",
 		"fields": [
@@ -62,7 +62,7 @@ func TestComplex(t *testing.T) {
 				]
 			}}
 		]
-	}`, [][]string{[]string{"key_one", "key_two", "key_three"}})
+	}`)
 	assert.Nil(t, err)
 
 	valueJSON := `{

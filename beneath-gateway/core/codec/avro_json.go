@@ -1,4 +1,4 @@
-package schema
+package codec
 
 import (
 	"encoding/hex"

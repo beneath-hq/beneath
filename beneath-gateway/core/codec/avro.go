@@ -1,4 +1,4 @@
-package schema
+package codec
 
 import (
 	"encoding/json"
@@ -7,17 +7,17 @@ import (
 	"github.com/linkedin/goavro/v2"
 )
 
-// Codec contains schema info for a stream and can marshal/ummarshal records
-type Codec struct {
-	indexes    [][]string
+// AvroCodec contains schema info for a stream and can marshal/ummarshal records
+type AvroCodec struct {
 	avroSchema map[string]interface{}
 	avroCodec  *goavro.Codec
 }
 
-// NewCodec creates a new Codec
-func NewCodec(avroSchema string, indexes [][]string) (*Codec, error) {
-	codec := &Codec{}
-	codec.indexes = indexes
+// NewAvro creates a new Codec for encoding data between JSON and Avro
+// We're not just using the LinkedIn version because we want to handle
+// JSON data more naturally (and more opinionated, to be fair)
+func NewAvro(avroSchema string) (*AvroCodec, error) {
+	codec := &AvroCodec{}
 
 	// parse avro schema
 	err := json.Unmarshal([]byte(avroSchema), &codec.avroSchema)
@@ -35,7 +35,7 @@ func NewCodec(avroSchema string, indexes [][]string) (*Codec, error) {
 }
 
 // Marshal maps an unmarshaled json object to avro-encoded binary
-func (c *Codec) Marshal(jsonNative interface{}) ([]byte, error) {
+func (c *AvroCodec) Marshal(jsonNative interface{}) ([]byte, error) {
 	avroNative, err := jsonNativeToAvroNative(c.avroSchema, jsonNative)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (c *Codec) Marshal(jsonNative interface{}) ([]byte, error) {
 }
 
 // Unmarshal maps avro-encoded binary to an object that can be marshaled to json
-func (c *Codec) Unmarshal(data []byte) (interface{}, error) {
+func (c *AvroCodec) Unmarshal(data []byte) (interface{}, error) {
 	avroNative, remainder, err := c.avroCodec.NativeFromBinary(data)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal avro binary: %v", err.Error())
