@@ -214,8 +214,11 @@ func (c *Compiler) checkDeclaration(d *Declaration, seen map[string]bool, path *
 
 // type checks typeRef
 func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set) error {
-	// if array, check for double-optional, then recurse
+	// if array, check for nested arrays and double-optional, then recurse
 	if tr.Array != nil {
+		if tr.Array.Array != nil {
+			return fmt.Errorf("nested lists are not allowed at %v", tr.Pos.String())
+		}
 		if !tr.Array.Required {
 			return fmt.Errorf("type wrapped by list cannot be optional at %v", tr.Pos.String())
 		}
