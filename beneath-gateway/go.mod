@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.40.0
+	github.com/99designs/gqlgen v0.9.1
 	github.com/alecthomas/kong v0.2.0
 	github.com/alecthomas/participle v0.3.0
 	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1
@@ -29,8 +30,10 @@ require (
 	github.com/linkedin/goavro/v2 v2.8.5
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.3.0
+	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/arch v0.0.0-20190312162104-788fe5ffcd8c // indirect
