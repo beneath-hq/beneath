@@ -1,0 +1,1 @@
+go run github.com/99designs/gqlgen -c control/gql/gqlgen.yml 
