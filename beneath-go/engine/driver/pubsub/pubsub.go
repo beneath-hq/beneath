@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/beneath-core/beneath-gateway/core"
-	pb "github.com/beneath-core/beneath-gateway/proto"
+	"github.com/beneath-core/beneath-go/core"
+	pb "github.com/beneath-core/beneath-go/proto"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

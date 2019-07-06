@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beneath-core/beneath-gateway/control/gql"
-	"github.com/beneath-core/beneath-gateway/control/resolver"
+	"github.com/beneath-core/beneath-go/control/gql"
+	"github.com/beneath-core/beneath-go/control/resolver"
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"

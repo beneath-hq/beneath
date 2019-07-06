@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/beneath-core/beneath-gateway/control"
+	"github.com/beneath-core/beneath-go/control"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/beneath-core/beneath-gateway/control/gql"
-	"github.com/beneath-core/beneath-gateway/control/model"
+	"github.com/beneath-core/beneath-go/control/gql"
+	"github.com/beneath-core/beneath-go/control/model"
 )
 
 type Resolver struct {

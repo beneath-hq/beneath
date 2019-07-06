@@ -1,4 +1,4 @@
-module github.com/beneath-core/beneath-gateway
+module github.com/beneath-core/beneath-go
 
 go 1.12
 

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/beneath-core/beneath-gateway/gateway"
+	"github.com/beneath-core/beneath-go/gateway"
 	"golang.org/x/sync/errgroup"
 )
 

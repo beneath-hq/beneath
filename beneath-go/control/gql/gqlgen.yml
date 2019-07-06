@@ -13,7 +13,7 @@ resolver:
   package: resolver
   type: Resolver
 autobind:
-- "github.com/beneath-core/beneath-gateway/control/model"
+- "github.com/beneath-core/beneath-go/control/model"
 
 
 # models:
