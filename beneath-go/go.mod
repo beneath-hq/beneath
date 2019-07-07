@@ -11,7 +11,12 @@ require (
 	github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/go-pg/migrations v6.7.3+incompatible
+	github.com/go-pg/migrations/v7 v7.0.0
 	github.com/go-pg/pg v8.0.4+incompatible
+	github.com/go-pg/pg/v9 v9.0.0-beta
+	github.com/go-playground/locales v0.12.1 // indirect
+	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-redis/cache v6.4.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-test/deep v1.0.1
@@ -23,13 +28,11 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
-	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pty v1.1.5 // indirect
+	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/linkedin/goavro/v2 v2.8.5
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.3.0
@@ -50,6 +53,7 @@ require (
 	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3 // indirect
 	google.golang.org/grpc v1.21.1
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/go-playground/validator.v9 v9.29.0
 	honnef.co/go/tools v0.0.0-20190614002413-cb51c254f01b // indirect
-	mellium.im/sasl v0.2.1 // indirect
 )
