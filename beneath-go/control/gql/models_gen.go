@@ -2,12 +2,21 @@
 
 package gql
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+import (
+	"time"
+
+	"github.com/beneath-core/beneath-go/control/model"
+)
+
+type Me struct {
+	UserID    string       `json:"userId"`
+	User      *model.User  `json:"user"`
+	Email     *string      `json:"email"`
+	UpdatedOn *time.Time   `json:"updatedOn"`
+	Keys      []*model.Key `json:"keys"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type NewKey struct {
+	Key       *model.Key `json:"key"`
+	KeyString *string    `json:"keyString"`
 }

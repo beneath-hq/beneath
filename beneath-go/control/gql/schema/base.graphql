@@ -1,0 +1,14 @@
+scalar Time
+
+type Query {
+  empty: String
+  ping: String!
+}
+
+type Mutation {
+  empty: String
+}
+
+type Subscription {
+  empty: String
+}

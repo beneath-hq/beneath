@@ -1,0 +1,29 @@
+extend type Query {
+  stream(name: String!, projectName: String!): Stream
+}
+
+extend type Mutation {
+  createExternalStream(
+    projectId: ID!,
+    name: String!,
+    description: String!,
+    avroSchema: String!,
+    batch: Boolean!,
+    manual: Boolean!
+  ): Stream!
+  updateStream(streamId: ID!, description: String, manual: Boolean): Stream!
+}
+
+type Stream {
+  streamId: ID!
+  name: String!
+  description: String
+  schema: String
+  schemaType: String
+  batch: Boolean
+  external: Boolean
+  manual: Boolean
+  project: Project
+  createdOn: Time
+  updatedOn: Time
+}

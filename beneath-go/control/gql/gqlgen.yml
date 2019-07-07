@@ -1,7 +1,6 @@
 # Configures gqlgen – docs at https://gqlgen.com/config/
-
 schema:
-- "control/gql/**/*.graphql"
+- "control/gql/schema/**/*.graphql"
 exec:
   filename: control/gql/schema_gen.go
   package: gql
@@ -12,33 +11,15 @@ resolver:
   filename: control/resolver/resolver.go
   package: resolver
   type: Resolver
-autobind:
-- "github.com/beneath-core/beneath-go/control/model"
-
-
-# models:
-#   Todo:
-#     model: github.com/beneath-core/gqlgen-todos.Todo
-
-
-
-# .gqlgen.yml example
-#
-# Refer to https://gqlgen.com/config/
-# for detailed .gqlgen.yml documentation.
-
-# schema:
-# - "gqlgen_todos/schema/**.graphql"
-# exec:
-#   filename: gqlgen_todos/gql/generated.go
-#   package: gql
-# model:
-#   filename: gqlgen_todos/gql/models_generated.go
-#   package: gql
-# resolver:
-#   filename: gqlgen_todos/resolver.go
-#   type: Resolver
-# autobind: []
-# models:
-#   Todo:
-#     model: github.com/beneath-core/gqlgen-todos/gqlgen_todos/model.Todo
+autobind: []
+models:
+  Key:
+    model: github.com/beneath-core/beneath-go/control/model.Key
+  Project:
+    model: github.com/beneath-core/beneath-go/control/model.Project
+  Stream:
+    model: github.com/beneath-core/beneath-go/control/model.Stream
+  StreamInstance:
+    model: github.com/beneath-core/beneath-go/control/model.StreamInstance
+  User:
+    model: github.com/beneath-core/beneath-go/control/model.User
