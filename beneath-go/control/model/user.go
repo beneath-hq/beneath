@@ -8,17 +8,6 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-/*
-indexes:
-- IDX_UQ_USERS_USERNAME unique on username
-- IDX_UQ_USERS_EMAIL unique on email
-- IDX_UQ_USERS_GOOGLE_ID google_id
-- IDX_UQ_USERS_GITHUB_ID github_id
-- IDX_UQ_PROJECTS_NAME name
-- IDX_UQ_KEYS_HASHED_KEY
-- @Index("IDX_UQ_STREAMS_NAME_PROJECT", ["project", "name"], { unique: true })
-*/
-
 // constants
 var (
 	userUsernameRegex *regexp.Regexp
@@ -33,9 +22,9 @@ func init() {
 // User represents a Beneath user
 type User struct {
 	UserID    uuid.UUID  `sql:",pk,type:uuid"`
-	Username  string     `validate:"omitempty,gte=3,lte=16"`
+	Username  string     `sql:",unique",validate:"omitempty,gte=3,lte=16"`
 	Email     string     `sql:",unique,notnull",validate:"required,email"`
-	Name      string     `sql:",unique,notnull",validate:"required,gte=4,lte=50"`
+	Name      string     `sql:",notnull",validate:"required,gte=4,lte=50"`
 	Bio       string     `validate:"omitempty,lte=255"`
 	PhotoURL  string     `validate:"omitempty,url,lte=255"`
 	GoogleID  string     `sql:",unique",validate:"omitempty,lte=255"`
