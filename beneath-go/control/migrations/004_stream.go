@@ -19,10 +19,11 @@ func init() {
 				external     BOOLEAN NOT NULL,
 				batch        BOOLEAN NOT NULL,
 				manual       BOOLEAN NOT NULL,
-				project_id   UUID,
+				project_id   UUID NOT NULL,
 				created_on   TIMESTAMPTZ DEFAULT Now(),
 				updated_on   TIMESTAMPTZ DEFAULT Now(),
 				PRIMARY KEY (stream_id),
+				UNIQUE (project_id, name),
 				FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE RESTRICT
 			)
 		`)
