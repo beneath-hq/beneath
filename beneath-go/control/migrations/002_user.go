@@ -14,6 +14,15 @@ func init() {
 			return err
 		}
 
+		// User email index
+		_, err = db.Exec(`
+			ALTER TABLE users DROP CONSTRAINT users_email_key;
+			CREATE UNIQUE INDEX users_email_key ON public.users USING btree ((lower(email)));
+		`)
+		if err != nil {
+			return err
+		}
+
 		// UserToProject
 		err = db.Model(&model.UserToProject{}).CreateTable(defaultCreateOptions)
 		if err != nil {
