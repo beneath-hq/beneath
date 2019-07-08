@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/beneath-core/beneath-go/control/db"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -21,7 +22,7 @@ func init() {
 
 // Stream represents a collection of data
 type Stream struct {
-	StreamID                uuid.UUID `sql:",pk,type:uuid"`
+	StreamID                uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name                    string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, user_id) index
 	Description             string    `validate:"omitempty,lte=255"`
 	Schema                  string    `sql:",notnull",validate:"required"`
@@ -32,7 +33,7 @@ type Stream struct {
 	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project                 *Project
 	StreamInstances         []*StreamInstance
-	CurrentStreamInstanceID uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
+	CurrentStreamInstanceID *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
 	CurrentStreamInstance   *StreamInstance
 	CreatedOn               time.Time `sql:",default:now()"`
 	UpdatedOn               time.Time `sql:",default:now()"`
@@ -49,14 +50,16 @@ func streamValidation(sl validator.StructLevel) {
 
 // FindOneStreamByNameAndProject finds a stream
 func FindOneStreamByNameAndProject(name string, projectName string) *Stream {
-	// TODO
-	// return await getConnection()
-	//   .createQueryBuilder(Stream, "stream")
-	//   .innerJoinAndSelect("stream.project", "project")
-	//   .where("stream.name = lower(:name)", { name })
-	//   .andWhere("project.name = lower(:projectName)", { projectName })
-	//   .getOne();
-	return nil
+	stream := &Stream{}
+	err := db.DB.Model(stream).
+		Column("Project").
+		Where("lower(stream.name) = lower(?)", name).
+		Where("lower(project.name) = lower(?)", projectName).
+		Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return stream
 }
 
 /**
