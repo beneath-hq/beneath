@@ -4,8 +4,12 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/go-redis/cache"
 	uuid "github.com/satori/go.uuid"
+	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/beneath-core/beneath-go/control/db"
 )
 
 // Project represents a Beneath project
@@ -34,7 +38,11 @@ type ProjectToUser struct {
 }
 
 var (
+	// regex used in validation
 	projectNameRegex *regexp.Regexp
+
+	// redis cache for project data
+	projectCache *cache.Codec
 )
 
 // configure constants and validator
@@ -52,38 +60,30 @@ func validateProject(sl validator.StructLevel) {
 	}
 }
 
-// ProjectHasUser returns true iff user is a member of project
-func ProjectHasUser(projectID uuid.UUID, userID uuid.UUID) bool {
-	// TODO
-	// const result = await getConnection()
-	//     .createQueryBuilder(Project, "project")
-	//     .innerJoin("project.users", "user")
-	//     .where("user.userId = :userId", { userId })
-	//     .andWhere("project.projectId = :projectId", { projectId })
-	//     .select(["project.projectId"])
-	//     .cache(`projects_users:${projectId}:${userId}`, 300000)
-	//     .getOne();
-	//   return !!result;
-	return false
-}
-
 // AddUser makes user a member of project
-func (p *Project) AddUser(user *User) {
-	// TODO
-	// this.users.push(user);
-	// await this.save();
+func (p *Project) AddUser(userID uuid.UUID) error {
+	return db.DB.Insert(&ProjectToUser{
+		ProjectID: p.ProjectID,
+		UserID:    userID,
+	})
 }
 
-// RemoveUserByID removes a member from the project
-func (p *Project) RemoveUserByID(userID uuid.UUID) {
-	// TODO
-	// await Project.createQueryBuilder()
-	//   .relation("users")
-	//   .of({ projectId: this.projectId })
-	//   .remove({ userId });
+// RemoveUser removes a member from the project
+func (p *Project) RemoveUser(userID uuid.UUID) error {
+	// TODO remove from cache
+	return db.DB.Delete(&ProjectToUser{
+		ProjectID: p.ProjectID,
+		UserID:    userID,
+	})
+}
 
-	// const cache = getConnection().queryResultCache;
-	// if (cache) {
-	//   await cache.remove([`projects_users:${this.projectId}:${userId}`]);
-	// }
+func getProjectCache() *cache.Codec {
+	if projectCache == nil {
+		projectCache = &cache.Codec{
+			Redis:     db.Redis,
+			Marshal:   msgpack.Marshal,
+			Unmarshal: msgpack.Unmarshal,
+		}
+	}
+	return projectCache
 }
