@@ -1,22 +1,71 @@
 package model
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/go-redis/cache"
+	"github.com/vmihailenco/msgpack"
+
+	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
 
-// configure validator
+// Key represents an access token to read/write data or a user session token
+type Key struct {
+	_msgpack    struct{}   `msgpack:",omitempty"`
+	KeyID       uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Description string     `validate:"omitempty,lte=32"`
+	Prefix      string     `sql:",notnull",validate:"required,len=4"`
+	HashedKey   string     `sql:",unique,notnull",validate:"required,lte=64"`
+	Role        KeyRole    `sql:",notnull",validate:"required,lte=3"`
+	UserID      *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
+	User        *User
+	ProjectID   *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
+	Project     *Project
+	CreatedOn   *time.Time `sql:",default:now()"`
+	UpdatedOn   *time.Time `sql:",default:now()"`
+	KeyString   string     `sql:"-"`
+}
+
+// KeyRole represents a role in a Key
+type KeyRole string
+
+const (
+	// KeyRoleReadonly can only read data
+	KeyRoleReadonly KeyRole = "r"
+
+	// KeyRoleReadWrite can read and write data
+	KeyRoleReadWrite KeyRole = "rw"
+
+	// KeyRoleManage can edit a user
+	KeyRoleManage KeyRole = "m"
+
+	// number of keys to cache in local memory for extra speed
+	keyCacheLocalSize = 10000
+)
+
+var (
+	// redis cache for authenticated keys
+	keyCache *cache.Codec
+)
+
 func init() {
-	GetValidator().RegisterStructValidation(keyValidation, Key{})
+	// configure validator
+	GetValidator().RegisterStructValidation(validateKey, Key{})
 }
 
 // custom key validation
-func keyValidation(sl validator.StructLevel) {
+func validateKey(sl validator.StructLevel) {
 	k := sl.Current().Interface().(Key)
 
-	if k.UserID == uuid.Nil && k.ProjectID == uuid.Nil {
+	if k.UserID == nil && k.ProjectID == nil {
 		sl.ReportError(k.ProjectID, "ProjectID", "", "projectid_userid_empty", "")
 	}
 
@@ -25,101 +74,165 @@ func keyValidation(sl validator.StructLevel) {
 	}
 }
 
-// export enum KeyRole {
-//     Readonly = "r",
-//     Readwrite = "rw",
-//     Manage = "m",
-// }
-
-// Key represents an access token to read/write data or a user session token
-type Key struct {
-	KeyID       uuid.UUID `sql:",pk,type:uuid"`
-	Description string    `validate:"omitempty,lte=32"`
-	Prefix      string    `sql:",notnull",validate:"required,len=4"`
-	HashedKey   string    `sql:",unique,notnull",validate:"required,lte=64"`
-	Role        string    `sql:",notnull",validate:"required,lte=3"`
-	UserID      uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
-	User        *User
-	ProjectID   uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
-	Project     *Project
-	CreatedOn   time.Time `sql:",default:now()"`
-	UpdatedOn   time.Time `sql:",default:now()"`
-	KeyString   string    `sql:"-"`
+func getKeyCache() *cache.Codec {
+	if keyCache == nil {
+		keyCache = &cache.Codec{
+			Redis:     db.Redis,
+			Marshal:   msgpack.Marshal,
+			Unmarshal: msgpack.Unmarshal,
+		}
+		keyCache.UseLocalCache(keyCacheLocalSize, 1*time.Minute)
+	}
+	return keyCache
 }
 
 // GenerateKeyString returns a random generated key string
 func GenerateKeyString() string {
-	// TODO
-	// const arrayBuffer = new Array();
-	// uuidv4(null, arrayBuffer, 0);
-	// uuidv4(null, arrayBuffer, 16);
-	// const buffer = new Buffer(arrayBuffer);
-	// return buffer.toString("base64");
-	return ""
+	// generate 32 random bytes
+	dest := make([]byte, 32)
+	if _, err := rand.Read(dest); err != nil {
+		log.Fatalf("rand.Read: %v", err.Error())
+	}
+
+	// encode as base64 string
+	encoded := base64.StdEncoding.EncodeToString(dest)
+
+	// done
+	return encoded
 }
 
 // HashKeyString safely hashes keyString
 func HashKeyString(keyString string) string {
-	// TODO
-	// return crypto.createHash("sha256").update(new Buffer(key, "base64")).digest().toString("base64");
-	return ""
+	// decode bytes from base64
+	bytes, err := base64.StdEncoding.DecodeString(keyString)
+	if err != nil {
+		return ""
+	}
+
+	// use sha256 digest
+	hashed := sha256.Sum256(bytes)
+
+	// encode hashed bytes as base64
+	encoded := base64.StdEncoding.EncodeToString(hashed[:])
+
+	// done
+	return encoded
 }
 
 // NewKey creates a new, unconfigured key -- use NewUserKey or NewProjectKey instead
 func NewKey() *Key {
-	// TODO
-	// const key = new Key();
-	//   key.keyString = Key.generateKey();
-	//   key.hashedKey = Key.hashKey(key.keyString);
-	//   key.prefix = key.keyString.slice(0, 4);
-	//   return key;
-	return nil
+	keyStr := GenerateKeyString()
+	return &Key{
+		KeyString: keyStr,
+		HashedKey: HashKeyString(keyStr),
+		Prefix:    keyStr[0:4],
+	}
 }
 
-// NewUserKey creates a new key to manage a user
-func NewUserKey(userID uuid.UUID, role string, description string) *Key {
-	// TODO
-	// const key = this.newKey();
-	//     key.description = description;
-	//     key.role = role;
-	//     key.user = new User();
-	//     key.user.userId = userId;
-	//     await key.save();
-	//     return key;
-	return nil
+// CreateUserKey creates a new key to manage a user
+func CreateUserKey(userID uuid.UUID, role KeyRole, description string) (*Key, error) {
+	// create
+	key := NewKey()
+	key.Description = description
+	key.Role = role
+	key.UserID = &userID
+
+	// validate
+	err := GetValidator().Struct(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// insert
+	err = db.DB.Insert(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// done
+	return key, nil
 }
 
-// NewProjectKey creates a new read or readwrite key for a project
-func NewProjectKey(projectID uuid.UUID, role string, description string) *Key {
-	// TODO
-	// const key = this.newKey();
-	//   key.description = description;
-	//   key.role = role;
-	//   key.project = new Project();
-	//   key.project.projectId = projectId;
-	//   await key.save();
-	//   return key;
-	return nil
+// CreateProjectKey creates a new read or readwrite key for a project
+func CreateProjectKey(projectID uuid.UUID, role KeyRole, description string) (*Key, error) {
+	// create
+	key := NewKey()
+	key.Description = description
+	key.Role = role
+	key.ProjectID = &projectID
+
+	// validate
+	err := GetValidator().Struct(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// insert
+	err = db.DB.Insert(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// done
+	return key, nil
 }
 
-// AuthenticateKeyString returns the key object matching keyString (if there's a match)
+// AuthenticateKeyString returns the key object matching keyString or nil
 func AuthenticateKeyString(keyString string) *Key {
-	// const hashedKey = this.hashKey(keyString);
-	// const key: Key = await this.findOne({ hashedKey }, {
-	//   cache: { id: `key:${hashedKey}`, milliseconds: 3600000 }
-	// });
-	// if (!key) {
-	//   return null;
-	// }
-	// return key;
-	return nil
+	// note: we're also caching empty keys (i.e. where keyString doesn't match a key)
+	// to prevent database crash if someone is spamming with a bad key
+
+	hashed := HashKeyString(keyString)
+
+	key := &Key{}
+	err := getKeyCache().Once(&cache.Item{
+		Key:        redisKeyForHashedKey(hashed),
+		Object:     key,
+		Expiration: 1 * time.Hour,
+		Func: func() (interface{}, error) {
+			selectedKey := &Key{}
+			err := db.DB.Model(selectedKey).
+				Column("key_id", "role", "user_id", "project_id").
+				Where("hashed_key = ?", hashed).
+				Select()
+			if err != nil && err != pg.ErrNoRows {
+				return nil, err
+			}
+			return selectedKey, nil
+		},
+	})
+
+	if err != nil {
+		log.Panic(err.Error())
+		return nil
+	}
+
+	// see note above
+	if key.KeyID == uuid.Nil {
+		return nil
+	}
+
+	// not cached in redis
+	key.HashedKey = hashed
+
+	return key
 }
 
 // Revoke deletes the key
 func (k *Key) Revoke() {
-	// await this.remove();
-	//   const cache = getConnection().queryResultCache;
-	//   if (cache) {
-	//     await cache.remove([`key:${this.hashedKey}`]);
-	//   }
+	// delete from db
+	err := db.DB.Delete(k)
+	if err != nil && err != pg.ErrNoRows {
+		log.Panic(err.Error())
+	}
+
+	// remove from redis (ignore error)
+	err = getKeyCache().Delete(redisKeyForHashedKey(k.HashedKey))
+	if err != nil {
+		log.Panic(err.Error())
+	}
+}
+
+func redisKeyForHashedKey(hashedKey string) string {
+	return fmt.Sprintf("key:%s", hashedKey)
 }
