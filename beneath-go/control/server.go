@@ -46,14 +46,19 @@ func ListenAndServeHTTP(port int) error {
 	// Add CORS
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{
-			"http://localhost:8080",
+			"http://localhost:4000",
+			"https://beneath.network",
 		},
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
 
+	// Add health check
+	router.Get("/", healthCheck)
+	router.Get("/healthz", healthCheck)
+
 	// Add playground
-	router.Handle("/", handler.Playground("Beneath", "/graphql"))
+	router.Handle("/playground", handler.Playground("Beneath", "/graphql"))
 
 	// Add graphql server
 	router.Handle("/graphql",
@@ -63,4 +68,13 @@ func ListenAndServeHTTP(port int) error {
 	// Serve
 	log.Printf("HTTP server running on port %d\n", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	_, err := db.DB.Exec("SELECT 1")
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+	w.WriteHeader(200)
+	w.Write([]byte("success"))
 }
