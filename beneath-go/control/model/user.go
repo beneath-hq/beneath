@@ -24,17 +24,8 @@ type User struct {
 	GithubID  string     `sql:",unique",validate:"omitempty,lte=255"`
 	CreatedOn time.Time  `sql:",default:now()"`
 	UpdatedOn time.Time  `sql:",default:now()"`
-	Projects  []*Project `pg:"many2many:users_projects,joinFK:user_id"`
+	Projects  []*Project `pg:"many2many:projects_users,joinFK:user_id"`
 	Keys      []*Key
-}
-
-// UserToProject represnts the many-to-many relationship between users and projects
-type UserToProject struct {
-	tableName struct{}  `sql:"users_projects,alias:up"`
-	UserID    uuid.UUID `sql:",pk,type:uuid"`
-	User      *User
-	ProjectID uuid.UUID `sql:",pk,type:uuid"`
-	Project   *Project
 }
 
 var (

@@ -8,29 +8,9 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-// constants
-var (
-	projectNameRegex *regexp.Regexp
-)
-
-// configure constants and validator
-func init() {
-	projectNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
-	GetValidator().RegisterStructValidation(projectValidation, Project{})
-}
-
-// custom project validation
-func projectValidation(sl validator.StructLevel) {
-	p := sl.Current().Interface().(Project)
-
-	if !projectNameRegex.MatchString(p.Name) {
-		sl.ReportError(p.Name, "Name", "", "alphanumericorunderscore", "")
-	}
-}
-
 // Project represents a Beneath project
 type Project struct {
-	ProjectID   uuid.UUID `sql:",pk,type:uuid"`
+	ProjectID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name        string    `sql:",unique,notnull",validate:"required,gte=3,lte=16"`
 	DisplayName string    `sql:",notnull",validate:"required,gte=3,lte=40"`
 	Site        string    `validate:"omitempty,url,lte=255"`
@@ -41,7 +21,35 @@ type Project struct {
 	UpdatedOn   time.Time `sql:",default:now()"`
 	Keys        []*Key
 	Streams     []*Stream
-	Users       []*User `pg:"many2many:users_projects,joinFK:project_id"`
+	Users       []*User `pg:"many2many:projects_users,joinFK:project_id"`
+}
+
+// ProjectToUser represnts the many-to-many relationship between users and projects
+type ProjectToUser struct {
+	tableName struct{}  `sql:"projects_users,alias:up"`
+	ProjectID uuid.UUID `sql:",pk,type:uuid"`
+	Project   *Project
+	UserID    uuid.UUID `sql:",pk,type:uuid"`
+	User      *User
+}
+
+var (
+	projectNameRegex *regexp.Regexp
+)
+
+// configure constants and validator
+func init() {
+	projectNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	GetValidator().RegisterStructValidation(validateProject, Project{})
+}
+
+// custom project validation
+func validateProject(sl validator.StructLevel) {
+	p := sl.Current().Interface().(Project)
+
+	if !projectNameRegex.MatchString(p.Name) {
+		sl.ReportError(p.Name, "Name", "", "alphanumericorunderscore", "")
+	}
 }
 
 // ProjectHasUser returns true iff user is a member of project

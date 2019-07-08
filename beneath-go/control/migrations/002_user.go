@@ -23,8 +23,8 @@ func init() {
 			return err
 		}
 
-		// UserToProject
-		err = db.Model(&model.UserToProject{}).CreateTable(defaultCreateOptions)
+		// ProjectToUser
+		err = db.Model(&model.ProjectToUser{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -38,8 +38,8 @@ func init() {
 			return err
 		}
 
-		// UserToProject
-		err = db.Model(&model.UserToProject{}).DropTable(defaultDropOptions)
+		// ProjectToUser
+		err = db.Model(&model.ProjectToUser{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}
