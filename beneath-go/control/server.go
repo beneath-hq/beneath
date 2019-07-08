@@ -73,8 +73,10 @@ func ListenAndServeHTTP(port int) error {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	_, err := db.DB.Exec("SELECT 1")
 	if err != nil {
+		log.Printf("Database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(http.StatusText(http.StatusOK)))
 	}
-	w.WriteHeader(200)
-	w.Write([]byte("success"))
 }
