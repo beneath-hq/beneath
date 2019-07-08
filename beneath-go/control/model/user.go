@@ -1,27 +1,20 @@
 package model
 
 import (
+	"log"
 	"regexp"
 	"time"
 
+	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
-)
 
-// constants
-var (
-	userUsernameRegex *regexp.Regexp
+	"github.com/beneath-core/beneath-go/control/db"
 )
-
-// configure constants and validator
-func init() {
-	userUsernameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
-	GetValidator().RegisterStructValidation(userValidation, User{})
-}
 
 // User represents a Beneath user
 type User struct {
-	UserID    uuid.UUID  `sql:",pk,type:uuid"`
+	UserID    uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Username  string     `sql:",unique",validate:"omitempty,gte=3,lte=16"`
 	Email     string     `sql:",unique,notnull",validate:"required,email"`
 	Name      string     `sql:",notnull",validate:"required,gte=4,lte=50"`
@@ -44,6 +37,16 @@ type UserToProject struct {
 	Project   *Project
 }
 
+var (
+	userUsernameRegex *regexp.Regexp
+)
+
+// configure constants and validator
+func init() {
+	userUsernameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	GetValidator().RegisterStructValidation(userValidation, User{})
+}
+
 // custom user validation
 func userValidation(sl validator.StructLevel) {
 	u := sl.Current().Interface().(User)
@@ -57,44 +60,72 @@ func userValidation(sl validator.StructLevel) {
 
 // FindOneUserByEmail returns user with email (if exists)
 func FindOneUserByEmail(email string) *User {
-	// TODO
-	return nil
-	//     return await getConnection()
-	//       .createQueryBuilder(User, "user")
-	//       .where("lower(user.email) = lower(:email)", { email })
-	//       .getOne();
+	user := &User{}
+	err := db.DB.Model(user).Where("lower(email) = lower(?)", email).Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return user
 }
 
 // CreateOrUpdateUser consolidates and returns the user matching the args
-func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) *User {
-	// TODO:
-	//     let user = null;
-	//     let created = false;
-	//     if (githubId) {
-	//       user = await User.findOne({ githubId });
-	//     } else if (googleId) {
-	//       user = await User.findOne({ googleId });
-	//     }
-	//     if (!user) {
-	//       user = await User.findOne({ email });
-	//     }
-	//     if (!user) {
-	//       user = new User();
-	//       created = true;
-	//     }
+func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User, error) {
+	user := &User{}
+	create := false
 
-	//     user.githubId = user.githubId || githubId;
-	//     user.googleId = user.googleId || googleId;
-	//     user.email = email;
-	//     user.name = name;
-	//     user.photoUrl = photoUrl;
+	var query *orm.Query
+	if githubID != "" {
+		query = db.DB.Model(user).Where("github_id = ?", githubID)
+	} else if googleID != "" {
+		query = db.DB.Model(user).Where("google_id = ?", googleID)
+	} else {
+		log.Panic("CreateOrUpdateUser neither githubID nor googleID set")
+	}
 
-	//     await user.save();
-	//     if (created) {
-	//       logger.info(`Created userId <${user.userId}>`);
-	//     } else {
-	//       logger.info(`Updated userId <${user.userId}>`);
-	//     }
-	//     return user;
-	return nil
+	err := query.Select()
+	if !AssertFoundOne(err) {
+		userByEmail := FindOneUserByEmail(email)
+		if userByEmail == nil {
+			create = true
+		} else {
+			user = userByEmail
+		}
+	}
+
+	user.GithubID = githubID
+	user.GoogleID = googleID
+	user.Email = email
+	user.Name = name
+	user.PhotoURL = photoURL
+
+	// validate
+	err = GetValidator().Struct(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// insert or update
+	err = nil
+	if create {
+		err = db.DB.Insert(user)
+	} else {
+		err = db.DB.Update(user)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if create {
+		log.Printf("Created userID <%s>", user.UserID)
+	} else {
+		log.Printf("Updated userID <%s>", user.UserID)
+	}
+
+	return user, nil
+}
+
+// Delete removes the user from the database
+func (u *User) Delete() error {
+	return db.DB.Delete(u)
 }
