@@ -14,6 +14,15 @@ func init() {
 			return err
 		}
 
+		// Project name index
+		_, err = db.Exec(`
+			ALTER TABLE projects DROP CONSTRAINT projects_name_key;
+			CREATE UNIQUE INDEX projects_name_key ON public.projects USING btree ((lower(name)));
+		`)
+		if err != nil {
+			return err
+		}
+
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {

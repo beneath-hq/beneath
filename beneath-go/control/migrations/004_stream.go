@@ -23,9 +23,16 @@ func init() {
 				created_on   TIMESTAMPTZ DEFAULT Now(),
 				updated_on   TIMESTAMPTZ DEFAULT Now(),
 				PRIMARY KEY (stream_id),
-				UNIQUE (project_id, name),
 				FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE RESTRICT
 			)
+		`)
+		if err != nil {
+			return err
+		}
+
+		// (Project, name) unique index
+		_, err = db.Exec(`
+			CREATE UNIQUE INDEX streams_project_id_name_key ON public.streams USING btree (project_id, (lower(name)));
 		`)
 		if err != nil {
 			return err
