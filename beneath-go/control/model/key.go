@@ -119,6 +119,38 @@ func HashKeyString(keyString string) string {
 	return encoded
 }
 
+// FindKey finds a key
+func FindKey(keyID uuid.UUID) *Key {
+	key := &Key{
+		KeyID: keyID,
+	}
+	err := db.DB.Model(key).WherePK().Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return key
+}
+
+// FindUserKeys finds all the user's keys
+func FindUserKeys(userID uuid.UUID) []*Key {
+	var keys []*Key
+	err := db.DB.Model(&keys).Where("user_id = ?", userID).Limit(1000).Select()
+	if err != nil {
+		log.Panicf("Error getting keys: %s", err.Error())
+	}
+	return keys
+}
+
+// FindProjectKeys finds all the project's keys
+func FindProjectKeys(projectID uuid.UUID) []*Key {
+	var keys []*Key
+	err := db.DB.Model(&keys).Where("project_id = ?", projectID).Limit(1000).Select()
+	if err != nil {
+		log.Panicf("Error getting keys: %s", err.Error())
+	}
+	return keys
+}
+
 // NewKey creates a new, unconfigured key -- use NewUserKey or NewProjectKey instead
 func NewKey() *Key {
 	keyStr := GenerateKeyString()
@@ -228,7 +260,7 @@ func (k *Key) Revoke() {
 
 	// remove from redis (ignore error)
 	err = getKeyCache().Delete(redisKeyForHashedKey(k.HashedKey))
-	if err != nil {
+	if err != nil && err != cache.ErrCacheMiss {
 		log.Panic(err.Error())
 	}
 }
@@ -244,6 +276,7 @@ func (k *Key) IsPersonal() bool {
 
 // ReadsProject returns true iff the key gives permission to read the project
 func (k *Key) ReadsProject(projectID uuid.UUID) bool {
+	// TODO
 	if k == nil {
 	}
 	return true
@@ -251,6 +284,7 @@ func (k *Key) ReadsProject(projectID uuid.UUID) bool {
 
 // EditsProject returns true iff the key gives permission to edit the project
 func (k *Key) EditsProject(projectID uuid.UUID) bool {
+	// TODO
 	if k == nil {
 	}
 	return true

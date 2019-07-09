@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  issueUserKey(userID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  issueUserKey(readonly: Boolean!, description: String!): NewKey!
   issueProjectKey(projectID: UUID!, readonly: Boolean!, description: String!): NewKey!
   revokeKey(keyID: UUID!): Boolean!
 }

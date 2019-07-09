@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 		CreateProject         func(childComplexity int, name string, displayName string, site *string, description *string, photoURL *string) int
 		Empty                 func(childComplexity int) int
 		IssueProjectKey       func(childComplexity int, projectID uuid.UUID, readonly bool, description string) int
-		IssueUserKey          func(childComplexity int, userID uuid.UUID, readonly bool, description string) int
+		IssueUserKey          func(childComplexity int, readonly bool, description string) int
 		RemoveUserFromProject func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeKey             func(childComplexity int, keyID uuid.UUID) int
 		UpdateMe              func(childComplexity int, name *string, bio *string) int
@@ -150,7 +150,7 @@ type KeyResolver interface {
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
-	IssueUserKey(ctx context.Context, userID uuid.UUID, readonly bool, description string) (*NewKey, error)
+	IssueUserKey(ctx context.Context, readonly bool, description string) (*NewKey, error)
 	IssueProjectKey(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*NewKey, error)
 	RevokeKey(ctx context.Context, keyID uuid.UUID) (bool, error)
 	CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*model.Project, error)
@@ -342,7 +342,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IssueUserKey(childComplexity, args["userID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string)), true
+		return e.complexity.Mutation.IssueUserKey(childComplexity, args["readonly"].(bool), args["description"].(string)), true
 
 	case "Mutation.removeUserFromProject":
 		if e.complexity.Mutation.RemoveUserFromProject == nil {
@@ -841,7 +841,7 @@ type Subscription {
 }
 
 extend type Mutation {
-  issueUserKey(userID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  issueUserKey(readonly: Boolean!, description: String!): NewKey!
   issueProjectKey(projectID: UUID!, readonly: Boolean!, description: String!): NewKey!
   revokeKey(keyID: UUID!): Boolean!
 }
@@ -1096,30 +1096,22 @@ func (ec *executionContext) field_Mutation_issueProjectKey_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_issueUserKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["userID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userID"] = arg0
-	var arg1 bool
+	var arg0 bool
 	if tmp, ok := rawArgs["readonly"]; ok {
-		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["readonly"] = arg1
-	var arg2 string
+	args["readonly"] = arg0
+	var arg1 string
 	if tmp, ok := rawArgs["description"]; ok {
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg2
+	args["description"] = arg1
 	return args, nil
 }
 
@@ -1866,7 +1858,7 @@ func (ec *executionContext) _Mutation_issueUserKey(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().IssueUserKey(rctx, args["userID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string))
+		return ec.resolvers.Mutation().IssueUserKey(rctx, args["readonly"].(bool), args["description"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
