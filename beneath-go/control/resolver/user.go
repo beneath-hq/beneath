@@ -2,9 +2,9 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/beneath-core/beneath-go/control/auth"
+	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/model"
@@ -29,7 +29,7 @@ func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	key := auth.GetKey(ctx)
 	if !key.IsPersonal() {
-		return nil, fmt.Errorf("Must be authenticated with a personal key to call 'me'")
+		return nil, gqlerror.Errorf("Must be authenticated with a personal key to call 'me'")
 	}
 
 	user := model.FindUser(*key.UserID)
@@ -39,7 +39,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *string) (*gql.Me, error) {
 	key := auth.GetKey(ctx)
 	if !key.IsPersonal() {
-		return nil, fmt.Errorf("Must be authenticated with a personal key to call 'updateMe'")
+		return nil, gqlerror.Errorf("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
 	user := model.FindUser(*key.UserID)
