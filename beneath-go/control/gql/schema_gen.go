@@ -70,7 +70,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddUserToProject      func(childComplexity int, email string, projectID uuid.UUID) int
-		CreateExternalStream  func(childComplexity int, projectID uuid.UUID, name string, description *string, schema string, batch bool, manual bool) int
+		CreateExternalStream  func(childComplexity int, projectID uuid.UUID, description *string, schema string, batch bool, manual bool) int
 		CreateProject         func(childComplexity int, name string, displayName string, site *string, description *string, photoURL *string) int
 		Empty                 func(childComplexity int) int
 		IssueProjectKey       func(childComplexity int, projectID uuid.UUID, readonly bool, description string) int
@@ -119,6 +119,7 @@ type ComplexityRoot struct {
 		CreatedOn           func(childComplexity int) int
 		Description         func(childComplexity int) int
 		External            func(childComplexity int) int
+		KeyFields           func(childComplexity int) int
 		Manual              func(childComplexity int) int
 		Name                func(childComplexity int) int
 		Project             func(childComplexity int) int
@@ -156,7 +157,7 @@ type MutationResolver interface {
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*model.Project, error)
 	AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*model.User, error)
 	RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error)
-	CreateExternalStream(ctx context.Context, projectID uuid.UUID, name string, description *string, schema string, batch bool, manual bool) (*model.Stream, error)
+	CreateExternalStream(ctx context.Context, projectID uuid.UUID, description *string, schema string, batch bool, manual bool) (*model.Stream, error)
 	UpdateStream(ctx context.Context, streamID uuid.UUID, description *string, manual *bool) (*model.Stream, error)
 	UpdateMe(ctx context.Context, name *string, bio *string) (*Me, error)
 }
@@ -298,7 +299,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["name"].(string), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
+		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -622,6 +623,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.External(childComplexity), true
 
+	case "Stream.keyFields":
+		if e.complexity.Stream.KeyFields == nil {
+			break
+		}
+
+		return e.complexity.Stream.KeyFields(childComplexity), true
+
 	case "Stream.manual":
 		if e.complexity.Stream.Manual == nil {
 			break
@@ -884,7 +892,6 @@ type Project {
 extend type Mutation {
   createExternalStream(
     projectID: UUID!,
-    name: String!,
     description: String,
     schema: String!,
     batch: Boolean!,
@@ -900,6 +907,7 @@ type Stream {
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
+  keyFields: [String!]!
   external: Boolean!
   batch: Boolean!
   manual: Boolean!
@@ -974,46 +982,38 @@ func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context
 		}
 	}
 	args["projectID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
-	var arg2 *string
+	var arg1 *string
 	if tmp, ok := rawArgs["description"]; ok {
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg2
-	var arg3 string
+	args["description"] = arg1
+	var arg2 string
 	if tmp, ok := rawArgs["schema"]; ok {
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg3
-	var arg4 bool
+	args["schema"] = arg2
+	var arg3 bool
 	if tmp, ok := rawArgs["batch"]; ok {
+		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["batch"] = arg3
+	var arg4 bool
+	if tmp, ok := rawArgs["manual"]; ok {
 		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["batch"] = arg4
-	var arg5 bool
-	if tmp, ok := rawArgs["manual"]; ok {
-		arg5, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["manual"] = arg5
+	args["manual"] = arg4
 	return args, nil
 }
 
@@ -2171,7 +2171,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["name"].(string), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
+		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3355,6 +3355,43 @@ func (ec *executionContext) _Stream_canonicalAvroSchema(ctx context.Context, fie
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_keyFields(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyFields, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -5491,6 +5528,11 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "keyFields":
+			out.Values[i] = ec._Stream_keyFields(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "external":
 			out.Values[i] = ec._Stream_external(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6038,6 +6080,35 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstring(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstring(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {

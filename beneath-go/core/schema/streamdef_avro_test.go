@@ -46,7 +46,7 @@ func TestAvro1(t *testing.T) {
 	s := c.GetStream()
 	assert.NotNil(t, s)
 
-	avro, err := s.BuildAvroSchema(true)
+	avro, err := s.BuildAvroSchema()
 	assert.Nil(t, err)
 	assert.NotNil(t, avro)
 

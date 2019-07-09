@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/linkedin/goavro/v2"
 )
 
 // BuildAvroSchema compiles the stream into an Avro schema
-func (s *StreamDef) BuildAvroSchema(doc bool) (string, error) {
+func (s *StreamDef) BuildAvroSchema() (string, error) {
 	decl := s.Compiler.Declarations[s.TypeName]
 
 	definedNames := make(map[string]bool)
@@ -19,6 +21,22 @@ func (s *StreamDef) BuildAvroSchema(doc bool) (string, error) {
 	}
 
 	return string(json), nil
+}
+
+// BuildCanonicalAvroSchema compiles the stream into an Avro schema
+// in canonical form (compact and without doc)
+func (s *StreamDef) BuildCanonicalAvroSchema() (string, error) {
+	avro, err := s.BuildAvroSchema()
+	if err != nil {
+		return "", err
+	}
+
+	codec, err := goavro.NewCodec(avro)
+	if err != nil {
+		return "", err
+	}
+
+	return codec.CanonicalSchema(), nil
 }
 
 func (s *StreamDef) buildAvroRecord(t *Type, definedNames map[string]bool) interface{} {

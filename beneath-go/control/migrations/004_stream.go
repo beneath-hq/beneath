@@ -11,11 +11,13 @@ func init() {
 		// Stream
 		_, err = db.Exec(`
 			CREATE TABLE streams(
-				stream_id    UUID,
+				stream_id    UUID DEFAULT uuid_generate_v4(),
 				name         TEXT NOT NULL,
 				description  TEXT,
 				schema       TEXT NOT NULL,
-				avro_schema  JSON,
+				avro_schema  JSON NOT NULL,
+				canonical_avro_schema JSON NOT NULL,
+				key_fields   JSONB NOT NULL, 
 				external     BOOLEAN NOT NULL,
 				batch        BOOLEAN NOT NULL,
 				manual       BOOLEAN NOT NULL,

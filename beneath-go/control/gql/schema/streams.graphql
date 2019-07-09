@@ -5,7 +5,6 @@ extend type Query {
 extend type Mutation {
   createExternalStream(
     projectID: UUID!,
-    name: String!,
     description: String,
     schema: String!,
     batch: Boolean!,
@@ -21,6 +20,7 @@ type Stream {
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
+  keyFields: [String!]!
   external: Boolean!
   batch: Boolean!
   manual: Boolean!

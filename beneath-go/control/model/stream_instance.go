@@ -3,7 +3,10 @@ package model
 import (
 	"time"
 
+	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/beneath-core/beneath-go/control/db"
 )
 
 // StreamInstance represents a single version of a stream (for a streaming stream,
@@ -15,4 +18,38 @@ type StreamInstance struct {
 	Stream           *Stream
 	CreatedOn        time.Time `sql:",default:now()"`
 	UpdatedOn        time.Time `sql:",default:now()"`
+}
+
+// CreateStreamInstance creates a new instance
+func CreateStreamInstance(streamID uuid.UUID) (*StreamInstance, error) {
+	var res *StreamInstance
+
+	err := db.DB.RunInTransaction(func(tx *pg.Tx) error {
+		si, err := CreateStreamInstanceWithTx(tx, streamID)
+		if err != nil {
+			return err
+		}
+		res = si
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
+func CreateStreamInstanceWithTx(tx *pg.Tx, streamID uuid.UUID) (*StreamInstance, error) {
+	si := &StreamInstance{
+		StreamID: streamID,
+	}
+
+	_, err := tx.Model(si).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	return si, nil
 }
