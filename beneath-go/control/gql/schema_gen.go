@@ -62,7 +62,6 @@ type ComplexityRoot struct {
 
 	Me struct {
 		Email     func(childComplexity int) int
-		Keys      func(childComplexity int) int
 		UpdatedOn func(childComplexity int) int
 		User      func(childComplexity int) int
 		UserID    func(childComplexity int) int
@@ -249,13 +248,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Me.Email(childComplexity), true
 
-	case "Me.keys":
-		if e.complexity.Me.Keys == nil {
-			break
-		}
-
-		return e.complexity.Me.Keys(childComplexity), true
-
 	case "Me.updatedOn":
 		if e.complexity.Me.UpdatedOn == nil {
 			break
@@ -311,7 +303,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["name"].(string), args["displayName"].(string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["name"].(string), args["displayName"].(string), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
 
 	case "Mutation.empty":
 		if e.complexity.Mutation.Empty == nil {
@@ -390,7 +382,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string)), true
+		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
 
 	case "Mutation.updateStream":
 		if e.complexity.Mutation.UpdateStream == nil {
@@ -446,7 +438,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Name(childComplexity), true
 
-	case "Project.photoUrl":
+	case "Project.photoURL":
 		if e.complexity.Project.PhotoURL == nil {
 			break
 		}
@@ -700,7 +692,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Name(childComplexity), true
 
-	case "User.photoUrl":
+	case "User.photoURL":
 		if e.complexity.User.PhotoURL == nil {
 			break
 		}
@@ -866,8 +858,8 @@ type NewKey {
 }
 
 extend type Mutation {
-  createProject(name: String!, displayName: String!, site: String, description: String, photoUrl: String): Project!
-  updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoUrl: String): Project!
+  createProject(name: String!, displayName: String!, site: String, description: String, photoURL: String): Project!
+  updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoURL: String): Project!
   addUserToProject(email: String!, projectID: UUID!): User
   removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
@@ -878,7 +870,7 @@ type Project {
   displayName: String!
   site: String
   description: String
-  photoUrl: String
+  photoURL: String
   createdOn: Time!
   updatedOn: Time!
   users: [User!]
@@ -930,7 +922,7 @@ type User {
   username: String
   name: String!
   bio: String
-  photoUrl: String
+  photoURL: String
   createdOn: Time!
   projects: [Project!]!
 }
@@ -940,7 +932,6 @@ type Me {
   user: User!
   email: String!
   updatedOn: Time!
-  keys: [Key!]!
 }
 `},
 )
@@ -1053,13 +1044,13 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 	}
 	args["description"] = arg3
 	var arg4 *string
-	if tmp, ok := rawArgs["photoUrl"]; ok {
+	if tmp, ok := rawArgs["photoURL"]; ok {
 		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["photoUrl"] = arg4
+	args["photoURL"] = arg4
 	return args, nil
 }
 
@@ -1209,13 +1200,13 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 	}
 	args["description"] = arg3
 	var arg4 *string
-	if tmp, ok := rawArgs["photoUrl"]; ok {
+	if tmp, ok := rawArgs["photoURL"]; ok {
 		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["photoUrl"] = arg4
+	args["photoURL"] = arg4
 	return args, nil
 }
 
@@ -1761,43 +1752,6 @@ func (ec *executionContext) _Me_updatedOn(ctx context.Context, field graphql.Col
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Me_keys(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Me",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Keys, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Key)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -1990,7 +1944,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateProject(rctx, args["name"].(string), args["displayName"].(string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string))
+		return ec.resolvers.Mutation().CreateProject(rctx, args["name"].(string), args["displayName"].(string), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2034,7 +1988,7 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateProject(rctx, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string))
+		return ec.resolvers.Mutation().UpdateProject(rctx, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2522,7 +2476,7 @@ func (ec *executionContext) _Project_description(ctx context.Context, field grap
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Project_photoUrl(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_photoURL(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3778,7 +3732,7 @@ func (ec *executionContext) _User_bio(ctx context.Context, field graphql.Collect
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_photoUrl(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5146,11 +5100,6 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "keys":
-			out.Values[i] = ec._Me_keys(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5308,8 +5257,8 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Project_site(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Project_description(ctx, field, obj)
-		case "photoUrl":
-			out.Values[i] = ec._Project_photoUrl(ctx, field, obj)
+		case "photoURL":
+			out.Values[i] = ec._Project_photoURL(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._Project_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5620,8 +5569,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "bio":
 			out.Values[i] = ec._User_bio(ctx, field, obj)
-		case "photoUrl":
-			out.Values[i] = ec._User_photoUrl(ctx, field, obj)
+		case "photoURL":
+			out.Values[i] = ec._User_photoURL(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._User_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

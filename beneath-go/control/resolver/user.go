@@ -64,6 +64,5 @@ func userToMe(u *model.User) *gql.Me {
 		User:      u,
 		Email:     u.Email,
 		UpdatedOn: u.UpdatedOn,
-		Keys:      u.Keys,
 	}
 }

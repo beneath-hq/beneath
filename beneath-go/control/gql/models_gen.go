@@ -9,11 +9,10 @@ import (
 )
 
 type Me struct {
-	UserID    string       `json:"userID"`
-	User      *model.User  `json:"user"`
-	Email     string       `json:"email"`
-	UpdatedOn time.Time    `json:"updatedOn"`
-	Keys      []*model.Key `json:"keys"`
+	UserID    string      `json:"userID"`
+	User      *model.User `json:"user"`
+	Email     string      `json:"email"`
+	UpdatedOn time.Time   `json:"updatedOn"`
 }
 
 type NewKey struct {

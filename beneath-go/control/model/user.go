@@ -54,7 +54,7 @@ func FindUser(userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := db.DB.Model(user).WherePK().Column("user.*", "Keys", "Projects").Select()
+	err := db.DB.Model(user).WherePK().Column("user.*", "Projects").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
