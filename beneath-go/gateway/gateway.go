@@ -7,13 +7,13 @@ import (
 )
 
 type configSpecification struct {
-	HTTPPort        int    `envconfig:"HTTP_PORT" default:"5000"`
-	GRPCPort        int    `envconfig:"GRPC_PORT" default:"50051"`
-	StreamsDriver   string `envconfig:"STREAMS_DRIVER" required:"true"`
-	TablesDriver    string `envconfig:"TABLES_DRIVER" required:"true"`
-	WarehouseDriver string `envconfig:"WAREHOUSE_DRIVER" required:"true"`
-	RedisURL        string `envconfig:"REDIS_URL" required:"true"`
-	PostgresURL     string `envconfig:"POSTGRES_URL" required:"true"`
+	HTTPPort        int    `envconfig:"GATEWAY_PORT" default:"5000"`
+	GRPCPort        int    `envconfig:"GATEWAY_PORT_GRPC" default:"50051"`
+	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
+	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
+	RedisURL        string `envconfig:"CONTROL_REDIS_URL" required:"true"`
+	PostgresURL     string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
 }
 
 var (

@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	log.Fatal(control.ListenAndServeHTTP(control.Config.HTTPPort))
+	log.Fatal(control.ListenAndServeHTTP(control.Config.ControlPort))
 }

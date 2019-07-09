@@ -31,7 +31,7 @@ type Pubsub struct {
 func New() *Pubsub {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_pubsub", &config)
+	core.LoadConfig("beneath_engine_pubsub", &config)
 
 	// prepare pubsub client
 	client, err := pubsub.NewClient(context.Background(), config.ProjectID)

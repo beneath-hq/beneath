@@ -18,7 +18,7 @@ type Bigtable struct {
 func New() *Bigtable {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_bigtable", &config)
+	core.LoadConfig("beneath_engine_bigtable", &config)
 
 	// create instance
 	p := &Bigtable{}

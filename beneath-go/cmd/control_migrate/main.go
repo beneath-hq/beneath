@@ -26,7 +26,7 @@ Usage:
 `
 
 type configSpecification struct {
-	PostgresURL string `envconfig:"POSTGRES_URL" required:"true"`
+	PostgresURL string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
 }
 
 func main() {
