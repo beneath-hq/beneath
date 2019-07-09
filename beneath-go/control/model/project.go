@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/go-pg/pg"
 	"github.com/go-redis/cache"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
@@ -58,6 +59,28 @@ func validateProject(sl validator.StructLevel) {
 	if !projectNameRegex.MatchString(p.Name) {
 		sl.ReportError(p.Name, "Name", "", "alphanumericorunderscore", "")
 	}
+}
+
+// CreateWithUser creates a project and makes user a member
+func (p *Project) CreateWithUser(userID uuid.UUID) error {
+	// validate
+	err := GetValidator().Struct(p)
+	if err != nil {
+		return err
+	}
+
+	// create project and ProjectToUser in one transaction
+	return db.DB.RunInTransaction(func(tx *pg.Tx) error {
+		_, err := tx.Model(p).Insert()
+		if err != nil {
+			return err
+		}
+
+		return tx.Insert(&ProjectToUser{
+			ProjectID: p.ProjectID,
+			UserID:    userID,
+		})
+	})
 }
 
 // AddUser makes user a member of project
