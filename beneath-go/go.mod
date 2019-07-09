@@ -26,6 +26,7 @@ require (
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/pprof v0.0.0-20190515194954-54271f7e092f // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
+	github.com/gorilla/sessions v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/joho/godotenv v1.3.0
@@ -33,6 +34,7 @@ require (
 	github.com/kr/pty v1.1.5 // indirect
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/linkedin/goavro/v2 v2.8.5
+	github.com/markbates/goth v1.54.1
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.3.0

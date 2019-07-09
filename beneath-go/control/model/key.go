@@ -236,3 +236,8 @@ func (k *Key) Revoke() {
 func redisKeyForHashedKey(hashedKey string) string {
 	return fmt.Sprintf("key:%s", hashedKey)
 }
+
+// IsPersonal returns true iff the key gives manage rights on a user
+func (k *Key) IsPersonal() bool {
+	return k != nil && k.UserID != nil && k.Role == KeyRoleManage
+}

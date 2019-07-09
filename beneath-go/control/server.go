@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/beneath-core/beneath-go/control/auth"
+
 	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
@@ -17,9 +19,18 @@ import (
 )
 
 type configSpecification struct {
-	HTTPPort    int    `envconfig:"PORT" default:"4000"`
-	RedisURL    string `envconfig:"REDIS_URL" required:"true"`
-	PostgresURL string `envconfig:"POSTGRES_URL" required:"true"`
+	ControlPort  int    `envconfig:"CONTROL_PORT" required:"true"`
+	ControlHost  string `envconfig:"CONTROL_HOST" required:"true"`
+	FrontendHost string `envconfig:"FRONTEND_HOST" required:"true"`
+
+	RedisURL    string `envconfig:"CONTROL_REDIS_URL" required:"true"`
+	PostgresURL string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
+
+	SessionSecret    string `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
+	GithubAuthID     string `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
+	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
+	GoogleAuthID     string `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
+	GoogleAuthSecret string `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
 }
 
 var (
@@ -37,6 +48,17 @@ func init() {
 
 	// run migrations
 	migrations.MustRunUp(db.DB)
+
+	// configure auth
+	auth.InitGoth(&auth.GothConfig{
+		ClientHost:       Config.FrontendHost,
+		SessionSecret:    Config.SessionSecret,
+		BackendHost:      Config.ControlHost,
+		GithubAuthID:     Config.GithubAuthID,
+		GithubAuthSecret: Config.GithubAuthSecret,
+		GoogleAuthID:     Config.GoogleAuthID,
+		GoogleAuthSecret: Config.GoogleAuthSecret,
+	})
 }
 
 // ListenAndServeHTTP serves the GraphQL API on HTTP
@@ -46,12 +68,19 @@ func ListenAndServeHTTP(port int) error {
 	// Add CORS
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{
-			"http://localhost:4000",
-			"https://beneath.network",
+			Config.FrontendHost,
+			Config.ControlHost,
 		},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
+
+	// Authentication middleware (reads Bearer token if present)
+	router.Use(auth.HTTPMiddleware)
+
+	// Authentication endpoints
+	router.Mount("/auth", auth.Router())
 
 	// Add health check
 	router.Get("/", healthCheck)
