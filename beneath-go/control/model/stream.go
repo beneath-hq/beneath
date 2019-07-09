@@ -27,6 +27,7 @@ type Stream struct {
 	Description             string    `validate:"omitempty,lte=255"`
 	Schema                  string    `sql:",notnull",validate:"required"`
 	AvroSchema              string    `sql:",type:json",validate:"required"`
+	CanonicalAvroSchema     string    `sql:",type:json",validate:"required"`
 	External                bool      `sql:",notnull"`
 	Batch                   bool      `sql:",notnull"`
 	Manual                  bool      `sql:",notnull"`
