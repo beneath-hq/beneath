@@ -1,23 +1,24 @@
 extend type Query {
-  project(name: String, projectId: ID): Project
+  projectByName(name: String!): Project
+  projectByID(projectID: UUID!): Project
 }
 
 extend type Mutation {
   createProject(name: String!, displayName: String!, site: String, description: String, photoUrl: String): Project!
-  updateProject(projectId: ID!, displayName: String, site: String, description: String, photoUrl: String): Project!
-  addUserToProject(email: String!, projectId: ID!): User
-  removeUserFromProject(userId: ID!, projectId: ID!): Boolean
+  updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoUrl: String): Project!
+  addUserToProject(email: String!, projectID: UUID!): User
+  removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
 
 type Project {
-  projectId: ID!
-  name: String
-  displayName: String
+  projectID: ID!
+  name: String!
+  displayName: String!
   site: String
   description: String
   photoUrl: String
-  createdOn: Time
-  updatedOn: Time
-  users: [User]
-  streams: [Stream]
+  createdOn: Time!
+  updatedOn: Time!
+  users: [User!]
+  streams: [Stream!]
 }

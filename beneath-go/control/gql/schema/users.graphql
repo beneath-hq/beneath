@@ -1,26 +1,26 @@
 extend type Query {
   me: Me
-  user(userId: ID!): User
+  user(userID: UUID!): User
 }
 
 extend type Mutation {
-  updateMe(name: String, bio: String): Me
+  updateMe(name: String, bio: String): Me!
 }
 
 type User {
-  userId: ID!
+  userID: ID!
   username: String
-  name: String
+  name: String!
   bio: String
   photoUrl: String
-  createdOn: Time
-  projects: [Project]
+  createdOn: Time!
+  projects: [Project!]!
 }
 
 type Me {
-  userId: ID!
+  userID: ID!
   user: User!
-  email: String
-  updatedOn: Time
-  keys: [Key]
+  email: String!
+  updatedOn: Time!
+  keys: [Key!]!
 }

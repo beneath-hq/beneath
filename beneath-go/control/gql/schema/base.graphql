@@ -1,4 +1,5 @@
 scalar Time
+scalar UUID
 
 type Query {
   empty: String

@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 )
@@ -68,16 +69,17 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddUserToProject      func(childComplexity int, email string, projectID string) int
-		CreateExternalStream  func(childComplexity int, projectID string, name string, description string, avroSchema string, batch bool, manual bool) int
+		AddUserToProject      func(childComplexity int, email string, projectID uuid.UUID) int
+		CreateExternalStream  func(childComplexity int, projectID uuid.UUID, name string, description *string, schema string, batch bool, manual bool) int
 		CreateProject         func(childComplexity int, name string, displayName string, site *string, description *string, photoURL *string) int
 		Empty                 func(childComplexity int) int
-		IssueKey              func(childComplexity int, userID *string, projectID *string, readonly bool, description *string) int
-		RemoveUserFromProject func(childComplexity int, userID string, projectID string) int
-		RevokeKey             func(childComplexity int, keyID string) int
+		IssueProjectKey       func(childComplexity int, projectID uuid.UUID, readonly bool, description string) int
+		IssueUserKey          func(childComplexity int, userID uuid.UUID, readonly bool, description string) int
+		RemoveUserFromProject func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
+		RevokeKey             func(childComplexity int, keyID uuid.UUID) int
 		UpdateMe              func(childComplexity int, name *string, bio *string) int
-		UpdateProject         func(childComplexity int, projectID string, displayName *string, site *string, description *string, photoURL *string) int
-		UpdateStream          func(childComplexity int, streamID string, description *string, manual *bool) int
+		UpdateProject         func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
+		UpdateStream          func(childComplexity int, streamID uuid.UUID, description *string, manual *bool) int
 	}
 
 	NewKey struct {
@@ -99,27 +101,30 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Empty   func(childComplexity int) int
-		Keys    func(childComplexity int, userID *string, projectID *string) int
-		Me      func(childComplexity int) int
-		Ping    func(childComplexity int) int
-		Project func(childComplexity int, name *string, projectID *string) int
-		Stream  func(childComplexity int, name string, projectName string) int
-		User    func(childComplexity int, userID string) int
+		Empty          func(childComplexity int) int
+		KeysForProject func(childComplexity int, projectID uuid.UUID) int
+		KeysForUser    func(childComplexity int, userID uuid.UUID) int
+		Me             func(childComplexity int) int
+		Ping           func(childComplexity int) int
+		ProjectByID    func(childComplexity int, projectID uuid.UUID) int
+		ProjectByName  func(childComplexity int, name string) int
+		Stream         func(childComplexity int, name string, projectName string) int
+		User           func(childComplexity int, userID uuid.UUID) int
 	}
 
 	Stream struct {
-		Batch       func(childComplexity int) int
-		CreatedOn   func(childComplexity int) int
-		Description func(childComplexity int) int
-		External    func(childComplexity int) int
-		Manual      func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Project     func(childComplexity int) int
-		Schema      func(childComplexity int) int
-		SchemaType  func(childComplexity int) int
-		StreamID    func(childComplexity int) int
-		UpdatedOn   func(childComplexity int) int
+		AvroSchema          func(childComplexity int) int
+		Batch               func(childComplexity int) int
+		CanonicalAvroSchema func(childComplexity int) int
+		CreatedOn           func(childComplexity int) int
+		Description         func(childComplexity int) int
+		External            func(childComplexity int) int
+		Manual              func(childComplexity int) int
+		Name                func(childComplexity int) int
+		Project             func(childComplexity int) int
+		Schema              func(childComplexity int) int
+		StreamID            func(childComplexity int) int
+		UpdatedOn           func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -139,17 +144,20 @@ type ComplexityRoot struct {
 
 type KeyResolver interface {
 	KeyID(ctx context.Context, obj *model.Key) (string, error)
+
+	Role(ctx context.Context, obj *model.Key) (string, error)
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
-	IssueKey(ctx context.Context, userID *string, projectID *string, readonly bool, description *string) (*NewKey, error)
-	RevokeKey(ctx context.Context, keyID string) (*bool, error)
+	IssueUserKey(ctx context.Context, userID uuid.UUID, readonly bool, description string) (*NewKey, error)
+	IssueProjectKey(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*NewKey, error)
+	RevokeKey(ctx context.Context, keyID uuid.UUID) (bool, error)
 	CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*model.Project, error)
-	UpdateProject(ctx context.Context, projectID string, displayName *string, site *string, description *string, photoURL *string) (*model.Project, error)
-	AddUserToProject(ctx context.Context, email string, projectID string) (*model.User, error)
-	RemoveUserFromProject(ctx context.Context, userID string, projectID string) (*bool, error)
-	CreateExternalStream(ctx context.Context, projectID string, name string, description string, avroSchema string, batch bool, manual bool) (*model.Stream, error)
-	UpdateStream(ctx context.Context, streamID string, description *string, manual *bool) (*model.Stream, error)
+	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*model.Project, error)
+	AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*model.User, error)
+	RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error)
+	CreateExternalStream(ctx context.Context, projectID uuid.UUID, name string, description *string, schema string, batch bool, manual bool) (*model.Stream, error)
+	UpdateStream(ctx context.Context, streamID uuid.UUID, description *string, manual *bool) (*model.Stream, error)
 	UpdateMe(ctx context.Context, name *string, bio *string) (*Me, error)
 }
 type ProjectResolver interface {
@@ -158,16 +166,16 @@ type ProjectResolver interface {
 type QueryResolver interface {
 	Empty(ctx context.Context) (*string, error)
 	Ping(ctx context.Context) (string, error)
-	Keys(ctx context.Context, userID *string, projectID *string) ([]*model.Key, error)
-	Project(ctx context.Context, name *string, projectID *string) (*model.Project, error)
+	KeysForUser(ctx context.Context, userID uuid.UUID) ([]*model.Key, error)
+	KeysForProject(ctx context.Context, projectID uuid.UUID) ([]*model.Key, error)
+	ProjectByName(ctx context.Context, name string) (*model.Project, error)
+	ProjectByID(ctx context.Context, projectID uuid.UUID) (*model.Project, error)
 	Stream(ctx context.Context, name string, projectName string) (*model.Stream, error)
 	Me(ctx context.Context) (*Me, error)
-	User(ctx context.Context, userID string) (*model.User, error)
+	User(ctx context.Context, userID uuid.UUID) (*model.User, error)
 }
 type StreamResolver interface {
 	StreamID(ctx context.Context, obj *model.Stream) (string, error)
-
-	SchemaType(ctx context.Context, obj *model.Stream) (*string, error)
 }
 type SubscriptionResolver interface {
 	Empty(ctx context.Context) (<-chan *string, error)
@@ -205,7 +213,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Key.Description(childComplexity), true
 
-	case "Key.keyId":
+	case "Key.keyID":
 		if e.complexity.Key.KeyID == nil {
 			break
 		}
@@ -261,7 +269,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Me.User(childComplexity), true
 
-	case "Me.userId":
+	case "Me.userID":
 		if e.complexity.Me.UserID == nil {
 			break
 		}
@@ -278,7 +286,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddUserToProject(childComplexity, args["email"].(string), args["projectId"].(string)), true
+		return e.complexity.Mutation.AddUserToProject(childComplexity, args["email"].(string), args["projectID"].(uuid.UUID)), true
 
 	case "Mutation.createExternalStream":
 		if e.complexity.Mutation.CreateExternalStream == nil {
@@ -290,7 +298,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectId"].(string), args["name"].(string), args["description"].(string), args["avroSchema"].(string), args["batch"].(bool), args["manual"].(bool)), true
+		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["name"].(string), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -311,17 +319,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Empty(childComplexity), true
 
-	case "Mutation.issueKey":
-		if e.complexity.Mutation.IssueKey == nil {
+	case "Mutation.issueProjectKey":
+		if e.complexity.Mutation.IssueProjectKey == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_issueKey_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_issueProjectKey_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IssueKey(childComplexity, args["userId"].(*string), args["projectId"].(*string), args["readonly"].(bool), args["description"].(*string)), true
+		return e.complexity.Mutation.IssueProjectKey(childComplexity, args["projectID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string)), true
+
+	case "Mutation.issueUserKey":
+		if e.complexity.Mutation.IssueUserKey == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_issueUserKey_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.IssueUserKey(childComplexity, args["userID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string)), true
 
 	case "Mutation.removeUserFromProject":
 		if e.complexity.Mutation.RemoveUserFromProject == nil {
@@ -333,7 +353,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveUserFromProject(childComplexity, args["userId"].(string), args["projectId"].(string)), true
+		return e.complexity.Mutation.RemoveUserFromProject(childComplexity, args["userID"].(uuid.UUID), args["projectID"].(uuid.UUID)), true
 
 	case "Mutation.revokeKey":
 		if e.complexity.Mutation.RevokeKey == nil {
@@ -345,7 +365,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RevokeKey(childComplexity, args["keyId"].(string)), true
+		return e.complexity.Mutation.RevokeKey(childComplexity, args["keyID"].(uuid.UUID)), true
 
 	case "Mutation.updateMe":
 		if e.complexity.Mutation.UpdateMe == nil {
@@ -369,7 +389,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectId"].(string), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string)), true
+		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string)), true
 
 	case "Mutation.updateStream":
 		if e.complexity.Mutation.UpdateStream == nil {
@@ -381,7 +401,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStream(childComplexity, args["streamId"].(string), args["description"].(*string), args["manual"].(*bool)), true
+		return e.complexity.Mutation.UpdateStream(childComplexity, args["streamID"].(uuid.UUID), args["description"].(*string), args["manual"].(*bool)), true
 
 	case "NewKey.key":
 		if e.complexity.NewKey.Key == nil {
@@ -432,7 +452,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.PhotoURL(childComplexity), true
 
-	case "Project.projectId":
+	case "Project.projectID":
 		if e.complexity.Project.ProjectID == nil {
 			break
 		}
@@ -474,17 +494,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Empty(childComplexity), true
 
-	case "Query.keys":
-		if e.complexity.Query.Keys == nil {
+	case "Query.keysForProject":
+		if e.complexity.Query.KeysForProject == nil {
 			break
 		}
 
-		args, err := ec.field_Query_keys_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_keysForProject_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Keys(childComplexity, args["userId"].(*string), args["projectId"].(*string)), true
+		return e.complexity.Query.KeysForProject(childComplexity, args["projectID"].(uuid.UUID)), true
+
+	case "Query.keysForUser":
+		if e.complexity.Query.KeysForUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_keysForUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.KeysForUser(childComplexity, args["userID"].(uuid.UUID)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -500,17 +532,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Ping(childComplexity), true
 
-	case "Query.project":
-		if e.complexity.Query.Project == nil {
+	case "Query.projectByID":
+		if e.complexity.Query.ProjectByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_project_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_projectByID_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Project(childComplexity, args["name"].(*string), args["projectId"].(*string)), true
+		return e.complexity.Query.ProjectByID(childComplexity, args["projectID"].(uuid.UUID)), true
+
+	case "Query.projectByName":
+		if e.complexity.Query.ProjectByName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_projectByName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ProjectByName(childComplexity, args["name"].(string)), true
 
 	case "Query.stream":
 		if e.complexity.Query.Stream == nil {
@@ -534,7 +578,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["userId"].(string)), true
+		return e.complexity.Query.User(childComplexity, args["userID"].(uuid.UUID)), true
+
+	case "Stream.avroSchema":
+		if e.complexity.Stream.AvroSchema == nil {
+			break
+		}
+
+		return e.complexity.Stream.AvroSchema(childComplexity), true
 
 	case "Stream.batch":
 		if e.complexity.Stream.Batch == nil {
@@ -542,6 +593,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Stream.Batch(childComplexity), true
+
+	case "Stream.canonicalAvroSchema":
+		if e.complexity.Stream.CanonicalAvroSchema == nil {
+			break
+		}
+
+		return e.complexity.Stream.CanonicalAvroSchema(childComplexity), true
 
 	case "Stream.createdOn":
 		if e.complexity.Stream.CreatedOn == nil {
@@ -592,14 +650,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.Schema(childComplexity), true
 
-	case "Stream.schemaType":
-		if e.complexity.Stream.SchemaType == nil {
-			break
-		}
-
-		return e.complexity.Stream.SchemaType(childComplexity), true
-
-	case "Stream.streamId":
+	case "Stream.streamID":
 		if e.complexity.Stream.StreamID == nil {
 			break
 		}
@@ -655,7 +706,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Projects(childComplexity), true
 
-	case "User.userId":
+	case "User.userID":
 		if e.complexity.User.UserID == nil {
 			break
 		}
@@ -761,6 +812,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "control/gql/schema/base.graphql", Input: `scalar Time
+scalar UUID
 
 type Query {
   empty: String
@@ -776,50 +828,53 @@ type Subscription {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/keys.graphql", Input: `extend type Query {
-  keys(userId: ID, projectId: ID): [Key!]!
+  keysForUser(userID: UUID!): [Key!]!
+  keysForProject(projectID: UUID!): [Key!]!
 }
 
 extend type Mutation {
-  issueKey(userId: ID, projectId: ID, readonly: Boolean!, description: String): NewKey!
-  revokeKey(keyId: ID!): Boolean
+  issueUserKey(userID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  issueProjectKey(projectID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  revokeKey(keyID: UUID!): Boolean!
 }
 
 type Key {
-  keyId: ID!
-  description: String
-  prefix: String
-  role: String
-  createdOn: Time
-  updatedOn: Time
+  keyID: ID!
+  description: String!
+  prefix: String!
+  role: String!
+  createdOn: Time!
+  updatedOn: Time!
 }
 
 type NewKey {
-  key: Key
-  keyString: String
+  key: Key!
+  keyString: String!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
-  project(name: String, projectId: ID): Project
+  projectByName(name: String!): Project
+  projectByID(projectID: UUID!): Project
 }
 
 extend type Mutation {
   createProject(name: String!, displayName: String!, site: String, description: String, photoUrl: String): Project!
-  updateProject(projectId: ID!, displayName: String, site: String, description: String, photoUrl: String): Project!
-  addUserToProject(email: String!, projectId: ID!): User
-  removeUserFromProject(userId: ID!, projectId: ID!): Boolean
+  updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoUrl: String): Project!
+  addUserToProject(email: String!, projectID: UUID!): User
+  removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
 
 type Project {
-  projectId: ID!
-  name: String
-  displayName: String
+  projectID: ID!
+  name: String!
+  displayName: String!
   site: String
   description: String
   photoUrl: String
-  createdOn: Time
-  updatedOn: Time
-  users: [User]
-  streams: [Stream]
+  createdOn: Time!
+  updatedOn: Time!
+  users: [User!]
+  streams: [Stream!]
 }
 `},
 	&ast.Source{Name: "control/gql/schema/streams.graphql", Input: `extend type Query {
@@ -828,55 +883,56 @@ type Project {
 
 extend type Mutation {
   createExternalStream(
-    projectId: ID!,
+    projectID: UUID!,
     name: String!,
-    description: String!,
-    avroSchema: String!,
+    description: String,
+    schema: String!,
     batch: Boolean!,
     manual: Boolean!
   ): Stream!
-  updateStream(streamId: ID!, description: String, manual: Boolean): Stream!
+  updateStream(streamID: UUID!, description: String, manual: Boolean): Stream!
 }
 
 type Stream {
-  streamId: ID!
+  streamID: ID!
   name: String!
   description: String
-  schema: String
-  schemaType: String
-  batch: Boolean
-  external: Boolean
-  manual: Boolean
-  project: Project
-  createdOn: Time
-  updatedOn: Time
+  schema: String!
+  avroSchema: String!
+  canonicalAvroSchema: String!
+  external: Boolean!
+  batch: Boolean!
+  manual: Boolean!
+  project: Project!
+  createdOn: Time!
+  updatedOn: Time!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/users.graphql", Input: `extend type Query {
   me: Me
-  user(userId: ID!): User
+  user(userID: UUID!): User
 }
 
 extend type Mutation {
-  updateMe(name: String, bio: String): Me
+  updateMe(name: String, bio: String): Me!
 }
 
 type User {
-  userId: ID!
+  userID: ID!
   username: String
-  name: String
+  name: String!
   bio: String
   photoUrl: String
-  createdOn: Time
-  projects: [Project]
+  createdOn: Time!
+  projects: [Project!]!
 }
 
 type Me {
-  userId: ID!
+  userID: ID!
   user: User!
-  email: String
-  updatedOn: Time
-  keys: [Key]
+  email: String!
+  updatedOn: Time!
+  keys: [Key!]!
 }
 `},
 )
@@ -896,28 +952,28 @@ func (ec *executionContext) field_Mutation_addUserToProject_args(ctx context.Con
 		}
 	}
 	args["email"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg1, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectId"] = arg1
+	args["projectID"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectId"] = arg0
+	args["projectID"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
@@ -926,22 +982,22 @@ func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context
 		}
 	}
 	args["name"] = arg1
-	var arg2 string
+	var arg2 *string
 	if tmp, ok := rawArgs["description"]; ok {
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["description"] = arg2
 	var arg3 string
-	if tmp, ok := rawArgs["avroSchema"]; ok {
+	if tmp, ok := rawArgs["schema"]; ok {
 		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["avroSchema"] = arg3
+	args["schema"] = arg3
 	var arg4 bool
 	if tmp, ok := rawArgs["batch"]; ok {
 		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
@@ -1007,77 +1063,99 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_issueKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_issueProjectKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectId"] = arg1
-	var arg2 bool
+	args["projectID"] = arg0
+	var arg1 bool
 	if tmp, ok := rawArgs["readonly"]; ok {
-		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["readonly"] = arg2
-	var arg3 *string
+	args["readonly"] = arg1
+	var arg2 string
 	if tmp, ok := rawArgs["description"]; ok {
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg3
+	args["description"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_issueUserKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["readonly"]; ok {
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["readonly"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["description"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["description"] = arg2
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_removeUserFromProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg1, err = ec.unmarshalNID2string(ctx, tmp)
+	args["userID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectId"] = arg1
+	args["projectID"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_revokeKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["keyId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["keyID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["keyId"] = arg0
+	args["keyID"] = arg0
 	return args, nil
 }
 
@@ -1106,14 +1184,14 @@ func (ec *executionContext) field_Mutation_updateMe_args(ctx context.Context, ra
 func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectId"] = arg0
+	args["projectID"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["displayName"]; ok {
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
@@ -1152,14 +1230,14 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_updateStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["streamId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["streamId"] = arg0
+	args["streamID"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["description"]; ok {
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
@@ -1193,47 +1271,59 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_keys_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_keysForProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectId"] = arg1
+	args["projectID"] = arg0
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_project_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_keysForUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_projectByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_projectByName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
 	if tmp, ok := rawArgs["name"]; ok {
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["name"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectId"] = arg1
 	return args, nil
 }
 
@@ -1262,14 +1352,14 @@ func (ec *executionContext) field_Query_stream_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
+	args["userID"] = arg0
 	return args, nil
 }
 
@@ -1309,7 +1399,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Key_keyId(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
+func (ec *executionContext) _Key_keyID(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1372,12 +1462,15 @@ func (ec *executionContext) _Key_description(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Key_prefix(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
@@ -1406,12 +1499,15 @@ func (ec *executionContext) _Key_prefix(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Key_role(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
@@ -1427,25 +1523,28 @@ func (ec *executionContext) _Key_role(ctx context.Context, field graphql.Collect
 		Object:   "Key",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
+		return ec.resolvers.Key().Role(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Key_createdOn(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
@@ -1474,12 +1573,15 @@ func (ec *executionContext) _Key_createdOn(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Key_updatedOn(ctx context.Context, field graphql.CollectedField, obj *model.Key) (ret graphql.Marshaler) {
@@ -1508,15 +1610,18 @@ func (ec *executionContext) _Key_updatedOn(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Me_userId(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_userID(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1616,12 +1721,15 @@ func (ec *executionContext) _Me_email(ctx context.Context, field graphql.Collect
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_updatedOn(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -1650,12 +1758,15 @@ func (ec *executionContext) _Me_updatedOn(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_keys(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -1684,12 +1795,15 @@ func (ec *executionContext) _Me_keys(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Key)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
+	return ec.marshalNKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1726,7 +1840,7 @@ func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_issueKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_issueUserKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1743,7 +1857,7 @@ func (ec *executionContext) _Mutation_issueKey(ctx context.Context, field graphq
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_issueKey_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_issueUserKey_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1752,7 +1866,51 @@ func (ec *executionContext) _Mutation_issueKey(ctx context.Context, field graphq
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().IssueKey(rctx, args["userId"].(*string), args["projectId"].(*string), args["readonly"].(bool), args["description"].(*string))
+		return ec.resolvers.Mutation().IssueUserKey(rctx, args["userID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*NewKey)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNNewKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐNewKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_issueProjectKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_issueProjectKey_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().IssueProjectKey(rctx, args["projectID"].(uuid.UUID), args["readonly"].(bool), args["description"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1796,19 +1954,22 @@ func (ec *executionContext) _Mutation_revokeKey(ctx context.Context, field graph
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RevokeKey(rctx, args["keyId"].(string))
+		return ec.resolvers.Mutation().RevokeKey(rctx, args["keyID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1881,7 +2042,7 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateProject(rctx, args["projectId"].(string), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string))
+		return ec.resolvers.Mutation().UpdateProject(rctx, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoUrl"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1925,7 +2086,7 @@ func (ec *executionContext) _Mutation_addUserToProject(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddUserToProject(rctx, args["email"].(string), args["projectId"].(string))
+		return ec.resolvers.Mutation().AddUserToProject(rctx, args["email"].(string), args["projectID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1966,19 +2127,22 @@ func (ec *executionContext) _Mutation_removeUserFromProject(ctx context.Context,
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveUserFromProject(rctx, args["userId"].(string), args["projectId"].(string))
+		return ec.resolvers.Mutation().RemoveUserFromProject(rctx, args["userID"].(uuid.UUID), args["projectID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2007,7 +2171,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectId"].(string), args["name"].(string), args["description"].(string), args["avroSchema"].(string), args["batch"].(bool), args["manual"].(bool))
+		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["name"].(string), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2051,7 +2215,7 @@ func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStream(rctx, args["streamId"].(string), args["description"].(*string), args["manual"].(*bool))
+		return ec.resolvers.Mutation().UpdateStream(rctx, args["streamID"].(uuid.UUID), args["description"].(*string), args["manual"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2102,12 +2266,15 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*Me)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+	return ec.marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewKey_key(ctx context.Context, field graphql.CollectedField, obj *NewKey) (ret graphql.Marshaler) {
@@ -2136,12 +2303,15 @@ func (ec *executionContext) _NewKey_key(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Key)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
+	return ec.marshalNKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewKey_keyString(ctx context.Context, field graphql.CollectedField, obj *NewKey) (ret graphql.Marshaler) {
@@ -2170,15 +2340,18 @@ func (ec *executionContext) _NewKey_keyString(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Project_projectId(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_projectID(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2241,12 +2414,15 @@ func (ec *executionContext) _Project_name(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_displayName(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -2275,12 +2451,15 @@ func (ec *executionContext) _Project_displayName(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_site(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -2411,12 +2590,15 @@ func (ec *executionContext) _Project_createdOn(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_updatedOn(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -2445,12 +2627,15 @@ func (ec *executionContext) _Project_updatedOn(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_users(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -2592,7 +2777,7 @@ func (ec *executionContext) _Query_ping(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_keysForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2609,7 +2794,7 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_keys_args(ctx, rawArgs)
+	args, err := ec.field_Query_keysForUser_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2618,7 +2803,7 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Keys(rctx, args["userId"].(*string), args["projectId"].(*string))
+		return ec.resolvers.Query().KeysForUser(rctx, args["userID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2636,7 +2821,7 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 	return ec.marshalNKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_project(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_keysForProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2653,7 +2838,7 @@ func (ec *executionContext) _Query_project(ctx context.Context, field graphql.Co
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_project_args(ctx, rawArgs)
+	args, err := ec.field_Query_keysForProject_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2662,7 +2847,92 @@ func (ec *executionContext) _Query_project(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Project(rctx, args["name"].(*string), args["projectId"].(*string))
+		return ec.resolvers.Query().KeysForProject(rctx, args["projectID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Key)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_projectByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_projectByName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProjectByName(rctx, args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_projectByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_projectByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProjectByID(rctx, args["projectID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2778,7 +3048,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["userId"].(string))
+		return ec.resolvers.Query().User(rctx, args["userID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2868,7 +3138,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_streamId(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_streamID(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3002,49 +3272,18 @@ func (ec *executionContext) _Stream_schema(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_schemaType(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Stream().SchemaType(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Stream_batch(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_avroSchema(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3063,19 +3302,59 @@ func (ec *executionContext) _Stream_batch(ctx context.Context, field graphql.Col
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Batch, nil
+		return obj.AvroSchema, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_canonicalAvroSchema(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CanonicalAvroSchema, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -3104,12 +3383,52 @@ func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(bool)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_batch(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Batch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_manual(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -3138,12 +3457,15 @@ func (ec *executionContext) _Stream_manual(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(bool)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -3172,12 +3494,15 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -3206,12 +3531,15 @@ func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
@@ -3240,12 +3568,15 @@ func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Subscription_empty(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
@@ -3276,7 +3607,7 @@ func (ec *executionContext) _Subscription_empty(ctx context.Context, field graph
 	}
 }
 
-func (ec *executionContext) _User_userId(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_userID(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3373,12 +3704,15 @@ func (ec *executionContext) _User_name(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -3475,12 +3809,15 @@ func (ec *executionContext) _User_createdOn(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_projects(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -3509,12 +3846,15 @@ func (ec *executionContext) _User_projects(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -4687,7 +5027,7 @@ func (ec *executionContext) _Key(ctx context.Context, sel ast.SelectionSet, obj 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Key")
-		case "keyId":
+		case "keyID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4695,7 +5035,7 @@ func (ec *executionContext) _Key(ctx context.Context, sel ast.SelectionSet, obj 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Key_keyId(ctx, field, obj)
+				res = ec._Key_keyID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4703,14 +5043,38 @@ func (ec *executionContext) _Key(ctx context.Context, sel ast.SelectionSet, obj 
 			})
 		case "description":
 			out.Values[i] = ec._Key_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "prefix":
 			out.Values[i] = ec._Key_prefix(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "role":
-			out.Values[i] = ec._Key_role(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Key_role(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdOn":
 			out.Values[i] = ec._Key_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updatedOn":
 			out.Values[i] = ec._Key_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4733,8 +5097,8 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Me")
-		case "userId":
-			out.Values[i] = ec._Me_userId(ctx, field, obj)
+		case "userID":
+			out.Values[i] = ec._Me_userID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -4745,10 +5109,19 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			}
 		case "email":
 			out.Values[i] = ec._Me_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updatedOn":
 			out.Values[i] = ec._Me_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "keys":
 			out.Values[i] = ec._Me_keys(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4777,13 +5150,21 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "empty":
 			out.Values[i] = ec._Mutation_empty(ctx, field)
-		case "issueKey":
-			out.Values[i] = ec._Mutation_issueKey(ctx, field)
+		case "issueUserKey":
+			out.Values[i] = ec._Mutation_issueUserKey(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "issueProjectKey":
+			out.Values[i] = ec._Mutation_issueProjectKey(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "revokeKey":
 			out.Values[i] = ec._Mutation_revokeKey(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createProject":
 			out.Values[i] = ec._Mutation_createProject(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -4798,6 +5179,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_addUserToProject(ctx, field)
 		case "removeUserFromProject":
 			out.Values[i] = ec._Mutation_removeUserFromProject(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createExternalStream":
 			out.Values[i] = ec._Mutation_createExternalStream(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -4810,6 +5194,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateMe":
 			out.Values[i] = ec._Mutation_updateMe(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4834,8 +5221,14 @@ func (ec *executionContext) _NewKey(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = graphql.MarshalString("NewKey")
 		case "key":
 			out.Values[i] = ec._NewKey_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "keyString":
 			out.Values[i] = ec._NewKey_keyString(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4858,7 +5251,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Project")
-		case "projectId":
+		case "projectID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4866,7 +5259,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Project_projectId(ctx, field, obj)
+				res = ec._Project_projectID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4874,8 +5267,14 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			})
 		case "name":
 			out.Values[i] = ec._Project_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "displayName":
 			out.Values[i] = ec._Project_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "site":
 			out.Values[i] = ec._Project_site(ctx, field, obj)
 		case "description":
@@ -4884,8 +5283,14 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Project_photoUrl(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._Project_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updatedOn":
 			out.Values[i] = ec._Project_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "users":
 			out.Values[i] = ec._Project_users(ctx, field, obj)
 		case "streams":
@@ -4941,7 +5346,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "keys":
+		case "keysForUser":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4949,13 +5354,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_keys(ctx, field)
+				res = ec._Query_keysForUser(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
-		case "project":
+		case "keysForProject":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4963,7 +5368,32 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_project(ctx, field)
+				res = ec._Query_keysForProject(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "projectByName":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_projectByName(ctx, field)
+				return res
+			})
+		case "projectByID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_projectByID(ctx, field)
 				return res
 			})
 		case "stream":
@@ -5025,7 +5455,7 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Stream")
-		case "streamId":
+		case "streamID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -5033,7 +5463,7 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Stream_streamId(ctx, field, obj)
+				res = ec._Stream_streamID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5048,29 +5478,49 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Stream_description(ctx, field, obj)
 		case "schema":
 			out.Values[i] = ec._Stream_schema(ctx, field, obj)
-		case "schemaType":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Stream_schemaType(ctx, field, obj)
-				return res
-			})
-		case "batch":
-			out.Values[i] = ec._Stream_batch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "avroSchema":
+			out.Values[i] = ec._Stream_avroSchema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "canonicalAvroSchema":
+			out.Values[i] = ec._Stream_canonicalAvroSchema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "external":
 			out.Values[i] = ec._Stream_external(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "batch":
+			out.Values[i] = ec._Stream_batch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "manual":
 			out.Values[i] = ec._Stream_manual(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "project":
 			out.Values[i] = ec._Stream_project(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "createdOn":
 			out.Values[i] = ec._Stream_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updatedOn":
 			out.Values[i] = ec._Stream_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5113,7 +5563,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
-		case "userId":
+		case "userID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -5121,7 +5571,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_userId(ctx, field, obj)
+				res = ec._User_userID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5131,14 +5581,23 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._User_username(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "bio":
 			out.Values[i] = ec._User_bio(ctx, field, obj)
 		case "photoUrl":
 			out.Values[i] = ec._User_photoUrl(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._User_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "projects":
 			out.Values[i] = ec._User_projects(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5474,6 +5933,20 @@ func (ec *executionContext) marshalNKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbenea
 	return ec._Key(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMe2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
+	return ec._Me(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v *Me) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Me(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNNewKey2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐNewKey(ctx context.Context, sel ast.SelectionSet, v NewKey) graphql.Marshaler {
 	return ec._NewKey(ctx, sel, &v)
 }
@@ -5490,6 +5963,43 @@ func (ec *executionContext) marshalNNewKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbe
 
 func (ec *executionContext) marshalNProject2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
@@ -5522,6 +6032,52 @@ func (ec *executionContext) unmarshalNString2string(ctx context.Context, v inter
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	return graphql.UnmarshalTime(v)
+}
+
+func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec.marshalNTime2timeᚐTime(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
+	return UnmarshalUUID(v)
+}
+
+func (ec *executionContext) marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+	res := MarshalUUID(v)
 	if res == graphql.Null {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5793,80 +6349,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalID(v)
-}
-
-func (ec *executionContext) marshalOID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalID(v)
-}
-
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOID2string(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOID2string(ctx, sel, *v)
-}
-
-func (ec *executionContext) marshalOKey2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx context.Context, sel ast.SelectionSet, v model.Key) graphql.Marshaler {
-	return ec._Key(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx context.Context, sel ast.SelectionSet, v []*model.Key) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalOKey2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx context.Context, sel ast.SelectionSet, v *model.Key) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Key(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOMe2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
 	return ec._Me(ctx, sel, &v)
 }
@@ -5880,46 +6362,6 @@ func (ec *executionContext) marshalOMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneat
 
 func (ec *executionContext) marshalOProject2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
@@ -5960,7 +6402,7 @@ func (ec *executionContext) marshalOStream2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐStream(ctx, sel, v[i])
+			ret[i] = ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐStream(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6003,29 +6445,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	return graphql.UnmarshalTime(v)
-}
-
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	return graphql.MarshalTime(v)
-}
-
-func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
-}
-
 func (ec *executionContext) marshalOUser2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -6057,7 +6476,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

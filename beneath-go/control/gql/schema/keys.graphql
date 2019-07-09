@@ -1,22 +1,24 @@
 extend type Query {
-  keys(userId: ID, projectId: ID): [Key!]!
+  keysForUser(userID: UUID!): [Key!]!
+  keysForProject(projectID: UUID!): [Key!]!
 }
 
 extend type Mutation {
-  issueKey(userId: ID, projectId: ID, readonly: Boolean!, description: String): NewKey!
-  revokeKey(keyId: ID!): Boolean
+  issueUserKey(userID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  issueProjectKey(projectID: UUID!, readonly: Boolean!, description: String!): NewKey!
+  revokeKey(keyID: UUID!): Boolean!
 }
 
 type Key {
-  keyId: ID!
-  description: String
-  prefix: String
-  role: String
-  createdOn: Time
-  updatedOn: Time
+  keyID: ID!
+  description: String!
+  prefix: String!
+  role: String!
+  createdOn: Time!
+  updatedOn: Time!
 }
 
 type NewKey {
-  key: Key
-  keyString: String
+  key: Key!
+  keyString: String!
 }

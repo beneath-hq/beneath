@@ -9,14 +9,14 @@ import (
 )
 
 type Me struct {
-	UserID    string       `json:"userId"`
+	UserID    string       `json:"userID"`
 	User      *model.User  `json:"user"`
-	Email     *string      `json:"email"`
-	UpdatedOn *time.Time   `json:"updatedOn"`
+	Email     string       `json:"email"`
+	UpdatedOn time.Time    `json:"updatedOn"`
 	Keys      []*model.Key `json:"keys"`
 }
 
 type NewKey struct {
 	Key       *model.Key `json:"key"`
-	KeyString *string    `json:"keyString"`
+	KeyString string     `json:"keyString"`
 }

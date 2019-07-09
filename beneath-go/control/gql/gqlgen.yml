@@ -8,11 +8,13 @@ model:
   filename: control/gql/models_gen.go
   package: gql
 resolver:
-  filename: control/resolver/resolver.go
+  filename: control/resolver/generated.go
   package: resolver
   type: Resolver
 autobind: []
 models:
+  UUID:
+    model: github.com/beneath-core/beneath-go/control/gql.UUID
   Key:
     model: github.com/beneath-core/beneath-go/control/model.Key
   Project:
