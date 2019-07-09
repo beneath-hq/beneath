@@ -61,6 +61,31 @@ func validateProject(sl validator.StructLevel) {
 	}
 }
 
+// FindProject finds a project by ID
+func FindProject(projectID uuid.UUID) *Project {
+	project := &Project{
+		ProjectID: projectID,
+	}
+	err := db.DB.Model(project).WherePK().Column("project.*", "Streams", "Users").Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return project
+}
+
+// FindProjectByName finds a project by name
+func FindProjectByName(name string) *Project {
+	project := &Project{}
+	err := db.DB.Model(project).
+		Where("lower(project.name) = lower(?)", name).
+		Column("project.*", "Streams", "Users").
+		Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return project
+}
+
 // CreateWithUser creates a project and makes user a member
 func (p *Project) CreateWithUser(userID uuid.UUID) error {
 	// validate
@@ -94,10 +119,41 @@ func (p *Project) AddUser(userID uuid.UUID) error {
 // RemoveUser removes a member from the project
 func (p *Project) RemoveUser(userID uuid.UUID) error {
 	// TODO remove from cache
+	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
 	return db.DB.Delete(&ProjectToUser{
 		ProjectID: p.ProjectID,
 		UserID:    userID,
 	})
+}
+
+// UpdateDetails updates projects user-facing details
+func (p *Project) UpdateDetails(displayName *string, site *string, description *string, photoURL *string) error {
+	// set fields
+	if displayName != nil {
+		p.DisplayName = *displayName
+	}
+	if site != nil {
+		p.Site = *site
+	}
+	if description != nil {
+		p.Description = *description
+	}
+	if photoURL != nil {
+		p.PhotoURL = *photoURL
+	}
+
+	// validate
+	err := GetValidator().Struct(p)
+	if err != nil {
+		return err
+	}
+
+	// update
+	_, err = db.DB.Model(p).
+		Column("display_name", "site", "description", "photo_url").
+		WherePK().
+		Update()
+	return err
 }
 
 func getProjectCache() *cache.Codec {
