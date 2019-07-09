@@ -23,7 +23,11 @@ func (r *userResolver) UserID(ctx context.Context, obj *model.User) (string, err
 }
 
 func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User, error) {
-	return model.FindUser(userID), nil
+	user := model.FindUser(userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", userID.String())
+	}
+	return user, nil
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
