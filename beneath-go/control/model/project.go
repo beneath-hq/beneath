@@ -25,7 +25,7 @@ type Project struct {
 	UpdatedOn   time.Time `sql:",default:now()"`
 	Keys        []*Key
 	Streams     []*Stream
-	Users       []*User `pg:"many2many:projects_users,joinFK:project_id"`
+	Users       []*User `pg:"many2many:projects_users,fk:project_id,joinFK:user_id"`
 }
 
 // ProjectToUser represnts the many-to-many relationship between users and projects

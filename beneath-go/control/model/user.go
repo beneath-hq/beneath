@@ -24,7 +24,7 @@ type User struct {
 	GithubID  string     `sql:",unique",validate:"omitempty,lte=255"`
 	CreatedOn time.Time  `sql:",default:now()"`
 	UpdatedOn time.Time  `sql:",default:now()"`
-	Projects  []*Project `pg:"many2many:projects_users,joinFK:user_id"`
+	Projects  []*Project `pg:"many2many:projects_users,fk:user_id,joinFK:project_id"`
 	Keys      []*Key
 }
 
@@ -49,8 +49,20 @@ func userValidation(sl validator.StructLevel) {
 	}
 }
 
-// FindOneUserByEmail returns user with email (if exists)
-func FindOneUserByEmail(email string) *User {
+// FindUser returns the matching user or nil
+func FindUser(userID uuid.UUID) *User {
+	user := &User{
+		UserID: userID,
+	}
+	err := db.DB.Model(user).WherePK().Column("user.*", "Keys", "Projects").Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return user
+}
+
+// FindUserByEmail returns user with email (if exists)
+func FindUserByEmail(email string) *User {
 	user := &User{}
 	err := db.DB.Model(user).Where("lower(email) = lower(?)", email).Select()
 	if !AssertFoundOne(err) {
@@ -75,7 +87,7 @@ func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User
 
 	err := query.Select()
 	if !AssertFoundOne(err) {
-		userByEmail := FindOneUserByEmail(email)
+		userByEmail := FindUserByEmail(email)
 		if userByEmail == nil {
 			create = true
 		} else {
@@ -119,4 +131,23 @@ func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User
 // Delete removes the user from the database
 func (u *User) Delete() error {
 	return db.DB.Delete(u)
+}
+
+// UpdateDescription updates user's name and/or bio
+func (u *User) UpdateDescription(name *string, bio *string) error {
+	if name != nil {
+		u.Name = *name
+	}
+	if bio != nil {
+		u.Bio = *bio
+	}
+
+	// validate
+	err := GetValidator().Struct(u)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.DB.Model(u).Column("name", "bio").WherePK().Update()
+	return err
 }
