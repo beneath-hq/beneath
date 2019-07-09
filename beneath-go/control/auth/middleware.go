@@ -17,8 +17,8 @@ import (
 // ContextKey used as key in context.Context to set/get the auth object
 type ContextKey struct{}
 
-// GetAuth extracts the auth object from ctx
-func GetAuth(ctx context.Context) *model.Key {
+// GetKey extracts the auth object from ctx
+func GetKey(ctx context.Context) *model.Key {
 	auth, ok := ctx.Value(ContextKey{}).(*model.Key)
 	if !ok {
 		log.Panicln("couldn't get auth from context")

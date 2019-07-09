@@ -91,7 +91,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 
 // logoutHandler revokes the current auth key
 func logoutHandler(w http.ResponseWriter, r *http.Request) error {
-	key := GetAuth(r.Context())
+	key := GetKey(r.Context())
 	if key != nil {
 		if key.IsPersonal() {
 			key.Revoke()
