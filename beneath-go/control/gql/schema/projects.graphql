@@ -19,6 +19,6 @@ type Project {
   photoURL: String
   createdOn: Time!
   updatedOn: Time!
-  users: [User!]
-  streams: [Stream!]
+  users: [User!]!
+  streams: [Stream!]!
 }
