@@ -3,16 +3,17 @@ import gql from "graphql-tag";
 export const QUERY_STREAM = gql`
   query QueryStream($name: String!, $projectName: String!) {
     stream(name: $name, projectName: $projectName) {
-      streamId
+      streamID
       name
       description
       schema
-      schemaType
-      batch
+      avroSchema
+      keyFields
       external
+      batch
       manual
       project {
-        projectId
+        projectID
         name
       }
       createdOn
@@ -23,31 +24,30 @@ export const QUERY_STREAM = gql`
 
 export const CREATE_EXTERNAL_STREAM = gql`
   mutation CreateExternalStream(
-    $projectId: ID!,
-    $name: String!,
-    $description: String!,
-    $avroSchema: String!,
+    $projectID: UUID!,
+    $description: String,
+    $schema: String!,
     $batch: Boolean!,
     $manual: Boolean!
   ) {
     createExternalStream(
-      projectId: $projectId,
-      name: $name,
+      projectID: $projectID,
       description: $description,
-      avroSchema: $avroSchema,
+      schema: $schema,
       batch: $batch,
       manual: $manual
     ) {
-      streamId
+      streamID
       name
       description
       schema
-      schemaType
-      batch
+      avroSchema
+      keyFields
       external
+      batch
       manual
       project {
-        projectId
+        projectID
         name
       }
       createdOn
@@ -57,9 +57,9 @@ export const CREATE_EXTERNAL_STREAM = gql`
 `;
 
 export const UPDATE_STREAM = gql`
-  mutation UpdateStream($streamId: ID!, $description: String!, $manual: Boolean!) {
-    updateStream(streamId: $streamId, description: $description, manual: $manual) {
-      streamId
+  mutation UpdateStream($streamID: UUID!, $description: String, $manual: Boolean) {
+    updateStream(streamID: $streamID, description: $description, manual: $manual) {
+      streamID
       description
       manual
     }

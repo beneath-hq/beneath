@@ -1,4 +1,3 @@
-import avro from "avsc";
 import React, { Component } from "react";
 import Router from "next/router";
 import { Mutation } from "react-apollo";
@@ -17,20 +16,6 @@ import Page from "../../components/Page";
 import withMe from "../../hocs/withMe";
 import { QUERY_PROJECT } from "../../queries/project";
 import { CREATE_EXTERNAL_STREAM } from "../../queries/stream";
-
-const validateAvroSchema = (value) => {  
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  try {
-    const schema = JSON.parse(value);
-    avro.Type.forSchema(schema, { noAnonymousTypes: true });
-    return true;
-  } catch {}
-
-  return false;
-};
 
 const handleTabInput = (e) => {
   if (e.keyCode === 9) { // 9 = tab key
@@ -56,10 +41,9 @@ const useStyles = makeStyles((theme) => ({
 
 const NewStreamPage = ({ me }) => {
   const [values, setValues] = React.useState({
-    projectId: "",
-    name: "",
+    projectID: "",
     description: "",
-    avroSchema: "",
+    schema: "",
     batch: false,
     manual: true,
   });
@@ -104,28 +88,15 @@ const NewStreamPage = ({ me }) => {
               <SelectField
                 id="project"
                 label="Project"
-                value={values.projectId}
+                value={values.projectID}
                 options={me.user.projects.map((project) => ({
-                  value: project.projectId,
+                  value: project.projectID,
                   label: project.name,
                 }))}
-                onChange={handleChange("projectId")}
+                onChange={handleChange("projectID")}
                 required
                 margin="normal"
                 helperText="You can't change this later, so make sure you get it right"
-              />
-              <TextField
-                id="name"
-                label="Identifier"
-                value={values.name}
-                margin="normal"
-                fullWidth
-                required
-                onChange={handleChange("name")}
-                error={isNameError}
-                helperText={
-                  isNameError ? "Stream name already exists in project..." : "Make it all lowercase and separate words with dashes"
-                }
               />
               <TextField
                 id="description"
@@ -139,15 +110,15 @@ const NewStreamPage = ({ me }) => {
               />
               <TextField
                 id="schema"
-                label="Avro Schema"
-                value={values.avroSchema}
+                label="Schema"
+                value={values.schema}
                 margin="normal"
                 multiline rows={10} rowsMax={1000}
                 fullWidth
                 required
-                onChange={handleChange("avroSchema")}
+                onChange={handleChange("schema")}
                 onKeyDown={handleTabInput}
-                helperText={<Typography variant="caption">Specify the format of data on the stream as an <Link target="_blank" href="https://docs.oracle.com/database/nosql-12.1.3.0/GettingStartedGuide/avroschemas.html">Avro schema</Link></Typography>}
+                helperText={<Typography variant="caption">Specify the format of data on the stream as an <Link target="_blank" href="https://docs.oracle.com/database/nosql-12.1.3.0/GettingStartedGuide/avroschemas.html">GraphQL schema</Link></Typography>}
               />
               <FormGroup>
                 <CheckboxField 
@@ -168,11 +139,8 @@ const NewStreamPage = ({ me }) => {
               <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
                 disabled={
                   loading
-                  || !(values.projectId && values.projectId.length > 0)
-                  || !(values.name.match(/^[_a-z][_\-a-z0-9]*$/))
-                  || !(values.name && values.name.length >= 3 && values.name.length <= 40)
+                  || !(values.projectID && values.projectID.length > 0)
                   || !(values.description && values.description.length <= 255)
-                  || !validateAvroSchema(values.avroSchema)
                 }>
                 Create stream
               </Button>

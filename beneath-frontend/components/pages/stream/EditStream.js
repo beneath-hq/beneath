@@ -40,7 +40,7 @@ const EditStream = ({ stream }) => {
         <div>
           <form onSubmit={(e) => {
             e.preventDefault();
-            updateStream({ variables: { streamId: stream.streamId, ...values} });
+            updateStream({ variables: { streamID: stream.streamID, ...values} });
           }}
           >
             <TextField

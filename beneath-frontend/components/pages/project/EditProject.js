@@ -23,7 +23,7 @@ const EditProject = ({ project }) => {
     displayName: project.displayName || "",
     site: project.site || "",
     description: project.description || "",
-    photoUrl: project.photoUrl || "",
+    photoURL: project.photoURL || "",
   });
 
   const handleChange = (name) => (event) => {
@@ -37,7 +37,7 @@ const EditProject = ({ project }) => {
         <div>
           <form onSubmit={(e) => {
             e.preventDefault();
-            updateProject({ variables: { projectId: project.projectId, ...values } });
+            updateProject({ variables: { projectID: project.projectID, ...values } });
           }}
           >
             <TextField id="name" label="Name" value={project.name}
@@ -55,9 +55,9 @@ const EditProject = ({ project }) => {
               margin="normal" fullWidth
               onChange={handleChange("description")}
             />
-            <TextField id="photoUrl" label="Photo Url" value={values.photoUrl}
+            <TextField id="photoURL" label="Photo Url" value={values.photoURL}
               margin="normal" fullWidth
-              onChange={handleChange("photoUrl")}
+              onChange={handleChange("photoURL")}
             />
             <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
               disabled={
@@ -65,7 +65,7 @@ const EditProject = ({ project }) => {
                 || !(values.displayName && values.displayName.length >= 4 && values.displayName.length <= 40)
                 || !(values.site === "" || isUrl(values.site))
                 || !(values.description === "" || values.description.length < 256)
-                || !(values.photoUrl === "" || isUrl(values.photoUrl))
+                || !(values.photoURL === "" || isUrl(values.photoURL))
               }>
               Save changes
             </Button>

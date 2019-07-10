@@ -1,19 +1,20 @@
 import gql from "graphql-tag";
 
 export const QUERY_USER = gql`
-  query User($userId: ID!) {
-    user(userId: $userId) {
-      userId
+  query User($userID: UUID!) {
+    user(userID: $userID) {
+      userID
+      username
       name
       bio
-      photoUrl
+      photoURL
       createdOn
       projects {
-        projectId
+        projectID
         name
         displayName
         description
-        photoUrl
+        photoURL
       }
     }
   }
@@ -22,24 +23,24 @@ export const QUERY_USER = gql`
 export const QUERY_ME = gql`
   query {
     me {
-      userId
+      userID
+      email
+      updatedOn
       user {
-        userId
+        userID
         username
         name
         bio
-        photoUrl
+        photoURL
         createdOn
         projects {
-          projectId
+          projectID
           name
           displayName
           description
-          photoUrl
+          photoURL
         }
       }
-      email
-      updatedOn
     }
   }
 `;
@@ -47,9 +48,9 @@ export const QUERY_ME = gql`
 export const UPDATE_ME = gql`
   mutation UpdateMe($name: String, $bio: String) {
     updateMe(name: $name, bio: $bio) {
-      userId
+      userID
       user {
-        userId
+        userID
         name
         bio
       }

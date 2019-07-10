@@ -17,13 +17,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ListEntry = ({ href, as, label, selected, showAvatar, photoUrl }) => {
+const ListEntry = ({ href, as, label, selected, showAvatar, photoURL }) => {
   const classes = useStyles();
   return (
     <ListItem button selected={selected} component={NextMuiLink} as={as} href={href}>
       {showAvatar && (
         <ListItemAvatar className={classes.listItemAvatar}>
-          <Avatar size="dense-list" label={label} src={photoUrl} />
+          <Avatar size="dense-list" label={label} src={photoURL} />
         </ListItemAvatar>
       )}
       <ListItemText primary={label} />
@@ -52,7 +52,7 @@ const ExploreSidebar = ({ me, router }) => {
             as={`/projects/${project.name}`}
             label={project.displayName}
             selected={selected(`^/projects/${project.name}`)}
-            photoUrl={project.photoUrl}
+            photoURL={project.photoURL}
             showAvatar
           />
         ))}

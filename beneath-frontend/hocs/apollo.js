@@ -43,12 +43,12 @@ const createApolloClient = ({ initialState, token, res }) => {
   // returns ID for objects for caching/automatic state update
   const dataIdFromObject = (object) => {
     switch (object.__typename) {
-      case "User": return object.userId;
-      case "Me": return `me:${object.userId}`;
-      case "Key": return `${object.keyId}`;
+      case "User": return object.userID;
+      case "Me": return `me:${object.userID}`;
+      case "Key": return `${object.keyID}`;
       case "NewKey": return `${object.keyString}`;
-      case "Project": return `${object.projectId}`;
-      case "Stream": return `${object.streamId}`;
+      case "Project": return `${object.projectID}`;
+      case "Stream": return `${object.streamID}`;
       default: {
         console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
         return defaultDataIdFromObject(object);

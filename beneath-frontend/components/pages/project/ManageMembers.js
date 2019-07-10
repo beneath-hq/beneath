@@ -45,30 +45,30 @@ const ViewMembers = ({ project, editable }) => {
   const classes = useStyles();
   return (
     <List>
-      {project.users.map(({ userId, username, name, photoUrl }) => (
+      {project.users.map(({ userID, username, name, photoURL }) => (
         <ListItem
-          key={userId}
-          component={NextMuiLink} as={`/users/${userId}`} href={`/user?id=${userId}`}
+          key={userID}
+          component={NextMuiLink} as={`/users/${userID}`} href={`/user?id=${userID}`}
           disableGutters button
         >
-          <ListItemAvatar><Avatar size="list" label={name} src={photoUrl} /></ListItemAvatar>
+          <ListItemAvatar><Avatar size="list" label={name} src={photoURL} /></ListItemAvatar>
           <ListItemText primary={name} secondary={username} />
           {editable && (project.users.length > 1) && (
             <ListItemSecondaryAction>
               <Mutation mutation={REMOVE_MEMBER} update={(cache, { data: { removeUserFromProject } }) => {
                 const projectName = project.name;
                 if (removeUserFromProject) {
-                  const { project } = cache.readQuery({ query: QUERY_PROJECT, variables: { name: projectName } });
+                  const { projectByName } = cache.readQuery({ query: QUERY_PROJECT, variables: { name: projectName } });
                   cache.writeQuery({
                     query: QUERY_PROJECT,
                     variables: { name: projectName },
-                    data: { project: { ...project, users: project.users.filter((user) => user.userId !== userId) } },
+                    data: { projectByName: { ...projectByName, users: projectByName.users.filter((user) => user.userID !== userID) } },
                   });
                 }
               }}>
                 {(removeUserFromProject, { loading, error }) => (
                   <IconButton edge="end" aria-label="Delete" onClick={() => {
-                    removeUserFromProject({ variables: { projectId: project.projectId, userId: userId } });
+                    removeUserFromProject({ variables: { projectID: project.projectID, userID: userID } });
                   }}>
                     {loading ? <Loading size={20} /> : <DeleteIcon />}
                   </IconButton>
@@ -92,13 +92,13 @@ const AddMember = ({ project }) => {
       cache.writeQuery({
         query: QUERY_PROJECT,
         variables: { name: project.name },
-        data: { project: { ...query.project, users: query.project.users.concat([user]) } },
+        data: { projectByName: { ...query.projectByName, users: query.projectByName.users.concat([user]) } },
       });
     }} onCompleted={() => setEmail("")}>
       {(addUserToProject, { loading, error }) => (
         <form onSubmit={(e) => {
           e.preventDefault();
-          addUserToProject({ variables: { email, projectId: project.projectId } });
+          addUserToProject({ variables: { email, projectID: project.projectID } });
         }}>
           <Grid container alignItems={"center"} spacing={2} className={classes.addMemberContainer}>
             <Grid item xs={true}>

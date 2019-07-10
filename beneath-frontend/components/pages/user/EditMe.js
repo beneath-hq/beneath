@@ -39,7 +39,7 @@ const EditMeForm = ({ me }) => {
     email: me.email || "",
     name: me.user.name || "",
     bio: me.user.bio || "",
-    photoUrl: me.user.photoUrl || "",
+    photoURL: me.user.photoURL || "",
   });
 
   const handleChange = (name) => (event) => {
@@ -68,9 +68,9 @@ const EditMeForm = ({ me }) => {
               margin="normal" fullWidth disabled
               onChange={handleChange("email")}
             />
-            <TextField id="photo-url" label="Photo URL" value={values.photoUrl || ""}
+            <TextField id="photo-url" label="Photo URL" value={values.photoURL || ""}
               margin="normal" fullWidth disabled
-              onChange={handleChange("photoUrl")}
+              onChange={handleChange("photoURL")}
             />
             <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
               disabled={

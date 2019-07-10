@@ -11,13 +11,13 @@ import NextMuiLink from "../../NextMuiLink";
 const ViewProjects = ({ user }) => {
   return (
     <List>
-      {user.projects.map(({ projectId, name, displayName, description, photoUrl }) => (
+      {user.projects.map(({ projectID, name, displayName, description, photoURL }) => (
         <ListItem
-          key={projectId}
+          key={projectID}
           component={NextMuiLink} as={`/projects/${name}`} href={`/project?name=${name}`}
           disableGutters button
         >
-          <ListItemAvatar><Avatar size="list" label={displayName} src={photoUrl} /></ListItemAvatar>
+          <ListItemAvatar><Avatar size="list" label={displayName} src={photoURL} /></ListItemAvatar>
           <ListItemText primary={displayName} secondary={description} />
         </ListItem>
       ))}

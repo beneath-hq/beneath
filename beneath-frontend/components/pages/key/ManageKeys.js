@@ -1,10 +1,10 @@
 import ViewKeys from "./ViewKeys";
 import IssueKey from "./IssueKey";
 
-const ManageKeys = ({ projectId, userId }) => (
+const ManageKeys = ({ projectID, userID }) => (
   <React.Fragment>
-    <IssueKey projectId={projectId} userId={userId} />
-    <ViewKeys projectId={projectId} userId={userId} />
+    <IssueKey projectID={projectID} userID={userID} />
+    <ViewKeys projectID={projectID} userID={userID} />
   </React.Fragment>
 );
 

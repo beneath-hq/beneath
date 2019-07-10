@@ -24,8 +24,9 @@ const ProjectPage = ({ router, me }) => (
         if (loading) return <Loading justify="center" />;
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
-        let { project } = data;
-        let isProjectMember = me && project.users.some((user) => user.userId === me.userId);
+        console.log("PROJ: ", data)
+        let project = data.projectByName;
+        let isProjectMember = me && project.users.some((user) => user.userID === me.userID);
 
         let tabs = [
           { value: "streams", label: "Streams", render: () => (<ViewStreams project={project} />) },
@@ -33,14 +34,14 @@ const ProjectPage = ({ router, me }) => (
         ];
         if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject project={project} />) });
-          tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys projectId={project.projectId} />) });
+          tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys projectID={project.projectID} />) });
         }
 
         return (
           <React.Fragment>
             <PageTitle title={project.displayName} />
             <ProfileHero name={project.displayName} site={project.site}
-              description={project.description} avatarUrl={project.photoUrl}
+              description={project.description} avatarURL={project.photoURL}
             />
             <SubrouteTabs defaultValue="streams" tabs={tabs} />
           </React.Fragment>

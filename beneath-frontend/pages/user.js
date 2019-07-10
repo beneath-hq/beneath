@@ -22,29 +22,32 @@ const useStyles = makeStyles((theme) => ({
 
 const UserPage = ({ router, me }) => {
   const classes = useStyles();
-  const userId = router.query.id;
+  let userID = router.query.id;
+  if (userID === "me") {
+    userID = me.userID;
+  }
   return (
     <Page title="User" sidebar={<ExploreSidebar />}>
       <div>
-        <Query query={QUERY_USER} variables={{ userId }}>
+        <Query query={QUERY_USER} variables={{ userID }}>
           {({ loading, error, data }) => {
             if (loading) return <Loading justify="center" />;
             if (error) return <p>Error: {JSON.stringify(error)}</p>;
             
             let { user } = data;
-            let isMe = userId === "me" || userId === me.userId;
+            let isMe = userID === "me" || userID === me.userID;
             let tabs = [
               { value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> },
             ];
             if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-              tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys userId={user.userId} />)});
+              tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys userID={user.userID} />)});
             }
 
             return (
               <React.Fragment>
                 <PageTitle title={user.name} />
-                <ProfileHero name={user.name} description={user.bio} avatarUrl={user.photoUrl} />
+                <ProfileHero name={user.name} description={user.bio} avatarURL={user.photoURL} />
                 <SubrouteTabs defaultValue="projects" tabs={tabs} />
               </React.Fragment>
             );

@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const IssueKey = ({ userId, projectId }) => {
+const IssueKey = ({ userID, projectID }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [readonlyKey, setReadonlyKey] = React.useState(false);
   const [newKeyString, setNewKeyString] = React.useState(null);
@@ -89,10 +89,10 @@ const IssueKey = ({ userId, projectId }) => {
           closeDialog();
         }}
         update={(cache, { data: { issueKey } }) => {
-          const { keys } = cache.readQuery({ query: QUERY_KEYS, variables: { userId, projectId } });
+          const { keys } = cache.readQuery({ query: QUERY_KEYS, variables: { userID, projectID } });
           cache.writeQuery({
             query: QUERY_KEYS,
-            variables: { userId, projectId },
+            variables: { userID, projectID },
             data: { keys: keys.concat([issueKey.key]) },
           });
         }}
@@ -111,7 +111,7 @@ const IssueKey = ({ userId, projectId }) => {
                 Cancel
               </Button>
               <Button color="primary" disabled={loading} error={error} onClick={() => {
-                issueKey({ variables: { userId, projectId, description: input.value, readonly: readonlyKey } });
+                issueKey({ variables: { userID, projectID, description: input.value, readonly: readonlyKey } });
               }}>
                 Issue key
               </Button>

@@ -19,8 +19,8 @@ const prettyRoles = {
   "m": "Browser login",
 };
 
-const ViewKeys = ({ userId, projectId }) => {
-  let variables = { userId, projectId };
+const ViewKeys = ({ userID, projectID }) => {
+  let variables = { userID, projectID };
   return (
     <List dense={true}>
       <Query query={QUERY_KEYS} variables={variables}>
@@ -29,8 +29,8 @@ const ViewKeys = ({ userId, projectId }) => {
           if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
           let { keys } = data;
-          return keys.map(({ createdOn, description, keyId, prefix, role }) => (
-            <ListItem key={keyId} disableGutters>
+          return keys.map(({ createdOn, description, keyID, prefix, role }) => (
+            <ListItem key={keyID} disableGutters>
               <ListItemText
                 primary={
                   <React.Fragment>
@@ -51,13 +51,13 @@ const ViewKeys = ({ userId, projectId }) => {
                     cache.writeQuery({
                       query: QUERY_KEYS,
                       variables: variables,
-                      data: { keys: keys.filter((key) => key.keyId !== keyId) },
+                      data: { keys: keys.filter((key) => key.keyID !== keyID) },
                     });
                   }
                 }}>
                   {(revokeKey, { loading, error }) => (
                     <IconButton edge="end" aria-label="Delete" onClick={() => {
-                      revokeKey({ variables: { keyId } });
+                      revokeKey({ variables: { keyID } });
                     }}>
                       {loading ? <Loading size={20} /> : <DeleteIcon />}
                     </IconButton>

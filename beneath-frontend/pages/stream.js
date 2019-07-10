@@ -22,6 +22,8 @@ const StreamPage = ({ router }) => (
 
         let { stream } = data;
 
+        // TODO!
+
         let tabs = [
           { value: "explore", label: "Explore", render: () => (<p>Explore here</p>) },
           { value: "streaming", label: "Streaming", render: () => (<p>Streaming here</p>) },

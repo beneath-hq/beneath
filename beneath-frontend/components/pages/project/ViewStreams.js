@@ -11,9 +11,9 @@ import NextMuiLink from "../../NextMuiLink";
 const ViewStreams = ({ project }) => {
   return (
     <List>
-      {project.streams.map(({ streamId, name, description, external }) => (
+      {project.streams.map(({ streamID, name, description, external }) => (
         <ListItem
-          key={streamId}
+          key={streamID}
           component={NextMuiLink} as={`/projects/${project.name}/streams/${name}`} href={`/stream?name=${name}&project_name=${project.name}`}
           button
           disableGutters

@@ -1,24 +1,24 @@
 import gql from "graphql-tag";
 
 export const QUERY_PROJECT = gql`
-  query Project($name: String) {
-    project(name: $name) {
-      projectId
+  query ProjectByName($name: String!) {
+    projectByName(name: $name) {
+      projectID
       name
       displayName
       site
       description
-      photoUrl
+      photoURL
       createdOn
       updatedOn
       users {
-        userId
+        userID
         name
         username
-        photoUrl
+        photoURL
       }
       streams {
-        streamId
+        streamID
         name
         description
         external
@@ -28,52 +28,52 @@ export const QUERY_PROJECT = gql`
 `;
 
 export const NEW_PROJECT = gql`
-  mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoUrl: String) {
-    createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoUrl: $photoUrl) {
-      projectId
+  mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoURL: String) {
+    createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+      projectID
       name
       displayName
       site
       description
-      photoUrl
+      photoURL
       createdOn
       updatedOn
       users {
-        userId
+        userID
         name
         username
-        photoUrl
+        photoURL
       }
     }
   }
 `;
 
 export const UPDATE_PROJECT = gql`
-  mutation UpdateProject($projectId: ID!, $displayName: String, $site: String, $description: String, $photoUrl: String) {
-    updateProject(projectId: $projectId, displayName: $displayName, site: $site, description: $description, photoUrl: $photoUrl) {
-      projectId
+  mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
+    updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+      projectID
       displayName
       site
       description
-      photoUrl
+      photoURL
       updatedOn
     }
   }
 `;
 
 export const ADD_MEMBER = gql`
-  mutation AddUserToProject($email: String!, $projectId: ID!) {
-    addUserToProject(email: $email, projectId: $projectId) {
-      userId
+  mutation AddUserToProject($email: String!, $projectID: UUID!) {
+    addUserToProject(email: $email, projectID: $projectID) {
+      userID
       name
       username
-      photoUrl
+      photoURL
     }
   }
 `;
 
 export const REMOVE_MEMBER = gql`
-  mutation RemoveUserFromProject($userId: ID!, $projectId: ID!) {
-    removeUserFromProject(userId: $userId, projectId: $projectId)
+  mutation RemoveUserFromProject($userID: UUID!, $projectID: UUID!) {
+    removeUserFromProject(userID: $userID, projectID: $projectID)
   }
 `;

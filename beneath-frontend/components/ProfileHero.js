@@ -20,12 +20,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ProfileHero = ({ name, description, site, avatarUrl }) => {
+const ProfileHero = ({ name, description, site, avatarURL }) => {
   const classes = useStyles();
   return (
     <Grid container wrap="nowrap" spacing={0} className={classes.container}>
       <Grid className={classes.avatar} item>
-        <Avatar size="hero" label={name} src={avatarUrl} />
+        <Avatar size="hero" label={name} src={avatarURL} />
       </Grid>
       <Grid item>
         <Typography component="h1" variant="h1" gutterBottom>{name}</Typography>
@@ -40,7 +40,7 @@ ProfileHero.propTypes = {
   name: PropTypes.string,
   description: PropTypes.string,
   site: PropTypes.string,
-  avatarUrl: PropTypes.string,
+  avatarURL: PropTypes.string,
 };
 
 export default ProfileHero;
