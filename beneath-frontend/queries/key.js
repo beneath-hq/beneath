@@ -1,9 +1,9 @@
 import gql from "graphql-tag";
 
-export const QUERY_KEYS = gql`
-  query Keys($userId: ID, $projectId: ID) {
-    keys(userId: $userId, projectId: $projectId) {
-      keyId
+export const QUERY_USER_KEYS = gql`
+  query KeysForUser($userID: UUID!) {
+    keysForUser(userID: $userID) {
+      keyID
       description
       prefix
       role
@@ -12,12 +12,39 @@ export const QUERY_KEYS = gql`
   }
 `;
 
-export const ISSUE_KEY = gql`
-  mutation IssueKey($userId: ID, $projectId: ID, $readonly: Boolean!, $description: String) {
-    issueKey(userId: $userId, projectId: $projectId, readonly: $readonly, description: $description) {
+export const QUERY_PROJECT_KEYS = gql`
+  query KeysForProject($projectID: UUID!) {
+    keysForProject(projectID: $projectID) {
+      keyID
+      description
+      prefix
+      role
+      createdOn
+    }
+  }
+`;
+
+export const ISSUE_USER_KEY = gql`
+  mutation IssueUserKey($readonly: Boolean!, $description: String!) {
+    issueUserKey(readonly: $readonly, description: $description) {
       keyString
       key {
-        keyId
+        keyID
+        description
+        prefix
+        role
+        createdOn
+      }
+    }
+  }
+`;
+
+export const ISSUE_PROJECT_KEY = gql`
+  mutation IssueProjectKey($projectID: UUID!, $readonly: Boolean!, $description: String!) {
+    issueProjectKey(projectID: $projectID, readonly: $readonly, description: $description) {
+      keyString
+      key {
+        keyID
         description
         prefix
         role
@@ -28,7 +55,7 @@ export const ISSUE_KEY = gql`
 `;
 
 export const REVOKE_KEY = gql`
-  mutation RevokeKey($keyId: ID!) {
-    revokeKey(keyId: $keyId)
+  mutation RevokeKey($keyID: UUID!) {
+    revokeKey(keyID: $keyID)
   }
 `;

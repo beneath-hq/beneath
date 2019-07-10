@@ -12,7 +12,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/pages/user/EditMe";
 import ViewProjects from "../components/pages/user/ViewProjects";
-import ManageKeys from "../components/pages/key/ManageKeys";
+import { ManageUserKeys } from "../components/pages/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
 import { QUERY_USER } from "../queries/user";
@@ -41,7 +41,7 @@ const UserPage = ({ router, me }) => {
             ];
             if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-              tabs.push({ value: "keys", label: "Keys", render: () => (<ManageKeys userID={user.userID} />)});
+              tabs.push({ value: "keys", label: "Keys", render: () => (<ManageUserKeys userID={user.userID} />)});
             }
 
             return (

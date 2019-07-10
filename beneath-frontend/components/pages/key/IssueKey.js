@@ -14,7 +14,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import { QUERY_KEYS, ISSUE_KEY } from "../../../queries/key";
+import { QUERY_USER_KEYS, QUERY_PROJECT_KEYS, ISSUE_USER_KEY, ISSUE_PROJECT_KEY } from "../../../queries/key";
 
 const useStyles = makeStyles((theme) => ({
   issueKeyButton: {
@@ -25,7 +25,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const IssueKey = ({ userID, projectID }) => {
+// entity is either user or project
+const IssueKey = ({ entityName, entityID }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [readonlyKey, setReadonlyKey] = React.useState(false);
   const [newKeyString, setNewKeyString] = React.useState(null);
@@ -37,6 +38,24 @@ const IssueKey = ({ userID, projectID }) => {
   const closeDialog = (data) => {
     setDialogOpen(false);
   };
+
+  let query, queryKey, mutation, mutationKey, entityIDKey;
+  if (entityName === "user") {
+    query = QUERY_USER_KEYS;
+    queryKey = "keysForUser";
+    mutation = ISSUE_USER_KEY;
+    mutationKey = "issueUserKey";
+    entityIDKey = "userID";
+  } else if (entityName === "project") {
+    query = QUERY_PROJECT_KEYS;
+    queryKey = "keysForProject";
+    mutation = ISSUE_PROJECT_KEY;
+    mutationKey = "issueProjectKey";
+    entityIDKey = "projectID";
+  } else {
+    console.error("expected entity to be 'user' or 'project'")
+  }
+
 
   let input = null;
   const classes = useStyles();
@@ -83,17 +102,17 @@ const IssueKey = ({ userID, projectID }) => {
           </Grid>
         )}
       </Grid>
-      <Mutation mutation={ISSUE_KEY}
-        onCompleted={({ issueKey }) => {
-          setNewKeyString(issueKey.keyString);
+      <Mutation mutation={mutation}
+        onCompleted={(data) => {
+          setNewKeyString(data[mutationKey].keyString);
           closeDialog();
         }}
-        update={(cache, { data: { issueKey } }) => {
-          const { keys } = cache.readQuery({ query: QUERY_KEYS, variables: { userID, projectID } });
+        update={(cache, { data }) => {
+          const queryData = cache.readQuery({ query: query, variables: { [entityIDKey]: entityID } });
           cache.writeQuery({
-            query: QUERY_KEYS,
-            variables: { userID, projectID },
-            data: { keys: keys.concat([issueKey.key]) },
+            query: query,
+            variables: { [entityIDKey]: entityID },
+            data: { [queryKey]: queryData[queryKey].concat([data[mutationKey].key]) },
           });
         }}
       >
@@ -111,7 +130,7 @@ const IssueKey = ({ userID, projectID }) => {
                 Cancel
               </Button>
               <Button color="primary" disabled={loading} error={error} onClick={() => {
-                issueKey({ variables: { userID, projectID, description: input.value, readonly: readonlyKey } });
+                issueKey({ variables: { [entityIDKey]: entityID, description: input.value, readonly: readonlyKey } });
               }}>
                 Issue key
               </Button>

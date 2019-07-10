@@ -100,7 +100,7 @@ func (r *mutationResolver) RevokeKey(ctx context.Context, keyID uuid.UUID) (bool
 	authKey := auth.GetKey(ctx)
 	if key.ProjectID != nil && !authKey.EditsProject(*key.ProjectID) {
 		return false, gqlerror.Errorf("Not allowed to edit key")
-	} else if key.UserID != nil && authKey.UserID != key.UserID {
+	} else if key.UserID != nil && *authKey.UserID != *key.UserID {
 		return false, gqlerror.Errorf("Not allowed to edit key")
 	}
 

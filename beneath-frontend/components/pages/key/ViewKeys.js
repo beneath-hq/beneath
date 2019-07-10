@@ -11,7 +11,7 @@ import Moment from "react-moment";
 
 import Loading from "../../Loading";
 
-import { QUERY_KEYS, REVOKE_KEY } from "../../../queries/key";
+import { QUERY_PROJECT_KEYS, QUERY_USER_KEYS, REVOKE_KEY } from "../../../queries/key";
 
 const prettyRoles = {
   "r": "Read-only",
@@ -19,16 +19,28 @@ const prettyRoles = {
   "m": "Browser login",
 };
 
-const ViewKeys = ({ userID, projectID }) => {
-  let variables = { userID, projectID };
+const ViewKeys = ({ entityName, entityID }) => {
+  let query = null;
+  let queryKey = null;
+  let variables = {};
+  if (entityName === "user") {
+    query = QUERY_USER_KEYS;
+    queryKey = "keysForUser";
+    variables = { userID: entityID };
+  } else if (entityName === "project") {
+    query = QUERY_PROJECT_KEYS;
+    queryKey = "keysForProject";
+    variables = { projectID: projectID };
+  }
+
   return (
     <List dense={true}>
-      <Query query={QUERY_KEYS} variables={variables}>
+      <Query query={query} variables={variables}>
         {({ loading, error, data }) => {
           if (loading) return <Loading justify="center" />;
           if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
-          let { keys } = data;
+          let keys = data[queryKey];
           return keys.map(({ createdOn, description, keyID, prefix, role }) => (
             <ListItem key={keyID} disableGutters>
               <ListItemText
@@ -47,11 +59,11 @@ const ViewKeys = ({ userID, projectID }) => {
               <ListItemSecondaryAction>
                 <Mutation mutation={REVOKE_KEY} update={(cache, { data: { revokeKey } }) => {
                   if (revokeKey) {
-                    const { keys } = cache.readQuery({ query: QUERY_KEYS, variables: variables });
+                    const queryData = cache.readQuery({ query: query, variables: variables });
                     cache.writeQuery({
-                      query: QUERY_KEYS,
+                      query: query,
                       variables: variables,
-                      data: { keys: keys.filter((key) => key.keyID !== keyID) },
+                      data: { [queryKey]: queryData[queryKey].filter((key) => key.keyID !== keyID) },
                     });
                   }
                 }}>
