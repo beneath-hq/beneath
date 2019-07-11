@@ -34,6 +34,11 @@ func NewAvro(avroSchema string) (*AvroCodec, error) {
 	return codec, nil
 }
 
+// GetCanonicalSchema returns the avro schema as a string
+func (c *AvroCodec) GetCanonicalSchema() string {
+	return c.avroCodec.CanonicalSchema()
+}
+
 // Marshal maps an unmarshaled json object to avro-encoded binary
 func (c *AvroCodec) Marshal(jsonNative interface{}) ([]byte, error) {
 	avroNative, err := jsonNativeToAvroNative(c.avroSchema, jsonNative)

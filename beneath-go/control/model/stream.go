@@ -13,17 +13,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/schema"
 )
 
-// constants
-var (
-	streamNameRegex *regexp.Regexp
-)
-
-// configure constants and validator
-func init() {
-	streamNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
-	GetValidator().RegisterStructValidation(streamValidation, Stream{})
-}
-
 // Stream represents a collection of data
 type Stream struct {
 	StreamID                uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
@@ -43,6 +32,17 @@ type Stream struct {
 	CurrentStreamInstance   *StreamInstance
 	CreatedOn               time.Time `sql:",default:now()"`
 	UpdatedOn               time.Time `sql:",default:now()"`
+}
+
+var (
+	// used for validation
+	streamNameRegex *regexp.Regexp
+)
+
+func init() {
+	// configure validation
+	streamNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	GetValidator().RegisterStructValidation(streamValidation, Stream{})
 }
 
 // custom stream validation
@@ -78,6 +78,16 @@ func FindStreamByNameAndProject(name string, projectName string) *Stream {
 		return nil
 	}
 	return stream
+}
+
+// FindInstanceIDByNameAndProject returns the current instance ID of the stream
+func FindInstanceIDByNameAndProject(name string, projectName string) uuid.UUID {
+	return getInstanceCache().get(name, projectName)
+}
+
+// FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
+func FindCachedStreamByCurrentInstanceID(instanceID uuid.UUID) *CachedStream {
+	return getStreamCache().get(instanceID)
 }
 
 // UpdateDetails updates a stream (only exposes fields where updates are permitted)

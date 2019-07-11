@@ -289,3 +289,17 @@ func (k *Key) EditsProject(projectID uuid.UUID) bool {
 	}
 	return true
 }
+
+// WritesStream returns true iff the key gives permission to write to the stream
+func (k *Key) WritesStream(stream *CachedStream) bool {
+	// TODO
+	// role, err := RoleCache.Get(string(auth), stream.ProjectID)
+	// if err != nil {
+	// 	return httputil.NewHTTPError(404, err.Error())
+	// }
+
+	// if !role.Write && !(stream.Manual && role.Manage) {
+	// 	return httputil.NewHTTPError(403, "token doesn't grant right to write to this stream")
+	// }
+	return true
+}

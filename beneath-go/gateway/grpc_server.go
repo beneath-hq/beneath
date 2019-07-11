@@ -6,6 +6,10 @@ import (
 	"log"
 	"net"
 
+	"github.com/beneath-core/beneath-go/control/model"
+
+	"github.com/beneath-core/beneath-go/control/auth"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -26,11 +30,11 @@ func ListenAndServeGRPC(port int) error {
 
 	server := grpc.NewServer(
 		grpc_middleware.WithUnaryServerChain(
-			grpc_auth.UnaryServerInterceptor(authInterceptor),
+			grpc_auth.UnaryServerInterceptor(auth.GRPCInterceptor),
 			grpc_recovery.UnaryServerInterceptor(),
 		),
 		grpc_middleware.WithStreamServerChain(
-			grpc_auth.StreamServerInterceptor(authInterceptor),
+			grpc_auth.StreamServerInterceptor(auth.GRPCInterceptor),
 			grpc_recovery.StreamServerInterceptor(),
 		),
 	)
@@ -49,31 +53,27 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 }
 
 func (s *gRPCServer) WriteInternalRecords(ctx context.Context, req *pb.WriteInternalRecordsRequest) (*pb.WriteInternalRecordsResponse, error) {
-	auth := getAuth(ctx)
+	key := auth.GetKey(ctx)
 
 	instanceID, err := uuid.FromBytes(req.InstanceId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "InstanceId not valid UUID")
 	}
 
-	stream, err := StreamCache.Get(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
-	role, err := RoleCache.Get(string(auth), stream.ProjectID)
-	if err != nil {
-		return nil, grpc.Errorf(codes.NotFound, err.Error())
-	}
-
-	if !role.Write && !(stream.Manual && role.Manage) {
+	if !key.WritesStream(stream) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
-	err = Engine.QueueWrite(req)
-	if err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
-	}
+	// TODO
+	// err = Engine.QueueWrite(req)
+	// if err != nil {
+	// 	return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	// }
 
 	return &pb.WriteInternalRecordsResponse{}, nil
 }

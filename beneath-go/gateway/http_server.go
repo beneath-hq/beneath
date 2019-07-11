@@ -5,6 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/beneath-core/beneath-go/control/auth"
+	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/httputil"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	uuid "github.com/satori/go.uuid"
@@ -22,7 +26,7 @@ func httpHandler() http.Handler {
 	// handler.Use(middleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
 	handler.Use(middleware.Logger)
 	handler.Use(middleware.Recoverer)
-	handler.Use(authMiddleware)
+	handler.Use(auth.HTTPMiddleware)
 
 	// TODO: Add graphql
 	// GraphQL endpoints
@@ -30,45 +34,43 @@ func httpHandler() http.Handler {
 	// handler.Get("/projects/{projectName}/graphql")
 
 	// REST endpoints
-	handler.Method("GET", "/projects/{projectName}/streams/{streamName}", AppHandler(getFromInstance))
-	handler.Method("GET", "/streams/instances/{instanceID}", AppHandler(getFromInstance))
-	handler.Method("POST", "/streams/instances/{instanceID}", AppHandler(postToInstance))
+	handler.Method("GET", "/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
+	handler.Method("GET", "/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
+	handler.Method("POST", "/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	return handler
 }
 
+func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+	projectName := chi.URLParam(r, "projectName")
+	streamName := chi.URLParam(r, "streamName")
+	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	if instanceID == uuid.Nil {
+		return httputil.NewError(404, "instance for stream not found")
+	}
+
+	return getFromInstanceID(w, r, instanceID)
+}
+
 func getFromInstance(w http.ResponseWriter, r *http.Request) error {
-	auth := getAuth(r.Context())
-
-	var instanceID uuid.UUID
-	var err error
-	instanceIDStr := chi.URLParam(r, "instanceID")
-	if instanceIDStr != "" {
-		instanceID, err = uuid.FromString(instanceIDStr)
-		if err != nil {
-			return NewHTTPError(404, "instance not found -- malformed ID")
-		}
-	} else {
-		projectName := chi.URLParam(r, "projectName")
-		streamName := chi.URLParam(r, "streamName")
-		instanceID, err = InstanceCache.Get(projectName, streamName)
-		if err != nil {
-			return NewHTTPError(404, err.Error())
-		}
-	}
-
-	stream, err := StreamCache.Get(instanceID)
+	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
 	if err != nil {
-		return NewHTTPError(404, err.Error())
+		return httputil.NewError(404, "instance not found -- malformed ID")
 	}
 
-	role, err := RoleCache.Get(string(auth), stream.ProjectID)
-	if err != nil {
-		return NewHTTPError(404, err.Error())
+	return getFromInstanceID(w, r, instanceID)
+}
+
+func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
+	key := auth.GetKey(r.Context())
+
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return httputil.NewError(404, "stream not found")
 	}
 
-	if !role.Read || !(stream.Public && role.ReadPublic) {
-		return NewHTTPError(403, "token doesn't grant right to read this stream")
+	if !key.ReadsProject(stream.ProjectID) {
+		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
 	// TODO
@@ -80,74 +82,71 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 }
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
-	auth := getAuth(r.Context())
+	key := auth.GetKey(r.Context())
 
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
 	if err != nil {
-		return NewHTTPError(404, "instance not found -- malformed ID")
+		return httputil.NewError(404, "instance not found -- malformed ID")
 	}
 
-	stream, err := StreamCache.Get(instanceID)
-	if err != nil {
-		return NewHTTPError(404, err.Error())
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if err == nil {
+		return httputil.NewError(404, "stream not found")
 	}
 
-	role, err := RoleCache.Get(string(auth), stream.ProjectID)
-	if err != nil {
-		return NewHTTPError(404, err.Error())
+	if !key.WritesStream(stream) {
+		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
-	if !role.Write && !(stream.Manual && role.Manage) {
-		return NewHTTPError(403, "token doesn't grant right to write to this stream")
-	}
+	// TODO: Write item
 
 	return nil
-
-	// var body interface{}
-	// err = json.NewDecoder(r.Body).Decode(&body)
-	// if err != nil {
-	// 	return NewHTTPError(400, "request body must be json")
-	// }
-
-	//
-
-	// err = beneath.WriteItem(instanceID, schema, data, eventTime, seqNo)
-	// if err != nil {
-	// 	if inputerr, ok := err.(*beneath.WriteInputError); ok {
-	// 		return NewHTTPError(400, inputerr.Error())
-	// 	} else {
-	// 		return NewHTTPError(500, err.Error())
-	// 	}
-	// }
-
-	// SPEC
-	// - Get schema for stream
-	// - Read payload (JSON) and encode with schema
-	// - Write to pubsub
-
-	/*
-		INPUT
-		- instanceID
-		- data (json)
-		- timestamp: default now
-		- seq no: default random
-
-		- eventTime
-		- seqNo
-
-		PAYLOAD TO PUBSUB
-		- streamInstanceId
-		- ksuid: timestamp + seqno
-		- data (binary encoded according to schema)
-
-		INTO BIGQUERY
-		- create view beneath.projectName.streamName -> latest streamInstanceId
-		- beneath.projectName.streamInstanceId
-			- ksuid, timestamp, insert_time, fields in data
-
-		INTO BIGTABLE
-		- streamInstanceId#key (key read from data + schema)
-		- ksuid, updated_on, fields_in_data (on bigger than previous ksuid)
-
-	*/
 }
+
+// var body interface{}
+// err = json.NewDecoder(r.Body).Decode(&body)
+// if err != nil {
+// 	return NewHTTPError(400, "request body must be json")
+// }
+
+//
+
+// err = beneath.WriteItem(instanceID, schema, data, eventTime, seqNo)
+// if err != nil {
+// 	if inputerr, ok := err.(*beneath.WriteInputError); ok {
+// 		return NewHTTPError(400, inputerr.Error())
+// 	} else {
+// 		return NewHTTPError(500, err.Error())
+// 	}
+// }
+
+// SPEC
+// - Get schema for stream
+// - Read payload (JSON) and encode with schema
+// - Write to pubsub
+
+/*
+	INPUT
+	- instanceID
+	- data (json)
+	- timestamp: default now
+	- seq no: default random
+
+	- eventTime
+	- seqNo
+
+	PAYLOAD TO PUBSUB
+	- streamInstanceId
+	- ksuid: timestamp + seqno
+	- data (binary encoded according to schema)
+
+	INTO BIGQUERY
+	- create view beneath.projectName.streamName -> latest streamInstanceId
+	- beneath.projectName.streamInstanceId
+		- ksuid, timestamp, insert_time, fields in data
+
+	INTO BIGTABLE
+	- streamInstanceId#key (key read from data + schema)
+	- ksuid, updated_on, fields_in_data (on bigger than previous ksuid)
+
+*/
