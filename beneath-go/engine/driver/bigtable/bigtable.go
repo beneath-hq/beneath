@@ -5,8 +5,9 @@ import "github.com/beneath-core/beneath-go/core"
 // configSpecification defines the config variables to load from ENV
 // See https://github.com/kelseyhightower/envconfig
 type configSpecification struct {
-	ProjectID  string `envconfig:"PROJECT_ID" required:"true"`
-	InstanceID string `envconfig:"INSTANCE_ID" required:"true"`
+	ProjectID    string `envconfig:"PROJECT_ID" required:"true"`
+	InstanceID   string `envconfig:"INSTANCE_ID" required:"true"`
+	EmulatorHost string `envconfig:"EMULATOR_HOST" required:"false"`
 }
 
 // Bigtable implements beneath.TablesDriver

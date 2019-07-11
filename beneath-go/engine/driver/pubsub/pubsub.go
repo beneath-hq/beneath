@@ -18,6 +18,7 @@ import (
 type configSpecification struct {
 	ProjectID          string `envconfig:"PROJECT_ID" required:"true"`
 	InstanceID         string `envconfig:"INSTANCE_ID" required:"true"`
+	EmulatorHost       string `envconfig:"EMULATOR_HOST" required:"false"`
 	WriteRequestsTopic string `envconfig:"WRITE_REQUESTS_TOPIC" required:"true"`
 }
 
