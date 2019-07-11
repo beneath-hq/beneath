@@ -35,7 +35,7 @@ var (
 
 func init() {
 	core.LoadConfig("beneath", &Config)
-	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver)
+	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 	management.Init(Config.PostgresURL, Config.RedisURL)
 	InstanceCache = management.NewInstanceCache()
 	StreamCache = management.NewStreamCache()
