@@ -7,6 +7,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
+	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
 	"github.com/beneath-core/beneath-go/engine/driver/pubsub"
 	pb "github.com/beneath-core/beneath-go/proto"
@@ -18,12 +19,13 @@ const (
 
 // Engine interfaces with the data layer
 type Engine struct {
-	Streams StreamsDriver
-	Tables  TablesDriver
+	Streams   StreamsDriver
+	Tables    TablesDriver
+	Warehouse WarehouseDriver
 }
 
 // NewEngine creates a new Engine instance
-func NewEngine(streamsDriver string, tablesDriver string) *Engine {
+func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string) *Engine {
 	engine := &Engine{}
 
 	// init Streams
@@ -40,6 +42,14 @@ func NewEngine(streamsDriver string, tablesDriver string) *Engine {
 		engine.Tables = bigtable.New()
 	default:
 		log.Fatalf("invalid tables platform %s", tablesDriver)
+	}
+
+	// init Warehouse
+	switch warehouseDriver {
+	case "warehouse":
+		engine.Warehouse = bigquery.New()
+	default:
+		log.Fatalf("invalid warehouse platform %s", warehouseDriver)
 	}
 
 	// done

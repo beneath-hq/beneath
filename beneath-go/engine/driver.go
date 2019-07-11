@@ -14,3 +14,9 @@ type TablesDriver interface {
 	GetMaxDataSize() int
 	// TODO: Add table functions
 }
+
+// WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
+type WarehouseDriver interface {
+	GetMaxDataSize() int
+	// TODO: Add warehouse functions
+}

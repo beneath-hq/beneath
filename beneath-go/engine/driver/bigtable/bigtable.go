@@ -22,9 +22,9 @@ func New() *Bigtable {
 	core.LoadConfig("beneath_engine_bigtable", &config)
 
 	// create instance
-	p := &Bigtable{}
-	p.name = "bigtable"
-	return p
+	b := &Bigtable{}
+	b.name = "bigtable"
+	return b
 }
 
 // GetName implements beneath.TablesDriver
