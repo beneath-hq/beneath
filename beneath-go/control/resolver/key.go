@@ -48,8 +48,8 @@ func (r *queryResolver) KeysForProject(ctx context.Context, projectID uuid.UUID)
 }
 
 func (r *mutationResolver) IssueUserKey(ctx context.Context, readonly bool, description string) (*gql.NewKey, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	authKey := auth.GetKey(ctx)
+	if !authKey.IsPersonal() {
 		return nil, gqlerror.Errorf("Must be authenticated with a personal key")
 	}
 
@@ -58,7 +58,7 @@ func (r *mutationResolver) IssueUserKey(ctx context.Context, readonly bool, desc
 		role = model.KeyRoleReadonly
 	}
 
-	key, err := model.CreateUserKey(*key.UserID, role, description)
+	key, err := model.CreateUserKey(*authKey.UserID, role, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -70,8 +70,8 @@ func (r *mutationResolver) IssueUserKey(ctx context.Context, readonly bool, desc
 }
 
 func (r *mutationResolver) IssueProjectKey(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*gql.NewKey, error) {
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(projectID) {
+	authKey := auth.GetKey(ctx)
+	if !authKey.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project")
 	}
 
