@@ -28,7 +28,7 @@ func (r *keyResolver) Role(ctx context.Context, obj *model.Key) (string, error) 
 func (r *queryResolver) KeysForUser(ctx context.Context, userID uuid.UUID) ([]*model.Key, error) {
 	key := auth.GetKey(ctx)
 	if !key.IsPersonal() {
-		return nil, gqlerror.Errorf("Must be authenticated with a personal key")
+		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key")
 	}
 
 	if userID != *key.UserID {
@@ -50,7 +50,7 @@ func (r *queryResolver) KeysForProject(ctx context.Context, projectID uuid.UUID)
 func (r *mutationResolver) IssueUserKey(ctx context.Context, readonly bool, description string) (*gql.NewKey, error) {
 	authKey := auth.GetKey(ctx)
 	if !authKey.IsPersonal() {
-		return nil, gqlerror.Errorf("Must be authenticated with a personal key")
+		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key")
 	}
 
 	role := model.KeyRoleReadWrite
