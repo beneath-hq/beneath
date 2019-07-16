@@ -30,7 +30,7 @@ const ViewKeys = ({ entityName, entityID }) => {
   } else if (entityName === "project") {
     query = QUERY_PROJECT_KEYS;
     queryKey = "keysForProject";
-    variables = { projectID: projectID };
+    variables = { projectID: entityID };
   }
 
   return (
