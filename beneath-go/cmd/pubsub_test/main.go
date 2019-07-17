@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/grpc/codes"
@@ -13,6 +14,10 @@ import (
 )
 
 func main() {
+	// set environment variables
+	os.Setenv("PUBSUB_EMULATOR_HOST", "localhost:8085")
+	os.Setenv("PUBSUB_PROJECT_ID", "beneathcrypto")
+
 	// prepare pubsub client
 	client, err := pubsub.NewClient(context.Background(), "beneathcrypto")
 	if err != nil {
@@ -20,11 +25,14 @@ func main() {
 	}
 
 	// create test topic
-	topic, err := client.CreateTopic(context.Background(), "test-topic")
+	topicName := "test-topic"
+	topic, err := client.CreateTopic(context.Background(), topicName)
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
 			log.Fatalf("error creating topic: %v", err)
+		} else {
+			topic = client.Topic(topicName)
 		}
 	}
 
@@ -39,4 +47,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("error publishing: %v", err)
 	}
+
+	// cleanup
+	topic.Stop()
+	client.Close()
 }
