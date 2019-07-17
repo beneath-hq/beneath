@@ -10,11 +10,7 @@ import "engine.proto";
 
 service Gateway {
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
-  rpc WriteInternalRecords(WriteInternalRecordsRequest) returns (WriteInternalRecordsResponse) {}
 }
 
 message WriteRecordsResponse {
-}
-
-message WriteInternalRecordsResponse {
 }
