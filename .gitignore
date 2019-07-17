@@ -25,3 +25,4 @@ TODO
 venv
 yarn-error.log
 .vscode/launch.json
+.vscode/.ropeproject
