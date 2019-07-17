@@ -22,7 +22,7 @@ type CachedStream struct {
 	Batch     bool
 	Manual    bool
 	ProjectID uuid.UUID
-	KeyFields []string
+	KeyCodec  *codec.KeyCodec
 	AvroCodec *codec.AvroCodec
 }
 
@@ -44,8 +44,8 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 		Batch:               c.Batch,
 		Manual:              c.Manual,
 		ProjectID:           c.ProjectID,
-		KeyFields:           c.KeyFields,
-		CanonicalAvroSchema: c.AvroCodec.GetCanonicalSchema(),
+		KeyFields:           c.KeyCodec.GetKeyFields(),
+		CanonicalAvroSchema: c.AvroCodec.GetSchemaString(),
 	}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -65,18 +65,7 @@ func (c *CachedStream) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	c.Public = wrapped.Public
-	c.External = wrapped.External
-	c.Batch = wrapped.Batch
-	c.Manual = wrapped.Manual
-	c.ProjectID = wrapped.ProjectID
-	c.KeyFields = wrapped.KeyFields
-	c.AvroCodec, err = codec.NewAvro(wrapped.CanonicalAvroSchema)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return unwrapInternalCachedStream(&wrapped, c)
 }
 
 // streamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
@@ -165,8 +154,8 @@ func (c streamCache) unmarshal(b []byte, v interface{}) (err error) {
 
 func (c streamCache) getterFunc(instanceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
-		res := &CachedStream{}
-		_, err := db.DB.Query(res, `
+		internalResult := &internalCachedStream{}
+		_, err := db.DB.Query(internalResult, `
 				select
 					p.public,
 					s.external,
@@ -180,9 +169,36 @@ func (c streamCache) getterFunc(instanceID uuid.UUID) func() (interface{}, error
 				join projects p on s.project_id = p.project_id
 				where si.stream_instance_id = ?
 			`, instanceID)
+
+		result := &CachedStream{}
 		if err == pg.ErrNoRows {
-			return res, nil
+			return result, nil
+		} else if err != nil {
+			return nil, err
 		}
-		return res, err
+
+		unwrapInternalCachedStream(internalResult, result)
+
+		return result, nil
 	}
+}
+
+func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStream) (err error) {
+	target.Public = source.Public
+	target.External = source.External
+	target.Batch = source.Batch
+	target.Manual = source.Manual
+	target.ProjectID = source.ProjectID
+
+	target.AvroCodec, err = codec.NewAvro(source.CanonicalAvroSchema)
+	if err != nil {
+		return err
+	}
+
+	target.KeyCodec, err = codec.NewKey(source.KeyFields, target.AvroCodec.GetSchema())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

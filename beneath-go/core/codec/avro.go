@@ -9,8 +9,9 @@ import (
 
 // AvroCodec contains schema info for a stream and can marshal/ummarshal records
 type AvroCodec struct {
-	avroSchema map[string]interface{}
-	avroCodec  *goavro.Codec
+	avroSchemaString string
+	avroSchema       map[string]interface{}
+	avroCodec        *goavro.Codec
 }
 
 // NewAvro creates a new Codec for encoding data between JSON and Avro
@@ -18,6 +19,7 @@ type AvroCodec struct {
 // JSON data more naturally (and more opinionated, to be fair)
 func NewAvro(avroSchema string) (*AvroCodec, error) {
 	codec := &AvroCodec{}
+	codec.avroSchemaString = avroSchema
 
 	// parse avro schema
 	err := json.Unmarshal([]byte(avroSchema), &codec.avroSchema)
@@ -34,9 +36,14 @@ func NewAvro(avroSchema string) (*AvroCodec, error) {
 	return codec, nil
 }
 
-// GetCanonicalSchema returns the avro schema as a string
-func (c *AvroCodec) GetCanonicalSchema() string {
-	return c.avroCodec.CanonicalSchema()
+// GetSchema returns the avro schema as a map
+func (c *AvroCodec) GetSchema() map[string]interface{} {
+	return c.avroSchema
+}
+
+// GetSchemaString returns the avro schema as a string
+func (c *AvroCodec) GetSchemaString() string {
+	return c.avroSchemaString
 }
 
 // Marshal maps an unmarshaled json object to avro-encoded binary
