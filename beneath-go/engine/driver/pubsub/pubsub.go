@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/beneath-core/beneath-go/core"
@@ -24,8 +25,8 @@ type configSpecification struct {
 
 // Pubsub implements beneath.StreamsDriver
 type Pubsub struct {
-	client             *pubsub.Client
-	writeRequestsTopic *pubsub.Topic
+	Client             *pubsub.Client
+	WriteRequestsTopic *pubsub.Topic
 }
 
 // New returns a new
@@ -33,6 +34,12 @@ func New() *Pubsub {
 	// parse config from env
 	var config configSpecification
 	core.LoadConfig("beneath_engine_pubsub", &config)
+
+	// if EMULATOR_HOST set, configure pubsub for the emulator
+	if config.EmulatorHost != "" {
+		os.Setenv("PUBSUB_PROJECT_ID", config.ProjectID)
+		os.Setenv("PUBSUB_EMULATOR_HOST", config.EmulatorHost)
+	}
 
 	// prepare pubsub client
 	client, err := pubsub.NewClient(context.Background(), config.ProjectID)
@@ -45,14 +52,16 @@ func New() *Pubsub {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Fatalf("error creating topic: %v", err)
+			log.Panicf("error creating topic: %v", err)
+		} else {
+			writeRequestsTopic = client.Topic(config.WriteRequestsTopic)
 		}
 	}
 
 	// create instance
 	return &Pubsub{
-		client:             client,
-		writeRequestsTopic: writeRequestsTopic,
+		Client:             client,
+		WriteRequestsTopic: writeRequestsTopic,
 	}
 }
 
@@ -61,12 +70,12 @@ func (p *Pubsub) GetMaxMessageSize() int {
 	return 10000000
 }
 
-// PushWriteRequest implements beneath.StreamsDriver
-func (p *Pubsub) PushWriteRequest(req *pb.WriteInternalRecordsRequest) error {
+// QueueWriteRequest implements beneath.StreamsDriver
+func (p *Pubsub) QueueWriteRequest(req *pb.WriteRecordsRequest) error {
 	// encode message
 	msg, err := proto.Marshal(req)
 	if err != nil {
-		log.Panicf("error marshalling WriteInternalRecordsRequest: %v", err)
+		log.Panicf("error marshalling WriteRecordsRequest: %v", err)
 	}
 
 	// check encoded message size
@@ -79,7 +88,7 @@ func (p *Pubsub) PushWriteRequest(req *pb.WriteInternalRecordsRequest) error {
 
 	// push
 	ctx := context.Background()
-	result := p.writeRequestsTopic.Publish(ctx, &pubsub.Message{
+	result := p.WriteRequestsTopic.Publish(ctx, &pubsub.Message{
 		Data: []byte(msg),
 	})
 

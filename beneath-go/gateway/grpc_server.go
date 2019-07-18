@@ -6,16 +6,15 @@ import (
 	"log"
 	"net"
 
-	"github.com/beneath-core/beneath-go/control/model"
-
 	"github.com/beneath-core/beneath-go/control/auth"
+	"github.com/beneath-core/beneath-go/control/model"
+	pb "github.com/beneath-core/beneath-go/proto"
+	uuid "github.com/satori/go.uuid"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
-	pb "github.com/beneath-core/beneath-go/proto"
-	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,32 +47,57 @@ func ListenAndServeGRPC(port int) error {
 type gRPCServer struct{}
 
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
-	// TODO
-	return &pb.WriteRecordsResponse{}, nil
-}
-
-func (s *gRPCServer) WriteInternalRecords(ctx context.Context, req *pb.WriteInternalRecordsRequest) (*pb.WriteInternalRecordsResponse, error) {
+	// get auth
 	key := auth.GetKey(ctx)
 
-	instanceID, err := uuid.FromBytes(req.InstanceId)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "InstanceId not valid UUID")
+	// read instanceID
+	instanceID := uuid.FromBytesOrNil(req.InstanceId)
+	if instanceID == uuid.Nil {
+		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
 
+	// get stream info
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
-	if err != nil {
+	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
+	// check permissions
 	if !key.WritesStream(stream) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
-	// TODO
-	// err = Engine.QueueWrite(req)
-	// if err != nil {
-	// 	return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
-	// }
+	// check records supplied
+	if len(req.Records) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "records cannot be empty")
+	}
 
-	return &pb.WriteInternalRecordsResponse{}, nil
+	// check each record is valid
+	for idx, record := range req.Records {
+		// check it decodes
+		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d doesn't decode: %v", idx, err.Error()))
+		}
+
+		// compute key (only used to check size)
+		keyData, err := stream.KeyCodec.Marshal(decodedData.(map[string]interface{}))
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
+		}
+
+		// check size
+		err = Engine.CheckSize(len(keyData), len(record.AvroData))
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
+		}
+	}
+
+	// write request to engine
+	err := Engine.Streams.QueueWriteRequest(req)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	return &pb.WriteRecordsResponse{}, nil
 }

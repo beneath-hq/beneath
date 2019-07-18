@@ -1,20 +1,12 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"log"
-
-	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
 	"github.com/beneath-core/beneath-go/engine/driver/pubsub"
-	pb "github.com/beneath-core/beneath-go/proto"
-)
-
-const (
-	sequenceNumberSize = 16 // 128 bit
 )
 
 // Engine interfaces with the data layer
@@ -46,7 +38,7 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 
 	// init Warehouse
 	switch warehouseDriver {
-	case "warehouse":
+	case "bigquery":
 		engine.Warehouse = bigquery.New()
 	default:
 		log.Fatalf("invalid warehouse platform %s", warehouseDriver)
@@ -56,33 +48,25 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 	return engine
 }
 
-// QueueWrite todo
-func (e *Engine) QueueWrite(req *pb.WriteInternalRecordsRequest) error {
-	// validate instanceID
-	if uuid.FromBytesOrNil(req.InstanceId) == uuid.Nil {
-		return errors.New("invalid instanceId")
+// CheckSize validates that the size of a record (its key and its combined encoded avro)
+// fits within the constraints of the underlying infrastructure
+func (e *Engine) CheckSize(keyBytesLen int, avroBytesLen int) error {
+	// check key size
+	if keyBytesLen > e.Tables.GetMaxKeySize() {
+		return fmt.Errorf("invalid key size <%d bytes> (max key size is <%d bytes>)", keyBytesLen, e.Tables.GetMaxKeySize())
 	}
 
-	// validate records
-	for idx, record := range req.Records {
-		// check encoded key length
-		if len(record.EncodedKey) == 0 || len(record.EncodedKey) > e.Tables.GetMaxKeySize() {
-			return fmt.Errorf(
-				"record at index %d has invalid key size <%d bytes> (max key size is <%d bytes>)",
-				idx, len(record.EncodedKey), e.Tables.GetMaxKeySize(),
-			)
-		}
-
-		// check encoded data length
-		if len(record.EncodedData) > e.Tables.GetMaxDataSize() {
-			return fmt.Errorf(
-				"record at index %d has invalid size <%d bytes> (max key size is <%d bytes>)",
-				idx, len(record.EncodedData), e.Tables.GetMaxDataSize(),
-			)
-		}
+	// find max data size (= min(tablesMaxSize, warehouseMaxSize))
+	maxDataSize := e.Tables.GetMaxDataSize()
+	if maxDataSize > e.Warehouse.GetMaxDataSize() {
+		maxDataSize = e.Warehouse.GetMaxDataSize()
 	}
 
-	// push to queue
-	err := e.Streams.PushWriteRequest(req)
-	return err
+	// check data size
+	if avroBytesLen > maxDataSize {
+		return fmt.Errorf("invalid data size <%d bytes> (max data size is <%d bytes>)", avroBytesLen, maxDataSize)
+	}
+
+	// passed
+	return nil
 }
