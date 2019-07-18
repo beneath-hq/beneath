@@ -26,3 +26,4 @@ venv
 yarn-error.log
 .vscode/launch.json
 .vscode/.ropeproject
+.pytest_cache
