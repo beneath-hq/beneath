@@ -10,6 +10,10 @@ DEFAULT_START_BLOCK_NO = 0
 w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
 
 
+def current_milli_time():
+    return int(time.time() * 1000)
+
+
 def get_latest_block_synced():
     # First try to ask the gateway
     response = requests.get(
@@ -22,7 +26,8 @@ def get_latest_block_synced():
         return {
             "blockNumber": 0,
             "blockHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-            "blockParentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            "blockParentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "syncTimestamp": 1563444444
         }
 
 
@@ -43,7 +48,8 @@ def post_block_to_gateway(block_number, block_hash, block_parent_hash):
     post_json = {
         "blockNumber": block_number,
         "blockHash": block_hash,
-        "blockParentHash": block_parent_hash
+        "blockParentHash": block_parent_hash,
+        "syncTimestamp": current_milli_time()
     }
 
     response = requests.post(

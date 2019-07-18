@@ -9,6 +9,11 @@ import fetch_and_publish_blocks as fpb
 
 class Test_FetchAndPublishBlocks(unittest.TestCase):
     def test_get_blocks_with_web3(self):
+        # Mock the current time, so we get predictable results
+        CURRENT_TIME = 123123123
+        fpb.current_milli_time = Mock(return_value=CURRENT_TIME)
+
+        # Mock the latest block synced, so we get predictable results
         fpb.get_latest_block_synced = Mock(
             return_value={"blockNumber": 8123121, "blockHash": "0x121", "blockParentHash": "0x120"})
 
@@ -69,17 +74,17 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                 fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123121, 'blockHash': '0x0121',
-                      'blockParentHash': '0x0120'}),
+                      'blockParentHash': '0x0120', "syncTimestamp": CURRENT_TIME}),
             call(
                 fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123122, 'blockHash': '0x0122',
-                      'blockParentHash': '0x0121'}),
+                      'blockParentHash': '0x0121', "syncTimestamp": CURRENT_TIME}),
             call(
                 fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123123, 'blockHash': '0x0123',
-                      'blockParentHash': '0x0122'})],
+                      'blockParentHash': '0x0122', "syncTimestamp": CURRENT_TIME})],
             any_order=False)
         self.assertEqual(fpb.requests.post.call_count, 3, "requests.post must have been called exactly 3 times")
 
