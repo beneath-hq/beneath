@@ -20,24 +20,31 @@ type Compiler struct {
 // MustCompileToAvro is a helper function very useful in tests.
 // It compiles the schema to avro and panics on any errors.
 func MustCompileToAvro(schema string) interface{} {
+	avroSchemaString := MustCompileToAvroString(schema)
+
+	var avroSchema interface{}
+	err := json.Unmarshal([]byte(avroSchemaString), &avroSchema)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	return avroSchema
+}
+
+// MustCompileToAvroString is a variant of MustCompileToAvro
+func MustCompileToAvroString(schema string) string {
 	c := NewCompiler(schema)
 	err := c.Compile()
 	if err != nil {
 		log.Panic(err.Error())
 	}
 
-	avroSchemaString, err := c.GetStream().BuildAvroSchema()
+	avroSchemaString, err := c.GetStream().BuildCanonicalAvroSchema()
 	if err != nil {
 		log.Panic(err.Error())
 	}
 
-	var avroSchema interface{}
-	err = json.Unmarshal([]byte(avroSchemaString), &avroSchema)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-
-	return avroSchema
+	return avroSchemaString
 }
 
 // NewCompiler creates a new Compiler for schema -- don't forget to call Compile()
