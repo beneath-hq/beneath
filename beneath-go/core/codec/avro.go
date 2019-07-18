@@ -48,7 +48,7 @@ func (c *AvroCodec) GetSchemaString() string {
 
 // Marshal maps an unmarshaled json object to avro-encoded binary
 func (c *AvroCodec) Marshal(jsonNative interface{}) ([]byte, error) {
-	avroNative, err := jsonNativeToAvroNative(c.avroSchema, jsonNative)
+	avroNative, err := jsonNativeToAvroNative(c.avroSchema, jsonNative, map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (c *AvroCodec) Unmarshal(data []byte) (interface{}, error) {
 		return nil, fmt.Errorf("unmarshal avro binary produced remainder: data <%v> and remainder <%v>", data, remainder)
 	}
 
-	jsonNative, err := avroNativeToJSONNative(c.avroSchema, avroNative)
+	jsonNative, err := avroNativeToJSONNative(c.avroSchema, avroNative, map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}

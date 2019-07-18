@@ -4,46 +4,38 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/beneath-core/beneath-go/core/schema"
+
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAvroJson1(t *testing.T) {
-	var schema interface{}
-	err := json.Unmarshal([]byte(`{
-		"name": "test",
-		"type": "record",
-		"indexes": [["key_one", "key_two"]],
-		"fields": [
-			{"name": "key_one", "type": "string"},
-			{"name": "key_two", "type": "long", "logicalType": "timestamp-millis"},
-			{"name": "value_one", "type": "record", "fields": [
-				{"name": "one", "type": "bytes"},
-				{"name": "two", "type": "bytes", "logicalType": "decimal"},
-				{"name": "three", "type": ["null", "int"]},
-				{"name": "four", "type": ["null", {
-					"type": "array",
-					"items": "int"
-				}]},
-				{"name": "five", "type": "array", "items": [
-					"null",
-					{"type": "fixed", "size": 10}
-				]},
-				{"name": "six", "type": [
-					"null",
-					{"name": "six_type", "type": "record", "fields": [
-						{"type": "int", "name": "six_one"}
-					]}
-				]}
-			]}
-		]
-	}`), &schema)
-	assert.Nil(t, err)
+	avroSchema := schema.MustCompileToAvro(`
+		type Test @stream(name: "test", key: ["one", "two"]) {
+			one: String!
+			two: Timestamp!
+			three: TestA!
+		}
+		type TestA {
+			one: Bytes!
+			two: Numeric!
+			three: Int
+			four: [Int!]
+			five: [Bytes10!]
+			six: [TestB!]
+			seven: TestB
+		}
+		type TestB {
+			one: Int!
+			two: Bytes10
+		}
+	`)
 
 	valueJSON := `{
-		"key_one": "aaa bbb ccc",
-		"key_two": 1561294281000,
-		"value_one": {
+		"one": "aaa bbb ccc",
+		"two": 1561294281000,
+		"three": {
 			"one": "0xbeef",
 			"two": "12345678901234567890123456789012345678901234567890",
 			"three": null,
@@ -53,24 +45,25 @@ func TestAvroJson1(t *testing.T) {
 			],
 			"five": [
 				"0x00112233445566778899",
-				null,
 				"0x99887766554433221100"
 			],
-			"six": {
-				"six_one": 31
+			"six": null,
+			"seven": {
+				"one": 31,
+				"two": "0x99887766554433221100"
 			}
 		}
 	}`
 
 	var value, valueCopy interface{}
-	err = json.Unmarshal([]byte(valueJSON), &value)
+	err := json.Unmarshal([]byte(valueJSON), &value)
 	assert.Nil(t, err)
 	err = json.Unmarshal([]byte(valueJSON), &valueCopy)
 	assert.Nil(t, err)
 
-	avroNative, err := jsonNativeToAvroNative(schema, value)
+	avroNative, err := jsonNativeToAvroNative(avroSchema, value, map[string]interface{}{})
 	assert.Nil(t, err)
-	jsonNative, err := avroNativeToJSONNative(schema, avroNative)
+	jsonNative, err := avroNativeToJSONNative(avroSchema, avroNative, map[string]interface{}{})
 	assert.Nil(t, err)
 
 	if diff := deep.Equal(jsonNative, valueCopy); diff != nil {

@@ -11,6 +11,49 @@ import (
 
 var one = big.NewInt(1)
 
+// NOTE about definedTypes
+// definedTypes keeps track of custom types encountered during depth-first traversal
+// of the schema (as per the avro spec) -- they may later in the schema be referenced
+// by name, so we need to be able to look them up.
+// The only types that can be named are enum, record and fixed.
+// A tricky edge case is that of types being defined in types on a path we wouldn't
+// otherwise traverse -- e.g., a defined type in the array definition of an empty array.
+
+// extractDefinedTypes is a helper function used in jsonNativeToAvroNative and avroNativeToJSONNative
+// to extract and save named types as per the comment above.
+// Recursive extraction is an option since we want to avoid double-traversals on types that
+// jsonNativeToAvroNative or avroNativeToJSONNative will traverse anyway
+func extractDefinedTypes(schemaT interface{}, definedTypes map[string]interface{}, recursively bool) {
+	switch schema := schemaT.(type) {
+	case []interface{}:
+		if recursively {
+			extractDefinedTypes(schema[1], definedTypes, recursively)
+		}
+	case map[string]interface{}:
+		switch subtype := schema["type"].(type) {
+		case string:
+			switch subtype {
+			case "fixed":
+				definedTypes[schema["name"].(string)] = schema
+			case "array":
+				if recursively {
+					extractDefinedTypes(schema["items"], definedTypes, recursively)
+				}
+			case "record":
+				definedTypes[schema["name"].(string)] = schema
+				if recursively {
+					fields := schema["fields"].([]interface{})
+					for _, field := range fields {
+						extractDefinedTypes(field, definedTypes, recursively)
+					}
+				}
+			}
+		default:
+			extractDefinedTypes(subtype, definedTypes, recursively)
+		}
+	}
+}
+
 // jsonNativeToAvroNative converts the result of unmarshalling json into
 // a structure suitable as input to marshalling avro; namely, the transforms are:
 //   - unions: if value is not null, wrap in map with the type's name as the key
@@ -18,7 +61,7 @@ var one = big.NewInt(1)
 //   - fixed: turn from string prefixed with 0x matching size into [size]byte
 //   - bytes.decimal: turn from string containing a number into *big.Rat
 //   - long: if value is a string, convert to long
-func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{}, error) {
+func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}) (interface{}, error) {
 	switch schema := schemaT.(type) {
 	case string:
 		// handle bytes case
@@ -52,10 +95,15 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 			}
 		}
 
+		// check if it's a defined type
+		if definedTypes[schema] != nil {
+			return jsonNativeToAvroNative(definedTypes[schema], valT, definedTypes)
+		}
+
 		// default
 		return valT, nil
 	case []interface{}:
-		// ValidateSchema guarantees that unions have signature ["null", {...}],
+		// BuildAvroSchema guarantees that unions have signature ["null", {...}],
 		// but just to be sure
 		if len(schema) != 2 && schema[0] != "null" {
 			return nil, fmt.Errorf("encountered illegal union %v", schema)
@@ -63,11 +111,14 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 
 		// handle the null case
 		if valT == nil {
+			// we'll be returning nil, but first we have to traverse the alternate path
+			// for definedTypes, which may show up later in the schema (see note at top of file)
+			extractDefinedTypes(schema[1], definedTypes, true)
 			return nil, nil
 		}
 
 		// recurse
-		childVal, err := jsonNativeToAvroNative(schema[1], valT)
+		childVal, err := jsonNativeToAvroNative(schema[1], valT, definedTypes)
 		if err != nil {
 			return nil, err
 		}
@@ -105,6 +156,9 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 				return nil, fmt.Errorf("expected number key 'size' for schema <fixed>, got %v", schema)
 			}
 
+			// save as defined type
+			extractDefinedTypes(schema, definedTypes, false)
+
 			if strings.HasPrefix(val, "0x") && len(val) == 2*int(size)+2 {
 				binary, err := hex.DecodeString(val[2:])
 				if err == nil {
@@ -139,7 +193,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 			// handle long.timestamp-millis
 			if t == "long" && lt == "timestamp-millis" {
 				// parse as long
-				longT, err := jsonNativeToAvroNative(t, valT)
+				longT, err := jsonNativeToAvroNative(t, valT, definedTypes)
 				if err != nil {
 					return nil, err
 				}
@@ -167,11 +221,17 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 
 			res := make([]interface{}, len(val))
 			for i, v := range val {
-				r, err := jsonNativeToAvroNative(schema["items"], v)
+				r, err := jsonNativeToAvroNative(schema["items"], v, definedTypes)
 				if err != nil {
 					return nil, err
 				}
 				res[i] = r
+			}
+
+			if len(val) == 0 {
+				// when len == 0, no calls happen to jsonNativeToAvroNative
+				// so we have to manually make sure to extract types for schema["items"]
+				extractDefinedTypes(schema["items"], definedTypes, true)
 			}
 
 			return res, nil
@@ -188,6 +248,9 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 				return nil, fmt.Errorf("record type doesn't have fields: %v", schema)
 			}
 
+			// save as defined type
+			extractDefinedTypes(schema, definedTypes, false)
+
 			for _, fieldT := range fields {
 				field, ok := fieldT.(map[string]interface{})
 				if !ok {
@@ -200,17 +263,21 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 				}
 
 				if val[fieldName] != nil {
-					r, err := jsonNativeToAvroNative(field, val[fieldName])
+					r, err := jsonNativeToAvroNative(field, val[fieldName], definedTypes)
 					if err != nil {
 						return nil, err
 					}
 					val[fieldName] = r
+				} else {
+					// make sure to traverse the field for defined types, even though
+					// the value is empty (see note at top of file)
+					extractDefinedTypes(field, definedTypes, true)
 				}
 			}
 
 			return val, nil
 		}
-		return jsonNativeToAvroNative(t, valT)
+		return jsonNativeToAvroNative(t, valT, definedTypes)
 	default:
 		return nil, fmt.Errorf("unknown schema type: %T", schemaT)
 	}
@@ -222,7 +289,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}) (interface{},
 //   - bytes: turn from []byte into string prefixed with 0x
 //   - fixed: same as for bytes
 //   - bytes.decimal: turn into string representing the number in decimal
-func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{}, error) {
+func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}) (interface{}, error) {
 	switch schema := schemaT.(type) {
 	case string:
 		// handle bytes case
@@ -245,10 +312,15 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 			}
 		}
 
+		// check if it's a defined type
+		if definedTypes[schema] != nil {
+			return avroNativeToJSONNative(definedTypes[schema], valT, definedTypes)
+		}
+
 		// default
 		return valT, nil
 	case []interface{}:
-		// ValidateSchema guarantees that unions have signature ["null", {...}],
+		// BuildAvroSchema guarantees that unions have signature ["null", {...}],
 		// but just to be sure
 		if len(schema) != 2 && schema[0] != "null" {
 			return nil, fmt.Errorf("encountered illegal union %v", schema)
@@ -256,6 +328,9 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 
 		// handle the null case
 		if valT == nil {
+			// we're returning nil, but must make sure we pick up on all
+			// defined types on the alternative path (see note at top of file)
+			extractDefinedTypes(schema[1], definedTypes, true)
 			return nil, nil
 		}
 
@@ -267,7 +342,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 
 		// return wrapped value
 		for _, v := range val {
-			return avroNativeToJSONNative(schema[1], v)
+			return avroNativeToJSONNative(schema[1], v, definedTypes)
 		}
 
 		// not actually reachable
@@ -281,6 +356,10 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 			if !ok {
 				return nil, fmt.Errorf("expected []byte value for schema <fixed>, got %v", valT)
 			}
+
+			// save as defined type
+			extractDefinedTypes(schema, definedTypes, false)
+
 			return "0x" + hex.EncodeToString(val), nil
 		}
 
@@ -310,7 +389,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 					return nil, fmt.Errorf("expected time.time value for schema <long.timestamp-millis>, got %v", valT)
 				}
 				l := val.UnixNano() / int64(time.Millisecond)
-				return avroNativeToJSONNative(t, l)
+				return avroNativeToJSONNative(t, l, definedTypes)
 			}
 		}
 
@@ -323,11 +402,17 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 
 			res := make([]interface{}, len(val))
 			for i, v := range val {
-				r, err := avroNativeToJSONNative(schema["items"], v)
+				r, err := avroNativeToJSONNative(schema["items"], v, definedTypes)
 				if err != nil {
 					return nil, err
 				}
 				res[i] = r
+			}
+
+			if len(val) == 0 {
+				// when len == 0, no calls happen to avroNativeToJSONNative
+				// so we have to manually make sure to extract types for schema["items"]
+				extractDefinedTypes(schema["items"], definedTypes, true)
 			}
 
 			return res, nil
@@ -344,6 +429,9 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 				return nil, fmt.Errorf("record type doesn't have fields: %v", schema)
 			}
 
+			// save as defined type
+			extractDefinedTypes(schema, definedTypes, false)
+
 			for _, fieldT := range fields {
 				field, ok := fieldT.(map[string]interface{})
 				if !ok {
@@ -356,18 +444,23 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}) (interface{},
 				}
 
 				if val[fieldName] != nil {
-					r, err := avroNativeToJSONNative(field, val[fieldName])
+					r, err := avroNativeToJSONNative(field, val[fieldName], definedTypes)
 					if err != nil {
 						return nil, err
 					}
 					val[fieldName] = r
+				} else {
+					// make sure to traverse the field for defined types, even though
+					// the value is empty (see note at top of file)
+					extractDefinedTypes(field, definedTypes, true)
+					val[fieldName] = nil
 				}
 			}
 
 			return val, nil
 		}
 
-		return avroNativeToJSONNative(t, valT)
+		return avroNativeToJSONNative(t, valT, definedTypes)
 	default:
 		return nil, fmt.Errorf("unknown schema type: %T", schemaT)
 	}
