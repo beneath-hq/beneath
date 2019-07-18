@@ -7,7 +7,7 @@ from web3.datastructures import AttributeDict
 import fetch_and_publish_blocks as fpb
 
 
-class Test_FetchAndPublish(unittest.TestCase):
+class Test_FetchAndPublishBlocks(unittest.TestCase):
     def test_get_blocks_with_web3(self):
         fpb.START_FROM_BLOCK_NO = 8123121
 
@@ -36,6 +36,9 @@ class Test_FetchAndPublish(unittest.TestCase):
         mock_getBlock.side_effect = getBlock_return_values
         fpb.w3.eth.getBlock = mock_getBlock
 
+        # Mock requests.post to control behaviour and inspect calls made to it
+        fpb.requests.post = Mock(return_value=AttributeDict({"status_code": 200}))
+
         # Run the main loop until the test-exception stops it
         try:
             fpb.main()
@@ -43,11 +46,38 @@ class Test_FetchAndPublish(unittest.TestCase):
             print(str(e))
             pass
 
-        # Assert that w3.eth.getBlock() was called exactly as we expected
-        fpb.w3.eth.getBlock.assert_has_calls([
-            call("latest"), call(8123121), call(8123122), call(8123123), call("latest")
-        ], any_order=False)
-        self.assertEqual(fpb.w3.eth.getBlock.call_count, 5, "must have been called exactly 5 times")
+        # Assert that w3.eth.getBlock(...) was called exactly as we expected
+        fpb.w3.eth.getBlock.assert_has_calls(
+            [
+                call("latest"),
+                call(8123121),
+                call(8123122),
+                call(8123123),
+                call("latest")
+            ],
+            any_order=False
+        )
+        self.assertEqual(fpb.w3.eth.getBlock.call_count, 5, "getBlock must have been called exactly 5 times")
+
+        # Assert that requests.post(...) was called exactly as we expected
+        fpb.requests.post.assert_has_calls([
+            call(
+                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                headers={'content-type': 'application/json'},
+                json={'blockNumber': 8123121, 'blockHash': '0x0121',
+                      'blockParentHash': '0x0120'}),
+            call(
+                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                headers={'content-type': 'application/json'},
+                json={'blockNumber': 8123122, 'blockHash': '0x0122',
+                      'blockParentHash': '0x0121'}),
+            call(
+                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                headers={'content-type': 'application/json'},
+                json={'blockNumber': 8123123, 'blockHash': '0x0123',
+                      'blockParentHash': '0x0122'})],
+            any_order=False)
+        self.assertEqual(fpb.requests.post.call_count, 3, "requests.post must have been called exactly 3 times")
 
 
 if __name__ == '__main__':
