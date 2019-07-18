@@ -9,7 +9,8 @@ import fetch_and_publish_blocks as fpb
 
 class Test_FetchAndPublishBlocks(unittest.TestCase):
     def test_get_blocks_with_web3(self):
-        fpb.START_FROM_BLOCK_NO = 8123121
+        fpb.get_latest_block_synced = Mock(
+            return_value={"blockNumber": 8123121, "blockHash": "0x121", "blockParentHash": "0x120"})
 
         # Mock w3.eth.getBlock() to control its behavior
         mock_getBlock = Mock()
@@ -59,20 +60,23 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         )
         self.assertEqual(fpb.w3.eth.getBlock.call_count, 5, "getBlock must have been called exactly 5 times")
 
-        # Assert that requests.post(...) was called exactly as we expected
+        # Assert that the gateway was asked for the latest synced block
+        fpb.get_latest_block_synced.assert_called_once()
+
+        # Assert that blocks where POST'ed to the gateway as we expected
         fpb.requests.post.assert_has_calls([
             call(
-                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123121, 'blockHash': '0x0121',
                       'blockParentHash': '0x0120'}),
             call(
-                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123122, 'blockHash': '0x0122',
                       'blockParentHash': '0x0121'}),
             call(
-                'https://beneath.network/projects/ethereum/streams/block-numbers',
+                fpb.BENEATH_POST_BLOCK_URL,
                 headers={'content-type': 'application/json'},
                 json={'blockNumber': 8123123, 'blockHash': '0x0123',
                       'blockParentHash': '0x0122'})],
