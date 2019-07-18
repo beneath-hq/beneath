@@ -10,36 +10,39 @@ import (
 
 // BuildAvroSchema compiles the stream into an Avro schema
 func (s *StreamDef) BuildAvroSchema() (string, error) {
+	return s.buildAvroSchema(true)
+}
+
+// BuildCanonicalAvroSchema compiles the stream into an Avro schema
+// in canonical form (compact and without doc)
+// NOTE: We're just returning the avro schema without doc fields.
+// Canonical Avro isn't actually well defined and goavro's
+// function for transforming to canonical drops logicalType fields,
+// which won't do for us.
+func (s *StreamDef) BuildCanonicalAvroSchema() (string, error) {
+	return s.buildAvroSchema(false)
+}
+
+func (s *StreamDef) buildAvroSchema(doc bool) (string, error) {
 	decl := s.Compiler.Declarations[s.TypeName]
 
 	definedNames := make(map[string]bool)
-	avro := s.buildAvroRecord(decl.Type, definedNames)
+	avro := s.buildAvroRecord(decl.Type, doc, definedNames)
 
 	json, err := json.Marshal(avro)
 	if err != nil {
 		return "", fmt.Errorf("cannot marshal avro schema: %v", err.Error())
 	}
 
+	_, err = goavro.NewCodec(string(json))
+	if err != nil {
+		return "", err
+	}
+
 	return string(json), nil
 }
 
-// BuildCanonicalAvroSchema compiles the stream into an Avro schema
-// in canonical form (compact and without doc)
-func (s *StreamDef) BuildCanonicalAvroSchema() (string, error) {
-	avro, err := s.BuildAvroSchema()
-	if err != nil {
-		return "", err
-	}
-
-	codec, err := goavro.NewCodec(avro)
-	if err != nil {
-		return "", err
-	}
-
-	return codec.CanonicalSchema(), nil
-}
-
-func (s *StreamDef) buildAvroRecord(t *Type, definedNames map[string]bool) interface{} {
+func (s *StreamDef) buildAvroRecord(t *Type, doc bool, definedNames map[string]bool) interface{} {
 	if definedNames[t.Name] {
 		return t.Name
 	}
@@ -49,21 +52,24 @@ func (s *StreamDef) buildAvroRecord(t *Type, definedNames map[string]bool) inter
 	for idx, field := range t.Fields {
 		fields[idx] = map[string]interface{}{
 			"name": field.Name,
-			"type": s.buildAvroTypeRef(field.Type, definedNames),
+			"type": s.buildAvroTypeRef(field.Type, doc, definedNames),
 		}
 	}
 
 	record := map[string]interface{}{
 		"type":   "record",
 		"name":   t.Name,
-		"doc":    t.Doc,
 		"fields": fields,
+	}
+
+	if doc {
+		record["doc"] = t.Doc
 	}
 
 	return record
 }
 
-func (s *StreamDef) buildAvroEnum(e *Enum, definedNames map[string]bool) interface{} {
+func (s *StreamDef) buildAvroEnum(e *Enum, doc bool, definedNames map[string]bool) interface{} {
 	if definedNames[e.Name] {
 		return e.Name
 	}
@@ -77,15 +83,15 @@ func (s *StreamDef) buildAvroEnum(e *Enum, definedNames map[string]bool) interfa
 	return avro
 }
 
-func (s *StreamDef) buildAvroTypeRef(tr *TypeRef, definedNames map[string]bool) interface{} {
+func (s *StreamDef) buildAvroTypeRef(tr *TypeRef, doc bool, definedNames map[string]bool) interface{} {
 	var avro interface{}
 	if tr.Array != nil {
 		avro = map[string]interface{}{
 			"type":  "array",
-			"items": s.buildAvroTypeRef(tr.Array, definedNames),
+			"items": s.buildAvroTypeRef(tr.Array, doc, definedNames),
 		}
 	} else {
-		avro = s.buildAvroTypeName(tr.Type, definedNames)
+		avro = s.buildAvroTypeName(tr.Type, doc, definedNames)
 	}
 
 	if !tr.Required {
@@ -98,9 +104,9 @@ func (s *StreamDef) buildAvroTypeRef(tr *TypeRef, definedNames map[string]bool) 
 	return avro
 }
 
-func (s *StreamDef) buildAvroTypeName(name string, definedNames map[string]bool) interface{} {
+func (s *StreamDef) buildAvroTypeName(name string, doc bool, definedNames map[string]bool) interface{} {
 	if isPrimitiveTypeName(name) {
-		return s.buildAvroPrimitiveTypeName(name, definedNames)
+		return s.buildAvroPrimitiveTypeName(name, doc, definedNames)
 	}
 
 	decl := s.Compiler.Declarations[name]
@@ -110,18 +116,18 @@ func (s *StreamDef) buildAvroTypeName(name string, definedNames map[string]bool)
 	}
 
 	if decl.Enum != nil {
-		return s.buildAvroEnum(decl.Enum, definedNames)
+		return s.buildAvroEnum(decl.Enum, doc, definedNames)
 	}
 
 	if decl.Type != nil {
-		return s.buildAvroRecord(decl.Type, definedNames)
+		return s.buildAvroRecord(decl.Type, doc, definedNames)
 	}
 
 	log.Fatalf("declaration for type '%v' is neither enum nor record", name)
 	return nil
 }
 
-func (s *StreamDef) buildAvroPrimitiveTypeName(name string, definedNames map[string]bool) interface{} {
+func (s *StreamDef) buildAvroPrimitiveTypeName(name string, doc bool, definedNames map[string]bool) interface{} {
 	base, arg := splitPrimitiveName(name)
 	switch base {
 	case "Boolean":
