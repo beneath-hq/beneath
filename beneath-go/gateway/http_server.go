@@ -38,11 +38,48 @@ func httpHandler() http.Handler {
 	// handler.Get("/projects/{projectName}/graphql")
 
 	// REST endpoints
+	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/details", httputil.AppHandler(getStreamDetails))
 	handler.Method("GET", "/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
 	handler.Method("GET", "/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 	handler.Method("POST", "/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	return handler
+}
+
+func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
+	// get instance ID
+	projectName := chi.URLParam(r, "projectName")
+	streamName := chi.URLParam(r, "streamName")
+	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	if instanceID == uuid.Nil {
+		return httputil.NewError(404, "instance for stream not found")
+	}
+
+	// get stream details
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return httputil.NewError(404, "stream not found")
+	}
+
+	// create json response
+	json, err := json.Marshal(map[string]interface{}{
+		"current_instance_id": instanceID,
+		"project_id":          stream.ProjectID,
+		"public":              stream.Public,
+		"external":            stream.External,
+		"batch":               stream.Batch,
+		"manual":              stream.Manual,
+		"key_fields":          stream.KeyCodec.GetKeyFields(),
+		"avro_schema":         stream.AvroCodec.GetSchema(),
+	})
+	if err != nil {
+		return httputil.NewError(500, err.Error())
+	}
+
+	// write
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
+	return nil
 }
 
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
