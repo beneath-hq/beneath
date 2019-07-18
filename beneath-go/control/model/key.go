@@ -301,5 +301,5 @@ func (k *Key) WritesStream(stream *CachedStream) bool {
 	// if !role.Write && !(stream.Manual && role.Manage) {
 	// 	return httputil.NewHTTPError(403, "token doesn't grant right to write to this stream")
 	// }
-	return true
+	return k != nil
 }
