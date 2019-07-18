@@ -1,7 +1,9 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"unicode"
 
 	"github.com/golang-collections/collections/set"
@@ -13,6 +15,29 @@ type Compiler struct {
 	AST          *File
 	Declarations map[string]*Declaration
 	Streams      map[string]*StreamDef
+}
+
+// MustCompileToAvro is a helper function very useful in tests.
+// It compiles the schema to avro and panics on any errors.
+func MustCompileToAvro(schema string) interface{} {
+	c := NewCompiler(schema)
+	err := c.Compile()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	avroSchemaString, err := c.GetStream().BuildAvroSchema()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var avroSchema interface{}
+	err = json.Unmarshal([]byte(avroSchemaString), &avroSchema)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	return avroSchema
 }
 
 // NewCompiler creates a new Compiler for schema -- don't forget to call Compile()
