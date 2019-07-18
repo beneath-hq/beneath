@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,16 +21,14 @@ func hexToBytes(num string) []byte {
 
 func TestKeySimple(t *testing.T) {
 	keyFields := []string{"k1", "k2", "k3", "k4"}
-	schemaString := `{
-		"name": "test",
-		"type": "record",
-		"fields": [
-			{"name": "k1", "type": "fixed", "size": 20},
-			{"name": "k2", "type": "long"},
-			{"name": "k3", "type": "string"},
-			{"name": "k4", "type": "long", "logicalType": "timestamp-millis"}
-		]
-	}`
+	schemaString := schema.MustCompileToAvroString(`
+		type Test @stream(name: "test", key: ["k1", "k2", "k3", "k4"]) {
+			k1: Bytes20!
+			k2: Int64!
+			k3: String!
+			k4: Timestamp!
+		}
+	`)
 
 	avroCodec, err := NewAvro(schemaString)
 	assert.Nil(t, err)
