@@ -26,5 +26,10 @@
   "python.testing.pytestArgs": [
     "beneath-models"
   ],
-  "python.pythonPath": "/usr/local/bin/python3"
+  "python.pythonPath": "/usr/local/bin/python3",
+  "python.formatting.provider": "yapf",
+  "python.formatting.yapfArgs": [
+    "--style",
+    "google"
+  ]
 }

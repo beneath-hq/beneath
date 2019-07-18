@@ -9,7 +9,6 @@ import fetch_and_publish_blocks as fpb
 
 class Test_FetchAndPublishBlocks(unittest.TestCase):
 
-
     def test_get_blocks_with_web3(self):
         # Mock the current time, so we get predictable results
         CURRENT_TIME = 123123123
@@ -17,7 +16,11 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
 
         # Mock the latest block synced, so we get predictable results
         fpb.get_start_block = Mock(
-            return_value={"blockNumber": 8123121, "blockHash": "0x3121", "blockParentHash": "0x3120"})
+            return_value={
+                "blockNumber": 8123121,
+                "blockHash": "0x3121",
+                "blockParentHash": "0x3120"
+            })
 
         # Mock w3.eth.getBlock() to control its behavior
         mock_getBlock = Mock()
@@ -25,10 +28,30 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
 
         def getBlock_return_values(arg):
             blocks = {
-                "latest": AttributeDict({"number": 8123123, "hash": HexBytes("3123"), "parentHash": HexBytes("3122")}),
-                8123121: AttributeDict({"number": 8123121, "hash": HexBytes("3121"), "parentHash": HexBytes("3120")}),
-                8123122: AttributeDict({"number": 8123122, "hash": HexBytes("3122"), "parentHash": HexBytes("3121")}),
-                8123123: AttributeDict({"number": 8123123, "hash": HexBytes("3123"), "parentHash": HexBytes("3122")}),
+                "latest":
+                    AttributeDict({
+                        "number": 8123123,
+                        "hash": HexBytes("3123"),
+                        "parentHash": HexBytes("3122")
+                    }),
+                8123121:
+                    AttributeDict({
+                        "number": 8123121,
+                        "hash": HexBytes("3121"),
+                        "parentHash": HexBytes("3120")
+                    }),
+                8123122:
+                    AttributeDict({
+                        "number": 8123122,
+                        "hash": HexBytes("3122"),
+                        "parentHash": HexBytes("3121")
+                    }),
+                8123123:
+                    AttributeDict({
+                        "number": 8123123,
+                        "hash": HexBytes("3123"),
+                        "parentHash": HexBytes("3122")
+                    }),
             }
             if arg == "latest":
                 # When "latest" is called the third time, raise an exception so we can test results
@@ -45,7 +68,8 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         fpb.w3.eth.getBlock = mock_getBlock
 
         # Mock requests.post to control behaviour and inspect calls made to it
-        fpb.requests.post = Mock(return_value=AttributeDict({"status_code": 200}))
+        fpb.requests.post = Mock(
+            return_value=AttributeDict({"status_code": 200}))
 
         # Run the main loop until the test-exception stops it
         try:
@@ -55,41 +79,50 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
             pass
 
         # Assert that w3.eth.getBlock(...) was called exactly as we expected
-        fpb.w3.eth.getBlock.assert_has_calls(
-            [
-                call("latest"),
-                call(8123121),
-                call(8123122),
-                call(8123123),
-                call("latest")
-            ],
-            any_order=False
-        )
-        self.assertEqual(fpb.w3.eth.getBlock.call_count, 5, "getBlock must have been called exactly 5 times")
+        fpb.w3.eth.getBlock.assert_has_calls([
+            call("latest"),
+            call(8123121),
+            call(8123122),
+            call(8123123),
+            call("latest")
+        ],
+                                             any_order=False)
+        self.assertEqual(fpb.w3.eth.getBlock.call_count, 5,
+                         "getBlock must have been called exactly 5 times")
 
         # Assert that the gateway was asked for the latest synced block
         fpb.get_start_block.assert_called_once()
 
         # Assert that blocks where POST'ed to the gateway as we expected
         fpb.requests.post.assert_has_calls([
-            call(
-                fpb.BENEATH_POST_BLOCK_URL,
-                headers={'content-type': 'application/json'},
-                json={'blockNumber': 8123121, 'blockHash': '0x3121',
-                      'blockParentHash': '0x3120', "syncTimestamp": CURRENT_TIME}),
-            call(
-                fpb.BENEATH_POST_BLOCK_URL,
-                headers={'content-type': 'application/json'},
-                json={'blockNumber': 8123122, 'blockHash': '0x3122',
-                      'blockParentHash': '0x3121', "syncTimestamp": CURRENT_TIME}),
-            call(
-                fpb.BENEATH_POST_BLOCK_URL,
-                headers={'content-type': 'application/json'},
-                json={'blockNumber': 8123123, 'blockHash': '0x3123',
-                      'blockParentHash': '0x3122', "syncTimestamp": CURRENT_TIME})],
-            any_order=False)
-        self.assertEqual(fpb.requests.post.call_count, 3, "requests.post must have been called exactly 3 times")
-
+            call(fpb.BENEATH_POST_BLOCK_URL,
+                 headers={'content-type': 'application/json'},
+                 json={
+                     'blockNumber': 8123121,
+                     'blockHash': '0x3121',
+                     'blockParentHash': '0x3120',
+                     "syncTimestamp": CURRENT_TIME
+                 }),
+            call(fpb.BENEATH_POST_BLOCK_URL,
+                 headers={'content-type': 'application/json'},
+                 json={
+                     'blockNumber': 8123122,
+                     'blockHash': '0x3122',
+                     'blockParentHash': '0x3121',
+                     "syncTimestamp": CURRENT_TIME
+                 }),
+            call(fpb.BENEATH_POST_BLOCK_URL,
+                 headers={'content-type': 'application/json'},
+                 json={
+                     'blockNumber': 8123123,
+                     'blockHash': '0x3123',
+                     'blockParentHash': '0x3122',
+                     "syncTimestamp": CURRENT_TIME
+                 })
+        ],
+                                           any_order=False)
+        self.assertEqual(fpb.requests.post.call_count, 3,
+                         "requests.post must have been called exactly 3 times")
 
     def test_start_block_or_fork_handling(self):
         # Mock the current time, so we get predictable results
@@ -98,6 +131,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
 
         # Mock w3.eth.getBlock() to control its behavior
         latest_call_counter = 0
+
         def getBlock_return_values(arg):
             blocks = {
                 "latest":
@@ -147,13 +181,12 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                     return blocks["latest"]
             else:
                 return blocks[arg]
-        fpb.w3.eth.getBlock = Mock(
-            side_effect=getBlock_return_values)
+
+        fpb.w3.eth.getBlock = Mock(side_effect=getBlock_return_values)
 
         # Mock requests.post to control responses and inspect POST calls made to the gateway
         fpb.requests.post = Mock(
-            return_value=AttributeDict({"status_code": 200})
-        )
+            return_value=AttributeDict({"status_code": 200}))
 
         # Mock requests.get to control responses and inspect GET calls made to the gateway
         def request_get_handler(args):
@@ -190,6 +223,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
             }
             response.json.return_value = data[args]
             return response
+
         fpb.requests.get = Mock(side_effect=request_get_handler)
 
         # Run the main loop until the test-exception stops it
@@ -199,7 +233,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
             print(str(e))
             pass
 
-        # Assert that w3.eth.getBlock(...) was called exactly as we expected, 
+        # Assert that w3.eth.getBlock(...) was called exactly as we expected,
         # both to verify gateway block hashes and to get new blocks to POST.
         fpb.w3.eth.getBlock.assert_has_calls([
             call(123),
@@ -212,16 +246,25 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
             call(123),
             call(124),
             call('latest')
-        ], any_order=False)
+        ],
+                                             any_order=False)
         self.assertEqual(fpb.w3.eth.getBlock.call_count, 10,
                          "getBlock must have been called exactly 10 times")
 
         # Assert that the gateway was called to compare its blocks hashes with current block hashes from web3
         fpb.requests.get.assert_has_calls([
-            call('https://beneath.network/projects/ethereum/streams/ethereum-blocks?get-latest-record'),
-            call('https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=122'),
-            call('https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=121'),
-            call('https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=120')
+            call(
+                'https://beneath.network/projects/ethereum/streams/ethereum-blocks?get-latest-record'
+            ),
+            call(
+                'https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=122'
+            ),
+            call(
+                'https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=121'
+            ),
+            call(
+                'https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number=120'
+            )
         ])
         self.assertEqual(fpb.requests.get.call_count, 4,
                          "requests.get must have been called exactly 4 times")

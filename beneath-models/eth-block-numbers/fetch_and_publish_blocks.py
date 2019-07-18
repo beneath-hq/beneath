@@ -16,23 +16,26 @@ def current_milli_time():
 
 def get_block_from_gateway(block_number):
     return requests.get(
-        f"https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number={block_number}").json()
+        f"https://beneath.network/projects/ethereum/streams/ethereum-blocks?=block-number={block_number}"
+    ).json()
 
 
 def get_start_block():
     # First get the most recent block sent to the gateway
-    response = requests.get(
-        BENEATH_GET_LATEST_BLOCK_URL
-    )
+    response = requests.get(BENEATH_GET_LATEST_BLOCK_URL)
     if response.status_code <= 200:
         gateway_block = response.json()
     else:
         # If gateway fails to respond, return hard-coded block 0
         return {
-            "blockNumber": 0,
-            "blockHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-            "blockParentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "syncTimestamp": 1563444444
+            "blockNumber":
+                0,
+            "blockHash":
+                "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+            "blockParentHash":
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "syncTimestamp":
+                1563444444
         }
 
     # Compare gateway block hash with same blocknumbers hash from web3
@@ -40,14 +43,18 @@ def get_start_block():
     while gateway_block['blockHash'] != web3_block.hash.hex():
         # If hashes don't match, a fork probably happened. Check previous block until hash matches, so we are behind the fork and can go forward again.
         print(
-            f"Warning! Gateway block {gateway_block['blockNumber']} with hash {gateway_block['blockHash']} does not match Web3 block {web3_block.number} with hash {web3_block.hash.hex()}")
+            f"Warning! Gateway block {gateway_block['blockNumber']} with hash {gateway_block['blockHash']} does not match Web3 block {web3_block.number} with hash {web3_block.hash.hex()}"
+        )
         print("Trying the previous block...")
         if gateway_block['blockNumber'] > 0:
-            gateway_block = get_block_from_gateway(gateway_block['blockNumber']-1)
+            gateway_block = get_block_from_gateway(
+                gateway_block['blockNumber'] - 1)
             web3_block = w3.eth.getBlock(gateway_block['blockNumber'])
         else:
-            raise Exception("Could not find any block hash in gateway matching Web3 block hashes!")
-    return gateway_block['blockNumber']+1
+            raise Exception(
+                "Could not find any block hash in gateway matching Web3 block hashes!"
+            )
+    return gateway_block['blockNumber'] + 1
 
 
 def get_newer_block_no(current_block, newest_block_no):
@@ -71,11 +78,9 @@ def post_block_to_gateway(block_number, block_hash, block_parent_hash):
         "syncTimestamp": current_milli_time()
     }
 
-    response = requests.post(
-        BENEATH_POST_BLOCK_URL,
-        json=post_json,
-        headers=headers
-    )
+    response = requests.post(BENEATH_POST_BLOCK_URL,
+                             json=post_json,
+                             headers=headers)
 
     if (response.status_code > 200):
         print("Error posting block to gateway!", response)
@@ -94,9 +99,12 @@ def main():
             newest_block_no = get_newer_block_no(current_block, newest_block_no)
 
         block = w3.eth.getBlock(current_block)
-        print(f"Block {block.number} hash is {block.hash.hex()}, with parent hash {block.parentHash.hex()}")
+        print(
+            f"Block {block.number} hash is {block.hash.hex()}, with parent hash {block.parentHash.hex()}"
+        )
 
-        post_block_to_gateway(block.number, block.hash.hex(), block.parentHash.hex())
+        post_block_to_gateway(block.number, block.hash.hex(),
+                              block.parentHash.hex())
 
         current_block += 1
 
