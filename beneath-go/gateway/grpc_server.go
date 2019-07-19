@@ -46,6 +46,40 @@ func ListenAndServeGRPC(port int) error {
 // gRPCServer implements pb.GatewayServer
 type gRPCServer struct{}
 
+func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetailsRequest) (*pb.StreamDetailsResponse, error) {
+	// get auth
+	key := auth.GetKey(ctx)
+
+	// get instance ID
+	instanceID := model.FindInstanceIDByNameAndProject(req.StreamName, req.ProjectName)
+	if instanceID == uuid.Nil {
+		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// get stream details
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// check permissions
+	if !key.ReadsProject(stream.ProjectID) {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
+	}
+
+	// return
+	return &pb.StreamDetailsResponse{
+		CurrentInstanceId: instanceID.Bytes(),
+		ProjectId:         stream.ProjectID.Bytes(),
+		Public:            stream.Public,
+		External:          stream.External,
+		Batch:             stream.Batch,
+		Manual:            stream.Manual,
+		KeyFields:         stream.KeyCodec.GetKeyFields(),
+		AvroSchema:        stream.AvroCodec.GetSchemaString(),
+	}, nil
+}
+
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
 	key := auth.GetKey(ctx)

@@ -47,6 +47,9 @@ func httpHandler() http.Handler {
 }
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
+	// get auth
+	key := auth.GetKey(r.Context())
+
 	// get instance ID
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
@@ -59,6 +62,11 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
+	}
+
+	// check allowed to write stream
+	if !key.ReadsProject(stream.ProjectID) {
+		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
 	// create json response
