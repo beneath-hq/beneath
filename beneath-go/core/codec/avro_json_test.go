@@ -1,9 +1,9 @@
 package codec
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/schema"
 
 	"github.com/go-test/deep"
@@ -56,9 +56,9 @@ func TestAvroJson1(t *testing.T) {
 	}`
 
 	var value, valueCopy interface{}
-	err := json.Unmarshal([]byte(valueJSON), &value)
+	err := jsonutil.UnmarshalBytes([]byte(valueJSON), &value)
 	assert.Nil(t, err)
-	err = json.Unmarshal([]byte(valueJSON), &valueCopy)
+	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &valueCopy)
 	assert.Nil(t, err)
 
 	avroNative, err := jsonNativeToAvroNative(avroSchema, value, map[string]interface{}{})

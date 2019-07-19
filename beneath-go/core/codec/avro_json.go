@@ -2,6 +2,7 @@ package codec
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -92,6 +93,22 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 			}
 			if val, ok := valT.(float64); ok {
 				return int64(val), nil
+			}
+		}
+
+		// handle case where valT is a json.Number
+		if val, ok := valT.(json.Number); ok {
+			switch schema {
+			case "int":
+				// if doesn't fit into int32, should throw error during avro encoding
+				return val.Int64()
+			case "long":
+				return val.Int64()
+			case "float":
+				// if doesn't fit into float32, should throw error during avro encoding
+				return val.Float64()
+			case "double":
+				return val.Float64()
 			}
 		}
 

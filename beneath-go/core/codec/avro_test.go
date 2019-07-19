@@ -1,9 +1,9 @@
 package codec
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
@@ -28,9 +28,9 @@ func TestAvroSimple(t *testing.T) {
 	}`)
 
 	var jsonNative, jsonNativeCopy interface{}
-	err = json.Unmarshal([]byte(valueJSON), &jsonNative)
+	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNative)
 	assert.Nil(t, err)
-	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
+	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
 	binary, err := codec.Marshal(jsonNative)
@@ -77,9 +77,9 @@ func TestAvroComplex(t *testing.T) {
 	}`
 
 	var jsonNative, jsonNativeCopy interface{}
-	err = json.Unmarshal([]byte(valueJSON), &jsonNative)
+	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNative)
 	assert.Nil(t, err)
-	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
+	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
 	binary, err := codec.Marshal(jsonNative)
