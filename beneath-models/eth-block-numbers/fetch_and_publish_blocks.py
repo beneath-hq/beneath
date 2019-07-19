@@ -26,17 +26,8 @@ def get_start_block():
     if response.status_code <= 200:
         gateway_block = response.json()
     else:
-        # If gateway fails to respond, return hard-coded block 0
-        return {
-            "blockNumber":
-                0,
-            "blockHash":
-                "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
-            "blockParentHash":
-                "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "syncTimestamp":
-                1563444444
-        }
+        # If gateway fails to respond, start from block 0
+        return 0
 
     # Compare gateway block hash with same blocknumbers hash from web3
     web3_block = w3.eth.getBlock(gateway_block['blockNumber'])

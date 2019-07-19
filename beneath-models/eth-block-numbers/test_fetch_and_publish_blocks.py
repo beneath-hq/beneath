@@ -15,12 +15,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         fpb.current_milli_time = Mock(return_value=CURRENT_TIME)
 
         # Mock the latest block synced, so we get predictable results
-        fpb.get_start_block = Mock(
-            return_value={
-                "blockNumber": 8123121,
-                "blockHash": "0x3121",
-                "blockParentHash": "0x3120"
-            })
+        fpb.get_start_block = Mock(return_value=8123121)
 
         # Mock w3.eth.getBlock() to control its behavior
         mock_getBlock = Mock()
