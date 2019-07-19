@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +8,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/httputil"
+	"github.com/beneath-core/beneath-go/core/jsonutil"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
@@ -62,7 +62,7 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// create json response
-	json, err := json.Marshal(map[string]interface{}{
+	json, err := jsonutil.Marshal(map[string]interface{}{
 		"current_instance_id": instanceID,
 		"project_id":          stream.ProjectID,
 		"public":              stream.Public,
@@ -145,7 +145,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// decode json body
 	var body interface{}
-	err = json.NewDecoder(r.Body).Decode(&body)
+	err = jsonutil.Unmarshal(r.Body, &body)
 	if err != nil {
 		return httputil.NewError(400, "request body must be json")
 	}
@@ -170,6 +170,18 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, fmt.Sprintf("record at index %d is not an object", idx))
 		}
 
+		// get meta field
+		meta, ok := obj["@meta"].(map[string]interface{})
+		if !ok {
+			return httputil.NewError(400, "must provide '@meta' field for every record")
+		}
+
+		// get sequence number as uint64
+		sequenceNumber, err := jsonutil.ParseUint64(meta["sequence_number"])
+		if err != nil {
+			return httputil.NewError(400, "must provide '@meta.sequence_number' as number or numeric string for every record (must fit in a 64-bit unsigned integer)")
+		}
+
 		// encode as avro
 		avroData, err := stream.AvroCodec.Marshal(obj)
 		if err != nil {
@@ -191,7 +203,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		// save the record
 		records[idx] = &pb.Record{
 			AvroData:       avroData,
-			SequenceNumber: 0, // TODO
+			SequenceNumber: sequenceNumber,
 		}
 	}
 
