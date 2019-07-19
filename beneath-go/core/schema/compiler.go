@@ -17,6 +17,11 @@ type Compiler struct {
 	Streams      map[string]*StreamDef
 }
 
+//
+const (
+	maxFieldNameLen = 64
+)
+
 // MustCompileToAvro is a helper function very useful in tests.
 // It compiles the schema to avro and panics on any errors.
 func MustCompileToAvro(schema string) interface{} {
@@ -233,7 +238,12 @@ func (c *Compiler) checkDeclaration(d *Declaration, seen map[string]bool, path *
 	// check types
 	path.Insert(d.Type.Name)
 	for _, field := range d.Type.Fields {
-		e := c.checkTypeRef(field.Type, seen, path)
+		e := c.checkFieldName(field.Name)
+		if e != nil {
+			return e
+		}
+
+		e = c.checkTypeRef(field.Type, seen, path)
 		if e != nil {
 			return e
 		}
@@ -269,6 +279,19 @@ func (c *Compiler) checkTypeRef(tr *TypeRef, seen map[string]bool, path *set.Set
 
 	// recurse on type
 	return c.checkDeclaration(c.Declarations[tr.Type], seen, path)
+}
+
+// checks if field name is allowed
+func (c *Compiler) checkFieldName(name string) error {
+	if len(name) > maxFieldNameLen {
+		return fmt.Errorf("field name '%v' exceeds limit of 127 characters", name)
+	}
+
+	if name == "_key" || name == "_sequence_number" || name == "_insert_time" {
+		return fmt.Errorf("field name '%v' is a reserved identifier", name)
+	}
+
+	return nil
 }
 
 // parse declaration as stream if it has a stream annotation

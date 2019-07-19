@@ -316,3 +316,25 @@ func TestSDL26(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Regexp(t, "nested lists are not allowed at .*", err.Error())
 }
+
+func TestSDL27(t *testing.T) {
+	err := NewCompiler(`
+		type TestA @stream(name: "test", key: "a") {
+			a: Int!
+			bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: Int!
+		}
+	`).Compile()
+	assert.NotNil(t, err)
+	assert.Regexp(t, "field name 'b+' exceeds limit of 127 characters", err.Error())
+}
+
+func TestSDL28(t *testing.T) {
+	err := NewCompiler(`
+		type TestA @stream(name: "test", key: "a") {
+			a: Int!
+			_insert_time: Int!
+		}
+	`).Compile()
+	assert.NotNil(t, err)
+	assert.Regexp(t, "field name '_insert_time' is a reserved identifier", err.Error())
+}
