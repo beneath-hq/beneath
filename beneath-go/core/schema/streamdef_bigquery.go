@@ -8,14 +8,37 @@ import (
 
 // BuildBigQuerySchema compiles the stream into a BigQuery schema
 func (s *StreamDef) BuildBigQuerySchema() (string, error) {
+	// generate bigquery schema
 	decl := s.Compiler.Declarations[s.TypeName]
 	schema := s.buildBigQueryFields(decl.Type.Fields)
 
+	// inject internal fields
+	schema = append(
+		schema.([]interface{}),
+		map[string]interface{}{
+			"name": "_key",
+			"type": "BYTES",
+			"mode": "REQUIRED",
+		},
+		map[string]interface{}{
+			"name": "_sequence_number",
+			"type": "INTEGER",
+			"mode": "REQUIRED",
+		},
+		map[string]interface{}{
+			"name": "_insert_time",
+			"type": "TIMESTAMP",
+			"mode": "REQUIRED",
+		},
+	)
+
+	// convert to json
 	json, err := json.Marshal(schema)
 	if err != nil {
 		return "", fmt.Errorf("cannot marshal bigquery schema: %v", err.Error())
 	}
 
+	// finito
 	return string(json), nil
 }
 
