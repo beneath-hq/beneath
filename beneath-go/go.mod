@@ -8,6 +8,7 @@ require (
 	github.com/alecthomas/kong v0.2.0
 	github.com/alecthomas/participle v0.3.0
 	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1
+	github.com/apache/beam v2.13.0+incompatible
 	github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -52,6 +53,7 @@ require (
 	golang.org/x/sys v0.0.0-20190614084037-d442b75600c5 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/tools v0.0.0-20190613204242-ed0dc450797f // indirect
+	google.golang.org/api v0.6.0
 	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3 // indirect
 	google.golang.org/grpc v1.21.1

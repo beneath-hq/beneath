@@ -1,6 +1,3 @@
-// Command line tool to run/rollback migrations
-// Essentially stolen from https://github.com/go-pg/migrations/blob/master/example/main.go
-
 package main
 
 import (
@@ -39,7 +36,7 @@ func main() {
 	// publish
 	ctx := context.Background()
 	result := topic.Publish(ctx, &pubsub.Message{
-		Data: []byte("hello world"),
+		Data: []byte("hello world!!!"),
 	})
 
 	// blocks until ack'ed by pubsub
