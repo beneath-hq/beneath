@@ -14,6 +14,9 @@ type StreamsDriver interface {
 	// the write request being written to Pubsub, then from there read by
 	// the data processing pipeline and written to BigTable and BigQuery
 	QueueWriteRequest(req *pb.WriteRecordsRequest) error
+
+	// ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
+	ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
 }
 
 // TablesDriver defines the functions necessary to encapsulate Beneath's operational datastore needs

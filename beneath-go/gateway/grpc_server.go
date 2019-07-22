@@ -71,12 +71,14 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	return &pb.StreamDetailsResponse{
 		CurrentInstanceId: instanceID.Bytes(),
 		ProjectId:         stream.ProjectID.Bytes(),
+		ProjectName:       stream.ProjectName,
+		StreamName:        stream.StreamName,
+		KeyFields:         stream.KeyCodec.GetKeyFields(),
+		AvroSchema:        stream.AvroCodec.GetSchemaString(),
 		Public:            stream.Public,
 		External:          stream.External,
 		Batch:             stream.Batch,
 		Manual:            stream.Manual,
-		KeyFields:         stream.KeyCodec.GetKeyFields(),
-		AvroSchema:        stream.AvroCodec.GetSchemaString(),
 	}, nil
 }
 
