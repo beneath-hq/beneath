@@ -10,10 +10,11 @@ import fetch_and_publish_blocks as fpb
 
 class Test_ForkHandling(unittest.TestCase):
 
-    def test_start_block_or_fork_handling(self):
+    def setUp(self):
         # Reload fetch_and_publish_blocks so no side effects from other tests are carried over
         importlib.reload(fpb)
 
+    def test_start_block_or_fork_handling(self):
         # Mock the current time, so we get predictable results
         CURRENT_TIME = 123123123
         fpb.current_milli_time = Mock(return_value=CURRENT_TIME)

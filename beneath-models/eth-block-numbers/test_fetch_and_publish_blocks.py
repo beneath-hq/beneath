@@ -10,10 +10,11 @@ import fetch_and_publish_blocks as fpb
 
 class Test_FetchAndPublishBlocks(unittest.TestCase):
 
-    def test_get_blocks_with_web3(self):
+    def setUp(self):
         # Reload fetch_and_publish_blocks so no side effects from other tests are carried over
         importlib.reload(fpb)
 
+    def test_get_blocks_with_web3(self):
         # Mock the current time, so we get predictable results
         CURRENT_TIME = 123123123
         fpb.current_milli_time = Mock(return_value=CURRENT_TIME)
@@ -117,7 +118,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         # Assert that the gateway was asked for the latest synced block
         fpb.get_start_block.assert_called_once()
 
-        # Assert that blocks where POST"ed to the gateway as we expected
+        # Assert that blocks where POST'ed to the gateway as we expected
         expected_post_headers = {
             "Authorization": f"Bearer {fpb.BENEATH_PROJECT_KEY}",
             "content-type": "application/json"
