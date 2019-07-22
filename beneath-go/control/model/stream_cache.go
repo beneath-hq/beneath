@@ -17,15 +17,13 @@ import (
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
-	Public      bool
-	External    bool
-	Batch       bool
-	Manual      bool
-	ProjectID   uuid.UUID
-	ProjectName string
-	StreamName  string
-	KeyCodec    *codec.KeyCodec
-	AvroCodec   *codec.AvroCodec
+	Public    bool
+	External  bool
+	Batch     bool
+	Manual    bool
+	ProjectID uuid.UUID
+	KeyCodec  *codec.KeyCodec
+	AvroCodec *codec.AvroCodec
 }
 
 type internalCachedStream struct {
@@ -34,8 +32,6 @@ type internalCachedStream struct {
 	Batch               bool
 	Manual              bool
 	ProjectID           uuid.UUID
-	ProjectName         string
-	StreamName          string
 	KeyFields           []string
 	CanonicalAvroSchema string
 }
@@ -48,8 +44,6 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 		Batch:               c.Batch,
 		Manual:              c.Manual,
 		ProjectID:           c.ProjectID,
-		ProjectName:         c.ProjectName,
-		StreamName:          c.StreamName,
 		KeyFields:           c.KeyCodec.GetKeyFields(),
 		CanonicalAvroSchema: c.AvroCodec.GetSchemaString(),
 	}
@@ -168,8 +162,6 @@ func (c streamCache) getterFunc(instanceID uuid.UUID) func() (interface{}, error
 					s.batch,
 					s.manual,
 					s.project_id,
-					p.name as project_name,
-					s.name as stream_name,
 					s.key_fields,
 					s.canonical_avro_schema
 				from stream_instances si
@@ -197,8 +189,6 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.Batch = source.Batch
 	target.Manual = source.Manual
 	target.ProjectID = source.ProjectID
-	target.ProjectName = source.ProjectName
-	target.StreamName = source.StreamName
 
 	target.AvroCodec, err = codec.NewAvro(source.CanonicalAvroSchema)
 	if err != nil {

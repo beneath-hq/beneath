@@ -96,27 +96,15 @@ func (p *Project) CreateWithUser(userID uuid.UUID) error {
 
 	// create project and ProjectToUser in one transaction
 	return db.DB.RunInTransaction(func(tx *pg.Tx) error {
-		// insert project
 		_, err := tx.Model(p).Insert()
 		if err != nil {
 			return err
 		}
 
-		// connect project to userID
-		err = tx.Insert(&ProjectToUser{
+		return tx.Insert(&ProjectToUser{
 			ProjectID: p.ProjectID,
 			UserID:    userID,
 		})
-		if err != nil {
-			return err
-		}
-
-		err = db.Engine.Warehouse.RegisterProject(p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
-		if err != nil {
-			return err
-		}
-
-		return nil
 	})
 }
 
@@ -159,8 +147,6 @@ func (p *Project) UpdateDetails(displayName *string, site *string, description *
 	if err != nil {
 		return err
 	}
-
-	// TODO: Also update in BigQuery
 
 	// update
 	_, err = db.DB.Model(p).

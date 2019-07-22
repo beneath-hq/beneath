@@ -31,5 +31,7 @@
   "python.formatting.yapfArgs": [
     "--style",
     "google"
-  ]
+  ],
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true
 }

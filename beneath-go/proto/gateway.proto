@@ -18,18 +18,16 @@ message WriteRecordsResponse {
 
 message StreamDetailsRequest {
   string project_name = 1;
-  string stream_name  = 2;
+  string stream_name = 2;
 }
 
 message StreamDetailsResponse {
   bytes current_instance_id = 1;
   bytes project_id = 2;
-  string project_name = 3;
-  string stream_name = 4;
-  repeated string key_fields = 5;
-  string avro_schema = 6;
-  bool public = 7;
-  bool external = 8;
-  bool batch = 9;
-  bool manual = 10;
+  bool public = 3;
+  bool external = 4;
+  bool batch = 5;
+  bool manual = 6;
+  repeated string key_fields = 7;
+  string avro_schema = 8;
 }

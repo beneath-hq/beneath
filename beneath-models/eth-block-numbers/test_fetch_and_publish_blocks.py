@@ -16,18 +16,18 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
 
     def test_get_blocks_with_web3(self):
         # Mock the current time, so we get predictable results
-        CURRENT_TIME = 123123123
-        fpb.current_milli_time = Mock(return_value=CURRENT_TIME)
+        current_time = 123123123
+        fpb.current_milli_time = Mock(return_value=current_time)
         current_instance_id = "123TestInstanceId"
 
         # Mock the latest block synced, so we get predictable results
         fpb.get_start_block = Mock(return_value=8123121)
 
-        # Mock w3.eth.getBlock() to control its behavior
-        mock_getBlock = Mock()
+        # Mock W3.eth.getBlock() to control its behavior
+        mock_get_block = Mock()
         latest_call_counter = 0
 
-        def getBlock_return_values(arg):
+        def getBlock_return_values(*arg, **kwargs):
             blocks = {
                 "latest":
                     AttributeDict({
@@ -58,32 +58,32 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                         "timestamp": 10003
                     }),
             }
-            if arg == "latest":
+            if arg[0] == "latest":
                 # When "latest" is called the third time, raise an exception so we can test results
                 nonlocal latest_call_counter
                 latest_call_counter += 1
                 if latest_call_counter >= 2:
-                    raise Exception("stop loop for test assertion purposes")
-                else:
-                    return blocks["latest"]
+                    raise KeyboardInterrupt(
+                        "stop loop for test assertion purposes")
+                return blocks["latest"]
             else:
-                return blocks[arg]
+                return blocks[arg[0]]
 
-        mock_getBlock.side_effect = getBlock_return_values
-        fpb.w3.eth.getBlock = mock_getBlock
+        mock_get_block.side_effect = getBlock_return_values
+        fpb.W3.eth.getBlock = mock_get_block
 
         # Mock requests.get to control responses and inspect GET calls made to the gateway
         def request_get_handler(*args, **kwargs):
             response = Mock()
             response.status_code = 200
             data = {
-                fpb.beneath_get_latest_block_url: {
+                fpb.BENEATH_GET_LATEST_BLOCK_URL: {
                     "number": 8123123,
                     "hash": "0x3123",
                     "parentHash": "0x3122",
                     "timestamp": 10003
                 },
-                f"{fpb.beneath_stream_url}/details": {
+                f"{fpb.BENEATH_STREAM_URL}/details": {
                     "current_instance_id": current_instance_id
                 }
             }
@@ -99,12 +99,11 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         # Run the main loop until the test-exception stops it
         try:
             fpb.main()
-        except Exception as e:
-            print(str(e))
-            pass
+        except KeyboardInterrupt as ex:
+            print(str(ex))
 
-        # Assert that w3.eth.getBlock(...) was called exactly as we expected
-        fpb.w3.eth.getBlock.assert_has_calls([
+        # Assert that W3.eth.getBlock(...) was called exactly as we expected
+        fpb.W3.eth.getBlock.assert_has_calls([
             call("latest"),
             call(8123121),
             call(8123122),
@@ -112,7 +111,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
             call("latest")
         ],
                                              any_order=False)
-        self.assertEqual(fpb.w3.eth.getBlock.call_count, 5,
+        self.assertEqual(fpb.W3.eth.getBlock.call_count, 5,
                          "getBlock must have been called exactly 5 times")
 
         # Assert that the gateway was asked for the latest synced block
@@ -120,7 +119,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
 
         # Assert that blocks where POST'ed to the gateway as we expected
         expected_post_headers = {
-            "Authorization": f"Bearer {fpb.BENEATH_PROJECT_KEY}",
+            "Authorization": f"Bearer {fpb.config.BENEATH_PROJECT_KEY}",
             "content-type": "application/json"
         }
         fpb.requests.post.assert_has_calls([
@@ -128,7 +127,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                  headers=expected_post_headers,
                  json={
                      "@meta": {
-                         "sequence_number": CURRENT_TIME
+                         "sequence_number": current_time
                      },
                      "number": 8123121,
                      "hash": "0x3121",
@@ -139,7 +138,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                  headers=expected_post_headers,
                  json={
                      "@meta": {
-                         "sequence_number": CURRENT_TIME
+                         "sequence_number": current_time
                      },
                      "number": 8123122,
                      "hash": "0x3122",
@@ -150,7 +149,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                  headers=expected_post_headers,
                  json={
                      "@meta": {
-                         "sequence_number": CURRENT_TIME
+                         "sequence_number": current_time
                      },
                      "number": 8123123,
                      "hash": "0x3123",

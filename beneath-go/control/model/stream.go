@@ -21,7 +21,6 @@ type Stream struct {
 	Schema                  string    `sql:",notnull",validate:"required"`
 	AvroSchema              string    `sql:",type:json,notnull",validate:"required"`
 	CanonicalAvroSchema     string    `sql:",type:json,notnull",validate:"required"`
-	BigQuerySchema          string    `sql:"bigquery_schema,type:json,notnull",validate:"required"`
 	KeyFields               []string  `sql:",notnull",validate:"required,gte=1"`
 	External                bool      `sql:",notnull"`
 	Batch                   bool      `sql:",notnull"`
@@ -133,28 +132,16 @@ func (s *Stream) CompileAndCreate() error {
 		return fmt.Errorf("Error compiling schema: %s", err.Error())
 	}
 
-	// compute bigquery schema
-	bqSchema, err := streamDef.BuildBigQuerySchema()
-	if err != nil {
-		return fmt.Errorf("Error compiling schema: %s", err.Error())
-	}
-
 	// set missing stream fields
 	s.Name = streamDef.Name
 	s.KeyFields = streamDef.KeyFields
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
-	s.BigQuerySchema = bqSchema
 
 	// validate
 	err = GetValidator().Struct(s)
 	if err != nil {
 		return err
-	}
-
-	// populate s.Project if not set
-	if s.Project == nil {
-		s.Project = FindProject(s.ProjectID)
 	}
 
 	// create stream (and a new stream instance ID if not batch)
@@ -176,21 +163,6 @@ func (s *Stream) CompileAndCreate() error {
 			// update stream with stream instance ID
 			s.CurrentStreamInstanceID = &si.StreamInstanceID
 			_, err = tx.Model(s).WherePK().Update()
-			if err != nil {
-				return err
-			}
-
-			// register instance
-			err = db.Engine.Warehouse.RegisterStreamInstance(
-				s.ProjectID,
-				s.Project.Name,
-				s.StreamID,
-				s.Name,
-				s.Description,
-				s.BigQuerySchema,
-				s.KeyFields,
-				si.StreamInstanceID,
-			)
 			if err != nil {
 				return err
 			}
