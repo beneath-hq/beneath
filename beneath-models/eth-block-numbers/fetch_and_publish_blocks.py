@@ -1,3 +1,4 @@
+import logging as log
 import time
 
 import requests
@@ -12,6 +13,7 @@ BENEATH_PROJECT_STREAM = "block-numbers"
 beneath_stream_url = f"{BENEATH_BASE_URL}/projects/{BENEATH_PROJECT}/streams/{BENEATH_PROJECT_STREAM}"
 beneath_get_latest_block_url = "http://not.working.yet/"  # f"{BENEATH_BASE_URL}/projects/{BENEATH_PROJECT}/streams/{BENEATH_PROJECT_STREAM}?get-latest-record"
 
+log.basicConfig(level=log.INFO)
 w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
 
 
@@ -45,10 +47,10 @@ def get_start_block():
     web3_block = w3.eth.getBlock(gateway_block['number'])
     while gateway_block['hash'] != web3_block.hash.hex():
         # If hashes don't match, a fork probably happened. Check previous block until hash matches, so we are behind the fork and can go forward again.
-        print(
+        log.warning(
             f"Warning! Gateway block {gateway_block['number']} with hash {gateway_block['hash']} does not match Web3 block {web3_block.number} with hash {web3_block.hash.hex()}"
         )
-        print("Trying the previous block...")
+        log.info("Trying the previous block...")
         if gateway_block['number'] > 0:
             gateway_block = get_block_from_gateway(gateway_block['number'] - 1)
             web3_block = w3.eth.getBlock(gateway_block['number'])
@@ -61,17 +63,18 @@ def get_start_block():
 
 def get_newer_block_no(current_block, newest_block_no):
     while current_block > newest_block_no:
-        print("Getting newest block number...")
+        log.info("Sync finished. Checking for newer block number...")
         block_no = w3.eth.getBlock('latest').number
         if current_block > block_no:
-            print("No new block(s) found, waiting 5 sec...")
+            log.info("No new block(s) found, waiting 5 sec...")
             time.sleep(5)
         else:
+            log.info(f"New block number found: {block_no}")
             return block_no
 
 
-def post_block_to_gateway(instance_id, block_number, block_hash, block_parent_hash,
-                          block_timestamp):
+def post_block_to_gateway(instance_id, block_number, block_hash,
+                          block_parent_hash, block_timestamp):
     headers = {
         "Authorization": f"Bearer {BENEATH_PROJECT_KEY}",
         "content-type": "application/json"
@@ -92,9 +95,9 @@ def post_block_to_gateway(instance_id, block_number, block_hash, block_parent_ha
                              headers=headers)
 
     if (response.status_code > 200):
-        print("Error posting block to gateway!", response)
+        log.error(f"Error posting block to gateway!\n{response}")
     else:
-        print("Block posted successfully to gateway")
+        log.info("Block posted successfully to gateway")
 
 
 def main():
@@ -102,19 +105,28 @@ def main():
                                headers={
                                    "Bearer": BENEATH_PROJECT_KEY
                                }).json()["current_instance_id"]
+    log.info(f"Got gateway instance ID: {instance_id}")
+
     current_block = get_start_block()
+    log.info(f"Starting sync from block {current_block}")
+
     newest_block = w3.eth.getBlock('latest')  # TODO: Try/Catch
-    print("Newest block:", newest_block)
     newest_block_no = int(newest_block.number)
+    log.info(f"Current newest block from Web3 is {newest_block_no}")
 
     while True:
         if current_block > newest_block_no:
             newest_block_no = get_newer_block_no(current_block, newest_block_no)
 
         block = w3.eth.getBlock(current_block)
-        print(
+
+        log.info(
             f"Block {block.number} hash is {block.hash.hex()}, with parent hash {block.parentHash.hex()}"
         )
+
+        # Keep previous block and compare its hash to the new block's parent hash.
+        # If they are not the same, we have a chain reorg! Log warning and handle it,
+        # by walking backwards and compare with gateway block hashes until they are the same.
 
         post_block_to_gateway(instance_id, block.number, block.hash.hex(),
                               block.parentHash.hex(), block.timestamp)
