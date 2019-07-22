@@ -33,7 +33,7 @@ These are the main libraries used in the control server
 - [`goth`](https://github.com/markbates/goth): For setting up authentication with Google and Github
 - [`chi`](https://github.com/go-chi/chi): For HTTP routing
 
-### Adding GraphQL resolvers
+### Adding GraphQL resolvers in the *control server*
 
 1. Add/update the GraphQL schema files in `beneath-core/beneath-go/control/gql/schema`
 2. Run `gqlgen-control.sh`

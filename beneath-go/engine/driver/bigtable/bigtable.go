@@ -21,6 +21,9 @@ func New() *Bigtable {
 	var config configSpecification
 	core.LoadConfig("beneath_engine_bigtable", &config)
 
+	// signal that you are using the BigTable emulator by setting the BIGTABLE_EMULATOR_HOST environment variable
+	// once the emulator is running, run "$(gcloud beta emulators bigtable env-init)" in a terminal to set the environment variable
+
 	// create instance
 	b := &Bigtable{}
 	b.name = "bigtable"

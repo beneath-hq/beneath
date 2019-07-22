@@ -60,7 +60,9 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 ### Gateway backend
 
+- Go to `beneath-core/beneath-go`
 - Run with `go run cmd/gateway/main.go`
+- If successful, you can ping the gateway at http://localhost:5000/
 
 ### Frontend (UI)
 
