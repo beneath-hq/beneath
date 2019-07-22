@@ -73,6 +73,8 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	json, err := jsonutil.Marshal(map[string]interface{}{
 		"current_instance_id": instanceID,
 		"project_id":          stream.ProjectID,
+		"project_name":        stream.ProjectName,
+		"stream_name":         stream.StreamName,
 		"public":              stream.Public,
 		"external":            stream.External,
 		"batch":               stream.Batch,
