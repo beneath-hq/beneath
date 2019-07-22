@@ -17,6 +17,7 @@ func init() {
 				schema       TEXT NOT NULL,
 				avro_schema  JSON NOT NULL,
 				canonical_avro_schema JSON NOT NULL,
+				bigquery_schema JSON NOT NULL,
 				key_fields   JSONB NOT NULL, 
 				external     BOOLEAN NOT NULL,
 				batch        BOOLEAN NOT NULL,
