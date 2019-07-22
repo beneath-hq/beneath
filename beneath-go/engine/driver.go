@@ -1,6 +1,9 @@
 package engine
 
-import pb "github.com/beneath-core/beneath-go/proto"
+import (
+	pb "github.com/beneath-core/beneath-go/proto"
+	uuid "github.com/satori/go.uuid"
+)
 
 // StreamsDriver defines the functions necessary to encapsulate Beneath's streaming data needs
 type StreamsDriver interface {
@@ -26,4 +29,10 @@ type TablesDriver interface {
 type WarehouseDriver interface {
 	// GetMaxDataSize returns the maximum accepted row size in bytes
 	GetMaxDataSize() int
+
+	// RegisterProject should be called when a new project is created to create a corresponding dataset in the warehouse
+	RegisterProject(projectID uuid.UUID, public bool, name, displayName, description string) error
+
+	// RegisterStreamInstance should be called when a new stream instance is created to create a corresponding table in the warehouse
+	RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
 }
