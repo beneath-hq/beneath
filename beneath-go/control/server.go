@@ -1,21 +1,24 @@
 package control
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/beneath-core/beneath-go/control/auth"
-
 	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"github.com/vektah/gqlparser/gqlerror"
 )
 
 type configSpecification struct {
@@ -25,6 +28,10 @@ type configSpecification struct {
 
 	RedisURL    string `envconfig:"CONTROL_REDIS_URL" required:"true"`
 	PostgresURL string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
+
+	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
+	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 
 	SessionSecret    string `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
 	GithubAuthID     string `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
@@ -42,9 +49,10 @@ func init() {
 	// load config
 	core.LoadConfig("beneath", &Config)
 
-	// connect postgres and redis
+	// connect postgres, redis and engine
 	db.InitPostgres(Config.PostgresURL)
 	db.InitRedis(Config.RedisURL)
+	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 
 	// run migrations
 	migrations.MustRunUp(db.DB)
@@ -65,6 +73,12 @@ func init() {
 func ListenAndServeHTTP(port int) error {
 	router := chi.NewRouter()
 
+	// Don't crash totally on panic
+	router.Use(middleware.Recoverer)
+
+	// Log requests
+	router.Use(middleware.Logger)
+
 	// Add CORS
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -73,7 +87,7 @@ func ListenAndServeHTTP(port int) error {
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Debug:            true,
+		Debug:            false,
 	}).Handler)
 
 	// Authentication middleware (reads Bearer token if present)
@@ -90,9 +104,10 @@ func ListenAndServeHTTP(port int) error {
 	router.Handle("/playground", handler.Playground("Beneath", "/graphql"))
 
 	// Add graphql server
-	router.Handle("/graphql",
-		handler.GraphQL(gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{}})),
-	)
+	router.Handle("/graphql", handler.GraphQL(
+		makeExecutableSchema(),
+		makeGraphQLErrorPresenter(),
+	))
 
 	// Serve
 	log.Printf("HTTP server running on port %d\n", port)
@@ -108,4 +123,16 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	}
+}
+
+func makeExecutableSchema() graphql.ExecutableSchema {
+	return gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{}})
+}
+
+func makeGraphQLErrorPresenter() handler.Option {
+	return handler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+		// Uncomment this line to print resolver error details in the console
+		// log.Printf("Error in GraphQL Resolver: %s", err.Error())
+		return graphql.DefaultErrorPresenter(ctx, err)
+	})
 }
