@@ -5,9 +5,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/beneath-core/beneath-go/pipeline"
 )
 
 func main() {
-	pipeline.RunIt()
+	log.Fatal(pipeline.Run())
 }

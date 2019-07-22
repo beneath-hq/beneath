@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// create test topic
-	topicName := "test-topic"
+	topicName := "beneath-write-requests"
 	topic, err := client.CreateTopic(context.Background(), topicName)
 	if err != nil {
 		status, ok := status.FromError(err)

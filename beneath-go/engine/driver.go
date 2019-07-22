@@ -23,6 +23,12 @@ type TablesDriver interface {
 
 	// GetMaxDataSize returns the maximum accepted value size in bytes
 	GetMaxDataSize() int
+
+	// WriteRecordToTable...
+	WriteRecordToTable(instanceID uuid.UUID, encodedKey []byte, avroData []byte, sequenceNumber int64) error
+
+	// ReadRecordsFromTable...
+	ReadRecordsFromTable(instanceID uuid.UUID, encodedKey []byte) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs

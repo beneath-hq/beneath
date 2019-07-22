@@ -1,175 +1,223 @@
 package pipeline
 
 import (
-	"context"
-	"crypto/rand"
-	"log"
-	"strings"
+	"fmt"
 
-	"cloud.google.com/go/bigtable"
-	"cloud.google.com/go/pubsub"
+	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/engine"
 
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
 )
 
+type configSpecification struct {
+	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
+	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
+	RedisURL        string `envconfig:"CONTROL_REDIS_URL" required:"true"`
+	PostgresURL     string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
+}
+
+var (
+	// Config for gateway
+	Config configSpecification
+
+	// Engine is the data plane
+	Engine *engine.Engine
+)
+
+func init() {
+	core.LoadConfig("beneath", &Config)
+
+	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
+
+	db.InitPostgres(Config.PostgresURL)
+	db.InitRedis(Config.RedisURL)
+}
+
 const (
 	project = "beneathcrypto"
 )
 
-// initialize things
-func init() {
-	// db.InitPostgres(Config.PostgresURL) // initialize the Config variable; use line of code in gateway.go
-	// db.InitRedis(Config.RedisURL) // these two lines of code should enable us to retrieve schemas
-}
+// Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
+func Run() error {
 
-// RunIt runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
-func RunIt() { // call this function func init() or func main()?
+	return Engine.Streams.ReadWriteRequests(func(req *pb.WriteRecordsRequest) error {
+		instanceID := uuid.FromBytesOrNil(req.InstanceId)
+		stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+		if stream == nil {
+			return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
+		}
+
+		// save to bigtable, save to bigquery
+		for _, record := range req.Records { // in the future, refactor so that we write batch records when >1 record in a packet
+			decodedAvro, err := stream.AvroCodec.Unmarshal(record.AvroData)
+			if err != nil {
+				return err
+			}
+
+			decodedAvroMap, ok := decodedAvro.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("expected decoded avro data to be a map, got %T", decodedAvro)
+			}
+
+			key, err := stream.KeyCodec.Marshal(decodedAvroMap)
+			if err != nil {
+				return err
+			}
+
+			err = Engine.Tables.WriteRecordToTable(instanceID, key, record.AvroData, record.SequenceNumber)
+			// writeToBigTable(project, testPacket.InstanceId, record)
+			// writeToBigQuery()
+		}
+
+		// abstract bigtable stuff into engine
+		// return error if failure
+		return nil
+	})
+
+	//
 
 	// create data for testing
 	// create a uuid
-	uuidTest, _ := uuid.FromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	uuidTestBytes := uuidTest.Bytes()
+	// uuidTest, _ := uuid.FromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	// uuidTestBytes := uuidTest.Bytes()
 
-	// pubsub will produce a protocol buffer packet (as described in engine.proto)
-	// I need to unpack it via: proto.unmarshal()
-	// a testRecord (as seen below) will be produced
-	// for each Record in the Packet, write to BigTable
-	// each packet has only one instance ID
-	avroData1 := make([]byte, 10)
-	avroData2 := make([]byte, 10)
-	rand.Read(avroData1)
-	rand.Read(avroData2)
+	// // pubsub will produce a protocol buffer packet (as described in engine.proto)
+	// // I need to unpack it via: proto.unmarshal()
+	// // a testRecord (as seen below) will be produced
+	// // for each Record in the Packet, write to BigTable
+	// // each packet has only one instance ID
+	// avroData1 := make([]byte, 10)
+	// avroData2 := make([]byte, 10)
+	// rand.Read(avroData1)
+	// rand.Read(avroData2)
 
-	testPacket := &pb.WriteRecordsRequest{
-		InstanceId: uuidTestBytes,
-		Records: []*pb.Record{
-			&pb.Record{
-				AvroData:       avroData1,
-				SequenceNumber: 100, // then try out-of-order SequenceNumbers
-			},
-			&pb.Record{
-				AvroData:       avroData2,
-				SequenceNumber: 200,
-			},
-			&pb.Record{
-				AvroData:       avroData2,
-				SequenceNumber: 300,
-			},
-		},
-	}
+	// testPacket := &pb.WriteRecordsRequest{
+	// 	InstanceId: uuidTestBytes,
+	// 	Records: []*pb.Record{
+	// 		&pb.Record{
+	// 			AvroData:       avroData1,
+	// 			SequenceNumber: 100, // then try out-of-order SequenceNumbers
+	// 		},
+	// 		&pb.Record{
+	// 			AvroData:       avroData2,
+	// 			SequenceNumber: 200,
+	// 		},
+	// 		&pb.Record{
+	// 			AvroData:       avroData2,
+	// 			SequenceNumber: 300,
+	// 		},
+	// 	},
+	// }
 
-	// consume data from PubSub; unpack the protocol buffer packet
-	// consumeFromPubSub()
+	// // consume data from PubSub; unpack the protocol buffer packet
+	// // consumeFromPubSub()
 
-	// create a BigTable table called "main" (if it doesn't already exist)
-	createBigTableMain(project, uuidTestBytes)
+	// // create a BigTable table called "main" (if it doesn't already exist)
+	// createBigTableMain(project, uuidTestBytes)
 
-	// loop through records in packet and write to BigTable and BigQuery
-	// do I want to open/close the client every time within writeToBigTable, or open it once outside the loop
-	for _, record := range testPacket.Records {
-		writeToBigTable(project, testPacket.InstanceId, record)
-		// writeToBigQuery()
-	}
+	// // loop through records in packet and write to BigTable and BigQuery
+	// // do I want to open/close the client every time within writeToBigTable, or open it once outside the loop
+	// for _, record := range testPacket.Records {
+	// 	writeToBigTable(project, testPacket.InstanceId, record)
+	// 	// writeToBigQuery()
+	// }
 
-	// inspect and validate BigTable records
-	readFromBigTable(project, testPacket.InstanceId)
+	// // inspect and validate BigTable records
+	// readFromBigTable(project, testPacket.InstanceId)
 }
 
-func createBigTableMain(project string, instanceID []byte) {
-	// for testing:
-	// "project" and "instance" parameters in NewClient() are ignored when using the emulator
-	// signal that you are using the BigTable emulator by setting the BIGTABLE_EMULATOR_HOST environment variable
-	// once the emulator is running, run "$(gcloud beta emulators bigtable env-init)" in a terminal to set the environment variable
-	ctx := context.Background()
-	adminClient, err := bigtable.NewAdminClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
-	if err != nil {
-		log.Fatalf("Could not create admin client: %v", err)
-	}
+// func createBigTableMain(project string, instanceID []byte) {
+// 	// for testing:
+// 	// "project" and "instance" parameters in NewClient() are ignored when using the emulator
+// 	// signal that you are using the BigTable emulator by setting the BIGTABLE_EMULATOR_HOST environment variable
+// 	// once the emulator is running, run "$(gcloud beta emulators bigtable env-init)" in a terminal to set the environment variable
+// 	ctx := context.Background()
+// 	adminClient, err := bigtable.NewAdminClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
+// 	if err != nil {
+// 		log.Fatalf("Could not create admin client: %v", err)
+// 	}
 
-	err = adminClient.CreateTable(ctx, "main")
-	if err != nil {
-		// ignore error if table already exists
-		if !strings.Contains(err.Error(), "AlreadyExists") {
-			log.Fatalf("Could not create table: %v", err)
-		}
-	}
+// 	err = adminClient.CreateTable(ctx, "main")
+// 	if err != nil {
+// 		// ignore error if table already exists
+// 		if !strings.Contains(err.Error(), "AlreadyExists") {
+// 			log.Fatalf("Could not create table: %v", err)
+// 		}
+// 	}
 
-	err = adminClient.CreateColumnFamily(ctx, "main", "columnfamily0")
-	if err != nil {
-		// ignore error if column family already exists
-		if !strings.Contains(err.Error(), "AlreadyExists") {
-			log.Fatalf("Could not create column family: %v", err)
-		}
-	}
-}
+// 	err = adminClient.CreateColumnFamily(ctx, "main", "columnfamily0")
+// 	if err != nil {
+// 		// ignore error if column family already exists
+// 		if !strings.Contains(err.Error(), "AlreadyExists") {
+// 			log.Fatalf("Could not create column family: %v", err)
+// 		}
+// 	}
+// }
 
-func writeToBigTable(project string, instanceID []byte, record *pb.Record) {
-	// instead of sequence no., possibly use 3rd dimension of cell timestamp as described here: https://syslog.ravelin.com/the-joy-and-pain-of-using-google-bigtable-4210604c75be
-	// I should be able to do so if it is a 64-bit unsigned int
-	// replace bigtable.Now()
+// func writeToBigTable(project string, instanceID []byte, record *pb.Record) {
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	client, err := bigtable.NewClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
-	if err != nil {
-		log.Fatalf("Could not create data operations client: %v", err)
-	}
+// 	client, err := bigtable.NewClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
+// 	if err != nil {
+// 		log.Fatalf("Could not create data operations client: %v", err)
+// 	}
 
-	tbl := client.Open("main")
+// 	tbl := client.Open("main")
 
-	// use this random recordkey for testing
-	RecordKey := make([]byte, 10)
-	rand.Read(RecordKey)
+// 	// use this random recordkey for testing
+// 	RecordKey := make([]byte, 10)
+// 	rand.Read(RecordKey)
 
-	rowKeys := append(instanceID, RecordKey...)
-	columnFamilyName := "columnfamily0"
-	column0Name := "data"
-	// column1Name := "sequenceNumber"
+// 	rowKeys := append(instanceID, RecordKey...)
+// 	columnFamilyName := "columnfamily0"
+// 	column0Name := "data"
+// 	// column1Name := "sequenceNumber"
 
-	log.Printf("writing to table.")
-	muts := bigtable.NewMutation()
-	muts.Set(columnFamilyName, column0Name, bigtable.Timestamp(record.SequenceNumber), record.AvroData)
-	//muts.Set(columnFamilyName, column1Name, bigtable.Now(), []byte(record.SequenceNumber))
+// 	log.Printf("writing to table.")
+// 	muts := bigtable.NewMutation()
+// 	muts.Set(columnFamilyName, column0Name, bigtable.Timestamp(record.SequenceNumber), record.AvroData)
+// 	//muts.Set(columnFamilyName, column1Name, bigtable.Now(), []byte(record.SequenceNumber))
 
-	err = tbl.Apply(ctx, string(rowKeys), muts)
-	if err != nil {
-		log.Fatalf("Could not apply row mutation: %v", err)
-	}
+// 	err = tbl.Apply(ctx, string(rowKeys), muts)
+// 	if err != nil {
+// 		log.Fatalf("Could not apply row mutation: %v", err)
+// 	}
 
-	if err = client.Close(); err != nil {
-		log.Fatalf("Could not close data operations client: %v", err)
-	}
-}
+// 	if err = client.Close(); err != nil {
+// 		log.Fatalf("Could not close data operations client: %v", err)
+// 	}
+// }
 
-func readFromBigTable(project string, instanceID []byte) {
+// func readFromBigTable(project string, instanceID []byte) {
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	client, err := bigtable.NewClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
-	if err != nil {
-		log.Fatalf("Could not create data operations client: %v", err)
-	}
+// 	client, err := bigtable.NewClient(ctx, project, uuid.FromBytesOrNil(instanceID).String())
+// 	if err != nil {
+// 		log.Fatalf("Could not create data operations client: %v", err)
+// 	}
 
-	tbl := client.Open("main")
+// 	tbl := client.Open("main")
 
-	log.Printf("Reading all rows:")
-	rr := bigtable.PrefixRange("")
-	err = tbl.ReadRows(ctx, rr, func(row bigtable.Row) bool {
-		log.Print(row["columnfamily0"][0].Row)
-		log.Print(row["columnfamily0"][0].Column)
-		log.Print(row["columnfamily0"][0].Timestamp)
-		log.Print(row["columnfamily0"][0].Value)
-		return true
-	})
+// 	log.Printf("Reading all rows:")
+// 	rr := bigtable.PrefixRange("")
+// 	err = tbl.ReadRows(ctx, rr, func(row bigtable.Row) bool {
+// 		log.Print(row["columnfamily0"][0].Row)
+// 		log.Print(row["columnfamily0"][0].Column)
+// 		log.Print(row["columnfamily0"][0].Timestamp)
+// 		log.Print(row["columnfamily0"][0].Value)
+// 		return true
+// 	})
 
-	if err = client.Close(); err != nil {
-		log.Fatalf("Could not close data operations client: %v", err)
-	}
-}
-
-var topics []*pubsub.Topic
-var subs []*pubsub.Subscription
+// 	if err = client.Close(); err != nil {
+// 		log.Fatalf("Could not close data operations client: %v", err)
+// 	}
+// }
 
 /*  Notes, questions, and extra code
 
