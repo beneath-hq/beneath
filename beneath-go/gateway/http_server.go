@@ -186,8 +186,8 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, "must provide '@meta' field for every record")
 		}
 
-		// get sequence number as uint64
-		sequenceNumber, err := jsonutil.ParseUint64(meta["sequence_number"])
+		// get sequence number as int64
+		sequenceNumber, err := jsonutil.ParseInt64(meta["sequence_number"])
 		if err != nil {
 			return httputil.NewError(400, "must provide '@meta.sequence_number' as number or numeric string for every record (must fit in a 64-bit unsigned integer)")
 		}

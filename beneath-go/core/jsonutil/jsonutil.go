@@ -26,6 +26,23 @@ func UnmarshalBytes(data []byte, v interface{}) error {
 	return Unmarshal(bytes.NewReader(data), v)
 }
 
+// ParseInt64 is a helper for safely parsing values found in JSON to int64
+func ParseInt64(val interface{}) (int64, error) {
+	if val == nil {
+		return 0, fmt.Errorf("num is nil")
+	}
+
+	switch num := val.(type) {
+	case string:
+		return strconv.ParseInt(num, 10, 64)
+	case json.Number:
+		return num.Int64()
+	}
+
+	log.Panicf("unrecognized json numeric type: %T", val)
+	return 0, nil
+}
+
 // ParseUint64 is a helper for safely parsing values found in JSON to uint64
 func ParseUint64(val interface{}) (uint64, error) {
 	if val == nil {

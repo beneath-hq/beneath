@@ -8,7 +8,7 @@ package proto;
 
 message Record {
   bytes avro_data = 1;
-  uint64 sequence_number = 2;
+  int64 sequence_number = 2;
 }
 
 message WriteRecordsRequest {
