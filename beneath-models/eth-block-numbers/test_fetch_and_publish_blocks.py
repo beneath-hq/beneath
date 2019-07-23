@@ -21,7 +21,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         current_instance_id = "123TestInstanceId"
 
         # Mock the latest block synced, so we get predictable results
-        fpb.get_start_block = Mock(return_value=8123121)
+        fpb.get_start_block_no = Mock(return_value=8123121)
 
         # Mock W3.eth.getBlock() to control its behavior
         mock_get_block = Mock()
@@ -75,6 +75,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         # Mock requests.get to control responses and inspect GET calls made to the gateway
         def request_get_handler(*args, **kwargs):
             response = Mock()
+            response.raise_for_status = lambda: True
             response.status_code = 200
             data = {
                 fpb.BENEATH_GET_LATEST_BLOCK_URL: {
@@ -93,8 +94,10 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
         fpb.requests.get = Mock(side_effect=request_get_handler)
 
         # Mock requests.post to control behaviour and inspect calls made to it
-        fpb.requests.post = Mock(
-            return_value=AttributeDict({"status_code": 200}))
+        fpb.requests.post = Mock(return_value=AttributeDict({
+            "status_code": 200,
+            "raise_for_status": lambda: True
+        }))
 
         # Run the main loop until the test-exception stops it
         try:
@@ -115,7 +118,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                          "getBlock must have been called exactly 5 times")
 
         # Assert that the gateway was asked for the latest synced block
-        fpb.get_start_block.assert_called_once()
+        fpb.get_start_block_no.assert_called_once()
 
         # Assert that blocks where POST'ed to the gateway as we expected
         expected_post_headers = {
@@ -160,6 +163,7 @@ class Test_FetchAndPublishBlocks(unittest.TestCase):
                                            any_order=False)
         self.assertEqual(fpb.requests.post.call_count, 3,
                          "requests.post must have been called exactly 3 times")
+
 
 if __name__ == "__main__":
     unittest.main()

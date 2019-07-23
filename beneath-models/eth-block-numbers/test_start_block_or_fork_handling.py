@@ -83,8 +83,10 @@ class Test_ForkHandling(unittest.TestCase):
         fpb.W3.eth.getBlock = Mock(side_effect=getBlock_return_values)
 
         # Mock requests.post to control responses and inspect POST calls made to the gateway
-        fpb.requests.post = Mock(
-            return_value=AttributeDict({"status_code": 200}))
+        fpb.requests.post = Mock(return_value=AttributeDict({
+            "status_code": 200,
+            "raise_for_status": lambda: True
+        }))
 
         # Mock requests.get to control responses and inspect GET calls made to the gateway
         def request_get_handler(*args, **kwargs):
