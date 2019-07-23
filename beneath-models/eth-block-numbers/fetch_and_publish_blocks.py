@@ -84,18 +84,6 @@ def get_start_block_no():
   return gateway_block['number'] + 1
 
 
-def get_newer_block_no(current_block_no, target_block_no):
-  while current_block_no > target_block_no:
-    LOG.info("Sync finished. Checking for newer block number...")
-    block_no = get_block_from_web3('latest').number
-    if current_block_no > block_no:
-      LOG.info("No new block(s) found, waiting 5 sec...")
-      time.sleep(5)
-    else:
-      LOG.info("New block number found: %s", block_no)
-      return block_no
-
-
 @retry(wait=wait_random(min=5, max=10),
        stop=stop_after_attempt(5),
        before_sleep=before_sleep_log(LOG, logging.ERROR))
@@ -128,19 +116,28 @@ def main():
   instance_id = get_stream_instance_id()
   LOG.info("Got gateway instance ID: %s", instance_id)
 
-  current_block_no = get_start_block_no()
-  LOG.info("Starting sync from block %s", current_block_no)
+  next_block_no = get_start_block_no()
+  LOG.info("Starting sync from block %s", next_block_no)
 
   newest_block = get_block_from_web3('latest')
   target_block_no = int(newest_block.number)
   LOG.info("Current newest block from Web3 is %s", target_block_no)
 
   while True:
-    if current_block_no > target_block_no:
-      target_block_no = get_newer_block_no(current_block_no, target_block_no)
+    # If next_block_no > target_block_no, then we have reached
+    # our target block number and need to ask for a new target.
+    while next_block_no > target_block_no:
+      LOG.info("Target block reached. Asking for latest block number...")
+      latest_block_no = get_block_from_web3('latest').number
+      if next_block_no > latest_block_no:
+        LOG.info("No new block(s) found, waiting 5 sec...")
+        time.sleep(5)
+      else:
+        LOG.info("New block number found: %s", latest_block_no)
+        target_block_no = latest_block_no
 
-    block = get_block_from_web3(current_block_no)
-
+    # Get next block from Web3
+    block = get_block_from_web3(next_block_no)
     LOG.info("Block %s hash is %s, with parent hash %s", block.number,
              block.hash.hex(), block.parentHash.hex())
 
@@ -148,10 +145,12 @@ def main():
     # If they are not the same, we have a chain reorg! Log warning and handle it,
     # by walking backwards and compare with gateway block hashes until they are the same.
 
+    # Send the next block to the gateway
     post_block_to_gateway(instance_id, block.number, block.hash.hex(),
                           block.parentHash.hex(), block.timestamp)
 
-    current_block_no += 1
+    # Continue to the next block number
+    next_block_no += 1
 
 
 if __name__ == "__main__":
