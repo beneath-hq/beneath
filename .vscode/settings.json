@@ -12,26 +12,5 @@
   "go.vetFlags": [
     "-structtag=false"
   ],
-  "tslint.jsEnable": true,
-  "python.testing.unittestArgs": [
-    "-v",
-    "-s",
-    "./beneath-models",
-    "-p",
-    "test*.py"
-  ],
-  "python.testing.pytestEnabled": true,
-  "python.testing.nosetestsEnabled": false,
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": [
-    "beneath-models"
-  ],
-  "python.pythonPath": "/usr/local/bin/python3",
-  "python.formatting.provider": "yapf",
-  "python.formatting.yapfArgs": [
-    "--style",
-    "google"
-  ],
-  "python.linting.pylintEnabled": true,
-  "python.linting.enabled": true
+  "tslint.jsEnable": true
 }
