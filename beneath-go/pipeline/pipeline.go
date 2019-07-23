@@ -1,13 +1,18 @@
 package pipeline
 
 import (
+	//"fmt"
+	//"context"
 	"fmt"
+	//"log"
+	//"time"
 
 	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/model"
+
+	//"cloud.google.com/go/bigquery"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/engine"
-
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
 )
@@ -27,6 +32,18 @@ var (
 	// Engine is the data plane
 	Engine *engine.Engine
 )
+
+/* for bigquery:
+type Item struct {
+	Number         int       `bigquery:"number"`
+	Hash           []byte    `bigquery:"hash"`
+	ParentHash     []byte    `bigquery:"parentHash"`
+	Timestamp      time.Time `bigquery:"timestamp"`
+	Key            []byte    `bigquery:"_key"`
+	SequenceNumber int       `bigquery:"_sequence_number"`
+	InsertTime     time.Time `bigquery:"_insert_time"`
+}
+*/
 
 func init() {
 	core.LoadConfig("beneath", &Config)
@@ -55,7 +72,7 @@ func Run() error {
 		for _, record := range req.Records { // in the future, refactor so that we write batch records when >1 record in a packet
 			decodedAvro, err := stream.AvroCodec.Unmarshal(record.AvroData)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to decode avro data")
 			}
 
 			decodedAvroMap, ok := decodedAvro.(map[string]interface{})
@@ -65,70 +82,128 @@ func Run() error {
 
 			key, err := stream.KeyCodec.Marshal(decodedAvroMap)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to encode key")
 			}
 
 			err = Engine.Tables.WriteRecordToTable(instanceID, key, record.AvroData, record.SequenceNumber)
-			// writeToBigTable(project, testPacket.InstanceId, record)
 			// writeToBigQuery()
 		}
 
-		// abstract bigtable stuff into engine
-		// return error if failure
+		// read bigtable to validate pipeline
+		Engine.Tables.ReadRecordsFromTable(instanceID, []byte{1, 2, 3})
+
+		// test packet for bigquery
+		/*
+			testPacket := &pb.WriteRecordsRequest{
+				InstanceId: uuidTestBytes,
+				Records: []*pb.Record{
+					&pb.Record{
+						AvroData:       avroData1,
+						SequenceNumber: 100, // then try out-of-order SequenceNumbers
+					},
+					&pb.Record{
+						AvroData:       avroData2,
+						SequenceNumber: 200,
+					},
+					&pb.Record{
+						AvroData:       avroData2,
+						SequenceNumber: 300,
+					},
+				},
+			}
+		*/
+
+		/* for bigquery:
+		// start bigquery client and open table
+		// Creates a client.
+		ctx := context.Background()
+		client, err := bigquery.NewClient(ctx, "beneathcrypto")
+		if err != nil {
+			log.Fatalf("Failed to create client: %v", err)
+		}
+
+		// create an uploader in order to upload data to the table
+		myDataset := "ethereum_2"
+		tableName := "block_numbers_4e05d0ff"
+		u := client.Dataset(myDataset).Table(tableName).Uploader()
+
+		items := []*Item{
+			{Number: 10,
+				Hash:           []byte("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+				ParentHash:     []byte("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+				Timestamp:      time.Now(),
+				Key:            []byte("0xzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+				SequenceNumber: 1,
+				InsertTime:     time.Now()},
+		}
+		log.Print("got here")
+		if err := u.Put(ctx, items); err != nil {
+			if multiError, ok := err.(bigquery.PutMultiError); ok {
+				for _, err1 := range multiError {
+					for _, err2 := range err1.Errors {
+						fmt.Println(err2)
+					}
+				}
+			} else {
+				fmt.Println(err)
+			}
+			return err
+		}
+		*/
 		return nil
 	})
-
-	//
-
-	// create data for testing
-	// create a uuid
-	// uuidTest, _ := uuid.FromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	// uuidTestBytes := uuidTest.Bytes()
-
-	// // pubsub will produce a protocol buffer packet (as described in engine.proto)
-	// // I need to unpack it via: proto.unmarshal()
-	// // a testRecord (as seen below) will be produced
-	// // for each Record in the Packet, write to BigTable
-	// // each packet has only one instance ID
-	// avroData1 := make([]byte, 10)
-	// avroData2 := make([]byte, 10)
-	// rand.Read(avroData1)
-	// rand.Read(avroData2)
-
-	// testPacket := &pb.WriteRecordsRequest{
-	// 	InstanceId: uuidTestBytes,
-	// 	Records: []*pb.Record{
-	// 		&pb.Record{
-	// 			AvroData:       avroData1,
-	// 			SequenceNumber: 100, // then try out-of-order SequenceNumbers
-	// 		},
-	// 		&pb.Record{
-	// 			AvroData:       avroData2,
-	// 			SequenceNumber: 200,
-	// 		},
-	// 		&pb.Record{
-	// 			AvroData:       avroData2,
-	// 			SequenceNumber: 300,
-	// 		},
-	// 	},
-	// }
-
-	// // consume data from PubSub; unpack the protocol buffer packet
-	// // consumeFromPubSub()
-
-	// // create a BigTable table called "main" (if it doesn't already exist)
-	// createBigTableMain(project, uuidTestBytes)
-
-	// // loop through records in packet and write to BigTable and BigQuery
-	// // do I want to open/close the client every time within writeToBigTable, or open it once outside the loop
-	// for _, record := range testPacket.Records {
-	// 	writeToBigTable(project, testPacket.InstanceId, record)
-	// 	// writeToBigQuery()
-	// }
-
-	// // inspect and validate BigTable records
-	// readFromBigTable(project, testPacket.InstanceId)
 }
+
+//
+
+// create data for testing
+// create a uuid
+// uuidTest, _ := uuid.FromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+// uuidTestBytes := uuidTest.Bytes()
+
+// // pubsub will produce a protocol buffer packet (as described in engine.proto)
+// // I need to unpack it via: proto.unmarshal()
+// // a testRecord (as seen below) will be produced
+// // for each Record in the Packet, write to BigTable
+// // each packet has only one instance ID
+// avroData1 := make([]byte, 10)
+// avroData2 := make([]byte, 10)
+// rand.Read(avroData1)
+// rand.Read(avroData2)
+
+// testPacket := &pb.WriteRecordsRequest{
+// 	InstanceId: uuidTestBytes,
+// 	Records: []*pb.Record{
+// 		&pb.Record{
+// 			AvroData:       avroData1,
+// 			SequenceNumber: 100, // then try out-of-order SequenceNumbers
+// 		},
+// 		&pb.Record{
+// 			AvroData:       avroData2,
+// 			SequenceNumber: 200,
+// 		},
+// 		&pb.Record{
+// 			AvroData:       avroData2,
+// 			SequenceNumber: 300,
+// 		},
+// 	},
+// }
+
+// // consume data from PubSub; unpack the protocol buffer packet
+// // consumeFromPubSub()
+
+// // create a BigTable table called "main" (if it doesn't already exist)
+// createBigTableMain(project, uuidTestBytes)
+
+// // loop through records in packet and write to BigTable and BigQuery
+// // do I want to open/close the client every time within writeToBigTable, or open it once outside the loop
+// for _, record := range testPacket.Records {
+// 	writeToBigTable(project, testPacket.InstanceId, record)
+// 	// writeToBigQuery()
+// }
+
+// // inspect and validate BigTable records
+// readFromBigTable(project, testPacket.InstanceId)
 
 // func createBigTableMain(project string, instanceID []byte) {
 // 	// for testing:

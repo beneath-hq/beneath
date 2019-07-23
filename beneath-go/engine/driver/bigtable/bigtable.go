@@ -83,7 +83,7 @@ func (p *Bigtable) WriteRecordToTable(instanceID uuid.UUID, encodedKey []byte, a
 
 	log.Printf("writing to table.")
 	muts := bigtable.NewMutation()
-	muts.Set(columnFamilyName, columnName, bigtable.Timestamp(sequenceNumber), avroData)
+	muts.Set(columnFamilyName, columnName, bigtable.Timestamp(sequenceNumber*1000), avroData)
 
 	err := p.Table.Apply(ctx, string(rowKey), muts)
 	if err != nil {
@@ -95,23 +95,27 @@ func (p *Bigtable) WriteRecordToTable(instanceID uuid.UUID, encodedKey []byte, a
 
 // ReadRecordsFromTable ...
 func (p *Bigtable) ReadRecordsFromTable(instanceID uuid.UUID, encodedKey []byte) error {
-
-	//func readFromBigTable(project string, instanceID []byte) {
 	ctx := context.Background()
 
 	log.Printf("Reading all rows:")
 	rr := bigtable.PrefixRange("")
 	err := p.Table.ReadRows(ctx, rr, func(row bigtable.Row) bool {
-		log.Print(row[columnFamilyName][0].Row)
-		log.Print(row[columnFamilyName][0].Column)
-		log.Print(row[columnFamilyName][0].Timestamp)
-		log.Print(row[columnFamilyName][0].Value)
+		item := row[columnFamilyName][0]
+		log.Printf("\tKey: %s; Value: %s\n", item.Row, string(item.Value))
+		log.Printf("\tKey: %s; Timestamp: %v\n", item.Row, item.Timestamp)
 		return true
 	})
 
 	if err != nil {
 		return err
 	}
+
+	// if an instanceID + encodedKey is provided, read the specify row
+	log.Printf(instanceID.String())
+	log.Printf(string(encodedKey))
+	// rowKey := makeBigTableKey(instanceID, encodedKey)
+	// r, err = p.Table.ReadRow(ctx, rowKey)
+	// log.Print(r)
 
 	return nil
 }
