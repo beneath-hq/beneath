@@ -3,13 +3,13 @@ package pipeline
 import (
 	"fmt"
 
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/model"
-
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/engine"
 	pb "github.com/beneath-core/beneath-go/proto"
-	uuid "github.com/satori/go.uuid"
 )
 
 type configSpecification struct {
@@ -37,54 +37,63 @@ func init() {
 	db.InitRedis(Config.RedisURL)
 }
 
-const (
-	project = "beneathcrypto"
-)
-
 // Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
 func Run() error {
+	// begin processing write requests -- will run infinitely
+	err := Engine.Streams.ReadWriteRequests(processWriteRequest)
 
-	return Engine.Streams.ReadWriteRequests(func(req *pb.WriteRecordsRequest) error {
-		instanceID := uuid.FromBytesOrNil(req.InstanceId)
-		stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
-		if stream == nil {
-			return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
+	// processing incoming write requests crashed for some reason
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// processWriteRequest is called (approximately once) for each new write request
+// TODO: add metrics tracking -- group by instanceID and hour: 1) writes and 2) bytes
+func processWriteRequest(req *pb.WriteRecordsRequest) error {
+	// lookup stream for write request
+	instanceID := uuid.FromBytesOrNil(req.InstanceId)
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
+	}
+
+	// save each record to bigtable and bigquery
+	// TODO: Refactor so that we write batch records when >1 record in a write request
+	for _, record := range req.Records {
+		// decode the avro data
+		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data")
 		}
 
-		// save to bigtable, save to bigquery
-		for _, record := range req.Records { // in the future, refactor so that we write batch records when >1 record in a packet
-			// decode the avro data
-			decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData)
-			if err != nil {
-				return fmt.Errorf("unable to decode avro data")
-			}
-
-			// assert that the decoded data is a map
-			decodedMap, ok := decodedData.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("expected decoded data to be a map, got %T", decodedData)
-			}
-
-			// get the encoded key
-			encodedKey, err := stream.KeyCodec.Marshal(decodedMap)
-			if err != nil {
-				return fmt.Errorf("unable to get encoded key")
-			}
-
-			// writing encoded data to Table
-			err = Engine.Tables.WriteRecordToTable(instanceID, encodedKey, record.AvroData, record.SequenceNumber)
-
-			// writing decoded data to Warehouse
-			err = Engine.Warehouse.WriteRecordToWarehouse(stream.ProjectName, stream.StreamName, instanceID, encodedKey, decodedMap, record.SequenceNumber)
-
-			// calculate metrics: 1) writes and 2) bytes; group by instanceID and hour
-			// metrics[instanceID][writes][TIME] += 1
-			// metrics[instanceID][bytes][TIME] += len(decodedData)  // or something like this
+		// assert that the decoded data is a map
+		data, ok := dataT.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
 		}
 
-		// read bigtable to validate pipeline
-		Engine.Tables.ReadRecordsFromTable(instanceID, []byte{1, 2, 3})
+		// get the encoded key
+		key, err := stream.KeyCodec.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("unable to encode key")
+		}
 
-		return nil
-	})
+		// writing encoded data to Table
+		err = Engine.Tables.WriteRecord(instanceID, key, record.AvroData, record.SequenceNumber)
+		if err != nil {
+			return err
+		}
+
+		// writing decoded data to Warehouse
+		err = Engine.Warehouse.WriteRecord(stream.ProjectName, stream.StreamName, instanceID, key, data, record.SequenceNumber)
+		if err != nil {
+			return err
+		}
+	}
+
+	// done
+	return nil
 }

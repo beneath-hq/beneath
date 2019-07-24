@@ -27,8 +27,9 @@ type TablesDriver interface {
 	// GetMaxDataSize returns the maximum accepted value size in bytes
 	GetMaxDataSize() int
 
-	// WriteRecordToTable is called to write a record to the datastore
-	WriteRecordToTable(instanceID uuid.UUID, encodedKey []byte, avroData []byte, sequenceNumber int64) error
+	// WriteRecord saves a record unless sequenceNumber is lower than that of a previous write
+	// to the same key
+	WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error
 
 	// ReadRecordsFromTable is called to read the records on the datastore
 	ReadRecordsFromTable(instanceID uuid.UUID, encodedKey []byte) error
@@ -46,5 +47,5 @@ type WarehouseDriver interface {
 	RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
 
 	// WriteRecordToWarehouse is called to write a record to the data warehouse
-	WriteRecordToWarehouse(projectName string, streamName string, instanceID uuid.UUID, encodedKey []byte, decodedMap map[string]interface{}, sequenceNumber int64) error
+	WriteRecord(projectName string, streamName string, instanceID uuid.UUID, key []byte, data map[string]interface{}, sequenceNumber int64) error
 }

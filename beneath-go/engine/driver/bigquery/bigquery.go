@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -25,21 +26,6 @@ type configSpecification struct {
 // BigQuery implements beneath.WarehouseDriver
 type BigQuery struct {
 	Client *bq.Client
-}
-
-// Row type gets fed into BigQuery
-type Row struct {
-	Data     map[string]interface{}
-	InsertID string
-}
-
-// Save implements ValueSaver for the Row type
-func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
-	data := make(map[string]bq.Value, len(r.Data))
-	for k, v := range r.Data {
-		data[k] = bq.Value(v)
-	}
-	return data, r.InsertID, nil
 }
 
 const (
@@ -71,12 +57,12 @@ func New() *BigQuery {
 	}
 }
 
-// GetMaxDataSize implements beneath.WarehouseDriver
+// GetMaxDataSize implements engine.WarehouseDriver
 func (b *BigQuery) GetMaxDataSize() int {
 	return 1000000
 }
 
-// RegisterProject prepares a bigquery dataset for a project with the given name
+// RegisterProject  implements engine.WarehouseDriver
 func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displayName, description string) error {
 	// prepare access entries if public (otherwise leaving as default)
 	var access []*bq.AccessEntry
@@ -113,7 +99,7 @@ func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displ
 	return nil
 }
 
-// RegisterStreamInstance prepares a bigquery table for a stream instance
+// RegisterStreamInstance implements engine.WarehouseDriver
 func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error {
 	// build schema object
 	schema, err := bq.SchemaFromJSON([]byte(schemaJSON))
@@ -151,6 +137,51 @@ func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName strin
 	return nil
 }
 
+// Row represents a record and implements bigquery.ValueSaver for use in WriteRecord
+type Row struct {
+	Data     map[string]interface{}
+	InsertID string
+}
+
+// Save implements bigquery.ValueSaver
+func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
+	data := make(map[string]bq.Value, len(r.Data))
+	for k, v := range r.Data {
+		data[k] = bq.Value(v)
+	}
+	return data, r.InsertID, nil
+}
+
+// WriteRecord implements engine.WarehouseDriver
+func (b *BigQuery) WriteRecord(projectName string, streamName string, instanceID uuid.UUID, key []byte, data map[string]interface{}, sequenceNumber int64) error {
+	// create bigquery uploader
+	dataset := makeDatasetName(projectName)
+	table := makeTableName(streamName, instanceID)
+	u := b.Client.Dataset(dataset).Table(table).Inserter() // TODO: Should we cache/reuse this?
+
+	// add meta fields to be uploaded
+	data["_insert_time"] = time.Now()
+	data["_key"] = key
+	data["_sequence_number"] = sequenceNumber
+
+	// data to be uploaded
+	insertIDBytes := append(key, byte(sequenceNumber))
+	insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
+	rows := []*Row{{
+		Data:     data,
+		InsertID: insertID,
+	}}
+
+	// upload
+	err := u.Put(context.Background(), rows)
+	if err != nil {
+		return err
+	}
+
+	// done
+	return nil
+}
+
 func makeDatasetName(projectName string) string {
 	return strings.ReplaceAll(projectName, "-", "_")
 }
@@ -158,43 +189,4 @@ func makeDatasetName(projectName string) string {
 func makeTableName(streamName string, instanceID uuid.UUID) string {
 	name := strings.ReplaceAll(streamName, "-", "_")
 	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[0:4]))
-}
-
-// WriteRecordToWarehouse ...
-func (b *BigQuery) WriteRecordToWarehouse(projectName string, streamName string, instanceID uuid.UUID, encodedKey []byte, decodedMap map[string]interface{}, sequenceNumber int64) error {
-	ctx := context.Background()
-
-	// compute dataset + table names
-	datasetName := makeDatasetName(projectName)
-	tableName := makeTableName(streamName, instanceID)
-
-	// create an uploader in order to upload data to the table
-	u := b.Client.Dataset(datasetName).Table(tableName).Uploader()
-
-	// add metafields to be uploaded
-	decodedMap["_insert_time"] = time.Now()
-	decodedMap["_key"] = encodedKey
-	decodedMap["_sequence_number"] = sequenceNumber
-
-	// data to be uploaded
-	insertID := string(append(encodedKey, byte(sequenceNumber)))
-	rows := []*Row{
-		{Data: decodedMap,
-			InsertID: insertID},
-	}
-
-	log.Print("writing to warehouse...")
-	if err := u.Put(ctx, rows); err != nil {
-		if multiError, ok := err.(bq.PutMultiError); ok {
-			for _, err1 := range multiError {
-				for _, err2 := range err1.Errors {
-					fmt.Println(err2)
-				}
-			}
-		} else {
-			fmt.Println(err)
-		}
-		return err
-	}
-	return nil
 }
