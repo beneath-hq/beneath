@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"fmt"
+	"log"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -39,6 +40,9 @@ func init() {
 
 // Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
 func Run() error {
+	// log that we're running
+	log.Printf("Pipeline processing write requests\n")
+
 	// begin processing write requests -- will run infinitely
 	err := Engine.Streams.ReadWriteRequests(processWriteRequest)
 
