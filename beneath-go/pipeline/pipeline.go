@@ -3,6 +3,7 @@ package pipeline
 import (
 	"fmt"
 	"log"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -57,6 +58,10 @@ func Run() error {
 // processWriteRequest is called (approximately once) for each new write request
 // TODO: add metrics tracking -- group by instanceID and hour: 1) writes and 2) bytes
 func processWriteRequest(req *pb.WriteRecordsRequest) error {
+	// metrics to track
+	startTime := time.Now()
+	bytesWritten := 0
+
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
@@ -96,7 +101,16 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		if err != nil {
 			return err
 		}
+
+		// increment metrics
+		bytesWritten += len(record.AvroData)
 	}
+
+	// finalise metrics
+	elapsed := time.Since(startTime)
+
+	// log metrics
+	log.Printf("%s/%s (%s): Wrote %d record(s) (%dB) in %s", stream.ProjectName, stream.StreamName, instanceID.String(), len(req.Records), bytesWritten, elapsed)
 
 	// done
 	return nil
