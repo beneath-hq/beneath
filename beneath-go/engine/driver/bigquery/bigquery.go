@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"cloud.google.com/go/bigquery"
 	bq "cloud.google.com/go/bigquery"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,6 +25,21 @@ type configSpecification struct {
 // BigQuery implements beneath.WarehouseDriver
 type BigQuery struct {
 	Client *bq.Client
+}
+
+// Row type gets fed into BigQuery
+type Row struct {
+	Data     map[string]interface{}
+	InsertID string
+}
+
+// Save implements ValueSaver for the Row type
+func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
+	data := make(map[string]bq.Value, len(r.Data))
+	for k, v := range r.Data {
+		data[k] = bq.Value(v)
+	}
+	return data, r.InsertID, nil
 }
 
 const (
@@ -64,17 +79,17 @@ func (b *BigQuery) GetMaxDataSize() int {
 // RegisterProject prepares a bigquery dataset for a project with the given name
 func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displayName, description string) error {
 	// prepare access entries if public (otherwise leaving as default)
-	var access []*bigquery.AccessEntry
+	var access []*bq.AccessEntry
 	if public {
-		access = append(access, &bigquery.AccessEntry{
-			Role:       bigquery.ReaderRole,
-			EntityType: bigquery.SpecialGroupEntity,
+		access = append(access, &bq.AccessEntry{
+			Role:       bq.ReaderRole,
+			EntityType: bq.SpecialGroupEntity,
 			Entity:     "allAuthenticatedUsers",
 		})
 	}
 
 	// prepare dataset metadata
-	meta := &bigquery.DatasetMetadata{
+	meta := &bq.DatasetMetadata{
 		Name:        displayName,
 		Description: description,
 		Labels: map[string]string{
@@ -101,19 +116,19 @@ func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displ
 // RegisterStreamInstance prepares a bigquery table for a stream instance
 func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error {
 	// build schema object
-	schema, err := bigquery.SchemaFromJSON([]byte(schemaJSON))
+	schema, err := bq.SchemaFromJSON([]byte(schemaJSON))
 	if err != nil {
 		return err
 	}
 
 	// build meta
-	meta := &bigquery.TableMetadata{
+	meta := &bq.TableMetadata{
 		Description:      streamDescription,
 		Schema:           schema,
-		TimePartitioning: &bigquery.TimePartitioning{
+		TimePartitioning: &bq.TimePartitioning{
 			// TODO:
 		},
-		Clustering: &bigquery.Clustering{
+		Clustering: &bq.Clustering{
 			Fields: keyFields,
 		},
 		Labels: map[string]string{
@@ -143,4 +158,43 @@ func makeDatasetName(projectName string) string {
 func makeTableName(streamName string, instanceID uuid.UUID) string {
 	name := strings.ReplaceAll(streamName, "-", "_")
 	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[0:4]))
+}
+
+// WriteRecordToWarehouse ...
+func (b *BigQuery) WriteRecordToWarehouse(projectName string, streamName string, instanceID uuid.UUID, encodedKey []byte, decodedMap map[string]interface{}, sequenceNumber int64) error {
+	ctx := context.Background()
+
+	// compute dataset + table names
+	datasetName := makeDatasetName(projectName)
+	tableName := makeTableName(streamName, instanceID)
+
+	// create an uploader in order to upload data to the table
+	u := b.Client.Dataset(datasetName).Table(tableName).Uploader()
+
+	// add metafields to be uploaded
+	decodedMap["_insert_time"] = time.Now()
+	decodedMap["_key"] = encodedKey
+	decodedMap["_sequence_number"] = sequenceNumber
+
+	// data to be uploaded
+	insertID := string(append(encodedKey, byte(sequenceNumber)))
+	rows := []*Row{
+		{Data: decodedMap,
+			InsertID: insertID},
+	}
+
+	log.Print("writing to warehouse...")
+	if err := u.Put(ctx, rows); err != nil {
+		if multiError, ok := err.(bq.PutMultiError); ok {
+			for _, err1 := range multiError {
+				for _, err2 := range err1.Errors {
+					fmt.Println(err2)
+				}
+			}
+		} else {
+			fmt.Println(err)
+		}
+		return err
+	}
+	return nil
 }

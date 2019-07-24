@@ -81,7 +81,7 @@ func (p *Bigtable) WriteRecordToTable(instanceID uuid.UUID, encodedKey []byte, a
 
 	rowKey := makeBigTableKey(instanceID, encodedKey)
 
-	log.Printf("writing to table.")
+	log.Printf("writing to table...")
 	muts := bigtable.NewMutation()
 	muts.Set(columnFamilyName, columnName, bigtable.Timestamp(sequenceNumber*1000), avroData)
 
