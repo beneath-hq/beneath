@@ -18,7 +18,8 @@ W3 = Web3(Web3.HTTPProvider(config.WEB3_PROVIDER_URL))
 
 @retry(wait=wait_random(min=5, max=10),
        stop=stop_after_attempt(5),
-       before_sleep=before_sleep_log(LOG, logging.ERROR))
+       before_sleep=before_sleep_log(LOG, logging.ERROR),
+       reraise=True)
 def get_stream_instance_id():
   response = requests.get(f"{BENEATH_STREAM_URL}/details",
                           headers={"Bearer": config.BENEATH_PROJECT_KEY})
@@ -36,7 +37,8 @@ def current_milli_time():
 
 @retry(wait=wait_random(min=5, max=10),
        stop=stop_after_attempt(5),
-       before_sleep=before_sleep_log(LOG, logging.ERROR))
+       before_sleep=before_sleep_log(LOG, logging.ERROR),
+       reraise=True)
 def get_latest_block_from_gateway():
   ''' Get the most recent block that was sent to the gateway '''
   LOG.info("get_latest_block_from_gateway from %s",
@@ -48,7 +50,8 @@ def get_latest_block_from_gateway():
 
 @retry(wait=wait_random(min=5, max=10),
        stop=stop_after_attempt(5),
-       before_sleep=before_sleep_log(LOG, logging.ERROR))
+       before_sleep=before_sleep_log(LOG, logging.ERROR),
+       reraise=True)
 def get_block_from_gateway(block_number):
   response = requests.get(f"{BENEATH_STREAM_URL}?number={block_number}")
   response.raise_for_status()
@@ -57,31 +60,10 @@ def get_block_from_gateway(block_number):
 
 @retry(wait=wait_random(min=5, max=10),
        stop=stop_after_attempt(5),
-       before_sleep=before_sleep_log(LOG, logging.ERROR))
-def get_block_from_web3(block):
-  return W3.eth.getBlock(block)
-
-
-def get_start_block_no():
-  gateway_block = get_latest_block_from_gateway()
-  # Compare gateway block hash with same blocknumbers hash from web3
-  web3_block = get_block_from_web3(gateway_block['number'])
-  while gateway_block['hash'] != web3_block.hash.hex():
-    # If hashes don't match, a fork probably happened.
-    # Check previous block until hash matches, so we are behind the fork and can go forward again.
-    LOG.warning(
-        "Warning! Gateway block %s with hash %s does not match Web3 block %s with hash %s",
-        gateway_block['number'], gateway_block['hash'], web3_block.number,
-        web3_block.hash.hex())
-    LOG.info("Trying the previous block...")
-    if gateway_block['number'] > 0:
-      gateway_block = get_block_from_gateway(gateway_block['number'] - 1)
-      web3_block = get_block_from_web3(gateway_block['number'])
-    else:
-      raise Exception(
-          "Could not find any block hash in gateway matching Web3 block hashes!"
-      )
-  return gateway_block['number'] + 1
+       before_sleep=before_sleep_log(LOG, logging.ERROR),
+       reraise=True)
+def get_block_from_web3(block_no):
+  return W3.eth.getBlock(block_no)
 
 
 @retry(wait=wait_random(min=5, max=10),
@@ -116,8 +98,11 @@ def main():
   instance_id = get_stream_instance_id()
   LOG.info("Got gateway instance ID: %s", instance_id)
 
-  next_block_no = get_start_block_no()
-  LOG.info("Starting sync from block %s", next_block_no)
+  # Get the newest block from the gateway, so we know where to start syncing
+  latest_gateway_block = get_latest_block_from_gateway()
+  block_no = latest_gateway_block['number'] + 1
+  last_block_hash = latest_gateway_block['hash']
+  LOG.info("Starting sync from block %s", block_no)
 
   newest_block = get_block_from_web3('latest')
   target_block_no = int(newest_block.number)
@@ -126,10 +111,10 @@ def main():
   while True:
     # If next_block_no > target_block_no, then we have reached
     # our target block number and need to ask for a new target.
-    while next_block_no > target_block_no:
+    while block_no > target_block_no:
       LOG.info("Target block reached. Asking for latest block number...")
       latest_block_no = get_block_from_web3('latest').number
-      if next_block_no > latest_block_no:
+      if block_no > latest_block_no:
         LOG.info("No new block(s) found, waiting 5 sec...")
         time.sleep(5)
       else:
@@ -137,20 +122,44 @@ def main():
         target_block_no = latest_block_no
 
     # Get next block from Web3
-    block = get_block_from_web3(next_block_no)
-    LOG.info("Block %s hash is %s, with parent hash %s", block.number,
+    block = get_block_from_web3(block_no)
+    LOG.info("Got block %s with hash %s and parent hash %s", block.number,
              block.hash.hex(), block.parentHash.hex())
 
-    # Keep previous block and compare its hash to the new block's parent hash.
-    # If they are not the same, we have a chain reorg! Log warning and handle it,
-    # by walking backwards and compare with gateway block hashes until they are the same.
+    # Compare the new block's parent hash with the last blocks hash.
+    # If they don't match, we're on a fork that have been abandoned in a
+    # chain reorg! Log warning and handle it, by walking backwards through
+    # the blocks from Web3 and compare them with gateway block hashes
+    # until they match.
+    # That's the root of the fork and we can continue syncing from there.
+    if block.parentHash.hex() != last_block_hash:
+      LOG.warning(
+          "Block %s with hash %s expected to have parent hash %s, but it is %s",
+          block.number, block.hash.hex(), last_block_hash,
+          block.parentHash.hex())
+      LOG.info("Finding the last common hash")
+      block_no -= 1
+      gateway_block = get_block_from_gateway(block_no)
+      block = get_block_from_web3(block_no)
+      while gateway_block["hash"] != block.hash.hex():
+        LOG.info("At block %s Web3 hash is %s and gateway hash is %s", block_no,
+                 block.hash.hex(), gateway_block["hash"])
+        if block_no <= 0:
+          raise Exception(
+              "Could not find any block hash in gateway matching Web3 block hashes! Aborting."
+          )
+        block_no -= 1
+        gateway_block = get_block_from_gateway(block_no)
+        block = get_block_from_web3(block_no)
+      LOG.info("Common hash found at block %s. Continuing sync.", block_no)
 
-    # Send the next block to the gateway
+    # Send the block to the gateway
     post_block_to_gateway(instance_id, block.number, block.hash.hex(),
                           block.parentHash.hex(), block.timestamp)
 
     # Continue to the next block number
-    next_block_no += 1
+    last_block_hash = block.hash.hex()
+    block_no += 1
 
 
 if __name__ == "__main__":

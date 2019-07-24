@@ -8,64 +8,64 @@ from web3.datastructures import AttributeDict
 import fetch_and_publish_blocks as fpb
 
 
-class Test_ForkHandling(unittest.TestCase):
+class TestForkHandling(unittest.TestCase):
 
   def setUp(self):
     # Reload fetch_and_publish_blocks so no side effects from other tests are carried over
     importlib.reload(fpb)
 
-  def test_start_block_or_fork_handling(self):
+  def test_fork_handling(self):
     # Mock the current time, so we get predictable results
     current_time = 123123123
     fpb.current_milli_time = Mock(return_value=current_time)
     current_instance_id = "123TestInstanceId"
 
-    # Mock W3.eth.getBlock() to control its behavior
+    # Mock get_block_from_web3() to control its behavior
     latest_call_counter = 0
 
-    def getBlock_return_values(arg):
+    def web3_return_values(arg):
       blocks = {
           "latest":
               AttributeDict({
                   "number": 124,
                   "hash": HexBytes("0xb124"),
                   "parentHash": HexBytes("0xb123"),
-                  "timestamp": 10004
+                  "timestamp": 1500000004
               }),
           124:
               AttributeDict({
                   "number": 124,
                   "hash": HexBytes("0xb124"),
                   "parentHash": HexBytes("0xb123"),
-                  "timestamp": 10004
+                  "timestamp": 1500000004
               }),
           123:
               AttributeDict({
                   "number": 123,
                   "hash": HexBytes("0xb123"),
                   "parentHash": HexBytes("0xb122"),
-                  "timestamp": 10003
+                  "timestamp": 1500000003
               }),
           122:
               AttributeDict({
                   "number": 122,
                   "hash": HexBytes("0xb122"),
                   "parentHash": HexBytes("0xb121"),
-                  "timestamp": 10002
+                  "timestamp": 1500000002
               }),
           121:
               AttributeDict({
                   "number": 121,
                   "hash": HexBytes("0xb121"),
-                  "parentHash": HexBytes("0xb120"),
-                  "timestamp": 10001
+                  "parentHash": HexBytes("0xa120"),
+                  "timestamp": 1500000001
               }),
           120:
               AttributeDict({
                   "number": 120,
                   "hash": HexBytes("0xa120"),
                   "parentHash": HexBytes("0xa119"),
-                  "timestamp": 10001
+                  "timestamp": 1500000000
               }),
       }
       if arg == "latest":
@@ -79,7 +79,52 @@ class Test_ForkHandling(unittest.TestCase):
       else:
         return blocks[arg]
 
-    fpb.W3.eth.getBlock = Mock(side_effect=getBlock_return_values)
+    fpb.get_block_from_web3 = Mock(side_effect=web3_return_values)
+
+    # Mock get_stream_instance_id()
+    fpb.get_stream_instance_id = Mock(return_value=current_instance_id)
+
+    # Mock get_latest_block_from_gateway()
+    latest_block_from_gateway = {
+        "number": 123,
+        "hash": "0xa123",
+        "parentHash": "0xa122",
+        "timestamp": 1500000003
+    }
+    fpb.get_latest_block_from_gateway = Mock(
+        return_value=latest_block_from_gateway)
+
+    # Mock get_block_from_gateway()
+    def block_from_gateway(block_no):
+      blocks = {
+          123: {
+              "number": 123,
+              "hash": "0xa123",
+              "parentHash": "0xa122",
+              "timestamp": 1500000003
+          },
+          122: {
+              "number": 122,
+              "hash": "0xa122",
+              "parentHash": "0xa121",
+              "timestamp": 1500000002
+          },
+          121: {
+              "number": 121,
+              "hash": "0xa121",
+              "parentHash": "0xa120",
+              "timestamp": 1500000001
+          },
+          120: {
+              "number": 120,
+              "hash": "0xa120",
+              "parentHash": "0xa119",
+              "timestamp": 1500000000
+          }
+      }
+      return blocks[block_no]
+
+    fpb.get_block_from_gateway = Mock(side_effect=block_from_gateway)
 
     # Mock requests.post to control responses and inspect POST calls made to the gateway
     fpb.requests.post = Mock(return_value=AttributeDict({
@@ -87,79 +132,45 @@ class Test_ForkHandling(unittest.TestCase):
         "raise_for_status": lambda: True
     }))
 
-    # Mock requests.get to control responses and inspect GET calls made to the gateway
-    def request_get_handler(*args, **kwargs):
-      response = Mock()
-      response.status_code = 200
-      data = {
-          fpb.BENEATH_GET_LATEST_BLOCK_URL: {
-              "number": 123,
-              "hash": "0xa123",
-              "parentHash": "0xa122",
-              "timestamp": 1500000003
-          },
-          f"{fpb.BENEATH_STREAM_URL}?number=122": {
-              "number": 122,
-              "hash": "0xa122",
-              "parentHash": "0xa121",
-              "timestamp": 1500000002
-          },
-          f"{fpb.BENEATH_STREAM_URL}?number=121": {
-              "number": 121,
-              "hash": "0xa121",
-              "parentHash": "0xa120",
-              "timestamp": 1500000001
-          },
-          f"{fpb.BENEATH_STREAM_URL}?number=120": {
-              "number": 120,
-              "hash": "0xa120",
-              "parentHash": "0xa119",
-              "timestamp": 1500000000
-          },
-          f"{fpb.BENEATH_STREAM_URL}/details": {
-              "current_instance_id": current_instance_id
-          }
-      }
-      response.json.return_value = data[args[0]]
-      return response
-
-    fpb.requests.get = Mock(side_effect=request_get_handler)
-
     # Run the main loop until the test-exception stops it
     try:
       fpb.main()
     except KeyboardInterrupt as ex:
       print(str(ex))
 
-    # Assert that W3.eth.getBlock(...) was called exactly as we expected,
+    # Assert that get_block_from_web3(...) was called exactly as we expected,
     # both to verify gateway block hashes and to get new blocks to POST.
-    fpb.W3.eth.getBlock.assert_has_calls([
+    fpb.get_block_from_web3.assert_has_calls([
+        call("latest"),
+        call(124),
         call(123),
         call(122),
         call(121),
         call(120),
-        call("latest"),
         call(121),
         call(122),
         call(123),
         call(124),
         call("latest")
     ],
-                                         any_order=False)
-    self.assertEqual(fpb.W3.eth.getBlock.call_count, 10,
-                     "getBlock must have been called exactly 10 times")
+                                             any_order=False)
+    self.assertEqual(
+        fpb.get_block_from_web3.call_count, 11,
+        "get_block_from_web3 must have been called exactly 11 times")
+
+    # Assert that we asked for the stream instance ID
+    fpb.get_stream_instance_id.assert_called_once()
+
+    # Assert that the gateway was asked for its latest block
+    fpb.get_latest_block_from_gateway.assert_called_once()
 
     # Assert that the gateway was called to compare its blocks hashes with current block hashes from web3
-    fpb.requests.get.assert_has_calls([
-        call(f"{fpb.BENEATH_STREAM_URL}/details",
-             headers={"Bearer": fpb.config.BENEATH_PROJECT_KEY}),
-        call(fpb.BENEATH_GET_LATEST_BLOCK_URL),
-        call(f"{fpb.BENEATH_STREAM_URL}?number=122"),
-        call(f"{fpb.BENEATH_STREAM_URL}?number=121"),
-        call(f"{fpb.BENEATH_STREAM_URL}?number=120")
-    ])
-    self.assertEqual(fpb.requests.get.call_count, 5,
-                     "requests.get must have been called exactly 5 times")
+    fpb.get_block_from_gateway.assert_has_calls(
+        [call(123), call(122), call(121),
+         call(120)], any_order=False)
+    self.assertEqual(
+        fpb.get_block_from_gateway.call_count, 4,
+        "get_block_from_gateway(...) must have been called exactly 4 times")
 
     # Assert that the new blocks gets POST"ed to the gateway
     expected_post_headers = {
@@ -173,10 +184,21 @@ class Test_ForkHandling(unittest.TestCase):
                  "@meta": {
                      "sequence_number": current_time
                  },
+                 "number": 120,
+                 "hash": "0xa120",
+                 "parentHash": "0xa119",
+                 "timestamp": 1500000000
+             }),
+        call(fpb.get_beneath_instance_url(current_instance_id),
+             headers=expected_post_headers,
+             json={
+                 "@meta": {
+                     "sequence_number": current_time
+                 },
                  "number": 121,
                  "hash": "0xb121",
-                 "parentHash": "0xb120",
-                 "timestamp": 10001
+                 "parentHash": "0xa120",
+                 "timestamp": 1500000001
              }),
         call(fpb.get_beneath_instance_url(current_instance_id),
              headers=expected_post_headers,
@@ -187,7 +209,7 @@ class Test_ForkHandling(unittest.TestCase):
                  "number": 122,
                  "hash": "0xb122",
                  "parentHash": "0xb121",
-                 "timestamp": 10002
+                 "timestamp": 1500000002
              }),
         call(fpb.get_beneath_instance_url(current_instance_id),
              headers=expected_post_headers,
@@ -198,7 +220,7 @@ class Test_ForkHandling(unittest.TestCase):
                  "number": 123,
                  "hash": "0xb123",
                  "parentHash": "0xb122",
-                 "timestamp": 10003
+                 "timestamp": 1500000003
              }),
         call(fpb.get_beneath_instance_url(current_instance_id),
              headers=expected_post_headers,
@@ -209,11 +231,12 @@ class Test_ForkHandling(unittest.TestCase):
                  "number": 124,
                  "hash": "0xb124",
                  "parentHash": "0xb123",
-                 "timestamp": 10004
+                 "timestamp": 1500000004
              })
-    ])
-    self.assertEqual(fpb.requests.post.call_count, 4,
-                     "requests.post must have been called exactly 4 times")
+    ],
+                                       any_order=False)
+    self.assertEqual(fpb.requests.post.call_count, 5,
+                     "requests.post must have been called exactly 5 times")
 
 
 if __name__ == "__main__":
