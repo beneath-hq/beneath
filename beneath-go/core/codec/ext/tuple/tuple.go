@@ -77,6 +77,42 @@ type Tuple []TupleElement
 // an instance of this type.
 type UUID [16]byte
 
+// Successor returns the key that lexicographically sorts immediately after key
+func Successor(key []byte) []byte {
+	ret := make([]byte, len(key)+1)
+	copy(ret, key)
+	return ret
+}
+
+// PrefixSuccessor returns the first key that would sort outside the range prefixed by key
+// Note (1): Purely mechanical -- doesn't logically work when the last type in the key is bytes/string
+// because these finish with a 00 byte (see BytesTypePrefixSuccessor)
+// Note (2): Adapted from: https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/range.go
+func PrefixSuccessor(key []byte) []byte {
+	if len(key) == 0 {
+		return nil
+	}
+	for i := len(key) - 1; i >= 0; i-- {
+		if key[i] != 0xFF {
+			ret := make([]byte, i+1)
+			copy(ret, key[:i+1])
+			ret[i]++
+			return ret
+		}
+	}
+	return nil
+}
+
+// BytesTypePrefixSuccessor assumes the key was packed with a string or bytes type
+// as the last element and returns the first key that logically sorts outside that
+// range. See PrefixSuccessor for details.
+func BytesTypePrefixSuccessor(key []byte) []byte {
+	if key[len(key)-1] == 0x00 {
+		key = key[:len(key)-1]
+	}
+	return PrefixSuccessor(key)
+}
+
 // Versionstamp is struct for a FoundationDB verionstamp. Versionstamps are
 // 12 bytes long composed of a 10 byte transaction version and a 2 byte user
 // version. The transaction version is filled in at commit time and the user
