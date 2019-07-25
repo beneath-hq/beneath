@@ -217,7 +217,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// prepare write (we'll be writing as we get data, not in one batch)
-	unique := keyRange.Unique()
+	unique := keyRange.CheckUnique()
 	noComma := true
 	w.Header().Set("Content-Type", "application/json")
 
