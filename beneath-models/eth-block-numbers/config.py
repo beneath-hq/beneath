@@ -15,7 +15,8 @@ load_dotenv(DOTENV_PATH)
 # If they are missing, program will tell you what's missing and exit
 REQUIRED_ENVS = [
     "WEB3_PROVIDER_URL", "BENEATH_BASE_URL", "BENEATH_PROJECT",
-    "BENEATH_PROJECT_KEY", "BENEATH_PROJECT_STREAM", "BENEATH_WEB3_THREADS"
+    "BENEATH_PROJECT_KEY", "BENEATH_PROJECT_STREAM", "BENEATH_WEB3_THREADS",
+    "BENEATH_WEB3_RATE_LIMIT"
 ]
 
 # List all optional environment variables here.

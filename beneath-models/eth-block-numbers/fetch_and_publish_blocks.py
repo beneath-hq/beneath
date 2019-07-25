@@ -16,6 +16,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 W3 = Web3(Web3.HTTPProvider(config.WEB3_PROVIDER_URL))
+W3_BLOCKS_REQUESTED = 0
+START_TIME = time.time()
 
 
 @retry(wait=wait_random(min=5, max=10),
@@ -42,7 +44,13 @@ def current_milli_time():
        before_sleep=before_sleep_log(LOG, logging.ERROR),
        reraise=True)
 def get_latest_block_from_gateway():
-  return {"number": 0, "hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"}
+  return {
+      "number":
+          0,
+      "hash":
+          "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+  } # TODO Remove this return statement, when gateway can be queried for blocks
+
   ''' Get the most recent block that was sent to the gateway '''
   LOG.info("get_latest_block_from_gateway from %s",
            BENEATH_GET_LATEST_BLOCK_URL)
@@ -69,15 +77,29 @@ def get_block_from_web3(block_no):
   return W3.eth.getBlock(block_no)
 
 
-def get_blocks_batch_from_web3(block_no, target_block_no):
+def get_blocks_batch_from_web3(block_no, target_block_no, web3_blocks_requested_total):
+  # If we have gone above our target rate limit, we back off for a little while
+  rate_limit = int(config.BENEATH_WEB3_RATE_LIMIT)
+  elapsed_time = time.time() - START_TIME
+  web3_request_rate = web3_blocks_requested_total / elapsed_time
+  if web3_request_rate >= rate_limit:
+    # Back off for twice the time it takes to get under the rate limit
+    back_off_time = (web3_request_rate -
+                     rate_limit) * elapsed_time / rate_limit * 2
+    LOG.warning(
+        "Web3 hit rate limit of %s, with %s, backing off for %s seconds...",
+        rate_limit, web3_request_rate, back_off_time)
+    time.sleep(back_off_time)
+
+  # If we just want 1 block, no need to use threads
   if block_no == target_block_no:
     return [get_block_from_web3(block_no)]
 
+  # Send as many block requests as we can to threads and return the result
   web3_threads = int(config.BENEATH_WEB3_THREADS)
-  list_of_block_no = list(range(block_no,
-                                target_block_no))[:web3_threads]
+  list_of_block_no = list(range(block_no, target_block_no))[:web3_threads]
   with ThreadPoolExecutor(max_workers=web3_threads) as executor:
-    return executor.map(get_block_from_web3, list_of_block_no)
+    return list(executor.map(get_block_from_web3, list_of_block_no))
 
 
 @retry(wait=wait_random(min=5, max=10),
@@ -109,6 +131,8 @@ def post_block_to_gateway(instance_id, block_number, block_hash,
 
 
 def main():
+  web3_blocks_requested_total = 0
+
   instance_id = get_stream_instance_id()
   LOG.info("Got gateway instance ID: %s", instance_id)
 
@@ -138,7 +162,8 @@ def main():
         target_block_no = latest_block_no
 
     # Get next batch of blocks from Web3
-    blocks = get_blocks_batch_from_web3(block_no, target_block_no)
+    blocks = get_blocks_batch_from_web3(block_no, target_block_no, web3_blocks_requested_total)
+    web3_blocks_requested_total += len(blocks)
 
     for block in blocks:
       LOG.info("Processing block %s with hash %s and parent hash %s",
@@ -170,7 +195,7 @@ def main():
           block_no -= 1
           gateway_block = get_block_from_gateway(block_no)
           block = get_block_from_web3(block_no)
-        
+
         LOG.info("Common hash found at block %s. Continuing sync.", block_no)
 
       # Send the block to the gateway
@@ -181,6 +206,11 @@ def main():
       last_block_hash = block.hash.hex()
       block_no += 1
 
+  time_elapsed = time.time() - START_TIME
+  LOG.info(
+      "%s blocks took %s seconds, with an average of {block_no/time_elapsed} blocks per second",
+      block_no, time_elapsed
+  )
 
 if __name__ == "__main__":
   main()
