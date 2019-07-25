@@ -9,8 +9,19 @@ package proto;
 import "engine.proto";
 
 service Gateway {
+  rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
   rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+}
+
+message ReadRecordsRequest {
+  bytes instance_id = 1;
+  string where = 2;
+  int32 limit = 3;
+}
+
+message ReadRecordsResponse {
+  repeated Record records = 1;
 }
 
 message WriteRecordsResponse {
