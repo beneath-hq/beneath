@@ -3,6 +3,7 @@ package queryparse
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 )
@@ -73,6 +74,11 @@ func (o ConditionOp) String() string {
 		return "_gte,_lte"
 	}
 	return ""
+}
+
+// JSONStringToQuery is a wrapper for JSONToQuery
+func JSONStringToQuery(json string) (Query, error) {
+	return JSONReaderToQuery(strings.NewReader(json))
 }
 
 // JSONReaderToQuery is a wrapper for JSONToQuery
