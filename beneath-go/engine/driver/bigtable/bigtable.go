@@ -100,9 +100,12 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, l
 	var rr bigtable.RowSet
 	if keyRange == nil {
 		rr = bigtable.PrefixRange(string(instanceID[:]))
-	} else if keyRange.Unique() {
+	} else if keyRange.CheckUnique() {
 		rk := makeRowKey(instanceID, keyRange.Base)
 		rr = bigtable.SingleRow(string(rk))
+	} else if keyRange.RangeEnd == nil {
+		rk := makeRowKey(instanceID, keyRange.Base)
+		rr = bigtable.InfiniteRange(string(rk))
 	} else {
 		bk := makeRowKey(instanceID, keyRange.Base)
 		ek := makeRowKey(instanceID, keyRange.RangeEnd)
