@@ -73,7 +73,7 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	// TODO: Refactor so that we write batch records when >1 record in a write request
 	for _, record := range req.Records {
 		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
 			return fmt.Errorf("unable to decode avro data")
 		}
