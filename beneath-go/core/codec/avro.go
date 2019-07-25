@@ -62,7 +62,7 @@ func (c *AvroCodec) Marshal(jsonNative interface{}) ([]byte, error) {
 }
 
 // Unmarshal maps avro-encoded binary to an object that can be marshaled to json
-func (c *AvroCodec) Unmarshal(data []byte) (interface{}, error) {
+func (c *AvroCodec) Unmarshal(data []byte, convertToJSONTypes bool) (interface{}, error) {
 	avroNative, remainder, err := c.avroCodec.NativeFromBinary(data)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal avro binary: %v", err.Error())
@@ -70,7 +70,7 @@ func (c *AvroCodec) Unmarshal(data []byte) (interface{}, error) {
 		return nil, fmt.Errorf("unmarshal avro binary produced remainder: data <%v> and remainder <%v>", data, remainder)
 	}
 
-	jsonNative, err := avroNativeToJSONNative(c.avroSchema, avroNative, map[string]interface{}{})
+	jsonNative, err := avroNativeToJSONNative(c.avroSchema, avroNative, map[string]interface{}{}, convertToJSONTypes)
 	if err != nil {
 		return nil, err
 	}

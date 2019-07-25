@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/beneath-core/beneath-go/core/jsonutil"
@@ -30,13 +31,14 @@ func TestAvroSimple(t *testing.T) {
 	var jsonNative, jsonNativeCopy interface{}
 	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNative)
 	assert.Nil(t, err)
-	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNativeCopy)
+
+	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
 	binary, err := codec.Marshal(jsonNative)
 	assert.Nil(t, err)
 
-	native, err := codec.Unmarshal(binary)
+	native, err := codec.Unmarshal(binary, true)
 
 	if diff := deep.Equal(jsonNativeCopy, native); diff != nil {
 		t.Error(diff)
@@ -79,13 +81,14 @@ func TestAvroComplex(t *testing.T) {
 	var jsonNative, jsonNativeCopy interface{}
 	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNative)
 	assert.Nil(t, err)
-	err = jsonutil.UnmarshalBytes([]byte(valueJSON), &jsonNativeCopy)
+
+	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
 	binary, err := codec.Marshal(jsonNative)
 	assert.Nil(t, err)
 
-	native, err := codec.Unmarshal(binary)
+	native, err := codec.Unmarshal(binary, true)
 	assert.Nil(t, err)
 
 	if diff := deep.Equal(jsonNativeCopy, native); diff != nil {

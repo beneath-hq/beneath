@@ -306,7 +306,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 //   - bytes: turn from []byte into string prefixed with 0x
 //   - fixed: same as for bytes
 //   - bytes.decimal: turn into string representing the number in decimal
-func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}) (interface{}, error) {
+func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}, convertTypes bool) (interface{}, error) {
 	switch schema := schemaT.(type) {
 	case string:
 		// handle bytes case
@@ -316,22 +316,27 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				return nil, fmt.Errorf("expected []byte value for schema <bytes>, got %v", valT)
 			}
 
-			return "0x" + hex.EncodeToString(val), nil
+			if convertTypes {
+				return "0x" + hex.EncodeToString(val), nil
+			}
+			return val, nil
 		}
 
 		// handle case where long overflows float64
-		if schema == "long" {
-			if val, ok := valT.(int64); ok {
-				if val > 9007199254740992 || val < -9007199254740992 {
-					return strconv.FormatInt(val, 10), nil
+		if convertTypes {
+			if schema == "long" {
+				if val, ok := valT.(int64); ok {
+					if val > 9007199254740992 || val < -9007199254740992 {
+						return strconv.FormatInt(val, 10), nil
+					}
+					return float64(val), nil
 				}
-				return float64(val), nil
 			}
 		}
 
 		// check if it's a defined type
 		if definedTypes[schema] != nil {
-			return avroNativeToJSONNative(definedTypes[schema], valT, definedTypes)
+			return avroNativeToJSONNative(definedTypes[schema], valT, definedTypes, convertTypes)
 		}
 
 		// default
@@ -359,7 +364,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 
 		// return wrapped value
 		for _, v := range val {
-			return avroNativeToJSONNative(schema[1], v, definedTypes)
+			return avroNativeToJSONNative(schema[1], v, definedTypes, convertTypes)
 		}
 
 		// not actually reachable
@@ -377,7 +382,10 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			// save as defined type
 			extractDefinedTypes(schema, definedTypes, false)
 
-			return "0x" + hex.EncodeToString(val), nil
+			if convertTypes {
+				return "0x" + hex.EncodeToString(val), nil
+			}
+			return val, nil
 		}
 
 		// handle logical type
@@ -386,14 +394,20 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			if t == "bytes" && lt == "decimal" {
 				switch val := valT.(type) {
 				case *big.Rat:
-					return val.FloatString(0), nil
+					if convertTypes {
+						return val.FloatString(0), nil
+					}
+					return val, nil
 				case []byte:
 					n := new(big.Int)
 					n.SetBytes(val)
 					if len(val) > 0 && val[0]&0x80 > 0 {
 						n.Sub(n, new(big.Int).Lsh(one, uint(len(val))*8))
 					}
-					return n.String(), nil
+					if convertTypes {
+						return n.String(), nil
+					}
+					return n, nil
 				default:
 					return nil, fmt.Errorf("expected big.Rat or bytes value for schema <bytes.decimal>, got %v", valT)
 				}
@@ -405,8 +419,11 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				if !ok {
 					return nil, fmt.Errorf("expected time.time value for schema <long.timestamp-millis>, got %v", valT)
 				}
-				l := val.UnixNano() / int64(time.Millisecond)
-				return avroNativeToJSONNative(t, l, definedTypes)
+				if convertTypes {
+					l := val.UnixNano() / int64(time.Millisecond)
+					return avroNativeToJSONNative(t, l, definedTypes, convertTypes)
+				}
+				return val, nil
 			}
 		}
 
@@ -419,7 +436,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 
 			res := make([]interface{}, len(val))
 			for i, v := range val {
-				r, err := avroNativeToJSONNative(schema["items"], v, definedTypes)
+				r, err := avroNativeToJSONNative(schema["items"], v, definedTypes, convertTypes)
 				if err != nil {
 					return nil, err
 				}
@@ -461,7 +478,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				}
 
 				if val[fieldName] != nil {
-					r, err := avroNativeToJSONNative(field, val[fieldName], definedTypes)
+					r, err := avroNativeToJSONNative(field, val[fieldName], definedTypes, convertTypes)
 					if err != nil {
 						return nil, err
 					}
@@ -477,7 +494,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			return val, nil
 		}
 
-		return avroNativeToJSONNative(t, valT, definedTypes)
+		return avroNativeToJSONNative(t, valT, definedTypes, convertTypes)
 	default:
 		return nil, fmt.Errorf("unknown schema type: %T", schemaT)
 	}
