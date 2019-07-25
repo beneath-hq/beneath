@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/beneath-core/beneath-go/core/codec"
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
 )
@@ -31,8 +32,8 @@ type TablesDriver interface {
 	// to the same key
 	WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error
 
-	// ReadRecordsFromTable is called to read the records on the datastore
-	ReadRecordsFromTable(instanceID uuid.UUID, encodedKey []byte) error
+	// ReadRecords reads one or a range of records by key and calls fn one by one
+	ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
