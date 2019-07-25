@@ -82,8 +82,12 @@ func (p *Bigtable) GetMaxDataSize() int {
 
 // WriteRecord implements engine.TablesDriver
 func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error {
+	// bigtable truncates timestamps to milliseconds, so we have to compensate to save entire sequence number.
+	// upstream calls to CheckSequenceNumber will ensure this won't overflow
+	sequenceNumber *= 1000
+
 	mut := bigtable.NewMutation()
-	mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(sequenceNumber*1000), avroData)
+	mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(sequenceNumber), avroData)
 
 	rowKey := makeRowKey(instanceID, key)
 	err := p.Records.Apply(context.Background(), string(rowKey), mut)
