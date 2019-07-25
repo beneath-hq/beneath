@@ -49,6 +49,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"time"
 )
 
 // A TupleElement is one of the types that may be encoded in FoundationDB
@@ -389,6 +390,10 @@ func (p *packer) encodeTuple(t Tuple, nested bool, versionstamps bool) {
 			}
 		case UUID:
 			p.encodeUUID(e)
+		case time.Time:
+			// tuple doesn't natively support time
+			// so we encode it as unix milliseconds in an int
+			p.encodeInt(e.UnixNano() / int64(time.Millisecond))
 		case Versionstamp:
 			if versionstamps == false && e.TransactionVersion == incompleteTransactionVersion {
 				panic(fmt.Sprintf("Incomplete Versionstamp included in vanilla tuple pack"))

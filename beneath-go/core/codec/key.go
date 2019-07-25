@@ -2,7 +2,6 @@ package codec
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 	"github.com/beneath-core/beneath-go/core/queryparse"
@@ -56,12 +55,6 @@ func (c *KeyCodec) Marshal(data map[string]interface{}) ([]byte, error) {
 		val := data[field]
 		if val == nil {
 			return nil, fmt.Errorf("Value for key field '%s' is nil", field)
-		}
-
-		// tuple doesn't support time -- so we encode it as an int64
-		// TODO: add time handling to our fork of "tuple"
-		if valTime, ok := val.(time.Time); ok {
-			val = valTime.UnixNano() / int64(time.Millisecond)
 		}
 
 		t[idx] = val
