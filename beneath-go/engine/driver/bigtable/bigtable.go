@@ -98,7 +98,9 @@ func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte
 func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
 	// convert keyRange to RowSet
 	var rr bigtable.RowSet
-	if keyRange.Unique() {
+	if keyRange == nil {
+		rr = bigtable.PrefixRange(string(instanceID[:]))
+	} else if keyRange.Unique() {
 		rk := makeRowKey(instanceID, keyRange.Base)
 		rr = bigtable.SingleRow(string(rk))
 	} else {
