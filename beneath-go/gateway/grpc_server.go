@@ -111,7 +111,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	// check each record is valid
 	for idx, record := range req.Records {
 		// check it decodes
-		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d doesn't decode: %v", idx, err.Error()))
 		}
