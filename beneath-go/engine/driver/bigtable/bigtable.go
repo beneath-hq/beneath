@@ -6,10 +6,12 @@ import (
 	"os"
 
 	"cloud.google.com/go/bigtable"
-	"github.com/beneath-core/beneath-go/core"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/codec"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -80,8 +82,12 @@ func (p *Bigtable) GetMaxDataSize() int {
 
 // WriteRecord implements engine.TablesDriver
 func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error {
+	// bigtable truncates timestamps to milliseconds, so we have to compensate to save entire sequence number.
+	// upstream calls to CheckSequenceNumber will ensure this won't overflow
+	sequenceNumber *= 1000
+
 	mut := bigtable.NewMutation()
-	mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(sequenceNumber*1000), avroData)
+	mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(sequenceNumber), avroData)
 
 	rowKey := makeRowKey(instanceID, key)
 	err := p.Records.Apply(context.Background(), string(rowKey), mut)
@@ -92,30 +98,49 @@ func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte
 	return nil
 }
 
-// ReadRecordsFromTable implements engine.TablesDriver
-func (p *Bigtable) ReadRecordsFromTable(instanceID uuid.UUID, encodedKey []byte) error {
-	ctx := context.Background()
-
-	log.Printf("Reading all rows:")
-	rr := bigtable.PrefixRange("")
-	err := p.Records.ReadRows(ctx, rr, func(row bigtable.Row) bool {
-		item := row[recordsColumnFamilyName][0]
-		log.Printf("\tKey: %s; Value: %s\n", item.Row, string(item.Value))
-		log.Printf("\tKey: %s; Timestamp: %v\n", item.Row, item.Timestamp)
-		return true
-	})
-
-	if err != nil {
-		return err
+// ReadRecords implements engine.TablesDriver
+func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
+	// convert keyRange to RowSet
+	var rr bigtable.RowSet
+	if keyRange == nil {
+		rr = bigtable.PrefixRange(string(instanceID[:]))
+	} else if keyRange.CheckUnique() {
+		rk := makeRowKey(instanceID, keyRange.Base)
+		rr = bigtable.SingleRow(string(rk))
+	} else if keyRange.RangeEnd == nil {
+		rk := makeRowKey(instanceID, keyRange.Base)
+		rr = bigtable.InfiniteRange(string(rk))
+	} else {
+		bk := makeRowKey(instanceID, keyRange.Base)
+		ek := makeRowKey(instanceID, keyRange.RangeEnd)
+		rr = bigtable.NewRange(string(bk), string(ek))
 	}
 
-	// if an instanceID + encodedKey is provided, read the specify row
-	log.Printf(instanceID.String())
-	log.Printf(string(encodedKey))
-	// rowKey := makeBigTableKey(instanceID, encodedKey)
-	// r, err = p.Table.ReadRow(ctx, rowKey)
-	// log.Print(r)
+	// define callback triggered on each bigtable row
+	var cbErr error
+	cb := func(row bigtable.Row) bool {
+		// column families are returned as a map, columns as an array; we're expecting one column atm, so just take index 0
+		item := row[recordsColumnFamilyName][0]
 
+		// trigger callback
+		cbErr = fn(item.Value, int64(item.Timestamp))
+		if cbErr != nil {
+			return false // stop
+		}
+
+		// continue
+		return true
+	}
+
+	// read rows
+	err := p.Records.ReadRows(context.Background(), rr, cb, bigtable.LimitRows(int64(limit)), bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	if err != nil {
+		return err
+	} else if cbErr != nil {
+		return cbErr
+	}
+
+	// done
 	return nil
 }
 

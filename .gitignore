@@ -24,6 +24,9 @@ tmp
 TODO
 venv
 yarn-error.log
+.vscode/launch.json
+.vscode/.ropeproject
 */.vscode/launch.json
 */.vscode/.ropeproject
 .pytest_cache
+beneath-models/.venv

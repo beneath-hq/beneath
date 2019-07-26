@@ -209,10 +209,31 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 
 			// handle long.timestamp-millis
 			if t == "long" && lt == "timestamp-millis" {
-				// parse as long
+				// let's first try out some common string formats
+				if tStr, ok := valT.(string); ok {
+					// try "2006-01-02T15:04:05Z07:00" (RFC3339)
+					t, err := time.Parse(time.RFC3339, tStr)
+					if err == nil {
+						return t, nil
+					}
+
+					// try "2006-01-02T15:04:05"
+					t, err = time.Parse("2006-01-02T15:04:05", tStr)
+					if err == nil {
+						return t, nil
+					}
+
+					// try "2006-01-02"
+					t, err = time.Parse("2006-01-02", tStr)
+					if err == nil {
+						return t, nil
+					}
+				}
+
+				// didn't match our supported string formats, so we'll try to parse it as a long
 				longT, err := jsonNativeToAvroNative(t, valT, definedTypes)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("couldn't parse '%v' as a timestamp", valT)
 				}
 
 				val, ok := longT.(int64)
@@ -222,7 +243,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 
 				// check in range for time.Unix
 				if val > 9223372036853 || val < -9223372036853 { // 2^64/2/1000/1000
-					return nil, fmt.Errorf("timestamp out of range (nanoseconds must fit in in64)")
+					return nil, fmt.Errorf("timestamp out of range (nanoseconds must fit in int64)")
 				}
 
 				return time.Unix(0, int64(val)*int64(time.Millisecond)), nil
@@ -306,7 +327,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 //   - bytes: turn from []byte into string prefixed with 0x
 //   - fixed: same as for bytes
 //   - bytes.decimal: turn into string representing the number in decimal
-func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}) (interface{}, error) {
+func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes map[string]interface{}, convertTypes bool) (interface{}, error) {
 	switch schema := schemaT.(type) {
 	case string:
 		// handle bytes case
@@ -316,22 +337,27 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				return nil, fmt.Errorf("expected []byte value for schema <bytes>, got %v", valT)
 			}
 
-			return "0x" + hex.EncodeToString(val), nil
+			if convertTypes {
+				return "0x" + hex.EncodeToString(val), nil
+			}
+			return val, nil
 		}
 
 		// handle case where long overflows float64
-		if schema == "long" {
-			if val, ok := valT.(int64); ok {
-				if val > 9007199254740992 || val < -9007199254740992 {
-					return strconv.FormatInt(val, 10), nil
+		if convertTypes {
+			if schema == "long" {
+				if val, ok := valT.(int64); ok {
+					if val > 9007199254740992 || val < -9007199254740992 {
+						return strconv.FormatInt(val, 10), nil
+					}
+					return float64(val), nil
 				}
-				return float64(val), nil
 			}
 		}
 
 		// check if it's a defined type
 		if definedTypes[schema] != nil {
-			return avroNativeToJSONNative(definedTypes[schema], valT, definedTypes)
+			return avroNativeToJSONNative(definedTypes[schema], valT, definedTypes, convertTypes)
 		}
 
 		// default
@@ -359,7 +385,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 
 		// return wrapped value
 		for _, v := range val {
-			return avroNativeToJSONNative(schema[1], v, definedTypes)
+			return avroNativeToJSONNative(schema[1], v, definedTypes, convertTypes)
 		}
 
 		// not actually reachable
@@ -377,7 +403,10 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			// save as defined type
 			extractDefinedTypes(schema, definedTypes, false)
 
-			return "0x" + hex.EncodeToString(val), nil
+			if convertTypes {
+				return "0x" + hex.EncodeToString(val), nil
+			}
+			return val, nil
 		}
 
 		// handle logical type
@@ -386,14 +415,20 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			if t == "bytes" && lt == "decimal" {
 				switch val := valT.(type) {
 				case *big.Rat:
-					return val.FloatString(0), nil
+					if convertTypes {
+						return val.FloatString(0), nil
+					}
+					return val, nil
 				case []byte:
 					n := new(big.Int)
 					n.SetBytes(val)
 					if len(val) > 0 && val[0]&0x80 > 0 {
 						n.Sub(n, new(big.Int).Lsh(one, uint(len(val))*8))
 					}
-					return n.String(), nil
+					if convertTypes {
+						return n.String(), nil
+					}
+					return n, nil
 				default:
 					return nil, fmt.Errorf("expected big.Rat or bytes value for schema <bytes.decimal>, got %v", valT)
 				}
@@ -405,8 +440,11 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				if !ok {
 					return nil, fmt.Errorf("expected time.time value for schema <long.timestamp-millis>, got %v", valT)
 				}
-				l := val.UnixNano() / int64(time.Millisecond)
-				return avroNativeToJSONNative(t, l, definedTypes)
+				if convertTypes {
+					l := val.UnixNano() / int64(time.Millisecond)
+					return avroNativeToJSONNative(t, l, definedTypes, convertTypes)
+				}
+				return val, nil
 			}
 		}
 
@@ -419,7 +457,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 
 			res := make([]interface{}, len(val))
 			for i, v := range val {
-				r, err := avroNativeToJSONNative(schema["items"], v, definedTypes)
+				r, err := avroNativeToJSONNative(schema["items"], v, definedTypes, convertTypes)
 				if err != nil {
 					return nil, err
 				}
@@ -461,7 +499,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 				}
 
 				if val[fieldName] != nil {
-					r, err := avroNativeToJSONNative(field, val[fieldName], definedTypes)
+					r, err := avroNativeToJSONNative(field, val[fieldName], definedTypes, convertTypes)
 					if err != nil {
 						return nil, err
 					}
@@ -477,7 +515,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 			return val, nil
 		}
 
-		return avroNativeToJSONNative(t, valT, definedTypes)
+		return avroNativeToJSONNative(t, valT, definedTypes, convertTypes)
 	default:
 		return nil, fmt.Errorf("unknown schema type: %T", schemaT)
 	}

@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -39,6 +41,9 @@ func init() {
 
 // Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
 func Run() error {
+	// log that we're running
+	log.Printf("Pipeline processing write requests\n")
+
 	// begin processing write requests -- will run infinitely
 	err := Engine.Streams.ReadWriteRequests(processWriteRequest)
 
@@ -53,6 +58,10 @@ func Run() error {
 // processWriteRequest is called (approximately once) for each new write request
 // TODO: add metrics tracking -- group by instanceID and hour: 1) writes and 2) bytes
 func processWriteRequest(req *pb.WriteRecordsRequest) error {
+	// metrics to track
+	startTime := time.Now()
+	bytesWritten := 0
+
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
@@ -64,7 +73,7 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	// TODO: Refactor so that we write batch records when >1 record in a write request
 	for _, record := range req.Records {
 		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
 			return fmt.Errorf("unable to decode avro data")
 		}
@@ -92,7 +101,16 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		if err != nil {
 			return err
 		}
+
+		// increment metrics
+		bytesWritten += len(record.AvroData)
 	}
+
+	// finalise metrics
+	elapsed := time.Since(startTime)
+
+	// log metrics
+	log.Printf("%s/%s (%s): Wrote %d record(s) (%dB) in %s", stream.ProjectName, stream.StreamName, instanceID.String(), len(req.Records), bytesWritten, elapsed)
 
 	// done
 	return nil

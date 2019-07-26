@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -12,8 +13,8 @@ type Error struct {
 }
 
 // NewError creates a new HTTP error
-func NewError(code int, message string) *Error {
-	return &Error{code, message}
+func NewError(code int, format string, args ...interface{}) *Error {
+	return &Error{code, fmt.Sprintf(format, args...)}
 }
 
 func (e *Error) Error() string {

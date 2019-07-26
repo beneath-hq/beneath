@@ -1,6 +1,6 @@
-type BlockNumbers @stream(name: "block-numbers", key: "number") {
-  number Int!
-  hash Bytes32!
-  parentHash Bytes32!
-  timestamp Timestamp!
+type EthereumBlocks @stream(name: "ethereum-blocks", key: "number") {
+  number: Int!
+  hash: Bytes32!
+  parentHash: Bytes32!
+  timestamp: Timestamp!
 }

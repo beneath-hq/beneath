@@ -8,13 +8,15 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/codec"
+	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/queryparse"
 	pb "github.com/beneath-core/beneath-go/proto"
-	uuid "github.com/satori/go.uuid"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -82,6 +84,74 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	}, nil
 }
 
+func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest) (*pb.ReadRecordsResponse, error) {
+	// get auth
+	key := auth.GetKey(ctx)
+
+	// read instanceID
+	instanceID := uuid.FromBytesOrNil(req.InstanceId)
+	if instanceID == uuid.Nil {
+		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+	}
+
+	// get cached stream
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// check permissions
+	if !key.ReadsProject(stream.ProjectID) {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
+	}
+
+	// check limit is valid
+	if req.Limit == 0 {
+		return nil, grpc.Errorf(codes.InvalidArgument, "limit cannot be 0")
+	} else if req.Limit > maxRecordsLimit {
+		return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("limit exceeds maximum of %d", maxRecordsLimit))
+	}
+
+	// get key range based on where (if no where, it will be nil)
+	var keyRange *codec.KeyRange
+	if req.Where != "" {
+		// read where
+		var where map[string]interface{}
+		err := jsonutil.UnmarshalBytes([]byte(req.Where), &where)
+		if err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, "couldn't parse 'where' -- is it valid JSON?")
+		}
+
+		// make query
+		query, err := queryparse.JSONToQuery(where)
+		if err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("couldn't parse 'where' query: %s", err.Error()))
+		}
+
+		// set key range
+		keyRange, err = stream.KeyCodec.RangeFromQuery(query)
+		if err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+		}
+	}
+
+	// read rows from engine
+	response := &pb.ReadRecordsResponse{}
+	err := Engine.Tables.ReadRecords(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
+		response.Records = append(response.Records, &pb.Record{
+			AvroData:       avroData,
+			SequenceNumber: sequenceNumber,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	// done
+	return response, nil
+}
+
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
 	key := auth.GetKey(ctx)
@@ -110,8 +180,13 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 	// check each record is valid
 	for idx, record := range req.Records {
+		// check sequence number
+		if err := Engine.CheckSequenceNumber(record.SequenceNumber); err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d: %v", idx, err.Error()))
+		}
+
 		// check it decodes
-		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData)
+		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d doesn't decode: %v", idx, err.Error()))
 		}

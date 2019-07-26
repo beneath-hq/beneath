@@ -17,6 +17,11 @@ type configSpecification struct {
 	PostgresURL     string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
 }
 
+const (
+	defaultRecordsLimit = 50
+	maxRecordsLimit     = 200
+)
+
 var (
 	// Config for gateway
 	Config configSpecification

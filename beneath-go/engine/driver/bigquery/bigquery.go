@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 	"time"
 
@@ -147,9 +148,30 @@ type Row struct {
 func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
 	data := make(map[string]bq.Value, len(r.Data))
 	for k, v := range r.Data {
-		data[k] = bq.Value(v)
+		data[k] = r.recursiveSerialize(v)
 	}
 	return data, r.InsertID, nil
+}
+
+// the bigquery client serializes every type correctly except big numbers;
+// we handle those by a recursive search
+// note: overrides in place
+func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
+	switch val := valT.(type) {
+	case *big.Int:
+		return val.String()
+	case *big.Rat:
+		return val.FloatString(0)
+	case map[string]interface{}:
+		for k, v := range val {
+			val[k] = r.recursiveSerialize(v)
+		}
+	case []interface{}:
+		for i, v := range val {
+			val[i] = r.recursiveSerialize(v)
+		}
+	}
+	return valT
 }
 
 // WriteRecord implements engine.WarehouseDriver
