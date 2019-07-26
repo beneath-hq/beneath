@@ -11,14 +11,19 @@ func main() {
 	// coordinates multiple servers
 	group := new(errgroup.Group)
 
-	// http server
-	group.Go(func() error {
-		return gateway.ListenAndServeHTTP(gateway.Config.HTTPPort)
-	})
+	// // http server
+	// group.Go(func() error {
+	// 	return gateway.ListenAndServeHTTP(gateway.Config.HTTPPort)
+	// })
 
-	// gRPC server
+	// // gRPC server
+	// group.Go(func() error {
+	// 	return gateway.ListenAndServeGRPC(gateway.Config.GRPCPort)
+	// })
+
+	// websocket server
 	group.Go(func() error {
-		return gateway.ListenAndServeGRPC(gateway.Config.GRPCPort)
+		return gateway.ListenAndServeWS(gateway.Config.WSPort)
 	})
 
 	// run simultaneously
