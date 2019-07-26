@@ -1,0 +1,37 @@
+<html>
+
+<head>
+</head>
+
+<body>
+  <h1>Random Numbers:</h1>
+  <!-- 1 -->
+  <div id="num0"></div>
+  <div id="num1"></div>
+  <script type="text/javascript">
+    var lat = document.getElementById("num0");
+    var long = document.getElementById("num1");
+
+    // 2
+    var exampleSocket = new WebSocket("ws://localhost:8080/ws")  // encrypted websocket would use "wss://"
+    
+    // 3
+    exampleSocket.onopen = () => {
+      exampleSocket.send('{"payload": "My name is Eric", "id": "999", "type": "start"}');
+    }
+    
+    // 4
+    var update = function () {
+      exampleSocket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+
+        var numNums = data.payload.split(" ");
+        num0.textContent = numNums[0].toString();
+        num1.textContent = numNums[1].toString();
+      }
+    };
+    window.setTimeout(update);
+  </script>
+</body>
+
+</html>
