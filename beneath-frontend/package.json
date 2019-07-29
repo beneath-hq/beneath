@@ -41,12 +41,13 @@
     "react-moment": "^0.9.2",
     "recompose": "^0.30.0",
     "subscriptions-transport-ws": "^0.9.15",
+    "tslint": "^5.18.0",
     "validator": "^11.1.0"
   },
   "devDependencies": {
     "@types/graphql": "^14.2.3",
     "@types/node": "^12.6.8",
     "apollo": "^2.16.2",
-    "typescript": "^3.5.3"
+    "typescript": "~3.3.3"
   }
 }

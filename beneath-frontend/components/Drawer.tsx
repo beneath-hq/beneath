@@ -1,8 +1,7 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import Hidden from "@material-ui/core/Hidden";
 import Drawer from "@material-ui/core/Drawer";
+import Hidden from "@material-ui/core/Hidden";
 import { makeStyles } from "@material-ui/core/styles";
+import React, { FC } from "react";
 
 const drawerWidth = 240;
 
@@ -22,7 +21,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ResponsivePermanentDrawer = (props) => {
+interface IProps {
+  mobileOpen: boolean;
+  toggleMobileOpen: (event: {}) => void;
+}
+
+const ResponsivePermanentDrawer: FC<IProps> = (props) => {
   const classes = useStyles();
   return (
     <nav className={classes.drawer}>
@@ -33,7 +37,7 @@ const ResponsivePermanentDrawer = (props) => {
         </Drawer>
       </Hidden>
       <Hidden smUp implementation="css"> {/* Mobile variant */}
-        <Drawer open={ props.mobileOpen } variant="temporary" classes={{ paper: classes.drawerPaper }} 
+        <Drawer open={ props.mobileOpen } variant="temporary" classes={{ paper: classes.drawerPaper }}
           ModalProps={{ keepMounted: true }} onClose={props.toggleMobileOpen}
         >
           {props.children}
@@ -41,11 +45,6 @@ const ResponsivePermanentDrawer = (props) => {
       </Hidden>
     </nav>
   );
-}
-
-ResponsivePermanentDrawer.propTypes = {
-  mobileOpen: PropTypes.bool,
-  toggleMobileOpen: PropTypes.func,
 };
 
 export default ResponsivePermanentDrawer;

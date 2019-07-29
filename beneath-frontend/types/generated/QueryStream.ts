@@ -29,7 +29,7 @@ export interface QueryStream_stream {
 }
 
 export interface QueryStream {
-  stream: QueryStream_stream | null;
+  stream: QueryStream_stream;
 }
 
 export interface QueryStreamVariables {

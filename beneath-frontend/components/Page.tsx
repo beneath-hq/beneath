@@ -1,12 +1,15 @@
-import PropTypes from "prop-types";
-import React from "react";
 import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
+import React from "react";
 
 import Drawer from "./Drawer";
 import Header from "./Header";
 import PageTitle from "./PageTitle";
 import Subheader from "./Subheader";
+
+interface IStylesProps {
+  contentMarginTop?: null | "dense" | "normal" | "hero";
+}
 
 const useStyles = makeStyles((theme) => ({
   sidebarSubheaderAndContent: {
@@ -17,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
   },
-  content: ({ contentMarginTop }) => ({
+  content: ({ contentMarginTop }: IStylesProps) => ({
     marginTop: (
       contentMarginTop === "normal"
         ? theme.spacing(6)
@@ -30,7 +33,14 @@ const useStyles = makeStyles((theme) => ({
   }),
 }));
 
-const Page = (props) => {
+interface IProps {
+  title?: string;
+  sidebar: JSX.Element;
+  maxWidth?: false | "xs" | "sm" | "md" | "lg" | "xl";
+  contentMarginTop?: null | "dense" | "normal" | "hero";
+}
+
+const Page: React.FC<IProps> = (props) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = React.useState(false);
   const toggleMobileDrawer = () => {
     setMobileDrawerOpen(!mobileDrawerOpen);
@@ -58,13 +68,6 @@ const Page = (props) => {
       </div>
     </div>
   );
-};
-
-Page.propTypes = {
-  title: PropTypes.string,
-  sidebar: PropTypes.object,
-  maxWidth: PropTypes.oneOf([false, "xs", "sm", "md", "lg", "xl"]),
-  contentMarginTop: PropTypes.oneOf([null, "dense", "normal", "hero"]),
 };
 
 export default Page;
