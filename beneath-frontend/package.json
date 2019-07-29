@@ -48,6 +48,6 @@
     "@types/graphql": "^14.2.3",
     "@types/node": "^12.6.8",
     "apollo": "^2.16.2",
-    "typescript": "~3.3.3"
+    "typescript": "^3.5.3"
   }
 }
