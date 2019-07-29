@@ -1,7 +1,8 @@
-import Avatar from "@material-ui/core/Avatar";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { FunctionComponent } from "react";
+import Avatar, { AvatarProps } from "@material-ui/core/Avatar";
+import { makeStyles, Theme } from "@material-ui/core/styles";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
   hero: {
     width: theme.spacing(8),
     height: theme.spacing(8),
@@ -20,10 +21,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const BetterAvatar = ({ size, label, src, ...other }) => {
-  const classes = useStyles();
+interface BetterAvatarProps extends AvatarProps {
+  size: string;
+  label: string;
+  src: string;
+}
 
-  let className = null;
+const BetterAvatar: FunctionComponent<BetterAvatarProps> = ({ size, label, src, ...other }) => {
+  const classes = useStyles(undefined);
+
+  let className = undefined;
   if (size === "hero") {
     className = classes.hero;
   } else if (size === "list") {

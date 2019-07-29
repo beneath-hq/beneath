@@ -1,21 +1,23 @@
+import React, { FunctionComponent } from "react";
 import { Query } from "react-apollo";
 
 import { TokenConsumer } from "./auth";
 import { QUERY_ME } from "../queries/user";
 
-const withMe = (Component) => {
-  return (props) => (
+import { Me } from "../types/generated/Me"
+
+const withMe = <P extends object>(Component: React.ComponentType<P & Me>): FunctionComponent<P> => {
+  return (props: P) => (
     <TokenConsumer>
       {({ token }) => {
         if (token) {
           return (
-            <Query query={QUERY_ME}>
+            <Query<Me> query={QUERY_ME}>
               {({ loading, error, data }) => {
                 if (error) {
                   console.log("withMe error: ", error);
                 } else if (!loading && data) {
-                  let { me } = data;
-                  return <Component {...props} me={me} />
+                  return <Component {...props} me={data.me} />
                 } 
                 return null;
               }}

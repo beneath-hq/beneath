@@ -1,6 +1,4 @@
 import App, { Container } from "next/app";
-import Router from "next/router";
-import withGA from "next-ga";
 import React from "react";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -40,4 +38,4 @@ class BeneathApp extends App {
   }
 }
 
-export default withToken(withApolloClient(withGA("UA-118362426-2", Router)(BeneathApp)));
+export default withApolloClient(BeneathApp);
