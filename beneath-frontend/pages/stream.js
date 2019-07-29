@@ -9,7 +9,7 @@ import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
 import SubrouteTabs from "../components/SubrouteTabs";
 
-import EditStream from "../components/pages/stream/EditStream";
+import EditStream from "../components/stream/EditStream";
 
 import { QUERY_STREAM } from "../queries/stream";
 

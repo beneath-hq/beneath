@@ -14,12 +14,12 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/core";
 
-import Avatar from "../../Avatar";
-import Loading from "../../Loading";
-import NextMuiLink from "../../NextMuiLink";
-import VSpace from "../../VSpace";
+import Avatar from "../Avatar";
+import Loading from "../Loading";
+import NextMuiLink from "../NextMuiLink";
+import VSpace from "../VSpace";
 
-import { QUERY_PROJECT, ADD_MEMBER, REMOVE_MEMBER } from "../../../queries/project";
+import { QUERY_PROJECT, ADD_MEMBER, REMOVE_MEMBER } from "../../queries/project";
 
 const useStyles = makeStyles((theme) => ({
   addMemberContainer: {

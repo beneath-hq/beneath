@@ -10,9 +10,9 @@ import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
-import EditMe from "../components/pages/user/EditMe";
-import ViewProjects from "../components/pages/user/ViewProjects";
-import { ManageUserKeys } from "../components/pages/key/ManageKeys";
+import EditMe from "../components/user/EditMe";
+import ViewProjects from "../components/user/ViewProjects";
+import { ManageUserKeys } from "../components/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
 import { QUERY_USER } from "../queries/user";

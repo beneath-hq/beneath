@@ -14,7 +14,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import { QUERY_USER_KEYS, QUERY_PROJECT_KEYS, ISSUE_USER_KEY, ISSUE_PROJECT_KEY } from "../../../queries/key";
+import { QUERY_USER_KEYS, QUERY_PROJECT_KEYS, ISSUE_USER_KEY, ISSUE_PROJECT_KEY } from "../../queries/key";
 
 const useStyles = makeStyles((theme) => ({
   issueKeyButton: {

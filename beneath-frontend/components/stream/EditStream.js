@@ -8,10 +8,10 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import VSpace from "../../VSpace";
-import CheckboxField from "../../CheckboxField";
+import VSpace from "../VSpace";
+import CheckboxField from "../CheckboxField";
 
-import { UPDATE_STREAM } from "../../../queries/stream";
+import { UPDATE_STREAM } from "../../queries/stream";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

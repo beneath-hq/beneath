@@ -5,8 +5,8 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 
-import Avatar from "../../Avatar";
-import NextMuiLink from "../../NextMuiLink";
+import Avatar from "../Avatar";
+import NextMuiLink from "../NextMuiLink";
 
 const ViewStreams = ({ project }) => {
   return (

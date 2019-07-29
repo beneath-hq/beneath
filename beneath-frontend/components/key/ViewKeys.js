@@ -9,9 +9,9 @@ import ListItemText from "@material-ui/core/ListItemText";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Moment from "react-moment";
 
-import Loading from "../../Loading";
+import Loading from "../Loading";
 
-import { QUERY_PROJECT_KEYS, QUERY_USER_KEYS, REVOKE_KEY } from "../../../queries/key";
+import { QUERY_PROJECT_KEYS, QUERY_USER_KEYS, REVOKE_KEY } from "../../queries/key";
 
 const prettyRoles = {
   "r": "Read-only",

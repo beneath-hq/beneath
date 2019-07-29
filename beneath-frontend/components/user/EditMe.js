@@ -7,10 +7,10 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import Loading from "../../Loading";
-import VSpace from "../../VSpace";
+import Loading from "../Loading";
+import VSpace from "../VSpace";
 
-import { QUERY_ME, UPDATE_ME } from "../../../queries/user";
+import { QUERY_ME, UPDATE_ME } from "../../queries/user";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {
