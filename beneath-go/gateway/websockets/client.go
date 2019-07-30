@@ -21,9 +21,9 @@ type Client struct {
 
 // WebsocketMessage represents a message passed over the wire
 type WebsocketMessage struct {
-	Type    string `json:"type"`
-	ID      string `json:"id,omitempty"`
-	Payload string `json:"payload,omitempty"` // json.RawMessage?
+	Type    string                 `json:"type"`
+	ID      string                 `json:"id,omitempty"`
+	Payload map[string]interface{} `json:"payload,omitempty"` // json.RawMessage?
 }
 
 const (
@@ -87,8 +87,10 @@ func (c *Client) beginReading() {
 		// parse message as WebsocketMessage
 		var msg WebsocketMessage
 		err = json.Unmarshal(data, &msg)
+		errmessage := make(map[string]interface{})
 		if err != nil {
-			c.sendError("", "couldn't parse message as json")
+			errmessage["message"] = "couldn't parse message as json"
+			c.sendError("", errmessage)
 			continue
 		}
 
@@ -132,6 +134,7 @@ func (c *Client) beginWriting() {
 
 				// write message
 				w.Write(data)
+				w.Write([]byte("\n"))
 			}
 
 			// efficiency gain: empty the Send channel now that we have an open writer
@@ -150,19 +153,19 @@ func (c *Client) beginWriting() {
 }
 
 // sends a data message type to the user
-func (c *Client) sendData(id string, description string) {
+func (c *Client) sendData(id string, payload map[string]interface{}) {
 	c.Outbound <- WebsocketMessage{
 		Type:    dataMsgType,
 		ID:      id,
-		Payload: description,
+		Payload: payload,
 	}
 }
 
 // sendError sends an error WebsocketMessage to the user
-func (c *Client) sendError(id string, description string) {
+func (c *Client) sendError(id string, payload map[string]interface{}) {
 	c.Outbound <- WebsocketMessage{
 		Type:    errorMsgType,
 		ID:      id,
-		Payload: description,
+		Payload: payload,
 	}
 }

@@ -227,7 +227,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// read rows from engine
-	err = Engine.Tables.ReadRecords(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
+	err = Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
 		// decode avro
 		data, err := stream.AvroCodec.Unmarshal(avroData, true)
 		if err != nil {

@@ -99,7 +99,47 @@ func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte
 }
 
 // ReadRecords implements engine.TablesDriver
-func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
+func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error {
+	// convert keys to RowList
+	rl := make(bigtable.RowList, len(keys))
+	for idx, key := range keys {
+		rl[idx] = string(makeRowKey(instanceID, key))
+	}
+	log.Print("reading records")
+	// define callback triggered on each bigtable row
+	var idx uint
+	var cbErr error
+	cb := func(row bigtable.Row) bool {
+		// column families are returned as a map, columns as an array; we're expecting one column atm, so just take index 0
+		item := row[recordsColumnFamilyName][0]
+
+		// trigger callback
+		log.Print("triggering callback")
+		cbErr = fn(idx, item.Value, int64(item.Timestamp))
+		if cbErr != nil {
+			return false // stop
+		}
+
+		// continue
+		idx++
+		return true
+	}
+
+	// read rows
+	log.Print("reading rows: ", rl)
+	err := p.Records.ReadRows(context.Background(), rl, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	if err != nil {
+		return err
+	} else if cbErr != nil {
+		return cbErr
+	}
+
+	// done
+	return nil
+}
+
+// ReadRecordRange implements engine.TablesDriver
+func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
 	// convert keyRange to RowSet
 	var rr bigtable.RowSet
 	if keyRange == nil {

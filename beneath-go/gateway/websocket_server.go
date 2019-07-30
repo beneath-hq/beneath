@@ -26,7 +26,7 @@ func wsHandler() http.Handler {
 	handler.Use(auth.HTTPMiddleware)
 
 	// create broker and run in background
-	broker := websockets.NewBroker()
+	broker := websockets.NewBroker(Engine)
 
 	// accept new websockets on /ws
 	handler.Handle("/ws", httputil.AppHandler(broker.HTTPHandler))

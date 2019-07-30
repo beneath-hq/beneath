@@ -5,29 +5,51 @@
 
 <body>
   <h1>Random Numbers:</h1>
-  <!-- 1 -->
-  <div id="num0"></div>
-  <div id="num1"></div>
+  <div id="item0"></div>
+  <div id="item1"></div>
+  <h1>Block Numbers:</h1>
+  <div id="item2"></div>
+  <div id="item3"></div>
+  <div id="item4"></div>
+  <div id="item5"></div>
   <script type="text/javascript">
-    var lat = document.getElementById("num0");
-    var long = document.getElementById("num1");
-
-    // 2
-    var exampleSocket = new WebSocket("ws://localhost:8080/ws")  // encrypted websocket would use "wss://"
+ 
+    // connect to websocket
+    var socket = new WebSocket("ws://localhost:8080/ws")  // encrypted websocket would use "wss://"
     
-    // 3
-    exampleSocket.onopen = () => {
-      exampleSocket.send('{"payload": "My name is Eric", "id": "999", "type": "start"}');
+    // send a test message to the server
+    socket.onopen = () => {
+      socket.send('{"payload": "My name is Eric", "id": "999", "type": "start"}');
     }
     
-    // 4
+    // process messages from the server
     var update = function () {
-      exampleSocket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
+      socket.onmessage = function (event) {
+        console.log(event.data)
+        var records = event.data.split("\n")
+        records.pop()
+        console.log(records)
+        for (var i in records) {
+          console.log(records[i])
+          var data = JSON.parse(records[i]);
 
-        var numNums = data.payload.split(" ");
-        num0.textContent = numNums[0].toString();
-        num1.textContent = numNums[1].toString();
+          // get all keys of the message payload
+          var keys = [];
+          for (var k in data.payload) keys.push(k);
+
+          // assign the parsed payload to objects on the page
+          if (keys[0] == "number1") {
+            document.getElementById("item0").textContent = data.payload[keys[0]];
+            document.getElementById("item1").textContent = data.payload[keys[1]];
+          }
+          if (keys[0] == "hash") {
+            console.log(data)
+            document.getElementById("item2").textContent = data.payload[keys[0]];
+            document.getElementById("item3").textContent = data.payload[keys[1]];
+            document.getElementById("item4").textContent = data.payload[keys[2]];
+            document.getElementById("item5").textContent = data.payload[keys[3]];
+          }
+        }   
       }
     };
     window.setTimeout(update);

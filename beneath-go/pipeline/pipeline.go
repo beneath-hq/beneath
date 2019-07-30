@@ -60,7 +60,8 @@ func Run() error {
 func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	// metrics to track
 	startTime := time.Now()
-	bytesWritten := 0
+	var bytesWritten int64
+	bytesWritten = 0
 
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -69,9 +70,12 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
 	}
 
+	// keep track of keys to publish
+	keys := make([][]byte, len(req.Records))
+
 	// save each record to bigtable and bigquery
 	// TODO: Refactor so that we write batch records when >1 record in a write request
-	for _, record := range req.Records {
+	for i, record := range req.Records {
 		// decode the avro data
 		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
@@ -89,6 +93,7 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		if err != nil {
 			return fmt.Errorf("unable to encode key")
 		}
+		keys[i] = key
 
 		// writing encoded data to Table
 		err = Engine.Tables.WriteRecord(instanceID, key, record.AvroData, record.SequenceNumber)
@@ -103,7 +108,17 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		}
 
 		// increment metrics
-		bytesWritten += len(record.AvroData)
+		bytesWritten += int64(len(record.AvroData))
+	}
+
+	// publish metrics packet; the keys in the packet will be used to stream data via the gateway's websocket
+	err := Engine.Streams.QueueMetricsMessage(&pb.StreamMetricsPacket{
+		InstanceId:   instanceID.Bytes(),
+		Keys:         keys,
+		BytesWritten: bytesWritten,
+	})
+	if err != nil {
+		return err
 	}
 
 	// finalise metrics

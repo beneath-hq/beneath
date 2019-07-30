@@ -3,12 +3,13 @@ package websockets
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
+
+	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/engine"
+	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/gorilla/websocket"
-
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -20,6 +21,9 @@ type Request struct {
 
 // Broker maintains the set of active clients and routes messages to the clients
 type Broker struct {
+	// Reference to the engine that supplies new data
+	Engine *engine.Engine
+
 	// use to register a new client with the broker
 	Register chan *Client
 
@@ -29,8 +33,8 @@ type Broker struct {
 	// use to submit a new request from the client for processing
 	Requests chan Request
 
-	// use to distribute records to subscrined clients
-	Dispatch chan *Message
+	// use to distribute records to subscribed clients
+	Dispatch chan *pb.StreamMetricsPacket
 
 	// used to manage websocket
 	upgrader *websocket.Upgrader
@@ -39,12 +43,12 @@ type Broker struct {
 	clients map[*Client]bool
 
 	// Client subscriptions. Mapping: stream instance ID --> list of subscribed clients
-	// TODO
+	// TODO: modify this to accept instanceID+key as input
 	clientSubscriptions map[uuid.UUID][]*Client
 }
 
 // NewBroker initializes a new Broker
-func NewBroker() *Broker {
+func NewBroker(engine *engine.Engine) *Broker {
 	// create upgrader
 	upgrader := &websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -56,17 +60,30 @@ func NewBroker() *Broker {
 
 	// create broker
 	broker := &Broker{
+		Engine:              engine,
 		upgrader:            upgrader,
 		clients:             make(map[*Client]bool),
 		Register:            make(chan *Client),
 		Unregister:          make(chan *Client),
 		Requests:            make(chan Request),
-		Dispatch:            make(chan *Message),
+		Dispatch:            make(chan *pb.StreamMetricsPacket),
 		clientSubscriptions: make(map[uuid.UUID][]*Client),
 	}
 
 	// initialize run loop
 	go broker.runForever()
+
+	// initialize read loop
+	// TODO: Call subscribe to keys function on broker.Engine
+	go func() {
+		err := engine.Streams.ReadMetricsMessage(func(msg *pb.StreamMetricsPacket) error {
+			broker.Dispatch <- msg
+			return nil
+		})
+		if err != nil {
+			log.Panicf("ReadMetricsMessage crashed: %v", err.Error())
+		}
+	}()
 
 	// done
 	return broker
@@ -81,13 +98,13 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// create client and register it with the hub
+	log.Printf("registering new client...")
 	b.Register <- newClient(b, ws)
 
 	return nil
 }
 
 func (b *Broker) runForever() {
-	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {
 		case client := <-b.Register:
@@ -98,8 +115,6 @@ func (b *Broker) runForever() {
 			b.processRequest(req)
 		case msg := <-b.Dispatch:
 			b.processMessage(msg)
-		case <-ticker.C:
-			b.broadcast(fmt.Sprint(rand.Intn(100), rand.Intn(100)))
 		}
 	}
 }
@@ -123,13 +138,59 @@ func (b *Broker) processRequest(r Request) {
 }
 
 // process messages from pubsub (route to relevant clients)
-func (b *Broker) processMessage(msg *Message) {
-	// TODO: Dispatch message to relevant clients
-}
+func (b *Broker) processMessage(metrics *pb.StreamMetricsPacket) {
+	instanceID := uuid.FromBytesOrNil(metrics.InstanceId)
 
-// publish a string message to all clients
-func (b *Broker) broadcast(msg string) {
+	// lookup stream
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		log.Printf("cached stream is null for instanceid %s", instanceID.String())
+	}
+
+	/* TODO: Dispatch message to only the subscribed clients
+	// check for clients subscribed to the instance_id
+	subscribedClients := b.clientSubscriptions[instanceID]
+
+	// if there are subscribers to the metrics packet, pull the data
+	if len(subscribedClients > 0) {
+		// get values for each key
+	}
+	else return
+	*/
+
+	// initialize records object
+	records := make([]map[string]interface{}, len(metrics.Keys))
+
+	// make new ReadRecords function
+	err := b.Engine.Tables.ReadRecords(instanceID, metrics.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
+		// decode the avro data
+		dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data")
+		}
+
+		// assert that the decoded data is a map
+		data, ok := dataT.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+		}
+
+		// assign key to value
+		records[idx] = data
+
+		return nil
+	})
+
+	// handle ReadRecords error
+	if err != nil {
+		log.Print("Could not read records from BigTable: ", err.Error())
+	}
+
+	// TODO: for i, client := range subscribedClients {
 	for client := range b.clients {
-		client.sendData("", msg)
+		// loop through records and send one at a time
+		for _, record := range records {
+			client.sendData(fmt.Sprint(client), record)
+		}
 	}
 }

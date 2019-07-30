@@ -18,6 +18,13 @@ type StreamsDriver interface {
 
 	// ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
 	ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
+
+	// QueueMetricsMessage publishes a batch of keys + metrics to the streams driver
+	// TODO: the batch of keys will have multiple instance ids within it map[uuid.UUID][][]byte (map[instanceId]encodedKey)?
+	QueueMetricsMessage(metrics *pb.StreamMetricsPacket) error
+
+	// ReadMetricsMessage reads messages from the Metrics topic
+	ReadMetricsMessage(fn func(*pb.StreamMetricsPacket) error) error
 }
 
 // TablesDriver defines the functions necessary to encapsulate Beneath's operational datastore needs
@@ -32,8 +39,11 @@ type TablesDriver interface {
 	// to the same key
 	WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error
 
-	// ReadRecords reads one or a range of records by key and calls fn one by one
-	ReadRecords(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error
+	// ReadRecords reads one or multiple (not necessarily sequential) records by key and calls fn one by one
+	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error
+
+	// ReadRecordRange reads one or a range of records by key and calls fn one by one
+	ReadRecordRange(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs

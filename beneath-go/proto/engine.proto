@@ -15,3 +15,9 @@ message WriteRecordsRequest {
   bytes instance_id = 1;
   repeated Record records = 2;
 }
+
+message StreamMetricsPacket {
+  bytes instance_id = 1;
+  repeated bytes keys = 2;
+  int64 bytes_written = 3;
+}

@@ -8,6 +8,8 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -406,6 +408,20 @@ type GatewayServer interface {
 	ReadRecords(context.Context, *ReadRecordsRequest) (*ReadRecordsResponse, error)
 	WriteRecords(context.Context, *WriteRecordsRequest) (*WriteRecordsResponse, error)
 	GetStreamDetails(context.Context, *StreamDetailsRequest) (*StreamDetailsResponse, error)
+}
+
+// UnimplementedGatewayServer can be embedded to have forward compatible implementations.
+type UnimplementedGatewayServer struct {
+}
+
+func (*UnimplementedGatewayServer) ReadRecords(ctx context.Context, req *ReadRecordsRequest) (*ReadRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadRecords not implemented")
+}
+func (*UnimplementedGatewayServer) WriteRecords(ctx context.Context, req *WriteRecordsRequest) (*WriteRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteRecords not implemented")
+}
+func (*UnimplementedGatewayServer) GetStreamDetails(ctx context.Context, req *StreamDetailsRequest) (*StreamDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStreamDetails not implemented")
 }
 
 func RegisterGatewayServer(s *grpc.Server, srv GatewayServer) {

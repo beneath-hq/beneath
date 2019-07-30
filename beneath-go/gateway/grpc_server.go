@@ -137,7 +137,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err := Engine.Tables.ReadRecords(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
+	err := Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:       avroData,
 			SequenceNumber: sequenceNumber,
