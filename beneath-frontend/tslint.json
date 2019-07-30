@@ -5,6 +5,10 @@
   ],
   "jsRules": true,
   "rules": {
+    "max-classes-per-file": [
+      true,
+      5
+    ],
     "trailing-comma": [
       false
     ],
