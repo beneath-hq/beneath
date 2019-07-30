@@ -12,9 +12,9 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditStream from "../components/stream/EditStream";
 
-import { QUERY_STREAM } from "../queries/stream";
+import { QUERY_STREAM } from "../apollo/queries/stream";
 
-import { QueryStream, QueryStreamVariables } from "../types/generated/QueryStream"
+import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream"
 
 interface IProps {
   router: SingletonRouter;

@@ -10,8 +10,8 @@ import { makeStyles } from "@material-ui/core";
 import ExploreSidebar from "../../components/ExploreSidebar";
 import Page from "../../components/Page";
 
-import { NEW_PROJECT } from "../../queries/project";
-import { QUERY_ME } from "../../queries/user";
+import { NEW_PROJECT } from "../../apollo/queries/project";
+import { QUERY_ME } from "../../apollo/queries/user";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

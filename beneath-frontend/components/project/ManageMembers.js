@@ -19,7 +19,7 @@ import Loading from "../Loading";
 import NextMuiLink from "../NextMuiLink";
 import VSpace from "../VSpace";
 
-import { QUERY_PROJECT, ADD_MEMBER, REMOVE_MEMBER } from "../../queries/project";
+import { QUERY_PROJECT, ADD_MEMBER, REMOVE_MEMBER } from "../../apollo/queries/project";
 
 const useStyles = makeStyles((theme) => ({
   addMemberContainer: {

@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=development node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "apollo:generate": "yarn run apollo codegen:generate --target typescript --outputFlat types/generated --passthroughCustomScalars --customScalarsPrefix Control"
+    "apollo:generate": "yarn run apollo codegen:generate --target typescript --outputFlat apollo/types --passthroughCustomScalars --customScalarsPrefix Control"
   },
   "dependencies": {
     "@material-ui/core": "^4.2.1",

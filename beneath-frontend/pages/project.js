@@ -15,7 +15,7 @@ import { ManageProjectKeys } from "../components/key/ManageKeys";
 import ViewStreams from "../components/project/ViewStreams";
 
 import withMe from "../hocs/withMe";
-import { QUERY_PROJECT } from "../queries/project";
+import { QUERY_PROJECT } from "../apollo/queries/project";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" sidebar={<ExploreSidebar />}>

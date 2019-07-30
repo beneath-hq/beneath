@@ -9,7 +9,7 @@ import ListSubheader from "@material-ui/core/ListSubheader";
 import { makeStyles } from "@material-ui/core/styles";
 
 import withMe from "../hocs/withMe";
-import { Me } from "../types/generated/Me";
+import { Me } from "../apollo/types/Me";
 import Avatar from "./Avatar";
 import NextMuiLink from "./NextMuiLink";
 

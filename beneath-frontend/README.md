@@ -20,4 +20,4 @@ Regenerate types for Apollo queries (currently only covers queries in queries/*)
 
 ```yarn apollo:generate```
 
-Then delete the empty file `types/generated/globalTypes.ts`
+Then delete the empty file `apollo/types/globalTypes.ts`

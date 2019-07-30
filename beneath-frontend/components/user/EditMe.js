@@ -10,7 +10,7 @@ import { makeStyles } from "@material-ui/core";
 import Loading from "../Loading";
 import VSpace from "../VSpace";
 
-import { QUERY_ME, UPDATE_ME } from "../../queries/user";
+import { QUERY_ME, UPDATE_ME } from "../../apollo/queries/user";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

@@ -11,7 +11,7 @@ import Moment from "react-moment";
 
 import Loading from "../Loading";
 
-import { QUERY_PROJECT_KEYS, QUERY_USER_KEYS, REVOKE_KEY } from "../../queries/key";
+import { QUERY_PROJECT_KEYS, QUERY_USER_KEYS, REVOKE_KEY } from "../../apollo/queries/key";
 
 const prettyRoles = {
   "r": "Read-only",

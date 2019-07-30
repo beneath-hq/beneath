@@ -3,7 +3,7 @@ import React from "react";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import theme from "../lib/theme";
-import { withApolloClient } from "../hocs/apollo";
+import { withApolloClient } from "../apollo/withApollo";
 import { TokenProvider, withToken } from "../hocs/auth";
 import { ApolloProvider } from "react-apollo";
 

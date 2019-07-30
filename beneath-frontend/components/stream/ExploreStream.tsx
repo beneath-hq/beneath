@@ -13,7 +13,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 
 import connection from "../../lib/connection";
-import { QueryStream, QueryStream_stream } from "../../types/generated/QueryStream";
+import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
 import VSpace from "../VSpace";
 import { Schema } from "./schema";
 

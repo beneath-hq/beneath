@@ -8,6 +8,8 @@ const helmet = require("helmet");
 const compression = require("compression");
 const redirectToHTTPS = require("express-http-to-https").redirectToHTTPS;
 
+global.fetch = require("isomorphic-unfetch"); // Polyfill fetch() on the server (used by apollo-client)
+
 const port = parseInt(process.env.PORT, 10) || 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });

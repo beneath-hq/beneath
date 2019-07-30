@@ -1,6 +1,6 @@
 import TableCell from "@material-ui/core/TableCell";
 import avro from "avsc";
-import { QueryStream_stream } from "../../types/generated/QueryStream";
+import { QueryStream_stream } from "../../apollo/types/QueryStream";
 
 export class Schema {
   public keyFields: string[];
