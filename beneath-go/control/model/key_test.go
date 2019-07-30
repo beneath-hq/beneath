@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/stretchr/testify/assert"
 )
 

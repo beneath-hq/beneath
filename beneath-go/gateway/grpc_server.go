@@ -11,6 +11,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/queryparse"
+	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -137,7 +138,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err := Engine.Tables.ReadRecords(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
+	err := db.Engine.Tables.ReadRecords(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:       avroData,
 			SequenceNumber: sequenceNumber,
@@ -181,7 +182,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	// check each record is valid
 	for idx, record := range req.Records {
 		// check sequence number
-		if err := Engine.CheckSequenceNumber(record.SequenceNumber); err != nil {
+		if err := db.Engine.CheckSequenceNumber(record.SequenceNumber); err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d: %v", idx, err.Error()))
 		}
 
@@ -198,14 +199,14 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		}
 
 		// check size
-		err = Engine.CheckSize(len(keyData), len(record.AvroData))
+		err = db.Engine.CheckSize(len(keyData), len(record.AvroData))
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
 	}
 
 	// write request to engine
-	err := Engine.Streams.QueueWriteRequest(req)
+	err := db.Engine.Streams.QueueWriteRequest(req)
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}

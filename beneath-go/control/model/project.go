@@ -10,7 +10,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 // Project represents a Beneath project

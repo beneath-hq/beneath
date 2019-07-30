@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/beneath-core/beneath-go/core/codec"
-
-	"github.com/beneath-core/beneath-go/core/queryparse"
-
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/queryparse"
+	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/rs/cors"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -35,9 +35,21 @@ func httpHandler() http.Handler {
 	// handler.Use(middleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
 	handler.Use(middleware.Logger)
 	handler.Use(middleware.Recoverer)
+
+	// Add CORS
+	handler.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            false,
+	}).Handler)
+
+	// auth
 	handler.Use(auth.HTTPMiddleware)
 
-	// TODO: Add health checks
+	// Add health check
+	handler.Get("/", healthCheck)
+	handler.Get("/healthz", healthCheck)
 
 	// TODO: Add graphql
 	// GraphQL endpoints
@@ -51,6 +63,16 @@ func httpHandler() http.Handler {
 	handler.Method("POST", "/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	return handler
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	if db.Healthy() {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(http.StatusText(http.StatusOK)))
+	} else {
+		log.Printf("Database health check failed")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
@@ -227,7 +249,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// read rows from engine
-	err = Engine.Tables.ReadRecords(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
+	err = db.Engine.Tables.ReadRecords(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
 		// decode avro
 		data, err := stream.AvroCodec.Unmarshal(avroData, true)
 		if err != nil {
@@ -330,7 +352,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		// check sequence number
-		if err := Engine.CheckSequenceNumber(sequenceNumber); err != nil {
+		if err := db.Engine.CheckSequenceNumber(sequenceNumber); err != nil {
 			return httputil.NewError(400, err.Error())
 		}
 
@@ -347,7 +369,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		// check sizes
-		err = Engine.CheckSize(len(keyData), len(avroData))
+		err = db.Engine.CheckSize(len(keyData), len(avroData))
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
@@ -360,7 +382,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// queue write request (publishes to Pubsub)
-	err = Engine.Streams.QueueWriteRequest(&pb.WriteRecordsRequest{
+	err = db.Engine.Streams.QueueWriteRequest(&pb.WriteRecordsRequest{
 		InstanceId: instanceID.Bytes(),
 		Records:    records,
 	})

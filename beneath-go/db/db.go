@@ -31,3 +31,16 @@ func InitRedis(redisURL string) {
 func InitEngine(streamsDriver string, tablesDriver string, warehouseDriver string) {
 	Engine = engine.NewEngine(streamsDriver, tablesDriver, warehouseDriver)
 }
+
+// Healthy returns true if connections are live
+func Healthy() bool {
+	// check postgres
+	_, err := DB.Exec("SELECT 1")
+	pg := err == nil
+
+	// check redis
+	_, err = Redis.Ping().Result()
+	redis := err == nil
+
+	return pg && redis && Engine.Healthy()
+}

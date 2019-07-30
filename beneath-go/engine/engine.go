@@ -48,6 +48,12 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 	return engine
 }
 
+// Healthy returns true if connected to all services
+func (e *Engine) Healthy() bool {
+	// TODO
+	return true
+}
+
 // CheckSize validates that the size of a record (its key and its combined encoded avro)
 // fits within the constraints of the underlying infrastructure
 func (e *Engine) CheckSize(keyBytesLen int, avroBytesLen int) error {

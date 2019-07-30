@@ -1,9 +1,8 @@
 package gateway
 
 import (
-	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/core"
-	"github.com/beneath-core/beneath-go/engine"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 type configSpecification struct {
@@ -25,16 +24,12 @@ const (
 var (
 	// Config for gateway
 	Config configSpecification
-
-	// Engine is the data plane
-	Engine *engine.Engine
 )
 
 func init() {
 	core.LoadConfig("beneath", &Config)
 
-	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
-
 	db.InitPostgres(Config.PostgresURL)
 	db.InitRedis(Config.RedisURL)
+	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/cache"
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
