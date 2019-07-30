@@ -7,6 +7,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/core/httputil"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway/websockets"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -26,7 +27,7 @@ func wsHandler() http.Handler {
 	handler.Use(auth.HTTPMiddleware)
 
 	// create broker and run in background
-	broker := websockets.NewBroker(Engine)
+	broker := websockets.NewBroker(db.Engine)
 
 	// accept new websockets on /ws
 	handler.Handle("/ws", httputil.AppHandler(broker.HTTPHandler))

@@ -105,7 +105,7 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 	for idx, key := range keys {
 		rl[idx] = string(makeRowKey(instanceID, key))
 	}
-	log.Print("reading records")
+
 	// define callback triggered on each bigtable row
 	var idx uint
 	var cbErr error
@@ -114,7 +114,6 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 		item := row[recordsColumnFamilyName][0]
 
 		// trigger callback
-		log.Print("triggering callback")
 		cbErr = fn(idx, item.Value, int64(item.Timestamp))
 		if cbErr != nil {
 			return false // stop
