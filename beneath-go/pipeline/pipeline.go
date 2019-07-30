@@ -7,10 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core"
-	"github.com/beneath-core/beneath-go/engine"
+	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
@@ -25,18 +24,14 @@ type configSpecification struct {
 var (
 	// Config for gateway
 	Config configSpecification
-
-	// Engine is the data plane
-	Engine *engine.Engine
 )
 
 func init() {
 	core.LoadConfig("beneath", &Config)
 
-	Engine = engine.NewEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
-
 	db.InitPostgres(Config.PostgresURL)
 	db.InitRedis(Config.RedisURL)
+	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 }
 
 // Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
@@ -45,7 +40,7 @@ func Run() error {
 	log.Printf("Pipeline processing write requests\n")
 
 	// begin processing write requests -- will run infinitely
-	err := Engine.Streams.ReadWriteRequests(processWriteRequest)
+	err := db.Engine.Streams.ReadWriteRequests(processWriteRequest)
 
 	// processing incoming write requests crashed for some reason
 	if err != nil {
@@ -96,13 +91,13 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		keys[i] = key
 
 		// writing encoded data to Table
-		err = Engine.Tables.WriteRecord(instanceID, key, record.AvroData, record.SequenceNumber)
+		err = db.Engine.Tables.WriteRecord(instanceID, key, record.AvroData, record.SequenceNumber)
 		if err != nil {
 			return err
 		}
 
 		// writing decoded data to Warehouse
-		err = Engine.Warehouse.WriteRecord(stream.ProjectName, stream.StreamName, instanceID, key, data, record.SequenceNumber)
+		err = db.Engine.Warehouse.WriteRecord(stream.ProjectName, stream.StreamName, instanceID, key, data, record.SequenceNumber)
 		if err != nil {
 			return err
 		}

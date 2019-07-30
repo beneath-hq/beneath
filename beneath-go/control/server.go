@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/beneath-core/beneath-go/control/auth"
-	"github.com/beneath-core/beneath-go/control/db"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/db"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
@@ -115,13 +115,12 @@ func ListenAndServeHTTP(port int) error {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	_, err := db.DB.Exec("SELECT 1")
-	if err != nil {
-		log.Printf("Database health check failed")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	} else {
+	if db.Healthy() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
+	} else {
+		log.Printf("Database health check failed")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 

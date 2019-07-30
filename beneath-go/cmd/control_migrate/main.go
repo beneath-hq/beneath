@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/core"
 )

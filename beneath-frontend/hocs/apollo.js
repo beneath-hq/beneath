@@ -90,7 +90,10 @@ export const withApolloClient = (App) => {
   return class Apollo extends React.Component {
     static displayName = 'withApollo(App)'
     static async getInitialProps(ctx) {
-      const { Component, router, token, ctx: { res } } = ctx
+      const { Component, router, ctx: { req, res } } = ctx
+
+      // read token from token
+      let token = readTokenFromCookie(req)
 
       // Get app props to pass on
       let appProps = {}
@@ -149,4 +152,25 @@ export const withApolloClient = (App) => {
       return <App {...this.props} apolloClient={this.apolloClient} />
     }
   }
+};
+
+const readTokenFromCookie = (maybeReq) => {
+  let token = null;
+  let cookie = null;
+  if (maybeReq) {
+    cookie = maybeReq.headers.cookie;
+  } else if (document) {
+    cookie = document.cookie;
+  }
+  if (cookie) {
+    cookie = cookie.split(";").find((c) => c.trim().startsWith("token="));
+    if (cookie) {
+      token = cookie.replace(/^\s*token=/, "");
+      token = decodeURIComponent(token);
+      if (token.length == 0) {
+        token = null;
+      }
+    }
+  }
+  return token;
 };

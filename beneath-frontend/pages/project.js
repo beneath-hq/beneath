@@ -9,10 +9,10 @@ import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
-import EditProject from "../components/pages/project/EditProject";
-import ManageMembers from "../components/pages/project/ManageMembers";
-import { ManageProjectKeys } from "../components/pages/key/ManageKeys";
-import ViewStreams from "../components/pages/project/ViewStreams";
+import EditProject from "../components/project/EditProject";
+import ManageMembers from "../components/project/ManageMembers";
+import { ManageProjectKeys } from "../components/key/ManageKeys";
+import ViewStreams from "../components/project/ViewStreams";
 
 import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../queries/project";
@@ -24,7 +24,6 @@ const ProjectPage = ({ router, me }) => (
         if (loading) return <Loading justify="center" />;
         if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
-        console.log("PROJ: ", data)
         let project = data.projectByName;
         let isProjectMember = me && project.users.some((user) => user.userID === me.userID);
 

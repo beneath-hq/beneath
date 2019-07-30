@@ -1,5 +1,5 @@
 extend type Query {
-  stream(name: String!, projectName: String!): Stream
+  stream(name: String!, projectName: String!): Stream!
 }
 
 extend type Mutation {

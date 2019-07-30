@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/bluele/gcache"
 	"github.com/go-pg/pg"

@@ -6,7 +6,7 @@ import (
 	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/beneath-go/control/db"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 // StreamInstance represents a single version of a stream (for a streaming stream,
