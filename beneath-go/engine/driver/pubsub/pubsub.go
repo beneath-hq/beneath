@@ -18,16 +18,14 @@ import (
 // configSpecification defines the config variables to load from ENV
 // See https://github.com/kelseyhightower/envconfig
 type configSpecification struct {
-	ProjectID                 string `envconfig:"PROJECT_ID" required:"true"`
-	InstanceID                string `envconfig:"INSTANCE_ID" required:"true"`
-	EmulatorHost              string `envconfig:"EMULATOR_HOST" required:"false"`
-	WriteRequestsTopic        string `envconfig:"WRITE_REQUESTS_TOPIC" required:"true"`
-	WriteRequestsSubscription string `envconfig:"WRITE_REQUESTS_SUBSCRIPTION" required:"true"`
-	MetricsTopic              string `envconfig:"METRICS_TOPIC" required:"true"`
-	// TODO: Add subscription names; every gateway (probably 5 of them) need to have their own subscription
-	MetricsSubscription0 string `envconfig:"METRICS_SUBSCRIPTION_0" required:"true"`
-	MetricsSubscription1 string `envconfig:"METRICS_SUBSCRIPTION_1" required:"true"`
-	MetricsSubscription2 string `envconfig:"METRICS_SUBSCRIPTION_2" required:"true"` // is this the right way to do it?
+	ProjectID                      string `envconfig:"PROJECT_ID" required:"true"`
+	InstanceID                     string `envconfig:"INSTANCE_ID" required:"true"`
+	SubscriberID                   string `envconfig:"SUBSCRIBER_ID" required:"true"`
+	EmulatorHost                   string `envconfig:"EMULATOR_HOST" required:"false"`
+	WriteRequestsTopic             string `envconfig:"WRITE_REQUESTS_TOPIC" required:"true"`
+	WriteRequestsSubscription      string `envconfig:"WRITE_REQUESTS_SUBSCRIPTION" required:"true"`
+	WriteReportsTopic              string `envconfig:"WRITE_REPORTS_TOPIC" required:"true"`
+	WriteReportsSubscriptionPrefix string `envconfig:"WRITE_REPORTS_SUBSCRIPTION_PREFIX" required:"true"`
 }
 
 // Pubsub implements beneath.StreamsDriver
@@ -35,7 +33,7 @@ type Pubsub struct {
 	config             *configSpecification
 	Client             *pubsub.Client
 	WriteRequestsTopic *pubsub.Topic
-	MetricsTopic       *pubsub.Topic
+	WriteReportsTopic  *pubsub.Topic
 }
 
 // New returns a new
@@ -67,14 +65,14 @@ func New() *Pubsub {
 		}
 	}
 
-	// create metrics topic
-	metricsTopic, err := client.CreateTopic(context.Background(), config.MetricsTopic)
+	// create write reports topic
+	writeReportsTopic, err := client.CreateTopic(context.Background(), config.WriteReportsTopic)
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
 			log.Panicf("error creating topic: %v", err)
 		} else {
-			metricsTopic = client.Topic(config.MetricsTopic)
+			writeReportsTopic = client.Topic(config.WriteReportsTopic)
 		}
 	}
 
@@ -83,7 +81,7 @@ func New() *Pubsub {
 		config:             &config,
 		Client:             client,
 		WriteRequestsTopic: writeRequestsTopic,
-		MetricsTopic:       metricsTopic,
+		WriteReportsTopic:  writeReportsTopic,
 	}
 }
 
@@ -159,30 +157,10 @@ func (p *Pubsub) ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
 	return err
 }
 
-// get WriteRequests subscription
-func (p *Pubsub) getWriteRequestsSubscription() *pubsub.Subscription {
-	// create/get subscriber to topic
-	subscription, err := p.Client.CreateSubscription(context.Background(), p.config.WriteRequestsSubscription, pubsub.SubscriptionConfig{
-		Topic:       p.WriteRequestsTopic,
-		AckDeadline: 20 * time.Second,
-	})
-
-	if err != nil {
-		status, ok := status.FromError(err)
-		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating subscription: %v", err)
-		} else {
-			subscription = p.Client.Subscription(p.config.WriteRequestsSubscription)
-		}
-	}
-
-	return subscription
-}
-
-// QueueMetricsMessage implements beneath.StreamsDriver
-func (p *Pubsub) QueueMetricsMessage(metrics *pb.StreamMetricsPacket) error {
+// QueueWriteReport implements beneath.StreamsDriver
+func (p *Pubsub) QueueWriteReport(rep *pb.WriteRecordsReport) error {
 	// encode message
-	msg, err := proto.Marshal(metrics)
+	msg, err := proto.Marshal(rep)
 	if err != nil {
 		log.Panicf("error marshalling Metrics: %v", err)
 	}
@@ -190,14 +168,14 @@ func (p *Pubsub) QueueMetricsMessage(metrics *pb.StreamMetricsPacket) error {
 	// check encoded message size
 	if len(msg) > p.GetMaxMessageSize() {
 		return fmt.Errorf(
-			"metrics have invalid size <%d> (max message size is <%d bytes>)",
+			"write report has invalid size <%d> (max message size is <%d bytes>)",
 			len(msg), p.GetMaxMessageSize(),
 		)
 	}
 
 	// push
 	ctx := context.Background()
-	result := p.MetricsTopic.Publish(ctx, &pubsub.Message{
+	result := p.WriteReportsTopic.Publish(ctx, &pubsub.Message{
 		Data: []byte(msg),
 	})
 
@@ -206,40 +184,39 @@ func (p *Pubsub) QueueMetricsMessage(metrics *pb.StreamMetricsPacket) error {
 	return err
 }
 
-// ReadMetricsMessage implements beneath.StreamsDriver
-func (p *Pubsub) ReadMetricsMessage(fn func(*pb.StreamMetricsPacket) error) error {
+// ReadWriteReports implements beneath.StreamsDriver
+func (p *Pubsub) ReadWriteReports(fn func(*pb.WriteRecordsReport) error) error {
 	// prepare subscription and context
-	subscriberID := "0" // TODO: make this dynamic
-	sub := p.getMetricsSubscription(subscriberID)
+	sub := p.getWriteReportsSubscription()
 	cctx, cancel := context.WithCancel(context.Background())
 
 	// receive pubsub messages forever (or until error occurs)
 	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		// called for every single message on pubsub
-		// these messages will have been written by QueueMetricsMessage
+		// ack the message -- all processing finished successfully
+		msg.Ack()
 
-		// unmarshal metrics from pubsub
-		metrics := &pb.StreamMetricsPacket{}
-		err := proto.Unmarshal(msg.Data, metrics)
+		// called for every single message on pubsub
+		// these messages will have been written by QueueWriteReport
+
+		// unmarshal write report from pubsub
+		rep := &pb.WriteRecordsReport{}
+		err := proto.Unmarshal(msg.Data, rep)
 		if err != nil {
 			// standard error handling for pubsub library
-			log.Printf("couldn't unmarshal metrics: %s", err.Error())
+			log.Printf("couldn't unmarshal write report: %s", err.Error())
 			cancel()
 			return
 		}
 
 		// trigger callback function
-		err = fn(metrics)
+		err = fn(rep)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
 			// log error and cancel
-			log.Printf("couldn't process metrics: %s", err.Error())
+			log.Printf("couldn't process write report: %s", err.Error())
 			cancel()
 			return
 		}
-
-		// ack the message -- all processing finished successfully
-		msg.Ack()
 	})
 
 	// pubsub stopped listening for new messages for some reason
@@ -247,35 +224,38 @@ func (p *Pubsub) ReadMetricsMessage(fn func(*pb.StreamMetricsPacket) error) erro
 	return err
 }
 
-// get Metrics subscription for the relevant subscriber
-func (p *Pubsub) getMetricsSubscription(subscriberID string) *pubsub.Subscription {
-	// get relevant subscriber config
-	subName := ""
-	switch subscriberID {
-	case "0":
-		subName = p.config.MetricsSubscription0
-	case "1":
-		subName = p.config.MetricsSubscription1
-	case "2":
-		subName = p.config.MetricsSubscription2
-	default:
-		log.Fatalf("Could not create subscriber to Metrics topic: unrecognized subscriberID")
-	}
-
+// getSubscription finds or creates a topic subscription
+func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Subscription {
 	// create/get subscriber to topic
-	subscription, err := p.Client.CreateSubscription(context.Background(), subName, pubsub.SubscriptionConfig{
-		Topic:       p.MetricsTopic,
+	subscription, err := p.Client.CreateSubscription(context.Background(), subname, pubsub.SubscriptionConfig{
+		Topic:       topic,
 		AckDeadline: 20 * time.Second,
 	})
 
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating subscription: %v", err)
+			log.Panicf("error creating subscription '%s': %v", subname, err)
 		} else {
-			subscription = p.Client.Subscription(subName)
+			subscription = p.Client.Subscription(subname)
 		}
 	}
 
 	return subscription
+}
+
+// get subscription for WriteRequests
+func (p *Pubsub) getWriteRequestsSubscription() *pubsub.Subscription {
+	return p.getSubscription(p.WriteRequestsTopic, p.config.WriteRequestsSubscription)
+}
+
+// get Metrics subscription for the relevant subscriber
+func (p *Pubsub) getWriteReportsSubscription() *pubsub.Subscription {
+	subname := fmt.Sprintf("%s-%s", p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
+	sub := p.getSubscription(p.WriteReportsTopic, subname)
+	err := sub.SeekToTime(context.Background(), time.Now())
+	if err != nil {
+		log.Panicf("error seeking on subscription '%s': %v", subname, err)
+	}
+	return sub
 }

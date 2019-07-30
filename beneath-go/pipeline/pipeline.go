@@ -107,7 +107,7 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// publish metrics packet; the keys in the packet will be used to stream data via the gateway's websocket
-	err := Engine.Streams.QueueMetricsMessage(&pb.StreamMetricsPacket{
+	err := Engine.Streams.QueueWriteReport(&pb.StreamMetricsPacket{
 		InstanceId:   instanceID.Bytes(),
 		Keys:         keys,
 		BytesWritten: bytesWritten,

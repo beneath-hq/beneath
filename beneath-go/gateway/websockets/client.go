@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/beneath-core/beneath-go/control/model"
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -14,6 +17,13 @@ type Client struct {
 
 	// The websocket connection
 	WS *websocket.Conn
+
+	// Key used by client to authenticate
+	Key *model.Key
+
+	// Tracks the client's instance subscriptions (queries) and their IDs
+	Subscriptions map[string]uuid.UUID // TODO: need extra map for both way lookup
+	// Subscriptions map[uuid.UUID]string // TODO: come up with names
 
 	// Buffered channel of outbound messages to users
 	Outbound chan WebsocketMessage
@@ -26,6 +36,7 @@ type WebsocketMessage struct {
 	Payload map[string]interface{} `json:"payload,omitempty"` // json.RawMessage?
 }
 
+// List of potential values for WebsocketMessage.Type
 const (
 	connectionInitMsgType      = "connection_init"      // Client -> Server
 	connectionTerminateMsgType = "connection_terminate" // Client -> Server
@@ -39,8 +50,8 @@ const (
 	connectionKeepAliveMsgType = "ka"                   // Server -> Client
 )
 
-// newClient initializes a new client
-func newClient(broker *Broker, ws *websocket.Conn) *Client {
+// NewClient initializes a new client
+func NewClient(broker *Broker, ws *websocket.Conn, key *model.Key) *Client {
 	// TODO: revisit WS connection configuration
 	// ws.SetReadLimit(maxMessageSize)
 	// ws.SetReadDeadline(time.Now().Add(pongWait))
@@ -48,9 +59,11 @@ func newClient(broker *Broker, ws *websocket.Conn) *Client {
 	// ws.SetWriteDeadline(time.Now().Add(writeWait))
 
 	client := &Client{
-		Broker:   broker,
-		WS:       ws,
-		Outbound: make(chan WebsocketMessage, 256),
+		Broker:        broker,
+		WS:            ws,
+		Key:           key,
+		Subscriptions: make(map[string]uuid.UUID),
+		Outbound:      make(chan WebsocketMessage, 256),
 	}
 
 	// start background workers
@@ -58,6 +71,26 @@ func newClient(broker *Broker, ws *websocket.Conn) *Client {
 	go client.beginWriting()
 
 	return client
+}
+
+// SendData sends a data message type to the user
+func (c *Client) SendData(id string, payload map[string]interface{}) {
+	c.Outbound <- WebsocketMessage{
+		Type:    dataMsgType,
+		ID:      id,
+		Payload: payload,
+	}
+}
+
+// SendError sends an error WebsocketMessage to the user
+func (c *Client) SendError(id string, msg string) {
+	c.Outbound <- WebsocketMessage{
+		Type: errorMsgType,
+		ID:   id,
+		Payload: map[string]interface{}{
+			"message": msg,
+		},
+	}
 }
 
 // close decomissions the client
@@ -87,10 +120,8 @@ func (c *Client) beginReading() {
 		// parse message as WebsocketMessage
 		var msg WebsocketMessage
 		err = json.Unmarshal(data, &msg)
-		errmessage := make(map[string]interface{})
 		if err != nil {
-			errmessage["message"] = "couldn't parse message as json"
-			c.sendError("", errmessage)
+			c.SendError("", "couldn't parse message as json")
 			continue
 		}
 
@@ -149,23 +180,5 @@ func (c *Client) beginWriting() {
 				return
 			}
 		}
-	}
-}
-
-// sends a data message type to the user
-func (c *Client) sendData(id string, payload map[string]interface{}) {
-	c.Outbound <- WebsocketMessage{
-		Type:    dataMsgType,
-		ID:      id,
-		Payload: payload,
-	}
-}
-
-// sendError sends an error WebsocketMessage to the user
-func (c *Client) sendError(id string, payload map[string]interface{}) {
-	c.Outbound <- WebsocketMessage{
-		Type:    errorMsgType,
-		ID:      id,
-		Payload: payload,
 	}
 }

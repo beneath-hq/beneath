@@ -19,12 +19,11 @@ type StreamsDriver interface {
 	// ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
 	ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
 
-	// QueueMetricsMessage publishes a batch of keys + metrics to the streams driver
-	// TODO: the batch of keys will have multiple instance ids within it map[uuid.UUID][][]byte (map[instanceId]encodedKey)?
-	QueueMetricsMessage(metrics *pb.StreamMetricsPacket) error
+	// QueueWriteReport publishes a batch of keys + metrics to the streams driver
+	QueueWriteReport(rep *pb.WriteRecordsReport) error
 
-	// ReadMetricsMessage reads messages from the Metrics topic
-	ReadMetricsMessage(fn func(*pb.StreamMetricsPacket) error) error
+	// ReadWriteReports reads messages from the Metrics topic
+	ReadWriteReports(fn func(*pb.WriteRecordsReport) error) error
 }
 
 // TablesDriver defines the functions necessary to encapsulate Beneath's operational datastore needs
