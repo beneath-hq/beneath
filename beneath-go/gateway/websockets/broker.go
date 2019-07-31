@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/beneath-core/beneath-go/control/auth"
 
@@ -128,56 +129,91 @@ func (b *Broker) registerClient(c *Client) {
 // remove a client
 func (b *Broker) unregisterClient(c *Client) {
 	if _, ok := b.clients[c]; ok {
-		// TODO: remove all subscriptions
+		// remove client from all instance subscriptions
+		for instanceID := range c.InstancesToIDs {
+			index := getIndex(b.instanceSubscriptions[instanceID], c)
+			if index != -1 {
+				b.instanceSubscriptions[instanceID] = remove(b.instanceSubscriptions[instanceID], index)
+			}
+		}
+
+		// clear the client's mappings
+		c.IDsToInstances = make(map[string]uuid.UUID)
+		c.InstancesToIDs = make(map[uuid.UUID]string)
+
+		// delete client from the broker's client list
 		delete(b.clients, c)
 	}
 }
 
 // process a client request
 func (b *Broker) processRequest(r Request) {
-	/*
-		// PSEUDOCODE
+	// use the request's message type to process it accordingly
+	switch r.Message.Type {
+	case connectionInitMsgType:
+		// TODO
+	case connectionTerminateMsgType:
+		// TODO
+	case startMsgType:
+		// get instanceID that the user would like to subscribe to
+		instanceID := uuid.FromStringOrNil(r.Message.Payload["instance_id"].(string))
 
-		// get id, payload (parse instanceID), type from r
+		// get instanceID info
+		stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+		if stream == nil {
+			r.Client.SendError("", "Error! That instance_id doesn't exist.")
+			return
+		}
 
-		// type is either startMsgType or stopMsgType
-
-		// IF startMsgType
-
-		stream := ... from instanceID
-
-		if r.Client.Subscriptions[id] != nil {
-			// TODO IN FUTURE: What if IDs are different?
+		// check if client has already used the same ID
+		if _, ok := r.Client.IDsToInstances[r.Message.ID]; ok {
+			r.Client.SendError("", "Error! You are already using that ID.")
 			return
 		}
 
 		// check auth
 		if !r.Client.Key.ReadsProject(stream.ProjectID) {
-			// ERROR
+			r.Client.SendError("", "Error! You don't have permission to read that stream.")
+			return
 		}
 
-		// add to client subscriptions
-		r.Client.Subscriptions[id] = instanceID
+		// map the instanceID and the  1) instanceID and 2) the user's  to client subscription mappings
+		r.Client.IDsToInstances[r.Message.ID] = instanceID
+		r.Client.InstancesToIDs[instanceID] = r.Message.ID
 
-		// add to instanceSubscriptions
-		subscribed := b.instanceSubscriptions[instanceID]
+		// add client to instance subscriptions
 		if b.instanceSubscriptions[instanceID] == nil {
 			b.instanceSubscriptions[instanceID] = []*Client{r.Client}
 		} else {
 			b.instanceSubscriptions[instanceID] = append(b.instanceSubscriptions[instanceID], r.Client)
 		}
+		return
+	case stopMsgType:
+		instanceID := r.Client.IDsToInstances[r.Message.ID]
+		index := getIndex(b.instanceSubscriptions[instanceID], r.Client)
 
-		// ELSE IF stopMsgType
+		// check if client is subscribed to the stream
+		if index == -1 {
+			r.Client.SendError("", "Error! The ID you supplied is not subscribed to any stream.")
+			return
+		}
 
-		Use Client.Subscriptions to find instance ID, then use that to remove from broker.instanceSubscriptions
-	*/
-	log.Printf("Read new request: %v", r.Message)
-	// TODO: Update broker state (dispatch tables) based on client's request
-	// TODO: Use client.Key to check if allowed to read instance requested
+		// remove all subscriptions
+		b.instanceSubscriptions[instanceID] = remove(b.instanceSubscriptions[instanceID], index)
+		delete(r.Client.IDsToInstances, r.Message.ID)
+		delete(r.Client.InstancesToIDs, instanceID)
+		return
+
+	default:
+		log.Panic("unrecognized message type")
+	}
 }
 
 // process messages from pubsub (route to relevant clients)
 func (b *Broker) processMessage(rep *pb.WriteRecordsReport) {
+	// metrics to track
+	startTime := time.Now()
+
 	// lookup stream
 	instanceID := uuid.FromBytesOrNil(rep.InstanceId)
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
@@ -185,48 +221,68 @@ func (b *Broker) processMessage(rep *pb.WriteRecordsReport) {
 		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
 	}
 
-	/* TODO: Dispatch message to only the subscribed clients
-	// check for clients subscribed to the instance_id
+	// check for clients subscribed to the instanceID
 	subscribedClients := b.instanceSubscriptions[instanceID]
 
-	// if there are subscribers to the rep packet, pull the data
-	if len(subscribedClients > 0) {
-		// get values for each key
-	}
-	else return
-	*/
+	// only proceed if there are subscribers
+	if len(subscribedClients) > 0 {
+		// initialize the records object that will be sent to clients
+		records := make([]map[string]interface{}, len(rep.Keys))
 
-	// initialize records object
-	records := make([]map[string]interface{}, len(rep.Keys))
+		// read records from the Tables driver, decode the values, and assign the keys to values
+		err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
+			// decode the avro data
+			dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
+			if err != nil {
+				return fmt.Errorf("unable to decode avro data")
+			}
 
-	// make new ReadRecords function
-	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
-		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
+			// assert that the decoded data is a map
+			data, ok := dataT.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+			}
+
+			// assign key to value
+			records[idx] = data
+
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("unable to decode avro data")
+			log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
 		}
 
-		// assert that the decoded data is a map
-		data, ok := dataT.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+		// loop through all the subscribed clients
+		for _, client := range subscribedClients {
+			id := client.InstancesToIDs[instanceID]
+			// loop through records and send one at a time
+			for _, record := range records {
+				client.SendData(id, record)
+			}
 		}
 
-		// assign key to value
-		records[idx] = data
+		// finalize metrics
+		elapsed := time.Since(startTime)
 
-		return nil
-	})
-	if err != nil {
-		log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
+		// log: number of clients sent to, number of rows sent, time elapsed, instance id
+		log.Printf("Message sent to client(s). Number of clients: %d, Number of rows: %d, Time elapsed: %s, InstanceID: %s",
+			len(subscribedClients), len(records), elapsed, instanceID.String())
 	}
+	return
+}
 
-	// TODO: for i, client := range subscribedClients {
-	for client := range b.clients {
-		// loop through records and send one at a time
-		for _, record := range records {
-			client.SendData("gotten from client", record)
+// get index of element in Client list
+func getIndex(slice []*Client, client *Client) int {
+	for i, v := range slice {
+		if v == client {
+			return i
 		}
 	}
+	return -1
+}
+
+// remove client from Client list
+func remove(s []*Client, i int) []*Client {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }

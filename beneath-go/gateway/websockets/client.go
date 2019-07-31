@@ -22,8 +22,8 @@ type Client struct {
 	Key *model.Key
 
 	// Tracks the client's instance subscriptions (queries) and their IDs
-	Subscriptions map[string]uuid.UUID // TODO: need extra map for both way lookup
-	// Subscriptions map[uuid.UUID]string // TODO: come up with names
+	IDsToInstances map[string]uuid.UUID // TODO: need extra map for both way lookup
+	InstancesToIDs map[uuid.UUID]string // TODO: come up with names
 
 	// Buffered channel of outbound messages to users
 	Outbound chan WebsocketMessage
@@ -50,25 +50,32 @@ const (
 	connectionKeepAliveMsgType = "ka"                   // Server -> Client
 )
 
+// Configuration settings for websocket
+const (
+	// Maximum message size allowed from client
+	maxMessageSize = 256
+)
+
 // NewClient initializes a new client
 func NewClient(broker *Broker, ws *websocket.Conn, key *model.Key) *Client {
-	// TODO: revisit WS connection configuration
-	// ws.SetReadLimit(maxMessageSize)
-	// ws.SetReadDeadline(time.Now().Add(pongWait))
-	// ws.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	// ws.SetWriteDeadline(time.Now().Add(writeWait))
+	// set WS connection configuration
+	ws.SetReadLimit(maxMessageSize)
+	// ws.SetReadDeadline(time.Now().Add(readWait)) // do we want to cut people off after a certain amount of time?
 
 	client := &Client{
-		Broker:        broker,
-		WS:            ws,
-		Key:           key,
-		Subscriptions: make(map[string]uuid.UUID),
-		Outbound:      make(chan WebsocketMessage, 256),
+		Broker:         broker,
+		WS:             ws,
+		Key:            key,
+		IDsToInstances: make(map[string]uuid.UUID),
+		InstancesToIDs: make(map[uuid.UUID]string),
+		Outbound:       make(chan WebsocketMessage, 256),
 	}
 
 	// start background workers
 	go client.beginReading()
 	go client.beginWriting()
+
+	log.Printf("New client connected. Client IP: %v", client.WS.RemoteAddr())
 
 	return client
 }
@@ -97,8 +104,8 @@ func (c *Client) SendError(id string, msg string) {
 func (c *Client) close() {
 	c.Broker.Unregister <- c
 	c.WS.Close()
-	close(c.Outbound)
-	// TODO: Log closed connection
+	// close(c.Outbound)  // this was triggering "panic close of closed channel"
+	log.Printf("Closed connection. Client IP: %v", c.WS.RemoteAddr())
 }
 
 // beginReading relays requests from the websocket connection to the broker
@@ -124,6 +131,9 @@ func (c *Client) beginReading() {
 			c.SendError("", "couldn't parse message as json")
 			continue
 		}
+
+		// log information about client message
+		log.Printf("Message received from client. Client IP: %v, Message Type: %v, Message Size: %d bytes", c.WS.RemoteAddr(), msg.Type, len(data))
 
 		// send user request to broker
 		c.Broker.Requests <- Request{

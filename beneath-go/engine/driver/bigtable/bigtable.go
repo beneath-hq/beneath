@@ -125,7 +125,6 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 	}
 
 	// read rows
-	log.Print("reading rows: ", rl)
 	err := p.Records.ReadRows(context.Background(), rl, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 	if err != nil {
 		return err

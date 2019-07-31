@@ -253,9 +253,10 @@ func (p *Pubsub) getWriteRequestsSubscription() *pubsub.Subscription {
 func (p *Pubsub) getWriteReportsSubscription() *pubsub.Subscription {
 	subname := fmt.Sprintf("%s-%s", p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
 	sub := p.getSubscription(p.WriteReportsTopic, subname)
-	err := sub.SeekToTime(context.Background(), time.Now())
-	if err != nil {
-		log.Panicf("error seeking on subscription '%s': %v", subname, err)
-	}
+	// SeekToTime does not appear to be implemented on the emulator
+	// err := sub.SeekToTime(context.Background(), time.Now())
+	// if err != nil {
+	// 	log.Panicf("error seeking on subscription '%s': %v", subname, err)
+	// }
 	return sub
 }
