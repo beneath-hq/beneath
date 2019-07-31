@@ -2,6 +2,7 @@ import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, defaultDataIdFromObj
 import { ErrorLink } from "apollo-link-error";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
+import { resolvers, typeDefs } from "./schema";
 
 let apolloClient = null;
 
@@ -36,6 +37,8 @@ const createApolloClient = ({ initialState, token, res }) => {
     ssrMode: !process.browser,
     cache: new InMemoryCache({ dataIdFromObject }).restore(initialState || {}),
     link: ApolloLink.from([new ErrorLink(errorHook), new HttpLink(linkOptions)]),
+    typeDefs,
+    resolvers,
   };
 
   return new ApolloClient(apolloOptions);
@@ -56,6 +59,8 @@ const dataIdFromObject = (object) => {
       return `${object.projectID}`;
     case "Stream":
       return `${object.streamID}`;
+    case "Record":
+      return `${object.recordID}`;
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);
