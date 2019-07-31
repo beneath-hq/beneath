@@ -35,6 +35,8 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
     projectName: stream.project.name,
     streamName: stream.name,
     keyFields: schema.keyFields,
+    limit: 100,
+    where: null,
   };
 
   return (
@@ -68,3 +70,5 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
 };
 
 export default ExploreStream;
+
+

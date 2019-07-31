@@ -3,6 +3,7 @@ import { ErrorLink } from "apollo-link-error";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
 import { resolvers, typeDefs } from "./schema";
+import { GET_TOKEN } from "./queries/local/token";
 
 let apolloClient = null;
 
@@ -32,11 +33,14 @@ const createApolloClient = ({ initialState, token, res }) => {
     };
   }
 
+  const cache = new InMemoryCache({ dataIdFromObject }).restore(initialState || {});
+  cache.writeQuery({ query: GET_TOKEN, data: { token } });
+
   const apolloOptions = {
     connectToDevTools: process.browser && !IS_PRODUCTION,
     ssrMode: !process.browser,
-    cache: new InMemoryCache({ dataIdFromObject }).restore(initialState || {}),
     link: ApolloLink.from([new ErrorLink(errorHook), new HttpLink(linkOptions)]),
+    cache,
     typeDefs,
     resolvers,
   };

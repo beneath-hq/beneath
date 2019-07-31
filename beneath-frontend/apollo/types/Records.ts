@@ -21,4 +21,6 @@ export interface RecordsVariables {
   projectName: string;
   streamName: string;
   keyFields: string[];
+  limit: number;
+  where?: ControlJSON | null;
 }
