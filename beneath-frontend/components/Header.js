@@ -65,7 +65,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
         </Tabs>
         {/* Login-specific stuff */}
         <TokenConsumer>
-          {({ token }) => {
+          {(token) => {
             return (
               <React.Fragment>
                 {!token && (
