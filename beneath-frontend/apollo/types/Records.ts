@@ -9,7 +9,7 @@
 export interface Records_records {
   __typename: "Record";
   recordID: string;
-  data: string;
+  data: ControlJSON;
   sequenceNumber: string;
 }
 
@@ -18,5 +18,7 @@ export interface Records {
 }
 
 export interface RecordsVariables {
-  instanceID: ControlUUID;
+  projectName: string;
+  streamName: string;
+  keyFields: string[];
 }

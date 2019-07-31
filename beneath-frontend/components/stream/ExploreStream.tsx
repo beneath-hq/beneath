@@ -28,54 +28,42 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const ExploreStream: FC<QueryStream> = ({ stream }) => {
+  const classes = useStyles();
   const schema = new Schema(stream);
 
-  // const [data, setData] = useState({ records: [] });
+  const vars: RecordsVariables = {
+    projectName: stream.project.name,
+    streamName: stream.name,
+    keyFields: schema.keyFields,
+  };
 
-  // useEffect(() => {
-  //   const fetchRecords = async () => {
-  //     const url = `${connection.GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}`;
-  //     const res = await fetch(url);
-  //     const json = await res.json();
-  //     setData({
-  //       records: data.records.concat(json)
-  //     });
-  //   };
-
-  //   fetchRecords();
-  // }, []);
-
-  const classes = useStyles();
   return (
-    <Table className={classes.table} size="small">
-      <TableHead>
-        <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell())}</TableRow>
-      </TableHead>
-      <TableBody>
-        <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={{ instanceID: stream.streamID }}>
-          {({ loading, error, data }) => {
-            if (loading) {
-              return <Loading justify="center" />;
-            }
+    <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={vars}>
+      {({ loading, error, data }) => {
+        if (loading) {
+          return <Loading justify="center" />;
+        }
 
-            if (error || data === undefined) {
-              return <p>Error: {JSON.stringify(error)}</p>;
-            }
+        if (error || data === undefined) {
+          return <p>Error: {JSON.stringify(error)}</p>;
+        }
 
-            // return (
-            //   <>
-            //     {data.records.map((record) => (
-            //     <TableRow key={schema.makeUniqueIdentifier(record)}>
-            //       {schema.columns.map((column) => column.makeTableCell(record))}
-            //     </TableRow>
-            //   ))}
-            //   </>
-            // );
-            return (<p>{data.records[0].data}</p>);
-          }}
-        </Query>
-      </TableBody>
-    </Table>
+        return (
+          <Table className={classes.table} size="small">
+            <TableHead>
+              <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell())}</TableRow>
+            </TableHead>
+            <TableBody>
+              {data.records.map((record) => (
+              <TableRow key={record.recordID}>
+                {schema.columns.map((column) => column.makeTableCell(record.data))}
+              </TableRow>
+            ))}
+            </TableBody>
+          </Table>
+        );
+      }}
+    </Query>
   );
 };
 

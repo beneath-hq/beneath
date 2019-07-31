@@ -15,10 +15,6 @@ export class Schema {
       this.columns.push(new Column(field.name, field.type));
     }
   }
-
-  public makeUniqueIdentifier(record: any) {
-    return this.keyFields.reduce((prev, curr) => `${record[prev]}-${record[curr]}`, "");
-  }
 }
 
 class Column {
@@ -45,6 +41,9 @@ class Column {
   }
 
   private formatValue(val: any) {
-    return val.toString();
+    if (val !== undefined && val !== null) {
+      return val.toString();
+    }
+    return "";
   }
 }
