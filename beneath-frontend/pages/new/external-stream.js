@@ -14,8 +14,8 @@ import SelectField from "../../components/SelectField";
 import CheckboxField from "../../components/CheckboxField";
 import Page from "../../components/Page";
 import withMe from "../../hocs/withMe";
-import { QUERY_PROJECT } from "../../queries/project";
-import { CREATE_EXTERNAL_STREAM } from "../../queries/stream";
+import { QUERY_PROJECT } from "../../apollo/queries/project";
+import { CREATE_EXTERNAL_STREAM } from "../../apollo/queries/stream";
 
 const handleTabInput = (e) => {
   if (e.keyCode === 9) { // 9 = tab key

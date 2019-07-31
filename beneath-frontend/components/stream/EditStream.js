@@ -11,7 +11,7 @@ import { makeStyles } from "@material-ui/core";
 import VSpace from "../VSpace";
 import CheckboxField from "../CheckboxField";
 
-import { UPDATE_STREAM } from "../../queries/stream";
+import { UPDATE_STREAM } from "../../apollo/queries/stream";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

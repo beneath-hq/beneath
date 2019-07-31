@@ -15,7 +15,7 @@ import ViewProjects from "../components/user/ViewProjects";
 import { ManageUserKeys } from "../components/key/ManageKeys";
 
 import withMe from "../hocs/withMe";
-import { QUERY_USER } from "../queries/user";
+import { QUERY_USER } from "../apollo/queries/user";
 
 const useStyles = makeStyles((theme) => ({
 }));

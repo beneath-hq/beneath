@@ -1,15 +1,15 @@
 import React, { FunctionComponent } from "react";
 import { Query } from "react-apollo";
 
-import { QUERY_ME } from "../queries/user";
+import { QUERY_ME } from "../apollo/queries/user";
 import { TokenConsumer } from "./auth";
 
-import { Me } from "../types/generated/Me";
+import { Me } from "../apollo/types/Me";
 
 const withMe = <P extends object>(Component: React.ComponentType<P & Me>): FunctionComponent<P> => {
   return (props: P) => (
     <TokenConsumer>
-      {({ token }) => {
+      {(token) => {
         if (token) {
           return (
             <Query<Me> query={QUERY_ME}>
@@ -26,11 +26,11 @@ const withMe = <P extends object>(Component: React.ComponentType<P & Me>): Funct
         } else {
           return (
             <Component {...props} me={null} />
-          )
+          );
         }
       }}
     </TokenConsumer>
   );
-}
+};
 
 export default withMe;

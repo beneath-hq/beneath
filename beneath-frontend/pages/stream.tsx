@@ -7,13 +7,14 @@ import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
+import ExploreStream from "../components/stream/ExploreStream";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditStream from "../components/stream/EditStream";
 
-import { QUERY_STREAM } from "../queries/stream";
+import { QUERY_STREAM } from "../apollo/queries/stream";
 
-import { QueryStream, QueryStreamVariables } from "../types/generated/QueryStream"
+import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream"
 
 interface IProps {
   router: SingletonRouter;
@@ -40,12 +41,12 @@ const StreamPage: FC<IProps> = ({ router }) => {
           // TODO!
 
           const tabs = [
-            { value: "explore", label: "Explore", render: () => (<p>Explore here</p>) },
-            { value: "streaming", label: "Streaming", render: () => (<p>Streaming here</p>) },
-            { value: "api", label: "API", render: () => (<p>API here</p>) },
-            { value: "bigquery", label: "BigQuery", render: () => (<p>BigQuery here</p>) },
-            { value: "write", label: "Write", render: () => (<p>Write here</p>) },
-            { value: "edit", label: "Edit", render: () => (<EditStream stream={stream} />) },
+            { value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> },
+            { value: "streaming", label: "Streaming", render: () => <p>Streaming here</p> },
+            { value: "api", label: "API", render: () => <p>API here</p> },
+            { value: "bigquery", label: "BigQuery", render: () => <p>BigQuery here</p> },
+            { value: "write", label: "Write", render: () => <p>Write here</p> },
+            { value: "edit", label: "Edit", render: () => <EditStream stream={stream} /> },
           ];
 
           return (

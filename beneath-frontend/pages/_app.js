@@ -3,8 +3,7 @@ import React from "react";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import theme from "../lib/theme";
-import { withApolloClient } from "../hocs/apollo";
-import { TokenProvider, withToken } from "../hocs/auth";
+import { withApolloClient } from "../apollo/withApollo";
 import { ApolloProvider } from "react-apollo";
 
 class BeneathApp extends App {
@@ -25,14 +24,12 @@ class BeneathApp extends App {
 
     return (
       <Container>
-        <TokenProvider token={token}>
-          <ApolloProvider client={apolloClient}>
-            <ThemeProvider theme={theme}>
-              <CssBaseline />
-              <Component {...pageProps} />
-            </ThemeProvider>
-          </ApolloProvider>
-        </TokenProvider>
+        <ApolloProvider client={apolloClient}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Component {...pageProps} />
+          </ThemeProvider>
+        </ApolloProvider>
       </Container>
     );
   }

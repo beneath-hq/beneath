@@ -10,7 +10,7 @@ import isUrl from "validator/lib/isUrl";
 
 import VSpace from "../VSpace";
 
-import { UPDATE_PROJECT } from "../../queries/project";
+import { UPDATE_PROJECT } from "../../apollo/queries/project";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {

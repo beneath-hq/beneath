@@ -1,38 +1,33 @@
 import React, { FunctionComponent } from "react";
+import { Query } from "react-apollo";
+
+import { GET_TOKEN } from "../apollo/queries/local/token";
+import { Token } from "../apollo/types/Token";
 import Error from "../pages/_error";
 
-interface TokenContextInterface {
-  token: string | null;
+interface ITokenConsumerProps {
+  children: (token: string | null) => React.ReactNode;
 }
 
-const TokenContext = React.createContext<TokenContextInterface>({
-  token: null
-});
-
-interface TokenProviderProps {
-  token: string;
-}
-
-export const TokenProvider: FunctionComponent<TokenProviderProps> = (props) => {
+export const TokenConsumer: FunctionComponent<ITokenConsumerProps> = (props) => {
   return (
-    <TokenContext.Provider value={{token: props.token}}>
-      { props.children }
-    </TokenContext.Provider>
-  )
-}
-
-interface TokenConsumerProps {
-  children: (value: TokenContextInterface) => React.ReactNode;
-}
-
-export const TokenConsumer: FunctionComponent<TokenConsumerProps> = (props) => {
-  return <TokenContext.Consumer>{ props.children }</TokenContext.Consumer>;
-}
+    <Query<Token> query={GET_TOKEN}>
+      {({ loading, error, data }) => {
+        if (data) {
+          const { token } = data;
+          return props.children(token);
+        } else {
+          return props.children(null);
+        }
+      }}
+    </Query>
+  );
+};
 
 export const AuthRequired: FunctionComponent = (props) => {
   return (
     <TokenConsumer>
-      {({ token }) => {
+      {(token) => {
         if (token) {
           return props.children;
         } else {

@@ -8,8 +8,8 @@ import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import { makeStyles } from "@material-ui/core/styles";
 
+import { Me } from "../apollo/types/Me";
 import withMe from "../hocs/withMe";
-import { Me } from "../types/generated/Me";
 import Avatar from "./Avatar";
 import NextMuiLink from "./NextMuiLink";
 
