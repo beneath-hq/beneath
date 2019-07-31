@@ -19,15 +19,18 @@ import VSpace from "../VSpace";
 import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  table: {
+  paper: {
     width: "100%",
+    overflowX: "auto",
+  },
+  table: {
   },
   submitButton: {
     marginTop: theme.spacing(3),
   },
   cell: {
-    "borderBottom": `1px solid ${theme.palette.divider}`,
-    "borderLeft": `1px solid ${theme.palette.divider}`,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    borderLeft: `1px solid ${theme.palette.divider}`,
     "&:first-child": {
       borderLeft: "none",
     },
@@ -114,20 +117,22 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
           tableElem = <Loading justify="center" />;
         } else {
           tableElem = (
-            <Table className={classes.table} size="small">
-              <TableHead>
-                <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell(classes.cell))}</TableRow>
-              </TableHead>
-              <TableBody>
-                {data &&
-                  data.records.data &&
-                  data.records.data.map((record) => (
-                    <TableRow key={record.recordID} hover={true}>
-                      {schema.columns.map((column) => column.makeTableCell(record.data, classes.cell))}
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
+            <div className={classes.paper}>
+              <Table className={classes.table} size="small">
+                <TableHead>
+                  <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell(classes.cell))}</TableRow>
+                </TableHead>
+                <TableBody>
+                  {data &&
+                    data.records.data &&
+                    data.records.data.map((record) => (
+                      <TableRow key={record.recordID} hover={true}>
+                        {schema.columns.map((column) => column.makeTableCell(record.data, classes.cell))}
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
           );
         }
 
