@@ -55,6 +55,9 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 			token := strings.TrimSpace(header[6:])
 
 			key = model.AuthenticateKeyString(token)
+			if key == nil {
+				return httputil.NewError(400, "invalid authorization token")
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), ContextKey{}, key)
