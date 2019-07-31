@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/core/codec"
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/bluele/gcache"
 	"github.com/go-pg/pg"
 	"github.com/go-redis/cache"
@@ -43,16 +43,23 @@ type internalCachedStream struct {
 // MarshalBinary serializes for storage in cache
 func (c CachedStream) MarshalBinary() ([]byte, error) {
 	wrapped := internalCachedStream{
-		Public:              c.Public,
-		External:            c.External,
-		Batch:               c.Batch,
-		Manual:              c.Manual,
-		ProjectID:           c.ProjectID,
-		ProjectName:         c.ProjectName,
-		StreamName:          c.StreamName,
-		KeyFields:           c.KeyCodec.GetKeyFields(),
-		CanonicalAvroSchema: c.AvroCodec.GetSchemaString(),
+		Public:      c.Public,
+		External:    c.External,
+		Batch:       c.Batch,
+		Manual:      c.Manual,
+		ProjectID:   c.ProjectID,
+		ProjectName: c.ProjectName,
+		StreamName:  c.StreamName,
 	}
+
+	// necessary because we allow empty CachedStream objects
+	if c.KeyCodec != nil {
+		wrapped.KeyFields = c.KeyCodec.GetKeyFields()
+	}
+	if c.AvroCodec != nil {
+		wrapped.CanonicalAvroSchema = c.AvroCodec.GetSchemaString()
+	}
+
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(wrapped)
@@ -200,14 +207,20 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.ProjectName = source.ProjectName
 	target.StreamName = source.StreamName
 
-	target.AvroCodec, err = codec.NewAvro(source.CanonicalAvroSchema)
-	if err != nil {
-		return err
+	// nil checks necessary because we allow empty CachedStream objects
+
+	if source.CanonicalAvroSchema != "" {
+		target.AvroCodec, err = codec.NewAvro(source.CanonicalAvroSchema)
+		if err != nil {
+			return err
+		}
 	}
 
-	target.KeyCodec, err = codec.NewKey(source.KeyFields, target.AvroCodec.GetSchema())
-	if err != nil {
-		return err
+	if len(source.KeyFields) != 0 {
+		target.KeyCodec, err = codec.NewKey(source.KeyFields, target.AvroCodec.GetSchema())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
