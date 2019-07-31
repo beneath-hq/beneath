@@ -255,7 +255,12 @@ func (p *Pubsub) getWriteReportsSubscription() *pubsub.Subscription {
 	sub := p.getSubscription(p.WriteReportsTopic, subname)
 	err := sub.SeekToTime(context.Background(), time.Now())
 	if err != nil {
-		log.Panicf("error seeking on subscription '%s': %v", subname, err)
+		status, ok := status.FromError(err)
+		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
+			// Seek not implemented on Emulator, ignore
+		} else {
+			log.Panicf("error seeking on subscription '%s': %v", subname, err)
+		}
 	}
 	return sub
 }
