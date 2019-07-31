@@ -6,15 +6,21 @@
 // GraphQL query operation: Records
 // ====================================================
 
-export interface Records_records {
+export interface Records_records_data {
   __typename: "Record";
   recordID: string;
   data: ControlJSON;
   sequenceNumber: string;
 }
 
+export interface Records_records {
+  __typename: "RecordsResponse";
+  data: Records_records_data[] | null;
+  error: string | null;
+}
+
 export interface Records {
-  records: Records_records[];
+  records: Records_records;
 }
 
 export interface RecordsVariables {

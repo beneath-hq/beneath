@@ -13,6 +13,7 @@ export default createMuiTheme({
       paper: "rgba(35, 47, 74, 1)",
       default: "rgba(16, 24, 46, 1)",
     },
+    divider: "rgba(45, 51, 71, 1)",
     primary: {
       light: "rgba(28, 198, 234, 1)",
       main: "rgba(12, 172, 234, 1)",

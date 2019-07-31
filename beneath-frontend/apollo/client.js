@@ -65,6 +65,8 @@ const dataIdFromObject = (object) => {
       return `${object.streamID}`;
     case "Record":
       return `${object.recordID}`;
+    case "RecordsResponse":
+      return "";
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);

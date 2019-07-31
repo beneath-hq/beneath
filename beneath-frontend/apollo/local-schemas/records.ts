@@ -11,7 +11,12 @@ export const typeDefs = gql`
       keyFields: [String!]!,
       where: JSON,
       limit: Int!,
-    ): [Record!]!
+    ): RecordsResponse!
+  }
+
+  type RecordsResponse {
+    data: [Record!]
+    error: String
   }
 
   type Record {
@@ -42,15 +47,36 @@ export const resolvers = {
       const res = await fetch(url, { headers });
       const json = await res.json();
 
-      // build records objects
-      return json.map((row: any) => {
+      // check error
+      if (!res.ok) {
         return {
-          __typename: "Record",
-          recordID: makeUniqueIdentifier(keyFields, row),
-          data: row,
-          sequenceNumber: row["@meta"].sequence_number,
+          __typename: "RecordsResponse",
+          data: null,
+          error: json.error
         };
-      });
+      }
+
+      // get data as array
+      let data = json.data;
+      if (!data) {
+        data = [];
+      } else if (!Array.isArray(data)) {
+        data = [data];
+      }
+
+      // build records objects
+      return {
+        __typename: "RecordsResponse",
+        error: null,
+        data: data.map((row: any) => {
+          return {
+            __typename: "Record",
+            recordID: makeUniqueIdentifier(keyFields, row),
+            data: row,
+            sequenceNumber: row["@meta"].sequence_number,
+          };
+        }),
+      };
     },
   },
 };
