@@ -157,4 +157,4 @@ const isJSON = (val: string): boolean => {
   } catch {
     return false;
   }
-}
+};
