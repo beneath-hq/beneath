@@ -112,19 +112,20 @@ type ComplexityRoot struct {
 	}
 
 	Stream struct {
-		AvroSchema          func(childComplexity int) int
-		Batch               func(childComplexity int) int
-		CanonicalAvroSchema func(childComplexity int) int
-		CreatedOn           func(childComplexity int) int
-		Description         func(childComplexity int) int
-		External            func(childComplexity int) int
-		KeyFields           func(childComplexity int) int
-		Manual              func(childComplexity int) int
-		Name                func(childComplexity int) int
-		Project             func(childComplexity int) int
-		Schema              func(childComplexity int) int
-		StreamID            func(childComplexity int) int
-		UpdatedOn           func(childComplexity int) int
+		AvroSchema              func(childComplexity int) int
+		Batch                   func(childComplexity int) int
+		CanonicalAvroSchema     func(childComplexity int) int
+		CreatedOn               func(childComplexity int) int
+		CurrentStreamInstanceID func(childComplexity int) int
+		Description             func(childComplexity int) int
+		External                func(childComplexity int) int
+		KeyFields               func(childComplexity int) int
+		Manual                  func(childComplexity int) int
+		Name                    func(childComplexity int) int
+		Project                 func(childComplexity int) int
+		Schema                  func(childComplexity int) int
+		StreamID                func(childComplexity int) int
+		UpdatedOn               func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -601,6 +602,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.CreatedOn(childComplexity), true
 
+	case "Stream.currentStreamInstanceID":
+		if e.complexity.Stream.CurrentStreamInstanceID == nil {
+			break
+		}
+
+		return e.complexity.Stream.CurrentStreamInstanceID(childComplexity), true
+
 	case "Stream.description":
 		if e.complexity.Stream.Description == nil {
 			break
@@ -904,6 +912,7 @@ type Stream {
   batch: Boolean!
   manual: Boolean!
   project: Project!
+  currentStreamInstanceID: UUID
   createdOn: Time!
   updatedOn: Time!
 }
@@ -3497,6 +3506,40 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrentStreamInstanceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*uuid.UUID)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql.CollectedField, obj *model.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5512,6 +5555,8 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "currentStreamInstanceID":
+			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._Stream_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6496,6 +6541,29 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
+	return UnmarshalUUID(v)
+}
+
+func (ec *executionContext) marshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+	return MarshalUUID(v)
+}
+
+func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v *uuid.UUID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalOUser2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {

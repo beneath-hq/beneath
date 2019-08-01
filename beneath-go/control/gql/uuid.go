@@ -11,7 +11,9 @@ import (
 // MarshalUUID marshals the UUID custom scalar
 func MarshalUUID(id uuid.UUID) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
+		w.Write([]byte("\""))
 		w.Write([]byte(id.String()))
+		w.Write([]byte("\""))
 	})
 }
 

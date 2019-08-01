@@ -25,6 +25,7 @@ type Stream {
   batch: Boolean!
   manual: Boolean!
   project: Project!
+  currentStreamInstanceID: UUID
   createdOn: Time!
   updatedOn: Time!
 }
