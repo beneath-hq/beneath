@@ -239,14 +239,10 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// prepare write (we'll be writing as we get data, not in one batch)
-	unique := keyRange.CheckUnique()
-	noComma := true
 	w.Header().Set("Content-Type", "application/json")
 
-	// begin json array
-	if !unique {
-		w.Write([]byte("["))
-	}
+	// begin json object
+	result := make([]interface{}, 0, 1)
 
 	// read rows from engine
 	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
@@ -259,35 +255,32 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		// set sequence number
 		data.(map[string]interface{})["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
 
-		// encode json
-		packet, err := jsonutil.Marshal(data)
-		if err != nil {
-			return err
-		}
-
-		// write comma for multiple
-		if noComma {
-			noComma = false
-		} else {
-			w.Write([]byte(","))
-		}
-
-		// write packet
-		w.Write(packet)
-
 		// done
+		result = append(result, data)
 		return nil
 	})
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}
 
-	// close off written json array
-	if !unique {
-		w.Write([]byte("]"))
+	// prepare result for encoding
+	var encode interface{}
+	if keyRange.CheckUnique() {
+		if len(result) > 0 {
+			encode = map[string]interface{}{"data": result[0]}
+		} else {
+			encode = map[string]interface{}{"data": nil}
+		}
+	} else {
+		encode = map[string]interface{}{"data": result}
 	}
 
-	// done
+	// write and finish
+	err = jsonutil.MarshalWriter(encode, w)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

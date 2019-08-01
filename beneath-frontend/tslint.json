@@ -25,6 +25,10 @@
       {
         "order": "fields-first"
       }
+    ],
+    "object-literal-key-quotes": [
+      true,
+      "as-needed"
     ]
   },
   "rulesDirectory": []

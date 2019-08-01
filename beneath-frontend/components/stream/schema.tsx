@@ -31,13 +31,17 @@ class Column {
     return t === "int" || t === "long" || t === "float" || t === "double";
   }
 
-  public makeTableHeaderCell() {
-    return <TableCell key={this.name}>{this.name}</TableCell>;
+  public makeTableHeaderCell(className: string | undefined) {
+    return <TableCell key={this.name} className={className}>{this.name}</TableCell>;
   }
 
-  public makeTableCell(record: any) {
+  public makeTableCell(record: any, className: string | undefined) {
     const align = this.isNumeric() ? "right" : "left";
-    return <TableCell key={this.name} align={align}>{this.formatValue(record[this.name])}</TableCell>;
+    return (
+      <TableCell key={this.name} className={className} align={align}>
+        {this.formatValue(record[this.name])}
+      </TableCell>
+    );
   }
 
   private formatValue(val: any) {

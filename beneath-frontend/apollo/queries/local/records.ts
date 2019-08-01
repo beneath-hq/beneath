@@ -15,9 +15,12 @@ export const QUERY_RECORDS = gql`
       limit: $limit,
       where: $where
     ) @client {
-      recordID
-      data
-      sequenceNumber
+      data {
+        recordID
+        data
+        sequenceNumber
+      }
+      error
     }
   }
 `;

@@ -14,6 +14,12 @@ func Marshal(v interface{}) ([]byte, error) {
 	return json.Marshal(v)
 }
 
+// MarshalWriter is similar to Marshal, but encodes directly to a writer
+func MarshalWriter(v interface{}, w io.Writer) error {
+	enc := json.NewEncoder(w)
+	return enc.Encode(v)
+}
+
 // Unmarshal is similar to json.Unmarshal, but decodes numbers as json.Number instead of float64
 func Unmarshal(r io.Reader, v interface{}) error {
 	dec := json.NewDecoder(r)

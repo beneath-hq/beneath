@@ -1,68 +1,153 @@
 import React, { FC, useEffect, useState } from "react";
-import Moment from "react-moment";
+import { Query } from "react-apollo";
 
 import { makeStyles, Theme } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import FormGroup from "@material-ui/core/FormGroup";
+import Grid from "@material-ui/core/Grid";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
-import TableCell, { TableCellProps } from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 
-import { Query } from "react-apollo";
 import { QUERY_RECORDS } from "../../apollo/queries/local/records";
-import connection from "../../lib/connection";
-import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
+import { QueryStream } from "../../apollo/types/QueryStream";
 import { Records, RecordsVariables } from "../../apollo/types/Records";
+import Loading from "../Loading";
 import VSpace from "../VSpace";
 import { Schema } from "./schema";
-import Loading from "../Loading";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  table: {
+  paper: {
     width: "100%",
+    overflowX: "auto",
+  },
+  table: {},
+  submitButton: {
+    marginTop: theme.spacing(3),
+  },
+  row: {
+    "&:last-child": {
+      "& td": {
+        borderBottom: "none",
+      },
+    },
+  },
+  cell: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    borderLeft: `1px solid ${theme.palette.divider}`,
+    "&:first-child": {
+      borderLeft: "none",
+    },
   },
 }));
 
 const ExploreStream: FC<QueryStream> = ({ stream }) => {
-  const classes = useStyles();
   const schema = new Schema(stream);
 
-  const vars: RecordsVariables = {
-    projectName: stream.project.name,
-    streamName: stream.name,
-    keyFields: schema.keyFields,
-    limit: 100,
-    where: null,
+  const [values, setValues] = React.useState({
+    where: "",
+    vars: {
+      projectName: stream.project.name,
+      streamName: stream.name,
+      keyFields: schema.keyFields,
+      limit: 100,
+      where: "",
+    } as RecordsVariables,
+  });
+
+  const handleChange = (name: string) => (event: any) => {
+    setValues({ ...values, [name]: event.target.value });
   };
 
+  const classes = useStyles();
   return (
-    <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={vars}>
+    <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={values.vars}>
       {({ loading, error, data }) => {
-        if (loading) {
-          return <Loading justify="center" />;
-        }
+        const errorMsg = error ? error.message : data ? data.records.error : null;
 
-        if (error || data === undefined) {
-          return <p>Error: {JSON.stringify(error)}</p>;
+        const formElem = (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const where = values.where ? JSON.parse(values.where) : "";
+              setValues({ ...values, vars: { ...values.vars, where } });
+            }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs>
+                <TextField
+                  id="where"
+                  label="Query"
+                  value={values.where}
+                  margin="none"
+                  onChange={handleChange("where")}
+                  helperText={
+                    <>
+                      Query the stream on indexed fields
+                      {errorMsg && (
+                        <>
+                          <br /><br />
+                          <Typography variant="caption" color="error">
+                            Error: {errorMsg}
+                          </Typography>
+                        </>
+                      )}
+                    </>
+                  }
+                  fullWidth
+                />
+              </Grid>
+              <Grid item>
+                <Button
+                  type="submit"
+                  variant="outlined"
+                  color="primary"
+                  className={classes.submitButton}
+                  disabled={
+                    loading ||
+                    !(isJSON(values.where) || values.where.length === 0) ||
+                    !(values.where.length <= 1024)
+                  }
+                >
+                  Load
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        );
+
+        let tableElem = null;
+        if (loading) {
+          tableElem = <Loading justify="center" />;
+        } else {
+          tableElem = (
+            <div className={classes.paper}>
+              <Table className={classes.table} size="small">
+                <TableHead>
+                  <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell(classes.cell))}</TableRow>
+                </TableHead>
+                <TableBody>
+                  {data &&
+                    data.records.data &&
+                    data.records.data.map((record) => (
+                      <TableRow key={record.recordID} className={classes.row} hover={true}>
+                        {schema.columns.map((column) => column.makeTableCell(record.data, classes.cell))}
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          );
         }
 
         return (
-          <Table className={classes.table} size="small">
-            <TableHead>
-              <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell())}</TableRow>
-            </TableHead>
-            <TableBody>
-              {data.records.map((record) => (
-              <TableRow key={record.recordID}>
-                {schema.columns.map((column) => column.makeTableCell(record.data))}
-              </TableRow>
-            ))}
-            </TableBody>
-          </Table>
+          <>
+            {formElem}
+            <VSpace units={2} />
+            {tableElem}
+          </>
         );
       }}
     </Query>
@@ -71,4 +156,11 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
 
 export default ExploreStream;
 
-
+const isJSON = (val: string): boolean => {
+  try {
+    JSON.parse(val);
+    return true;
+  } catch {
+    return false;
+  }
+};
