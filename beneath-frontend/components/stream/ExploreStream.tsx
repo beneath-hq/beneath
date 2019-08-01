@@ -23,10 +23,16 @@ const useStyles = makeStyles((theme: Theme) => ({
     width: "100%",
     overflowX: "auto",
   },
-  table: {
-  },
+  table: {},
   submitButton: {
     marginTop: theme.spacing(3),
+  },
+  row: {
+    "&:last-child": {
+      "& td": {
+        borderBottom: "none",
+      },
+    },
   },
   cell: {
     borderBottom: `1px solid ${theme.palette.divider}`,
@@ -126,7 +132,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                   {data &&
                     data.records.data &&
                     data.records.data.map((record) => (
-                      <TableRow key={record.recordID} hover={true}>
+                      <TableRow key={record.recordID} className={classes.row} hover={true}>
                         {schema.columns.map((column) => column.makeTableCell(record.data, classes.cell))}
                       </TableRow>
                     ))}
