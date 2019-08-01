@@ -174,27 +174,42 @@ func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
 	return valT
 }
 
-// WriteRecord implements engine.WarehouseDriver
-func (b *BigQuery) WriteRecord(projectName string, streamName string, instanceID uuid.UUID, key []byte, data map[string]interface{}, sequenceNumber int64) error {
+// WriteRecords implements engine.WarehouseDriver
+func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, data []map[string]interface{}, sequenceNumbers []int64) error {
+	// ensure all WriteRequest objects the same length
+	if !(len(keys) == len(data) && len(keys) == len(sequenceNumbers)) {
+		return fmt.Errorf("error: keys, data, and sequenceNumbers do not all have the same length")
+	}
+
 	// create bigquery uploader
 	dataset := makeDatasetName(projectName)
 	table := makeTableName(streamName, instanceID)
 	u := b.Client.Dataset(dataset).Table(table).Inserter() // TODO: Should we cache/reuse this?
 
-	// add meta fields to be uploaded
-	data["_insert_time"] = time.Now()
-	data["_key"] = key
-	data["_sequence_number"] = sequenceNumber
+	// keep track of the insert time
+	insertTime := time.Now()
 
-	// data to be uploaded
-	insertIDBytes := append(key, byte(sequenceNumber))
-	insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
-	rows := []*Row{{
-		Data:     data,
-		InsertID: insertID,
-	}}
+	rows := make([]*Row, len(keys))
 
-	// upload
+	// create a BigQuery Row out of each of the records in the WriteRequest
+	for i, key := range keys {
+		// add meta fields to be uploaded
+		data[i]["_insert_time"] = insertTime
+		data[i]["_key"] = key
+		data[i]["_sequence_number"] = sequenceNumbers[i]
+
+		// data to be uploaded
+		insertIDBytes := append(key, byte(sequenceNumbers[i]))
+		insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
+		row := &Row{
+			Data:     data[i],
+			InsertID: insertID,
+		}
+
+		rows[i] = row
+	}
+
+	// upload all the rows at once
 	err := u.Put(context.Background(), rows)
 	if err != nil {
 		return err
