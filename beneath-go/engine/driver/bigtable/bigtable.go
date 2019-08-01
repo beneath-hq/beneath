@@ -2,6 +2,7 @@ package bigtable
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -80,17 +81,34 @@ func (p *Bigtable) GetMaxDataSize() int {
 	return 1000000
 }
 
-// WriteRecord implements engine.TablesDriver
-func (p *Bigtable) WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error {
+// WriteRecords implements engine.TablesDriver
+func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64) error {
+	// ensure all WriteRequest objects the same length
+	if !(len(keys) == len(avroData) && len(keys) == len(sequenceNumbers)) {
+		return fmt.Errorf("error: keys, data, and sequenceNumbers do not all have the same length")
+	}
+
 	// bigtable truncates timestamps to milliseconds, so we have to compensate to save entire sequence number.
 	// upstream calls to CheckSequenceNumber will ensure this won't overflow
-	sequenceNumber *= 1000
+	var newSequenceNumbers []int64
+	for _, sn := range sequenceNumbers {
+		newSequenceNumbers = append(newSequenceNumbers, sn*1000)
+	}
 
-	mut := bigtable.NewMutation()
-	mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(sequenceNumber), avroData)
+	var muts []*bigtable.Mutation
+	rowKeys := make([]string, len(keys))
 
-	rowKey := makeRowKey(instanceID, key)
-	err := p.Records.Apply(context.Background(), string(rowKey), mut)
+	// create one mutation for each record in the WriteRequest
+	for i, key := range keys {
+		mut := bigtable.NewMutation()
+		mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
+		muts = append(muts, mut)
+
+		rowKeys[i] = string(makeRowKey(instanceID, key))
+	}
+
+	// apply all the mutations (i.e. write all the records) at once
+	_, err := p.Records.ApplyBulk(context.Background(), rowKeys, muts)
 	if err != nil {
 		return err
 	}

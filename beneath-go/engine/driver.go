@@ -34,9 +34,8 @@ type TablesDriver interface {
 	// GetMaxDataSize returns the maximum accepted value size in bytes
 	GetMaxDataSize() int
 
-	// WriteRecord saves a record unless sequenceNumber is lower than that of a previous write
-	// to the same key
-	WriteRecord(instanceID uuid.UUID, key []byte, avroData []byte, sequenceNumber int64) error
+	// WriteRecords saves one or multiple records. It does not save records if sequenceNumber is lower than that of a previous write to the same key
+	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64) error
 
 	// ReadRecords reads one or multiple (not necessarily sequential) records by key and calls fn one by one
 	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error
@@ -56,6 +55,6 @@ type WarehouseDriver interface {
 	// RegisterStreamInstance should be called when a new stream instance is created to create a corresponding table in the warehouse
 	RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
 
-	// WriteRecordToWarehouse is called to write a record to the data warehouse
-	WriteRecord(projectName string, streamName string, instanceID uuid.UUID, key []byte, data map[string]interface{}, sequenceNumber int64) error
+	// WriteRecords saves one or multiple records to the data warehouse
+	WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, data []map[string]interface{}, sequenceNumbers []int64) error
 }

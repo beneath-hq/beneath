@@ -66,11 +66,17 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// keep track of keys to publish
-	keys := make([][]byte, len(req.Records))
+	numRecords := len(req.Records)
+	keys := make([][]byte, numRecords)
 
 	// save each record to bigtable and bigquery
-	// TODO: Refactor so that we write batch records when >1 record in a write request
+	avroData := make([][]byte, numRecords)
+	data := make([]map[string]interface{}, numRecords)
+	sequenceNumbers := make([]int64, numRecords)
+
+	// loop through each record in the Write Request
 	for i, record := range req.Records {
+		avroData[i] = record.AvroData
 		// decode the avro data
 		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
 		if err != nil {
@@ -78,36 +84,39 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 		}
 
 		// assert that the decoded data is a map
-		data, ok := dataT.(map[string]interface{})
+		var ok bool
+		data[i], ok = dataT.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
 		}
 
 		// get the encoded key
-		key, err := stream.KeyCodec.Marshal(data)
+		keys[i], err = stream.KeyCodec.Marshal(data[i])
 		if err != nil {
 			return fmt.Errorf("unable to encode key")
 		}
-		keys[i] = key
 
-		// writing encoded data to Table
-		err = db.Engine.Tables.WriteRecord(instanceID, key, record.AvroData, record.SequenceNumber)
-		if err != nil {
-			return err
-		}
-
-		// writing decoded data to Warehouse
-		err = db.Engine.Warehouse.WriteRecord(stream.ProjectName, stream.StreamName, instanceID, key, data, record.SequenceNumber)
-		if err != nil {
-			return err
-		}
+		// save sequence number
+		sequenceNumbers[i] = record.SequenceNumber
 
 		// increment metrics
 		bytesWritten += int64(len(record.AvroData))
 	}
 
+	// writing encoded data to Table
+	err := db.Engine.Tables.WriteRecords(instanceID, keys, avroData, sequenceNumbers)
+	if err != nil {
+		return err
+	}
+
+	// writing decoded data to Warehouse
+	err = db.Engine.Warehouse.WriteRecords(stream.ProjectName, stream.StreamName, instanceID, keys, data, sequenceNumbers)
+	if err != nil {
+		return err
+	}
+
 	// publish metrics packet; the keys in the packet will be used to stream data via the gateway's websocket
-	err := db.Engine.Streams.QueueWriteReport(&pb.WriteRecordsReport{
+	err = db.Engine.Streams.QueueWriteReport(&pb.WriteRecordsReport{
 		InstanceId:   instanceID.Bytes(),
 		Keys:         keys,
 		BytesWritten: bytesWritten,
