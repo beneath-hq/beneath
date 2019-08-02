@@ -7,14 +7,13 @@ import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
+import EditStream from "../components/stream/EditStream";
 import ExploreStream from "../components/stream/ExploreStream";
 import SubrouteTabs from "../components/SubrouteTabs";
-
-import EditStream from "../components/stream/EditStream";
+import WriteStream from "../components/stream/WriteStream";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
-
-import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream"
+import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
 
 interface IProps {
   router: SingletonRouter;
@@ -38,16 +37,21 @@ const StreamPage: FC<IProps> = ({ router }) => {
 
           const { stream } = data;
 
-          // TODO!
+          const tabs = [];
+          tabs.push({ value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> });
 
-          const tabs = [
-            { value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> },
-            { value: "streaming", label: "Streaming", render: () => <p>Streaming here</p> },
-            { value: "api", label: "API", render: () => <p>API here</p> },
-            { value: "bigquery", label: "BigQuery", render: () => <p>BigQuery here</p> },
-            { value: "write", label: "Write", render: () => <p>Write here</p> },
-            { value: "edit", label: "Edit", render: () => <EditStream stream={stream} /> },
-          ];
+          if (!stream.batch) {
+            tabs.push({ value: "streaming", label: "Streaming", render: () => <p>Streaming here</p> });
+          }
+
+          tabs.push({ value: "api", label: "API", render: () => <p>API here</p> });
+          tabs.push({ value: "bigquery", label: "BigQuery", render: () => <p>BigQuery here</p> });
+
+          if (stream.manual) {
+            tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
+          }
+
+          tabs.push({ value: "edit", label: "Edit", render: () => <EditStream stream={stream} /> });
 
           return (
             <React.Fragment>

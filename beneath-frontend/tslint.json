@@ -29,7 +29,8 @@
     "object-literal-key-quotes": [
       true,
       "as-needed"
-    ]
+    ],
+    "interface-name": false
   },
   "rulesDirectory": []
 }

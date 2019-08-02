@@ -9,6 +9,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
+import CodeTextField from "../../components/CodeTextField";
 import ExploreSidebar from "../../components/ExploreSidebar";
 import SelectField from "../../components/SelectField";
 import CheckboxField from "../../components/CheckboxField";
@@ -16,22 +17,6 @@ import Page from "../../components/Page";
 import withMe from "../../hocs/withMe";
 import { QUERY_PROJECT } from "../../apollo/queries/project";
 import { CREATE_EXTERNAL_STREAM } from "../../apollo/queries/stream";
-
-const handleTabInput = (e) => {
-  if (e.keyCode === 9) { // 9 = tab key
-    let start = event.target.selectionStart;
-    let end = event.target.selectionEnd;
-
-    let value = event.target.value;
-    value = value.substring(0, start) + "    " + value.substring(end);
-    event.target.value = value;
-
-    event.target.selectionStart = event.target.selectionEnd = start + 4;
-
-    e.preventDefault();
-    return false;
-  }
-};
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {
@@ -108,7 +93,7 @@ const NewStreamPage = ({ me }) => {
                 onChange={handleChange("description")}
                 helperText="Help people understand what data this stream will contain"
               />
-              <TextField
+              <CodeTextField
                 id="schema"
                 label="Schema"
                 value={values.schema}
@@ -117,7 +102,6 @@ const NewStreamPage = ({ me }) => {
                 fullWidth
                 required
                 onChange={handleChange("schema")}
-                onKeyDown={handleTabInput}
                 helperText={<Typography variant="caption">Specify the format of data on the stream as an <Link target="_blank" href="https://docs.oracle.com/database/nosql-12.1.3.0/GettingStartedGuide/avroschemas.html">GraphQL schema</Link></Typography>}
               />
               <FormGroup>

@@ -24,6 +24,7 @@ export interface QueryStream_stream {
   batch: boolean;
   manual: boolean;
   project: QueryStream_stream_project;
+  currentStreamInstanceID: ControlUUID | null;
   createdOn: ControlTime;
   updatedOn: ControlTime;
 }

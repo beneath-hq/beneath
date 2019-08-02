@@ -1,7 +1,12 @@
+import { ApolloCache } from "apollo-cache";
 import gql from "graphql-tag";
 
 import connection from "../../lib/connection";
 import { GET_TOKEN } from "../queries/local/token";
+import { CreateRecordsVariables } from "../types/CreateRecords";
+import { RecordsVariables } from "../types/Records";
+import { QUERY_RECORDS } from "../queries/local/records";
+
 
 export const typeDefs = gql`
   extend type Query {
@@ -14,9 +19,11 @@ export const typeDefs = gql`
     ): RecordsResponse!
   }
 
-  type RecordsResponse {
-    data: [Record!]
-    error: String
+  extend type Mutation {
+    createRecords(
+      instanceID: UUID!,
+      json: JSON!,
+    ): CreateRecordsResponse!
   }
 
   type Record {
@@ -24,11 +31,20 @@ export const typeDefs = gql`
     data: JSON!
     sequenceNumber: String!
   }
+
+  type RecordsResponse {
+    data: [Record!]
+    error: String
+  }
+
+  type CreateRecordsResponse {
+    error: String
+  }
 `;
 
 export const resolvers = {
   Query: {
-    records: async (_: any, { projectName, streamName, keyFields, where, limit }: any, { cache }: any) => {
+    records: async (_: any, { projectName, streamName, keyFields, where, limit }: RecordsVariables, { cache }: any) => {
       // build url with limit and where
       let url = `${connection.GATEWAY_URL}/projects/${projectName}/streams/${streamName}`;
       url += `?limit=${limit}`;
@@ -42,6 +58,12 @@ export const resolvers = {
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
+
+      // await new Promise(function (resolve) {
+      //   setTimeout(function () {
+      //     resolve();
+      //   }, 3000);
+      // });
 
       // fetch
       const res = await fetch(url, { headers });
@@ -76,6 +98,42 @@ export const resolvers = {
             sequenceNumber: row["@meta"].sequence_number,
           };
         }),
+      };
+    },
+  },
+  Mutation: {
+    createRecords: async (_: any, { instanceID, json }: CreateRecordsVariables, { cache }: any) => {
+      // build url with limit and where
+      const url = `${connection.GATEWAY_URL}/streams/instances/${instanceID}`;
+
+      // build headers with authorization
+      const headers: any = { "Content-Type": "application/json" };
+      const { token } = cache.readQuery({ query: GET_TOKEN });
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      // submit
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(json),
+      });
+
+      // check error
+      let error = null;
+      if (!res.ok) {
+        try {
+          const data = await res.json();
+          error = data.error || null;
+        } catch {
+          error = res.text();
+        }
+      }
+
+      return {
+        __typename: "CreateRecordsResponse",
+        error,
       };
     },
   },

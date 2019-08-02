@@ -24,6 +24,7 @@ export interface CreateExternalStream_createExternalStream {
   batch: boolean;
   manual: boolean;
   project: CreateExternalStream_createExternalStream_project;
+  currentStreamInstanceID: ControlUUID | null;
   createdOn: ControlTime;
   updatedOn: ControlTime;
 }

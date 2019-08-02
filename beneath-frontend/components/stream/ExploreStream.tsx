@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC } from "react";
 import { Query } from "react-apollo";
 
 import { makeStyles, Theme } from "@material-ui/core";
@@ -14,6 +14,7 @@ import Typography from "@material-ui/core/Typography";
 import { QUERY_RECORDS } from "../../apollo/queries/local/records";
 import { QueryStream } from "../../apollo/types/QueryStream";
 import { Records, RecordsVariables } from "../../apollo/types/Records";
+import BNTextField from "../BNTextField";
 import Loading from "../Loading";
 import VSpace from "../VSpace";
 import { Schema } from "./schema";
@@ -63,9 +64,9 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
 
   const classes = useStyles();
   return (
-    <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={values.vars}>
+    <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={values.vars} fetchPolicy="cache-and-network">
       {({ loading, error, data }) => {
-        const errorMsg = error ? error.message : data ? data.records.error : null;
+        const errorMsg = loading ? null : error ? error.message : data ? data.records.error : null;
 
         const formElem = (
           <form
@@ -77,25 +78,14 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
           >
             <Grid container spacing={2}>
               <Grid item xs>
-                <TextField
+                <BNTextField
                   id="where"
                   label="Query"
                   value={values.where}
                   margin="none"
                   onChange={handleChange("where")}
-                  helperText={
-                    <>
-                      Query the stream on indexed fields
-                      {errorMsg && (
-                        <>
-                          <br /><br />
-                          <Typography variant="caption" color="error">
-                            Error: {errorMsg}
-                          </Typography>
-                        </>
-                      )}
-                    </>
-                  }
+                  helperText="Query the stream on indexed fields"
+                  errorText={errorMsg ? `Error: ${errorMsg}` : undefined}
                   fullWidth
                 />
               </Grid>
@@ -106,9 +96,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                   color="primary"
                   className={classes.submitButton}
                   disabled={
-                    loading ||
-                    !(isJSON(values.where) || values.where.length === 0) ||
-                    !(values.where.length <= 1024)
+                    loading || !(isJSON(values.where) || values.where.length === 0) || !(values.where.length <= 1024)
                   }
                 >
                   Load
@@ -119,7 +107,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
         );
 
         let tableElem = null;
-        if (loading) {
+        if (loading && !(data && data.records)) {
           tableElem = <Loading justify="center" />;
         } else {
           tableElem = (

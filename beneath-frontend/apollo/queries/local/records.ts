@@ -14,12 +14,20 @@ export const QUERY_RECORDS = gql`
       keyFields: $keyFields,
       limit: $limit,
       where: $where
-    ) @client {
+    ) @client @connection(key: "records", filter: ["projectName", "streamName"]) {
       data {
         recordID
         data
         sequenceNumber
       }
+      error
+    }
+  }
+`;
+
+export const CREATE_RECORDS = gql`
+  mutation CreateRecords($instanceID: UUID!, $json: JSON!) {
+    createRecords(instanceID: $instanceID, json: $json) @client {
       error
     }
   }

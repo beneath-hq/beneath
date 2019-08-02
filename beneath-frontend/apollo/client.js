@@ -66,7 +66,9 @@ const dataIdFromObject = (object) => {
     case "Record":
       return `${object.recordID}`;
     case "RecordsResponse":
-      return "";
+      return defaultDataIdFromObject(object);
+    case "CreateRecordsResponse":
+      return defaultDataIdFromObject(object);
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);

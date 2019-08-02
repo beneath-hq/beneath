@@ -16,6 +16,7 @@ export const QUERY_STREAM = gql`
         projectID
         name
       }
+      currentStreamInstanceID
       createdOn
       updatedOn
     }
@@ -50,6 +51,7 @@ export const CREATE_EXTERNAL_STREAM = gql`
         projectID
         name
       }
+      currentStreamInstanceID
       createdOn
       updatedOn
     }
