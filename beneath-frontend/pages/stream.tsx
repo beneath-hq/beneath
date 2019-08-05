@@ -9,8 +9,9 @@ import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
 import EditStream from "../components/stream/EditStream";
 import ExploreStream from "../components/stream/ExploreStream";
-import SubrouteTabs from "../components/SubrouteTabs";
+import StreamAPI from "../components/stream/StreamAPI";
 import WriteStream from "../components/stream/WriteStream";
+import SubrouteTabs from "../components/SubrouteTabs";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
@@ -44,8 +45,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
             tabs.push({ value: "streaming", label: "Streaming", render: () => <p>Streaming here</p> });
           }
 
-          tabs.push({ value: "api", label: "API", render: () => <p>API here</p> });
-          tabs.push({ value: "bigquery", label: "BigQuery", render: () => <p>BigQuery here</p> });
+          tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
 
           if (stream.manual) {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });

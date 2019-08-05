@@ -12,7 +12,6 @@
   "dependencies": {
     "@material-ui/core": "^4.2.1",
     "@material-ui/icons": "^4.2.1",
-    "@types/lodash": "^4.14.136",
     "apollo-boost": "^0.4.3",
     "apollo-cache-inmemory": "^1.6.2",
     "apollo-client": "^2.6.3",
@@ -34,6 +33,7 @@
     "lodash": "^4.17.15",
     "moment": "^2.23.0",
     "next": "^9.0.2",
+    "prism-react-renderer": "^0.1.7",
     "prop-types": "^15.6.2",
     "react": "^16.8.6",
     "react-apollo": "^2.5.8",
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/graphql": "^14.2.3",
+    "@types/lodash": "^4.14.136",
     "@types/node": "^12.6.8",
     "apollo": "^2.16.2",
     "typescript": "^3.5.3"
