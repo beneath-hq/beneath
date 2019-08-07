@@ -1,0 +1,82 @@
+Good resource for how to upload packages to PyPi:
+https://packaging.python.org/tutorials/packaging-projects/
+
+authentication:
+os.environ["BENEATH_SECRET"] = "..."
+
+client = Beneath(secret)
+
+USE CASE 1:
+- reading data into jupyter notebook for adhoc analysis
+  - get schema 
+  - read using (requires schema -- and must use an Avro library to decode)
+    - rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
+- imagine jupyter notebook:
+
+import beneath
+df = beneath.get(project="ethereum", stream="blocks").to_dataframe()
+
+import beneath
+
+stream = beneath.Stream(project="ethereum", stream="blocks")
+loader = stream.Loader(query, unlimited=True)
+
+# 1
+for row in loader:
+  ...
+
+# 2
+loader.to_dataframe()
+
+# convenience function for creating loader
+stream.load_many(query, unlimited=?)
+
+
+rows = stream.get_many({
+  "a": 1000,
+  "b": { "_gt": 50 },
+})
+
+
+- limit on amount of data?
+- where query?
+- separate validation of stream?
+
+
+USE CASE 2:
+- writing ad-hoc data from jupyter notebook (rare)
+  - like Beam sink, but not adhering to the sink spec
+
+USE CASE 3:
+- writing data from Beam
+- Beam sink for writing to Beneath (WriteToBeneath(beneath.Stream(project="ethereum", stream="blocks")))
+  - get schema details for the instance 
+    - rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+  - write using (need schema to use)
+    - rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
+  - follow spec here: https://beam.apache.org/documentation/io/developing-io-python/
+  - versions
+    - streaming
+      - just write to current_instance_id
+    - batch
+      - initialize new instance 
+      - make all writes to new instance
+      - at the end, promote to current (locks the instance and prevents further writes)
+
+    instance = stream.BeginNewBatch()
+    instance.Write(...)
+    instance.PromoteToCurrent()
+
+USE CASE 4:
+- easily run BQ query and get response (make it easy)
+
+
+*note: use iterators to allow for lazy execution of an interable
+-- if someone is importing a ton of data, using an interator will only read that data once the iterator passes over the element
+
+
+TODOs:
+- ensure correct error handling for all function inputs
+- upgrade gRPC channel to SSL/TLS
+
+

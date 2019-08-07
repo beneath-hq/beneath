@@ -6,7 +6,7 @@ option java_outer_classname = "BeneathProto";
 
 package proto;
 
-import "engine.proto";
+import "beneath/proto/engine.proto";
 
 service Gateway {
   rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}

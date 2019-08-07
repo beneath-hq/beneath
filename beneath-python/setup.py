@@ -7,12 +7,12 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="beneath-python-package",
     version="0.0.1",
-    author="Example Author",
-    author_email="author@example.com",
-    description="A small example package",
+    author="Benjamin Egelund-Muller and Eric Green",
+    author_email="eric@beneath.network",
+    description="Client package for Beneath Systems",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://beneath.network/",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
