@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/beneath-core/beneath-go/control/auth"
@@ -22,6 +23,12 @@ type Request struct {
 	Message WebsocketMessage
 }
 
+// Dispatch bundles a filter and several records to sent to subscribers
+type Dispatch struct {
+	Filter  SubscriptionFilter
+	Records []map[string]interface{}
+}
+
 // Broker maintains the set of active clients and routes messages to the clients
 type Broker struct {
 	// use to register a new client with the broker
@@ -34,7 +41,7 @@ type Broker struct {
 	requests chan Request
 
 	// use to distribute records to subscribed clients
-	dispatch chan *pb.WriteRecordsReport
+	dispatch chan Dispatch
 
 	// Reference to the engine that supplies new data
 	engine *engine.Engine
@@ -50,6 +57,9 @@ type Broker struct {
 
 	// All open subscriptions (map of instanceIDs to subscribed clients)
 	subscriptions map[SubscriptionFilter]map[*Client]bool
+
+	// lock on subscriptions
+	subscriptionsMu sync.RWMutex
 }
 
 const (
@@ -71,7 +81,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 		register:        make(chan *Client),
 		unregister:      make(chan *Client),
 		requests:        make(chan Request),
-		dispatch:        make(chan *pb.WriteRecordsReport),
+		dispatch:        make(chan Dispatch),
 		engine:          engine,
 		upgrader:        upgrader,
 		keepAliveTicker: time.NewTicker(connectionKeepAliveInterval),
@@ -84,10 +94,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 
 	// initialize reading data from engine (puts data on Dispatch, which is read in runForever)
 	go func() {
-		err := engine.Streams.ReadWriteReports(func(rep *pb.WriteRecordsReport) error {
-			broker.dispatch <- rep
-			return nil
-		})
+		err := engine.Streams.ReadWriteReports(broker.handleWriteReport)
 		if err != nil {
 			log.Panicf("ReadWriteReports crashed: %v", err.Error())
 		}
@@ -148,6 +155,69 @@ func (b *Broker) sendKeepAlive() {
 	log.Printf("Sent keep alive to %d client(s) in %s", len(b.clients), elapsed)
 }
 
+// Handles incoming write report from pubsub and puts them on the dispatch channel.
+// It checks if there are any subscribers for this report before dispatching it.
+// If there are subscribers, it gets the full records from bigtable first.
+func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
+	// metrics to track
+	startTime := time.Now()
+
+	// get instance and filter
+	instanceID := uuid.FromBytesOrNil(rep.InstanceId)
+	filter := SubscriptionFilter(instanceID)
+
+	// check if worth continuing
+	b.subscriptionsMu.RLock()
+	n := len(b.subscriptions[filter])
+	b.subscriptionsMu.RUnlock()
+	if n == 0 {
+		return nil
+	}
+
+	// get stream
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
+	}
+
+	// read and decode records matchin rep.Keys from Tables
+	records := make([]map[string]interface{}, len(rep.Keys))
+	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
+		// decode the avro data
+		dataT, err := stream.AvroCodec.Unmarshal(avroData, true)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data")
+		}
+
+		// assert that the decoded data is a map
+		data, ok := dataT.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+		}
+
+		// assign key to value
+		records[idx] = data
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
+	}
+
+	// push to dispatch channel
+	b.dispatch <- Dispatch{
+		Filter:  filter,
+		Records: records,
+	}
+
+	// log metrics
+	elapsed := time.Since(startTime)
+	log.Printf("Sent %d row(s) from instance %s to %d client(s) in %s", len(records), instanceID.String(), n, elapsed)
+
+	return nil
+}
+
 // handle a new client
 func (b *Broker) processRegister(c *Client) {
 	b.clients[c] = true
@@ -162,9 +232,11 @@ func (b *Broker) processUnregister(c *Client) {
 	delete(b.clients, c)
 
 	c.mu.Lock()
+	b.subscriptionsMu.RLock() // only read because deletes happen on child map, which does not require concurrency
 	for filter := range c.Subscriptions {
 		delete(b.subscriptions[filter], c)
 	}
+	b.subscriptionsMu.RUnlock()
 	c.mu.Unlock()
 
 	c.Close()
@@ -225,10 +297,12 @@ func (b *Broker) processStartRequest(r Request) {
 	}
 
 	// add client to subscriptions
+	b.subscriptionsMu.Lock()
 	if b.subscriptions[filter] == nil {
 		b.subscriptions[filter] = make(map[*Client]bool)
 	}
 	b.subscriptions[filter][r.Client] = true
+	b.subscriptionsMu.Unlock()
 }
 
 // process a stopMsgType
@@ -241,67 +315,26 @@ func (b *Broker) processStopRequest(r Request) {
 	}
 
 	// remove subscription from broker
+	b.subscriptionsMu.RLock() // only read because editing child map
 	delete(b.subscriptions[filter], r.Client)
+	b.subscriptionsMu.RUnlock()
 
 	// send complete (as per spec)
 	r.Client.SendComplete(r.Message.ID)
 }
 
 // process messages from pubsub (route to relevant clients)
-func (b *Broker) processMessage(rep *pb.WriteRecordsReport) {
-	// metrics to track
-	startTime := time.Now()
-
-	// lookup stream
-	instanceID := uuid.FromBytesOrNil(rep.InstanceId)
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
-	if stream == nil {
-		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
-	}
-
-	// filter from instanceID (using wrapper because we want more elaborate filtering in the future)
-	filter := SubscriptionFilter(instanceID)
-
-	// only proceed if there are subscribers
-	subscribers := b.subscriptions[filter]
-	if len(subscribers) == 0 {
-		return
-	}
-
-	// read and decode records matchin rep.Keys from Tables
-	records := make([]map[string]interface{}, len(rep.Keys))
-	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
-		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data")
-		}
-
-		// assert that the decoded data is a map
-		data, ok := dataT.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
-		}
-
-		// assign key to value
-		records[idx] = data
-
-		return nil
-	})
-
-	if err != nil {
-		log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
-	}
+func (b *Broker) processMessage(d Dispatch) {
+	// get subscribers
+	b.subscriptionsMu.RLock()
+	subscribers := b.subscriptions[d.Filter]
+	b.subscriptionsMu.RUnlock()
 
 	// push records to all subscribers
 	for c := range subscribers {
-		subID := c.GetSubscriptionID(filter)
-		for _, record := range records {
+		subID := c.GetSubscriptionID(d.Filter)
+		for _, record := range d.Records {
 			c.SendData(subID, record)
 		}
 	}
-
-	// log metrics
-	elapsed := time.Since(startTime)
-	log.Printf("Sent %d row(s) from instance %s to %d client(s) in %s", len(records), instanceID.String(), len(subscribers), elapsed)
 }

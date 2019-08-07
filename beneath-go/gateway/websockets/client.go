@@ -20,6 +20,10 @@ type SubscriptionID string
 // FUTURE: Add info to filter by key prefix
 type SubscriptionFilter uuid.UUID
 
+func (f SubscriptionFilter) String() string {
+	return uuid.UUID(f).String()
+}
+
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	// The broker that the client belongs to
@@ -252,44 +256,21 @@ func (c *Client) beginWriting() {
 				return
 			}
 
-			// open a writer for the next message to send
+			// encode message as json
+			data, err := json.Marshal(msg)
+			if err != nil {
+				log.Panicf("couldn't marshal WebsocketMessage: %v", msg)
+				return
+			}
+
+			// write
 			c.mu.Lock()
-			w, err := c.WS.NextWriter(websocket.TextMessage)
+			err = c.WS.WriteMessage(websocket.TextMessage, data)
+			c.mu.Unlock()
 			if err != nil {
 				// breaking out of run loop -- closing the client
-				c.mu.Unlock()
 				return
 			}
-
-			// writes a to writer
-			fn := func(msg WebsocketMessage) {
-				// encode message as json
-				data, err := json.Marshal(msg)
-				if err != nil {
-					c.mu.Unlock()
-					log.Panicf("couldn't marshal WebsocketMessage: %v", msg)
-					return
-				}
-
-				// write message
-				w.Write(data)
-				w.Write([]byte("\n"))
-			}
-
-			// efficiency gain: empty the Send channel now that we have an open writer
-			fn(msg)
-			for i := 0; i < len(c.Outbound); i++ {
-				fn(<-c.Outbound)
-			}
-
-			// close the writer; flush the complete message to the network
-			if err := w.Close(); err != nil {
-				// breaking out of run loop -- closing the client
-				c.mu.Unlock()
-				return
-			}
-
-			c.mu.Unlock()
 		}
 	}
 }
