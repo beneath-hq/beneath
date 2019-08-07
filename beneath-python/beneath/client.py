@@ -6,6 +6,7 @@ import json
 import time
 import apache_beam as beam
 from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
+import beneath
 from beneath.stream import Stream
 from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
@@ -50,6 +51,15 @@ class Client:
     # create a "stub" (aka a client). the stub has all the methods that the gateway server has. so it'll have ReadRecords(), WriteRecords(), and GetStreamDetails()
     self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
+    # ensure that the user is running the most current Python package
+    response = self.stub.GetCurrentBeneathPackageVersion(
+        gateway_pb2.PackageVersionRequest(package_version=beneath.__version__),
+      metadata=self.request_metadata)
+    if response.version_response == "not current":
+      raise Exception(
+          "Your Beneath package is not up-to-date. Please upgrade before continuing.")
+
+
     # create a dictionary to remember schemas
     self.avro_schemas = dict()
 
@@ -58,8 +68,7 @@ class Client:
     details = self.stub.GetStreamDetails(
         gateway_pb2.StreamDetailsRequest(
             project_name=project_name, stream_name=stream_name),
-        metadata=self.request_metadata
-    )
+        metadata=self.request_metadata)
 
     # store the stream's schema in memory
     self.avro_schemas[details.current_instance_id] = details.avro_schema

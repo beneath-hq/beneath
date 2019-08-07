@@ -12,6 +12,7 @@ service Gateway {
   rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
   rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+  rpc GetCurrentBeneathPackageVersion(PackageVersionRequest) returns (PackageVersionResponse) {}
 }
 
 message ReadRecordsRequest {
@@ -43,4 +44,12 @@ message StreamDetailsResponse {
   bool external = 8;
   bool batch = 9;
   bool manual = 10;
+}
+
+message PackageVersionRequest {
+  string package_version = 1;
+}
+
+message PackageVersionResponse {
+  string version_response = 1;
 }
