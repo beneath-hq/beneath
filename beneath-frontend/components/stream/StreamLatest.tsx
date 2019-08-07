@@ -13,7 +13,7 @@ import { Schema } from "./schema";
 type StreamLatestProps = QueryStream & { client: ApolloClient<any> };
 
 interface StreamLatestState {
-  messages: string[];
+  error: string | undefined;
 }
 
 class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState> {
@@ -26,7 +26,7 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
     this.apollo = props.client;
     this.schema = new Schema(props.stream, true);
     this.state = {
-      messages: [],
+      error: undefined,
     };
   }
 
@@ -37,6 +37,10 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
   }
 
   public componentDidMount() {
+    if (this.subscription) {
+      return;
+    }
+
     const self = this;
 
     this.subscription = new SubscriptionClient(`${GATEWAY_URL_WS}/ws`, {
@@ -52,7 +56,6 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
       streamName: this.props.stream.name,
     };
 
-    // request updates on instance
     this.subscription.request(request).subscribe({
       next: (result) => {
         const queryData = self.apollo.cache.readQuery({
@@ -81,13 +84,18 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
           data: queryData,
         });
       },
-      error: (result) => {
-        // self.setState({
-        //   messages: self.state.messages.concat(["ERROR: " + JSON.stringify(result)]),
-        // });
+      error: (error) => {
+        self.setState({
+          error: error.message,
+        });
       },
       complete: () => {
-        console.error("Unexpected subscription complete for instance");
+        if (!self.state.error) {
+          self.setState({
+            error: "Unexpected completion of subscription",
+          });
+        }
+        self.subscription = undefined;
       },
     });
   }
@@ -98,7 +106,7 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
       streamName: this.props.stream.name,
       limit: 100,
     };
-    
+
     return (
       <Query<LatestRecords, LatestRecordsVariables>
         query={QUERY_LATEST_RECORDS}
@@ -106,9 +114,16 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
         fetchPolicy="cache-and-network"
       >
         {({ loading, error, data }) => {
-          // const errorMsg = loading ? null : error ? error.message : data ? data.records.error : null;
+          const errorMsg = error || this.state.error;
+          if (errorMsg) {
+            return <p>Error: {JSON.stringify(error)}</p>;
+          }
 
-          return <RecordsTable schema={this.schema} records={data ? data.latestRecords : null} />;
+          loading = loading || !!this.subscription;
+
+          return (
+            <RecordsTable schema={this.schema} loading={loading} records={data ? data.latestRecords : null} />
+          );
         }}
       </Query>
     );
