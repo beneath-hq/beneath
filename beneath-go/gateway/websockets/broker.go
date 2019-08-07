@@ -25,16 +25,16 @@ type Request struct {
 // Broker maintains the set of active clients and routes messages to the clients
 type Broker struct {
 	// use to register a new client with the broker
-	Register chan *Client
+	register chan *Client
 
 	// use to remove a client from the broker
-	Unregister chan *Client
+	unregister chan *Client
 
 	// use to submit a new request from the client for processing
-	Requests chan Request
+	requests chan Request
 
 	// use to distribute records to subscribed clients
-	Dispatch chan *pb.WriteRecordsReport
+	dispatch chan *pb.WriteRecordsReport
 
 	// Reference to the engine that supplies new data
 	engine *engine.Engine
@@ -42,12 +42,19 @@ type Broker struct {
 	// used to manage websocket
 	upgrader *websocket.Upgrader
 
-	// Registered clients.
+	// used to send keep alive messages regularly
+	keepAliveTicker *time.Ticker
+
+	// Registered clients
 	clients map[*Client]bool
 
-	// Client subscriptions. Mapping: stream instance ID --> list of subscribed clients
-	instanceSubscriptions map[uuid.UUID][]*Client
+	// All open subscriptions (map of instanceIDs to subscribed clients)
+	subscriptions map[SubscriptionFilter]map[*Client]bool
 }
+
+const (
+	connectionKeepAliveInterval = 10 * time.Second
+)
 
 // NewBroker initializes a new Broker
 func NewBroker(engine *engine.Engine) *Broker {
@@ -61,14 +68,15 @@ func NewBroker(engine *engine.Engine) *Broker {
 
 	// create broker
 	broker := &Broker{
-		engine:                engine,
-		upgrader:              upgrader,
-		clients:               make(map[*Client]bool),
-		Register:              make(chan *Client),
-		Unregister:            make(chan *Client),
-		Requests:              make(chan Request),
-		Dispatch:              make(chan *pb.WriteRecordsReport),
-		instanceSubscriptions: make(map[uuid.UUID][]*Client),
+		register:        make(chan *Client),
+		unregister:      make(chan *Client),
+		requests:        make(chan Request),
+		dispatch:        make(chan *pb.WriteRecordsReport),
+		engine:          engine,
+		upgrader:        upgrader,
+		keepAliveTicker: time.NewTicker(connectionKeepAliveInterval),
+		clients:         make(map[*Client]bool),
+		subscriptions:   make(map[SubscriptionFilter]map[*Client]bool),
 	}
 
 	// initialize run loop
@@ -77,7 +85,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 	// initialize reading data from engine (puts data on Dispatch, which is read in runForever)
 	go func() {
 		err := engine.Streams.ReadWriteReports(func(rep *pb.WriteRecordsReport) error {
-			broker.Dispatch <- rep
+			broker.dispatch <- rep
 			return nil
 		})
 		if err != nil {
@@ -92,7 +100,9 @@ func NewBroker(engine *engine.Engine) *Broker {
 // HTTPHandler upgrades incoming requests to websocket connections
 func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 	// upgrade to a websocket connection
-	ws, err := b.upgrader.Upgrade(w, r, nil)
+	ws, err := b.upgrader.Upgrade(w, r, http.Header{
+		"Sec-Websocket-Protocol": []string{"graphql-ws"},
+	})
 	if err != nil {
 		return err
 	}
@@ -101,7 +111,7 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 	key := auth.GetKey(r.Context())
 
 	// create client and register it with the hub
-	b.Register <- NewClient(b, ws, key)
+	b.register <- NewClient(b, ws, key)
 
 	return nil
 }
@@ -109,41 +119,55 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 func (b *Broker) runForever() {
 	for {
 		select {
-		case client := <-b.Register:
-			b.registerClient(client)
-		case client := <-b.Unregister:
-			b.unregisterClient(client)
-		case req := <-b.Requests:
+		case client := <-b.register:
+			b.processRegister(client)
+		case client := <-b.unregister:
+			b.processUnregister(client)
+		case req := <-b.requests:
 			b.processRequest(req)
-		case msg := <-b.Dispatch:
+		case msg := <-b.dispatch:
 			b.processMessage(msg)
+		case <-b.keepAliveTicker.C:
+			b.sendKeepAlive()
 		}
 	}
+}
+
+// CloseClient safely closes the client and can be called multiple times
+func (b *Broker) CloseClient(c *Client) {
+	b.unregister <- c
+}
+
+// broadcasts keep alive message to all subscribers
+func (b *Broker) sendKeepAlive() {
+	startTime := time.Now()
+	for client := range b.clients {
+		client.SendKeepAlive()
+	}
+	elapsed := time.Since(startTime)
+	log.Printf("Sent keep alive to %d client(s) in %s", len(b.clients), elapsed)
 }
 
 // handle a new client
-func (b *Broker) registerClient(c *Client) {
+func (b *Broker) processRegister(c *Client) {
 	b.clients[c] = true
 }
 
-// remove a client
-func (b *Broker) unregisterClient(c *Client) {
-	if _, ok := b.clients[c]; ok {
-		// remove client from all instance subscriptions
-		for instanceID := range c.InstancesToIDs {
-			index := getIndex(b.instanceSubscriptions[instanceID], c)
-			if index != -1 {
-				b.instanceSubscriptions[instanceID] = remove(b.instanceSubscriptions[instanceID], index)
-			}
-		}
-
-		// clear the client's mappings
-		c.IDsToInstances = make(map[string]uuid.UUID)
-		c.InstancesToIDs = make(map[uuid.UUID]string)
-
-		// delete client from the broker's client list
-		delete(b.clients, c)
+// remove a client and its subscriptions
+func (b *Broker) processUnregister(c *Client) {
+	if !b.clients[c] {
+		return
 	}
+
+	delete(b.clients, c)
+
+	c.mu.Lock()
+	for filter := range c.Subscriptions {
+		delete(b.subscriptions[filter], c)
+	}
+	c.mu.Unlock()
+
+	c.Close()
 }
 
 // process a client request
@@ -151,62 +175,76 @@ func (b *Broker) processRequest(r Request) {
 	// use the request's message type to process it accordingly
 	switch r.Message.Type {
 	case connectionInitMsgType:
-		// TODO
+		r.Client.SendConnectionAck()
 	case connectionTerminateMsgType:
-		// TODO
+		r.Client.Terminate(websocket.CloseNormalClosure, "terminated")
 	case startMsgType:
-		// get instanceID that the user would like to subscribe to
-		instanceID := uuid.FromStringOrNil(r.Message.Payload["instance_id"].(string))
-
-		// get instanceID info
-		stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
-		if stream == nil {
-			r.Client.SendError("", "Error! That instance_id doesn't exist.")
-			return
-		}
-
-		// check if client has already used the same ID
-		if _, ok := r.Client.IDsToInstances[r.Message.ID]; ok {
-			r.Client.SendError("", "Error! You are already using that ID.")
-			return
-		}
-
-		// check auth
-		if !r.Client.Key.ReadsProject(stream.ProjectID) {
-			r.Client.SendError("", "Error! You don't have permission to read that stream.")
-			return
-		}
-
-		// map the instanceID and the  1) instanceID and 2) the user's  to client subscription mappings
-		r.Client.IDsToInstances[r.Message.ID] = instanceID
-		r.Client.InstancesToIDs[instanceID] = r.Message.ID
-
-		// add client to instance subscriptions
-		if b.instanceSubscriptions[instanceID] == nil {
-			b.instanceSubscriptions[instanceID] = []*Client{r.Client}
-		} else {
-			b.instanceSubscriptions[instanceID] = append(b.instanceSubscriptions[instanceID], r.Client)
-		}
-		return
+		b.processStartRequest(r)
 	case stopMsgType:
-		instanceID := r.Client.IDsToInstances[r.Message.ID]
-		index := getIndex(b.instanceSubscriptions[instanceID], r.Client)
-
-		// check if client is subscribed to the stream
-		if index == -1 {
-			r.Client.SendError("", "Error! The ID you supplied is not subscribed to any stream.")
-			return
-		}
-
-		// remove all subscriptions
-		b.instanceSubscriptions[instanceID] = remove(b.instanceSubscriptions[instanceID], index)
-		delete(r.Client.IDsToInstances, r.Message.ID)
-		delete(r.Client.InstancesToIDs, instanceID)
-		return
-
+		b.processStopRequest(r)
 	default:
-		log.Panic("unrecognized message type")
+		r.Client.SendConnectionError("unrecognized message type")
+		r.Client.Terminate(websocket.CloseProtocolError, "unrecognized message type")
 	}
+}
+
+// process a startMsgType
+func (b *Broker) processStartRequest(r Request) {
+	// check format
+	query, ok := r.Message.Payload["query"].(string)
+	if !ok {
+		r.Client.SendError(r.Message.ID, "Error! Query key required in payload")
+		return
+	}
+
+	// get instanceID that the user would like to subscribe to
+	// FUTURE: the query will be a proper graphql query
+	instanceID := uuid.FromStringOrNil(query)
+
+	// get instanceID info
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		r.Client.SendError(r.Message.ID, "Error! That instance_id doesn't exist")
+		return
+	}
+
+	// check auth
+	if !r.Client.Key.ReadsProject(stream.ProjectID) {
+		r.Client.SendError(r.Message.ID, "Error! You don't have permission to read that stream.")
+		return
+	}
+
+	// "convert" to filter (in future, may be more elaborate)
+	filter := SubscriptionFilter(instanceID)
+
+	// check if client has already used the same ID
+	err := r.Client.TrackSubscription(filter, r.Message.ID)
+	if err != nil {
+		r.Client.SendError(r.Message.ID, err.Error())
+		return
+	}
+
+	// add client to subscriptions
+	if b.subscriptions[filter] == nil {
+		b.subscriptions[filter] = make(map[*Client]bool)
+	}
+	b.subscriptions[filter][r.Client] = true
+}
+
+// process a stopMsgType
+func (b *Broker) processStopRequest(r Request) {
+	// remove subscription from client
+	filter, ok := r.Client.UntrackSubscription(r.Message.ID)
+	if !ok {
+		r.Client.SendError(r.Message.ID, "Error! The ID you supplied is not subscribed to any stream")
+		return
+	}
+
+	// remove subscription from broker
+	delete(b.subscriptions[filter], r.Client)
+
+	// send complete (as per spec)
+	r.Client.SendComplete(r.Message.ID)
 }
 
 // process messages from pubsub (route to relevant clients)
@@ -221,68 +259,49 @@ func (b *Broker) processMessage(rep *pb.WriteRecordsReport) {
 		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
 	}
 
-	// check for clients subscribed to the instanceID
-	subscribedClients := b.instanceSubscriptions[instanceID]
+	// filter from instanceID (using wrapper because we want more elaborate filtering in the future)
+	filter := SubscriptionFilter(instanceID)
 
 	// only proceed if there are subscribers
-	if len(subscribedClients) > 0 {
-		// initialize the records object that will be sent to clients
-		records := make([]map[string]interface{}, len(rep.Keys))
+	subscribers := b.subscriptions[filter]
+	if len(subscribers) == 0 {
+		return
+	}
 
-		// read records from the Tables driver, decode the values, and assign the keys to values
-		err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
-			// decode the avro data
-			dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
-			if err != nil {
-				return fmt.Errorf("unable to decode avro data")
-			}
-
-			// assert that the decoded data is a map
-			data, ok := dataT.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
-			}
-
-			// assign key to value
-			records[idx] = data
-
-			return nil
-		})
+	// read and decode records matchin rep.Keys from Tables
+	records := make([]map[string]interface{}, len(rep.Keys))
+	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
+		// decode the avro data
+		dataT, err := stream.AvroCodec.Unmarshal(avroData, false)
 		if err != nil {
-			log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
+			return fmt.Errorf("unable to decode avro data")
 		}
 
-		// loop through all the subscribed clients
-		for _, client := range subscribedClients {
-			id := client.InstancesToIDs[instanceID]
-			// loop through records and send one at a time
-			for _, record := range records {
-				client.SendData(id, record)
-			}
+		// assert that the decoded data is a map
+		data, ok := dataT.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
 		}
 
-		// finalize metrics
-		elapsed := time.Since(startTime)
+		// assign key to value
+		records[idx] = data
 
-		// log: number of clients sent to, number of rows sent, time elapsed, instance id
-		log.Printf("Message sent to client(s). Number of clients: %d, Number of rows: %d, Time elapsed: %s, InstanceID: %s",
-			len(subscribedClients), len(records), elapsed, instanceID.String())
+		return nil
+	})
+
+	if err != nil {
+		log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
 	}
-	return
-}
 
-// get index of element in Client list
-func getIndex(slice []*Client, client *Client) int {
-	for i, v := range slice {
-		if v == client {
-			return i
+	// push records to all subscribers
+	for c := range subscribers {
+		subID := c.GetSubscriptionID(filter)
+		for _, record := range records {
+			c.SendData(subID, record)
 		}
 	}
-	return -1
-}
 
-// remove client from Client list
-func remove(s []*Client, i int) []*Client {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
+	// log metrics
+	elapsed := time.Since(startTime)
+	log.Printf("Sent %d row(s) from instance %s to %d client(s) in %s", len(records), instanceID.String(), len(subscribers), elapsed)
 }
