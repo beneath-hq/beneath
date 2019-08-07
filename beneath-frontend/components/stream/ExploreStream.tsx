@@ -21,14 +21,13 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const ExploreStream: FC<QueryStream> = ({ stream }) => {
-  const schema = new Schema(stream);
+  const schema = new Schema(stream, false);
 
   const [values, setValues] = React.useState({
     where: "",
     vars: {
       projectName: stream.project.name,
       streamName: stream.name,
-      keyFields: schema.keyFields,
       limit: 100,
       where: "",
     } as RecordsVariables,

@@ -4,14 +4,12 @@ export const QUERY_RECORDS = gql`
   query Records(
     $projectName: String!,
     $streamName: String!,
-    $keyFields: [String!]!,
     $limit: Int!,
     $where: JSON)
   {
     records(
       projectName: $projectName,
       streamName: $streamName,
-      keyFields: $keyFields,
       limit: $limit,
       where: $where
     ) @client @connection(key: "records", filter: ["projectName", "streamName"]) {
@@ -21,6 +19,24 @@ export const QUERY_RECORDS = gql`
         sequenceNumber
       }
       error
+    }
+  }
+`;
+
+export const QUERY_LATEST_RECORDS = gql`
+  query LatestRecords(
+    $projectName: String!,
+    $streamName: String!,
+    $limit: Int!,
+  ) {
+    latestRecords(
+      projectName: $projectName,
+      streamName: $streamName,
+      limit: $limit,
+    ) @client @connection(key: "latestRecords", filter: ["projectName", "streamName"]) {
+      recordID
+      data
+      sequenceNumber
     }
   }
 `;

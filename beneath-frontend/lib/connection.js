@@ -11,6 +11,7 @@ const API_URL = `${HTTP_PROTOCOL}://${API_HOST}`;
 
 const GATEWAY_HOST = IS_PRODUCTION ? "data.beneath.network" : "localhost:5000";
 const GATEWAY_URL = `${HTTP_PROTOCOL}://${GATEWAY_HOST}`;
+const GATEWAY_URL_WS = `${WEBSOCKET_PROTOCOL}://${GATEWAY_HOST}`;
 
 module.exports = {
   IS_PRODUCTION,
@@ -22,4 +23,5 @@ module.exports = {
   API_URL,
   GATEWAY_HOST,
   GATEWAY_URL,
+  GATEWAY_URL_WS,
 };

@@ -1,24 +1,15 @@
 import _ from "lodash";
 import React, { FC } from "react";
-import { Query, Mutation } from "react-apollo";
+import { Mutation } from "react-apollo";
 
 import { makeStyles, Theme } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 
-import { QUERY_RECORDS, CREATE_RECORDS } from "../../apollo/queries/local/records";
+import { CREATE_RECORDS } from "../../apollo/queries/local/records";
 import { CreateRecords, CreateRecordsVariables } from "../../apollo/types/CreateRecords";
 import { QueryStream } from "../../apollo/types/QueryStream";
-import { Records, RecordsVariables } from "../../apollo/types/Records";
 import CodeTextField from "../CodeTextField";
-import Loading from "../Loading";
-import VSpace from "../VSpace";
 import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -47,7 +38,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const ExploreStream: FC<QueryStream> = ({ stream }) => {
-  const schema = new Schema(stream);
+  const schema = new Schema(stream, false);
 
   const [values, setValues] = React.useState({
     json: "",
@@ -67,7 +58,11 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
         if (createRecords.error) {
           setValues({ ...values, error: createRecords.error });
         } else {
-          setValues({ json: "", error: "", flash: "Successfully wrote record, but it might take a while before it shows up." });
+          setValues({
+            json: "",
+            error: "",
+            flash: "Successfully wrote record, but it might take a while before it shows up."
+          });
         }
       }}
       // not updating QUERY_RECORDS because it was tricky, so we use cache-and-network on it instead

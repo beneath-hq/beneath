@@ -1,72 +1,118 @@
+import { ApolloClient } from "apollo-boost";
 import React, { FC } from "react";
-import { Subscription } from "react-apollo";
+import { Query, withApollo } from "react-apollo";
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
-import { QUERY_RECORDS } from "../../apollo/queries/local/records";
+import { QUERY_LATEST_RECORDS } from "../../apollo/queries/local/records";
+import { LatestRecords, LatestRecordsVariables } from "../../apollo/types/LatestRecords";
 import { QueryStream } from "../../apollo/types/QueryStream";
-import Loading from "../Loading";
+import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
 import { Schema } from "./schema";
 
-const GRAPHQL_ENDPOINT = "ws://localhost:8080/ws";
+type StreamLatestProps = QueryStream & { client: ApolloClient<any> };
 
 interface StreamLatestState {
   messages: string[];
 }
 
-class StreamLatest extends React.Component<QueryStream, StreamLatestState> {
+class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState> {
+  private apollo: ApolloClient<any>
+  private subscription: SubscriptionClient | undefined;
   private schema: Schema;
-  private client: SubscriptionClient | undefined;
 
-  constructor(props: QueryStream) {
+  constructor(props: StreamLatestProps) {
     super(props);
-    this.schema = new Schema(props.stream);
+    this.apollo = props.client;
+    this.schema = new Schema(props.stream, true);
     this.state = {
       messages: [],
     };
   }
 
   public componentWillUnmount() {
-    if (this.client) {
-      console.log("closing");
-      this.client.close();
+    if (this.subscription) {
+      this.subscription.close(true);
     }
   }
 
   public componentDidMount() {
-    this.client = new SubscriptionClient(GRAPHQL_ENDPOINT, {
-      reconnect: false, // TODO: true
+    const self = this;
+
+    this.subscription = new SubscriptionClient(`${GATEWAY_URL_WS}/ws`, {
+      reconnect: true,
     });
 
-    const _this = this;
+    const request = {
+      query: this.props.stream.currentStreamInstanceID || undefined,
+    };
 
-    const obs = this.client.request({
-      query: "af6602e8-0c55-4579-972e-206f90c668b7",
-    });
+    const apolloVariables = {
+      projectName: this.props.stream.project.name,
+      streamName: this.props.stream.name,
+    };
 
-    obs.subscribe({
+    // request updates on instance
+    this.subscription.request(request).subscribe({
       next: (result) => {
-        _this.setState({
-          messages: _this.state.messages.concat(["NEXT: " + JSON.stringify(result)]),
+        const queryData = self.apollo.cache.readQuery({
+          query: QUERY_LATEST_RECORDS,
+          variables: apolloVariables,
+        }) as any;
+
+        if (!queryData.latestRecords) {
+          queryData.latestRecords = [];
+        }
+
+        const recordID = self.schema.makeUniqueIdentifier(result.data);
+
+        queryData.latestRecords = queryData.latestRecords.filter((record: any) => record.recordID !== recordID);
+
+        queryData.latestRecords.unshift({
+          __typename: "Record",
+          recordID,
+          data: result.data,
+          sequenceNumber: result.data && result.data["@meta"] && result.data["@meta"].sequence_number,
+        });
+
+        self.apollo.writeQuery({
+          query: QUERY_LATEST_RECORDS,
+          variables: apolloVariables,
+          data: queryData,
         });
       },
       error: (result) => {
-        _this.setState({
-          messages: _this.state.messages.concat(["ERROR: " + JSON.stringify(result)]),
-        });
+        // self.setState({
+        //   messages: self.state.messages.concat(["ERROR: " + JSON.stringify(result)]),
+        // });
       },
       complete: () => {
-        _this.setState({
-          messages: _this.state.messages.concat(["COMPLETE: ---"]),
-        });
+        console.error("Unexpected subscription complete for instance");
       },
     });
-
   }
 
   public render() {
-    return <p>{JSON.stringify(this.state.messages)}</p>;
-  }
-};
+    const variables = {
+      projectName: this.props.stream.project.name,
+      streamName: this.props.stream.name,
+      limit: 100,
+    };
+    
+    return (
+      <Query<LatestRecords, LatestRecordsVariables>
+        query={QUERY_LATEST_RECORDS}
+        variables={variables}
+        fetchPolicy="cache-and-network"
+      >
+        {({ loading, error, data }) => {
+          // const errorMsg = loading ? null : error ? error.message : data ? data.records.error : null;
 
-export default StreamLatest;
+          return <RecordsTable schema={this.schema} records={data ? data.latestRecords : null} />;
+        }}
+      </Query>
+    );
+  }
+}
+
+export default withApollo(StreamLatest);

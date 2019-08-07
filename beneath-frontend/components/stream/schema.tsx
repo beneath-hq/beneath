@@ -6,14 +6,25 @@ export class Schema {
   public keyFields: string[];
   public avroSchema: avro.types.RecordType;
   public columns: Column[];
+  public includeSequenceNumber: boolean;
 
-  constructor(stream: QueryStream_stream) {
+  constructor(stream: QueryStream_stream, includeSequenceNumber: boolean) {
     this.keyFields = stream.keyFields;
     this.avroSchema = avro.Type.forSchema(JSON.parse(stream.avroSchema)) as avro.types.RecordType;
     this.columns = [];
+    this.includeSequenceNumber = true;
     for (const field of this.avroSchema.fields) {
       this.columns.push(new Column(field.name, field.type));
     }
+  }
+
+  public makeUniqueIdentifier(record: any) {
+    let id = this.keyFields.reduce((prev, curr) => `${prev}-${record[curr]}`, "");
+    if (this.includeSequenceNumber) {
+      const seqNo = record["@meta"] && record["@meta"].sequence_number;
+      id = `${id}-${seqNo || ""}`;
+    }
+    return id;
   }
 }
 
@@ -32,7 +43,11 @@ class Column {
   }
 
   public makeTableHeaderCell(className: string | undefined) {
-    return <TableCell key={this.name} className={className}>{this.name}</TableCell>;
+    return (
+      <TableCell key={this.name} className={className}>
+        {this.name}
+      </TableCell>
+    );
   }
 
   public makeTableCell(record: any, className: string | undefined) {
