@@ -16,6 +16,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/gateway/websockets"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
@@ -56,6 +57,10 @@ func httpHandler() http.Handler {
 	// GraphQL endpoints
 	// handler.Get("/graphql")
 	// handler.Get("/projects/{projectName}/graphql")
+
+	// create websocket broker and start accepting new connections on /ws
+	broker := websockets.NewBroker(db.Engine)
+	handler.Method("GET", "/ws", httputil.AppHandler(broker.HTTPHandler))
 
 	// REST endpoints
 	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/details", httputil.AppHandler(getStreamDetails))

@@ -21,11 +21,6 @@ func main() {
 		return gateway.ListenAndServeGRPC(gateway.Config.GRPCPort)
 	})
 
-	// websocket server
-	group.Go(func() error {
-		return gateway.ListenAndServeWS(gateway.Config.WSPort)
-	})
-
 	// run simultaneously
 	log.Fatal(group.Wait())
 }
