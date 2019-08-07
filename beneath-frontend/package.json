@@ -41,7 +41,7 @@
     "react-jss": "^8.6.1",
     "react-moment": "^0.9.2",
     "recompose": "^0.30.0",
-    "subscriptions-transport-ws": "^0.9.15",
+    "subscriptions-transport-ws": "^0.9.16",
     "tslint": "^5.18.0",
     "validator": "^11.1.0"
   },

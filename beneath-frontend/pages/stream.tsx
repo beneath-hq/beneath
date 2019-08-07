@@ -10,6 +10,7 @@ import PageTitle from "../components/PageTitle";
 import EditStream from "../components/stream/EditStream";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
+import StreamLatest from "../components/stream/StreamLatest";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs from "../components/SubrouteTabs";
 
@@ -42,7 +43,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
           tabs.push({ value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> });
 
           if (!stream.batch) {
-            tabs.push({ value: "streaming", label: "Streaming", render: () => <p>Streaming here</p> });
+            tabs.push({ value: "streaming", label: "Streaming", render: () => <StreamLatest stream={stream} /> });
           }
 
           tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });

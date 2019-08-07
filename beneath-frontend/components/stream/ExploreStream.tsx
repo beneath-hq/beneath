@@ -4,43 +4,19 @@ import { Query } from "react-apollo";
 import { makeStyles, Theme } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
 
 import { QUERY_RECORDS } from "../../apollo/queries/local/records";
 import { QueryStream } from "../../apollo/types/QueryStream";
 import { Records, RecordsVariables } from "../../apollo/types/Records";
 import BNTextField from "../BNTextField";
 import Loading from "../Loading";
+import RecordsTable from "../RecordsTable";
 import VSpace from "../VSpace";
 import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  paper: {
-    width: "100%",
-    overflowX: "auto",
-  },
-  table: {},
   submitButton: {
     marginTop: theme.spacing(3),
-  },
-  row: {
-    "&:last-child": {
-      "& td": {
-        borderBottom: "none",
-      },
-    },
-  },
-  cell: {
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    borderLeft: `1px solid ${theme.palette.divider}`,
-    "&:first-child": {
-      borderLeft: "none",
-    },
   },
 }));
 
@@ -110,24 +86,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
         if (loading && !(data && data.records)) {
           tableElem = <Loading justify="center" />;
         } else {
-          tableElem = (
-            <div className={classes.paper}>
-              <Table className={classes.table} size="small">
-                <TableHead>
-                  <TableRow>{schema.columns.map((column) => column.makeTableHeaderCell(classes.cell))}</TableRow>
-                </TableHead>
-                <TableBody>
-                  {data &&
-                    data.records.data &&
-                    data.records.data.map((record) => (
-                      <TableRow key={record.recordID} className={classes.row} hover={true}>
-                        {schema.columns.map((column) => column.makeTableCell(record.data, classes.cell))}
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          );
+          tableElem = <RecordsTable schema={schema} records={data ? data.records.data : null} />;
         }
 
         return (

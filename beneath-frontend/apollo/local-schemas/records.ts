@@ -5,8 +5,6 @@ import connection from "../../lib/connection";
 import { GET_TOKEN } from "../queries/local/token";
 import { CreateRecordsVariables } from "../types/CreateRecords";
 import { RecordsVariables } from "../types/Records";
-import { QUERY_RECORDS } from "../queries/local/records";
-
 
 export const typeDefs = gql`
   extend type Query {
