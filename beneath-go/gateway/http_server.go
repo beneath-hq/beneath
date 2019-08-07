@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
@@ -332,16 +333,19 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, fmt.Sprintf("record at index %d is not an object", idx))
 		}
 
-		// get meta field
-		meta, ok := obj["@meta"].(map[string]interface{})
-		if !ok {
-			return httputil.NewError(400, "must provide '@meta' field for every record")
-		}
-
 		// get sequence number as int64
-		sequenceNumber, err := jsonutil.ParseInt64(meta["sequence_number"])
-		if err != nil {
-			return httputil.NewError(400, "must provide '@meta.sequence_number' as number or numeric string for every record (e.g. use your machine's timestamp)")
+		var sequenceNumber int64
+		meta, ok := obj["@meta"].(map[string]interface{})
+		if ok {
+			raw := meta["sequence_number"]
+			if raw != nil {
+				sequenceNumber, err = jsonutil.ParseInt64(meta["sequence_number"])
+				if err != nil {
+					return httputil.NewError(400, "couldn't parse '@meta.sequence_number' as number or numeric string for record at index %d", idx)
+				}
+			}
+		} else {
+			sequenceNumber = time.Now().Unix() / int64(time.Millisecond)
 		}
 
 		// check sequence number

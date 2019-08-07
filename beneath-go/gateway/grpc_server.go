@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
@@ -181,6 +182,11 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 	// check each record is valid
 	for idx, record := range req.Records {
+		// set sequence number to current timestamp if it's 0
+		if record.SequenceNumber == 0 {
+			record.SequenceNumber = time.Now().Unix() / int64(time.Millisecond)
+		}
+
 		// check sequence number
 		if err := db.Engine.CheckSequenceNumber(record.SequenceNumber); err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d: %v", idx, err.Error()))

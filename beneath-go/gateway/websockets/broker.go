@@ -195,6 +195,11 @@ func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
 			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
 		}
 
+		// assign sequence number into data
+		data["@meta"] = map[string]interface{}{
+			"sequence_number": sequenceNumber,
+		}
+
 		// assign key to value
 		records[idx] = data
 
