@@ -1,6 +1,12 @@
-import TableCell from "@material-ui/core/TableCell";
 import avro from "avsc";
+import _ from "lodash";
+
+import TableCell from "@material-ui/core/TableCell";
+import Moment from "react-moment";
+
 import { QueryStream_stream } from "../../apollo/types/QueryStream";
+
+type TimeagoType = "timeago";
 
 export class Schema {
   public keyFields: string[];
@@ -12,9 +18,12 @@ export class Schema {
     this.keyFields = stream.keyFields;
     this.avroSchema = avro.Type.forSchema(JSON.parse(stream.avroSchema)) as avro.types.RecordType;
     this.columns = [];
-    this.includeSequenceNumber = true;
+    this.includeSequenceNumber = includeSequenceNumber;
     for (const field of this.avroSchema.fields) {
-      this.columns.push(new Column(field.name, field.type));
+      this.columns.push(new Column(field.name, field.name, field.type));
+    }
+    if (includeSequenceNumber) {
+      this.columns.push(new Column("@meta.sequence_number", "Time ago", "timeago"));
     }
   }
 
@@ -28,16 +37,22 @@ export class Schema {
   }
 }
 
+
 class Column {
   public name: string;
-  public type: avro.Type;
+  public displayName: string;
+  public type: avro.Type | TimeagoType;
 
-  constructor(name: string, type: avro.Type) {
+  constructor(name: string, displayName: string, type: avro.Type | TimeagoType) {
     this.name = name;
+    this.displayName = displayName;
     this.type = type;
   }
 
   public isNumeric(): boolean {
+    if (this.type === "timeago") {
+      return false;
+    }
     const t = this.type.typeName;
     return t === "int" || t === "long" || t === "float" || t === "double";
   }
@@ -45,7 +60,7 @@ class Column {
   public makeTableHeaderCell(className: string | undefined) {
     return (
       <TableCell key={this.name} className={className}>
-        {this.name}
+        {this.displayName}
       </TableCell>
     );
   }
@@ -54,13 +69,17 @@ class Column {
     const align = this.isNumeric() ? "right" : "left";
     return (
       <TableCell key={this.name} className={className} align={align}>
-        {this.formatValue(record[this.name])}
+        {this.formatValue(_.get(record, this.name))}
       </TableCell>
     );
   }
 
   private formatValue(val: any) {
     if (val !== undefined && val !== null) {
+      if (this.type === "timeago") {
+        return <Moment fromNow ago date={new Date(val / 1000)} />;
+      }
+
       return val.toString();
     }
     return "";

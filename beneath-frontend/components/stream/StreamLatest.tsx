@@ -10,12 +10,15 @@ import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
 import { Schema } from "./schema";
 
+const FLASH_ROWS_DURATION = 5000;
+
 interface StreamLatestProps extends QueryStream {
   setLoading: (loading: boolean) => void;
 }
 
 interface StreamLatestState {
   error: string | undefined;
+  flashRows: number;
 }
 
 class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, StreamLatestState> {
@@ -29,6 +32,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
     this.schema = new Schema(props.stream, true);
     this.state = {
       error: undefined,
+      flashRows: 0,
     };
   }
 
@@ -89,16 +93,30 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
           variables: apolloVariables,
           data: queryData,
         });
+
+        self.setState({
+          error: self.state.error,
+          flashRows: self.state.flashRows + 1,
+        });
+
+        setTimeout(() => {
+          self.setState({
+            error: self.state.error,
+            flashRows: self.state.flashRows - 1,
+          });
+        }, FLASH_ROWS_DURATION);
       },
       error: (error) => {
         self.setState({
           error: error.message,
+          flashRows: self.state.flashRows,
         });
       },
       complete: () => {
         if (!self.state.error) {
           self.setState({
             error: "Unexpected completion of subscription",
+            flashRows: self.state.flashRows,
           });
         }
         self.subscription = undefined;
@@ -125,7 +143,13 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
             return <p>Error: {JSON.stringify(error)}</p>;
           }
 
-          return <RecordsTable schema={this.schema} records={data ? data.latestRecords : null} />;
+          return (
+            <RecordsTable
+              schema={this.schema}
+              records={data ? data.latestRecords : null}
+              highlightTopN={this.state.flashRows}
+            />
+          );
         }}
       </Query>
     );
