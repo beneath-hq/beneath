@@ -1,6 +1,12 @@
 Good resource for how to upload packages to PyPi:
 https://packaging.python.org/tutorials/packaging-projects/
 
+Add command line functionality:
+https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html
+
+Parsing command line arguments:
+https://realpython.com/command-line-interfaces-python-argparse/#how-to-use-the-python-argparse-library-to-create-a-command-line-interface
+
 authentication:
 os.environ["BENEATH_SECRET"] = "..."
 

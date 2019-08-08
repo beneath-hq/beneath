@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+import argparse
+
+# set up argument parsing
+my_parser = argparse.ArgumentParser()
+my_parser.add_argument('deploy', type=str, help='Deploy a model to Beneath')
+args = my_parser.parse_args()
+
+# handle deploy
+if args.deploy:
+  print("hey")
+
+# handle X
+
+# handle Y
+
+# handle Z
+
+
