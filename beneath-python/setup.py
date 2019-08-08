@@ -6,7 +6,8 @@ with open("README.md", "r") as fh:
 # TODO: input correct specifications
 setuptools.setup(
     name="beneath-python-package",
-    version="0.0.1",
+    version=open(
+        "beneath/_version.py").readlines()[-1].split()[-1].strip("\"'"),
     author="Benjamin Egelund-Muller and Eric Green",
     author_email="eric@beneath.network",
     description="Client package for Beneath Systems",

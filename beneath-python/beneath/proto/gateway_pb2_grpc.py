@@ -30,6 +30,11 @@ class GatewayStub(object):
         request_serializer=beneath_dot_proto_dot_gateway__pb2.StreamDetailsRequest.SerializeToString,
         response_deserializer=beneath_dot_proto_dot_gateway__pb2.StreamDetailsResponse.FromString,
         )
+    self.GetCurrentBeneathPackageVersion = channel.unary_unary(
+        '/proto.Gateway/GetCurrentBeneathPackageVersion',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.PackageVersionRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.PackageVersionResponse.FromString,
+        )
 
 
 class GatewayServicer(object):
@@ -57,6 +62,13 @@ class GatewayServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def GetCurrentBeneathPackageVersion(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
 
 def add_GatewayServicer_to_server(servicer, server):
   rpc_method_handlers = {
@@ -74,6 +86,11 @@ def add_GatewayServicer_to_server(servicer, server):
           servicer.GetStreamDetails,
           request_deserializer=beneath_dot_proto_dot_gateway__pb2.StreamDetailsRequest.FromString,
           response_serializer=beneath_dot_proto_dot_gateway__pb2.StreamDetailsResponse.SerializeToString,
+      ),
+      'GetCurrentBeneathPackageVersion': grpc.unary_unary_rpc_method_handler(
+          servicer.GetCurrentBeneathPackageVersion,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.PackageVersionRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.PackageVersionResponse.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

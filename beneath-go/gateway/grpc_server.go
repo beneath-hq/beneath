@@ -219,3 +219,14 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 	return &pb.WriteRecordsResponse{}, nil
 }
+
+// check to see if the client's version is current
+func (s *gRPCServer) GetCurrentBeneathPackageVersion(ctx context.Context, req *pb.PackageVersionRequest) (*pb.PackageVersionResponse, error) {
+	response := ""
+	if req.PackageVersion == "0.0.1" {
+		response = "current"
+	} else {
+		response = "not current"
+	}
+	return &pb.PackageVersionResponse{VersionResponse: response}, nil
+}
