@@ -1,6 +1,6 @@
 import { ApolloClient } from "apollo-boost";
 import React, { FC } from "react";
-import { Query, withApollo } from "react-apollo";
+import { Query, withApollo, WithApolloClient } from "react-apollo";
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
 import { QUERY_LATEST_RECORDS } from "../../apollo/queries/local/records";
@@ -10,18 +10,20 @@ import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
 import { Schema } from "./schema";
 
-type StreamLatestProps = QueryStream & { client: ApolloClient<any> };
+interface StreamLatestProps extends QueryStream {
+  setLoading: (loading: boolean) => void;
+}
 
 interface StreamLatestState {
   error: string | undefined;
 }
 
-class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState> {
-  private apollo: ApolloClient<any>
+class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, StreamLatestState> {
+  private apollo: ApolloClient<any>;
   private subscription: SubscriptionClient | undefined;
   private schema: Schema;
 
-  constructor(props: StreamLatestProps) {
+  constructor(props: WithApolloClient<StreamLatestProps>) {
     super(props);
     this.apollo = props.client;
     this.schema = new Schema(props.stream, true);
@@ -31,12 +33,16 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
   }
 
   public componentWillUnmount() {
+    this.props.setLoading(false);
+
     if (this.subscription) {
       this.subscription.close(true);
     }
   }
 
   public componentDidMount() {
+    this.props.setLoading(true);
+
     if (this.subscription) {
       return;
     }
@@ -119,15 +125,11 @@ class StreamLatest extends React.Component<StreamLatestProps, StreamLatestState>
             return <p>Error: {JSON.stringify(error)}</p>;
           }
 
-          loading = loading || !!this.subscription;
-
-          return (
-            <RecordsTable schema={this.schema} loading={loading} records={data ? data.latestRecords : null} />
-          );
+          return <RecordsTable schema={this.schema} records={data ? data.latestRecords : null} />;
         }}
       </Query>
     );
   }
 }
 
-export default withApollo(StreamLatest);
+export default withApollo<StreamLatestProps>(StreamLatest);
