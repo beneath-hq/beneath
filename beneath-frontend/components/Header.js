@@ -45,15 +45,19 @@ const Header = (({ router, toggleMobileDrawer }) => {
   const selectedTab = tabs.find((tab) => !!router.pathname.match(tab.selectRegex));
   const classes = useStyles();
   return (
-    <AppBar position="relative" className={classes.appBar}>
+    <AppBar position="sticky" className={classes.appBar}>
       <Toolbar variant="dense">
         {toggleMobileDrawer && (
-          <IconButton color="inherit" edge="start" aria-label="Open drawer"
-            className={classes.drawerButton} onClick={toggleMobileDrawer}
+          <IconButton
+            color="inherit"
+            edge="start"
+            aria-label="Open drawer"
+            className={classes.drawerButton}
+            onClick={toggleMobileDrawer}
           >
             <MenuIcon />
           </IconButton>
-        ) }
+        )}
         <Link component={NextMuiLink} href="/" variant="h6" color="inherit" underline="none" noWrap>
           BENEATH
         </Link>
@@ -69,19 +73,28 @@ const Header = (({ router, toggleMobileDrawer }) => {
             return (
               <React.Fragment>
                 {!token && (
-                  <Button color="inherit" component={NextMuiLink} size="small" href="/auth">Login</Button>
+                  <Button color="inherit" component={NextMuiLink} size="small" href="/auth">
+                    Login
+                  </Button>
                 )}
                 {token && (
                   <React.Fragment>
                     <IconButton edge="end" aria-haspopup="true" onClick={openMenu} color="inherit">
                       <Person />
                     </IconButton>
-                    <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={closeMenu}
+                    <Menu
+                      anchorEl={menuAnchorEl}
+                      open={isMenuOpen}
+                      onClose={closeMenu}
                       anchorOrigin={{ vertical: "top", horizontal: "right" }}
                       transformOrigin={{ vertical: "top", horizontal: "right" }}
                     >
-                      <MenuItem onClick={closeMenu} component={NextMuiLink} as="/users/me" href="/user?id=me">Profile</MenuItem>
-                      <MenuItem component={NextMuiLink} href="/auth/logout">Logout</MenuItem>
+                      <MenuItem onClick={closeMenu} component={NextMuiLink} as="/users/me" href="/user?id=me">
+                        Profile
+                      </MenuItem>
+                      <MenuItem component={NextMuiLink} href="/auth/logout">
+                        Logout
+                      </MenuItem>
                     </Menu>
                   </React.Fragment>
                 )}
