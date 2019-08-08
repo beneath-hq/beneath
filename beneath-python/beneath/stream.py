@@ -1,10 +1,9 @@
 import io
 import grpc
 import uuid
-import pandas as pd
 import json
 import time
-import apache_beam as beam
+import pandas as pd
 from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
 from beneath.proto import gateway_pb2_grpc
 from beneath.proto import gateway_pb2

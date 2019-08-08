@@ -21,19 +21,7 @@ Here is an example of WriteToBeneath's usage in a Beam pipeline:
 
 
 """
-
-import io
-import grpc
-import uuid
-import pandas as pd
-import json
-import time
 import apache_beam as beam
-from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
-from beneath.client import Client
-from beneath.proto import engine_pb2
-from beneath.proto import gateway_pb2
-from beneath.proto import gateway_pb2_grpc
 
 # write to gateway function
 class _GatewayWriteFn(beam.DoFn):

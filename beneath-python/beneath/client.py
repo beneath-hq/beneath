@@ -1,11 +1,7 @@
-import io
 import grpc
 import uuid
-import pandas as pd
 import json
-import time
-import apache_beam as beam
-from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
+from fastavro import parse_schema
 import beneath
 from beneath.stream import Stream
 from beneath.proto import engine_pb2

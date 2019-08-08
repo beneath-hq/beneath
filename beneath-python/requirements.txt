@@ -1,0 +1,4 @@
+apache-beam==2.14.0
+fastavro==0.21.24
+grpcio-tools==1.22.0
+pandas==0.24.2

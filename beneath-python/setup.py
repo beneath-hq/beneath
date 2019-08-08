@@ -20,4 +20,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        'apache_beam',
+        'fastavro',
+        'grpcio-tools',
+        'pandas'
+    ]
 )
