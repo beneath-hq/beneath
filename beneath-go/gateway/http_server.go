@@ -350,7 +350,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 				}
 			}
 		} else {
-			sequenceNumber = time.Now().Unix() / int64(time.Millisecond)
+			sequenceNumber = time.Now().UnixNano() / int64(time.Millisecond)
 		}
 
 		// check sequence number

@@ -1,18 +1,11 @@
-import Link from "next/link";
+import Link, { LinkProps } from "next/link";
 import React, { FC } from "react";
 
-interface IProps {
-  href: string;
-  as?: string;
-  prefetch?: boolean;
-  replace?: boolean;
-  shallow?: boolean;
-}
-
-const NextMuiLink = React.forwardRef<any, IProps>(({ as, href, prefetch, replace, shallow, ...props }, ref) => {
+const NextMuiLink = React.forwardRef<Link, LinkProps>((props, ref) => {
+  const { href, as, replace, scroll, shallow, passHref, onError, prefetch, ...others } = props;
   return (
-    <Link href={href} prefetch={prefetch} as={as} ref={ref} replace={replace} shallow={shallow}>
-      <a {...props} />
+    <Link href={href} as={as} replace={replace} scroll={scroll} shallow={shallow} passHref={passHref} prefetch={prefetch}>
+      <a {...others} />
     </Link>
   );
 });

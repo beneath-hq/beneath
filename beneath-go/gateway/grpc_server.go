@@ -184,7 +184,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	for idx, record := range req.Records {
 		// set sequence number to current timestamp if it's 0
 		if record.SequenceNumber == 0 {
-			record.SequenceNumber = time.Now().Unix() / int64(time.Millisecond)
+			record.SequenceNumber = time.Now().UnixNano() / int64(time.Millisecond)
 		}
 
 		// check sequence number

@@ -12,7 +12,7 @@ import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import StreamLatest from "../components/stream/StreamLatest";
 import WriteStream from "../components/stream/WriteStream";
-import SubrouteTabs from "../components/SubrouteTabs";
+import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
@@ -43,7 +43,11 @@ const StreamPage: FC<IProps> = ({ router }) => {
           tabs.push({ value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> });
 
           if (!stream.batch) {
-            tabs.push({ value: "streaming", label: "Streaming", render: () => <StreamLatest stream={stream} /> });
+            tabs.push({
+              value: "streaming",
+              label: "Streaming",
+              render: ((props: SubrouteTabProps) => <StreamLatest stream={stream} {...props} />),
+            });
           }
 
           tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });

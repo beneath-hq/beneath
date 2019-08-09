@@ -1,9 +1,12 @@
+import { ApolloClient } from "apollo-boost";
 import { ApolloCache } from "apollo-cache";
 import gql from "graphql-tag";
 
 import connection from "../../lib/connection";
 import { GET_TOKEN } from "../queries/local/token";
+import { QUERY_STREAM } from "../queries/stream";
 import { CreateRecordsVariables } from "../types/CreateRecords";
+import { LatestRecordsVariables } from "../types/LatestRecords";
 import { RecordsVariables } from "../types/Records";
 
 export const typeDefs = gql`
@@ -11,10 +14,15 @@ export const typeDefs = gql`
     records(
       projectName: String!,
       streamName: String!,
-      keyFields: [String!]!,
       where: JSON,
       limit: Int!,
     ): RecordsResponse!
+
+    latestRecords(
+      projectName: String!,
+      streamName: String!,
+      limit: Int!,
+    ): [Record!]!
   }
 
   extend type Mutation {
@@ -40,28 +48,40 @@ export const typeDefs = gql`
   }
 `;
 
+interface ResolverContext {
+  client: ApolloClient<any>;
+  cache: ApolloCache<any>;
+}
+
 export const resolvers = {
   Query: {
-    records: async (_: any, { projectName, streamName, keyFields, where, limit }: RecordsVariables, { cache }: any) => {
+    records: async (_: any, args: RecordsVariables, { cache, client }: ResolverContext) => {
+      // get stream
+      const { data: { stream } } = await  client.query({
+        query: QUERY_STREAM,
+        variables: { projectName: args.projectName, name: args.streamName },
+      });
+      if (!stream) {
+        return {
+          __typename: "RecordsResponse",
+          data: null,
+          error: "couldn't find stream",
+        };
+      }
+
       // build url with limit and where
-      let url = `${connection.GATEWAY_URL}/projects/${projectName}/streams/${streamName}`;
-      url += `?limit=${limit}`;
-      if (where) {
-        url += `&where=${JSON.stringify(where)}`;
+      let url = `${connection.GATEWAY_URL}/projects/${args.projectName}/streams/${args.streamName}`;
+      url += `?limit=${args.limit}`;
+      if (args.where) {
+        url += `&where=${JSON.stringify(args.where)}`;
       }
 
       // build headers with authorization
       const headers: any = { "Content-Type": "application/json" };
-      const { token } = cache.readQuery({ query: GET_TOKEN });
+      const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
-
-      // await new Promise(function (resolve) {
-      //   setTimeout(function () {
-      //     resolve();
-      //   }, 3000);
-      // });
 
       // fetch
       const res = await fetch(url, { headers });
@@ -91,22 +111,27 @@ export const resolvers = {
         data: data.map((row: any) => {
           return {
             __typename: "Record",
-            recordID: makeUniqueIdentifier(keyFields, row),
+            recordID: makeUniqueIdentifier(stream.keyFields, row),
             data: row,
             sequenceNumber: row["@meta"].sequence_number,
           };
         }),
       };
     },
+    latestRecords: async (_: any, args: LatestRecordsVariables, { cache, client }: ResolverContext) => {
+      // TODO:
+      const res = await resolvers.Query.records(null, args, { cache, client });
+      return res.data;
+    },
   },
   Mutation: {
-    createRecords: async (_: any, { instanceID, json }: CreateRecordsVariables, { cache }: any) => {
+    createRecords: async (_: any, { instanceID, json }: CreateRecordsVariables, { cache }: ResolverContext) => {
       // build url with limit and where
       const url = `${connection.GATEWAY_URL}/streams/instances/${instanceID}`;
 
       // build headers with authorization
       const headers: any = { "Content-Type": "application/json" };
-      const { token } = cache.readQuery({ query: GET_TOKEN });
+      const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -143,5 +168,5 @@ export default {
 };
 
 const makeUniqueIdentifier = (keyFields: string[], data: any) => {
-  return keyFields.reduce((prev, curr) => `${data[prev]}-${data[curr]}`, "");
+  return keyFields.reduce((prev, curr) => `${prev}-${data[curr]}`, "");
 };

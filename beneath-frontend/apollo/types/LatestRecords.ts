@@ -3,29 +3,22 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: Records
+// GraphQL query operation: LatestRecords
 // ====================================================
 
-export interface Records_records_data {
+export interface LatestRecords_latestRecords {
   __typename: "Record";
   recordID: string;
   data: ControlJSON;
   sequenceNumber: string;
 }
 
-export interface Records_records {
-  __typename: "RecordsResponse";
-  data: Records_records_data[] | null;
-  error: string | null;
+export interface LatestRecords {
+  latestRecords: LatestRecords_latestRecords[];
 }
 
-export interface Records {
-  records: Records_records;
-}
-
-export interface RecordsVariables {
+export interface LatestRecordsVariables {
   projectName: string;
   streamName: string;
   limit: number;
-  where?: ControlJSON | null;
 }

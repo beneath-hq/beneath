@@ -20,8 +20,6 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const StreamAPI: FC<QueryStream> = ({ stream }) => {
-  const schema = new Schema(stream);
-
   const classes = useStyles();
   return (
     <Container maxWidth={"md"}>
