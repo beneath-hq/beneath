@@ -76,22 +76,21 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 
 	// loop through each record in the Write Request
 	for i, record := range req.Records {
+		// set avro data
 		avroData[i] = record.AvroData
-		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data")
-		}
 
-		// assert that the decoded data is a map
-		var ok bool
-		data[i], ok = dataT.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+		// decode the avro data
+		obj, err := stream.Codec.UnmarshalAvro(record.AvroData)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data: %v", err.Error())
+		}
+		data[i], err = stream.Codec.ConvertFromAvroNative(obj, false)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data: %v", err.Error())
 		}
 
 		// get the encoded key
-		keys[i], err = stream.KeyCodec.Marshal(data[i])
+		keys[i], err = stream.Codec.MarshalKey(data[i])
 		if err != nil {
 			return fmt.Errorf("unable to encode key")
 		}

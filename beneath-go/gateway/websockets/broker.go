@@ -184,15 +184,15 @@ func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
 	records := make([]map[string]interface{}, len(rep.Keys))
 	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
 		// decode the avro data
-		dataT, err := stream.AvroCodec.Unmarshal(avroData, true)
+		obj, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
 			return fmt.Errorf("unable to decode avro data")
 		}
 
 		// assert that the decoded data is a map
-		data, ok := dataT.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("expected decoded data to be a map, got %T", dataT)
+		data, err := stream.Codec.ConvertFromAvroNative(obj, true)
+		if err != nil {
+			return fmt.Errorf("unable to decode avro data")
 		}
 
 		// assign sequence number into data

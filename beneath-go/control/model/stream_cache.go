@@ -24,8 +24,7 @@ type CachedStream struct {
 	ProjectID   uuid.UUID
 	ProjectName string
 	StreamName  string
-	KeyCodec    *codec.KeyCodec
-	AvroCodec   *codec.AvroCodec
+	Codec       *codec.Codec
 }
 
 type internalCachedStream struct {
@@ -53,11 +52,9 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 	}
 
 	// necessary because we allow empty CachedStream objects
-	if c.KeyCodec != nil {
-		wrapped.KeyFields = c.KeyCodec.GetKeyFields()
-	}
-	if c.AvroCodec != nil {
-		wrapped.CanonicalAvroSchema = c.AvroCodec.GetSchemaString()
+	if c.Codec != nil {
+		wrapped.KeyFields = c.Codec.GetKeyFields()
+		wrapped.CanonicalAvroSchema = c.Codec.GetAvroSchemaString()
 	}
 
 	var buf bytes.Buffer
@@ -209,15 +206,8 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 
 	// nil checks necessary because we allow empty CachedStream objects
 
-	if source.CanonicalAvroSchema != "" {
-		target.AvroCodec, err = codec.NewAvro(source.CanonicalAvroSchema)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(source.KeyFields) != 0 {
-		target.KeyCodec, err = codec.NewKey(source.KeyFields, target.AvroCodec.GetSchema())
+	if source.CanonicalAvroSchema != "" && len(source.KeyFields) != 0 {
+		target.Codec, err = codec.New(source.CanonicalAvroSchema, source.KeyFields)
 		if err != nil {
 			return err
 		}

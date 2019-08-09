@@ -155,10 +155,10 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 }
 
 // ReadRecordRange implements engine.TablesDriver
-func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange *codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
+func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
 	// convert keyRange to RowSet
 	var rr bigtable.RowSet
-	if keyRange == nil {
+	if keyRange.IsNil() {
 		rr = bigtable.PrefixRange(string(instanceID[:]))
 	} else if keyRange.CheckUnique() {
 		rk := makeRowKey(instanceID, keyRange.Base)

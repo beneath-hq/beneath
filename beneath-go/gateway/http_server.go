@@ -11,7 +11,6 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
-	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/queryparse"
@@ -114,8 +113,8 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 		"external":            stream.External,
 		"batch":               stream.Batch,
 		"manual":              stream.Manual,
-		"key_fields":          stream.KeyCodec.GetKeyFields(),
-		"avro_schema":         stream.AvroCodec.GetSchema(),
+		"key_fields":          stream.Codec.GetKeyFields(),
+		"avro_schema":         stream.Codec.GetAvroSchema(),
 	})
 	if err != nil {
 		return httputil.NewError(500, err.Error())
@@ -183,13 +182,23 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			}
 			body["where"] = whereParsed
 		}
+
+		// read page
+		if after := r.URL.Query().Get("after"); after != "" {
+			var afterParsed interface{}
+			err := jsonutil.UnmarshalBytes([]byte(after), &afterParsed)
+			if err != nil {
+				return httputil.NewError(400, "couldn't parse page url parameter as json")
+			}
+			body["after"] = afterParsed
+		}
 	} else if err != nil {
 		return httputil.NewError(400, "couldn't parse body -- is it valid JSON?")
 	}
 
 	// make sure there's no accidental keys
 	for k := range body {
-		if k != "where" && k != "limit" {
+		if k != "where" && k != "limit" && k != "after" {
 			return httputil.NewError(400, "unrecognized query key '%s'; valid keys are 'where' and 'limit'", k)
 		}
 	}
@@ -222,8 +231,8 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		return httputil.NewError(400, fmt.Sprintf("limit exceeds maximum of %d", maxRecordsLimit))
 	}
 
-	// get key range based on where (if no where, it will be nil)
-	var keyRange *codec.KeyRange
+	// get key range where clause (if no where, it will be nil)
+	var whereQuery queryparse.Query
 	if body["where"] != nil {
 		// get where as map
 		where, ok := body["where"].(map[string]interface{})
@@ -232,16 +241,32 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		}
 
 		// make query
-		query, err := queryparse.JSONToQuery(where)
+		whereQuery, err = queryparse.JSONToQuery(where)
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("couldn't parse where query: %s", err.Error()))
 		}
+	}
 
-		// set key range
-		keyRange, err = stream.KeyCodec.RangeFromQuery(query)
-		if err != nil {
-			return httputil.NewError(400, err.Error())
+	// adapt key range based on after (for pagination), if present
+	var afterQuery queryparse.Query
+	if body["after"] != nil {
+		// get after as map
+		after, ok := body["after"].(map[string]interface{})
+		if !ok {
+			return httputil.NewError(400, "expected 'after' to be a json object")
 		}
+
+		// make query
+		afterQuery, err = queryparse.JSONToQuery(after)
+		if err != nil {
+			return httputil.NewError(400, fmt.Sprintf("couldn't parse after query: %s", err.Error()))
+		}
+	}
+
+	// set key range
+	keyRange, err := stream.Codec.MakeKeyRange(whereQuery, afterQuery)
+	if err != nil {
+		return httputil.NewError(400, err.Error())
 	}
 
 	// prepare write (we'll be writing as we get data, not in one batch)
@@ -253,13 +278,19 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	// read rows from engine
 	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
 		// decode avro
-		data, err := stream.AvroCodec.Unmarshal(avroData, true)
+		data, err := stream.Codec.UnmarshalAvro(avroData)
+		if err != nil {
+			return err
+		}
+
+		// convert to json friendly
+		data, err = stream.Codec.ConvertFromAvroNative(data, true)
 		if err != nil {
 			return err
 		}
 
 		// set sequence number
-		data.(map[string]interface{})["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
+		data["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
 
 		// done
 		result = append(result, data)
@@ -358,14 +389,20 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, err.Error())
 		}
 
+		// convert to avro native for encoding
+		avroNative, err := stream.Codec.ConvertToAvroNative(obj, true)
+		if err != nil {
+			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
+		}
+
 		// encode as avro
-		avroData, err := stream.AvroCodec.Marshal(obj)
+		avroData, err := stream.Codec.MarshalAvro(avroNative)
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
 
 		// compute key (only used for size check)
-		keyData, err := stream.KeyCodec.Marshal(obj)
+		keyData, err := stream.Codec.MarshalKey(avroNative)
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}

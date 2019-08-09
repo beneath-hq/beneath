@@ -9,7 +9,6 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
-	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/db"
@@ -77,8 +76,8 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 		ProjectId:         stream.ProjectID.Bytes(),
 		ProjectName:       stream.ProjectName,
 		StreamName:        stream.StreamName,
-		KeyFields:         stream.KeyCodec.GetKeyFields(),
-		AvroSchema:        stream.AvroCodec.GetSchemaString(),
+		KeyFields:         stream.Codec.GetKeyFields(),
+		AvroSchema:        stream.Codec.GetAvroSchemaString(),
 		Public:            stream.Public,
 		External:          stream.External,
 		Batch:             stream.Batch,
@@ -114,8 +113,8 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 		return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("limit exceeds maximum of %d", maxRecordsLimit))
 	}
 
-	// get key range based on where (if no where, it will be nil)
-	var keyRange *codec.KeyRange
+	// get key range where clause (if no where, it will be nil)
+	var whereQuery queryparse.Query
 	if req.Where != "" {
 		// read where
 		var where map[string]interface{}
@@ -125,21 +124,38 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 		}
 
 		// make query
-		query, err := queryparse.JSONToQuery(where)
+		whereQuery, err = queryparse.JSONToQuery(where)
 		if err != nil {
 			return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("couldn't parse 'where' query: %s", err.Error()))
 		}
+	}
 
-		// set key range
-		keyRange, err = stream.KeyCodec.RangeFromQuery(query)
+	// adapt key range based on after (for pagination), if present
+	var afterQuery queryparse.Query
+	if req.After != "" {
+		// read after
+		var after map[string]interface{}
+		err := jsonutil.UnmarshalBytes([]byte(req.After), &after)
 		if err != nil {
-			return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+			return nil, grpc.Errorf(codes.InvalidArgument, "couldn't parse 'after' -- is it valid JSON?")
 		}
+
+		// make query
+		afterQuery, err = queryparse.JSONToQuery(after)
+		if err != nil {
+			return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("couldn't parse 'after' query: %s", err.Error()))
+		}
+	}
+
+	// set key range
+	keyRange, err := stream.Codec.MakeKeyRange(whereQuery, afterQuery)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err := db.Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
+	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:       avroData,
 			SequenceNumber: sequenceNumber,
@@ -193,13 +209,13 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		}
 
 		// check it decodes
-		decodedData, err := stream.AvroCodec.Unmarshal(record.AvroData, false)
+		decodedData, err := stream.Codec.UnmarshalAvro(record.AvroData)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d doesn't decode: %v", idx, err.Error()))
 		}
 
 		// compute key (only used to check size)
-		keyData, err := stream.KeyCodec.Marshal(decodedData.(map[string]interface{}))
+		keyData, err := stream.Codec.MarshalKey(decodedData)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
