@@ -23,6 +23,7 @@ setuptools.setup(
     scripts=['bin/beneathcmd'],
     install_requires=[
         'apache_beam',
+        'argparse',
         'fastavro',
         'grpcio-tools',
         'pandas'
