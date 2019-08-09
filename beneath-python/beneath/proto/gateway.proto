@@ -17,8 +17,9 @@ service Gateway {
 
 message ReadRecordsRequest {
   bytes instance_id = 1;
-  string where = 2;
-  int32 limit = 3;
+  int32 limit = 2;
+  string where = 3;
+  string after = 4;
 }
 
 message ReadRecordsResponse {
