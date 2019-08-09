@@ -5,13 +5,15 @@ export const QUERY_RECORDS = gql`
     $projectName: String!,
     $streamName: String!,
     $limit: Int!,
-    $where: JSON)
+    $where: JSON,
+    $after: JSON)
   {
     records(
       projectName: $projectName,
       streamName: $streamName,
       limit: $limit,
-      where: $where
+      where: $where,
+      after: $after
     ) @client @connection(key: "records", filter: ["projectName", "streamName"]) {
       data {
         recordID

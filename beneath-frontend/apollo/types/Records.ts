@@ -28,4 +28,5 @@ export interface RecordsVariables {
   streamName: string;
   limit: number;
   where?: ControlJSON | null;
+  after?: ControlJSON | null;
 }

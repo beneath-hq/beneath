@@ -15,6 +15,7 @@ export const typeDefs = gql`
       projectName: String!,
       streamName: String!,
       where: JSON,
+      after: JSON,
       limit: Int!,
     ): RecordsResponse!
 
@@ -74,6 +75,9 @@ export const resolvers = {
       url += `?limit=${args.limit}`;
       if (args.where) {
         url += `&where=${JSON.stringify(args.where)}`;
+      }
+      if (args.after) {
+        url += `&after=${JSON.stringify(args.after)}`;
       }
 
       // build headers with authorization

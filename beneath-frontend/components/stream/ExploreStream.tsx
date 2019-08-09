@@ -4,6 +4,7 @@ import { Query } from "react-apollo";
 import { makeStyles, Theme } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
 
 import { QUERY_RECORDS } from "../../apollo/queries/local/records";
 import { QueryStream } from "../../apollo/types/QueryStream";
@@ -18,6 +19,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   submitButton: {
     marginTop: theme.spacing(3),
   },
+  fetchMoreButton: {},
+  noMoreDataCaption: {
+    color: theme.palette.text.disabled,
+  },
 }));
 
 const ExploreStream: FC<QueryStream> = ({ stream }) => {
@@ -25,10 +30,11 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
 
   const [values, setValues] = React.useState({
     where: "",
+    noMore: false,
     vars: {
       projectName: stream.project.name,
       streamName: stream.name,
-      limit: 100,
+      limit: 20,
       where: "",
     } as RecordsVariables,
   });
@@ -40,7 +46,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
   const classes = useStyles();
   return (
     <Query<Records, RecordsVariables> query={QUERY_RECORDS} variables={values.vars} fetchPolicy="cache-and-network">
-      {({ loading, error, data }) => {
+      {({ loading, error, data, fetchMore }) => {
         const errorMsg = loading ? null : error ? error.message : data ? data.records.error : null;
 
         const formElem = (
@@ -88,11 +94,75 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
           tableElem = <RecordsTable schema={schema} records={data ? data.records.data : null} />;
         }
 
+        let moreElem = null;
+        const records = data && data.records.data;
+        if (tableElem && records && records.length > 0 && records.length % values.vars.limit === 0) {
+          moreElem = (
+            <Grid container justify="center">
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  className={classes.fetchMoreButton}
+                  disabled={loading}
+                  onClick={() => {
+                    const after = {} as any;
+                    for (const field of schema.keyFields) {
+                      after[field] = records[records.length - 1].data[field];
+                    }
+                    fetchMore({
+                      variables: { ...values.vars, after },
+                      updateQuery: (prev, { fetchMoreResult }) => {
+                        if (!fetchMoreResult) {
+                          return prev;
+                        }
+                        const prevRecords = prev.records.data;
+                        const newRecords = fetchMoreResult.records.data;
+                        if (!newRecords || newRecords.length === 0) {
+                          setValues({ ...values, noMore: true });
+                        }
+                        if (!prevRecords || !newRecords) {
+                          return prev;
+                        }
+                        const res = {
+                          records: {
+                            __typename: "RecordsResponse",
+                            data: [...prevRecords, ...newRecords],
+                            error: null,
+                          }
+                        };
+                        console.log(res);
+                        return {
+                          records: {
+                            __typename: "RecordsResponse",
+                            data: [...prevRecords, ...newRecords],
+                            error: null,
+                          },
+                        };
+                      },
+                    });
+                  }}
+                >
+                  Fetch more
+                </Button>
+              </Grid>
+            </Grid>
+          );
+        }
+
         return (
           <>
             {formElem}
             <VSpace units={2} />
             {tableElem}
+            <VSpace units={4} />
+            {!values.noMore && moreElem}
+            {(!moreElem || values.noMore) && (
+              <Typography className={classes.noMoreDataCaption} variant="body2" align="center">
+                There's no more data to load in this stream
+              </Typography>
+            )}
+            <VSpace units={8} />
           </>
         );
       }}
