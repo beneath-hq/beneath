@@ -36,19 +36,18 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 	return stream, nil
 }
 
-func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, description *string, schema string, batch bool, manual bool) (*model.Stream, error) {
+func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*model.Stream, error) {
 	key := auth.GetKey(ctx)
 	if !key.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID)
 	}
 
 	stream := &model.Stream{
-		Description: DereferenceString(description),
-		Schema:      schema,
-		External:    true,
-		Batch:       batch,
-		Manual:      manual,
-		ProjectID:   projectID,
+		Schema:    schema,
+		External:  true,
+		Batch:     batch,
+		Manual:    manual,
+		ProjectID: projectID,
 	}
 
 	err := stream.CompileAndCreate()
@@ -60,7 +59,7 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 	return model.FindStream(stream.StreamID), nil
 }
 
-func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, description *string, manual *bool) (*model.Stream, error) {
+func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*model.Stream, error) {
 	stream := model.FindStream(streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
@@ -71,7 +70,7 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID,
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
-	err := stream.UpdateDetails(description, manual)
+	err := stream.UpdateDetails(schema, manual)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

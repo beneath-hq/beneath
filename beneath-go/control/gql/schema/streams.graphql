@@ -5,12 +5,15 @@ extend type Query {
 extend type Mutation {
   createExternalStream(
     projectID: UUID!,
-    description: String,
     schema: String!,
     batch: Boolean!,
     manual: Boolean!
   ): Stream!
-  updateStream(streamID: UUID!, description: String, manual: Boolean): Stream!
+  updateStream(
+    streamID: UUID!,
+    schema: String,
+    manual: Boolean,
+  ): Stream!
 }
 
 type Stream {

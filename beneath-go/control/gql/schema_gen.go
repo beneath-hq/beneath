@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddUserToProject      func(childComplexity int, email string, projectID uuid.UUID) int
-		CreateExternalStream  func(childComplexity int, projectID uuid.UUID, description *string, schema string, batch bool, manual bool) int
+		CreateExternalStream  func(childComplexity int, projectID uuid.UUID, schema string, batch bool, manual bool) int
 		CreateProject         func(childComplexity int, name string, displayName string, site *string, description *string, photoURL *string) int
 		Empty                 func(childComplexity int) int
 		IssueProjectKey       func(childComplexity int, projectID uuid.UUID, readonly bool, description string) int
@@ -78,7 +78,7 @@ type ComplexityRoot struct {
 		RevokeKey             func(childComplexity int, keyID uuid.UUID) int
 		UpdateMe              func(childComplexity int, name *string, bio *string) int
 		UpdateProject         func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
-		UpdateStream          func(childComplexity int, streamID uuid.UUID, description *string, manual *bool) int
+		UpdateStream          func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 	}
 
 	NewKey struct {
@@ -157,8 +157,8 @@ type MutationResolver interface {
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*model.Project, error)
 	AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*model.User, error)
 	RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error)
-	CreateExternalStream(ctx context.Context, projectID uuid.UUID, description *string, schema string, batch bool, manual bool) (*model.Stream, error)
-	UpdateStream(ctx context.Context, streamID uuid.UUID, description *string, manual *bool) (*model.Stream, error)
+	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*model.Stream, error)
+	UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*model.Stream, error)
 	UpdateMe(ctx context.Context, name *string, bio *string) (*Me, error)
 }
 type ProjectResolver interface {
@@ -292,7 +292,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
+		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -395,7 +395,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStream(childComplexity, args["streamID"].(uuid.UUID), args["description"].(*string), args["manual"].(*bool)), true
+		return e.complexity.Mutation.UpdateStream(childComplexity, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool)), true
 
 	case "NewKey.key":
 		if e.complexity.NewKey.Key == nil {
@@ -892,12 +892,15 @@ type Project {
 extend type Mutation {
   createExternalStream(
     projectID: UUID!,
-    description: String,
     schema: String!,
     batch: Boolean!,
     manual: Boolean!
   ): Stream!
-  updateStream(streamID: UUID!, description: String, manual: Boolean): Stream!
+  updateStream(
+    streamID: UUID!,
+    schema: String,
+    manual: Boolean,
+  ): Stream!
 }
 
 type Stream {
@@ -982,38 +985,30 @@ func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context
 		}
 	}
 	args["projectID"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["description"]; ok {
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["description"] = arg1
-	var arg2 string
+	var arg1 string
 	if tmp, ok := rawArgs["schema"]; ok {
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schema"] = arg2
-	var arg3 bool
+	args["schema"] = arg1
+	var arg2 bool
 	if tmp, ok := rawArgs["batch"]; ok {
+		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["batch"] = arg2
+	var arg3 bool
+	if tmp, ok := rawArgs["manual"]; ok {
 		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["batch"] = arg3
-	var arg4 bool
-	if tmp, ok := rawArgs["manual"]; ok {
-		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["manual"] = arg4
+	args["manual"] = arg3
 	return args, nil
 }
 
@@ -1231,13 +1226,13 @@ func (ec *executionContext) field_Mutation_updateStream_args(ctx context.Context
 	}
 	args["streamID"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["description"]; ok {
+	if tmp, ok := rawArgs["schema"]; ok {
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg1
+	args["schema"] = arg1
 	var arg2 *bool
 	if tmp, ok := rawArgs["manual"]; ok {
 		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
@@ -2126,7 +2121,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["description"].(*string), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
+		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2170,7 +2165,7 @@ func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStream(rctx, args["streamID"].(uuid.UUID), args["description"].(*string), args["manual"].(*bool))
+		return ec.resolvers.Mutation().UpdateStream(rctx, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
