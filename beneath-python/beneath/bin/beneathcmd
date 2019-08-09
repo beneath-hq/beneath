@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+import sys
+sys.path.append('/Users/ericgreen/Desktop/Beneath/code/beneath-core/beneath-python/')
+import os
+import argparse
+from beneath.client import Client
+
+def _config_dir():
+  p = os.path.expanduser("~/.beneath")
+  if not os.path.exists(p):
+    os.makedirs(p)
+  return p
+
+def _secret_file_path():
+  return os.path.join(_config_dir(), "secret.txt")
+
+def _write_secret(SECRET):
+  with open(_secret_file_path(), "w+") as f:
+    return f.write(SECRET)
+
+def _read_secret():
+  with open(_secret_file_path(), "r") as f:
+    return f.read()
+
+def _read_bool(s):
+  if s.lower() == "true":
+    return True
+  else:
+    return False
+
+def get_client():
+  SECRET = _read_secret()
+  client = Client(secret=SECRET)  # TODO: all secrets currently pass, need to handle failed authentication attempts later
+  if client is None:
+    raise Exception("Your authentication credentials failed. Please authenticate again with 'beneath auth SECRET'")
+  else:
+    return client
+
+def auth(args):
+  client = Client(secret=args.secret)
+  if client:
+    print("you have authenticated successfully")
+    _write_secret(args.secret)
+  else:
+    print("your attempt to authenticate failed")
+  return
+
+def model_init(args):
+  print("init")
+  print(args)
+  # client = get_client()
+  pass
+
+def model_sim(args):
+  print("model_sim")
+  print(args)
+  # client = get_client()
+  pass
+
+def model_stage(args):
+  print("model_stage")
+  print(args)
+  # client = get_client()
+  pass
+
+def model_deploy(args):
+  print("model_deploy")
+  print(args)
+  # client = get_client()
+  pass
+
+def stream_create_ext(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get the projectID from the user-supplied projectName
+  project_id = client.get_project_id(args.project)
+  
+  # read schema from the user-supplied file
+  with open(args.file, "r") as f:
+    schema = f.read()
+  
+  # convert user's text to a bool
+  manual = _read_bool(args.manual)
+
+  # submit GraphQL mutation to create an external stream
+  result = client.create_external_stream(project_id, schema, manual)
+
+  # print out the stream's details to the user
+  print(result)
+  return
+
+def stream_update_ext(args):
+  print("stream_update_ext")
+  print(args)
+  # client = get_client()
+  pass
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  _root = parser.add_subparsers()
+
+  # auth parser
+  _auth = _root.add_parser('auth')
+  _auth.set_defaults(func=auth)
+  _auth.add_argument('secret', type=str)
+
+  # model parser and subparsers
+  _model = _root.add_parser('model').add_subparsers()
+
+  _model_init = _model.add_parser('init')
+  _model_init.set_defaults(func=model_init)
+  _model_init.add_argument('model', type=str)
+  _model_init.add_argument('--project', type=str, required=True)
+
+  _model_sim = _model.add_parser('simulate')
+  _model_sim.set_defaults(func=model_sim)
+  _model_sim.add_argument('--sample-size', type=int, required=True)
+
+  _model_stage = _model.add_parser('stage')
+  _model_stage.set_defaults(func=model_stage)
+
+  _model_deploy = _model.add_parser('deploy')
+  _model_deploy.set_defaults(func=model_deploy)
+  _model_deploy.add_argument('--update', type=str, required=True)
+
+  # stream parser and subparsers
+  _stream = _root.add_parser('stream').add_subparsers()
+
+  _stream_create_ext = _stream.add_parser('create-external')
+  _stream_create_ext.set_defaults(func=stream_create_ext)
+  _stream_create_ext.add_argument('--project', type=str, required=True)
+  _stream_create_ext.add_argument('--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
+  _stream_create_ext.add_argument('--manual', type=str, required=True)
+
+  _stream_update_ext = _stream.add_parser('update-external')
+  _stream_update_ext.set_defaults(func=stream_update_ext)
+  _stream_update_ext.add_argument('--file', type=str, required=True)
+
+  # parse the args and call the relevant function
+  args = parser.parse_args()
+  args.func(args)

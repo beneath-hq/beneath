@@ -21,19 +21,7 @@ Here is an example of WriteToBeneath's usage in a Beam pipeline:
 
 
 """
-
-import io
-import grpc
-import uuid
-import pandas as pd
-import json
-import time
 import apache_beam as beam
-from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
-from beneath.client import Client
-from beneath.proto import engine_pb2
-from beneath.proto import gateway_pb2
-from beneath.proto import gateway_pb2_grpc
 
 # write to gateway function
 class _GatewayWriteFn(beam.DoFn):
@@ -41,34 +29,34 @@ class _GatewayWriteFn(beam.DoFn):
     if stream is None:
       raise Exception("Error! The provided stream is not valid")
     self.stream = stream
-    self.batch = None
+    self.bundle = None
 
   def __getstate__(self):
     return {
         "stream": self.stream,
-        "batch": self.batch,
+        "bundle": self.bundle,
     }
 
   def __setstate__(self, obj):
     self.stream = obj["stream"]
-    self.batch = obj["batch"]
+    self.bundle = obj["bundle"]
 
   def start_bundle(self):
     pass
 
   def process(self, row):
-    # add row to batch
-    if self.batch == None:
-      self.batch = [row]
+    # add row to bundle
+    if self.bundle == None:
+      self.bundle = [row]
     else:
-      self.batch.append(row)
+      self.bundle.append(row)
 
   def finish_bundle(self):
-    # write all records in batch
-    for i in range(len(self.batch)):
-      self.stream.write_record(self.stream.current_instance_id, self.batch[i])
-    # clear batch
-    self.batch = None
+    # write all records in bundle
+    for i in range(len(self.bundle)):
+      self.stream.write_record(self.stream.current_instance_id, self.bundle[i])
+    # clear bundle
+    self.bundle = None
 
 
 class WriteToBeneath(beam.PTransform):

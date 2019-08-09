@@ -20,4 +20,12 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    scripts=['bin/beneathcmd'],
+    install_requires=[
+        'apache_beam',
+        'argparse',
+        'fastavro',
+        'grpcio-tools',
+        'pandas'
+    ]
 )

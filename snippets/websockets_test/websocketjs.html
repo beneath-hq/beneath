@@ -19,7 +19,7 @@
     
     // send a test message to the server
     socket.onopen = () => {
-      socket.send('{"payload": "My name is Eric", "id": "999", "type": "start"}');
+      socket.send('{"payload": {"instance_id": "4e05d0ff-f5f4-4ae9-b957-f8d09c91ffcc"}, "id": "999", "type": "start"}');
     }
     
     // process messages from the server

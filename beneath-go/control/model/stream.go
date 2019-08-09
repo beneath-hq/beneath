@@ -9,8 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/core/schema"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 // Stream represents a collection of data
@@ -92,13 +92,11 @@ func FindCachedStreamByCurrentInstanceID(instanceID uuid.UUID) *CachedStream {
 }
 
 // UpdateDetails updates a stream (only exposes fields where updates are permitted)
-func (s *Stream) UpdateDetails(description *string, manual *bool) error {
-	if description != nil {
-		s.Description = *description
-	}
+func (s *Stream) UpdateDetails(schema *string, manual *bool) error {
 	if manual != nil {
 		s.Manual = *manual
 	}
+	// TODO: Handle schema updates (only documentation updates, not semantic updates)
 
 	// validate
 	err := GetValidator().Struct(s)
@@ -145,6 +143,7 @@ func (s *Stream) CompileAndCreate() error {
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
 	s.BigQuerySchema = bqSchema
+	// TODO: Set description based on streamDef
 
 	// validate
 	err = GetValidator().Struct(s)
