@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
@@ -14,14 +15,10 @@ func TestKeyRange1(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": "abc" }`)
 	assert.Nil(t, err)
 
-	c, err := NewKey([]string{"a"}, map[string]interface{}{
-		"fields": []interface{}{
-			map[string]interface{}{"name": "a", "type": "string"},
-		},
-	})
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "string"}]}`, []string{"a"})
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(q, c)
+	r, err := NewKeyRange(c, q)
 	assert.Nil(t, err)
 
 	assert.True(t, r.Contains(tuple.Tuple{"abc"}.Pack()))
@@ -32,14 +29,10 @@ func TestKeyRange2(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100 } }`)
 	assert.Nil(t, err)
 
-	c, err := NewKey([]string{"a"}, map[string]interface{}{
-		"fields": []interface{}{
-			map[string]interface{}{"name": "a", "type": "long"},
-		},
-	})
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, []string{"a"})
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(q, c)
+	r, err := NewKeyRange(c, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.Contains(tuple.Tuple{0}.Pack()))
@@ -52,14 +45,10 @@ func TestKeyRange3(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
 	assert.Nil(t, err)
 
-	c, err := NewKey([]string{"a"}, map[string]interface{}{
-		"fields": []interface{}{
-			map[string]interface{}{"name": "a", "type": "long"},
-		},
-	})
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, []string{"a"})
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(q, c)
+	r, err := NewKeyRange(c, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.Contains(tuple.Tuple{100}.Pack()))
@@ -73,15 +62,10 @@ func TestKeyRange4(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": 100, "b": { "_prefix": "ab" } }`)
 	assert.Nil(t, err)
 
-	c, err := NewKey([]string{"a", "b"}, map[string]interface{}{
-		"fields": []interface{}{
-			map[string]interface{}{"name": "a", "type": "long"},
-			map[string]interface{}{"name": "b", "type": "string"},
-		},
-	})
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(q, c)
+	r, err := NewKeyRange(c, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.Contains(tuple.Tuple{100, "aab"}.Pack()))
@@ -96,14 +80,41 @@ func TestKeyRange5(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_prefix": 100 } }`)
 	assert.Nil(t, err)
 
-	c, err := NewKey([]string{"a", "b"}, map[string]interface{}{
-		"fields": []interface{}{
-			map[string]interface{}{"name": "a", "type": "long"},
-		},
-	})
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
 	assert.Nil(t, err)
 
-	_, err = NewKeyRange(q, c)
+	_, err = NewKeyRange(c, q)
 	assert.NotNil(t, err)
 	assert.Regexp(t, "cannot use '_prefix' on field 'a' because it only works on string and byte types", err.Error())
+}
+
+func TestKeyRange6(t *testing.T) {
+	where, err := queryparse.JSONStringToQuery(`{ "a": { "_eq": 100 } }`)
+	assert.Nil(t, err)
+
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
+	assert.Nil(t, err)
+
+	kr, err := NewKeyRange(c, where)
+	assert.Nil(t, err)
+
+	after, err := queryparse.JSONStringToQuery(`{ "a": 100 }`)
+	assert.Nil(t, err)
+	kr, err = kr.WithAfter(c, after)
+	assert.NotNil(t, err)
+	assert.Regexp(t, "after query must include exactly all keys fields and not more", err.Error())
+
+	after, err = queryparse.JSONStringToQuery(`{ "a": 100, "b": {"_prefix": "bbb"} }`)
+	assert.Nil(t, err)
+	kr, err = kr.WithAfter(c, after)
+	assert.NotNil(t, err)
+	assert.Regexp(t, "after query cannot use '_prefix' constraint", err.Error())
+
+	after, err = queryparse.JSONStringToQuery(`{ "a": 100, "b": "bbb" }`)
+	assert.Nil(t, err)
+	base1 := kr.Base
+	kr, err = kr.WithAfter(c, after)
+	assert.Nil(t, err)
+	base2 := kr.Base
+	assert.True(t, bytes.Compare(base1, base2) < 0)
 }

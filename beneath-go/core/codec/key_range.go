@@ -16,8 +16,13 @@ type KeyRange struct {
 	Unique   bool
 }
 
+// IsNil returns true if the key range is uninitialized
+func (r KeyRange) IsNil() bool {
+	return r.Base == nil && r.RangeEnd == nil && !r.Unique
+}
+
 // Contains is true if the KeyRange contains a key
-func (r *KeyRange) Contains(key []byte) bool {
+func (r KeyRange) Contains(key []byte) bool {
 	if r.Unique {
 		return bytes.Equal(r.Base, key)
 	} else if r.RangeEnd == nil {
@@ -27,33 +32,81 @@ func (r *KeyRange) Contains(key []byte) bool {
 }
 
 // CheckUnique is true iff key range identifies one exact key
-func (r *KeyRange) CheckUnique() bool {
-	return r != nil && r.Unique
+func (r KeyRange) CheckUnique() bool {
+	return r.Unique
 }
 
-// NewKeyRange builds a new key range based on a query and a key codec
-func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
+// WithAfter will narrow the range to only keys after the given key
+func (r KeyRange) WithAfter(c *Codec, q queryparse.Query) (KeyRange, error) {
+	// check correct query length
+	if len(q) != len(c.keyFields) {
+		return r, fmt.Errorf("after query must include exactly all keys fields and not more")
+	}
+
 	// prepare key
 	key := make(tuple.Tuple, len(q))
 
 	// iterate through key fields
-	for idx, field := range c.fields {
+	for idx, field := range c.keyFields {
 		// get condition for field
 		cond := q[field]
 		if cond == nil {
-			if len(c.fields) == 1 {
-				return nil, fmt.Errorf("expected lookup on and only on key field '%s'", field)
+			return r, fmt.Errorf("expected key field '%s' in after query", field)
+		}
+
+		// check is eq
+		if cond.Op != queryparse.ConditionOpEq {
+			return r, fmt.Errorf("after query cannot use '%s' constraint", cond.Op.String())
+		}
+
+		// parse arg value
+		avroType := c.keyAvroTypes[idx]
+		arg, err := parseJSONValue(avroType, cond.Arg1)
+		if err != nil {
+			return r, err
+		}
+
+		// set val in key we're building
+		key[idx] = arg
+	}
+
+	// pack
+	newBase := tuple.Successor(key.Pack())
+	if bytes.Compare(newBase, r.Base) > 0 {
+		r.Base = newBase
+	}
+
+	return r, nil
+}
+
+// NewKeyRange builds a new key range based on a where query and a key codec
+func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
+	// handle empty
+	if q == nil || len(q) == 0 {
+		return KeyRange{}, nil
+	}
+
+	// prepare key
+	key := make(tuple.Tuple, len(q))
+
+	// iterate through key fields
+	for idx, field := range c.keyFields {
+		// get condition for field
+		cond := q[field]
+		if cond == nil {
+			if len(c.keyFields) == 1 {
+				return KeyRange{}, fmt.Errorf("expected lookup on and only on key field '%s'", field)
 			}
-			return nil, fmt.Errorf("expected field '%s' in query (composite keys are indexed starting with the leftmost field)", field)
+			return KeyRange{}, fmt.Errorf("expected field '%s' in query (composite keys are indexed starting with the leftmost field)", field)
 		}
 
 		// get avro type
-		avroType := c.avroTypes[idx]
+		avroType := c.keyAvroTypes[idx]
 
 		// parse arg1 value
 		arg1, err := parseJSONValue(avroType, cond.Arg1)
 		if err != nil {
-			return nil, err
+			return KeyRange{}, err
 		}
 
 		// set val in key we're building
@@ -63,16 +116,16 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 		// so handle it separately
 		if cond.Op == queryparse.ConditionOpEq {
 			// next step depends on how far we've come
-			if idx+1 == len(c.fields) {
+			if idx+1 == len(c.keyFields) {
 				// we've added _eq constraints for every key field, so we're done and it's a unique key
-				return &KeyRange{
+				return KeyRange{
 					Base:   key.Pack(),
 					Unique: true,
 				}, nil
 			} else if idx+1 == len(q) {
 				// we've added _eq constraints for some subset of leftmost key fields, so we're done and it's a prefix key
 				packed := key.Pack()
-				return &KeyRange{
+				return KeyRange{
 					Base:     packed,
 					RangeEnd: tuple.PrefixSuccessor(packed),
 				}, nil
@@ -87,7 +140,7 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 
 		// every other condition is terminal, so check there's no more conditions
 		if idx+1 != len(q) {
-			return nil, fmt.Errorf("cannot use '%s' on field '%s' because you have constraints on fields that appear later in the key", cond.Op.String(), field)
+			return KeyRange{}, fmt.Errorf("cannot use '%s' on field '%s' because you have constraints on fields that appear later in the key", cond.Op.String(), field)
 		}
 
 		// pack key (and a copy with the last element removed)
@@ -99,29 +152,29 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 		case queryparse.ConditionOpPrefix:
 			// prefix should only work on strings, bytes and fixed
 			if !canPrefixLookup(avroType) {
-				return nil, fmt.Errorf("cannot use '_prefix' on field '%s' because it only works on string and byte types", field)
+				return KeyRange{}, fmt.Errorf("cannot use '_prefix' on field '%s' because it only works on string and byte types", field)
 			}
-			return &KeyRange{
+			return KeyRange{
 				Base:     packed,
 				RangeEnd: tuple.BytesTypePrefixSuccessor(packed),
 			}, nil
 		case queryparse.ConditionOpGt:
-			return &KeyRange{
+			return KeyRange{
 				Base:     tuple.Successor(packed),
 				RangeEnd: tuple.PrefixSuccessor(packedParent),
 			}, nil
 		case queryparse.ConditionOpGte:
-			return &KeyRange{
+			return KeyRange{
 				Base:     packed,
 				RangeEnd: tuple.PrefixSuccessor(packedParent),
 			}, nil
 		case queryparse.ConditionOpLt:
-			return &KeyRange{
+			return KeyRange{
 				Base:     packedParent,
 				RangeEnd: packed,
 			}, nil
 		case queryparse.ConditionOpLte:
-			return &KeyRange{
+			return KeyRange{
 				Base:     packedParent,
 				RangeEnd: tuple.Successor(packed),
 			}, nil
@@ -130,7 +183,7 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 		// parse cond.Arg2
 		arg2, err := parseJSONValue(avroType, cond.Arg2)
 		if err != nil {
-			return nil, err
+			return KeyRange{}, err
 		}
 
 		// pack with arg2
@@ -140,22 +193,22 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 		// handle ops that also rely on cond.Arg2
 		switch cond.Op {
 		case queryparse.ConditionOpGtLt:
-			return &KeyRange{
+			return KeyRange{
 				Base:     tuple.Successor(packed),
 				RangeEnd: packedEnd,
 			}, nil
 		case queryparse.ConditionOpGtLte:
-			return &KeyRange{
+			return KeyRange{
 				Base:     tuple.Successor(packed),
 				RangeEnd: tuple.Successor(packedEnd),
 			}, nil
 		case queryparse.ConditionOpGteLt:
-			return &KeyRange{
+			return KeyRange{
 				Base:     packed,
 				RangeEnd: packedEnd,
 			}, nil
 		case queryparse.ConditionOpGteLte:
-			return &KeyRange{
+			return KeyRange{
 				Base:     packed,
 				RangeEnd: tuple.Successor(packedEnd),
 			}, nil
@@ -163,12 +216,12 @@ func NewKeyRange(q queryparse.Query, c *KeyCodec) (r *KeyRange, err error) {
 
 		// if we got here, something went terribly wrong
 		log.Panicf("RangeFromQuery: impossible state")
-		return nil, nil
+		return KeyRange{}, nil
 	}
 
 	// if we got here, something went terribly wrong
 	log.Panicf("RangeFromQuery: impossible state")
-	return nil, nil
+	return KeyRange{}, nil
 }
 
 // converts a query arg to a native value
