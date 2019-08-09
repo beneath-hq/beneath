@@ -95,7 +95,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
         }
 
         let moreElem = null;
-        const records = data && data.records.data;
+        const records = data && data.records && data.records.data;
         if (tableElem && records && records.length > 0 && records.length % values.vars.limit === 0) {
           moreElem = (
             <Grid container justify="center">
