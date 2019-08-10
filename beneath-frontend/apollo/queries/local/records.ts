@@ -30,15 +30,20 @@ export const QUERY_LATEST_RECORDS = gql`
     $projectName: String!,
     $streamName: String!,
     $limit: Int!,
+    $before: String,
   ) {
     latestRecords(
       projectName: $projectName,
       streamName: $streamName,
       limit: $limit,
+      before: $before,
     ) @client @connection(key: "latestRecords", filter: ["projectName", "streamName"]) {
-      recordID
-      data
-      sequenceNumber
+      data {
+        recordID
+        data
+        sequenceNumber
+      }
+      error
     }
   }
 `;

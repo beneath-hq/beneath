@@ -7,7 +7,6 @@ import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
-import EditStream from "../components/stream/EditStream";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import StreamLatest from "../components/stream/StreamLatest";
@@ -55,8 +54,6 @@ const StreamPage: FC<IProps> = ({ router }) => {
           if (stream.manual) {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
-
-          tabs.push({ value: "edit", label: "Edit", render: () => <EditStream stream={stream} /> });
 
           return (
             <React.Fragment>

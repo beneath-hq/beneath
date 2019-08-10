@@ -124,14 +124,6 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                         if (!prevRecords || !newRecords) {
                           return prev;
                         }
-                        const res = {
-                          records: {
-                            __typename: "RecordsResponse",
-                            data: [...prevRecords, ...newRecords],
-                            error: null,
-                          }
-                        };
-                        console.log(res);
                         return {
                           records: {
                             __typename: "RecordsResponse",

@@ -3,21 +3,37 @@ import React, { FC } from "react";
 import { Query, withApollo, WithApolloClient } from "react-apollo";
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
+import { createStyles, Theme, withStyles } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+
 import { QUERY_LATEST_RECORDS } from "../../apollo/queries/local/records";
 import { LatestRecords, LatestRecordsVariables } from "../../apollo/types/LatestRecords";
 import { QueryStream } from "../../apollo/types/QueryStream";
 import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
+import VSpace from "../VSpace";
 import { Schema } from "./schema";
 
 const FLASH_ROWS_DURATION = 5000;
 
+const styles = (theme: Theme) => createStyles({
+  noMoreDataCaption: {
+    color: theme.palette.text.disabled,
+  },
+});
+
 interface StreamLatestProps extends QueryStream {
   setLoading: (loading: boolean) => void;
+  classes: {
+    noMoreDataCaption: string;
+  };
 }
 
 interface StreamLatestState {
   error: string | undefined;
+  hasMore: boolean;
   flashRows: number;
 }
 
@@ -32,6 +48,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
     this.schema = new Schema(props.stream, true);
     this.state = {
       error: undefined,
+      hasMore: true,
       flashRows: 0,
     };
   }
@@ -68,20 +85,30 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
 
     this.subscription.request(request).subscribe({
       next: (result) => {
-        const queryData = self.apollo.cache.readQuery({
+        let queryData = self.apollo.cache.readQuery({
           query: QUERY_LATEST_RECORDS,
           variables: apolloVariables,
         }) as any;
 
+        if (!queryData) {
+          queryData = {};
+        }
+
         if (!queryData.latestRecords) {
-          queryData.latestRecords = [];
+          queryData.latestRecords = {};
+        }
+
+        if (!queryData.latestRecords.data) {
+          queryData.latestRecords.data = [];
         }
 
         const recordID = self.schema.makeUniqueIdentifier(result.data);
 
-        queryData.latestRecords = queryData.latestRecords.filter((record: any) => record.recordID !== recordID);
+        queryData.latestRecords.data = queryData.latestRecords.data.filter(
+          (record: any) => record.recordID !== recordID
+        );
 
-        queryData.latestRecords.unshift({
+        queryData.latestRecords.data.unshift({
           __typename: "Record",
           recordID,
           data: result.data,
@@ -128,7 +155,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
     const variables = {
       projectName: this.props.stream.project.name,
       streamName: this.props.stream.name,
-      limit: 100,
+      limit: 20,
     };
 
     return (
@@ -137,18 +164,69 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
         variables={variables}
         fetchPolicy="cache-and-network"
       >
-        {({ loading, error, data }) => {
-          const errorMsg = error || this.state.error;
+        {({ loading, error, data, fetchMore }) => {
+          const errorMsg =
+            error || (data && data.latestRecords && data.latestRecords.error) || this.state.error;
           if (errorMsg) {
             return <p>Error: {JSON.stringify(error)}</p>;
           }
 
+          const records = data ? (data.latestRecords ? data.latestRecords.data : null) : null;
+
+          let moreElem = null;
+          if (this.state.hasMore && records && records.length > 0 && records.length % variables.limit === 0) {
+            moreElem = (
+              <Grid container justify="center">
+                <Grid item>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    disabled={loading}
+                    onClick={() => {
+                      const before = records[records.length - 1].sequenceNumber;
+                      fetchMore({
+                        variables: { ...variables, before },
+                        updateQuery: (prev, { fetchMoreResult }) => {
+                          if (!fetchMoreResult) {
+                            return prev;
+                          }
+                          const prevRecords = prev.latestRecords.data;
+                          const newRecords = fetchMoreResult.latestRecords.data;
+                          if (!newRecords || newRecords.length === 0) {
+                            this.setState({ hasMore: false });
+                          }
+                          if (!prevRecords || !newRecords) {
+                            return prev;
+                          }
+                          return {
+                            latestRecords: {
+                              __typename: "RecordsResponse",
+                              data: [...prevRecords, ...newRecords],
+                              error: null,
+                            },
+                          };
+                        },
+                      });
+                    }}
+                  >
+                    Fetch more
+                  </Button>
+                </Grid>
+              </Grid>
+            );
+          }
+
           return (
-            <RecordsTable
-              schema={this.schema}
-              records={data ? data.latestRecords : null}
-              highlightTopN={this.state.flashRows}
-            />
+            <>
+              <RecordsTable schema={this.schema} records={records} highlightTopN={this.state.flashRows} />
+              <VSpace units={4} />
+              {this.state.hasMore && moreElem}
+              {!moreElem && (
+                <Typography className={this.props.classes.noMoreDataCaption} variant="body2" align="center">
+                  There's no more latest data available to load
+                </Typography>
+              )}
+            </>
           );
         }}
       </Query>
@@ -156,4 +234,4 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
   }
 }
 
-export default withApollo<StreamLatestProps>(StreamLatest);
+export default withStyles(styles)(withApollo<StreamLatestProps>(StreamLatest));
