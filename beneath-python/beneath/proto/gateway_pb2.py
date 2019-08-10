@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='proto',
   syntax='proto3',
   serialized_options=_b('\n\025network.beneath.protoB\014BeneathProtoP\001'),
-  serialized_pb=_b('\n\x1b\x62\x65neath/proto/gateway.proto\x12\x05proto\x1a\x1a\x62\x65neath/proto/engine.proto\"V\n\x12ReadRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\r\n\x05limit\x18\x02 \x01(\x05\x12\r\n\x05where\x18\x03 \x01(\t\x12\r\n\x05\x61\x66ter\x18\x04 \x01(\t\"5\n\x13ReadRecordsResponse\x12\x1e\n\x07records\x18\x01 \x03(\x0b\x32\r.proto.Record\"\x16\n\x14WriteRecordsResponse\"A\n\x14StreamDetailsRequest\x12\x14\n\x0cproject_name\x18\x01 \x01(\t\x12\x13\n\x0bstream_name\x18\x02 \x01(\t\"\xdd\x01\n\x15StreamDetailsResponse\x12\x1b\n\x13\x63urrent_instance_id\x18\x01 \x01(\x0c\x12\x12\n\nproject_id\x18\x02 \x01(\x0c\x12\x14\n\x0cproject_name\x18\x03 \x01(\t\x12\x13\n\x0bstream_name\x18\x04 \x01(\t\x12\x12\n\nkey_fields\x18\x05 \x03(\t\x12\x13\n\x0b\x61vro_schema\x18\x06 \x01(\t\x12\x0e\n\x06public\x18\x07 \x01(\x08\x12\x10\n\x08\x65xternal\x18\x08 \x01(\x08\x12\r\n\x05\x62\x61tch\x18\t \x01(\x08\x12\x0e\n\x06manual\x18\n \x01(\x08\"0\n\x15PackageVersionRequest\x12\x17\n\x0fpackage_version\x18\x01 \x01(\t\"2\n\x16PackageVersionResponse\x12\x18\n\x10version_response\x18\x01 \x01(\t2\xcf\x02\n\x07Gateway\x12\x46\n\x0bReadRecords\x12\x19.proto.ReadRecordsRequest\x1a\x1a.proto.ReadRecordsResponse\"\x00\x12I\n\x0cWriteRecords\x12\x1a.proto.WriteRecordsRequest\x1a\x1b.proto.WriteRecordsResponse\"\x00\x12O\n\x10GetStreamDetails\x12\x1b.proto.StreamDetailsRequest\x1a\x1c.proto.StreamDetailsResponse\"\x00\x12`\n\x1fGetCurrentBeneathPackageVersion\x12\x1c.proto.PackageVersionRequest\x1a\x1d.proto.PackageVersionResponse\"\x00\x42\'\n\x15network.beneath.protoB\x0c\x42\x65neathProtoP\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x1b\x62\x65neath/proto/gateway.proto\x12\x05proto\x1a\x1a\x62\x65neath/proto/engine.proto\"V\n\x12ReadRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\r\n\x05limit\x18\x02 \x01(\x05\x12\r\n\x05where\x18\x03 \x01(\t\x12\r\n\x05\x61\x66ter\x18\x04 \x01(\t\"5\n\x13ReadRecordsResponse\x12\x1e\n\x07records\x18\x01 \x03(\x0b\x32\r.proto.Record\"N\n\x18ReadLatestRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\r\n\x05limit\x18\x02 \x01(\x05\x12\x0e\n\x06\x62\x65\x66ore\x18\x03 \x01(\x03\"\x16\n\x14WriteRecordsResponse\"A\n\x14StreamDetailsRequest\x12\x14\n\x0cproject_name\x18\x01 \x01(\t\x12\x13\n\x0bstream_name\x18\x02 \x01(\t\"\xdd\x01\n\x15StreamDetailsResponse\x12\x1b\n\x13\x63urrent_instance_id\x18\x01 \x01(\x0c\x12\x12\n\nproject_id\x18\x02 \x01(\x0c\x12\x14\n\x0cproject_name\x18\x03 \x01(\t\x12\x13\n\x0bstream_name\x18\x04 \x01(\t\x12\x12\n\nkey_fields\x18\x05 \x03(\t\x12\x13\n\x0b\x61vro_schema\x18\x06 \x01(\t\x12\x0e\n\x06public\x18\x07 \x01(\x08\x12\x10\n\x08\x65xternal\x18\x08 \x01(\x08\x12\r\n\x05\x62\x61tch\x18\t \x01(\x08\x12\x0e\n\x06manual\x18\n \x01(\x08\"0\n\x15PackageVersionRequest\x12\x17\n\x0fpackage_version\x18\x01 \x01(\t\"2\n\x16PackageVersionResponse\x12\x18\n\x10version_response\x18\x01 \x01(\t2\xa3\x03\n\x07Gateway\x12\x46\n\x0bReadRecords\x12\x19.proto.ReadRecordsRequest\x1a\x1a.proto.ReadRecordsResponse\"\x00\x12R\n\x11ReadLatestRecords\x12\x1f.proto.ReadLatestRecordsRequest\x1a\x1a.proto.ReadRecordsResponse\"\x00\x12I\n\x0cWriteRecords\x12\x1a.proto.WriteRecordsRequest\x1a\x1b.proto.WriteRecordsResponse\"\x00\x12O\n\x10GetStreamDetails\x12\x1b.proto.StreamDetailsRequest\x1a\x1c.proto.StreamDetailsResponse\"\x00\x12`\n\x1fGetCurrentBeneathPackageVersion\x12\x1c.proto.PackageVersionRequest\x1a\x1d.proto.PackageVersionResponse\"\x00\x42\'\n\x15network.beneath.protoB\x0c\x42\x65neathProtoP\x01\x62\x06proto3')
   ,
   dependencies=[beneath_dot_proto_dot_engine__pb2.DESCRIPTOR,])
 
@@ -111,6 +111,51 @@ _READRECORDSRESPONSE = _descriptor.Descriptor(
 )
 
 
+_READLATESTRECORDSREQUEST = _descriptor.Descriptor(
+  name='ReadLatestRecordsRequest',
+  full_name='proto.ReadLatestRecordsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='instance_id', full_name='proto.ReadLatestRecordsRequest.instance_id', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='limit', full_name='proto.ReadLatestRecordsRequest.limit', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='before', full_name='proto.ReadLatestRecordsRequest.before', index=2,
+      number=3, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=209,
+  serialized_end=287,
+)
+
+
 _WRITERECORDSRESPONSE = _descriptor.Descriptor(
   name='WriteRecordsResponse',
   full_name='proto.WriteRecordsResponse',
@@ -130,8 +175,8 @@ _WRITERECORDSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=209,
-  serialized_end=231,
+  serialized_start=289,
+  serialized_end=311,
 )
 
 
@@ -168,8 +213,8 @@ _STREAMDETAILSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=233,
-  serialized_end=298,
+  serialized_start=313,
+  serialized_end=378,
 )
 
 
@@ -262,8 +307,8 @@ _STREAMDETAILSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=301,
-  serialized_end=522,
+  serialized_start=381,
+  serialized_end=602,
 )
 
 
@@ -293,8 +338,8 @@ _PACKAGEVERSIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=524,
-  serialized_end=572,
+  serialized_start=604,
+  serialized_end=652,
 )
 
 
@@ -324,13 +369,14 @@ _PACKAGEVERSIONRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=574,
-  serialized_end=624,
+  serialized_start=654,
+  serialized_end=704,
 )
 
 _READRECORDSRESPONSE.fields_by_name['records'].message_type = beneath_dot_proto_dot_engine__pb2._RECORD
 DESCRIPTOR.message_types_by_name['ReadRecordsRequest'] = _READRECORDSREQUEST
 DESCRIPTOR.message_types_by_name['ReadRecordsResponse'] = _READRECORDSRESPONSE
+DESCRIPTOR.message_types_by_name['ReadLatestRecordsRequest'] = _READLATESTRECORDSREQUEST
 DESCRIPTOR.message_types_by_name['WriteRecordsResponse'] = _WRITERECORDSRESPONSE
 DESCRIPTOR.message_types_by_name['StreamDetailsRequest'] = _STREAMDETAILSREQUEST
 DESCRIPTOR.message_types_by_name['StreamDetailsResponse'] = _STREAMDETAILSRESPONSE
@@ -351,6 +397,13 @@ ReadRecordsResponse = _reflection.GeneratedProtocolMessageType('ReadRecordsRespo
   # @@protoc_insertion_point(class_scope:proto.ReadRecordsResponse)
   })
 _sym_db.RegisterMessage(ReadRecordsResponse)
+
+ReadLatestRecordsRequest = _reflection.GeneratedProtocolMessageType('ReadLatestRecordsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _READLATESTRECORDSREQUEST,
+  '__module__' : 'beneath.proto.gateway_pb2'
+  # @@protoc_insertion_point(class_scope:proto.ReadLatestRecordsRequest)
+  })
+_sym_db.RegisterMessage(ReadLatestRecordsRequest)
 
 WriteRecordsResponse = _reflection.GeneratedProtocolMessageType('WriteRecordsResponse', (_message.Message,), {
   'DESCRIPTOR' : _WRITERECORDSRESPONSE,
@@ -396,8 +449,8 @@ _GATEWAY = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=627,
-  serialized_end=962,
+  serialized_start=707,
+  serialized_end=1126,
   methods=[
   _descriptor.MethodDescriptor(
     name='ReadRecords',
@@ -409,9 +462,18 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='ReadLatestRecords',
+    full_name='proto.Gateway.ReadLatestRecords',
+    index=1,
+    containing_service=None,
+    input_type=_READLATESTRECORDSREQUEST,
+    output_type=_READRECORDSRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='WriteRecords',
     full_name='proto.Gateway.WriteRecords',
-    index=1,
+    index=2,
     containing_service=None,
     input_type=beneath_dot_proto_dot_engine__pb2._WRITERECORDSREQUEST,
     output_type=_WRITERECORDSRESPONSE,
@@ -420,7 +482,7 @@ _GATEWAY = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetStreamDetails',
     full_name='proto.Gateway.GetStreamDetails',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_STREAMDETAILSREQUEST,
     output_type=_STREAMDETAILSRESPONSE,
@@ -429,7 +491,7 @@ _GATEWAY = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetCurrentBeneathPackageVersion',
     full_name='proto.Gateway.GetCurrentBeneathPackageVersion',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_PACKAGEVERSIONREQUEST,
     output_type=_PACKAGEVERSIONRESPONSE,
