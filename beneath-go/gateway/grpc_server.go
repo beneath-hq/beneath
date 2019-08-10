@@ -191,6 +191,11 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
 	}
 
+	// check isn't batch
+	if stream.Batch {
+		return nil, grpc.Errorf(codes.InvalidArgument, "cannot get latest records for batch streams")
+	}
+
 	// check limit is valid
 	if req.Limit == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "limit cannot be 0")

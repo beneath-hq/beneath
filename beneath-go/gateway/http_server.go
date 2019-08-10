@@ -338,6 +338,11 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
+	// check isn't batch
+	if stream.Batch {
+		return httputil.NewError(400, "cannot get latest records for batch streams")
+	}
+
 	// read body
 	var body map[string]interface{}
 	err := jsonutil.Unmarshal(r.Body, &body)
