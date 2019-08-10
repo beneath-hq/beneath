@@ -22,11 +22,15 @@ def _read_secret():
   with open(_secret_file_path(), "r") as f:
     return f.read()
 
-def _read_bool(s):
-  if s.lower() == "true":
-    return True
-  else:
-    return False
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def get_client():
   SECRET = _read_secret()
@@ -43,6 +47,36 @@ def auth(args):
     _write_secret(args.secret)
   else:
     print("your attempt to authenticate failed")
+  return
+
+def list_projects(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get the user's ID
+  result = client.get_me()
+  userID = result['userID']
+
+  # submit GraphQL query to get the user's projects
+  result = client.get_user_by_ID(userID)
+  projects = result['projects']
+
+  # print out the projects to the user
+  for project in projects:
+    print(project['name'])
+  return
+
+def list_streams(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get a project's streams
+  result = client.get_project_by_name(args.project)
+  streams = result['streams']
+
+  # print out the streams to the user
+  for streamname in streams:
+      print(streamname['name'])
   return
 
 def model_init(args):
@@ -74,14 +108,15 @@ def stream_create_ext(args):
   client = get_client()
 
   # submit GraphQL query to get the projectID from the user-supplied projectName
-  project_id = client.get_project_id(args.project)
+  result = client.get_project_by_name(args.project)
+  project_id = result['projectID']
   
   # read schema from the user-supplied file
   with open(args.file, "r") as f:
     schema = f.read()
   
-  # convert user's text to a bool
-  manual = _read_bool(args.manual)
+  # ensure user's text is a bool
+  manual = args.manual
 
   # submit GraphQL mutation to create an external stream
   result = client.create_external_stream(project_id, schema, manual)
@@ -91,10 +126,14 @@ def stream_create_ext(args):
   return
 
 def stream_update_ext(args):
-  print("stream_update_ext")
-  print(args)
+  # start client with the secret stored in .beneath/secret
   # client = get_client()
+
+  # 
+  print(args)
   pass
+
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -104,6 +143,16 @@ if __name__ == '__main__':
   _auth = _root.add_parser('auth')
   _auth.set_defaults(func=auth)
   _auth.add_argument('secret', type=str)
+
+  # list parser and subparsers
+  _list = _root.add_parser('list').add_subparsers()
+
+  _list_projects = _list.add_parser('projects')
+  _list_projects.set_defaults(func=list_projects)
+
+  _list_streams = _list.add_parser('streams')
+  _list_streams.set_defaults(func=list_streams)
+  _list_streams.add_argument('--project', type=str, required=True)
 
   # model parser and subparsers
   _model = _root.add_parser('model').add_subparsers()
@@ -131,11 +180,13 @@ if __name__ == '__main__':
   _stream_create_ext.set_defaults(func=stream_create_ext)
   _stream_create_ext.add_argument('--project', type=str, required=True)
   _stream_create_ext.add_argument('--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
-  _stream_create_ext.add_argument('--manual', type=str, required=True)
+  _stream_create_ext.add_argument('--manual', type=str2bool, required=True)
 
   _stream_update_ext = _stream.add_parser('update-external')
   _stream_update_ext.set_defaults(func=stream_update_ext)
-  _stream_update_ext.add_argument('--file', type=str, required=True)
+  _stream_update_ext.add_argument('stream', type=str)
+  _stream_update_ext.add_argument('--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
+  _stream_update_ext.add_argument('--manual', type=str2bool, required=True)
 
   # parse the args and call the relevant function
   args = parser.parse_args()

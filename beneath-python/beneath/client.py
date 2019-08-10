@@ -95,16 +95,97 @@ class Client:
       print(request.text)
       raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
+  # get "me" info
+  def get_me(self):
+    result = self.run_query(
+      variables={},
+      query="""
+      query Me {
+          me{
+            userID
+            user {
+              username
+              name
+            }
+            email
+            updatedOn
+          }
+        }
+      """
+    )
+    return result['data']['me']
+
+  # get a user's info by UUID
+  def get_user_by_ID(self, userID):
+    result = self.run_query(
+      variables={
+          "userID": userID
+      },
+      query="""
+      query User($userID: UUID!) {
+        user(
+          userID: $userID
+        ) {
+          userID
+          username
+          name
+          bio
+          photoURL
+          createdOn
+          projects {
+            name
+            createdOn
+            updatedOn
+            streams {
+              name
+            }
+          }
+        }
+      }
+      """
+    )
+    return result['data']['user']
+
+  # get a project's info by name
+  def get_project_by_name(self, project_name):
+    result = self.run_query(
+        variables={
+            "name": project_name
+        },
+        query="""
+        query ProjectByName($name: String!) {
+            projectByName(name: $name) {
+                projectID
+                name
+                displayName
+                site
+                description
+                photoURL
+                createdOn
+                updatedOn
+                users {
+                  username
+                }
+                streams {
+                  name
+                }
+            }
+        }
+      """
+    )
+
+    return result['data']['projectByName']
+
   # create an external stream
   def create_external_stream(self, project_id, schema, manual):
     result = self.run_query(
-      variables={
-        "projectID": project_id,
-        "schema": schema,
-        "batch": False,
-        "manual": manual
-      },
-      query="""
+        variables={
+            "projectID": project_id,
+            "schema": schema,
+            "batch": False,
+            "manual": manual
+        },
+        query="""
         mutation CreateExternalStream($projectID: UUID!, $schema: String!, $batch: Boolean!, $manual: Boolean!) {
           createExternalStream(
             projectID: $projectID,
@@ -133,19 +214,38 @@ class Client:
     )
     return result
 
-  def get_project_id(self, project_name):
+  # update an external stream
+  def update_external_stream(self, stream_id, schema, manual):
     result = self.run_query(
-      variables={
-        "name": project_name
-      },
-      query=
-      """
-        query ProjectByName($name: String!) {
-            projectByName(name: $name) {
-                projectID
+        variables={
+            "streamID": stream_id,
+            "schema": schema,
+            "manual": manual
+        },
+        query="""
+        mutation UpdateStream($streamID: UUID!, $schema: String!, $manual: Boolean!) {
+          updateStream(
+            streamID: $streamID,
+            schema: $schema,
+            manual: $manual
+          ) {
+            streamID
+            name
+            schema
+            avroSchema
+            keyFields
+            external
+            batch
+            manual
+            project {
+              projectID
+              name
             }
+            currentStreamInstanceID
+            createdOn
+            updatedOn
+          }
         }
       """
     )
-    
-    return result['data']['projectByName']['projectID']
+    return result

@@ -53,7 +53,7 @@ func (r *mutationResolver) IssueUserKey(ctx context.Context, readonly bool, desc
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key")
 	}
 
-	role := model.KeyRoleReadWrite
+	role := model.KeyRoleManage
 	if readonly {
 		role = model.KeyRoleReadonly
 	}

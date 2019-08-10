@@ -271,7 +271,7 @@ func redisKeyForHashedKey(hashedKey string) string {
 
 // IsPersonal returns true iff the key gives manage rights on a user
 func (k *Key) IsPersonal() bool {
-	return k != nil && k.UserID != nil && k.Role == KeyRoleManage
+	return k != nil && k.UserID != nil
 }
 
 // ReadsProject returns true iff the key gives permission to read the project
