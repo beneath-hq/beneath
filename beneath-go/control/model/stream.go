@@ -92,17 +92,57 @@ func FindCachedStreamByCurrentInstanceID(instanceID uuid.UUID) *CachedStream {
 }
 
 // UpdateDetails updates a stream (only exposes fields where updates are permitted)
-func (s *Stream) UpdateDetails(schema *string, manual *bool) error {
+func (s *Stream) UpdateDetails(newSchema *string, manual *bool) error {
 	if manual != nil {
 		s.Manual = *manual
 	}
-	// TODO: Handle schema updates (only documentation updates, not semantic updates)
+
+	// we allow updating the schema with new docs/layout, but not semantic updates
+	if newSchema != nil {
+		// compile schema
+		compiler := schema.NewCompiler(*newSchema)
+		err := compiler.Compile()
+		if err != nil {
+			return fmt.Errorf("Error compiling schema: %s", err.Error())
+		}
+		streamDef := compiler.GetStream()
+
+		// get canonical avro
+		canonicalAvro, err := streamDef.BuildCanonicalAvroSchema()
+		if err != nil {
+			return fmt.Errorf("Error compiling schema: %s", err.Error())
+		}
+
+		// check canonical avro is the same
+		if canonicalAvro != s.CanonicalAvroSchema {
+			return fmt.Errorf("Unfortunately we do not currently support changing a stream's data structure; you can only edit its documentation")
+		}
+
+		// get avro schemas
+		avro, err := streamDef.BuildAvroSchema()
+		if err != nil {
+			return fmt.Errorf("Error compiling schema: %s", err.Error())
+		}
+
+		// compute bigquery schema
+		bqSchema, err := streamDef.BuildBigQuerySchema()
+		if err != nil {
+			return fmt.Errorf("Error compiling schema: %s", err.Error())
+		}
+
+		// set update avro and bigquery
+		s.AvroSchema = avro
+		s.BigQuerySchema = bqSchema
+		s.Description = streamDef.Description
+	}
 
 	// validate
 	err := GetValidator().Struct(s)
 	if err != nil {
 		return err
 	}
+
+	// TODO: Update schema in BigQuery
 
 	// update
 	_, err = db.DB.Model(s).Column("description", "manual").WherePK().Update()
@@ -143,7 +183,7 @@ func (s *Stream) CompileAndCreate() error {
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
 	s.BigQuerySchema = bqSchema
-	// TODO: Set description based on streamDef
+	s.Description = streamDef.Description
 
 	// validate
 	err = GetValidator().Struct(s)

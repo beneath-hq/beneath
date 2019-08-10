@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/linkedin/goavro/v2"
 )
@@ -54,6 +55,12 @@ func (s *StreamDef) buildAvroRecord(t *Type, doc bool, definedNames map[string]b
 			"name": field.Name,
 			"type": s.buildAvroTypeRef(field.Type, doc, definedNames),
 		}
+		if doc {
+			content := strings.TrimSpace(field.Doc)
+			if content != "" {
+				fields[idx]["doc"] = field.Doc
+			}
+		}
 	}
 
 	record := map[string]interface{}{
@@ -63,7 +70,10 @@ func (s *StreamDef) buildAvroRecord(t *Type, doc bool, definedNames map[string]b
 	}
 
 	if doc {
-		record["doc"] = t.Doc
+		content := strings.TrimSpace(t.Doc)
+		if content != "" {
+			record["doc"] = content
+		}
 	}
 
 	return record
