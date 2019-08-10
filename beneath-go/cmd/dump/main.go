@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	os.Setenv("BIGTABLE_PROJECT_ID", "beneathcrypto")
+	os.Setenv("BIGTABLE_PROJECT_ID", "")
 	os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:8086")
 
 	// prepare BigTable client
 	ctx := context.Background()
-	client, err := bigtable.NewClient(ctx, "beneathcrypto", "")
+	client, err := bigtable.NewClient(ctx, "", "")
 	if err != nil {
 		log.Fatalf("Could not create bigtable client: %v", err)
 	}

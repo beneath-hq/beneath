@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"time"
+
 	"github.com/beneath-core/beneath-go/core/codec"
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
@@ -35,13 +37,16 @@ type TablesDriver interface {
 	GetMaxDataSize() int
 
 	// WriteRecords saves one or multiple records. It does not save records if sequenceNumber is lower than that of a previous write to the same key
-	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64) error
+	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64, saveLatest bool) error
 
 	// ReadRecords reads one or multiple (not necessarily sequential) records by key and calls fn one by one
 	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error
 
 	// ReadRecordRange reads one or a range of records by key and calls fn one by one
 	ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error
+
+	// ReadLatestRecords returns the latest records written to the instance
+	ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, sequenceNumber int64) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs

@@ -170,6 +170,59 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	return response, nil
 }
 
+func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRecordsRequest) (*pb.ReadRecordsResponse, error) {
+	// get auth
+	key := auth.GetKey(ctx)
+
+	// read instanceID
+	instanceID := uuid.FromBytesOrNil(req.InstanceId)
+	if instanceID == uuid.Nil {
+		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+	}
+
+	// get cached stream
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// check permissions
+	if !key.ReadsProject(stream.ProjectID) {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
+	}
+
+	// check limit is valid
+	if req.Limit == 0 {
+		return nil, grpc.Errorf(codes.InvalidArgument, "limit cannot be 0")
+	} else if req.Limit > maxRecordsLimit {
+		return nil, grpc.Errorf(codes.InvalidArgument, fmt.Sprintf("limit exceeds maximum of %d", maxRecordsLimit))
+	}
+
+	// get before as time
+	var before time.Time
+	if req.Before != 0 {
+		before = time.Unix(0, req.Before*int64(time.Millisecond))
+	} else {
+		before = time.Time{}
+	}
+
+	// read rows from engine
+	response := &pb.ReadRecordsResponse{}
+	err := db.Engine.Tables.ReadLatestRecords(instanceID, int(req.Limit), before, func(avroData []byte, sequenceNumber int64) error {
+		response.Records = append(response.Records, &pb.Record{
+			AvroData:       avroData,
+			SequenceNumber: sequenceNumber,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	// done
+	return response, nil
+}
+
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
 	key := auth.GetKey(ctx)

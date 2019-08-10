@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
+
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/httputil"
@@ -64,7 +66,9 @@ func httpHandler() http.Handler {
 	// REST endpoints
 	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/details", httputil.AppHandler(getStreamDetails))
 	handler.Method("GET", "/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
+	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/latest", httputil.AppHandler(getLatestFromProjectAndStream))
 	handler.Method("GET", "/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
+	handler.Method("GET", "/streams/instances/{instanceID}/latest", httputil.AppHandler(getLatestFromInstance))
 	handler.Method("POST", "/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	return handler
@@ -137,6 +141,17 @@ func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	return getFromInstanceID(w, r, instanceID)
 }
 
+func getLatestFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+	projectName := chi.URLParam(r, "projectName")
+	streamName := chi.URLParam(r, "streamName")
+	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	if instanceID == uuid.Nil {
+		return httputil.NewError(404, "instance for stream not found")
+	}
+
+	return getLatestFromInstanceID(w, r, instanceID)
+}
+
 func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
 	if err != nil {
@@ -144,6 +159,15 @@ func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return getFromInstanceID(w, r, instanceID)
+}
+
+func getLatestFromInstance(w http.ResponseWriter, r *http.Request) error {
+	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
+	if err != nil {
+		return httputil.NewError(404, "instance not found -- malformed ID")
+	}
+
+	return getLatestFromInstanceID(w, r, instanceID)
 }
 
 func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
@@ -204,31 +228,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// get limit
-	limit := defaultRecordsLimit
-	if body["limit"] != nil {
-		switch num := body["limit"].(type) {
-		case string:
-			l, err := strconv.Atoi(num)
-			if err != nil {
-				return httputil.NewError(400, "couldn't parse limit as integer")
-			}
-			limit = l
-		case json.Number:
-			l, err := num.Int64()
-			if err != nil {
-				return httputil.NewError(400, "couldn't parse limit as integer")
-			}
-			limit = int(l)
-		default:
-			return httputil.NewError(400, "couldn't parse limit as integer")
-		}
-	}
-
-	// check limit is valid
-	if limit == 0 {
-		return httputil.NewError(400, "limit cannot be 0")
-	} else if limit > maxRecordsLimit {
-		return httputil.NewError(400, fmt.Sprintf("limit exceeds maximum of %d", maxRecordsLimit))
+	limit, err := parseLimit(body["limit"])
+	if err != nil {
+		return httputil.NewError(400, err.Error())
 	}
 
 	// get key range where clause (if no where, it will be nil)
@@ -311,6 +313,103 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	} else {
 		encode = map[string]interface{}{"data": result}
 	}
+
+	// write and finish
+	err = jsonutil.MarshalWriter(encode, w)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
+	// get auth
+	key := auth.GetKey(r.Context())
+
+	// get cached stream
+	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	if stream == nil {
+		return httputil.NewError(404, "stream not found")
+	}
+
+	// check permissions
+	if !key.ReadsProject(stream.ProjectID) {
+		return httputil.NewError(403, "token doesn't grant right to read this stream")
+	}
+
+	// read body
+	var body map[string]interface{}
+	err := jsonutil.Unmarshal(r.Body, &body)
+	if err == io.EOF {
+		// no body -- try reading from url parameters
+		body = make(map[string]interface{})
+
+		// read limit
+		if limit := r.URL.Query().Get("limit"); limit != "" {
+			body["limit"] = limit
+		}
+
+		// read before
+		if before := r.URL.Query().Get("before"); before != "" {
+			body["before"] = before
+		}
+	} else if err != nil {
+		return httputil.NewError(400, "couldn't parse body -- is it valid JSON?")
+	}
+
+	// make sure there's no accidental keys
+	for k := range body {
+		if k != "limit" && k != "before" {
+			return httputil.NewError(400, "unrecognized query key '%s'; valid keys are 'limit' and 'before'", k)
+		}
+	}
+
+	// get limit
+	limit, err := parseLimit(body["limit"])
+	if err != nil {
+		return httputil.NewError(400, err.Error())
+	}
+
+	// get before
+	before, err := timeutil.Parse(body["before"], true)
+	if err != nil {
+		return httputil.NewError(400, err.Error())
+	}
+
+	// prepare write (we'll be writing as we get data, not in one batch)
+	w.Header().Set("Content-Type", "application/json")
+
+	// begin json object
+	result := make([]interface{}, 0, limit)
+
+	// read rows from engine
+	err = db.Engine.Tables.ReadLatestRecords(instanceID, limit, before, func(avroData []byte, sequenceNumber int64) error {
+		// decode avro
+		data, err := stream.Codec.UnmarshalAvro(avroData)
+		if err != nil {
+			return err
+		}
+
+		// convert to json friendly
+		data, err = stream.Codec.ConvertFromAvroNative(data, true)
+		if err != nil {
+			return err
+		}
+
+		// set sequence number
+		data["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
+
+		// done
+		result = append(result, data)
+		return nil
+	})
+	if err != nil {
+		return httputil.NewError(400, err.Error())
+	}
+
+	// prepare result for encoding
+	encode := map[string]interface{}{"data": result}
 
 	// write and finish
 	err = jsonutil.MarshalWriter(encode, w)
@@ -431,4 +530,35 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// Done
 	return nil
+}
+
+func parseLimit(val interface{}) (int, error) {
+	limit := defaultRecordsLimit
+	if val != nil {
+		switch num := val.(type) {
+		case string:
+			l, err := strconv.Atoi(num)
+			if err != nil {
+				return 0, fmt.Errorf("couldn't parse limit as integer")
+			}
+			limit = l
+		case json.Number:
+			l, err := num.Int64()
+			if err != nil {
+				return 0, fmt.Errorf("couldn't parse limit as integer")
+			}
+			limit = int(l)
+		default:
+			return 0, fmt.Errorf("couldn't parse limit as integer")
+		}
+	}
+
+	// check limit is valid
+	if limit == 0 {
+		return 0, fmt.Errorf("limit cannot be 0")
+	} else if limit > maxRecordsLimit {
+		return 0, fmt.Errorf("limit exceeds maximum of %d", maxRecordsLimit)
+	}
+
+	return limit, nil
 }

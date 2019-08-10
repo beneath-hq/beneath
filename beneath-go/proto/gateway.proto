@@ -10,6 +10,7 @@ import "engine.proto";
 
 service Gateway {
   rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
+  rpc ReadLatestRecords(ReadLatestRecordsRequest) returns (ReadRecordsResponse) {}
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
   rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
   rpc GetCurrentBeneathPackageVersion(PackageVersionRequest) returns (PackageVersionResponse) {}
@@ -24,6 +25,12 @@ message ReadRecordsRequest {
 
 message ReadRecordsResponse {
   repeated Record records = 1;
+}
+
+message ReadLatestRecordsRequest {
+  bytes instance_id = 1;
+  int32 limit = 2;
+  int64 before = 3;
 }
 
 message WriteRecordsResponse {

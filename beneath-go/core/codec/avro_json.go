@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/beneath-core/beneath-go/core/timeutil"
 )
 
 var one = big.NewInt(1)
@@ -209,44 +211,7 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 
 			// handle long.timestamp-millis
 			if t == "long" && lt == "timestamp-millis" {
-				// let's first try out some common string formats
-				if tStr, ok := valT.(string); ok {
-					// try "2006-01-02T15:04:05Z07:00" (RFC3339)
-					t, err := time.Parse(time.RFC3339, tStr)
-					if err == nil {
-						return t, nil
-					}
-
-					// try "2006-01-02T15:04:05"
-					t, err = time.Parse("2006-01-02T15:04:05", tStr)
-					if err == nil {
-						return t, nil
-					}
-
-					// try "2006-01-02"
-					t, err = time.Parse("2006-01-02", tStr)
-					if err == nil {
-						return t, nil
-					}
-				}
-
-				// didn't match our supported string formats, so we'll try to parse it as a long
-				longT, err := jsonNativeToAvroNative(t, valT, definedTypes)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't parse '%v' as a timestamp", valT)
-				}
-
-				val, ok := longT.(int64)
-				if !ok {
-					return nil, fmt.Errorf("expected int64 value, got %v", valT)
-				}
-
-				// check in range for time.Unix
-				if val > 9223372036853 || val < -9223372036853 { // 2^64/2/1000/1000
-					return nil, fmt.Errorf("timestamp out of range (nanoseconds must fit in int64)")
-				}
-
-				return time.Unix(0, int64(val)*int64(time.Millisecond)), nil
+				return timeutil.Parse(valT, false)
 			}
 		}
 

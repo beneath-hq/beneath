@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
@@ -27,12 +28,19 @@ type configSpecification struct {
 type Bigtable struct {
 	Client  *bigtable.Client
 	Records *bigtable.Table
+	Latest  *bigtable.Table
 }
 
 const (
 	recordsTableName        = "records"
 	recordsColumnFamilyName = "cf0"
 	recordsColumnName       = "avro0"
+
+	latestTableName        = "latest"
+	latestColumnFamilyName = "cf0"
+	latestColumnName       = "avro0"
+
+	maxLatestRecords = 1000
 )
 
 // New returns a new
@@ -56,6 +64,7 @@ func New() *Bigtable {
 
 	// initialize tables if they don't exist
 	initializeRecordsTable(admin)
+	initializeLatestTable(admin)
 
 	// prepare BigTable client
 	ctx := context.Background()
@@ -68,6 +77,7 @@ func New() *Bigtable {
 	return &Bigtable{
 		Client:  client,
 		Records: client.Open(recordsTableName),
+		Latest:  client.Open(latestTableName),
 	}
 }
 
@@ -82,7 +92,7 @@ func (p *Bigtable) GetMaxDataSize() int {
 }
 
 // WriteRecords implements engine.TablesDriver
-func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64) error {
+func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64, saveLatest bool) error {
 	// ensure all WriteRequest objects the same length
 	if !(len(keys) == len(avroData) && len(keys) == len(sequenceNumbers)) {
 		return fmt.Errorf("error: keys, data, and sequenceNumbers do not all have the same length")
@@ -95,22 +105,41 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 		newSequenceNumbers = append(newSequenceNumbers, sn*1000)
 	}
 
-	var muts []*bigtable.Mutation
+	muts := make([]*bigtable.Mutation, len(keys))
 	rowKeys := make([]string, len(keys))
+
+	var latestMuts []*bigtable.Mutation
+	var latestRowKeys []string
+	if saveLatest {
+		latestMuts = make([]*bigtable.Mutation, len(keys))
+		latestRowKeys = make([]string, len(keys))
+	}
 
 	// create one mutation for each record in the WriteRequest
 	for i, key := range keys {
-		mut := bigtable.NewMutation()
-		mut.Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
-		muts = append(muts, mut)
-
+		muts[i] = bigtable.NewMutation()
+		muts[i].Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
 		rowKeys[i] = string(makeRowKey(instanceID, key))
+
+		if saveLatest {
+			latestMuts[i] = bigtable.NewMutation()
+			latestMuts[i].Set(latestColumnFamilyName, latestColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
+			latestRowKeys[i] = string(instanceID.Bytes())
+		}
 	}
 
 	// apply all the mutations (i.e. write all the records) at once
 	_, err := p.Records.ApplyBulk(context.Background(), rowKeys, muts)
 	if err != nil {
 		return err
+	}
+
+	// save latest
+	if saveLatest {
+		_, err := p.Latest.ApplyBulk(context.Background(), latestRowKeys, latestMuts)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -200,6 +229,34 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 	return nil
 }
 
+// ReadLatestRecords implements engine.TablesDriver
+func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, sequenceNumber int64) error) error {
+	// create filter
+	var filter bigtable.Filter
+	if before.IsZero() {
+		filter = bigtable.LatestNFilter(limit)
+	} else {
+		filter = bigtable.ChainFilters(bigtable.TimestampRangeFilter(time.Time{}, before), bigtable.LatestNFilter(limit))
+	}
+
+	// read row
+	row, err := p.Latest.ReadRow(context.Background(), string(instanceID.Bytes()), bigtable.RowFilter(filter))
+	if err != nil {
+		return err
+	}
+
+	// iterate through versions and return
+	for _, item := range row[latestColumnFamilyName] {
+		err := fn(item.Value, int64(item.Timestamp))
+		if err != nil {
+			return err
+		}
+	}
+
+	// done
+	return nil
+}
+
 // combine instanceID and key to a row key
 func makeRowKey(instanceID uuid.UUID, key []byte) []byte {
 	return append(instanceID[:], key...)
@@ -222,5 +279,37 @@ func initializeRecordsTable(admin *bigtable.AdminClient) {
 		if !ok || status.Code() != codes.AlreadyExists {
 			log.Panicf("error creating column family '%s': %v", recordsColumnFamilyName, err)
 		}
+	}
+
+	// set garbage collection policy
+	err = admin.SetGCPolicy(context.Background(), recordsTableName, recordsColumnFamilyName, bigtable.MaxVersionsPolicy(1))
+	if err != nil {
+		log.Panicf("error setting gc policy: %v", err)
+	}
+}
+
+func initializeLatestTable(admin *bigtable.AdminClient) {
+	// create table
+	err := admin.CreateTable(context.Background(), latestTableName)
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			log.Panicf("error creating table '%s': %v", latestTableName, err)
+		}
+	}
+
+	// create column family
+	err = admin.CreateColumnFamily(context.Background(), latestTableName, latestColumnFamilyName)
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			log.Panicf("error creating column family '%s': %v", latestColumnFamilyName, err)
+		}
+	}
+
+	// set garbage collection policy
+	err = admin.SetGCPolicy(context.Background(), latestTableName, latestColumnFamilyName, bigtable.MaxVersionsPolicy(maxLatestRecords))
+	if err != nil {
+		log.Panicf("error setting gc policy: %v", err)
 	}
 }

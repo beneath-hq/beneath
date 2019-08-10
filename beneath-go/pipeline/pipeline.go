@@ -103,7 +103,7 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// writing encoded data to Table
-	err := db.Engine.Tables.WriteRecords(instanceID, keys, avroData, sequenceNumbers)
+	err := db.Engine.Tables.WriteRecords(instanceID, keys, avroData, sequenceNumbers, !stream.Batch)
 	if err != nil {
 		return err
 	}

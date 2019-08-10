@@ -147,6 +147,9 @@ func (b *Broker) CloseClient(c *Client) {
 
 // broadcasts keep alive message to all subscribers
 func (b *Broker) sendKeepAlive() {
+	if len(b.clients) == 0 {
+		return
+	}
 	startTime := time.Now()
 	for client := range b.clients {
 		client.SendKeepAlive()
