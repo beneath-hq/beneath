@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"unicode"
 
 	"github.com/golang-collections/collections/set"
@@ -356,10 +357,11 @@ func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 
 	// done
 	return &StreamDef{
-		Name:      streamName,
-		TypeName:  declaration.Type.Name,
-		KeyFields: streamKey,
-		External:  streamExternal,
-		Compiler:  c,
+		Name:        streamName,
+		Description: strings.TrimSpace(declaration.Type.Doc),
+		TypeName:    declaration.Type.Name,
+		KeyFields:   streamKey,
+		External:    streamExternal,
+		Compiler:    c,
 	}, nil
 }

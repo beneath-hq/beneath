@@ -70,6 +70,7 @@ type Type struct {
 
 // Field is member of Type
 type Field struct {
+	Doc  string   "@String?"
 	Name string   `@Ident`
 	Type *TypeRef `":" @@`
 }

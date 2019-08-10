@@ -2,9 +2,10 @@ package schema
 
 // StreamDef has data about a stream defined in a schema
 type StreamDef struct {
-	Name      string
-	TypeName  string
-	KeyFields []string
-	External  bool
-	Compiler  *Compiler
+	Name        string
+	Description string
+	TypeName    string
+	KeyFields   []string
+	External    bool
+	Compiler    *Compiler
 }
