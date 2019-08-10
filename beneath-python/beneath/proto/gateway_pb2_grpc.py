@@ -20,6 +20,11 @@ class GatewayStub(object):
         request_serializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsRequest.SerializeToString,
         response_deserializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsResponse.FromString,
         )
+    self.ReadLatestRecords = channel.unary_unary(
+        '/proto.Gateway/ReadLatestRecords',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.ReadLatestRecordsRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsResponse.FromString,
+        )
     self.WriteRecords = channel.unary_unary(
         '/proto.Gateway/WriteRecords',
         request_serializer=beneath_dot_proto_dot_engine__pb2.WriteRecordsRequest.SerializeToString,
@@ -42,6 +47,13 @@ class GatewayServicer(object):
   pass
 
   def ReadRecords(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def ReadLatestRecords(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -75,6 +87,11 @@ def add_GatewayServicer_to_server(servicer, server):
       'ReadRecords': grpc.unary_unary_rpc_method_handler(
           servicer.ReadRecords,
           request_deserializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsResponse.SerializeToString,
+      ),
+      'ReadLatestRecords': grpc.unary_unary_rpc_method_handler(
+          servicer.ReadLatestRecords,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.ReadLatestRecordsRequest.FromString,
           response_serializer=beneath_dot_proto_dot_gateway__pb2.ReadRecordsResponse.SerializeToString,
       ),
       'WriteRecords': grpc.unary_unary_rpc_method_handler(

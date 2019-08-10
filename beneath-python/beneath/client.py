@@ -173,8 +173,40 @@ class Client:
         }
       """
     )
-
     return result['data']['projectByName']
+
+  # get a streams's info by stream name and project name
+  def get_stream_details(self, stream_name, project_name):
+    result = self.run_query(
+        variables={
+            "name": stream_name,
+            "projectName": project_name
+        },
+        query="""
+        query Stream($name: String!, $projectName: String!) {
+            stream(
+              name: $name, 
+              projectName: $projectName) {
+                streamID
+                name
+                description
+                schema
+                avroSchema
+                keyFields
+                external
+                batch
+                manual
+                project {
+                  name
+                }
+                currentStreamInstanceID
+                createdOn
+                updatedOn
+            }
+        }
+      """
+    )
+    return result['data']['stream']
 
   # create an external stream
   def create_external_stream(self, project_id, schema, manual):
@@ -195,6 +227,7 @@ class Client:
           ) {
             streamID
             name
+            description
             schema
             avroSchema
             keyFields
@@ -231,6 +264,7 @@ class Client:
           ) {
             streamID
             name
+            description
             schema
             avroSchema
             keyFields

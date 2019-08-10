@@ -127,11 +127,25 @@ def stream_create_ext(args):
 
 def stream_update_ext(args):
   # start client with the secret stored in .beneath/secret
-  # client = get_client()
+  client = get_client()
 
-  # 
-  print(args)
-  pass
+  # get stream id
+  result = client.get_stream_details(args.stream, args.project)
+  stream_id = result['streamID']
+
+  # read schema from the user-supplied file
+  with open(args.file, "r") as f:
+    schema = f.read()
+
+  # ensure user's text is a bool
+  manual = args.manual
+  
+  # submit GraphQL mutation to update stream
+  result = client.update_external_stream(stream_id, schema, manual)
+  
+  # print out the stream's details to the user 
+  print(result)
+  return
 
 
 
@@ -185,9 +199,15 @@ if __name__ == '__main__':
   _stream_update_ext = _stream.add_parser('update-external')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
+  _stream_update_ext.add_argument('--project', type=str, required=True)
   _stream_update_ext.add_argument('--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
   _stream_update_ext.add_argument('--manual', type=str2bool, required=True)
 
   # parse the args and call the relevant function
   args = parser.parse_args()
-  args.func(args)
+  try:
+    func = args.func
+  except AttributeError:
+    parser.error("too few arguments")
+  func(args)
+
