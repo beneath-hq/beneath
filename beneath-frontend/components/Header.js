@@ -30,8 +30,8 @@ const useStyles = makeStyles((theme) => ({
   drawerButton: {
     marginRight: theme.spacing(2),
     marginLeft: 0,
-    [theme.breakpoints.up('sm')]: {
-      display: 'none',
+    [theme.breakpoints.up("sm")]: {
+      display: "none",
     },
   },
 }));
