@@ -1,5 +1,6 @@
-apache-beam==2.14.0
+apache_beam[gcp]==2.14.0
 argparse==1.1
 fastavro==0.21.24
 grpcio-tools==1.22.0
 pandas==0.24.2
+six==1.12.0

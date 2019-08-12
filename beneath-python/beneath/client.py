@@ -8,9 +8,6 @@ from beneath.stream import Stream
 from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
-import sys
-sys.path.append(
-    '/Users/ericgreen/Desktop/Beneath/code/beneath-core/beneath-python/beneath')
 from beneath import config
   
 # create a map on the client. instanceid -> schema, so we cache it to remember it
@@ -64,7 +61,7 @@ class Client:
     self.avro_schemas = dict()
 
   # get a stream's details
-  def get_stream(self, project_name, stream_name):
+  def stream(self, project_name, stream_name):
     details = self.stub.GetStreamDetails(
         gateway_pb2.StreamDetailsRequest(
             project_name=project_name, stream_name=stream_name),
@@ -214,7 +211,7 @@ class Client:
             "projectID": project_id,
             "schema": schema,
             "batch": False,
-            "manual": manual
+            "manual": manual if manual else False
         },
         query="""
         mutation CreateExternalStream($projectID: UUID!, $schema: String!, $batch: Boolean!, $manual: Boolean!) {
@@ -252,7 +249,7 @@ class Client:
         variables={
             "streamID": stream_id,
             "schema": schema,
-            "manual": manual
+            "manual": manual if manual else False
         },
         query="""
         mutation UpdateStream($streamID: UUID!, $schema: String!, $manual: Boolean!) {
