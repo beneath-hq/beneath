@@ -48,7 +48,12 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
     crumbs = [
       <ExploreCrumb key={0} />,
       <ProjectCrumb key={1} name={router.query.project_name as string} />,
-      <StreamCrumb key={2} isCurrent project={router.query.project_name as string} stream={router.query.name as string} />,
+      <StreamCrumb
+        key={2}
+        isCurrent
+        project={router.query.project_name as string}
+        stream={router.query.name as string}
+      />,
     ];
   } else if (router.route === "/user") {
     crumbs = [
