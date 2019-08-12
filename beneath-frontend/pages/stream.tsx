@@ -26,7 +26,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
     projectName: router.query.project_name as string,
   };
   return (
-    <Page title="Stream" sidebar={<ExploreSidebar me={null} />}>
+    <Page title="Stream" subheader>
       <Query<QueryStream, QueryStreamVariables> query={QUERY_STREAM} variables={variables}>
         {({ loading, error, data }) => {
           if (loading) {

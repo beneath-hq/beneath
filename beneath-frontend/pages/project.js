@@ -18,11 +18,15 @@ import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../apollo/queries/project";
 
 const ProjectPage = ({ router, me }) => (
-  <Page title="Project" sidebar={<ExploreSidebar />}>
+  <Page title="Project" subheader>
     <Query query={QUERY_PROJECT} variables={{ name: router.query.name }}>
       {({ loading, error, data }) => {
-        if (loading) return <Loading justify="center" />;
-        if (error) return <p>Error: {JSON.stringify(error)}</p>;
+        if (loading) {
+          return <Loading justify="center" />;
+        }
+        if (error) {
+          return <p>Error: {JSON.stringify(error)}</p>;
+        }
 
         let project = data.projectByName;
         let isProjectMember = me && project.users.some((user) => user.userID === me.userID);

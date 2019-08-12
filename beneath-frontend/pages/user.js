@@ -27,13 +27,17 @@ const UserPage = ({ router, me }) => {
     userID = me.userID;
   }
   return (
-    <Page title="User" sidebar={<ExploreSidebar />}>
+    <Page title="User" subheader>
       <div>
         <Query query={QUERY_USER} variables={{ userID }}>
           {({ loading, error, data }) => {
-            if (loading) return <Loading justify="center" />;
-            if (error) return <p>Error: {JSON.stringify(error)}</p>;
-            
+            if (loading) {
+              return <Loading justify="center" />;
+            }
+            if (error) {
+              return <p>Error: {JSON.stringify(error)}</p>;
+            }
+
             let { user } = data;
             let isMe = userID === "me" || userID === me.userID;
             let tabs = [
