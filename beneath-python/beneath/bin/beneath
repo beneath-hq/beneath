@@ -41,13 +41,13 @@ def get_client():
     return client
 
 def auth(args):
-  client = Client(secret=args.secret)
-  if client:
-    print("you have authenticated successfully")
+  try:
+    Client(secret=args.secret)
     _write_secret(args.secret)
-  else:
-    print("your attempt to authenticate failed")
-  return
+    print("You have authenticated successfully!")
+  except:
+    _write_secret("")
+    print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
 
 def list_projects(args):
   # start client with the secret stored in .beneath/secret

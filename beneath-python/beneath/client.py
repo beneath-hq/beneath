@@ -60,7 +60,6 @@ class Client:
       raise Exception(
           "Your Beneath package is not up-to-date. Please upgrade before continuing.")
 
-
     # create a dictionary to remember schemas
     self.avro_schemas = dict()
 
