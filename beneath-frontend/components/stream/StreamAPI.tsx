@@ -23,6 +23,70 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
   const classes = useStyles();
   return (
     <Container maxWidth={"md"}>
+      <Typography variant="h3" gutterBottom>
+        Python
+      </Typography>
+      <Typography variant="body2" paragraph>
+        We provide a Python library that makes it easy to get data into e.g. a Jupyter notebook. Just copy and paste
+        this snippet:
+      </Typography>
+      <CodeBlock language={"python"}>{`import beneath
+client = Client(TOKEN)
+stream = client.Stream(project="${stream.project.name}", stream="${stream.name}")
+df = stream.load_all().to_dataframe()`}</CodeBlock>
+      <Typography variant="body2" paragraph>
+        Replace TOKEN with a read-only key, which you can obtain{" "}
+        <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
+          <MUILink className={classes.link}>here</MUILink>
+        </Link>
+        . You must first install our Python library with <code>pip install beneath</code>.
+      </Typography>
+      <VSpace units={4} />
+
+      <Typography variant="h3" gutterBottom>
+        JavaScript
+      </Typography>
+      <Typography variant="body2" paragraph>
+        You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
+        very important that you only use read-only keys in your front-end.
+      </Typography>
+      <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${
+        stream.name
+      }", {
+  "Authorization": "Bearer TOKEN",
+  "Content-Type": "application/json",
+})
+.then(res => res.json())
+.then(data => {
+  // TODO: Add your logic here
+  console.log(data)
+})`}</CodeBlock>
+      <Typography variant="body2" paragraph>
+        Replace TOKEN with a read-only key, which you can obtain{" "}
+        <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
+          <MUILink className={classes.link}>here</MUILink>
+        </Link>
+        .
+      </Typography>
+      <VSpace units={4} />
+
+      <Typography variant="h3" gutterBottom>
+        BigQuery
+      </Typography>
+      <Typography variant="body2" paragraph>
+        You can query this stream however you want using its public BigQuery dataset. Here's an example of how to
+        query it from the BigQuery{" "}
+        <MUILink href="https://console.cloud.google.com/bigquery" className={classes.link}>
+          console
+        </MUILink>
+        .
+      </Typography>
+      <CodeBlock language={"sql"}>{`select * from \`${bigQueryName(stream)}\``}</CodeBlock>
+      <Typography variant="body2" paragraph>
+        Data is made available in BigQuery nearly in real time.
+      </Typography>
+      <VSpace units={4} />
+
       <VSpace units={4} />
       <Typography variant="h3" gutterBottom>
         REST API
@@ -42,21 +106,6 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
         .
       </Typography>
       <VSpace units={4} />
-      <Typography variant="h3" gutterBottom>
-        BigQuery
-      </Typography>
-      <Typography variant="body2" paragraph>
-        You can query this stream however you want using its public BigQuery dataset. Here's an example of how to
-        query it from the BigQuery{" "}
-        <MUILink href="https://console.cloud.google.com/bigquery" className={classes.link}>
-          console
-        </MUILink>
-        .
-      </Typography>
-      <CodeBlock language={"sql"}>{`select * from \`${bigQueryName(stream)}\``}</CodeBlock>
-      <Typography variant="body2" paragraph>
-        Data is made available in BigQuery nearly in real time.
-      </Typography>
     </Container>
   );
 };
