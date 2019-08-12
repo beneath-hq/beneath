@@ -1,10 +1,10 @@
-" MKR transfers for the last month. "
-type MKRTransfers @stream(name: "mkr-transfers", key: ['_time', '_index']) {
-  transaction_hash: String!
-  _time: Timestamp! 
-  _index: Int!
-  _name: String!
-  _from: String
-  _to: String
-  _value: String!
+" MKR transfers including mints and burns "
+type MKRTransfers @stream(name: "mkr-transfers", key: ["time", "index"]) {
+  transactionHash: String!
+  time: Timestamp!
+  index: Int!
+  name: String!
+  from: String
+  to: String
+  value: String!
 }

@@ -7,7 +7,7 @@ return BigInt(x).toString()
 with logs as (
   select l.transaction_hash as transaction_hash, l.block_timestamp as time, l.log_index as index_in_block, l.topics, l.data
   from `bigquery-public-data.crypto_ethereum.logs` l
-  where l.address = '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359'  
+  where l.address = '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2'  
   and l.block_timestamp > timestamp(date(2019, 8, 1))
 )
 select
