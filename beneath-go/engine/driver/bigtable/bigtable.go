@@ -108,11 +108,9 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 	muts := make([]*bigtable.Mutation, len(keys))
 	rowKeys := make([]string, len(keys))
 
-	var latestMuts []*bigtable.Mutation
-	var latestRowKeys []string
+	var latestMut *bigtable.Mutation
 	if saveLatest {
-		latestMuts = make([]*bigtable.Mutation, len(keys))
-		latestRowKeys = make([]string, len(keys))
+		latestMut = bigtable.NewMutation()
 	}
 
 	// create one mutation for each record in the WriteRequest
@@ -122,9 +120,9 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 		rowKeys[i] = string(makeRowKey(instanceID, key))
 
 		if saveLatest {
-			latestMuts[i] = bigtable.NewMutation()
-			latestMuts[i].Set(latestColumnFamilyName, latestColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
-			latestRowKeys[i] = string(instanceID.Bytes())
+			// TODO: fix hack when using real timestamps (only use hack if value not user provided)
+			seqNo := newSequenceNumbers[i] + int64(i*1000)
+			latestMut.Set(latestColumnFamilyName, latestColumnName, bigtable.Timestamp(seqNo), avroData[i])
 		}
 	}
 
@@ -136,7 +134,7 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 
 	// save latest
 	if saveLatest {
-		_, err := p.Latest.ApplyBulk(context.Background(), latestRowKeys, latestMuts)
+		err := p.Latest.Apply(context.Background(), string(instanceID.Bytes()), latestMut)
 		if err != nil {
 			return err
 		}

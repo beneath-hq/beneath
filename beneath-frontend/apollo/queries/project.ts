@@ -1,5 +1,19 @@
 import gql from "graphql-tag";
 
+export const EXPLORE_PROJECTS = gql`
+  query ExploreProjects {
+    exploreProjects {
+      projectID
+      name
+      displayName
+      description
+      photoURL
+      createdOn
+      updatedOn
+    }
+  }
+`;
+
 export const QUERY_PROJECT = gql`
   query ProjectByName($name: String!) {
     projectByName(name: $name) {

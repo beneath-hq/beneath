@@ -61,8 +61,6 @@ const ExploreSidebar: FC<IExploreSidebarProps> = ({ me, router }) => {
         <ListSubheader>Create</ListSubheader>
         <ListEntry key={"/new/project"} href={"/new/project"} label={"New project"}
           selected={selected(/^\/new\/project/)} />
-        <ListEntry key={"/new/external-stream"} href={"/new/external-stream"} label={"New external stream"}
-          selected={selected(/^\/new\/external-stream/)} />
 
         {me && (
           <>

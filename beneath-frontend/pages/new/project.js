@@ -32,7 +32,7 @@ const NewProjectPage = () => {
 
   const classes = useStyles();
   return (
-    <Page title="New Project" sidebar={<ExploreSidebar />} maxWidth="md" contentMarginTop="normal">
+    <Page title="New Project" subheader maxWidth="md" contentMarginTop="normal">
       <Mutation mutation={NEW_PROJECT} 
         refetchQueries={[{ query: QUERY_ME }]}
         onCompleted={({ createProject }) => {

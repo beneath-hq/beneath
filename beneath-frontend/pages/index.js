@@ -19,6 +19,7 @@ class Index extends Component {
         <TokenConsumer>
           {(token) => {
             this.token = token;
+            return <></>;
           }}
         </TokenConsumer>
       </Page>

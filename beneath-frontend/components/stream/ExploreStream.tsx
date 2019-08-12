@@ -17,7 +17,7 @@ import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
   submitButton: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(1.5),
   },
   fetchMoreButton: {},
   noMoreDataCaption: {
@@ -80,7 +80,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                     loading || !(isJSON(values.where) || values.where.length === 0) || !(values.where.length <= 1024)
                   }
                 >
-                  Load
+                  Execute
                 </Button>
               </Grid>
             </Grid>
@@ -124,14 +124,6 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                         if (!prevRecords || !newRecords) {
                           return prev;
                         }
-                        const res = {
-                          records: {
-                            __typename: "RecordsResponse",
-                            data: [...prevRecords, ...newRecords],
-                            error: null,
-                          }
-                        };
-                        console.log(res);
                         return {
                           records: {
                             __typename: "RecordsResponse",

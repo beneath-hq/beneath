@@ -1,6 +1,7 @@
 package model
 
 import (
+	"log"
 	"regexp"
 	"time"
 
@@ -71,6 +72,16 @@ func FindProject(projectID uuid.UUID) *Project {
 		return nil
 	}
 	return project
+}
+
+// FindProjects returns a sample of projects
+func FindProjects() []*Project {
+	var projects []*Project
+	err := db.DB.Model(&projects).Where("project.public = true").Limit(200).Select()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	return projects
 }
 
 // FindProjectByName finds a project by name

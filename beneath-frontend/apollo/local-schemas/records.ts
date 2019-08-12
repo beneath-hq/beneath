@@ -23,7 +23,8 @@ export const typeDefs = gql`
       projectName: String!,
       streamName: String!,
       limit: Int!,
-    ): [Record!]!
+      before: String,
+    ): RecordsResponse!
   }
 
   extend type Mutation {
@@ -115,7 +116,7 @@ export const resolvers = {
         data: data.map((row: any) => {
           return {
             __typename: "Record",
-            recordID: makeUniqueIdentifier(stream.keyFields, row),
+            recordID: makeUniqueIdentifier(stream.keyFields, row, false),
             data: row,
             sequenceNumber: row["@meta"].sequence_number,
           };
@@ -123,9 +124,66 @@ export const resolvers = {
       };
     },
     latestRecords: async (_: any, args: LatestRecordsVariables, { cache, client }: ResolverContext) => {
-      // TODO:
-      const res = await resolvers.Query.records(null, args, { cache, client });
-      return res.data;
+      // get stream
+      const { data: { stream } } = await client.query({
+        query: QUERY_STREAM,
+        variables: { projectName: args.projectName, name: args.streamName },
+      });
+      if (!stream) {
+        return {
+          __typename: "RecordsResponse",
+          data: null,
+          error: "couldn't find stream",
+        };
+      }
+
+      // build url with limit and where
+      let url = `${connection.GATEWAY_URL}/projects/${args.projectName}/streams/${args.streamName}/latest`;
+      url += `?limit=${args.limit}`;
+      if (args.before) {
+        // TODO: Get rid of when we transition to timestmaps
+        url += `&before=${parseInt(args.before, 10) / 1000}`;
+      }
+
+      // build headers with authorization
+      const headers: any = { "Content-Type": "application/json" };
+      const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      // fetch
+      const res = await fetch(url, { headers });
+      const json = await res.json();
+
+      // check error
+      if (!res.ok) {
+        return {
+          __typename: "RecordsResponse",
+          data: null,
+          error: json.error
+        };
+      }
+
+      // get data as array
+      let data = json.data;
+      if (!data) {
+        data = [];
+      }
+
+      // build records objects
+      return {
+        __typename: "RecordsResponse",
+        error: null,
+        data: data.map((row: any) => {
+          return {
+            __typename: "Record",
+            recordID: makeUniqueIdentifier(stream.keyFields, row, true),
+            data: row,
+            sequenceNumber: row["@meta"].sequence_number,
+          };
+        }),
+      };
     },
   },
   Mutation: {
@@ -171,6 +229,11 @@ export default {
   resolvers,
 };
 
-const makeUniqueIdentifier = (keyFields: string[], data: any) => {
-  return keyFields.reduce((prev, curr) => `${prev}-${data[curr]}`, "");
+const makeUniqueIdentifier = (keyFields: string[], data: any, includeSequenceNumber: boolean) => {
+  let id = keyFields.reduce((prev, curr) => `${prev}-${data[curr]}`, "");
+  if (includeSequenceNumber) {
+    const seqNo = data["@meta"] && data["@meta"].sequence_number;
+    id = `${id}-${seqNo || ""}`;
+  }
+  return id;
 };

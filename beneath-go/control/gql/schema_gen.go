@@ -100,15 +100,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Empty          func(childComplexity int) int
-		KeysForProject func(childComplexity int, projectID uuid.UUID) int
-		KeysForUser    func(childComplexity int, userID uuid.UUID) int
-		Me             func(childComplexity int) int
-		Ping           func(childComplexity int) int
-		ProjectByID    func(childComplexity int, projectID uuid.UUID) int
-		ProjectByName  func(childComplexity int, name string) int
-		Stream         func(childComplexity int, name string, projectName string) int
-		User           func(childComplexity int, userID uuid.UUID) int
+		Empty           func(childComplexity int) int
+		ExploreProjects func(childComplexity int) int
+		KeysForProject  func(childComplexity int, projectID uuid.UUID) int
+		KeysForUser     func(childComplexity int, userID uuid.UUID) int
+		Me              func(childComplexity int) int
+		Ping            func(childComplexity int) int
+		ProjectByID     func(childComplexity int, projectID uuid.UUID) int
+		ProjectByName   func(childComplexity int, name string) int
+		Stream          func(childComplexity int, name string, projectName string) int
+		User            func(childComplexity int, userID uuid.UUID) int
 	}
 
 	Stream struct {
@@ -169,6 +170,7 @@ type QueryResolver interface {
 	Ping(ctx context.Context) (string, error)
 	KeysForUser(ctx context.Context, userID uuid.UUID) ([]*model.Key, error)
 	KeysForProject(ctx context.Context, projectID uuid.UUID) ([]*model.Key, error)
+	ExploreProjects(ctx context.Context) ([]*model.Project, error)
 	ProjectByName(ctx context.Context, name string) (*model.Project, error)
 	ProjectByID(ctx context.Context, projectID uuid.UUID) (*model.Project, error)
 	Stream(ctx context.Context, name string, projectName string) (*model.Stream, error)
@@ -487,6 +489,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Empty(childComplexity), true
+
+	case "Query.exploreProjects":
+		if e.complexity.Query.ExploreProjects == nil {
+			break
+		}
+
+		return e.complexity.Query.ExploreProjects(childComplexity), true
 
 	case "Query.keysForProject":
 		if e.complexity.Query.KeysForProject == nil {
@@ -861,6 +870,7 @@ type NewKey {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
+  exploreProjects: [Project!]!
   projectByName(name: String!): Project
   projectByID(projectID: UUID!): Project
 }
@@ -2819,6 +2829,43 @@ func (ec *executionContext) _Query_keysForProject(ctx context.Context, field gra
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNKey2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_exploreProjects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ExploreProjects(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5400,6 +5447,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_keysForProject(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "exploreProjects":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_exploreProjects(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

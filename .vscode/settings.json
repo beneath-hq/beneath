@@ -3,7 +3,9 @@
   "editor.tabSize": 2,
   "files.exclude": {
     "**/node_modules": true,
-    "**/venv": true
+    "**/venv": true,
+    "**/.next": true,
+    "**/.pytest_cache": true,
   },
   "go.formatTool": "goimports",
   "go.testFlags": [

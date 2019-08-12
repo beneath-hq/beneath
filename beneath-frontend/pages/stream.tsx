@@ -7,7 +7,6 @@ import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
-import EditStream from "../components/stream/EditStream";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import StreamLatest from "../components/stream/StreamLatest";
@@ -27,7 +26,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
     projectName: router.query.project_name as string,
   };
   return (
-    <Page title="Stream" sidebar={<ExploreSidebar me={null} />}>
+    <Page title="Stream" subheader>
       <Query<QueryStream, QueryStreamVariables> query={QUERY_STREAM} variables={variables}>
         {({ loading, error, data }) => {
           if (loading) {
@@ -56,7 +55,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
 
-          tabs.push({ value: "edit", label: "Edit", render: () => <EditStream stream={stream} /> });
+          tabs.push({ value: "metrics", label: "Metrics", render: () => <p>Metrics</p> });
 
           return (
             <React.Fragment>

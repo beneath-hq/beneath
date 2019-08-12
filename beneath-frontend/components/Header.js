@@ -17,7 +17,9 @@ import NextMuiLink from "./NextMuiLink";
 import { TokenConsumer } from "../hocs/auth";
 
 const tabs = [
-  { label: "Explore", href: "/explore", selectRegex: "^/(explore|new|project|stream|user).*$" },
+  { label: "Create", href: "/create", selectRegex: "^/(new|create).*$" },
+  { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$" },
+  { label: "Docs", href: "/docs", selectRegex: "^/docs.*$" },
   { label: "About", href: "/about", selectRegex: "^/about.*$" },
 ];
 
@@ -28,8 +30,8 @@ const useStyles = makeStyles((theme) => ({
   drawerButton: {
     marginRight: theme.spacing(2),
     marginLeft: 0,
-    [theme.breakpoints.up('sm')]: {
-      display: 'none',
+    [theme.breakpoints.up("sm")]: {
+      display: "none",
     },
   },
 }));
@@ -62,7 +64,7 @@ const Header = (({ router, toggleMobileDrawer }) => {
           BENEATH
         </Link>
         <div className={classes.grow} />
-        <Tabs value={selectedTab ? selectedTab.href : false}>
+        <Tabs indicatorColor="primary" textColor="primary" value={selectedTab ? selectedTab.href : false}>
           {tabs.map(({ href, label }) => (
             <Tab key={href} label={label} value={href} component={NextMuiLink} href={href} />
           ))}

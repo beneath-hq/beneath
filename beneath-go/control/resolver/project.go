@@ -21,6 +21,10 @@ func (r *projectResolver) ProjectID(ctx context.Context, obj *model.Project) (st
 	return obj.ProjectID.String(), nil
 }
 
+func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*model.Project, error) {
+	return model.FindProjects(), nil
+}
+
 func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*model.Project, error) {
 	project := model.FindProjectByName(name)
 	if project == nil {
