@@ -18,6 +18,9 @@ def fix_bytes(field):
     return row
   return _fix_bytes
 
+# BigQuery returns timestamps as strings, and fastavro expects them as integers (milliseconds from epoch). This function reverts this interpretation for a specified column.
+# def fix_timestamps()
+
 # run the script
 def run(argv=None):
   # set up beneath client

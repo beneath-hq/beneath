@@ -1,0 +1,11 @@
+" Dai daily active addresses for the last month. "
+type DaiDailyActiveAddresses @stream(name: "dai-daily-active-addresses-3", key: 'time') {
+  time: Timestamp!
+  users: Int!
+  senders: Int!
+  receivers: Int!
+  transfers: Int!
+  minted: Float!
+  burned: Float!
+  turnover: Float!
+}

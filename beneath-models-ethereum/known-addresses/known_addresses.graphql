@@ -1,0 +1,5 @@
+type KnownAddresses @stream(name: "known-addresses", key: "address") {
+  address: Bytes20!
+  category: String!
+  label: String!
+}
