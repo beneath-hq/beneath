@@ -55,6 +55,8 @@ const StreamPage: FC<IProps> = ({ router }) => {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
 
+          tabs.push({ value: "metrics", label: "Metrics", render: () => <p>Metrics</p> });
+
           return (
             <React.Fragment>
               <PageTitle title={`${stream.project.name}/${stream.name}`} />
