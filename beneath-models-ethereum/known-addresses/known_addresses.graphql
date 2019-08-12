@@ -3,4 +3,3 @@ type KnownAddresses @stream(name: "known-addresses", key: "address") {
   category: String!
   label: String!
 }
-
