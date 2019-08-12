@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/big"
 	"strings"
-	"time"
 
 	bq "cloud.google.com/go/bigquery"
 	"google.golang.org/grpc/codes"
@@ -134,6 +133,18 @@ func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName strin
 		return err
 	}
 
+	// create view
+	viewMeta := &bq.TableMetadata{
+		Description: meta.Description,
+		Labels:      meta.Labels,
+		ViewQuery:   fmt.Sprintf("select * except(`__key`, `__data`, `__timestamp`) from `%s`", fullyQualifiedName(table)),
+	}
+	table = dataset.Table(makeViewName(streamName))
+	err = table.Create(context.Background(), viewMeta)
+	if err != nil {
+		return err
+	}
+
 	// done
 	return nil
 }
@@ -153,7 +164,7 @@ func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
 	return data, r.InsertID, nil
 }
 
-// the bigquery client serializes every type correctly except big numbers;
+// the bigquery client serializes every type correctly except big numbers and byte arrays;
 // we handle those by a recursive search
 // note: overrides in place
 func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
@@ -162,6 +173,8 @@ func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
 		return val.String()
 	case *big.Rat:
 		return val.FloatString(0)
+	case []byte:
+		return "0x" + hex.EncodeToString(val)
 	case map[string]interface{}:
 		for k, v := range val {
 			val[k] = r.recursiveSerialize(v)
@@ -186,17 +199,14 @@ func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceI
 	table := makeTableName(streamName, instanceID)
 	u := b.Client.Dataset(dataset).Table(table).Inserter() // TODO: Should we cache/reuse this?
 
-	// keep track of the insert time
-	insertTime := time.Now()
-
 	rows := make([]*Row, len(keys))
 
 	// create a BigQuery Row out of each of the records in the WriteRequest
 	for i, key := range keys {
 		// add meta fields to be uploaded
-		data[i]["_insert_time"] = insertTime
-		data[i]["_key"] = key
-		data[i]["_sequence_number"] = sequenceNumbers[i]
+		data[i]["__key"] = key
+		data[i]["__data"] = data[i]
+		data[i]["__timestamp"] = sequenceNumbers[i]
 
 		// data to be uploaded
 		insertIDBytes := append(key, byte(sequenceNumbers[i]))
@@ -226,4 +236,12 @@ func makeDatasetName(projectName string) string {
 func makeTableName(streamName string, instanceID uuid.UUID) string {
 	name := strings.ReplaceAll(streamName, "-", "_")
 	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[0:4]))
+}
+
+func makeViewName(streamName string) string {
+	return strings.ReplaceAll(streamName, "-", "_")
+}
+
+func fullyQualifiedName(table *bq.Table) string {
+	return strings.ReplaceAll(table.FullyQualifiedName(), ":", ".")
 }

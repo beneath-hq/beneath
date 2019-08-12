@@ -288,7 +288,7 @@ func (c *Compiler) checkFieldName(name string) error {
 		return fmt.Errorf("field name '%v' exceeds limit of 127 characters", name)
 	}
 
-	if name == "_key" || name == "_sequence_number" || name == "_insert_time" {
+	if name == "__key" || name == "__data" || name == "__timestamp" {
 		return fmt.Errorf("field name '%v' is a reserved identifier", name)
 	}
 

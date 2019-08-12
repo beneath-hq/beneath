@@ -17,7 +17,7 @@ func TestBigQuery(t *testing.T) {
 	// streamID := uuid.FromStringOrNil("a556a809-5a11-4c18-922c-53d9960283d1")
 	// streamName := "test-stream"
 	// instanceID := uuid.FromStringOrNil("1d628bc4-0bc6-4d08-86bf-f7472c2029bd")
-	// schema := `[{"mode":"REQUIRED","name":"a","type":"STRING"},{"mode":"REQUIRED","name":"b","type":"TIMESTAMP"},{"mode":"REQUIRED","name":"_key","type":"BYTES"},{"mode":"REQUIRED","name":"_sequence_number","type":"INTEGER"},{"mode":"REQUIRED","name":"_insert_time","type":"TIMESTAMP"}]`
+	// schema := `[{"mode":"REQUIRED","name":"a","type":"STRING"},{"mode":"REQUIRED","name":"b","type":"TIMESTAMP"},{"mode":"REQUIRED","name":"_key","type":"BYTES"},{"mode":"REQUIRED","name":"_sequence_number","type":"INTEGER"},{"mode":"REQUIRED","name":"__timestamp","type":"TIMESTAMP"}]`
 	// keyFields := []string{"a", "b"}
 
 	// err := b.RegisterProject(projectID, true, projectName, "Test Project", "It's a test project")

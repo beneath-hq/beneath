@@ -16,17 +16,17 @@ func (s *StreamDef) BuildBigQuerySchema() (string, error) {
 	schema = append(
 		schema.([]interface{}),
 		map[string]interface{}{
-			"name": "_key",
+			"name": "__key",
 			"type": "BYTES",
 			"mode": "REQUIRED",
 		},
 		map[string]interface{}{
-			"name": "_sequence_number",
-			"type": "INTEGER",
+			"name": "__data",
+			"type": "BYTES",
 			"mode": "REQUIRED",
 		},
 		map[string]interface{}{
-			"name": "_insert_time",
+			"name": "__timestamp",
 			"type": "TIMESTAMP",
 			"mode": "REQUIRED",
 		},
@@ -109,8 +109,8 @@ func (s *StreamDef) buildBigQueryPrimitiveTypeName(name string) interface{} {
 	case "Boolean":
 		return "BOOLEAN"
 	case "Bytes":
-		// no special handling for arg
-		return "BYTES"
+		// BigQuery doesn't allow clustering on bytes
+		return "STRING"
 	case "Float":
 		// no special handling for arg
 		return "FLOAT"

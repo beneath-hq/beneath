@@ -332,9 +332,9 @@ func TestSDL28(t *testing.T) {
 	err := NewCompiler(`
 		type TestA @stream(name: "test", key: "a") {
 			a: Int!
-			_insert_time: Int!
+			__timestamp: Int!
 		}
 	`).Compile()
 	assert.NotNil(t, err)
-	assert.Regexp(t, "field name '_insert_time' is a reserved identifier", err.Error())
+	assert.Regexp(t, "field name '__timestamp' is a reserved identifier", err.Error())
 }
