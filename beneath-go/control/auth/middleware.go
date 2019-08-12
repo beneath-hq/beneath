@@ -56,7 +56,7 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 			key = model.AuthenticateKeyString(token)
 			if key == nil {
-				return httputil.NewError(400, "invalid authorization token")
+				return httputil.NewError(400, "unauthenticated")
 			}
 		}
 

@@ -296,6 +296,12 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 // check to see if the client's version is current
 func (s *gRPCServer) GetCurrentBeneathPackageVersion(ctx context.Context, req *pb.PackageVersionRequest) (*pb.PackageVersionResponse, error) {
+	// get auth
+	key := auth.GetKey(ctx)
+	if key.IsAnonymous() {
+		return nil, grpc.Errorf(codes.InvalidArgument, "unauthenticated")
+	}
+
 	response := ""
 	if req.PackageVersion == "0.0.1" {
 		response = "current"

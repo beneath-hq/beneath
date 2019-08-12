@@ -269,6 +269,11 @@ func redisKeyForHashedKey(hashedKey string) string {
 	return fmt.Sprintf("key:%s", hashedKey)
 }
 
+// IsAnonymous returns true iff the key doesn't exist
+func (k *Key) IsAnonymous() bool {
+	return k == nil || k.KeyID == uuid.Nil
+}
+
 // IsPersonal returns true iff the key gives manage rights on a user
 func (k *Key) IsPersonal() bool {
 	return k != nil && k.UserID != nil
