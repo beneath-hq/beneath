@@ -11,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 
 import { EXPLORE_PROJECTS } from "../apollo/queries/project";
 import Avatar from "../components/Avatar";
+import Loading from "../components/Loading";
 import NextMuiLink from "../components/NextMuiLink";
 import Page from "../components/Page";
 

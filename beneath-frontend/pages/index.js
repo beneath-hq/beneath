@@ -6,11 +6,12 @@ import { TokenConsumer } from "../hocs/auth";
 
 class Index extends Component {
   componentDidMount() {
-    if (this.token) {
-      Router.replace("/explore");
-    } else {
-      Router.replace("/about");
-    }
+    Router.replace("/explore");
+    // if (this.token) {
+    //   Router.replace("/explore");
+    // } else {
+    //   Router.replace("/about");
+    // }
   }
 
   render() {

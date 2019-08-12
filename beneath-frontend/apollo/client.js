@@ -39,7 +39,7 @@ const createApolloClient = ({ initialState, token, res }) => {
   const apolloOptions = {
     connectToDevTools: process.browser && !IS_PRODUCTION,
     ssrMode: !process.browser,
-    link: ApolloLink.from([new ErrorLink(errorHook), new HttpLink(linkOptions)]),
+    link: ApolloLink.from([new ErrorLink(makeErrorHook({ token, res })), new HttpLink(linkOptions)]),
     cache,
     typeDefs,
     resolvers,
@@ -76,12 +76,10 @@ const dataIdFromObject = (object) => {
   }
 };
 
-const errorHook = ({ graphQLErrors, networkError }) => {
-  // redirect to /auth/logout if error is `UNAUTHENTICATED` and `token` is set
-  // (probably means the user logged out in another window)
-  if (graphQLErrors && graphQLErrors.length > 0) {
-    let error = graphQLErrors[0];
-    if (error.extensions && error.extensions.code === "UNAUTHENTICATED") {
+const makeErrorHook = ({ token, res }) => {
+  return ({ graphQLErrors, networkError }) => {
+    // redirect to /auth/logout if error is `unauthenticated` (probably means the user logged out in another window)
+    if (networkError && networkError.result && networkError.result.error === "unauthenticated") {
       if (token) {
         if (process.browser) {
           document.location.href = "/auth/logout";
@@ -90,8 +88,12 @@ const errorHook = ({ graphQLErrors, networkError }) => {
         }
       }
     }
-    if (error.extensions && error.extensions.code === "VALIDATION_ERROR") {
-      console.log("Validation error", error.extensions.exception);
+
+    if (graphQLErrors && graphQLErrors.length > 0) {
+      let error = graphQLErrors[0];
+      if (error.extensions && error.extensions.code === "VALIDATION_ERROR") {
+        console.log("Validation error", error.extensions.exception);
+      }
     }
-  }
-};
+  };
+}

@@ -69,12 +69,13 @@ app.prepare().then(() => {
 
   // Redirect "/" based on whether user logged in
   server.get("/", (req, res) => {
-    let loggedIn = !!req.cookies["token"];
-    if (loggedIn) {
-      res.redirect("/explore");
-    } else {
-      res.redirect("/about");
-    }
+    res.redirect("/explore");
+    // let loggedIn = !!req.cookies["token"];
+    // if (loggedIn) {
+    //   res.redirect("/explore");
+    // } else {
+    //   res.redirect("/about");
+    // }
   });
 
   // Routes
