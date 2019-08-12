@@ -65,21 +65,25 @@ class Stream:
     df = pd.DataFrame(decoded_data)
     return df
 
-  def write_record(self, instance_id, record, sequence_number=None):
-    # ensure record is a dict
-    if not isinstance(record, dict):
-      raise TypeError("record must be a dict")
+  def write_records(self, instance_id, records, sequence_number=None):  # should I be multiprocessing this for loop?
+    new_records = [None]*len(records)
 
-    # encode avro
-    encoded_data = self._encode_avro(record)
-    if sequence_number is None:
-      sequence_number = int(round(time.time() * 1000))
-    new_record = engine_pb2.Record(
-        avro_data=encoded_data, sequence_number=sequence_number)
+    # ensure each record is a dict
+    for i, record in enumerate(records):
+      if not isinstance(record, dict):
+        print(record)
+        raise TypeError("record must be a dict")
+
+      # encode avro
+      encoded_data = self._encode_avro(record)
+      if sequence_number is None:
+        sequence_number = int(round(time.time() * 1000))
+      new_records[i] = engine_pb2.Record(
+          avro_data=encoded_data, sequence_number=sequence_number)
 
     # gRPC WriteRecords to gateway
     response = self.client.stub.WriteRecords(
-        engine_pb2.WriteRecordsRequest(instance_id=instance_id.bytes, records=[new_record]), metadata=self.client.request_metadata)
+        engine_pb2.WriteRecordsRequest(instance_id=instance_id.bytes, records=new_records), metadata=self.client.request_metadata)
     return response
 
   def _decode_avro(self, data):

@@ -53,8 +53,7 @@ class _GatewayWriteFn(beam.DoFn):
 
   def finish_bundle(self):
     # write all records in bundle
-    for i in range(len(self.bundle)):
-      self.stream.write_record(self.stream.current_instance_id, self.bundle[i])
+    self.stream.write_records(self.stream.current_instance_id, self.bundle)
     # clear bundle
     self.bundle = None
 
