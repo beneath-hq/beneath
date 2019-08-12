@@ -1,10 +1,10 @@
-" Dai transfers for the last month. "
-type DaiTransfers @stream(name: "dai-transfers-3", key: ['_time', '_index']) {
-  transaction_hash: String!
-  _time: Timestamp! 
-  _index: Int!
-  _name: String!
-  _from: String
-  _to: String
-  _value: String!
+" Dai transfers including mints and burns "
+type DaiTransfers @stream(name: "dai-transfers", key: ["time", "index"]) {
+  transactionHash: String!
+  time: Timestamp! 
+  index: Int!
+  name: String!
+  from: String
+  to: String
+  value: String!
 }
