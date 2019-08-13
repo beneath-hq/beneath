@@ -2,7 +2,6 @@
   Batch model for extracting Dai transfers into Beneath
 """
 
-import os
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from beneath.client import Client
@@ -13,14 +12,13 @@ with open("query.sql", "r") as f:
 
 def run():
   # Connect to Beneath
-  client = Client(os.environ["BENEATH_SECRET"])
-  stream = client.stream("maker", "dai-transfers")
+  client = Client()
 
   # Define pipeline steps
   p = beam.Pipeline(options=PipelineOptions())
   (p
     | 'Read' >> beam.io.Read(beam.io.BigQuerySource(query=query, use_standard_sql=True))
-    | 'Write' >> WriteToBeneath(stream)
+    | 'Write' >> WriteToBeneath(client.stream("maker", "dai-transfers"))
   )
 
   # Run pipeline
