@@ -10,7 +10,7 @@ export interface LatestRecords_latestRecords_data {
   __typename: "Record";
   recordID: string;
   data: ControlJSON;
-  sequenceNumber: string;
+  timestamp: number;
 }
 
 export interface LatestRecords_latestRecords {
@@ -27,5 +27,5 @@ export interface LatestRecordsVariables {
   projectName: string;
   streamName: string;
   limit: number;
-  before?: string | null;
+  before?: number | null;
 }

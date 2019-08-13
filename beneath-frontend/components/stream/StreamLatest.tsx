@@ -112,7 +112,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
           __typename: "Record",
           recordID,
           data: result.data,
-          sequenceNumber: result.data && result.data["@meta"] && result.data["@meta"].sequence_number,
+          timestamp: result.data && result.data["@meta"] && result.data["@meta"].timestamp,
         });
 
         self.apollo.writeQuery({
@@ -183,7 +183,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
                     color="primary"
                     disabled={loading}
                     onClick={() => {
-                      const before = records[records.length - 1].sequenceNumber;
+                      const before = records[records.length - 1].timestamp;
                       fetchMore({
                         variables: { ...variables, before },
                         updateQuery: (prev, { fetchMoreResult }) => {

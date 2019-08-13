@@ -12,26 +12,26 @@ export class Schema {
   public keyFields: string[];
   public avroSchema: avro.types.RecordType;
   public columns: Column[];
-  public includeSequenceNumber: boolean;
+  public includeTimestamp: boolean;
 
-  constructor(stream: QueryStream_stream, includeSequenceNumber: boolean) {
+  constructor(stream: QueryStream_stream, includeTimestamp: boolean) {
     this.keyFields = stream.keyFields;
     this.avroSchema = avro.Type.forSchema(JSON.parse(stream.avroSchema)) as avro.types.RecordType;
     this.columns = [];
-    this.includeSequenceNumber = includeSequenceNumber;
+    this.includeTimestamp = includeTimestamp;
     for (const field of this.avroSchema.fields) {
       this.columns.push(new Column(field.name, field.name, field.type));
     }
-    if (includeSequenceNumber) {
-      this.columns.push(new Column("@meta.sequence_number", "Time ago", "timeago"));
+    if (includeTimestamp) {
+      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago"));
     }
   }
 
   public makeUniqueIdentifier(record: any) {
     let id = this.keyFields.reduce((prev, curr) => `${prev}-${record[curr]}`, "");
-    if (this.includeSequenceNumber) {
-      const seqNo = record["@meta"] && record["@meta"].sequence_number;
-      id = `${id}-${seqNo || ""}`;
+    if (this.includeTimestamp) {
+      const ts = record["@meta"] && record["@meta"].timestamp;
+      id = `${id}-${ts || ""}`;
     }
     return id;
   }
@@ -77,7 +77,12 @@ class Column {
   private formatValue(val: any) {
     if (val !== undefined && val !== null) {
       if (this.type === "timeago") {
-        return <Moment fromNow ago date={new Date(val / 1000)} />;
+        return <Moment fromNow ago date={new Date(val)} />;
+      }
+
+      if (this.name === "day" || this.name === "time") {
+        // TODODODO
+        return new Date(val).toISOString().slice(0, 19);
       }
 
       return val.toString();

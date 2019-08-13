@@ -18,7 +18,7 @@ export const QUERY_RECORDS = gql`
       data {
         recordID
         data
-        sequenceNumber
+        timestamp
       }
       error
     }
@@ -30,7 +30,7 @@ export const QUERY_LATEST_RECORDS = gql`
     $projectName: String!,
     $streamName: String!,
     $limit: Int!,
-    $before: String,
+    $before: Int,
   ) {
     latestRecords(
       projectName: $projectName,
@@ -41,7 +41,7 @@ export const QUERY_LATEST_RECORDS = gql`
       data {
         recordID
         data
-        sequenceNumber
+        timestamp
       }
       error
     }

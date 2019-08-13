@@ -23,7 +23,7 @@ export const typeDefs = gql`
       projectName: String!,
       streamName: String!,
       limit: Int!,
-      before: String,
+      before: Int,
     ): RecordsResponse!
   }
 
@@ -37,7 +37,7 @@ export const typeDefs = gql`
   type Record {
     recordID: ID!
     data: JSON!
-    sequenceNumber: String!
+    timestamp: Int!
   }
 
   type RecordsResponse {
@@ -118,7 +118,7 @@ export const resolvers = {
             __typename: "Record",
             recordID: makeUniqueIdentifier(stream.keyFields, row, false),
             data: row,
-            sequenceNumber: row["@meta"].sequence_number,
+            timestamp: row["@meta"].timestamp,
           };
         }),
       };
@@ -141,8 +141,7 @@ export const resolvers = {
       let url = `${connection.GATEWAY_URL}/projects/${args.projectName}/streams/${args.streamName}/latest`;
       url += `?limit=${args.limit}`;
       if (args.before) {
-        // TODO: Get rid of when we transition to timestmaps
-        url += `&before=${parseInt(args.before, 10) / 1000}`;
+        url += `&before=${args.before}`;
       }
 
       // build headers with authorization
@@ -180,7 +179,7 @@ export const resolvers = {
             __typename: "Record",
             recordID: makeUniqueIdentifier(stream.keyFields, row, true),
             data: row,
-            sequenceNumber: row["@meta"].sequence_number,
+            timestamp: row["@meta"].timestamp,
           };
         }),
       };
@@ -229,11 +228,11 @@ export default {
   resolvers,
 };
 
-const makeUniqueIdentifier = (keyFields: string[], data: any, includeSequenceNumber: boolean) => {
+const makeUniqueIdentifier = (keyFields: string[], data: any, includeTimestamp: boolean) => {
   let id = keyFields.reduce((prev, curr) => `${prev}-${data[curr]}`, "");
-  if (includeSequenceNumber) {
-    const seqNo = data["@meta"] && data["@meta"].sequence_number;
-    id = `${id}-${seqNo || ""}`;
+  if (includeTimestamp) {
+    const ts = data["@meta"] && data["@meta"].timestamp;
+    id = `${id}-${ts || ""}`;
   }
   return id;
 };

@@ -30,12 +30,12 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
         We provide a Python library that makes it easy to get data into e.g. a Jupyter notebook. Just copy and paste
         this snippet:
       </Typography>
-      <CodeBlock language={"python"}>{`import beneath
-client = Client(TOKEN)
-stream = client.Stream(project="${stream.project.name}", stream="${stream.name}")
-df = stream.load_all().to_dataframe()`}</CodeBlock>
+      <CodeBlock language={"python"}>{`from beneath.client import Client
+client = Client(SECRET)
+stream = client.stream(project="${stream.project.name}", stream="${stream.name}")
+df = stream.load_all()`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace TOKEN with a read-only key, which you can obtain{" "}
+        Replace SECRET with a read-only key, which you can obtain{" "}
         <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
           <MUILink className={classes.link}>here</MUILink>
         </Link>
@@ -115,6 +115,7 @@ export default StreamAPI;
 const bigQueryName = (stream: QueryStream_stream) => {
   const projectName = stream.project.name.replace(/-/g, "_");
   const streamName = stream.name.replace(/-/g, "_");
-  const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;
+  // const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;
+  const idSlug = null;
   return `beneathcrypto.${projectName}.${streamName}${idSlug ? "_" + idSlug : ""}`;
 };

@@ -10,7 +10,7 @@ export interface Records_records_data {
   __typename: "Record";
   recordID: string;
   data: ControlJSON;
-  sequenceNumber: string;
+  timestamp: number;
 }
 
 export interface Records_records {
