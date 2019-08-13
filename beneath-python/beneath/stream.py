@@ -5,18 +5,20 @@ import json
 import time
 import pandas as pd
 from fastavro import schemaless_writer, schemaless_reader, reader, parse_schema
+from beneath import config
 from beneath.proto import gateway_pb2_grpc
 from beneath.proto import gateway_pb2
 from beneath.proto import engine_pb2
 
 class Stream:
-  """Stream enables read/write operations.
+  """
+    Stream enables read/write operations.
 
-  Args:
-    client (Client):
-      Authenticator to data on Beneath.
-    details (StreamDetailsResponse):
-      Contains all metadata related to a Stream.
+    Args:
+      client (Client):
+        Authenticator to data on Beneath.
+      details (StreamDetailsResponse):
+        Contains all metadata related to a Stream.
   """
 
   def __init__(self, client, project_name, stream_name, current_instance_id, avro_schema, batch):
@@ -52,7 +54,7 @@ class Stream:
 
     # gRPC ReadRecords from gateway
     response = self.client.stub.ReadRecords(
-        gateway_pb2.ReadRecordsRequest(instance_id=instance_id, where=self._parse_where(where), limit=limit), metadata=self.client.request_metadata)
+        gateway_pb2.ReadRecordsRequest(instance_id=instance_id.bytes, where=self._parse_where(where), limit=limit), metadata=self.client.request_metadata)
 
     # decode avro
     # TODO: is there a way to parallelize this? response.records is an irregular object
@@ -65,7 +67,10 @@ class Stream:
     df = pd.DataFrame(decoded_data)
     return df
 
-  def write_records(self, instance_id, records, sequence_number=None):  # should I be multiprocessing this for loop?
+  def load_all(self):
+    return self.read_records(where="", limit=1000)
+
+  def write_records(self, instance_id, records, timestamp=None):  # should I be multiprocessing this for loop?
     new_records = [None]*len(records)
 
     # ensure each record is a dict
@@ -76,15 +81,23 @@ class Stream:
 
       # encode avro
       encoded_data = self._encode_avro(record)
-      if sequence_number is None:
-        sequence_number = int(round(time.time() * 1000))
+      if timestamp is None:
+        timestamp = int(round(time.time() * 1000))
       new_records[i] = engine_pb2.Record(
-          avro_data=encoded_data, sequence_number=sequence_number)
+          avro_data=encoded_data, timestamp=timestamp)
 
     # gRPC WriteRecords to gateway
     response = self.client.stub.WriteRecords(
         engine_pb2.WriteRecordsRequest(instance_id=instance_id.bytes, records=new_records), metadata=self.client.request_metadata)
     return response
+
+  def bigquery_name(self, table=False):
+    return "{}.{}.{}{}".format(
+      config.BIGQUERY_PROJECT,
+      self.project_name.replace("-", "_"),
+      self.stream_name.replace("-", "_"),
+      "_{}".format(self.current_instance_id.hex[0:6]) if table else ""
+    )
 
   def _decode_avro(self, data):
     reader = io.BytesIO(data)

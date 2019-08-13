@@ -1,4 +1,2 @@
-"""Version information."""
-
-# The following line *must* be the last in the module, exactly as formatted:
+""" Version information """
 __version__ = "0.0.1"

@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='proto',
   syntax='proto3',
   serialized_options=_b('\n\025network.beneath.protoB\005ProtoP\001'),
-  serialized_pb=_b('\n\x1a\x62\x65neath/proto/engine.proto\x12\x05proto\"4\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x17\n\x0fsequence_number\x18\x02 \x01(\x03\"J\n\x13WriteRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x1e\n\x07records\x18\x02 \x03(\x0b\x32\r.proto.Record\"N\n\x12WriteRecordsReport\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x15\n\rbytes_written\x18\x02 \x01(\x03\x12\x0c\n\x04keys\x18\x03 \x03(\x0c\x42 \n\x15network.beneath.protoB\x05ProtoP\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x1a\x62\x65neath/proto/engine.proto\x12\x05proto\".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"J\n\x13WriteRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x1e\n\x07records\x18\x02 \x03(\x0b\x32\r.proto.Record\"N\n\x12WriteRecordsReport\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x15\n\rbytes_written\x18\x02 \x01(\x03\x12\x0c\n\x04keys\x18\x03 \x03(\x0c\x42 \n\x15network.beneath.protoB\x05ProtoP\x01\x62\x06proto3')
 )
 
 
@@ -41,7 +41,7 @@ _RECORD = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='sequence_number', full_name='proto.Record.sequence_number', index=1,
+      name='timestamp', full_name='proto.Record.timestamp', index=1,
       number=2, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -60,7 +60,7 @@ _RECORD = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=37,
-  serialized_end=89,
+  serialized_end=83,
 )
 
 
@@ -97,8 +97,8 @@ _WRITERECORDSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=91,
-  serialized_end=165,
+  serialized_start=85,
+  serialized_end=159,
 )
 
 
@@ -142,8 +142,8 @@ _WRITERECORDSREPORT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=167,
-  serialized_end=245,
+  serialized_start=161,
+  serialized_end=239,
 )
 
 _WRITERECORDSREQUEST.fields_by_name['records'].message_type = _RECORD

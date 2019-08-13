@@ -3,24 +3,8 @@ import argparse
 import json
 import os
 
+from beneath import config
 from beneath.client import Client
-
-def _config_dir():
-  p = os.path.expanduser("~/.beneath")
-  if not os.path.exists(p):
-    os.makedirs(p)
-  return p
-
-def _secret_file_path():
-  return os.path.join(_config_dir(), "secret.txt")
-
-def _write_secret(SECRET):
-  with open(_secret_file_path(), "w+") as f:
-    return f.write(SECRET)
-
-def _read_secret():
-  with open(_secret_file_path(), "r") as f:
-    return f.read()
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -33,20 +17,15 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def get_client():
-  SECRET = _read_secret()
-  client = Client(secret=SECRET)  # TODO: all secrets currently pass, need to handle failed authentication attempts later
-  if client is None:
-    raise Exception("Your authentication credentials failed. Please authenticate again with 'beneath auth SECRET'")
-  else:
-    return client
+  return Client()
 
 def auth(args):
   try:
     Client(secret=args.secret)
-    _write_secret(args.secret)
+    config.write_secret(args.secret)
     print("You have authenticated successfully!")
   except:
-    _write_secret("")
+    config.write_secret("")
     print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
 
 def list_projects(args):
@@ -122,7 +101,7 @@ def stream_create_ext(args):
   result = client.create_external_stream(project_id, schema, manual)
 
   # print out the stream's details to the user
-  pretty_print_graphql_result(result["data"]["updateStream"], [
+  pretty_print_graphql_result(result["data"]["createExternalStream"], [
     "name",
     "description",
     "external",

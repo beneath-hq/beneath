@@ -14,17 +14,20 @@ from beneath import config
 # create fn "getAvroSchema" to see if the schema is in memory already
 
 class Client:
-  """Client to bundle configuration for API requests.
+  """
+    Client to bundle configuration for API requests.
 
-  Args:
-    secret (str):
-      The user's password to authenticate permission to access Beneath. 
+    Args:
+      secret (str):
+        A read/write secret to authenticate permission to access Beneath
   """
 
   # initialize the client with the user's secret
-  def __init__(self, secret):
+  def __init__(self, secret=None):
     self.secret = secret
-    if not isinstance(secret, str):
+    if self.secret is None:
+      self.secret = config.read_secret()
+    if not isinstance(self.secret, str):
       raise TypeError("secret must be a string")
     
     self._prepare()
@@ -32,7 +35,7 @@ class Client:
   def __getstate__(self):
     return {
       "secret": self.secret,
-    }  
+    }
 
   def __setstate__(self, obj):
     self.secret = obj["secret"]
@@ -61,10 +64,10 @@ class Client:
     self.avro_schemas = dict()
 
   # get a stream's details
-  def stream(self, project_name, stream_name):
+  def stream(self, project, stream):
     details = self.stub.GetStreamDetails(
         gateway_pb2.StreamDetailsRequest(
-            project_name=project_name, stream_name=stream_name),
+            project_name=project, stream_name=stream),
         metadata=self.request_metadata)
 
     # store the stream's schema in memory
