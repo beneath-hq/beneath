@@ -1,3 +1,4 @@
+" Manually curated stream of labeled Ethereum addresses "
 type KnownAddresses @stream(name: "known-addresses", key: "address") {
   address: Bytes20!
   category: String!
