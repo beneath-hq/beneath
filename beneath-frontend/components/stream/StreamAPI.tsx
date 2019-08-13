@@ -31,7 +31,7 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
         this snippet:
       </Typography>
       <CodeBlock language={"python"}>{`from beneath.client import Client
-client = Client(SECRET)
+client = Client()
 stream = client.stream(project="${stream.project.name}", stream="${stream.name}")
 df = stream.load_all()`}</CodeBlock>
       <Typography variant="body2" paragraph>
