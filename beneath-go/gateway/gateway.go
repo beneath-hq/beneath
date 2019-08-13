@@ -17,7 +17,7 @@ type configSpecification struct {
 
 const (
 	defaultRecordsLimit = 50
-	maxRecordsLimit     = 200
+	maxRecordsLimit     = 1000
 )
 
 var (

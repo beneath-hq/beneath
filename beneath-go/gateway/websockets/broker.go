@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
+
 	"github.com/beneath-core/beneath-go/control/auth"
 
 	"github.com/beneath-core/beneath-go/control/model"
@@ -185,7 +187,7 @@ func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
 
 	// read and decode records matchin rep.Keys from Tables
 	records := make([]map[string]interface{}, len(rep.Keys))
-	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, sequenceNumber int64) error {
+	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, timestamp time.Time) error {
 		// decode the avro data
 		obj, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -198,9 +200,9 @@ func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
 			return fmt.Errorf("unable to decode avro data")
 		}
 
-		// assign sequence number into data
+		// assign timestamp into data
 		data["@meta"] = map[string]interface{}{
-			"sequence_number": sequenceNumber,
+			"timestamp": timeutil.UnixMilli(timestamp),
 		}
 
 		// assign key to value

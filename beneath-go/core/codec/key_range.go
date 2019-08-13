@@ -226,7 +226,7 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 
 // converts a query arg to a native value
 func parseJSONValue(avroType interface{}, val interface{}) (interface{}, error) {
-	return jsonNativeToAvroNative(avroType, val, nil)
+	return jsonNativeToAvroNative(avroType, val, map[string]interface{}{})
 }
 
 // canPrefixLookup returns true iff type is string, bytes or fixed

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"strings"
+	"time"
 
 	bq "cloud.google.com/go/bigquery"
 	"google.golang.org/grpc/codes"
@@ -188,35 +189,36 @@ func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
 }
 
 // WriteRecords implements engine.WarehouseDriver
-func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, data []map[string]interface{}, sequenceNumbers []int64) error {
+func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error {
 	// ensure all WriteRequest objects the same length
-	if !(len(keys) == len(data) && len(keys) == len(sequenceNumbers)) {
-		return fmt.Errorf("error: keys, data, and sequenceNumbers do not all have the same length")
+	if !(len(keys) == len(records) && len(keys) == len(avros) && len(keys) == len(timestamps)) {
+		return fmt.Errorf("error: keys, avros, data, and timestamps do not all have the same length")
 	}
 
 	// create bigquery uploader
 	dataset := makeDatasetName(projectName)
 	table := makeTableName(streamName, instanceID)
-	u := b.Client.Dataset(dataset).Table(table).Inserter() // TODO: Should we cache/reuse this?
-
-	rows := make([]*Row, len(keys))
+	u := b.Client.Dataset(dataset).Table(table).Inserter()
 
 	// create a BigQuery Row out of each of the records in the WriteRequest
+	rows := make([]*Row, len(keys))
 	for i, key := range keys {
 		// add meta fields to be uploaded
-		data[i]["__key"] = key
-		data[i]["__data"] = data[i]
-		data[i]["__timestamp"] = sequenceNumbers[i]
+		records[i]["__key"] = key
+		records[i]["__data"] = avros[i]
+		records[i]["__timestamp"] = timestamps[i]
 
 		// data to be uploaded
-		insertIDBytes := append(key, byte(sequenceNumbers[i]))
+		timestampBytes, err := timestamps[i].MarshalBinary()
+		if err != nil {
+			log.Panic(err.Error())
+		}
+		insertIDBytes := append(key, timestampBytes...)
 		insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
-		row := &Row{
-			Data:     data[i],
+		rows[i] = &Row{
+			Data:     records[i],
 			InsertID: insertID,
 		}
-
-		rows[i] = row
 	}
 
 	// upload all the rows at once

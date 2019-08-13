@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+// UnixMilli converts t to milliseconds since 1970
+func UnixMilli(t time.Time) int64 {
+	return t.UnixNano() / int64(time.Millisecond)
+}
+
+// FromUnixMilli converts milliseconds since 1970 to a time.Time
+func FromUnixMilli(ms int64) time.Time {
+	return time.Unix(0, ms*int64(time.Millisecond))
+}
+
 // Parse makes a best effort to parse val as a time.Time.
 // Input will typically come from a user.
 func Parse(val interface{}, allowNil bool) (time.Time, error) {

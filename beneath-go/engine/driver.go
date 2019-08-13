@@ -36,17 +36,17 @@ type TablesDriver interface {
 	// GetMaxDataSize returns the maximum accepted value size in bytes
 	GetMaxDataSize() int
 
-	// WriteRecords saves one or multiple records. It does not save records if sequenceNumber is lower than that of a previous write to the same key
-	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64, saveLatest bool) error
+	// WriteRecords saves one or multiple records. It does not save records if timestamp is lower than that of a previous write to the same key
+	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error
 
 	// ReadRecords reads one or multiple (not necessarily sequential) records by key and calls fn one by one
-	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error
+	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error
 
 	// ReadRecordRange reads one or a range of records by key and calls fn one by one
-	ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error
+	ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error
 
 	// ReadLatestRecords returns the latest records written to the instance
-	ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, sequenceNumber int64) error) error
+	ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
@@ -61,5 +61,5 @@ type WarehouseDriver interface {
 	RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
 
 	// WriteRecords saves one or multiple records to the data warehouse
-	WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, data []map[string]interface{}, sequenceNumbers []int64) error
+	WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
 }

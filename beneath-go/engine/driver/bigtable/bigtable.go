@@ -92,17 +92,10 @@ func (p *Bigtable) GetMaxDataSize() int {
 }
 
 // WriteRecords implements engine.TablesDriver
-func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, sequenceNumbers []int64, saveLatest bool) error {
+func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error {
 	// ensure all WriteRequest objects the same length
-	if !(len(keys) == len(avroData) && len(keys) == len(sequenceNumbers)) {
-		return fmt.Errorf("error: keys, data, and sequenceNumbers do not all have the same length")
-	}
-
-	// bigtable truncates timestamps to milliseconds, so we have to compensate to save entire sequence number.
-	// upstream calls to CheckSequenceNumber will ensure this won't overflow
-	var newSequenceNumbers []int64
-	for _, sn := range sequenceNumbers {
-		newSequenceNumbers = append(newSequenceNumbers, sn*1000)
+	if !(len(keys) == len(avroData) && len(keys) == len(timestamps)) {
+		return fmt.Errorf("error: keys, data, and timestamps do not all have the same length")
 	}
 
 	muts := make([]*bigtable.Mutation, len(keys))
@@ -115,14 +108,14 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 
 	// create one mutation for each record in the WriteRequest
 	for i, key := range keys {
+		t := bigtable.Time(timestamps[i])
+
 		muts[i] = bigtable.NewMutation()
-		muts[i].Set(recordsColumnFamilyName, recordsColumnName, bigtable.Timestamp(newSequenceNumbers[i]), avroData[i])
+		muts[i].Set(recordsColumnFamilyName, recordsColumnName, t, avroData[i])
 		rowKeys[i] = string(makeRowKey(instanceID, key))
 
 		if saveLatest {
-			// TODO: fix hack when using real timestamps (only use hack if value not user provided)
-			seqNo := newSequenceNumbers[i] + int64(i*1000)
-			latestMut.Set(latestColumnFamilyName, latestColumnName, bigtable.Timestamp(seqNo), avroData[i])
+			latestMut.Set(latestColumnFamilyName, latestColumnName, t, avroData[i])
 		}
 	}
 
@@ -144,7 +137,7 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 }
 
 // ReadRecords implements engine.TablesDriver
-func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, sequenceNumber int64) error) error {
+func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error {
 	// convert keys to RowList
 	rl := make(bigtable.RowList, len(keys))
 	for idx, key := range keys {
@@ -159,7 +152,7 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 		item := row[recordsColumnFamilyName][0]
 
 		// trigger callback
-		cbErr = fn(idx, item.Value, int64(item.Timestamp))
+		cbErr = fn(idx, item.Value, item.Timestamp.Time())
 		if cbErr != nil {
 			return false // stop
 		}
@@ -182,7 +175,7 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 }
 
 // ReadRecordRange implements engine.TablesDriver
-func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, sequenceNumber int64) error) error {
+func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error {
 	// convert keyRange to RowSet
 	var rr bigtable.RowSet
 	if keyRange.IsNil() {
@@ -206,7 +199,7 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 		item := row[recordsColumnFamilyName][0]
 
 		// trigger callback
-		cbErr = fn(item.Value, int64(item.Timestamp))
+		cbErr = fn(item.Value, item.Timestamp.Time())
 		if cbErr != nil {
 			return false // stop
 		}
@@ -228,7 +221,7 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 }
 
 // ReadLatestRecords implements engine.TablesDriver
-func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, sequenceNumber int64) error) error {
+func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error {
 	// create filter
 	var filter bigtable.Filter
 	if before.IsZero() {
@@ -245,7 +238,7 @@ func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before tim
 
 	// iterate through versions and return
 	for _, item := range row[latestColumnFamilyName] {
-		err := fn(item.Value, int64(item.Timestamp))
+		err := fn(item.Value, item.Timestamp.Time())
 		if err != nil {
 			return err
 		}

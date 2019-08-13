@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/beneath-core/beneath-go/core/codec"
@@ -85,11 +86,13 @@ type streamCache struct {
 }
 
 var (
-	_streamCache streamCache
+	_streamCacheLock sync.Mutex
+	_streamCache     streamCache
 )
 
 // getStreamCache returns a global streamCache
 func getStreamCache() streamCache {
+	_streamCacheLock.Lock()
 	if _streamCache.codec == nil {
 		_streamCache.codec = &cache.Codec{
 			Redis:     db.Redis,
@@ -98,7 +101,7 @@ func getStreamCache() streamCache {
 		}
 		_streamCache.lru = gcache.New(_streamCache.cacheLRUSize()).LRU().Build()
 	}
-
+	_streamCacheLock.Unlock()
 	return _streamCache
 }
 

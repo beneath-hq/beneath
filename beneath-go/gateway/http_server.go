@@ -278,7 +278,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	result := make([]interface{}, 0, 1)
 
 	// read rows from engine
-	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, sequenceNumber int64) error {
+	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, timestamp time.Time) error {
 		// decode avro
 		data, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -291,8 +291,8 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			return err
 		}
 
-		// set sequence number
-		data["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
+		// set timestamp
+		data["@meta"] = map[string]int64{"timestamp": timeutil.UnixMilli(timestamp)}
 
 		// done
 		result = append(result, data)
@@ -389,7 +389,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	result := make([]interface{}, 0, limit)
 
 	// read rows from engine
-	err = db.Engine.Tables.ReadLatestRecords(instanceID, limit, before, func(avroData []byte, sequenceNumber int64) error {
+	err = db.Engine.Tables.ReadLatestRecords(instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
 		// decode avro
 		data, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -402,8 +402,8 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 			return err
 		}
 
-		// set sequence number
-		data["@meta"] = map[string]int64{"sequence_number": sequenceNumber}
+		// set timestamp
+		data["@meta"] = map[string]int64{"timestamp": timeutil.UnixMilli(timestamp)}
 
 		// done
 		result = append(result, data)
@@ -473,24 +473,18 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, fmt.Sprintf("record at index %d is not an object", idx))
 		}
 
-		// get sequence number as int64
-		var sequenceNumber int64
+		// get timestamp
+		timestamp := time.Now()
 		meta, ok := obj["@meta"].(map[string]interface{})
 		if ok {
-			raw := meta["sequence_number"]
+			raw := meta["timestamp"]
 			if raw != nil {
-				sequenceNumber, err = jsonutil.ParseInt64(meta["sequence_number"])
+				raw, err := jsonutil.ParseInt64(meta["timestamp"])
 				if err != nil {
-					return httputil.NewError(400, "couldn't parse '@meta.sequence_number' as number or numeric string for record at index %d", idx)
+					return httputil.NewError(400, "couldn't parse '@meta.timestamp' as number or numeric string for record at index %d", idx)
 				}
+				timestamp = timeutil.FromUnixMilli(raw)
 			}
-		} else {
-			sequenceNumber = time.Now().UnixNano() / int64(time.Millisecond)
-		}
-
-		// check sequence number
-		if err := db.Engine.CheckSequenceNumber(sequenceNumber); err != nil {
-			return httputil.NewError(400, err.Error())
 		}
 
 		// convert to avro native for encoding
@@ -519,8 +513,8 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 		// save the record
 		records[idx] = &pb.Record{
-			AvroData:       avroData,
-			SequenceNumber: sequenceNumber,
+			AvroData:  avroData,
+			Timestamp: timeutil.UnixMilli(timestamp),
 		}
 	}
 

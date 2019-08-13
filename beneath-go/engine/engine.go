@@ -76,18 +76,3 @@ func (e *Engine) CheckSize(keyBytesLen int, avroBytesLen int) error {
 	// passed
 	return nil
 }
-
-// CheckSequenceNumber validates a sequence number as it must tolerate some truncation
-// (specifically multiplication by 1000 without overflow)
-func (e *Engine) CheckSequenceNumber(sequenceNumber int64) error {
-	if sequenceNumber == 0 {
-		return nil
-	}
-	c := sequenceNumber * 1000
-	if (c < 0) == (sequenceNumber < 0) {
-		if c/1000 == sequenceNumber {
-			return nil
-		}
-	}
-	return fmt.Errorf("abs(sequence_number) exceeds limit of '9223372036854775'")
-}

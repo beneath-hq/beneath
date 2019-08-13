@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
+
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/beneath-go/control/model"
@@ -56,7 +58,6 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	// metrics to track
 	startTime := time.Now()
 	var bytesWritten int64
-	bytesWritten = 0
 
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -66,50 +67,48 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// keep track of keys to publish
-	numRecords := len(req.Records)
-	keys := make([][]byte, numRecords)
-
-	// save each record to bigtable and bigquery
-	avroData := make([][]byte, numRecords)
-	data := make([]map[string]interface{}, numRecords)
-	sequenceNumbers := make([]int64, numRecords)
+	n := len(req.Records)
+	keys := make([][]byte, n)
+	avros := make([][]byte, n)
+	records := make([]map[string]interface{}, n)
+	timestamps := make([]time.Time, n)
 
 	// loop through each record in the Write Request
 	for i, record := range req.Records {
 		// set avro data
-		avroData[i] = record.AvroData
+		avros[i] = record.AvroData
 
 		// decode the avro data
 		obj, err := stream.Codec.UnmarshalAvro(record.AvroData)
 		if err != nil {
 			return fmt.Errorf("unable to decode avro data: %v", err.Error())
 		}
-		data[i], err = stream.Codec.ConvertFromAvroNative(obj, false)
+		records[i], err = stream.Codec.ConvertFromAvroNative(obj, false)
 		if err != nil {
 			return fmt.Errorf("unable to decode avro data: %v", err.Error())
 		}
 
 		// get the encoded key
-		keys[i], err = stream.Codec.MarshalKey(data[i])
+		keys[i], err = stream.Codec.MarshalKey(records[i])
 		if err != nil {
 			return fmt.Errorf("unable to encode key")
 		}
 
-		// save sequence number
-		sequenceNumbers[i] = record.SequenceNumber
+		// save timestamp
+		timestamps[i] = timeutil.FromUnixMilli(record.Timestamp)
 
 		// increment metrics
 		bytesWritten += int64(len(record.AvroData))
 	}
 
 	// writing encoded data to Table
-	err := db.Engine.Tables.WriteRecords(instanceID, keys, avroData, sequenceNumbers, !stream.Batch)
+	err := db.Engine.Tables.WriteRecords(instanceID, keys, avros, timestamps, !stream.Batch)
 	if err != nil {
 		return err
 	}
 
 	// writing decoded data to Warehouse
-	err = db.Engine.Warehouse.WriteRecords(stream.ProjectName, stream.StreamName, instanceID, keys, data, sequenceNumbers)
+	err = db.Engine.Warehouse.WriteRecords(stream.ProjectName, stream.StreamName, instanceID, keys, avros, records, timestamps)
 	if err != nil {
 		return err
 	}
@@ -126,8 +125,6 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 
 	// finalise metrics
 	elapsed := time.Since(startTime)
-
-	// log metrics
 	log.Printf("%s/%s (%s): Wrote %d record(s) (%dB) in %s", stream.ProjectName, stream.StreamName, instanceID.String(), len(req.Records), bytesWritten, elapsed)
 
 	// done

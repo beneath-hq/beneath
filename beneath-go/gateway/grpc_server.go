@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
+
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
@@ -155,10 +157,10 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, sequenceNumber int64) error {
+	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
-			AvroData:       avroData,
-			SequenceNumber: sequenceNumber,
+			AvroData:  avroData,
+			Timestamp: timeutil.UnixMilli(timestamp),
 		})
 		return nil
 	})
@@ -206,17 +208,17 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	// get before as time
 	var before time.Time
 	if req.Before != 0 {
-		before = time.Unix(0, req.Before*int64(time.Millisecond))
+		before = timeutil.FromUnixMilli(req.Before)
 	} else {
 		before = time.Time{}
 	}
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err := db.Engine.Tables.ReadLatestRecords(instanceID, int(req.Limit), before, func(avroData []byte, sequenceNumber int64) error {
+	err := db.Engine.Tables.ReadLatestRecords(instanceID, int(req.Limit), before, func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
-			AvroData:       avroData,
-			SequenceNumber: sequenceNumber,
+			AvroData:  avroData,
+			Timestamp: timeutil.UnixMilli(timestamp),
 		})
 		return nil
 	})
@@ -256,14 +258,9 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 	// check each record is valid
 	for idx, record := range req.Records {
-		// set sequence number to current timestamp if it's 0
-		if record.SequenceNumber == 0 {
-			record.SequenceNumber = time.Now().UnixNano() / int64(time.Millisecond)
-		}
-
-		// check sequence number
-		if err := db.Engine.CheckSequenceNumber(record.SequenceNumber); err != nil {
-			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d: %v", idx, err.Error()))
+		// set timestamp to current timestamp if it's 0
+		if record.Timestamp == 0 {
+			record.Timestamp = timeutil.UnixMilli(time.Now())
 		}
 
 		// check it decodes
