@@ -6,6 +6,7 @@
     "**/venv": true,
     "**/.next": true,
     "**/.pytest_cache": true,
+    "**/__pycache__": true,
   },
   "go.formatTool": "goimports",
   "go.testFlags": [
