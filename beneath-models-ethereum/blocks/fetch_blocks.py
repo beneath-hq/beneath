@@ -12,7 +12,7 @@ client = Client()
 stream = client.stream(project="ethereum", stream="blocks")
 
 def run():
-  current = get_block("latest")["number"] - 13
+  current = get_block("latest")["number"] - 12
   while True:
     next = get_block("latest")["number"] - 12
     if next > current:
@@ -24,6 +24,7 @@ def run():
 
 
 def get_block(num):
+  # pylint: disable=no-member
   return w3.eth.getBlock(num)
 
 
