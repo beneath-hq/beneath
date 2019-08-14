@@ -24,6 +24,11 @@ def run():
     1 for v in vs if v["address"] and v["value"] < 0
   )))
 
+  # TODO
+  # results["users"] = # count(distinct u.address) as users
+  # results["senders"] = # count(distinct if(u.value < 0, u.address, null)) as senders
+  # results["receivers"] = # count(distinct if(u.value > 0, u.address, null)) as receivers
+
   results["minted"] = (daily | beam.CombinePerKey(lambda vs: sum(
     -1 * v["value"]
     for v in vs

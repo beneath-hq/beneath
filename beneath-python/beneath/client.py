@@ -1,106 +1,134 @@
 import grpc
 import uuid
-import json
 import requests
-from fastavro import parse_schema
-import beneath
+import warnings
+
+from beneath import __version__
+from beneath import config
 from beneath.stream import Stream
 from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
-from beneath import config
-  
-# create a map on the client. instanceid -> schema, so we cache it to remember it
-# create fn "getAvroSchema" to see if the schema is in memory already
 
 class Client:
   """
-    Client to bundle configuration for API requests.
-
-    Args:
-      secret (str):
-        A read/write secret to authenticate permission to access Beneath
+  Client to bundle configuration for API requests.
   """
 
-  # initialize the client with the user's secret
   def __init__(self, secret=None):
+    """
+    Args:
+      secret (str): A beneath secret to use for authentication. If not set, reads secret from ~/.beneath.
+    """
     self.secret = secret
     if self.secret is None:
       self.secret = config.read_secret()
     if not isinstance(self.secret, str):
-      raise TypeError("secret must be a string")
-    
+      raise TypeError("secret must be a string")    
     self._prepare()
 
+
   def __getstate__(self):
-    return {
-      "secret": self.secret,
-    }
+    return { "secret": self.secret }
+
 
   def __setstate__(self, obj):
     self.secret = obj["secret"]
     self._prepare()
 
-  # create a client with the provided secret
+
   def _prepare(self):
+    """ Called either in __init__ or after unpickling """
+    self._connect_grpc()
+    self._check_auth_and_version()
+
+
+  def _connect_grpc(self):
     self.request_metadata = [('authorization', 'Bearer {}'.format(self.secret))]
-
-    # open a grpc channel from the client to the server
-    # TODO: create a SSL/TLS connection
-    self.channel = grpc.insecure_channel('localhost:50051')
-
-    # create a "stub" (aka a client). the stub has all the methods that the gateway server has. so it'll have ReadRecords(), WriteRecords(), and GetStreamDetails()
+    self.channel = grpc.insecure_channel(config.BENEATH_GATEWAY_HOST_GRPC)
     self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
-    # ensure that the user is running the most current Python package
-    response = self.stub.GetCurrentBeneathPackageVersion(
-        gateway_pb2.PackageVersionRequest(package_version=beneath.__version__),
-      metadata=self.request_metadata)
-    if response.version_response == "not current":
+
+  def _send_client_ping(self):
+    return self.stub.SendClientPing(gateway_pb2.ClientPing(
+      client_id=config.PYTHON_CLIENT_ID,
+      client_version=__version__,
+    ), metadata=self.request_metadata)
+
+
+  def _check_auth_and_version(self):
+    pong = self._send_client_ping()
+    self._check_pong_status(pong.status)
+    if not pong.authenticated:
+      raise Exception("You must authenticate with 'beneath auth' or by passing the 'secret' arg")
+
+
+  def _check_pong_status(self, status):
+    if status == "warning":
+      warnings.warn(
+        "This version of the Beneath python library will soon be deprecated."
+        "Update with 'pip install --upgrade beneath'."
+      )
+    elif status == "deprecated":
       raise Exception(
-          "Your Beneath package is not up-to-date. Please upgrade before continuing.")
+        "This version of the Beneath python library is out-of-date."
+        "Update with 'pip install --upgrade beneath' to continue."
+      )
 
-    # create a dictionary to remember schemas
-    self.avro_schemas = dict()
 
-  # get a stream's details
-  def stream(self, project, stream):
-    details = self.stub.GetStreamDetails(
-        gateway_pb2.StreamDetailsRequest(
-            project_name=project, stream_name=stream),
-        metadata=self.request_metadata)
+  def _query_control(self, query, variables):
+    """ Sends a GraphQL query to the control server """
+    headers = {"Authorization": "Bearer " + self.secret}
+    response = requests.post(
+      config.BENEATH_CONTROL_HOST + '/graphql', 
+      json={'query': query, 'variables': variables},
+      headers=headers
+    )
+    response.raise_for_status()
+    return response.json()
 
-    # store the stream's schema in memory
-    self.avro_schemas[details.current_instance_id] = details.avro_schema
+  def read_batch(self, instance_id, where, limit, after):
+    response = self.stub.ReadRecords(
+      gateway_pb2.ReadRecordsRequest(
+        instance_id=instance_id.bytes,
+        where=where,
+        limit=limit,
+        after=after,
+      ), metadata=self.request_metadata
+    )
+    return response.records
 
-    # return a Stream class
+
+  def stream(self, project_name, stream_name):
+    """
+    Returns a Stream object identifying a Beneath stream
+
+    Args:
+      project (str): Name of the project that contains the stream.
+      stream (str): Name of the stream.
+    """
+    details = self.get_stream_details(project_name, stream_name)
     return Stream(
       client=self,
-      project_name=details.project_name,
-      stream_name=details.stream_name,
-      current_instance_id=uuid.UUID(bytes=details.current_instance_id),
-      avro_schema=parse_schema(json.loads(details.avro_schema)),
-      batch=details.batch,
+      project_name=details['project']['name'],
+      stream_name=details['name'],
+      schema=details['schema'],
+      avro_schema=details['avroSchema'],
+      batch=details['batch'],
+      current_instance_id=uuid.UUID(hex=details['currentStreamInstanceID']),
     )
 
-  # Client code for control server
-  # run a GraphQL query
-  def run_query(self, query, variables):
-    headers = {"Authorization": "Bearer " + self.secret}
-    request = requests.post(config.BENEATH_CONTROL_HOST + '/graphql', json={'query': query, 'variables': variables}, headers=headers)
-    if request.status_code == 200:
-      return request.json()
-    else:
-      print(request.text)
-      raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
-  # get "me" info
   def get_me(self):
-    result = self.run_query(
+    """
+      Returns info about the authenticated user.
+      Returns None if authenicated with a project secret.
+    """
+    result = self._query_control(
       variables={},
       query="""
-      query Me {
-          me{
+        query Me {
+          me {
             userID
             user {
               username
@@ -112,111 +140,111 @@ class Client:
         }
       """
     )
-    return result['data']['me']
+    me = result['data']['me']
+    if me is None:
+      raise Exception("Cannot call get_me when authenticated with a project key")
+    return me
 
-  # get a user's info by UUID
-  def get_user_by_ID(self, userID):
-    result = self.run_query(
-      variables={
-          "userID": userID
-      },
+
+  def get_user_by_id(self, user_id):
+    result = self._query_control(
+      variables={ "userID": user_id },
       query="""
-      query User($userID: UUID!) {
-        user(
-          userID: $userID
-        ) {
-          userID
-          username
-          name
-          bio
-          photoURL
-          createdOn
-          projects {
+        query User($userID: UUID!) {
+          user(
+            userID: $userID
+          ) {
+            userID
+            username
             name
+            bio
+            photoURL
             createdOn
-            updatedOn
-            streams {
+            projects {
               name
+              createdOn
+              updatedOn
+              streams {
+                name
+              }
             }
           }
         }
-      }
       """
     )
     return result['data']['user']
 
-  # get a project's info by name
-  def get_project_by_name(self, project_name):
-    result = self.run_query(
-        variables={
-            "name": project_name
-        },
+
+  def get_project_by_name(self, name):
+    result = self._query_control(
+        variables={ "name": name },
         query="""
-        query ProjectByName($name: String!) {
+          query ProjectByName($name: String!) {
             projectByName(name: $name) {
-                projectID
+              projectID
+              name
+              displayName
+              site
+              description
+              photoURL
+              createdOn
+              updatedOn
+              users {
+                username
+              }
+              streams {
                 name
-                displayName
-                site
-                description
-                photoURL
-                createdOn
-                updatedOn
-                users {
-                  username
-                }
-                streams {
-                  name
-                }
+              }
             }
         }
       """
     )
     return result['data']['projectByName']
 
-  # get a streams's info by stream name and project name
-  def get_stream_details(self, stream_name, project_name):
-    result = self.run_query(
-        variables={
-            "name": stream_name,
-            "projectName": project_name
-        },
-        query="""
+
+  def get_stream_details(self, project_name, stream_name):
+    result = self._query_control(
+      variables={
+        'name': stream_name,
+        'projectName': project_name,
+      },
+      query="""
         query Stream($name: String!, $projectName: String!) {
-            stream(
-              name: $name, 
-              projectName: $projectName) {
-                streamID
-                name
-                description
-                schema
-                avroSchema
-                keyFields
-                external
-                batch
-                manual
-                project {
-                  name
-                }
-                currentStreamInstanceID
-                createdOn
-                updatedOn
+          stream(
+            name: $name, 
+            projectName: $projectName,
+          ) {
+            streamID
+            name
+            description
+            schema
+            avroSchema
+            keyFields
+            external
+            batch
+            manual
+            project {
+              name
             }
+            currentStreamInstanceID
+            createdOn
+            updatedOn
+          }
         }
       """
     )
     return result['data']['stream']
+    
 
-  # create an external stream
-  def create_external_stream(self, project_id, schema, manual):
-    result = self.run_query(
-        variables={
-            "projectID": project_id,
-            "schema": schema,
-            "batch": False,
-            "manual": manual if manual else False
-        },
-        query="""
+  def create_external_stream(self, project_id, schema, manual=None):
+    result = self._query_control(
+      variables={
+        "projectID": project_id,
+        "schema": schema,
+        "batch": False,
+        "manual": bool(manual),
+      },
+      query="""
         mutation CreateExternalStream($projectID: UUID!, $schema: String!, $batch: Boolean!, $manual: Boolean!) {
           createExternalStream(
             projectID: $projectID,
@@ -246,16 +274,18 @@ class Client:
     )
     return result
 
-  # update an external stream
-  def update_external_stream(self, stream_id, schema, manual):
-    result = self.run_query(
-        variables={
-            "streamID": stream_id,
-            "schema": schema,
-            "manual": manual if manual else False
-        },
-        query="""
-        mutation UpdateStream($streamID: UUID!, $schema: String!, $manual: Boolean!) {
+
+  def update_external_stream(self, stream_id, schema=None, manual=None):
+    variables = { "streamID": stream_id }
+    if schema != None:
+      variables["schema"] = schema
+    if manual != None:
+      variables["manual"] = bool(manual)
+      
+    result = self._query_control(
+      variables=variables,
+      query="""
+        mutation UpdateStream($streamID: UUID!, $schema: String, $manual: Boolean) {
           updateStream(
             streamID: $streamID,
             schema: $schema,

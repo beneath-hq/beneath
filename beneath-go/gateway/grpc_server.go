@@ -25,6 +25,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type clientVersionSpec struct {
+	DeprecatedVersion  string
+	WarningVersion     string
+	RecommendedVersion string
+}
+
+func (s clientVersionSpec) IsZero() bool {
+	return s.DeprecatedVersion == "" || s.WarningVersion == "" || s.RecommendedVersion == ""
+}
+
+var clientSpecs = map[string]clientVersionSpec{
+	"beneath-python": clientVersionSpec{
+		DeprecatedVersion:  "0.0.0",
+		WarningVersion:     "0.0.0",
+		RecommendedVersion: "0.0.1",
+	},
+}
+
 // ListenAndServeGRPC serves a gRPC API
 func ListenAndServeGRPC(port int) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -291,19 +309,21 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	return &pb.WriteRecordsResponse{}, nil
 }
 
-// check to see if the client's version is current
-func (s *gRPCServer) GetCurrentBeneathPackageVersion(ctx context.Context, req *pb.PackageVersionRequest) (*pb.PackageVersionResponse, error) {
-	// get auth
-	key := auth.GetKey(ctx)
-	if key.IsAnonymous() {
-		return nil, grpc.Errorf(codes.InvalidArgument, "unauthenticated")
+func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*pb.ClientPong, error) {
+	spec := clientSpecs[req.ClientId]
+	if spec.IsZero() {
+		return nil, grpc.Errorf(codes.InvalidArgument, "unrecognized client ID")
 	}
 
-	response := ""
-	if req.PackageVersion == "0.0.1" {
-		response = "current"
-	} else {
-		response = "not current"
+	status := "deprecated"
+	if req.ClientVersion == spec.RecommendedVersion {
+		status = "stable"
 	}
-	return &pb.PackageVersionResponse{VersionResponse: response}, nil
+
+	key := auth.GetKey(ctx)
+	return &pb.ClientPong{
+		Authenticated:      !key.IsAnonymous(),
+		Status:             status,
+		RecommendedVersion: spec.RecommendedVersion,
+	}, nil
 }

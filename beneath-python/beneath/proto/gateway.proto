@@ -13,7 +13,7 @@ service Gateway {
   rpc ReadLatestRecords(ReadLatestRecordsRequest) returns (ReadRecordsResponse) {}
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
   rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
-  rpc GetCurrentBeneathPackageVersion(PackageVersionRequest) returns (PackageVersionResponse) {}
+  rpc SendClientPing(ClientPing) returns (ClientPong) {}
 }
 
 message ReadRecordsRequest {
@@ -54,10 +54,13 @@ message StreamDetailsResponse {
   bool manual = 10;
 }
 
-message PackageVersionRequest {
-  string package_version = 1;
+message ClientPing {
+  string client_id = 1;
+  string client_version = 2;
 }
 
-message PackageVersionResponse {
-  string version_response = 1;
+message ClientPong {
+  bool authenticated = 1;
+  string status = 2;
+  string recommended_version = 3;
 }
