@@ -283,7 +283,7 @@ class Client:
         }
       """
     )
-    return result
+    return result['data']['createExternalStream']
 
 
   def update_external_stream(self, stream_id, schema=None, manual=None):
@@ -322,4 +322,4 @@ class Client:
         }
       """
     )
-    return result
+    return result['data']['updateStream']
