@@ -87,6 +87,7 @@ class Client:
     response.raise_for_status()
     return response.json()
 
+
   def read_batch(self, instance_id, where, limit, after):
     response = self.stub.ReadRecords(
       gateway_pb2.ReadRecordsRequest(
@@ -97,6 +98,15 @@ class Client:
       ), metadata=self.request_metadata
     )
     return response.records
+
+
+  def write_batch(self, instance_id, encoded_records):
+    self.stub.WriteRecords(
+      engine_pb2.WriteRecordsRequest(
+        instance_id=instance_id.bytes,
+        records=encoded_records
+      ), metadata=self.request_metadata
+    )
 
 
   def stream(self, project_name, stream_name):
@@ -113,8 +123,8 @@ class Client:
       project_name=details['project']['name'],
       stream_name=details['name'],
       schema=details['schema'],
-      avro_schema=details['avroSchema'],
       key_fields=details['keyFields'],
+      avro_schema=details['avroSchema'],
       batch=details['batch'],
       current_instance_id=uuid.UUID(hex=details['currentStreamInstanceID']),
     )
