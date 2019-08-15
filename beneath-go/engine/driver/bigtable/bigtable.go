@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
+
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
@@ -184,8 +186,9 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 		rk := makeRowKey(instanceID, keyRange.Base)
 		rr = bigtable.SingleRow(string(rk))
 	} else if keyRange.RangeEnd == nil {
-		rk := makeRowKey(instanceID, keyRange.Base)
-		rr = bigtable.InfiniteRange(string(rk))
+		bk := makeRowKey(instanceID, keyRange.Base)
+		ek := tuple.PrefixSuccessor(instanceID[:])
+		rr = bigtable.NewRange(string(bk), string(ek))
 	} else {
 		bk := makeRowKey(instanceID, keyRange.Base)
 		ek := makeRowKey(instanceID, keyRange.RangeEnd)
