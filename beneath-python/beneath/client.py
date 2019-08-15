@@ -114,6 +114,7 @@ class Client:
       stream_name=details['name'],
       schema=details['schema'],
       avro_schema=details['avroSchema'],
+      key_fields=details['keyFields'],
       batch=details['batch'],
       current_instance_id=uuid.UUID(hex=details['currentStreamInstanceID']),
     )

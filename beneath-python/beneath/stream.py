@@ -16,7 +16,7 @@ class Stream:
   Stream enables read and write operations on Beneath streams
   """
 
-  def __init__(self, client, project_name, stream_name, schema, avro_schema, batch, current_instance_id):
+  def __init__(self, client, project_name, stream_name, schema, avro_schema, key_fields, batch, current_instance_id):
     """
     Args:
       client (Client): Connection to Beneath.
@@ -32,6 +32,7 @@ class Stream:
     self.stream_name = stream_name
     self.schema = schema
     self.avro_schema = parse_schema(json.loads(avro_schema))
+    self.key_fields = key_fields
     self.batch = batch
     self.current_instance_id = current_instance_id
 
@@ -43,6 +44,7 @@ class Stream:
         "stream_name": self.stream_name,
         "schema": self.schema,
         "avro_schema": self.avro_schema,
+        "key_fields": self.key_fields,
         "batch": self.batch,
         "current_instance_id": self.current_instance_id,
     }
@@ -54,6 +56,7 @@ class Stream:
     self.stream_name = obj["stream_name"]
     self.schema = obj["schema"]
     self.avro_schema = obj["avro_schema"]
+    self.key_fields = obj["key_fields"]
     self.batch = obj["batch"]
     self.current_instance_id = obj["current_instance_id"]
 
