@@ -37,7 +37,7 @@ def list_projects(args):
   userID = result['userID']
 
   # submit GraphQL query to get the user's projects
-  result = client.get_user_by_ID(userID)
+  result = client.get_user_by_id(userID)
   projects = result['projects']
 
   # print out the projects to the user
