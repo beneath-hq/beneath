@@ -7,6 +7,7 @@
     "**/.next": true,
     "**/.pytest_cache": true,
     "**/__pycache__": true,
+    "**/.ipynb_checkpoints": true,
   },
   "go.formatTool": "goimports",
   "go.testFlags": [
