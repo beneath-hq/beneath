@@ -19,7 +19,7 @@ import { QUERY_PROJECT } from "../apollo/queries/project";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" subheader>
-    <Query query={QUERY_PROJECT} variables={{ name: router.query.name }}>
+    <Query query={QUERY_PROJECT} variables={{ name: router.query.name }} fetchPolicy="cache-and-network">
       {({ loading, error, data }) => {
         if (loading) {
           return <Loading justify="center" />;

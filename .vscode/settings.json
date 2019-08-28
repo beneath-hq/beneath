@@ -16,5 +16,6 @@
   "go.vetFlags": [
     "-structtag=false"
   ],
-  "tslint.jsEnable": true
+  "tslint.jsEnable": true,
+  "go.inferGopath": false
 }

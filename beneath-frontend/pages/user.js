@@ -29,7 +29,7 @@ const UserPage = ({ router, me }) => {
   return (
     <Page title="User" subheader>
       <div>
-        <Query query={QUERY_USER} variables={{ userID }}>
+        <Query query={QUERY_USER} variables={{ userID }} fetchPolicy="cache-and-network">
           {({ loading, error, data }) => {
             if (loading) {
               return <Loading justify="center" />;

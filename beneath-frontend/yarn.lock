@@ -919,6 +919,25 @@
     prop-types "^15.7.2"
     react-is "^16.8.6"
 
+"@ndhoule/each@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@ndhoule/each/-/each-2.0.1.tgz#bbed372a603e0713a3193c706a73ddebc5b426a9"
+  integrity sha1-u+03KmA+BxOjGTxwanPd68W0Jqk=
+  dependencies:
+    "@ndhoule/keys" "^2.0.0"
+
+"@ndhoule/keys@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@ndhoule/keys/-/keys-2.0.0.tgz#3d64ae677c65a261747bf3a457c62eb292a4e0ce"
+  integrity sha1-PWSuZ3xlomF0e/OkV8YuspKk4M4=
+
+"@ndhoule/map@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@ndhoule/map/-/map-2.0.1.tgz#f5ca0a47424ea67f46e2a6d499b9e9bc886aefa8"
+  integrity sha1-9coKR0JOpn9G4qbUmbnpvIhq76g=
+  dependencies:
+    "@ndhoule/each" "^2.0.1"
+
 "@oclif/color@^0.0.0":
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/@oclif/color/-/color-0.0.0.tgz#54939bbd16d1387511bf1a48ccda1a417248e6a9"
@@ -1067,6 +1086,13 @@
   integrity sha512-MI4Xx6LHs4Webyvi6EbspgyAb4D2Q2VtnCQ1blOJcoLS6mVa8lNN2rkIy1CVxfTUpoyIbCTkXES1rLXztFD1lg==
   dependencies:
     any-observable "^0.3.0"
+
+"@segment/snippet@^4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@segment/snippet/-/snippet-4.4.0.tgz#153f17b8048a2764bbb1343a61f3c3c24da038e2"
+  integrity sha1-FT8XuASKJ2S7sTQ6YfPDwk2gOOI=
+  dependencies:
+    "@ndhoule/map" "^2.0.1"
 
 "@sindresorhus/is@^0.7.0":
   version "0.7.0"
