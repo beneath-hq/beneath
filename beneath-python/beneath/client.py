@@ -283,6 +283,8 @@ class Client:
         }
       """
     )
+    if 'errors' in result:
+      return result
     return result['data']['createExternalStream']
 
 
