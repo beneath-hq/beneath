@@ -3,22 +3,22 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: KeysForUser
+// GraphQL query operation: SecretsForUser
 // ====================================================
 
-export interface KeysForUser_keysForUser {
-  __typename: "Key";
-  keyID: string;
+export interface SecretsForUser_secretsForUser {
+  __typename: "Secret";
+  secretID: string;
   description: string;
   prefix: string;
   role: string;
   createdOn: ControlTime;
 }
 
-export interface KeysForUser {
-  keysForUser: KeysForUser_keysForUser[];
+export interface SecretsForUser {
+  secretsForUser: SecretsForUser_secretsForUser[];
 }
 
-export interface KeysForUserVariables {
+export interface SecretsForUserVariables {
   userID: ControlUUID;
 }

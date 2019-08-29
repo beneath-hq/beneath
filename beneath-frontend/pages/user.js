@@ -12,7 +12,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/user/EditMe";
 import ViewProjects from "../components/user/ViewProjects";
-import { ManageUserKeys } from "../components/key/ManageKeys";
+import { ManageUserSecrets } from "../components/secret/ManageSecrets";
 
 import withMe from "../hocs/withMe";
 import { QUERY_USER } from "../apollo/queries/user";
@@ -45,7 +45,7 @@ const UserPage = ({ router, me }) => {
             ];
             if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-              tabs.push({ value: "keys", label: "Keys", render: () => (<ManageUserKeys userID={user.userID} />)});
+              tabs.push({ value: "secrets", label: "Secrets", render: () => <ManageUserSecrets userID={user.userID} /> });
             }
 
             return (

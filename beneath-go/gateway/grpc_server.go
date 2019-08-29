@@ -71,7 +71,7 @@ type gRPCServer struct{}
 
 func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetailsRequest) (*pb.StreamDetailsResponse, error) {
 	// get auth
-	key := auth.GetKey(ctx)
+	secret := auth.GetSecret(ctx)
 
 	// get instance ID
 	instanceID := model.FindInstanceIDByNameAndProject(req.StreamName, req.ProjectName)
@@ -86,7 +86,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
@@ -107,7 +107,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 
 func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
-	key := auth.GetKey(ctx)
+	secret := auth.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -122,7 +122,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
 	}
 
@@ -192,7 +192,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
-	key := auth.GetKey(ctx)
+	secret := auth.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -207,7 +207,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
 	}
 
@@ -250,7 +250,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
-	key := auth.GetKey(ctx)
+	secret := auth.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -265,7 +265,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// check permissions
-	if !key.WritesStream(stream) {
+	if !secret.WritesStream(stream) {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
 	}
 
@@ -320,9 +320,9 @@ func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*p
 		status = "stable"
 	}
 
-	key := auth.GetKey(ctx)
+	secret := auth.GetSecret(ctx)
 	return &pb.ClientPong{
-		Authenticated:      !key.IsAnonymous(),
+		Authenticated:      !secret.IsAnonymous(),
 		Status:             status,
 		RecommendedVersion: spec.RecommendedVersion,
 	}, nil

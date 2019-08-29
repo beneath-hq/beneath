@@ -31,22 +31,22 @@ func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	secret := auth.GetSecret(ctx)
+	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
 
-	user := model.FindUser(*key.UserID)
+	user := model.FindUser(*secret.UserID)
 	return userToMe(user), nil
 }
 
 func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *string) (*gql.Me, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	secret := auth.GetSecret(ctx)
+	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
-	user := model.FindUser(*key.UserID)
+	user := model.FindUser(*secret.UserID)
 	err := user.UpdateDescription(name, bio)
 	if err != nil {
 		return nil, err

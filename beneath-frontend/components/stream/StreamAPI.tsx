@@ -35,8 +35,8 @@ client = Client()
 stream = client.stream(project="${stream.project.name}", stream="${stream.name}")
 df = stream.load_all()`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace SECRET with a read-only key, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
+        Replace SECRET with a read-only secret, which you can obtain{" "}
+        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
           <MUILink className={classes.link}>here</MUILink>
         </Link>
         . You must first install our Python library with <code>pip install beneath</code>.
@@ -48,7 +48,7 @@ df = stream.load_all()`}</CodeBlock>
       </Typography>
       <Typography variant="body2" paragraph>
         You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
-        very important that you only use read-only keys in your front-end.
+        very important that you only use read-only secrets in your front-end.
       </Typography>
       <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${
         stream.name
@@ -62,8 +62,8 @@ df = stream.load_all()`}</CodeBlock>
   console.log(data)
 })`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace TOKEN with a read-only key, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
+        Replace TOKEN with a read-only secret, which you can obtain{" "}
+        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
           <MUILink className={classes.link}>here</MUILink>
         </Link>
         .
@@ -99,8 +99,8 @@ df = stream.load_all()`}</CodeBlock>
         {`curl -H "Authorization: TOKEN" ${GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}`}
       </CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace TOKEN with a read-only key, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=keys"} as={"/users/me/keys"}>
+        Replace TOKEN with a read-only secret, which you can obtain{" "}
+        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
           <MUILink className={classes.link}>here</MUILink>
         </Link>
         .

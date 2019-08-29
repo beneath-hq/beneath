@@ -31,8 +31,8 @@ func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*model.
 		return nil, gqlerror.Errorf("Project %s not found", name)
 	}
 
-	key := auth.GetKey(ctx)
-	if !key.ReadsProject(project.ProjectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.ReadsProject(project.ProjectID) {
 		return nil, gqlerror.Errorf("Not allowed to read project %s", name)
 	}
 
@@ -40,8 +40,8 @@ func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*model.
 }
 
 func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*model.Project, error) {
-	key := auth.GetKey(ctx)
-	if !key.ReadsProject(projectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.ReadsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to read project %s", projectID.String())
 	}
 
@@ -54,8 +54,8 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 }
 
 func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*model.Project, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	secret := auth.GetSecret(ctx)
+	if !secret.IsPersonal() {
 		return nil, gqlerror.Errorf("Not allowed to create project")
 	}
 
@@ -68,7 +68,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		Public:      true,
 	}
 
-	err := project.CreateWithUser(*key.UserID)
+	err := project.CreateWithUser(*secret.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +77,8 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 }
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*model.Project, error) {
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(projectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 
@@ -96,8 +96,8 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 }
 
 func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*model.User, error) {
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(projectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 
@@ -119,8 +119,8 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 }
 
 func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error) {
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(projectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.EditsProject(projectID) {
 		return false, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 

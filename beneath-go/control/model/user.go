@@ -25,7 +25,7 @@ type User struct {
 	CreatedOn time.Time  `sql:",default:now()"`
 	UpdatedOn time.Time  `sql:",default:now()"`
 	Projects  []*Project `pg:"many2many:projects_users,fk:user_id,joinFK:project_id"`
-	Keys      []*Key
+	Secrets   []*Secret
 }
 
 var (

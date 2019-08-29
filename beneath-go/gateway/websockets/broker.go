@@ -117,10 +117,10 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// create client and register it with the hub
-	b.register <- NewClient(b, ws, key)
+	b.register <- NewClient(b, ws, secret)
 
 	return nil
 }
@@ -291,7 +291,7 @@ func (b *Broker) processStartRequest(r Request) {
 	}
 
 	// check auth
-	if !r.Client.Key.ReadsProject(stream.ProjectID) {
+	if !r.Client.Secret.ReadsProject(stream.ProjectID) {
 		r.Client.SendError(r.Message.ID, "Error! You don't have permission to read that stream.")
 		return
 	}

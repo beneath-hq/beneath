@@ -3,13 +3,13 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL mutation operation: RevokeKey
+// GraphQL mutation operation: RevokeSecret
 // ====================================================
 
-export interface RevokeKey {
-  revokeKey: boolean;
+export interface RevokeSecret {
+  revokeSecret: boolean;
 }
 
-export interface RevokeKeyVariables {
-  keyID: ControlUUID;
+export interface RevokeSecretVariables {
+  secretID: ControlUUID;
 }

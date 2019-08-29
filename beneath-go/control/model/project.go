@@ -25,7 +25,7 @@ type Project struct {
 	Public      bool      `sql:",notnull,default:true"`
 	CreatedOn   time.Time `sql:",default:now()"`
 	UpdatedOn   time.Time `sql:",default:now()"`
-	Keys        []*Key
+	Secrets     []*Secret
 	Streams     []*Stream
 	Users       []*User `pg:"many2many:projects_users,fk:project_id,joinFK:user_id"`
 }

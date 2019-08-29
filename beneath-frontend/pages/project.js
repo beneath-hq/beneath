@@ -11,7 +11,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/project/EditProject";
 import ManageMembers from "../components/project/ManageMembers";
-import { ManageProjectKeys } from "../components/key/ManageKeys";
+import { ManageProjectSecrets } from "../components/secret/ManageSecrets";
 import ViewStreams from "../components/project/ViewStreams";
 
 import withMe from "../hocs/withMe";
@@ -37,7 +37,7 @@ const ProjectPage = ({ router, me }) => (
         ];
         if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject project={project} />) });
-          tabs.push({ value: "keys", label: "Keys", render: () => (<ManageProjectKeys projectID={project.projectID} />) });
+          tabs.push({ value: "secrets", label: "Secrets", render: () => (<ManageProjectSecrets projectID={project.projectID} />) });
         }
 
         return (

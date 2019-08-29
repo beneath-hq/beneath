@@ -86,7 +86,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get instance ID
 	projectName := chi.URLParam(r, "projectName")
@@ -103,7 +103,7 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to read stream
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -172,7 +172,7 @@ func getLatestFromInstance(w http.ResponseWriter, r *http.Request) error {
 
 func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
@@ -181,7 +181,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -325,7 +325,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
@@ -334,7 +334,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -427,7 +427,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get instance ID
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
@@ -442,7 +442,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to write stream
-	if !key.WritesStream(stream) {
+	if !secret.WritesStream(stream) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 

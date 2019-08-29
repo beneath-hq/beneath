@@ -32,8 +32,8 @@ type Client struct {
 	// The websocket connection
 	WS *websocket.Conn
 
-	// Key used by client to authenticate
-	Key *model.Key
+	// Secret used by client to authenticate
+	Secret *model.Secret
 
 	// Buffered channel of outbound messages to users
 	Outbound chan WebsocketMessage
@@ -74,14 +74,14 @@ const (
 )
 
 // NewClient initializes a new client
-func NewClient(broker *Broker, ws *websocket.Conn, key *model.Key) *Client {
+func NewClient(broker *Broker, ws *websocket.Conn, secret *model.Secret) *Client {
 	// set WS connection configuration
 	ws.SetReadLimit(maxMessageSize)
 
 	client := &Client{
 		Broker:        broker,
 		WS:            ws,
-		Key:           key,
+		Secret:        secret,
 		Outbound:      make(chan WebsocketMessage, 16),
 		Subscriptions: make(map[SubscriptionFilter]SubscriptionID),
 	}

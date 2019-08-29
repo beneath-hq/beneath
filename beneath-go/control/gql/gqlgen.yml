@@ -15,8 +15,8 @@ autobind: []
 models:
   UUID:
     model: github.com/beneath-core/beneath-go/control/gql.UUID
-  Key:
-    model: github.com/beneath-core/beneath-go/control/model.Key
+  Secret:
+    model: github.com/beneath-core/beneath-go/control/model.Secret
   Project:
     model: github.com/beneath-core/beneath-go/control/model.Project
   Stream:

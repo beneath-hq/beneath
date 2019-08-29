@@ -14,10 +14,15 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import { QUERY_USER_KEYS, QUERY_PROJECT_KEYS, ISSUE_USER_KEY, ISSUE_PROJECT_KEY } from "../../apollo/queries/key";
+import {
+  QUERY_USER_SECRETS,
+  QUERY_PROJECT_SECRETS,
+  ISSUE_USER_SECRET,
+  ISSUE_PROJECT_SECRET
+} from "../../apollo/queries/secret";
 
 const useStyles = makeStyles((theme) => ({
-  issueKeyButton: {
+  issueSecretButton: {
     display: "block",
     minHeight: theme.spacing(10),
     textAlign: "left",
@@ -26,31 +31,35 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // entity is either user or project
-const IssueKey = ({ entityName, entityID }) => {
+const IssueSecret = ({ entityName, entityID }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [readonlyKey, setReadonlyKey] = React.useState(false);
-  const [newKeyString, setNewKeyString] = React.useState(null);
+  const [readonlySecret, setReadonlySecret] = React.useState(false);
+  const [newSecretString, setNewSecretString] = React.useState(null);
 
   const openDialog = (readonly) => {
-    setReadonlyKey(readonly);
+    setReadonlySecret(readonly);
     setDialogOpen(true);
   };
   const closeDialog = (data) => {
     setDialogOpen(false);
   };
 
-  let query, queryKey, mutation, mutationKey, entityIDKey;
+  let query;
+  let queryKey;
+  let mutation;
+  let mutationKey;
+  let entityIDKey;
   if (entityName === "user") {
-    query = QUERY_USER_KEYS;
-    queryKey = "keysForUser";
-    mutation = ISSUE_USER_KEY;
-    mutationKey = "issueUserKey";
+    query = QUERY_USER_SECRETS;
+    queryKey = "secretsForUser";
+    mutation = ISSUE_USER_SECRET;
+    mutationKey = "issueUserSecret";
     entityIDKey = "userID";
   } else if (entityName === "project") {
-    query = QUERY_PROJECT_KEYS;
-    queryKey = "keysForProject";
-    mutation = ISSUE_PROJECT_KEY;
-    mutationKey = "issueProjectKey";
+    query = QUERY_PROJECT_SECRETS;
+    queryKey = "secretsForProject";
+    mutation = ISSUE_PROJECT_SECRET;
+    mutationKey = "issueProjectSecret";
     entityIDKey = "projectID";
   } else {
     console.error("expected entity to be 'user' or 'project'")
@@ -64,9 +73,9 @@ const IssueKey = ({ entityName, entityID }) => {
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Button color="secondary" variant="outlined" fullWidth
-            className={classes.issueKeyButton} onClick={() => openDialog(false)}>
+            className={classes.issueSecretButton} onClick={() => openDialog(false)}>
             <Typography variant="button" display="block">
-              Issue read/write key
+              Issue read/write secret
             </Typography>
             <Typography variant="caption" display="block">
               Grants access to read and mutate data. E.g. pushing external data into Beneath.
@@ -75,27 +84,27 @@ const IssueKey = ({ entityName, entityID }) => {
         </Grid>
         <Grid item xs={12} md={6}>
           <Button color="primary" variant="outlined" fullWidth
-            className={classes.issueKeyButton} onClick={() => openDialog(true)}>
+            className={classes.issueSecretButton} onClick={() => openDialog(true)}>
             <Typography variant="button" display="block">
-              Issue read-only key
+              Issue read-only secret
             </Typography>
             <Typography variant="caption" display="block">
               Grants access to read data. E.g. reading Beneath data from an external application.
             </Typography>
           </Button>
         </Grid>
-        {newKeyString && (
+        {newSecretString && (
           <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" color="textSecondary" gutterBottom>
-                  Here is your new key:
+                  Here is your new secret:
                 </Typography>
                 <Typography color="textSecondary" noWrap gutterBottom>
-                  {newKeyString}
+                  {newSecretString}
                 </Typography>
                 <Typography variant="body2">
-                  The key will only be shown this once – remember to keep it safe!
+                  The secret will only be shown this once – remember to keep it safe!
                 </Typography>
               </CardContent>
             </Card>
@@ -104,7 +113,7 @@ const IssueKey = ({ entityName, entityID }) => {
       </Grid>
       <Mutation mutation={mutation}
         onCompleted={(data) => {
-          setNewKeyString(data[mutationKey].keyString);
+          setNewSecretString(data[mutationKey].secretString);
           closeDialog();
         }}
         update={(cache, { data }) => {
@@ -112,27 +121,29 @@ const IssueKey = ({ entityName, entityID }) => {
           cache.writeQuery({
             query: query,
             variables: { [entityIDKey]: entityID },
-            data: { [queryKey]: queryData[queryKey].concat([data[mutationKey].key]) },
+            data: { [queryKey]: queryData[queryKey].concat([data[mutationKey].secret]) },
           });
         }}
       >
-        {(issueKey, { loading, error }) => (
+        {(issueSecret, { loading, error }) => (
           <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
-            <DialogTitle id="form-dialog-title">Issue key</DialogTitle>
+            <DialogTitle id="form-dialog-title">Issue secret</DialogTitle>
             <DialogContent>
               <DialogContentText>
-                Enter a description for the key
+                Enter a description for the secret
               </DialogContentText>
-              <TextField autoFocus margin="dense" id="name" label="Key Description" fullWidth inputRef={(node) => input = node} />
+              <TextField autoFocus margin="dense" id="name" label="Secret Description" fullWidth inputRef={(node) => input = node} />
             </DialogContent>
             <DialogActions>
               <Button color="primary" onClick={closeDialog}>
                 Cancel
               </Button>
               <Button color="primary" disabled={loading} error={error} onClick={() => {
-                issueKey({ variables: { [entityIDKey]: entityID, description: input.value, readonly: readonlyKey } });
+                issueSecret({
+                  variables: { [entityIDKey]: entityID, description: input.value, readonly: readonlySecret },
+                });
               }}>
-                Issue key
+                Issue secret
               </Button>
             </DialogActions>
           </Dialog>
@@ -142,4 +153,4 @@ const IssueKey = ({ entityName, entityID }) => {
   );
 };
 
-export default IssueKey;
+export default IssueSecret;
