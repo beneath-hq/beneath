@@ -1,14 +1,35 @@
-" Blocks loaded from Ethereum (delayed by 12 blocks) "
+" Blocks loaded from Ethereum "
 type Block @stream(name: "blocks", key: "number") {
+  " Block number "
   number: Int!
+
+  " Block timestamp "
   timestamp: Timestamp!
+
+  " Block hash "
   hash: Bytes32!
+
+  " Hash of parent block "
   parentHash: Bytes32!
+
+  " Address of block miner "
   miner: Bytes20!
+
+  " Size of block in bytes "
   size: Int!
+
+  " Number of transactions in block "
   transactions: Int!
+
+  " Block difficulty "
   difficulty: Numeric!
+
+  " Extra data embedded in block by miner "
   extraData: Bytes!
+
+  " Gas limit "
   gasLimit: Int!
+
+  " Gas used "
   gasUsed: Int!
 }
