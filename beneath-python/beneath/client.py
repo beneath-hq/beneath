@@ -10,6 +10,13 @@ from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
 
+
+class GraphQLError(Exception):
+  def __init__(self, message, errors):
+    super().__init__(message)
+    self.errors = errors
+
+
 class Client:
   """
   Client to bundle configuration for API requests.
@@ -85,7 +92,10 @@ class Client:
       headers=headers
     )
     response.raise_for_status()
-    return response.json()
+    obj = response.json()
+    if 'errors' in obj:
+      raise GraphQLError(obj['errors'][0]['message'], obj['errors'])
+    return obj['data']
 
 
   def read_batch(self, instance_id, where, limit, after):
@@ -151,7 +161,7 @@ class Client:
         }
       """
     )
-    me = result['data']['me']
+    me = result['me']
     if me is None:
       raise Exception("Cannot call get_me when authenticated with a project key")
     return me
@@ -183,7 +193,7 @@ class Client:
         }
       """
     )
-    return result['data']['user']
+    return result['user']
 
 
   def get_project_by_name(self, name):
@@ -210,7 +220,7 @@ class Client:
         }
       """
     )
-    return result['data']['projectByName']
+    return result['projectByName']
 
 
   def get_stream_details(self, project_name, stream_name):
@@ -244,7 +254,7 @@ class Client:
         }
       """
     )
-    return result['data']['stream']
+    return result['stream']
     
 
   def create_external_stream(self, project_id, schema, manual=None):
@@ -283,7 +293,7 @@ class Client:
         }
       """
     )
-    return result['data']['createExternalStream']
+    return result['createExternalStream']
 
 
   def update_external_stream(self, stream_id, schema=None, manual=None):
@@ -322,4 +332,4 @@ class Client:
         }
       """
     )
-    return result['data']['updateStream']
+    return result['updateStream']

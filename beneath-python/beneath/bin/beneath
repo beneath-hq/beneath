@@ -101,7 +101,7 @@ def stream_create_ext(args):
   result = client.create_external_stream(project_id, schema, manual)
 
   # print out the stream's details to the user
-  pretty_print_graphql_result(result["data"]["createExternalStream"], [
+  pretty_print_graphql_result(result, [
     "name",
     "description",
     "external",
