@@ -22,11 +22,11 @@ func (r *projectResolver) ProjectID(ctx context.Context, obj *model.Project) (st
 }
 
 func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*model.Project, error) {
-	return model.FindProjects(), nil
+	return model.FindProjects(ctx), nil
 }
 
 func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*model.Project, error) {
-	project := model.FindProjectByName(name)
+	project := model.FindProjectByName(ctx, name)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s not found", name)
 	}
@@ -45,7 +45,7 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 		return nil, gqlerror.Errorf("Not allowed to read project %s", projectID.String())
 	}
 
-	project := model.FindProject(projectID)
+	project := model.FindProject(ctx, projectID)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
@@ -68,7 +68,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		Public:      true,
 	}
 
-	err := project.CreateWithUser(*secret.UserID)
+	err := project.CreateWithUser(ctx, *secret.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +82,12 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 
-	project := model.FindProject(projectID)
+	project := model.FindProject(ctx, projectID)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
 
-	err := project.UpdateDetails(displayName, site, description, photoURL)
+	err := project.UpdateDetails(ctx, displayName, site, description, photoURL)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -101,7 +101,7 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 
-	user := model.FindUserByEmail(email)
+	user := model.FindUserByEmail(ctx, email)
 	if user == nil {
 		return nil, gqlerror.Errorf("No user found with that email")
 	}
@@ -110,7 +110,7 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 		ProjectID: projectID,
 	}
 
-	err := project.AddUser(user.UserID)
+	err := project.AddUser(ctx, user.UserID)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -124,7 +124,7 @@ func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uui
 		return false, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
 	}
 
-	project := model.FindProject(projectID)
+	project := model.FindProject(ctx, projectID)
 	if project == nil {
 		return false, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
@@ -133,7 +133,7 @@ func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uui
 		return false, gqlerror.Errorf("Can't remove last member of project")
 	}
 
-	err := project.RemoveUser(userID)
+	err := project.RemoveUser(ctx, userID)
 	if err != nil {
 		return false, gqlerror.Errorf(err.Error())
 	}

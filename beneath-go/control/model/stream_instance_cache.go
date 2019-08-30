@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -35,13 +36,13 @@ func getInstanceCache() instanceCache {
 	return _instanceCache
 }
 
-func (c instanceCache) get(streamName string, projectName string) uuid.UUID {
+func (c instanceCache) get(ctx context.Context, streamName string, projectName string) uuid.UUID {
 	var instanceID uuid.UUID
 	err := c.codec.Once(&cache.Item{
 		Key:        c.redisKey(streamName, projectName),
 		Object:     &instanceID,
 		Expiration: c.cacheTime(),
-		Func:       c.getterFunc(streamName, projectName),
+		Func:       c.getterFunc(ctx, streamName, projectName),
 	})
 
 	if err != nil {
@@ -78,10 +79,10 @@ func (c instanceCache) unmarshal(b []byte, v interface{}) (err error) {
 	return err
 }
 
-func (c instanceCache) getterFunc(streamName string, projectName string) func() (interface{}, error) {
+func (c instanceCache) getterFunc(ctx context.Context, streamName string, projectName string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		res := uuid.Nil
-		_, err := db.DB.Query(pg.Scan(&res), `
+		_, err := db.DB.QueryContext(ctx, pg.Scan(&res), `
 			select s.current_stream_instance_id
 			from streams s
 			join projects p on s.project_id = p.project_id

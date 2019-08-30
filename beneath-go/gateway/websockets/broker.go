@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,6 +34,9 @@ type Dispatch struct {
 
 // Broker maintains the set of active clients and routes messages to the clients
 type Broker struct {
+	// context used by the broker
+	ctx context.Context
+
 	// use to register a new client with the broker
 	register chan *Client
 
@@ -80,6 +84,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 
 	// create broker
 	broker := &Broker{
+		ctx:             context.Background(),
 		register:        make(chan *Client),
 		unregister:      make(chan *Client),
 		requests:        make(chan Request),
@@ -163,7 +168,7 @@ func (b *Broker) sendKeepAlive() {
 // Handles incoming write report from pubsub and puts them on the dispatch channel.
 // It checks if there are any subscribers for this report before dispatching it.
 // If there are subscribers, it gets the full records from bigtable first.
-func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
+func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error {
 	// metrics to track
 	startTime := time.Now()
 
@@ -180,14 +185,14 @@ func (b *Broker) handleWriteReport(rep *pb.WriteRecordsReport) error {
 	}
 
 	// get stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
 	}
 
 	// read and decode records matchin rep.Keys from Tables
 	records := make([]map[string]interface{}, len(rep.Keys))
-	err := b.engine.Tables.ReadRecords(instanceID, rep.Keys, func(idx uint, avroData []byte, timestamp time.Time) error {
+	err := b.engine.Tables.ReadRecords(ctx, instanceID, rep.Keys, func(idx uint, avroData []byte, timestamp time.Time) error {
 		// decode the avro data
 		obj, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -284,7 +289,7 @@ func (b *Broker) processStartRequest(r Request) {
 	instanceID := uuid.FromStringOrNil(query)
 
 	// get instanceID info
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(b.ctx, instanceID)
 	if stream == nil {
 		r.Client.SendError(r.Message.ID, "Error! That instance_id doesn't exist")
 		return

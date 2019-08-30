@@ -74,13 +74,13 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	secret := auth.GetSecret(ctx)
 
 	// get instance ID
-	instanceID := model.FindInstanceIDByNameAndProject(req.StreamName, req.ProjectName)
+	instanceID := model.FindInstanceIDByNameAndProject(ctx, req.StreamName, req.ProjectName)
 	if instanceID == uuid.Nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
 	// get stream details
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -116,7 +116,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -175,7 +175,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, int(req.Limit), func(avroData []byte, timestamp time.Time) error {
+	err = db.Engine.Tables.ReadRecordRange(ctx, instanceID, keyRange, int(req.Limit), func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:  avroData,
 			Timestamp: timeutil.UnixMilli(timestamp),
@@ -201,7 +201,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -233,7 +233,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
-	err := db.Engine.Tables.ReadLatestRecords(instanceID, int(req.Limit), before, func(avroData []byte, timestamp time.Time) error {
+	err := db.Engine.Tables.ReadLatestRecords(ctx, instanceID, int(req.Limit), before, func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:  avroData,
 			Timestamp: timeutil.UnixMilli(timestamp),
@@ -259,7 +259,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// get stream info
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -301,7 +301,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// write request to engine
-	err := db.Engine.Streams.QueueWriteRequest(req)
+	err := db.Engine.Streams.QueueWriteRequest(ctx, req)
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}

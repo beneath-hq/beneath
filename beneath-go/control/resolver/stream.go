@@ -23,7 +23,7 @@ func (r *streamResolver) StreamID(ctx context.Context, obj *model.Stream) (strin
 }
 
 func (r *queryResolver) Stream(ctx context.Context, name string, projectName string) (*model.Stream, error) {
-	stream := model.FindStreamByNameAndProject(name, projectName)
+	stream := model.FindStreamByNameAndProject(ctx, name, projectName)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
 	}
@@ -50,17 +50,17 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 		ProjectID: projectID,
 	}
 
-	err := stream.CompileAndCreate()
+	err := stream.CompileAndCreate(ctx)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
 	// done (using FindStream to get relations correctly)
-	return model.FindStream(stream.StreamID), nil
+	return model.FindStream(ctx, stream.StreamID), nil
 }
 
 func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*model.Stream, error) {
-	stream := model.FindStream(streamID)
+	stream := model.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}
@@ -70,7 +70,7 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID,
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
-	err := stream.UpdateDetails(schema, manual)
+	err := stream.UpdateDetails(ctx, schema, manual)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

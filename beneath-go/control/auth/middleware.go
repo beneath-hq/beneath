@@ -34,7 +34,7 @@ func GRPCInterceptor(ctx context.Context) (context.Context, error) {
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
 	}
 
-	secret := model.AuthenticateSecretString(token)
+	secret := model.AuthenticateSecretString(ctx, token)
 
 	newCtx := context.WithValue(ctx, ContextKey{}, secret)
 	return newCtx, nil
@@ -54,7 +54,7 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 			token := strings.TrimSpace(header[6:])
 
-			secret = model.AuthenticateSecretString(token)
+			secret = model.AuthenticateSecretString(r.Context(), token)
 			if secret == nil {
 				return httputil.NewError(400, "unauthenticated")
 			}

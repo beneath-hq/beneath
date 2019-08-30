@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -106,7 +107,7 @@ func getStreamCache() streamCache {
 }
 
 // get returns the CachedStream for the given instanceID
-func (c streamCache) get(instanceID uuid.UUID) *CachedStream {
+func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStream {
 	key := c.redisKey(instanceID)
 
 	// lookup in lru first
@@ -122,7 +123,7 @@ func (c streamCache) get(instanceID uuid.UUID) *CachedStream {
 		Key:        key,
 		Object:     cachedStream,
 		Expiration: c.cacheTime(),
-		Func:       c.getterFunc(instanceID),
+		Func:       c.getterFunc(ctx, instanceID),
 	})
 
 	if err != nil {
@@ -165,10 +166,10 @@ func (c streamCache) unmarshal(b []byte, v interface{}) (err error) {
 	return cachedStream.UnmarshalBinary(b)
 }
 
-func (c streamCache) getterFunc(instanceID uuid.UUID) func() (interface{}, error) {
+func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		internalResult := &internalCachedStream{}
-		_, err := db.DB.Query(internalResult, `
+		_, err := db.DB.QueryContext(ctx, internalResult, `
 				select
 					p.public,
 					s.external,

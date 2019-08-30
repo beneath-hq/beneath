@@ -69,8 +69,7 @@ func New() *Bigtable {
 	initializeLatestTable(admin)
 
 	// prepare BigTable client
-	ctx := context.Background()
-	client, err := bigtable.NewClient(ctx, config.ProjectID, config.InstanceID)
+	client, err := bigtable.NewClient(context.Background(), config.ProjectID, config.InstanceID)
 	if err != nil {
 		log.Fatalf("Could not create bigtable client: %v", err)
 	}
@@ -94,7 +93,7 @@ func (p *Bigtable) GetMaxDataSize() int {
 }
 
 // WriteRecords implements engine.TablesDriver
-func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error {
+func (p *Bigtable) WriteRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error {
 	// ensure all WriteRequest objects the same length
 	if !(len(keys) == len(avroData) && len(keys) == len(timestamps)) {
 		return fmt.Errorf("error: keys, data, and timestamps do not all have the same length")
@@ -122,14 +121,14 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 	}
 
 	// apply all the mutations (i.e. write all the records) at once
-	_, err := p.Records.ApplyBulk(context.Background(), rowKeys, muts)
+	_, err := p.Records.ApplyBulk(ctx, rowKeys, muts)
 	if err != nil {
 		return err
 	}
 
 	// save latest
 	if saveLatest {
-		err := p.Latest.Apply(context.Background(), string(instanceID.Bytes()), latestMut)
+		err := p.Latest.Apply(ctx, string(instanceID.Bytes()), latestMut)
 		if err != nil {
 			return err
 		}
@@ -139,7 +138,7 @@ func (p *Bigtable) WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData []
 }
 
 // ReadRecords implements engine.TablesDriver
-func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error {
+func (p *Bigtable) ReadRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error {
 	// convert keys to RowList
 	rl := make(bigtable.RowList, len(keys))
 	for idx, key := range keys {
@@ -165,7 +164,7 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 	}
 
 	// read rows
-	err := p.Records.ReadRows(context.Background(), rl, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	err := p.Records.ReadRows(ctx, rl, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 	if err != nil {
 		return err
 	} else if cbErr != nil {
@@ -177,7 +176,7 @@ func (p *Bigtable) ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx 
 }
 
 // ReadRecordRange implements engine.TablesDriver
-func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error {
+func (p *Bigtable) ReadRecordRange(ctx context.Context, instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error {
 	// convert keyRange to RowSet
 	var rr bigtable.RowSet
 	if keyRange.IsNil() {
@@ -212,7 +211,7 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 	}
 
 	// read rows
-	err := p.Records.ReadRows(context.Background(), rr, cb, bigtable.LimitRows(int64(limit)), bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	err := p.Records.ReadRows(ctx, rr, cb, bigtable.LimitRows(int64(limit)), bigtable.RowFilter(bigtable.LatestNFilter(1)))
 	if err != nil {
 		return err
 	} else if cbErr != nil {
@@ -224,7 +223,7 @@ func (p *Bigtable) ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange
 }
 
 // ReadLatestRecords implements engine.TablesDriver
-func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error {
+func (p *Bigtable) ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error {
 	// create filter
 	var filter bigtable.Filter
 	if before.IsZero() {
@@ -234,7 +233,7 @@ func (p *Bigtable) ReadLatestRecords(instanceID uuid.UUID, limit int, before tim
 	}
 
 	// read row
-	row, err := p.Latest.ReadRow(context.Background(), string(instanceID.Bytes()), bigtable.RowFilter(filter))
+	row, err := p.Latest.ReadRow(ctx, string(instanceID.Bytes()), bigtable.RowFilter(filter))
 	if err != nil {
 		return err
 	}

@@ -70,13 +70,13 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// upsert user
-	user, err := model.CreateOrUpdateUser(githubID, googleID, info.Email, info.Name, info.AvatarURL)
+	user, err := model.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, info.Name, info.AvatarURL)
 	if err != nil {
 		return err
 	}
 
 	// create session secret
-	secret, err := model.CreateUserSecret(user.UserID, model.SecretRoleManage, "Browser session")
+	secret, err := model.CreateUserSecret(r.Context(), user.UserID, model.SecretRoleManage, "Browser session")
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) error {
 	secret := GetSecret(r.Context())
 	if secret != nil {
 		if secret.IsPersonal() {
-			secret.Revoke()
+			secret.Revoke(r.Context())
 			log.Printf("Logout userID %s with hashed secret %s", secret.UserID, secret.HashedSecret)
 		}
 	}

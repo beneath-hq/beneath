@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -120,11 +121,11 @@ func HashSecretString(secretString string) string {
 }
 
 // FindSecret finds a secret
-func FindSecret(secretID uuid.UUID) *Secret {
+func FindSecret(ctx context.Context, secretID uuid.UUID) *Secret {
 	secret := &Secret{
 		SecretID: secretID,
 	}
-	err := db.DB.Model(secret).WherePK().Select()
+	err := db.DB.ModelContext(ctx, secret).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -132,9 +133,9 @@ func FindSecret(secretID uuid.UUID) *Secret {
 }
 
 // FindUserSecrets finds all the user's secrets
-func FindUserSecrets(userID uuid.UUID) []*Secret {
+func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*Secret {
 	var secrets []*Secret
-	err := db.DB.Model(&secrets).Where("user_id = ?", userID).Limit(1000).Select()
+	err := db.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
 	if err != nil {
 		log.Panicf("Error getting secrets: %s", err.Error())
 	}
@@ -142,9 +143,9 @@ func FindUserSecrets(userID uuid.UUID) []*Secret {
 }
 
 // FindProjectSecrets finds all the project's secrets
-func FindProjectSecrets(projectID uuid.UUID) []*Secret {
+func FindProjectSecrets(ctx context.Context, projectID uuid.UUID) []*Secret {
 	var secrets []*Secret
-	err := db.DB.Model(&secrets).Where("project_id = ?", projectID).Limit(1000).Select()
+	err := db.DB.ModelContext(ctx, &secrets).Where("project_id = ?", projectID).Limit(1000).Select()
 	if err != nil {
 		log.Panicf("Error getting secrets: %s", err.Error())
 	}
@@ -162,7 +163,7 @@ func NewSecret() *Secret {
 }
 
 // CreateUserSecret creates a new secret to manage a user
-func CreateUserSecret(userID uuid.UUID, role SecretRole, description string) (*Secret, error) {
+func CreateUserSecret(ctx context.Context, userID uuid.UUID, role SecretRole, description string) (*Secret, error) {
 	// create
 	secret := NewSecret()
 	secret.Description = description
@@ -176,7 +177,7 @@ func CreateUserSecret(userID uuid.UUID, role SecretRole, description string) (*S
 	}
 
 	// insert
-	err = db.DB.Insert(secret)
+	err = db.DB.WithContext(ctx).Insert(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +187,7 @@ func CreateUserSecret(userID uuid.UUID, role SecretRole, description string) (*S
 }
 
 // CreateProjectSecret creates a new read or readwrite secret for a project
-func CreateProjectSecret(projectID uuid.UUID, role SecretRole, description string) (*Secret, error) {
+func CreateProjectSecret(ctx context.Context, projectID uuid.UUID, role SecretRole, description string) (*Secret, error) {
 	// create
 	secret := NewSecret()
 	secret.Description = description
@@ -200,7 +201,7 @@ func CreateProjectSecret(projectID uuid.UUID, role SecretRole, description strin
 	}
 
 	// insert
-	err = db.DB.Insert(secret)
+	err = db.DB.WithContext(ctx).Insert(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +211,7 @@ func CreateProjectSecret(projectID uuid.UUID, role SecretRole, description strin
 }
 
 // AuthenticateSecretString returns the secret object matching secretString or nil
-func AuthenticateSecretString(secretString string) *Secret {
+func AuthenticateSecretString(ctx context.Context, secretString string) *Secret {
 	// note: we're also caching empty secrets (i.e. where secretString doesn't match a secret)
 	// to prevent database crash if someone is spamming with a bad secret
 
@@ -223,7 +224,7 @@ func AuthenticateSecretString(secretString string) *Secret {
 		Expiration: 1 * time.Hour,
 		Func: func() (interface{}, error) {
 			selectedSecret := &Secret{}
-			err := db.DB.Model(selectedSecret).
+			err := db.DB.ModelContext(ctx, selectedSecret).
 				Column("secret_id", "role", "user_id", "project_id").
 				Where("hashed_secret = ?", hashed).
 				Select()
@@ -251,9 +252,9 @@ func AuthenticateSecretString(secretString string) *Secret {
 }
 
 // Revoke deletes the secret
-func (k *Secret) Revoke() {
+func (k *Secret) Revoke(ctx context.Context) {
 	// delete from db
-	err := db.DB.Delete(k)
+	err := db.DB.WithContext(ctx).Delete(k)
 	if err != nil && err != pg.ErrNoRows {
 		log.Panic(err.Error())
 	}

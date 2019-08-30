@@ -35,7 +35,7 @@ func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([
 		return nil, gqlerror.Errorf("Not allowed to read user's secrets")
 	}
 
-	return model.FindUserSecrets(userID), nil
+	return model.FindUserSecrets(ctx, userID), nil
 }
 
 func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UUID) ([]*model.Secret, error) {
@@ -44,7 +44,7 @@ func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UU
 		return nil, gqlerror.Errorf("Not allowed to read project secrets")
 	}
 
-	return model.FindProjectSecrets(projectID), nil
+	return model.FindProjectSecrets(ctx, projectID), nil
 }
 
 func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, description string) (*gql.NewSecret, error) {
@@ -58,7 +58,7 @@ func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, d
 		role = model.SecretRoleReadonly
 	}
 
-	secret, err := model.CreateUserSecret(*authSecret.UserID, role, description)
+	secret, err := model.CreateUserSecret(ctx, *authSecret.UserID, role, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -80,7 +80,7 @@ func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uui
 		role = model.SecretRoleReadonly
 	}
 
-	secret, err := model.CreateProjectSecret(projectID, role, description)
+	secret, err := model.CreateProjectSecret(ctx, projectID, role, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -92,7 +92,7 @@ func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uui
 }
 
 func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
-	secret := model.FindSecret(secretID)
+	secret := model.FindSecret(ctx, secretID)
 	if secret == nil {
 		return false, gqlerror.Errorf("Secret not found")
 	}
@@ -104,6 +104,6 @@ func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID)
 		return false, gqlerror.Errorf("Not allowed to edit secret")
 	}
 
-	secret.Revoke()
+	secret.Revoke(ctx)
 	return true, nil
 }
