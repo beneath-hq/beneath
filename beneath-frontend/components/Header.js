@@ -17,10 +17,9 @@ import NextMuiLink from "./NextMuiLink";
 import { TokenConsumer } from "../hocs/auth";
 
 const tabs = [
-  { label: "Create", href: "/create", selectRegex: "^/(new|create).*$" },
   { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$" },
-  { label: "Docs", href: "/docs", selectRegex: "^/docs.*$" },
-  { label: "About", href: "/about", selectRegex: "^/about.*$" },
+  { label: "Docs", href: "https://about.beneath.network/docs" },
+  { label: "Blog", href: "https://about.beneath.network/blog" },
 ];
 
 const useStyles = makeStyles((theme) => ({
