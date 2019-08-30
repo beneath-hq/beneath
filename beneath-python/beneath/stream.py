@@ -62,7 +62,7 @@ class Stream:
     self.current_instance_id = obj["current_instance_id"]
 
 
-  def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None):
+  def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, convert_types=None):
     instance_id = self._instance_id_or_default(instance_id)
     where = self._parse_where(where)
     

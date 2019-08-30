@@ -10,8 +10,10 @@ class ReadFromBeneath(beam.PTransform):
 
   def expand(self, pvalue):
     stream = self.stream
-    query = "select * from `{}`".format(stream.bigquery_name())
+    query = "select * from `{}`".format(stream.bigquery_table)
+    source = beam.io.BigQuerySource(query=query, use_standard_sql=True)
+    # can probably get query schema with source.schema
     return (
         pvalue
-        | beam.io.Read(beam.io.BigQuerySource(query=query, use_standard_sql=True))
+        | beam.io.Read(source)
     )

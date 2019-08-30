@@ -13,6 +13,8 @@ const GATEWAY_HOST = IS_PRODUCTION ? "data.beneath.network" : "localhost:5000";
 const GATEWAY_URL = `${HTTP_PROTOCOL}://${GATEWAY_HOST}`;
 const GATEWAY_URL_WS = `${WEBSOCKET_PROTOCOL}://${GATEWAY_HOST}`;
 
+const SEGMENT_WRITE_KEY = "k7toJbXkajZ8fdJzMQPJwCkqs0rColn9";
+
 module.exports = {
   IS_PRODUCTION,
   HTTP_PROTOCOL,
@@ -24,4 +26,5 @@ module.exports = {
   GATEWAY_HOST,
   GATEWAY_URL,
   GATEWAY_URL_WS,
+  SEGMENT_WRITE_KEY,
 };

@@ -1,0 +1,9 @@
+" A stream created to test types "
+type TypeTestingStream @stream(name: "type-testing-stream", key: "number") {
+  number: Int!
+  timestamp: Timestamp!
+  hash: Bytes32!
+  miner: Bytes20!
+  difficulty: Numeric!
+  extraData: Bytes!
+}

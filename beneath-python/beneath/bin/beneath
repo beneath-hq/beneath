@@ -37,7 +37,7 @@ def list_projects(args):
   userID = result['userID']
 
   # submit GraphQL query to get the user's projects
-  result = client.get_user_by_ID(userID)
+  result = client.get_user_by_id(userID)
   projects = result['projects']
 
   # print out the projects to the user
@@ -56,6 +56,9 @@ def list_streams(args):
   # print out the streams to the user
   for streamname in streams:
       print(streamname['name'])
+
+  if len(streams) == 0:
+    print("There are no streams currently in this project")
   return
 
 def model_init(args):
@@ -94,12 +97,10 @@ def stream_create_ext(args):
   with open(args.file, "r") as f:
     schema = f.read()
   
-  # ensure user's text is a bool
-  manual = args.manual
-
   # submit GraphQL mutation to create an external stream
+  manual = args.manual
   result = client.create_external_stream(project_id, schema, manual)
-
+  
   # print out the stream's details to the user
   pretty_print_graphql_result(result, [
     "name",
@@ -125,10 +126,8 @@ def stream_update_ext(args):
     with open(args.file, "r") as f:
       schema = f.read()
 
-  # ensure user's text is a bool
-  manual = str2bool(args.manual)
-  
   # submit GraphQL mutation to update stream
+  manual = args.manual
   result = client.update_external_stream(stream_id, schema, manual)
   
   # print out the stream's details to the user 
