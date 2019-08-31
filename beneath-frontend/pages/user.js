@@ -3,7 +3,6 @@ import { withRouter } from "next/router";
 import { Query } from "react-apollo";
 import { makeStyles } from "@material-ui/core/styles";
 
-import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
@@ -23,9 +22,6 @@ const useStyles = makeStyles((theme) => ({
 const UserPage = ({ router, me }) => {
   const classes = useStyles();
   let userID = router.query.id;
-  if (userID === "me") {
-    userID = me.userID;
-  }
   return (
     <Page title="User" subheader>
       <div>
@@ -39,7 +35,7 @@ const UserPage = ({ router, me }) => {
             }
 
             let { user } = data;
-            let isMe = userID === "me" || userID === me.userID;
+            let isMe = userID === me.userID;
             let tabs = [
               { value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> },
             ];

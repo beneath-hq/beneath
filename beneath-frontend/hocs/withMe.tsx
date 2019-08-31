@@ -6,8 +6,10 @@ import { TokenConsumer } from "./auth";
 
 import { Me } from "../apollo/types/Me";
 
-const withMe = <P extends object>(Component: React.ComponentType<P & Me>): FunctionComponent<P> => {
-  return (props: P) => (
+export type ExcludeMeProps<P> = Pick<P, Exclude<keyof P, keyof Me>>;
+
+export const withMe = <P extends Me>(Component: React.ComponentType<P>): FunctionComponent<ExcludeMeProps<P>> => {
+  return (props: ExcludeMeProps<P>) => (
     <TokenConsumer>
       {(token) => {
         if (token) {
@@ -17,16 +19,14 @@ const withMe = <P extends object>(Component: React.ComponentType<P & Me>): Funct
                 if (error) {
                   console.log("withMe error: ", error);
                 } else if (!loading && data) {
-                  return <Component {...props} me={data.me} />;
+                  return <Component {...props as any} me={data.me} />;
                 }
                 return null;
               }}
             </Query>
           );
         } else {
-          return (
-            <Component {...props} me={null} />
-          );
+          return <Component {...props as any} me={null} />;
         }
       }}
     </TokenConsumer>

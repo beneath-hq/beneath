@@ -2,7 +2,6 @@ import { SingletonRouter, withRouter } from "next/router";
 import React, { FC } from "react";
 import { Query } from "react-apollo";
 
-import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";

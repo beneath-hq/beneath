@@ -35,11 +35,8 @@ client = Client()
 stream = client.stream(project="${stream.project.name}", stream="${stream.name}")
 df = stream.load_all()`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace SECRET with a read-only secret, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
-          <MUILink className={classes.link}>here</MUILink>
-        </Link>
-        . You must first install our Python library with <code>pip install beneath</code>.
+        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
+        You must first install our Python library with <code>pip install beneath</code>.
       </Typography>
       <VSpace units={4} />
 
@@ -53,7 +50,7 @@ df = stream.load_all()`}</CodeBlock>
       <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${
         stream.name
       }", {
-  "Authorization": "Bearer TOKEN",
+  "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
 .then(res => res.json())
@@ -62,11 +59,7 @@ df = stream.load_all()`}</CodeBlock>
   console.log(data)
 })`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace TOKEN with a read-only secret, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
-          <MUILink className={classes.link}>here</MUILink>
-        </Link>
-        .
+        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
       </Typography>
       <VSpace units={4} />
 

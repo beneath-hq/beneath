@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { withRouter } from "next/router";
 import { Query } from "react-apollo";
 
-import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
@@ -14,8 +13,8 @@ import ManageMembers from "../components/project/ManageMembers";
 import { ManageProjectSecrets } from "../components/secret/ManageSecrets";
 import ViewStreams from "../components/project/ViewStreams";
 
-import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../apollo/queries/project";
+import withMe from "../hocs/withMe";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" subheader>
