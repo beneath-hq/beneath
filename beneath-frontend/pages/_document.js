@@ -42,6 +42,7 @@ export default class MyDocument extends Document {
       // note: the page option only covers SSR tracking.
       // _app.js is used to track other events using `window.analytics.page()`
       page: true,
+      host: "cdn.happy.beneath.network",
     };
 
     if (IS_PRODUCTION) {
