@@ -23,7 +23,7 @@ func (r *userResolver) UserID(ctx context.Context, obj *model.User) (string, err
 }
 
 func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User, error) {
-	user := model.FindUser(userID)
+	user := model.FindUser(ctx, userID)
 	if user == nil {
 		return nil, gqlerror.Errorf("User %s not found", userID.String())
 	}
@@ -31,23 +31,23 @@ func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	secret := auth.GetSecret(ctx)
+	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
 
-	user := model.FindUser(*key.UserID)
+	user := model.FindUser(ctx, *secret.UserID)
 	return userToMe(user), nil
 }
 
 func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *string) (*gql.Me, error) {
-	key := auth.GetKey(ctx)
-	if !key.IsPersonal() {
+	secret := auth.GetSecret(ctx)
+	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
-	user := model.FindUser(*key.UserID)
-	err := user.UpdateDescription(name, bio)
+	user := model.FindUser(ctx, *secret.UserID)
+	err := user.UpdateDescription(ctx, name, bio)
 	if err != nil {
 		return nil, err
 	}

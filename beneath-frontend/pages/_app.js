@@ -1,4 +1,4 @@
-import App, { Container } from "next/app";
+import App from "next/app";
 import Router from "next/router";
 import React from "react";
 import { ThemeProvider } from "@material-ui/styles";
@@ -41,14 +41,12 @@ class BeneathApp extends App {
     const { Component, apolloClient, token, pageProps } = this.props;
 
     return (
-      <Container>
-        <ApolloProvider client={apolloClient}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Component {...pageProps} />
-          </ThemeProvider>
-        </ApolloProvider>
-      </Container>
+      <ApolloProvider client={apolloClient}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Component {...pageProps} />
+        </ThemeProvider>
+      </ApolloProvider>
     );
   }
 }

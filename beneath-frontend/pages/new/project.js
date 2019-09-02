@@ -7,7 +7,6 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
 
-import ExploreSidebar from "../../components/ExploreSidebar";
 import Page from "../../components/Page";
 
 import { NEW_PROJECT } from "../../apollo/queries/project";

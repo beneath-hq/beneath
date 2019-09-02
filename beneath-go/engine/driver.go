@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"time"
 
 	"github.com/beneath-core/beneath-go/core/codec"
@@ -16,16 +17,16 @@ type StreamsDriver interface {
 	// QueueWriteRequest queues a write request -- concretely, it results in
 	// the write request being written to Pubsub, then from there read by
 	// the data processing pipeline and written to BigTable and BigQuery
-	QueueWriteRequest(req *pb.WriteRecordsRequest) error
+	QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error
 
 	// ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
-	ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
+	ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequest) error) error
 
 	// QueueWriteReport publishes a batch of keys + metrics to the streams driver
-	QueueWriteReport(rep *pb.WriteRecordsReport) error
+	QueueWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error
 
 	// ReadWriteReports reads messages from the Metrics topic
-	ReadWriteReports(fn func(*pb.WriteRecordsReport) error) error
+	ReadWriteReports(fn func(context.Context, *pb.WriteRecordsReport) error) error
 }
 
 // TablesDriver defines the functions necessary to encapsulate Beneath's operational datastore needs
@@ -37,16 +38,16 @@ type TablesDriver interface {
 	GetMaxDataSize() int
 
 	// WriteRecords saves one or multiple records. It does not save records if timestamp is lower than that of a previous write to the same key
-	WriteRecords(instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error
+	WriteRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error
 
 	// ReadRecords reads one or multiple (not necessarily sequential) records by key and calls fn one by one
-	ReadRecords(instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error
+	ReadRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, fn func(idx uint, avroData []byte, timestamp time.Time) error) error
 
 	// ReadRecordRange reads one or a range of records by key and calls fn one by one
-	ReadRecordRange(instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error
+	ReadRecordRange(ctx context.Context, instanceID uuid.UUID, keyRange codec.KeyRange, limit int, fn func(avroData []byte, timestamp time.Time) error) error
 
 	// ReadLatestRecords returns the latest records written to the instance
-	ReadLatestRecords(instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error
+	ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
@@ -55,11 +56,11 @@ type WarehouseDriver interface {
 	GetMaxDataSize() int
 
 	// RegisterProject should be called when a new project is created to create a corresponding dataset in the warehouse
-	RegisterProject(projectID uuid.UUID, public bool, name, displayName, description string) error
+	RegisterProject(ctx context.Context, projectID uuid.UUID, public bool, name, displayName, description string) error
 
 	// RegisterStreamInstance should be called when a new stream instance is created to create a corresponding table in the warehouse
-	RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
+	RegisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
 
 	// WriteRecords saves one or multiple records to the data warehouse
-	WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
+	WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
 }

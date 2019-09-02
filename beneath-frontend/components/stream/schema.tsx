@@ -1,8 +1,6 @@
 import avro from "avsc";
 import _ from "lodash";
 import numeral from "numeral";
-
-import TableCell from "@material-ui/core/TableCell";
 import Moment from "react-moment";
 
 import { QueryStream_stream } from "../../apollo/types/QueryStream";
@@ -26,10 +24,10 @@ export class Schema {
     this.columns = [];
     this.includeTimestamp = includeTimestamp;
     for (const field of this.avroSchema.fields) {
-      this.columns.push(new Column(field.name, field.name, field.type));
+      this.columns.push(new Column(field.name, field.name, field.type, (field as any).doc));
     }
     if (includeTimestamp) {
-      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago"));
+      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago", undefined));
     }
   }
 
@@ -43,16 +41,17 @@ export class Schema {
   }
 }
 
-
 class Column {
   public name: string;
   public displayName: string;
   public type: avro.Type | TimeagoType;
+  public doc: string | undefined;
 
-  constructor(name: string, displayName: string, type: avro.Type | TimeagoType) {
+  constructor(name: string, displayName: string, type: avro.Type | TimeagoType, doc: string | undefined) {
     this.name = name;
     this.displayName = displayName;
     this.type = type;
+    this.doc = doc;
   }
 
   public isNumeric(): boolean {
@@ -63,21 +62,8 @@ class Column {
     return t === "int" || t === "long" || t === "float" || t === "double";
   }
 
-  public makeTableHeaderCell(className: string | undefined) {
-    return (
-      <TableCell key={this.name} className={className}>
-        {this.displayName}
-      </TableCell>
-    );
-  }
-
-  public makeTableCell(record: any, className: string | undefined) {
-    const align = this.isNumeric() ? "right" : "left";
-    return (
-      <TableCell key={this.name} className={className} align={align}>
-        {this.formatValue(_.get(record, this.name))}
-      </TableCell>
-    );
+  public formatRecord(record: any) {
+    return this.formatValue(_.get(record, this.name));
   }
 
   private formatValue(val: any) {

@@ -70,32 +70,32 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// upsert user
-	user, err := model.CreateOrUpdateUser(githubID, googleID, info.Email, info.Name, info.AvatarURL)
+	user, err := model.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, info.Name, info.AvatarURL)
 	if err != nil {
 		return err
 	}
 
-	// create session key
-	key, err := model.CreateUserKey(user.UserID, model.KeyRoleManage, "Browser session")
+	// create session secret
+	secret, err := model.CreateUserSecret(r.Context(), user.UserID, model.SecretRoleManage, "Browser session")
 	if err != nil {
 		return err
 	}
 
 	// redirect to client, setting token
-	url := fmt.Sprintf("%s/auth/callback/login?token=%s", gothConfig.ClientHost, url.QueryEscape(key.KeyString))
+	url := fmt.Sprintf("%s/auth/callback/login?token=%s", gothConfig.ClientHost, url.QueryEscape(secret.SecretString))
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 
 	// done
 	return nil
 }
 
-// logoutHandler revokes the current auth key
+// logoutHandler revokes the current auth secret
 func logoutHandler(w http.ResponseWriter, r *http.Request) error {
-	key := GetKey(r.Context())
-	if key != nil {
-		if key.IsPersonal() {
-			key.Revoke()
-			log.Printf("Logout userID %s with hashed key %s", key.UserID, key.HashedKey)
+	secret := GetSecret(r.Context())
+	if secret != nil {
+		if secret.IsPersonal() {
+			secret.Revoke(r.Context())
+			log.Printf("Logout userID %s with hashed secret %s", secret.UserID, secret.HashedSecret)
 		}
 	}
 	return nil

@@ -86,24 +86,24 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get instance ID
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
 
 	// get stream details
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
 
 	// check allowed to read stream
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -133,7 +133,7 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
@@ -144,7 +144,7 @@ func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 func getLatestFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(streamName, projectName)
+	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
@@ -172,16 +172,16 @@ func getLatestFromInstance(w http.ResponseWriter, r *http.Request) error {
 
 func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -278,7 +278,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	result := make([]interface{}, 0, 1)
 
 	// read rows from engine
-	err = db.Engine.Tables.ReadRecordRange(instanceID, keyRange, limit, func(avroData []byte, timestamp time.Time) error {
+	err = db.Engine.Tables.ReadRecordRange(r.Context(), instanceID, keyRange, limit, func(avroData []byte, timestamp time.Time) error {
 		// decode avro
 		data, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -325,16 +325,16 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
 
 	// check permissions
-	if !key.ReadsProject(stream.ProjectID) {
+	if !secret.ReadsProject(stream.ProjectID) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -389,7 +389,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	result := make([]interface{}, 0, limit)
 
 	// read rows from engine
-	err = db.Engine.Tables.ReadLatestRecords(instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
+	err = db.Engine.Tables.ReadLatestRecords(r.Context(), instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
 		// decode avro
 		data, err := stream.Codec.UnmarshalAvro(avroData)
 		if err != nil {
@@ -427,7 +427,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	key := auth.GetKey(r.Context())
+	secret := auth.GetSecret(r.Context())
 
 	// get instance ID
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))
@@ -436,13 +436,13 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// get stream
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
 
 	// check allowed to write stream
-	if !key.WritesStream(stream) {
+	if !secret.WritesStream(stream) {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
@@ -519,7 +519,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// queue write request (publishes to Pubsub)
-	err = db.Engine.Streams.QueueWriteRequest(&pb.WriteRecordsRequest{
+	err = db.Engine.Streams.QueueWriteRequest(r.Context(), &pb.WriteRecordsRequest{
 		InstanceId: instanceID.Bytes(),
 		Records:    records,
 	})

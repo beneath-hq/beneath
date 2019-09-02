@@ -91,7 +91,7 @@ func (p *Pubsub) GetMaxMessageSize() int {
 }
 
 // QueueWriteRequest implements beneath.StreamsDriver
-func (p *Pubsub) QueueWriteRequest(req *pb.WriteRecordsRequest) error {
+func (p *Pubsub) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
 	// encode message
 	msg, err := proto.Marshal(req)
 	if err != nil {
@@ -107,7 +107,6 @@ func (p *Pubsub) QueueWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// push
-	ctx := context.Background()
 	result := p.WriteRequestsTopic.Publish(ctx, &pubsub.Message{
 		Data: []byte(msg),
 	})
@@ -118,7 +117,7 @@ func (p *Pubsub) QueueWriteRequest(req *pb.WriteRecordsRequest) error {
 }
 
 // ReadWriteRequests implements beneath.StreamsDriver
-func (p *Pubsub) ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error {
+func (p *Pubsub) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequest) error) error {
 	// prepare subscription and context
 	sub := p.getWriteRequestsSubscription()
 	cctx, cancel := context.WithCancel(context.Background())
@@ -139,7 +138,7 @@ func (p *Pubsub) ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
 		}
 
 		// trigger callback function
-		err = fn(req)
+		err = fn(ctx, req)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
 			// log error and cancel
@@ -158,7 +157,7 @@ func (p *Pubsub) ReadWriteRequests(fn func(*pb.WriteRecordsRequest) error) error
 }
 
 // QueueWriteReport implements beneath.StreamsDriver
-func (p *Pubsub) QueueWriteReport(rep *pb.WriteRecordsReport) error {
+func (p *Pubsub) QueueWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error {
 	// encode message
 	msg, err := proto.Marshal(rep)
 	if err != nil {
@@ -174,7 +173,6 @@ func (p *Pubsub) QueueWriteReport(rep *pb.WriteRecordsReport) error {
 	}
 
 	// push
-	ctx := context.Background()
 	result := p.WriteReportsTopic.Publish(ctx, &pubsub.Message{
 		Data: []byte(msg),
 	})
@@ -185,7 +183,7 @@ func (p *Pubsub) QueueWriteReport(rep *pb.WriteRecordsReport) error {
 }
 
 // ReadWriteReports implements beneath.StreamsDriver
-func (p *Pubsub) ReadWriteReports(fn func(*pb.WriteRecordsReport) error) error {
+func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsReport) error) error {
 	// prepare subscription and context
 	sub := p.getWriteReportsSubscription()
 	cctx, cancel := context.WithCancel(context.Background())
@@ -209,7 +207,7 @@ func (p *Pubsub) ReadWriteReports(fn func(*pb.WriteRecordsReport) error) error {
 		}
 
 		// trigger callback function
-		err = fn(rep)
+		err = fn(ctx, rep)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
 			// log error and cancel

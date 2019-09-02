@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { withRouter } from "next/router";
 import { Query } from "react-apollo";
 
-import ExploreSidebar from "../components/ExploreSidebar";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
@@ -11,11 +10,11 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/project/EditProject";
 import ManageMembers from "../components/project/ManageMembers";
-import { ManageProjectKeys } from "../components/key/ManageKeys";
+import { ManageProjectSecrets } from "../components/secret/ManageSecrets";
 import ViewStreams from "../components/project/ViewStreams";
 
-import withMe from "../hocs/withMe";
 import { QUERY_PROJECT } from "../apollo/queries/project";
+import withMe from "../hocs/withMe";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" subheader>
@@ -37,7 +36,7 @@ const ProjectPage = ({ router, me }) => (
         ];
         if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject project={project} />) });
-          tabs.push({ value: "keys", label: "Keys", render: () => (<ManageProjectKeys projectID={project.projectID} />) });
+          tabs.push({ value: "secrets", label: "Secrets", render: () => (<ManageProjectSecrets projectID={project.projectID} />) });
         }
 
         return (

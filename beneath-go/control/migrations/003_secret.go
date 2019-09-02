@@ -8,8 +8,8 @@ import (
 
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// Key
-		err = db.Model(&model.Key{}).CreateTable(defaultCreateOptions)
+		// Secret
+		err = db.Model(&model.Secret{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -17,8 +17,8 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Key
-		err = db.Model(&model.Key{}).DropTable(defaultDropOptions)
+		// Secret
+		err = db.Model(&model.Secret{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

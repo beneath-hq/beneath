@@ -17,9 +17,9 @@ import (
 // ContextKey used as key in context.Context to set/get the auth object
 type ContextKey struct{}
 
-// GetKey extracts the auth object from ctx
-func GetKey(ctx context.Context) *model.Key {
-	auth, ok := ctx.Value(ContextKey{}).(*model.Key)
+// GetSecret extracts the auth object from ctx
+func GetSecret(ctx context.Context) *model.Secret {
+	auth, ok := ctx.Value(ContextKey{}).(*model.Secret)
 	if !ok {
 		log.Panicln("couldn't get auth from context")
 	}
@@ -34,9 +34,9 @@ func GRPCInterceptor(ctx context.Context) (context.Context, error) {
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
 	}
 
-	key := model.AuthenticateKeyString(token)
+	secret := model.AuthenticateSecretString(ctx, token)
 
-	newCtx := context.WithValue(ctx, ContextKey{}, key)
+	newCtx := context.WithValue(ctx, ContextKey{}, secret)
 	return newCtx, nil
 }
 
@@ -44,7 +44,7 @@ func GRPCInterceptor(ctx context.Context) (context.Context, error) {
 // Sets ContextKey to nil if no authorization passed (contrary to gRPC)
 func HTTPMiddleware(next http.Handler) http.Handler {
 	return httputil.AppHandler(func(w http.ResponseWriter, r *http.Request) error {
-		var key *model.Key
+		var secret *model.Secret
 
 		header := r.Header.Get("Authorization")
 		if header != "" {
@@ -54,13 +54,13 @@ func HTTPMiddleware(next http.Handler) http.Handler {
 
 			token := strings.TrimSpace(header[6:])
 
-			key = model.AuthenticateKeyString(token)
-			if key == nil {
+			secret = model.AuthenticateSecretString(r.Context(), token)
+			if secret == nil {
 				return httputil.NewError(400, "unauthenticated")
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), ContextKey{}, key)
+		ctx := context.WithValue(r.Context(), ContextKey{}, secret)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return nil
 	})

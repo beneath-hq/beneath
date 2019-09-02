@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"log"
 	"regexp"
 	"time"
@@ -25,7 +26,7 @@ type Project struct {
 	Public      bool      `sql:",notnull,default:true"`
 	CreatedOn   time.Time `sql:",default:now()"`
 	UpdatedOn   time.Time `sql:",default:now()"`
-	Keys        []*Key
+	Secrets     []*Secret
 	Streams     []*Stream
 	Users       []*User `pg:"many2many:projects_users,fk:project_id,joinFK:user_id"`
 }
@@ -63,11 +64,11 @@ func validateProject(sl validator.StructLevel) {
 }
 
 // FindProject finds a project by ID
-func FindProject(projectID uuid.UUID) *Project {
+func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 	project := &Project{
 		ProjectID: projectID,
 	}
-	err := db.DB.Model(project).WherePK().Column("project.*", "Streams", "Users").Select()
+	err := db.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -75,9 +76,9 @@ func FindProject(projectID uuid.UUID) *Project {
 }
 
 // FindProjects returns a sample of projects
-func FindProjects() []*Project {
+func FindProjects(ctx context.Context) []*Project {
 	var projects []*Project
-	err := db.DB.Model(&projects).Where("project.public = true").Limit(200).Select()
+	err := db.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Select()
 	if err != nil {
 		log.Panic(err.Error())
 	}
@@ -85,9 +86,9 @@ func FindProjects() []*Project {
 }
 
 // FindProjectByName finds a project by name
-func FindProjectByName(name string) *Project {
+func FindProjectByName(ctx context.Context, name string) *Project {
 	project := &Project{}
-	err := db.DB.Model(project).
+	err := db.DB.ModelContext(ctx, project).
 		Where("lower(project.name) = lower(?)", name).
 		Column("project.*", "Streams", "Users").
 		Select()
@@ -98,7 +99,7 @@ func FindProjectByName(name string) *Project {
 }
 
 // CreateWithUser creates a project and makes user a member
-func (p *Project) CreateWithUser(userID uuid.UUID) error {
+func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID) error {
 	// validate
 	err := GetValidator().Struct(p)
 	if err != nil {
@@ -106,7 +107,7 @@ func (p *Project) CreateWithUser(userID uuid.UUID) error {
 	}
 
 	// create project and ProjectToUser in one transaction
-	return db.DB.RunInTransaction(func(tx *pg.Tx) error {
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert project
 		_, err := tx.Model(p).Insert()
 		if err != nil {
@@ -122,7 +123,7 @@ func (p *Project) CreateWithUser(userID uuid.UUID) error {
 			return err
 		}
 
-		err = db.Engine.Warehouse.RegisterProject(p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
+		err = db.Engine.Warehouse.RegisterProject(ctx, p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
 		if err != nil {
 			return err
 		}
@@ -132,25 +133,25 @@ func (p *Project) CreateWithUser(userID uuid.UUID) error {
 }
 
 // AddUser makes user a member of project
-func (p *Project) AddUser(userID uuid.UUID) error {
-	return db.DB.Insert(&ProjectToUser{
+func (p *Project) AddUser(ctx context.Context, userID uuid.UUID) error {
+	return db.DB.WithContext(ctx).Insert(&ProjectToUser{
 		ProjectID: p.ProjectID,
 		UserID:    userID,
 	})
 }
 
 // RemoveUser removes a member from the project
-func (p *Project) RemoveUser(userID uuid.UUID) error {
+func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	// TODO remove from cache
 	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
-	return db.DB.Delete(&ProjectToUser{
+	return db.DB.WithContext(ctx).Delete(&ProjectToUser{
 		ProjectID: p.ProjectID,
 		UserID:    userID,
 	})
 }
 
 // UpdateDetails updates projects user-facing details
-func (p *Project) UpdateDetails(displayName *string, site *string, description *string, photoURL *string) error {
+func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *string, description *string, photoURL *string) error {
 	// set fields
 	if displayName != nil {
 		p.DisplayName = *displayName
@@ -174,7 +175,7 @@ func (p *Project) UpdateDetails(displayName *string, site *string, description *
 	// TODO: Also update in BigQuery
 
 	// update
-	_, err = db.DB.Model(p).
+	_, err = db.DB.WithContext(ctx).Model(p).
 		Column("display_name", "site", "description", "photo_url").
 		WherePK().
 		Update()

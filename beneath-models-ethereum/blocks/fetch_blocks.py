@@ -9,7 +9,7 @@ WEB3_PROVIDER_URL = "https://mainnet.infura.io/v3/c7cb3618405a48d5bb6392ccd6c2ad
 
 w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
 client = Client()
-stream = client.stream(project="ethereum", stream="blocks")
+stream = client.stream(project_name="ethereum", stream_name="blocks")
 
 def run():
   current = get_block("latest")["number"] - 12
@@ -42,7 +42,7 @@ def save_block(block):
     "gasLimit": block["gasLimit"],
     "gasUsed": block["gasUsed"],
   }
-  stream.write_records(stream.current_instance_id, [save])
+  stream.write(instance_id=stream.current_instance_id, records=[save])
   print("Saved block {}".format(save["number"]))
 
 

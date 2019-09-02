@@ -3,22 +3,22 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: KeysForProject
+// GraphQL query operation: SecretsForProject
 // ====================================================
 
-export interface KeysForProject_keysForProject {
-  __typename: "Key";
-  keyID: string;
+export interface SecretsForProject_secretsForProject {
+  __typename: "Secret";
+  secretID: string;
   description: string;
   prefix: string;
   role: string;
   createdOn: ControlTime;
 }
 
-export interface KeysForProject {
-  keysForProject: KeysForProject_keysForProject[];
+export interface SecretsForProject {
+  secretsForProject: SecretsForProject_secretsForProject[];
 }
 
-export interface KeysForProjectVariables {
+export interface SecretsForProjectVariables {
   projectID: ControlUUID;
 }

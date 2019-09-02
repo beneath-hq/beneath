@@ -23,13 +23,13 @@ func (r *streamResolver) StreamID(ctx context.Context, obj *model.Stream) (strin
 }
 
 func (r *queryResolver) Stream(ctx context.Context, name string, projectName string) (*model.Stream, error) {
-	stream := model.FindStreamByNameAndProject(name, projectName)
+	stream := model.FindStreamByNameAndProject(ctx, name, projectName)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
 	}
 
-	key := auth.GetKey(ctx)
-	if !key.ReadsProject(stream.ProjectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.ReadsProject(stream.ProjectID) {
 		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
 	}
 
@@ -37,8 +37,8 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 }
 
 func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*model.Stream, error) {
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(projectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID)
 	}
 
@@ -50,27 +50,27 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 		ProjectID: projectID,
 	}
 
-	err := stream.CompileAndCreate()
+	err := stream.CompileAndCreate(ctx)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
 	// done (using FindStream to get relations correctly)
-	return model.FindStream(stream.StreamID), nil
+	return model.FindStream(ctx, stream.StreamID), nil
 }
 
 func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*model.Stream, error) {
-	stream := model.FindStream(streamID)
+	stream := model.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}
 
-	key := auth.GetKey(ctx)
-	if !key.EditsProject(stream.ProjectID) {
+	secret := auth.GetSecret(ctx)
+	if !secret.EditsProject(stream.ProjectID) {
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
-	err := stream.UpdateDetails(schema, manual)
+	err := stream.UpdateDetails(ctx, schema, manual)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

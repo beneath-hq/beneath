@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-pg/pg"
@@ -21,10 +22,10 @@ type StreamInstance struct {
 }
 
 // CreateStreamInstance creates a new instance
-func CreateStreamInstance(streamID uuid.UUID) (*StreamInstance, error) {
+func CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (*StreamInstance, error) {
 	var res *StreamInstance
 
-	err := db.DB.RunInTransaction(func(tx *pg.Tx) error {
+	err := db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		si, err := CreateStreamInstanceWithTx(tx, streamID)
 		if err != nil {
 			return err

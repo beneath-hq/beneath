@@ -55,10 +55,10 @@ const dataIdFromObject = (object) => {
       return object.userID;
     case "Me":
       return `me:${object.userID}`;
-    case "Key":
-      return `${object.keyID}`;
-    case "NewKey":
-      return `${object.keyString}`;
+    case "Secret":
+      return `${object.secretID}`;
+    case "NewSecret":
+      return `${object.secretString}`;
     case "Project":
       return `${object.projectID}`;
     case "Stream":

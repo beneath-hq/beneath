@@ -64,7 +64,7 @@ func (b *BigQuery) GetMaxDataSize() int {
 }
 
 // RegisterProject  implements engine.WarehouseDriver
-func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displayName, description string) error {
+func (b *BigQuery) RegisterProject(ctx context.Context, projectID uuid.UUID, public bool, name, displayName, description string) error {
 	// prepare access entries if public (otherwise leaving as default)
 	var access []*bq.AccessEntry
 	if public {
@@ -86,7 +86,7 @@ func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displ
 	}
 
 	// create dataset for project
-	err := b.Client.Dataset(makeDatasetName(name)).Create(context.Background(), meta)
+	err := b.Client.Dataset(makeDatasetName(name)).Create(ctx, meta)
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
@@ -101,7 +101,7 @@ func (b *BigQuery) RegisterProject(projectID uuid.UUID, public bool, name, displ
 }
 
 // RegisterStreamInstance implements engine.WarehouseDriver
-func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error {
+func (b *BigQuery) RegisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error {
 	// build schema object
 	schema, err := bq.SchemaFromJSON([]byte(schemaJSON))
 	if err != nil {
@@ -128,7 +128,7 @@ func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName strin
 	// create table
 	dataset := b.Client.Dataset(makeDatasetName(projectName))
 	table := dataset.Table(makeTableName(streamName, instanceID))
-	err = table.Create(context.Background(), meta)
+	err = table.Create(ctx, meta)
 	if err != nil {
 		// TODO: very unlikely, but should probably delete old table and create new (to ensure correct schema)
 		return err
@@ -141,7 +141,7 @@ func (b *BigQuery) RegisterStreamInstance(projectID uuid.UUID, projectName strin
 		ViewQuery:   fmt.Sprintf("select * except(`__key`, `__data`, `__timestamp`) from `%s`", fullyQualifiedName(table)),
 	}
 	table = dataset.Table(makeViewName(streamName))
-	err = table.Create(context.Background(), viewMeta)
+	err = table.Create(ctx, viewMeta)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
 }
 
 // WriteRecords implements engine.WarehouseDriver
-func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error {
+func (b *BigQuery) WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error {
 	// ensure all WriteRequest objects the same length
 	if !(len(keys) == len(records) && len(keys) == len(avros) && len(keys) == len(timestamps)) {
 		return fmt.Errorf("error: keys, avros, data, and timestamps do not all have the same length")
@@ -222,7 +222,7 @@ func (b *BigQuery) WriteRecords(projectName string, streamName string, instanceI
 	}
 
 	// upload all the rows at once
-	err := u.Put(context.Background(), rows)
+	err := u.Put(ctx, rows)
 	if err != nil {
 		return err
 	}

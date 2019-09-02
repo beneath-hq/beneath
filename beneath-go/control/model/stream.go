@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -56,11 +57,11 @@ func streamValidation(sl validator.StructLevel) {
 }
 
 // FindStream finds a stream
-func FindStream(streamID uuid.UUID) *Stream {
+func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	stream := &Stream{
 		StreamID: streamID,
 	}
-	err := db.DB.Model(stream).WherePK().Column("stream.*", "Project", "CurrentStreamInstance").Select()
+	err := db.DB.ModelContext(ctx, stream).WherePK().Column("stream.*", "Project", "CurrentStreamInstance").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -68,9 +69,9 @@ func FindStream(streamID uuid.UUID) *Stream {
 }
 
 // FindStreamByNameAndProject finds a stream
-func FindStreamByNameAndProject(name string, projectName string) *Stream {
+func FindStreamByNameAndProject(ctx context.Context, name string, projectName string) *Stream {
 	stream := &Stream{}
-	err := db.DB.Model(stream).
+	err := db.DB.ModelContext(ctx, stream).
 		Column("stream.*", "Project", "CurrentStreamInstance").
 		Where("lower(stream.name) = lower(?)", name).
 		Where("lower(project.name) = lower(?)", projectName).
@@ -82,17 +83,17 @@ func FindStreamByNameAndProject(name string, projectName string) *Stream {
 }
 
 // FindInstanceIDByNameAndProject returns the current instance ID of the stream
-func FindInstanceIDByNameAndProject(name string, projectName string) uuid.UUID {
-	return getInstanceCache().get(name, projectName)
+func FindInstanceIDByNameAndProject(ctx context.Context, name string, projectName string) uuid.UUID {
+	return getInstanceCache().get(ctx, name, projectName)
 }
 
 // FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
-func FindCachedStreamByCurrentInstanceID(instanceID uuid.UUID) *CachedStream {
-	return getStreamCache().get(instanceID)
+func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UUID) *CachedStream {
+	return getStreamCache().get(ctx, instanceID)
 }
 
 // UpdateDetails updates a stream (only exposes fields where updates are permitted)
-func (s *Stream) UpdateDetails(newSchema *string, manual *bool) error {
+func (s *Stream) UpdateDetails(ctx context.Context, newSchema *string, manual *bool) error {
 	if manual != nil {
 		s.Manual = *manual
 	}
@@ -145,13 +146,13 @@ func (s *Stream) UpdateDetails(newSchema *string, manual *bool) error {
 	// TODO: Update schema in BigQuery
 
 	// update
-	_, err = db.DB.Model(s).Column("description", "manual").WherePK().Update()
+	_, err = db.DB.ModelContext(ctx, s).Column("description", "manual").WherePK().Update()
 	return err
 }
 
 // CompileAndCreate compiles the schema, derives name and avro schemas and inserts
 // the stream into the database
-func (s *Stream) CompileAndCreate() error {
+func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	// compile schema
 	compiler := schema.NewCompiler(s.Schema)
 	err := compiler.Compile()
@@ -193,11 +194,11 @@ func (s *Stream) CompileAndCreate() error {
 
 	// populate s.Project if not set
 	if s.Project == nil {
-		s.Project = FindProject(s.ProjectID)
+		s.Project = FindProject(ctx, s.ProjectID)
 	}
 
 	// create stream (and a new stream instance ID if not batch)
-	err = db.DB.RunInTransaction(func(tx *pg.Tx) error {
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert stream
 		_, err := tx.Model(s).Insert()
 		if err != nil {
@@ -221,6 +222,7 @@ func (s *Stream) CompileAndCreate() error {
 
 			// register instance
 			err = db.Engine.Warehouse.RegisterStreamInstance(
+				ctx,
 				s.ProjectID,
 				s.Project.Name,
 				s.StreamID,

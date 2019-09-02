@@ -8,7 +8,6 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Divider from "@material-ui/core/Divider";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 
 import { QUERY_USER } from "../apollo/queries/user";
@@ -133,17 +132,6 @@ interface UserCrumbProps {
 }
 
 const UserCrumb: FC<UserCrumbProps> = ({ userID, isCurrent }) => {
-  if (userID === "me") {
-    return (
-      <Crumb
-        isCurrent={isCurrent}
-        href={`/user?id=${userID}`}
-        as={`/users/${userID}`}
-        label={"You"}
-      />
-    );
-  }
-
   return (
     <Query<User, UserVariables> query={QUERY_USER} variables={{ userID }}>
       {({ loading, error, data }) => (

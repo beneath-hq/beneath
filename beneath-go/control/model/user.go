@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"log"
 	"regexp"
 	"time"
@@ -25,7 +26,7 @@ type User struct {
 	CreatedOn time.Time  `sql:",default:now()"`
 	UpdatedOn time.Time  `sql:",default:now()"`
 	Projects  []*Project `pg:"many2many:projects_users,fk:user_id,joinFK:project_id"`
-	Keys      []*Key
+	Secrets   []*Secret
 }
 
 var (
@@ -50,11 +51,11 @@ func userValidation(sl validator.StructLevel) {
 }
 
 // FindUser returns the matching user or nil
-func FindUser(userID uuid.UUID) *User {
+func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := db.DB.Model(user).WherePK().Column("user.*", "Projects").Select()
+	err := db.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -62,9 +63,9 @@ func FindUser(userID uuid.UUID) *User {
 }
 
 // FindUserByEmail returns user with email (if exists)
-func FindUserByEmail(email string) *User {
+func FindUserByEmail(ctx context.Context, email string) *User {
 	user := &User{}
-	err := db.DB.Model(user).Where("lower(email) = lower(?)", email).Select()
+	err := db.DB.ModelContext(ctx, user).Where("lower(email) = lower(?)", email).Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -72,22 +73,22 @@ func FindUserByEmail(email string) *User {
 }
 
 // CreateOrUpdateUser consolidates and returns the user matching the args
-func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User, error) {
+func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, photoURL string) (*User, error) {
 	user := &User{}
 	create := false
 
 	var query *orm.Query
 	if githubID != "" {
-		query = db.DB.Model(user).Where("github_id = ?", githubID)
+		query = db.DB.ModelContext(ctx, user).Where("github_id = ?", githubID)
 	} else if googleID != "" {
-		query = db.DB.Model(user).Where("google_id = ?", googleID)
+		query = db.DB.ModelContext(ctx, user).Where("google_id = ?", googleID)
 	} else {
 		log.Panic("CreateOrUpdateUser neither githubID nor googleID set")
 	}
 
 	err := query.Select()
 	if !AssertFoundOne(err) {
-		userByEmail := FindUserByEmail(email)
+		userByEmail := FindUserByEmail(ctx, email)
 		if userByEmail == nil {
 			create = true
 		} else {
@@ -110,9 +111,9 @@ func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User
 	// insert or update
 	err = nil
 	if create {
-		err = db.DB.Insert(user)
+		err = db.DB.WithContext(ctx).Insert(user)
 	} else {
-		err = db.DB.Update(user)
+		err = db.DB.WithContext(ctx).Update(user)
 	}
 
 	if err != nil {
@@ -129,12 +130,12 @@ func CreateOrUpdateUser(githubID, googleID, email, name, photoURL string) (*User
 }
 
 // Delete removes the user from the database
-func (u *User) Delete() error {
-	return db.DB.Delete(u)
+func (u *User) Delete(ctx context.Context) error {
+	return db.DB.WithContext(ctx).Delete(u)
 }
 
 // UpdateDescription updates user's name and/or bio
-func (u *User) UpdateDescription(name *string, bio *string) error {
+func (u *User) UpdateDescription(ctx context.Context, name *string, bio *string) error {
 	if name != nil {
 		u.Name = *name
 	}
@@ -148,6 +149,6 @@ func (u *User) UpdateDescription(name *string, bio *string) error {
 		return err
 	}
 
-	_, err = db.DB.Model(u).Column("name", "bio").WherePK().Update()
+	_, err = db.DB.ModelContext(ctx, u).Column("name", "bio").WherePK().Update()
 	return err
 }

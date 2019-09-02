@@ -15,7 +15,7 @@ type Me struct {
 	UpdatedOn time.Time   `json:"updatedOn"`
 }
 
-type NewKey struct {
-	Key       *model.Key `json:"key"`
-	KeyString string     `json:"keyString"`
+type NewSecret struct {
+	Secret       *model.Secret `json:"secret"`
+	SecretString string        `json:"secretString"`
 }

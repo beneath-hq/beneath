@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -54,14 +55,14 @@ func Run() error {
 
 // processWriteRequest is called (approximately once) for each new write request
 // TODO: add metrics tracking -- group by instanceID and hour: 1) writes and 2) bytes
-func processWriteRequest(req *pb.WriteRecordsRequest) error {
+func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
 	// metrics to track
 	startTime := time.Now()
 	var bytesWritten int64
 
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	stream := model.FindCachedStreamByCurrentInstanceID(instanceID)
+	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
 	}
@@ -102,19 +103,19 @@ func processWriteRequest(req *pb.WriteRecordsRequest) error {
 	}
 
 	// writing encoded data to Table
-	err := db.Engine.Tables.WriteRecords(instanceID, keys, avros, timestamps, !stream.Batch)
+	err := db.Engine.Tables.WriteRecords(ctx, instanceID, keys, avros, timestamps, !stream.Batch)
 	if err != nil {
 		return err
 	}
 
 	// writing decoded data to Warehouse
-	err = db.Engine.Warehouse.WriteRecords(stream.ProjectName, stream.StreamName, instanceID, keys, avros, records, timestamps)
+	err = db.Engine.Warehouse.WriteRecords(ctx, stream.ProjectName, stream.StreamName, instanceID, keys, avros, records, timestamps)
 	if err != nil {
 		return err
 	}
 
 	// publish metrics packet; the keys in the packet will be used to stream data via the gateway's websocket
-	err = db.Engine.Streams.QueueWriteReport(&pb.WriteRecordsReport{
+	err = db.Engine.Streams.QueueWriteReport(ctx, &pb.WriteRecordsReport{
 		InstanceId:   instanceID.Bytes(),
 		Keys:         keys,
 		BytesWritten: bytesWritten,
