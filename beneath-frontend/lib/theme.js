@@ -62,7 +62,7 @@ export default createMuiTheme({
     MuiAppBar: {
       colorPrimary: {
         backgroundColor: "rgba(16, 24, 46, 1)",
-      }
+      },
     },
     MuiAvatar: {
       root: {
@@ -83,7 +83,8 @@ export default createMuiTheme({
   },
   typography: {
     useNextVariants: true,
-    fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
+    fontFamily: `-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif`,
+    // fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
     h1: {
       fontWeight: 600,
       fontSize: "6rem",

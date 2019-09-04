@@ -28,7 +28,7 @@ class CodeBlock extends PureComponent<CodeBlockProps> {
         overflowX: "auto",
         fontSize: "0.875rem",
         fontStyle: "normal",
-        color: theme.palette.text,
+        fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
         backgroundColor: theme.palette.background.paper,
       },
     });

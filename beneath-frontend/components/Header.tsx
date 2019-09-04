@@ -24,9 +24,9 @@ import {
 } from "@material-ui/icons";
 
 const tabs = [
-  { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$" },
-  { label: "Docs", href: "https://about.beneath.network/docs", selectRegex: "^$" },
-  { label: "Blog", href: "https://about.beneath.network/blog", selectRegex: "^$" },
+  { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$", external: false },
+  { label: "Docs", href: "https://about.beneath.network/docs", selectRegex: "^/docs$", external: true },
+  { label: "Blog", href: "https://about.beneath.network/blog", selectRegex: "^/blog$", external: true },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -89,8 +89,8 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
         </Link>
         <div className={classes.grow} />
         <Tabs indicatorColor="primary" textColor="primary" value={selectedTab ? selectedTab.href : false}>
-          {tabs.map(({ href, label }) => (
-            <Tab key={href} label={label} value={href} component={NextMuiLink} href={href} />
+          {tabs.map(({ href, label, external }) => (
+            <Tab key={href} label={label} value={href} component={external ? "a" : NextMuiLink} href={href} />
           ))}
         </Tabs>
         {/* Login-specific stuff */}
