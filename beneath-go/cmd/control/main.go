@@ -1,11 +1,10 @@
 package main
 
 import (
-	"log"
-
 	"github.com/beneath-core/beneath-go/control"
+	"github.com/beneath-core/beneath-go/core/log"
 )
 
 func main() {
-	log.Fatal(control.ListenAndServeHTTP(control.Config.ControlPort))
+	log.S.Fatal(control.ListenAndServeHTTP(control.Config.ControlPort))
 }

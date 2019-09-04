@@ -44,6 +44,9 @@ require (
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.opencensus.io v0.22.0 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.10.0
 	golang.org/x/arch v0.0.0-20190312162104-788fe5ffcd8c // indirect
 	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8 // indirect
 	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522 // indirect

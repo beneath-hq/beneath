@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"log"
 	"regexp"
 	"time"
 
@@ -80,7 +79,7 @@ func FindProjects(ctx context.Context) []*Project {
 	var projects []*Project
 	err := db.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Select()
 	if err != nil {
-		log.Panic(err.Error())
+		panic(err)
 	}
 	return projects
 }

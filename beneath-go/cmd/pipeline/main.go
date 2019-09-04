@@ -5,11 +5,10 @@
 package main
 
 import (
-	"log"
-
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/pipeline"
 )
 
 func main() {
-	log.Fatal(pipeline.Run())
+	log.S.Fatal(pipeline.Run())
 }

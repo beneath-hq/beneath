@@ -3,12 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/httputil"
+	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/core/middleware"
 
 	"github.com/go-chi/chi"
 	"github.com/markbates/goth/gothic"
@@ -18,8 +19,7 @@ import (
 func Router() http.Handler {
 	// check config set
 	if gothConfig == nil {
-		log.Panic("Call InitGoth before AuthHandler")
-		return nil
+		panic("Call InitGoth before AuthHandler")
 	}
 
 	// prepare router
@@ -91,11 +91,15 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 
 // logoutHandler revokes the current auth secret
 func logoutHandler(w http.ResponseWriter, r *http.Request) error {
-	secret := GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 	if secret != nil {
 		if secret.IsPersonal() {
 			secret.Revoke(r.Context())
-			log.Printf("Logout userID %s with hashed secret %s", secret.UserID, secret.HashedSecret)
+			log.S.Infow(
+				"control user logout",
+				"user_id", secret.UserID,
+				"hashed_secret", secret.HashedSecret,
+			)
 		}
 	}
 	return nil

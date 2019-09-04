@@ -1,8 +1,6 @@
 package model
 
 import (
-	"log"
-
 	"github.com/go-pg/pg"
 )
 
@@ -14,7 +12,7 @@ func AssertFoundOne(err error) bool {
 		if err == pg.ErrNoRows {
 			return false
 		}
-		log.Panic(err.Error())
+		panic(err)
 		return false
 	}
 	return true

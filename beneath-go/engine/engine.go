@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
@@ -25,7 +24,7 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 	case "pubsub":
 		engine.Streams = pubsub.New()
 	default:
-		log.Fatalf("invalid streams platform %s", streamsDriver)
+		panic(fmt.Errorf("invalid streams platform %s", streamsDriver))
 	}
 
 	// init Tables
@@ -33,7 +32,7 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 	case "bigtable":
 		engine.Tables = bigtable.New()
 	default:
-		log.Fatalf("invalid tables platform %s", tablesDriver)
+		panic(fmt.Errorf("invalid tables platform %s", tablesDriver))
 	}
 
 	// init Warehouse
@@ -41,7 +40,7 @@ func NewEngine(streamsDriver string, tablesDriver string, warehouseDriver string
 	case "bigquery":
 		engine.Warehouse = bigquery.New()
 	default:
-		log.Fatalf("invalid warehouse platform %s", warehouseDriver)
+		panic(fmt.Errorf("invalid warehouse platform %s", warehouseDriver))
 	}
 
 	// done

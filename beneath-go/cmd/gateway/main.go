@@ -1,8 +1,7 @@
 package main
 
 import (
-	"log"
-
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/gateway"
 	"golang.org/x/sync/errgroup"
 )
@@ -22,5 +21,5 @@ func main() {
 	})
 
 	// run simultaneously
-	log.Fatal(group.Wait())
+	log.S.Fatal(group.Wait())
 }

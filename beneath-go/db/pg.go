@@ -1,7 +1,7 @@
 package db
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/go-pg/pg"
 )
@@ -9,7 +9,7 @@ import (
 func newDatabase(postgresURL string) *pg.DB {
 	opts, err := pg.ParseURL(postgresURL)
 	if err != nil {
-		log.Fatalf("postgres: %s", err.Error())
+		panic(err)
 	}
 
 	db := pg.Connect(opts)
@@ -24,7 +24,7 @@ func newDatabase(postgresURL string) *pg.DB {
 type queryLoggerHook struct{}
 
 func (h queryLoggerHook) BeforeQuery(q *pg.QueryEvent) {
-	log.Println(q.FormattedQuery())
+	fmt.Print(q.FormattedQuery())
 }
 
 func (h queryLoggerHook) AfterQuery(q *pg.QueryEvent) {

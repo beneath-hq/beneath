@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/beneath-core/beneath-go/db"
@@ -46,7 +45,7 @@ func (c instanceCache) get(ctx context.Context, streamName string, projectName s
 	})
 
 	if err != nil {
-		log.Panicf("instanceCache.Get error: %v", err)
+		panic(err)
 	}
 
 	return instanceID

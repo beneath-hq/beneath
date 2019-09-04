@@ -271,7 +271,7 @@ func (p *packer) encodeInt(i int64) {
 func (p *packer) encodeBigInt(i *big.Int) {
 	length := len(i.Bytes())
 	if length > 0xff {
-		panic(fmt.Sprintf("Integer magnitude is too large (more than 255 bytes)"))
+		panic(fmt.Errorf("Integer magnitude is too large (more than 255 bytes)"))
 	}
 
 	if i.Sign() >= 0 {
@@ -339,7 +339,7 @@ func (p *packer) encodeVersionstamp(v Versionstamp) {
 	isIncomplete := v.TransactionVersion == incompleteTransactionVersion
 	if isIncomplete {
 		if p.versionstampPos != -1 {
-			panic(fmt.Sprintf("Tuple can only contain one incomplete versionstamp"))
+			panic(fmt.Errorf("Tuple can only contain one incomplete versionstamp"))
 		}
 
 		p.versionstampPos = int32(len(p.buf))
@@ -396,12 +396,12 @@ func (p *packer) encodeTuple(t Tuple, nested bool, versionstamps bool) {
 			p.encodeInt(e.UnixNano() / int64(time.Millisecond))
 		case Versionstamp:
 			if versionstamps == false && e.TransactionVersion == incompleteTransactionVersion {
-				panic(fmt.Sprintf("Incomplete Versionstamp included in vanilla tuple pack"))
+				panic(fmt.Errorf("Incomplete Versionstamp included in vanilla tuple pack"))
 			}
 
 			p.encodeVersionstamp(e)
 		default:
-			panic(fmt.Sprintf("unencodable element at index %d (%v, type %T)", i, t[i], t[i]))
+			panic(fmt.Errorf("unencodable element at index %d (%v, type %T)", i, t[i], t[i]))
 		}
 	}
 

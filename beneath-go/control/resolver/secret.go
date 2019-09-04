@@ -3,9 +3,9 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -26,7 +26,7 @@ func (r *secretResolver) Role(ctx context.Context, obj *model.Secret) (string, e
 }
 
 func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*model.Secret, error) {
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
@@ -39,7 +39,7 @@ func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([
 }
 
 func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UUID) ([]*model.Secret, error) {
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to read project secrets")
 	}
@@ -48,7 +48,7 @@ func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UU
 }
 
 func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, description string) (*gql.NewSecret, error) {
-	authSecret := auth.GetSecret(ctx)
+	authSecret := middleware.GetSecret(ctx)
 	if !authSecret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
@@ -70,7 +70,7 @@ func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, d
 }
 
 func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*gql.NewSecret, error) {
-	authSecret := auth.GetSecret(ctx)
+	authSecret := middleware.GetSecret(ctx)
 	if !authSecret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project")
 	}
@@ -97,7 +97,7 @@ func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID)
 		return false, gqlerror.Errorf("Secret not found")
 	}
 
-	authSecret := auth.GetSecret(ctx)
+	authSecret := middleware.GetSecret(ctx)
 	if secret.ProjectID != nil && !authSecret.EditsProject(*secret.ProjectID) {
 		return false, gqlerror.Errorf("Not allowed to edit secret")
 	} else if secret.UserID != nil && *authSecret.UserID != *secret.UserID {

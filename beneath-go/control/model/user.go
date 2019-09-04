@@ -2,9 +2,10 @@ package model
 
 import (
 	"context"
-	"log"
 	"regexp"
 	"time"
+
+	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
@@ -83,7 +84,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	} else if googleID != "" {
 		query = db.DB.ModelContext(ctx, user).Where("google_id = ?", googleID)
 	} else {
-		log.Panic("CreateOrUpdateUser neither githubID nor googleID set")
+		panic("CreateOrUpdateUser neither githubID nor googleID set")
 	}
 
 	err := query.Select()
@@ -121,9 +122,15 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	}
 
 	if create {
-		log.Printf("Created userID <%s>", user.UserID)
+		log.S.Infow(
+			"control created user",
+			"user_id", user.UserID,
+		)
 	} else {
-		log.Printf("Updated userID <%s>", user.UserID)
+		log.S.Infow(
+			"control updated user",
+			"user_id", user.UserID,
+		)
 	}
 
 	return user, nil

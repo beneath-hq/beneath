@@ -3,20 +3,22 @@ package control
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
+
+	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/db"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -73,11 +75,11 @@ func init() {
 func ListenAndServeHTTP(port int) error {
 	router := chi.NewRouter()
 
-	// Don't crash totally on panic
-	router.Use(middleware.Recoverer)
-
-	// Log requests
+	// router.Use(chimiddleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	router.Use(middleware.InjectTags)
 	router.Use(middleware.Logger)
+	router.Use(chimiddleware.Recoverer)
+	router.Use(middleware.Auth)
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{
@@ -89,9 +91,6 @@ func ListenAndServeHTTP(port int) error {
 		AllowCredentials: true,
 		Debug:            false,
 	}).Handler)
-
-	// Authentication middleware (reads Bearer token if present)
-	router.Use(auth.HTTPMiddleware)
 
 	// Authentication endpoints
 	router.Mount("/auth", auth.Router())
@@ -106,11 +105,12 @@ func ListenAndServeHTTP(port int) error {
 	// Add graphql server
 	router.Handle("/graphql", handler.GraphQL(
 		makeExecutableSchema(),
+		makeQueryLoggingMiddleware(),
 		makeGraphQLErrorPresenter(),
 	))
 
 	// Serve
-	log.Printf("HTTP server running on port %d\n", port)
+	log.S.Infow("control http started", "port", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 }
 
@@ -119,7 +119,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {
-		log.Printf("Database health check failed")
+		log.S.Errorf("Control database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
@@ -131,7 +131,19 @@ func makeExecutableSchema() graphql.ExecutableSchema {
 func makeGraphQLErrorPresenter() handler.Option {
 	return handler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
 		// Uncomment this line to print resolver error details in the console
-		// log.Printf("Error in GraphQL Resolver: %s", err.Error())
+		// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
 		return graphql.DefaultErrorPresenter(ctx, err)
+	})
+}
+
+func makeQueryLoggingMiddleware() handler.Option {
+	return handler.RequestMiddleware(func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
+		reqCtx := graphql.GetRequestContext(ctx)
+		tags := middleware.GetTags(ctx)
+		tags.Query = map[string]interface{}{
+			"query": reqCtx.RawQuery,
+			"vars":  reqCtx.Variables,
+		}
+		return next(ctx)
 	})
 }

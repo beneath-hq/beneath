@@ -3,16 +3,15 @@ package websockets
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
-
-	"github.com/beneath-core/beneath-go/control/auth"
+	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
 	pb "github.com/beneath-core/beneath-go/proto"
 
@@ -103,7 +102,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 	go func() {
 		err := engine.Streams.ReadWriteReports(broker.handleWriteReport)
 		if err != nil {
-			log.Panicf("ReadWriteReports crashed: %v", err.Error())
+			panic(err)
 		}
 	}()
 
@@ -122,7 +121,7 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// get auth
-	secret := auth.GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 
 	// create client and register it with the hub
 	b.register <- NewClient(b, ws, secret)
@@ -162,7 +161,11 @@ func (b *Broker) sendKeepAlive() {
 		client.SendKeepAlive()
 	}
 	elapsed := time.Since(startTime)
-	log.Printf("Sent keep alive to %d client(s) in %s", len(b.clients), elapsed)
+	log.S.Infow(
+		"ws keepalive",
+		"clients", len(b.clients),
+		"elapsed", elapsed,
+	)
 }
 
 // Handles incoming write report from pubsub and puts them on the dispatch channel.
@@ -187,7 +190,7 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 	// get stream
 	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
-		log.Panicf("cached stream is null for instanceid %s", instanceID.String())
+		panic(fmt.Errorf("cached stream is null for instance_id %s", instanceID.String()))
 	}
 
 	// read and decode records matchin rep.Keys from Tables
@@ -217,7 +220,7 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 	})
 
 	if err != nil {
-		log.Panicf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error())
+		panic(fmt.Errorf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error()))
 	}
 
 	// push to dispatch channel
@@ -228,7 +231,13 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 
 	// log metrics
 	elapsed := time.Since(startTime)
-	log.Printf("Sent %d row(s) from instance %s to %d client(s) in %s", len(records), instanceID.String(), n, elapsed)
+	log.S.Infow(
+		"ws dispatch",
+		"rows", len(records),
+		"instance", instanceID.String(),
+		"clients", n,
+		"elapsed", elapsed,
+	)
 
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 )
 
@@ -45,8 +44,7 @@ func ParseInt64(val interface{}) (int64, error) {
 		return num.Int64()
 	}
 
-	log.Panicf("unrecognized json numeric type: %T", val)
-	return 0, nil
+	panic(fmt.Errorf("unrecognized json numeric type: %T", val))
 }
 
 // ParseUint64 is a helper for safely parsing values found in JSON to uint64
@@ -62,6 +60,5 @@ func ParseUint64(val interface{}) (uint64, error) {
 		return strconv.ParseUint(num.String(), 10, 64)
 	}
 
-	log.Panicf("unrecognized json numeric type: %T", val)
-	return 0, nil
+	panic(fmt.Errorf("unrecognized json numeric type: %T", val))
 }

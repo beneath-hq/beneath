@@ -3,7 +3,6 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 )
 
 // BuildBigQuerySchema compiles the stream into a BigQuery schema
@@ -70,8 +69,7 @@ func (s *StreamDef) buildBigQueryField(tr *TypeRef, name string) interface{} {
 
 		// nested arrays not allowed
 		if tr.Array != nil {
-			log.Fatalf("bigquery schema builder: encountered nested array at %v", tr.Pos)
-			return nil
+			panic(fmt.Errorf("bigquery schema builder: encountered nested array at %v", tr.Pos))
 		}
 	}
 
@@ -83,8 +81,7 @@ func (s *StreamDef) buildBigQueryField(tr *TypeRef, name string) interface{} {
 		// handle declaration
 		decl := s.Compiler.Declarations[tr.Type]
 		if decl == nil {
-			log.Fatalf("bigquery schema builder: type '%v' is neither primitive nor declared", tr.Type)
-			return nil
+			panic(fmt.Errorf("bigquery schema builder: type '%v' is neither primitive nor declared", tr.Type))
 		}
 
 		// enums coerced to string
@@ -126,6 +123,6 @@ func (s *StreamDef) buildBigQueryPrimitiveTypeName(name string) interface{} {
 		return "TIMESTAMP"
 	}
 
-	log.Fatalf("type '%v' is not a primitive", name)
+	panic(fmt.Errorf("type '%v' is not a primitive", name))
 	return nil
 }

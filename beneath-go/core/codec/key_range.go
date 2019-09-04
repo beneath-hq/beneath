@@ -3,7 +3,6 @@ package codec
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 	"github.com/beneath-core/beneath-go/core/queryparse"
@@ -215,13 +214,11 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 		}
 
 		// if we got here, something went terribly wrong
-		log.Panicf("RangeFromQuery: impossible state")
-		return KeyRange{}, nil
+		panic("RangeFromQuery: impossible state")
 	}
 
 	// if we got here, something went terribly wrong
-	log.Panicf("RangeFromQuery: impossible state")
-	return KeyRange{}, nil
+	panic("RangeFromQuery: impossible state")
 }
 
 // converts a query arg to a native value

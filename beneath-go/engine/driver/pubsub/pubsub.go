@@ -3,16 +3,17 @@ package pubsub
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/beneath-core/beneath-go/core"
-	pb "github.com/beneath-core/beneath-go/proto"
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/log"
+	pb "github.com/beneath-core/beneath-go/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -51,7 +52,7 @@ func New() *Pubsub {
 	// prepare pubsub client
 	client, err := pubsub.NewClient(context.Background(), config.ProjectID)
 	if err != nil {
-		log.Fatalf("could not create pubsub client: %v", err)
+		panic(err)
 	}
 
 	// create write requests topic
@@ -59,7 +60,7 @@ func New() *Pubsub {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating topic: %v", err)
+			panic(err)
 		} else {
 			writeRequestsTopic = client.Topic(config.WriteRequestsTopic)
 		}
@@ -70,7 +71,7 @@ func New() *Pubsub {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating topic: %v", err)
+			panic(err)
 		} else {
 			writeReportsTopic = client.Topic(config.WriteReportsTopic)
 		}
@@ -95,7 +96,7 @@ func (p *Pubsub) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequ
 	// encode message
 	msg, err := proto.Marshal(req)
 	if err != nil {
-		log.Panicf("error marshalling WriteRecordsRequest: %v", err)
+		panic(err)
 	}
 
 	// check encoded message size
@@ -132,7 +133,7 @@ func (p *Pubsub) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequ
 		err := proto.Unmarshal(msg.Data, req)
 		if err != nil {
 			// standard error handling for pubsub library
-			log.Printf("couldn't unmarshal write records request: %s", err.Error())
+			log.S.Errorf("couldn't unmarshal write records request: %s", err.Error())
 			cancel()
 			return
 		}
@@ -142,7 +143,7 @@ func (p *Pubsub) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequ
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
 			// log error and cancel
-			log.Printf("couldn't process write request: %s", err.Error())
+			log.S.Errorf("couldn't process write request: %s", err.Error())
 			cancel()
 			return
 		}
@@ -161,7 +162,7 @@ func (p *Pubsub) QueueWriteReport(ctx context.Context, rep *pb.WriteRecordsRepor
 	// encode message
 	msg, err := proto.Marshal(rep)
 	if err != nil {
-		log.Panicf("error marshalling Metrics: %v", err)
+		panic(err)
 	}
 
 	// check encoded message size
@@ -201,7 +202,7 @@ func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsRepor
 		err := proto.Unmarshal(msg.Data, rep)
 		if err != nil {
 			// standard error handling for pubsub library
-			log.Printf("couldn't unmarshal write report: %s", err.Error())
+			log.S.Errorf("couldn't unmarshal write report: %s", err.Error())
 			cancel()
 			return
 		}
@@ -211,7 +212,7 @@ func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsRepor
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
 			// log error and cancel
-			log.Printf("couldn't process write report: %s", err.Error())
+			log.S.Errorf("couldn't process write report: %s", err.Error())
 			cancel()
 			return
 		}
@@ -233,7 +234,7 @@ func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Su
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating subscription '%s': %v", subname, err)
+			panic(fmt.Errorf("error creating subscription '%s': %v", subname, err))
 		} else {
 			subscription = p.Client.Subscription(subname)
 		}
@@ -257,7 +258,7 @@ func (p *Pubsub) getWriteReportsSubscription() *pubsub.Subscription {
 		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
 			// Seek not implemented on Emulator, ignore
 		} else {
-			log.Panicf("error seeking on subscription '%s': %v", subname, err)
+			panic(fmt.Errorf("error seeking on subscription '%s': %v", subname, err))
 		}
 	}
 	return sub

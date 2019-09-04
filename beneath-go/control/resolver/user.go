@@ -3,11 +3,11 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -31,7 +31,7 @@ func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
@@ -41,7 +41,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 }
 
 func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *string) (*gql.Me, error) {
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}

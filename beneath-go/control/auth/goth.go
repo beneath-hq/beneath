@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gorilla/sessions"
@@ -30,13 +29,11 @@ var (
 // InitGoth configures goth
 func InitGoth(config *GothConfig) {
 	if config == nil {
-		log.Panicf("GothConfig cannot be nil")
-		return
+		panic("GothConfig cannot be nil")
 	}
 
 	if gothConfig != nil {
-		log.Panicf("InitGoth called twice")
-		return
+		panic("InitGoth called twice")
 	}
 
 	gothConfig = config

@@ -3,7 +3,6 @@ package codec
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 	"github.com/beneath-core/beneath-go/core/queryparse"
@@ -119,7 +118,7 @@ func (c *Codec) UnmarshalAvro(data []byte) (map[string]interface{}, error) {
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		log.Panic("Decoding avro data did not yield map")
+		panic("Decoding avro data did not yield map")
 	}
 
 	return res, nil
@@ -128,7 +127,7 @@ func (c *Codec) UnmarshalAvro(data []byte) (map[string]interface{}, error) {
 // ConvertToAvroNative converts a record (possibly decoded from JSON) to avro native representation
 func (c *Codec) ConvertToAvroNative(data map[string]interface{}, convertFromJSONTypes bool) (map[string]interface{}, error) {
 	if !convertFromJSONTypes {
-		log.Panic("ConvertToAvroNative currently only supports convertFromJSONTypes == true")
+		panic("ConvertToAvroNative currently only supports convertFromJSONTypes == true")
 	}
 
 	obj, err := jsonNativeToAvroNative(c.avroSchema, data, map[string]interface{}{})
@@ -138,7 +137,7 @@ func (c *Codec) ConvertToAvroNative(data map[string]interface{}, convertFromJSON
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		log.Panic("Output type of jsonNativeToAvroNative does not match input type")
+		panic("Output type of jsonNativeToAvroNative does not match input type")
 	}
 
 	return res, nil
@@ -154,7 +153,7 @@ func (c *Codec) ConvertFromAvroNative(avroNative map[string]interface{}, convert
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		log.Panic("Output type of avroNativeToJSONNative does not match input type")
+		panic("Output type of avroNativeToJSONNative does not match input type")
 	}
 
 	return res, nil

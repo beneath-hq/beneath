@@ -4,40 +4,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
+	"github.com/beneath-core/beneath-go/core/log"
 
-	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/queryparse"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway/websockets"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	uuid "github.com/satori/go.uuid"
 )
 
 // ListenAndServeHTTP serves a HTTP API
 func ListenAndServeHTTP(port int) error {
-	log.Printf("HTTP server running on port %d\n", port)
+	log.S.Infow("gateway http started", "port", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), httpHandler())
 }
 
 func httpHandler() http.Handler {
 	handler := chi.NewRouter()
 
-	// handler.Use(middleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	// handler.Use(chimiddleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	handler.Use(middleware.InjectTags)
 	handler.Use(middleware.Logger)
-	handler.Use(middleware.Recoverer)
+	handler.Use(chimiddleware.Recoverer)
+	handler.Use(middleware.Auth)
 
 	// Add CORS
 	handler.Use(cors.New(cors.Options{
@@ -46,9 +48,6 @@ func httpHandler() http.Handler {
 		AllowCredentials: true,
 		Debug:            false,
 	}).Handler)
-
-	// auth
-	handler.Use(auth.HTTPMiddleware)
 
 	// Add health check
 	handler.Get("/", healthCheck)
@@ -79,14 +78,14 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {
-		log.Printf("Database health check failed")
+		log.S.Errorf("Gateway database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	secret := auth.GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 
 	// get instance ID
 	projectName := chi.URLParam(r, "projectName")
@@ -172,7 +171,7 @@ func getLatestFromInstance(w http.ResponseWriter, r *http.Request) error {
 
 func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	secret := auth.GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
@@ -325,7 +324,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) error {
 	// get auth
-	secret := auth.GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
@@ -427,7 +426,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	// get auth
-	secret := auth.GetSecret(r.Context())
+	secret := middleware.GetSecret(r.Context())
 
 	// get instance ID
 	instanceID, err := uuid.FromString(chi.URLParam(r, "instanceID"))

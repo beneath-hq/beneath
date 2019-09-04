@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -127,7 +126,7 @@ func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStrea
 	})
 
 	if err != nil {
-		log.Panicf("streamCache.Get error: %v", err)
+		panic(err)
 	}
 
 	if cachedStream.ProjectID == uuid.Nil {

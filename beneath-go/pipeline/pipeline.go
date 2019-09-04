@@ -3,15 +3,14 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
-
-	"github.com/beneath-core/beneath-go/core/timeutil"
 
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
@@ -40,7 +39,7 @@ func init() {
 // Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
 func Run() error {
 	// log that we're running
-	log.Printf("Pipeline processing write requests\n")
+	log.S.Info("pipeline started")
 
 	// begin processing write requests -- will run infinitely
 	err := db.Engine.Streams.ReadWriteRequests(processWriteRequest)
@@ -126,7 +125,15 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error
 
 	// finalise metrics
 	elapsed := time.Since(startTime)
-	log.Printf("%s/%s (%s): Wrote %d record(s) (%dB) in %s", stream.ProjectName, stream.StreamName, instanceID.String(), len(req.Records), bytesWritten, elapsed)
+	log.S.Infow(
+		"pipeline write",
+		"project", stream.ProjectName,
+		"stream", stream.StreamName,
+		"instance", instanceID.String(),
+		"records", len(req.Records),
+		"bytes", bytesWritten,
+		"elapsed", elapsed,
+	)
 
 	// done
 	return nil

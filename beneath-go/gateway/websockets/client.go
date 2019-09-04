@@ -3,8 +3,9 @@ package websockets
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
+
+	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/model"
 	uuid "github.com/satori/go.uuid"
@@ -90,7 +91,10 @@ func NewClient(broker *Broker, ws *websocket.Conn, secret *model.Secret) *Client
 	go client.beginReading()
 	go client.beginWriting()
 
-	log.Printf("New client connected. Client IP: %v", client.WS.RemoteAddr())
+	log.S.Infow(
+		"ws conn new",
+		"ip", client.WS.RemoteAddr(),
+	)
 
 	return client
 }
@@ -203,7 +207,10 @@ func (c *Client) Terminate(closeCode int, msg string) {
 func (c *Client) Close() {
 	close(c.Outbound)
 	_ = c.WS.Close()
-	log.Printf("Closed connection. Client IP: %v", c.WS.RemoteAddr())
+	log.S.Infow(
+		"ws conn closed",
+		"ip", c.WS.RemoteAddr(),
+	)
 }
 
 // beginReading relays requests from the websocket connection to the broker
@@ -217,7 +224,11 @@ func (c *Client) beginReading() {
 		if err != nil {
 			// break out of the run loop (triggering CloseClient) if the connection closed
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseProtocolError, websocket.CloseNoStatusReceived) {
-				log.Printf("Client closed unexpectedly: %v", err)
+				log.S.Infow(
+					"ws conn closed unexpectedly",
+					"err", err.Error(),
+					"ip", c.WS.RemoteAddr(),
+				)
 			}
 			return
 		}
@@ -232,7 +243,12 @@ func (c *Client) beginReading() {
 		}
 
 		// log information about client message
-		log.Printf("Message received from client. Client IP: %v, Message Type: %v, Message Size: %d bytes", c.WS.RemoteAddr(), msg.Type, len(data))
+		log.S.Infow(
+			"ws msg receive",
+			"ip", c.WS.RemoteAddr(),
+			"msg_type", msg.Type,
+			"bytes", len(data),
+		)
 
 		// send user request to broker
 		c.Broker.requests <- Request{
@@ -259,8 +275,7 @@ func (c *Client) beginWriting() {
 			// encode message as json
 			data, err := json.Marshal(msg)
 			if err != nil {
-				log.Panicf("couldn't marshal WebsocketMessage: %v", msg)
-				return
+				panic(fmt.Errorf("couldn't marshal WebsocketMessage: %v", msg))
 			}
 
 			// write

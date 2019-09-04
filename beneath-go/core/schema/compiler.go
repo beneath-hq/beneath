@@ -3,7 +3,6 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"unicode"
 
@@ -31,7 +30,7 @@ func MustCompileToAvro(schema string) interface{} {
 	var avroSchema interface{}
 	err := json.Unmarshal([]byte(avroSchemaString), &avroSchema)
 	if err != nil {
-		log.Panic(err.Error())
+		panic(err)
 	}
 
 	return avroSchema
@@ -42,12 +41,12 @@ func MustCompileToAvroString(schema string) string {
 	c := NewCompiler(schema)
 	err := c.Compile()
 	if err != nil {
-		log.Panic(err.Error())
+		panic(err)
 	}
 
 	avroSchemaString, err := c.GetStream().BuildCanonicalAvroSchema()
 	if err != nil {
-		log.Panic(err.Error())
+		panic(err)
 	}
 
 	return avroSchemaString

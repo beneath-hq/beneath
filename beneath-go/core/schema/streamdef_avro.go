@@ -3,7 +3,6 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/linkedin/goavro/v2"
@@ -121,8 +120,7 @@ func (s *StreamDef) buildAvroTypeName(name string, doc bool, definedNames map[st
 
 	decl := s.Compiler.Declarations[name]
 	if decl == nil {
-		log.Fatalf("type '%v' is neither primitive nor declared", name)
-		return nil
+		panic(fmt.Errorf("type '%v' is neither primitive nor declared", name))
 	}
 
 	if decl.Enum != nil {
@@ -133,8 +131,7 @@ func (s *StreamDef) buildAvroTypeName(name string, doc bool, definedNames map[st
 		return s.buildAvroRecord(decl.Type, doc, definedNames)
 	}
 
-	log.Fatalf("declaration for type '%v' is neither enum nor record", name)
-	return nil
+	panic(fmt.Errorf("declaration for type '%v' is neither enum nor record", name))
 }
 
 func (s *StreamDef) buildAvroPrimitiveTypeName(name string, doc bool, definedNames map[string]bool) interface{} {
@@ -184,6 +181,5 @@ func (s *StreamDef) buildAvroPrimitiveTypeName(name string, doc bool, definedNam
 		}
 	}
 
-	log.Fatalf("type '%v' is not a primitive", name)
-	return nil
+	panic(fmt.Errorf("type '%v' is not a primitive", name))
 }

@@ -6,9 +6,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
-	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/middleware"
 )
 
 // Stream returns the gql.StreamResolver
@@ -28,7 +28,7 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
 	}
 
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.ReadsProject(stream.ProjectID) {
 		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
 	}
@@ -37,7 +37,7 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 }
 
 func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*model.Stream, error) {
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID)
 	}
@@ -65,7 +65,7 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID,
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}
 
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(stream.ProjectID) {
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}

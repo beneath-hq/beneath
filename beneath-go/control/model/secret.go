@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/go-redis/cache"
@@ -92,7 +91,7 @@ func GenerateSecretString() string {
 	// generate 32 random bytes
 	dest := make([]byte, 32)
 	if _, err := rand.Read(dest); err != nil {
-		log.Fatalf("rand.Read: %v", err.Error())
+		panic(err.Error())
 	}
 
 	// encode as base64 string
@@ -137,7 +136,7 @@ func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*Secret {
 	var secrets []*Secret
 	err := db.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
 	if err != nil {
-		log.Panicf("Error getting secrets: %s", err.Error())
+		panic(err)
 	}
 	return secrets
 }
@@ -147,7 +146,7 @@ func FindProjectSecrets(ctx context.Context, projectID uuid.UUID) []*Secret {
 	var secrets []*Secret
 	err := db.DB.ModelContext(ctx, &secrets).Where("project_id = ?", projectID).Limit(1000).Select()
 	if err != nil {
-		log.Panicf("Error getting secrets: %s", err.Error())
+		panic(err)
 	}
 	return secrets
 }
@@ -236,8 +235,7 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 	})
 
 	if err != nil {
-		log.Panic(err.Error())
-		return nil
+		panic(err)
 	}
 
 	// see note above
@@ -256,13 +254,13 @@ func (k *Secret) Revoke(ctx context.Context) {
 	// delete from db
 	err := db.DB.WithContext(ctx).Delete(k)
 	if err != nil && err != pg.ErrNoRows {
-		log.Panic(err.Error())
+		panic(err)
 	}
 
 	// remove from redis (ignore error)
 	err = getSecretCache().Delete(redisKeyForHashedSecret(k.HashedSecret))
 	if err != nil && err != cache.ErrCacheMiss {
-		log.Panic(err.Error())
+		panic(err)
 	}
 }
 

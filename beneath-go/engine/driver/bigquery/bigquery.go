@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/beneath-core/beneath-go/core/log"
 
 	bq "cloud.google.com/go/bigquery"
 	"google.golang.org/grpc/codes"
@@ -49,7 +50,7 @@ func New() *BigQuery {
 	// create client
 	client, err := bq.NewClient(context.Background(), config.ProjectID)
 	if err != nil {
-		log.Fatalf("could not create bigquery client: %v", err)
+		panic(err)
 	}
 
 	// create instance
@@ -90,9 +91,9 @@ func (b *BigQuery) RegisterProject(ctx context.Context, projectID uuid.UUID, pub
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating dataset for project '%s': %v", name, err)
+			panic(fmt.Errorf("error creating dataset for project '%s': %v", name, err))
 		} else {
-			log.Printf("trying to create dataset that already exists for project '%s'", name)
+			log.S.Errorf("trying to create dataset that already exists for project '%s'", name)
 		}
 	}
 
@@ -211,7 +212,7 @@ func (b *BigQuery) WriteRecords(ctx context.Context, projectName string, streamN
 		// data to be uploaded
 		timestampBytes, err := timestamps[i].MarshalBinary()
 		if err != nil {
-			log.Panic(err.Error())
+			panic(err)
 		}
 		insertIDBytes := append(key, timestampBytes...)
 		insertID := base64.StdEncoding.EncodeToString(insertIDBytes)

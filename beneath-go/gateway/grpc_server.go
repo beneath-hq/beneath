@@ -3,16 +3,15 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
-
-	"github.com/beneath-core/beneath-go/control/auth"
 	"github.com/beneath-core/beneath-go/control/model"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/queryparse"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 
@@ -23,6 +22,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	maxRecvMsgSize = 1024 * 1024 * 10
+	maxSendMsgSize = 1024 * 1024 * 50
 )
 
 type clientVersionSpec struct {
@@ -51,18 +55,24 @@ func ListenAndServeGRPC(port int) error {
 	}
 
 	server := grpc.NewServer(
+		grpc.MaxRecvMsgSize(maxRecvMsgSize),
+		grpc.MaxSendMsgSize(maxSendMsgSize),
 		grpc_middleware.WithUnaryServerChain(
-			grpc_auth.UnaryServerInterceptor(auth.GRPCInterceptor),
+			middleware.InjectTagsUnaryServerInterceptor(),
+			middleware.LoggerUnaryServerInterceptor(),
+			grpc_auth.UnaryServerInterceptor(middleware.AuthInterceptor),
 			grpc_recovery.UnaryServerInterceptor(),
 		),
 		grpc_middleware.WithStreamServerChain(
-			grpc_auth.StreamServerInterceptor(auth.GRPCInterceptor),
+			middleware.InjectTagsStreamServerInterceptor(),
+			middleware.LoggerStreamServerInterceptor(),
+			grpc_auth.StreamServerInterceptor(middleware.AuthInterceptor),
 			grpc_recovery.StreamServerInterceptor(),
 		),
 	)
 	pb.RegisterGatewayServer(server, &gRPCServer{})
 
-	log.Printf("gRPC server running on port %d\n", port)
+	log.S.Infow("gateway grpc started", "port", port)
 	return server.Serve(lis)
 }
 
@@ -70,8 +80,14 @@ func ListenAndServeGRPC(port int) error {
 type gRPCServer struct{}
 
 func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetailsRequest) (*pb.StreamDetailsResponse, error) {
+	// set query (for logging)
+	middleware.SetTagsQuery(ctx,
+		"stream", req.StreamName,
+		"project", req.ProjectName,
+	)
+
 	// get auth
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 
 	// get instance ID
 	instanceID := model.FindInstanceIDByNameAndProject(ctx, req.StreamName, req.ProjectName)
@@ -107,13 +123,21 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 
 func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	if instanceID == uuid.Nil {
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
+
+	// set query (for logging)
+	middleware.SetTagsQuery(ctx,
+		"instance_id", instanceID.String(),
+		"limit", req.Limit,
+		"where", req.Where,
+		"after", req.After,
+	)
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -192,13 +216,20 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	if instanceID == uuid.Nil {
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
+
+	// set query (for logging)
+	middleware.SetTagsQuery(ctx,
+		"instance_id", instanceID.String(),
+		"limit", req.Limit,
+		"before", req.Before,
+	)
 
 	// get cached stream
 	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -250,13 +281,19 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	if instanceID == uuid.Nil {
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
+
+	// set query (for logging)
+	middleware.SetTagsQuery(ctx,
+		"instance_id", instanceID.String(),
+		"records_count", len(req.Records),
+	)
 
 	// get stream info
 	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -310,6 +347,12 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 }
 
 func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*pb.ClientPong, error) {
+	// set query (for logging)
+	middleware.SetTagsQuery(ctx,
+		"client_id", req.ClientId,
+		"client_version", req.ClientVersion,
+	)
+
 	spec := clientSpecs[req.ClientId]
 	if spec.IsZero() {
 		return nil, grpc.Errorf(codes.InvalidArgument, "unrecognized client ID")
@@ -320,7 +363,7 @@ func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*p
 		status = "stable"
 	}
 
-	secret := auth.GetSecret(ctx)
+	secret := middleware.GetSecret(ctx)
 	return &pb.ClientPong{
 		Authenticated:      !secret.IsAnonymous(),
 		Status:             status,

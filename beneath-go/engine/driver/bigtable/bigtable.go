@@ -3,11 +3,8 @@ package bigtable
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
-
-	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
@@ -16,6 +13,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/codec"
+	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -60,7 +58,7 @@ func New() *Bigtable {
 	// create BigTable admin
 	admin, err := bigtable.NewAdminClient(context.Background(), config.ProjectID, config.InstanceID)
 	if err != nil {
-		log.Fatalf("Could not create admin client: %v", err)
+		panic(err)
 	}
 	defer admin.Close()
 
@@ -71,7 +69,7 @@ func New() *Bigtable {
 	// prepare BigTable client
 	client, err := bigtable.NewClient(context.Background(), config.ProjectID, config.InstanceID)
 	if err != nil {
-		log.Fatalf("Could not create bigtable client: %v", err)
+		panic(err)
 	}
 
 	// create instance
@@ -261,7 +259,7 @@ func initializeRecordsTable(admin *bigtable.AdminClient) {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating table '%s': %v", recordsTableName, err)
+			panic(fmt.Errorf("error creating table '%s': %v", recordsTableName, err))
 		}
 	}
 
@@ -270,14 +268,14 @@ func initializeRecordsTable(admin *bigtable.AdminClient) {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating column family '%s': %v", recordsColumnFamilyName, err)
+			panic(fmt.Errorf("error creating column family '%s': %v", recordsColumnFamilyName, err))
 		}
 	}
 
 	// set garbage collection policy
 	err = admin.SetGCPolicy(context.Background(), recordsTableName, recordsColumnFamilyName, bigtable.MaxVersionsPolicy(1))
 	if err != nil {
-		log.Panicf("error setting gc policy: %v", err)
+		panic(fmt.Errorf("error setting gc policy: %v", err))
 	}
 }
 
@@ -287,7 +285,7 @@ func initializeLatestTable(admin *bigtable.AdminClient) {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating table '%s': %v", latestTableName, err)
+			panic(fmt.Errorf("error creating table '%s': %v", latestTableName, err))
 		}
 	}
 
@@ -296,13 +294,13 @@ func initializeLatestTable(admin *bigtable.AdminClient) {
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
-			log.Panicf("error creating column family '%s': %v", latestColumnFamilyName, err)
+			panic(fmt.Errorf("error creating column family '%s': %v", latestColumnFamilyName, err))
 		}
 	}
 
 	// set garbage collection policy
 	err = admin.SetGCPolicy(context.Background(), latestTableName, latestColumnFamilyName, bigtable.MaxVersionsPolicy(maxLatestRecords))
 	if err != nil {
-		log.Panicf("error setting gc policy: %v", err)
+		panic(fmt.Errorf("error setting gc policy: %v", err))
 	}
 }

@@ -193,7 +193,7 @@ func TestKeySimple(t *testing.T) {
 func hexToBytes(num string) []byte {
 	bytes, err := hex.DecodeString(strings.Replace(num, "0x", "", 1))
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 	return bytes
 }
