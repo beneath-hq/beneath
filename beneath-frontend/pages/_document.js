@@ -4,14 +4,14 @@
 import Document, { Head, Main, NextScript } from "next/document";
 import React from "react";
 import flush from "styled-jsx/server";
-import { ServerStyleSheets } from '@material-ui/styles';
-import * as snippet from '@segment/snippet'
+import { ServerStyleSheets } from "@material-ui/styles";
+import * as snippet from "@segment/snippet";
 
 import theme from "../lib/theme";
 import { IS_PRODUCTION, SEGMENT_WRITE_KEY } from "../lib/connection";
 
 export default class MyDocument extends Document {
-  static async getInitialProps(ctx) {    
+  static async getInitialProps(ctx) {
     // For MUI + Next.js, see https://github.com/mui-org/material-ui/blob/master/examples/nextjs/pages/_document.js
     // Render app and page and get the context of the page with collected side effects.
     const sheets = new ServerStyleSheets();
