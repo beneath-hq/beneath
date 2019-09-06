@@ -8,7 +8,6 @@ import Typography from "@material-ui/core/Typography";
 
 import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
 import { GATEWAY_URL } from "../../lib/connection";
-import { Schema } from "./schema";
 
 import CodeBlock from "../CodeBlock";
 import VSpace from "../VSpace";
@@ -32,8 +31,8 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
       </Typography>
       <CodeBlock language={"python"}>{`from beneath.client import Client
 client = Client()
-stream = client.stream(project="${stream.project.name}", stream="${stream.name}")
-df = stream.load_all()`}</CodeBlock>
+stream = client.stream(project_name="${stream.project.name}", stream_name="${stream.name}")
+df = stream.read()`}</CodeBlock>
       <Typography variant="body2" paragraph>
         Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
         You must first install our Python library with <code>pip install beneath</code>.

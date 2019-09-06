@@ -15,6 +15,7 @@ import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
 import VSpace from "../VSpace";
 import { Schema } from "./schema";
+import { GET_TOKEN } from "../../apollo/queries/local/token";
 
 const FLASH_ROWS_DURATION = 5000;
 
@@ -70,8 +71,32 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
 
     const self = this;
 
+    const tokenData = this.apollo.readQuery({ query: GET_TOKEN });
+    if (!tokenData) {
+      this.props.setLoading(false);
+      return;
+    }
+
+    const token = tokenData.token;
+
     this.subscription = new SubscriptionClient(`${GATEWAY_URL_WS}/ws`, {
       reconnect: true,
+      connectionParams: {
+        secret: token
+      },
+      connectionCallback: (error: any, _: any) => {
+        if (error) {
+          if (this.subscription) {
+            this.subscription.close(true);
+            this.props.setLoading(false);
+            this.state = {
+              error: error.message,
+              hasMore: false,
+              flashRows: 0,
+            };
+          }
+        }
+      },
     });
 
     const request = {
@@ -168,7 +193,7 @@ class StreamLatest extends React.Component<WithApolloClient<StreamLatestProps>, 
           const errorMsg =
             error || (data && data.latestRecords && data.latestRecords.error) || this.state.error;
           if (errorMsg) {
-            return <p>Error: {JSON.stringify(error)}</p>;
+            return <p>Error: {JSON.stringify(errorMsg)}</p>;
           }
 
           const records = data ? (data.latestRecords ? data.latestRecords.data : null) : null;

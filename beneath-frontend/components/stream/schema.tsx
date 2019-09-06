@@ -1,7 +1,8 @@
 import avro from "avsc";
 import _ from "lodash";
+import dynamic from "next/dynamic";
 import numeral from "numeral";
-import Moment from "react-moment";
+const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import { QueryStream_stream } from "../../apollo/types/QueryStream";
 
