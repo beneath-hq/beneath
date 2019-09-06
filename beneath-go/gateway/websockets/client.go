@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-
-	"github.com/beneath-core/beneath-go/core/log"
+	"time"
 
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/log"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/gorilla/websocket"
@@ -44,6 +44,13 @@ type Client struct {
 
 	// Lock
 	mu sync.Mutex
+
+	// Metrics
+	startTime       time.Time
+	messagesRead    uint
+	bytesRead       uint
+	messagesWritten uint
+	bytesWritten    uint
 }
 
 // WebsocketMessage represents a message passed over the wire
@@ -75,23 +82,23 @@ const (
 )
 
 // NewClient initializes a new client
-func NewClient(broker *Broker, ws *websocket.Conn, secret *model.Secret) *Client {
+func NewClient(broker *Broker, ws *websocket.Conn) *Client {
 	// set WS connection configuration
 	ws.SetReadLimit(maxMessageSize)
 
 	client := &Client{
 		Broker:        broker,
 		WS:            ws,
-		Secret:        secret,
 		Outbound:      make(chan WebsocketMessage, 16),
 		Subscriptions: make(map[SubscriptionFilter]SubscriptionID),
+		startTime:     time.Now(),
 	}
 
 	// start background workers
 	go client.beginReading()
 	go client.beginWriting()
 
-	log.S.Infow(
+	client.log(
 		"ws conn new",
 		"ip", client.WS.RemoteAddr(),
 	)
@@ -196,6 +203,26 @@ func (c *Client) GetSubscriptionID(filter SubscriptionFilter) SubscriptionID {
 	return subID
 }
 
+// Init should be called upon receipt of connectionInitMsgType
+func (c *Client) Init(payload map[string]interface{}) {
+	// get token
+	token, ok := payload["secret"].(string)
+	if !ok {
+		c.SendConnectionError("websocket must pass a secret")
+		return
+	}
+
+	// authenticate
+	c.Secret = model.AuthenticateSecretString(c.Broker.ctx, token)
+	if c.Secret == nil {
+		c.SendConnectionError("couldn't authenticate secret")
+		return
+	}
+
+	// send ack
+	c.SendConnectionAck()
+}
+
 // Terminate gracefully closes the connection
 func (c *Client) Terminate(closeCode int, msg string) {
 	c.mu.Lock()
@@ -207,10 +234,17 @@ func (c *Client) Terminate(closeCode int, msg string) {
 func (c *Client) Close() {
 	close(c.Outbound)
 	_ = c.WS.Close()
-	log.S.Infow(
+	c.mu.Lock()
+	c.log(
 		"ws conn closed",
 		"ip", c.WS.RemoteAddr(),
+		"reads", c.messagesRead,
+		"bytes_read", c.bytesRead,
+		"writes", c.messagesWritten,
+		"bytes_written", c.bytesWritten,
+		"elapsed", time.Since(c.startTime),
 	)
+	c.mu.Unlock()
 }
 
 // beginReading relays requests from the websocket connection to the broker
@@ -224,7 +258,7 @@ func (c *Client) beginReading() {
 		if err != nil {
 			// break out of the run loop (triggering CloseClient) if the connection closed
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseProtocolError, websocket.CloseNoStatusReceived) {
-				log.S.Infow(
+				c.log(
 					"ws conn closed unexpectedly",
 					"err", err.Error(),
 					"ip", c.WS.RemoteAddr(),
@@ -232,6 +266,12 @@ func (c *Client) beginReading() {
 			}
 			return
 		}
+
+		// record metrics
+		c.mu.Lock()
+		c.messagesRead++
+		c.bytesRead += uint(len(data))
+		c.mu.Unlock()
 
 		// parse message as WebsocketMessage
 		var msg WebsocketMessage
@@ -243,7 +283,7 @@ func (c *Client) beginReading() {
 		}
 
 		// log information about client message
-		log.S.Infow(
+		c.log(
 			"ws msg receive",
 			"ip", c.WS.RemoteAddr(),
 			"msg_type", msg.Type,
@@ -278,8 +318,12 @@ func (c *Client) beginWriting() {
 				panic(fmt.Errorf("couldn't marshal WebsocketMessage: %v", msg))
 			}
 
-			// write
+			// record metrics
 			c.mu.Lock()
+			c.messagesWritten++
+			c.bytesWritten += uint(len(data))
+
+			// write
 			err = c.WS.WriteMessage(websocket.TextMessage, data)
 			c.mu.Unlock()
 			if err != nil {
@@ -288,4 +332,25 @@ func (c *Client) beginWriting() {
 			}
 		}
 	}
+}
+
+// logs a message including info about the client
+func (c *Client) log(msg string, keysAndValues ...interface{}) {
+	l := log.S
+
+	if c.Secret != nil {
+		if c.Secret.UserID != nil {
+			l = l.With(
+				"secret", c.Secret.SecretID.String(),
+				"user", c.Secret.UserID.String(),
+			)
+		} else if c.Secret.ProjectID != nil {
+			l = l.With(
+				"secret", c.Secret.SecretID.String(),
+				"project", c.Secret.ProjectID.String(),
+			)
+		}
+	}
+
+	l.Infow(msg, keysAndValues...)
 }

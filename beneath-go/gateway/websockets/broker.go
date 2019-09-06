@@ -10,7 +10,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/model"
-	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
 	pb "github.com/beneath-core/beneath-go/proto"
@@ -120,11 +119,8 @@ func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// get auth
-	secret := middleware.GetSecret(r.Context())
-
 	// create client and register it with the hub
-	b.register <- NewClient(b, ws, secret)
+	b.register <- NewClient(b, ws)
 
 	return nil
 }
@@ -271,7 +267,7 @@ func (b *Broker) processRequest(r Request) {
 	// use the request's message type to process it accordingly
 	switch r.Message.Type {
 	case connectionInitMsgType:
-		r.Client.SendConnectionAck()
+		r.Client.Init(r.Message.Payload)
 	case connectionTerminateMsgType:
 		r.Client.Terminate(websocket.CloseNormalClosure, "terminated")
 	case startMsgType:

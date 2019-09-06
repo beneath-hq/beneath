@@ -17,7 +17,6 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -61,13 +60,13 @@ func ListenAndServeGRPC(port int) error {
 			middleware.InjectTagsUnaryServerInterceptor(),
 			middleware.LoggerUnaryServerInterceptor(),
 			grpc_auth.UnaryServerInterceptor(middleware.AuthInterceptor),
-			grpc_recovery.UnaryServerInterceptor(),
+			middleware.RecovererUnaryServerInterceptor(),
 		),
 		grpc_middleware.WithStreamServerChain(
 			middleware.InjectTagsStreamServerInterceptor(),
 			middleware.LoggerStreamServerInterceptor(),
 			grpc_auth.StreamServerInterceptor(middleware.AuthInterceptor),
-			grpc_recovery.StreamServerInterceptor(),
+			middleware.RecovererStreamServerInterceptor(),
 		),
 	)
 	pb.RegisterGatewayServer(server, &gRPCServer{})

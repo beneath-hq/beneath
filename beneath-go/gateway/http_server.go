@@ -21,7 +21,6 @@ import (
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
-	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -38,7 +37,7 @@ func httpHandler() http.Handler {
 	// handler.Use(chimiddleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
 	handler.Use(middleware.InjectTags)
 	handler.Use(middleware.Logger)
-	handler.Use(chimiddleware.Recoverer)
+	handler.Use(middleware.Recoverer)
 	handler.Use(middleware.Auth)
 
 	// Add CORS
