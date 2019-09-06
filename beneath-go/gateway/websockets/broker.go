@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/log"
-
 	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
 	pb "github.com/beneath-core/beneath-go/proto"
 
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 )
@@ -74,10 +74,10 @@ const (
 func NewBroker(engine *engine.Engine) *Broker {
 	// create upgrader
 	upgrader := &websocket.Upgrader{
+		EnableCompression: true,
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
-		EnableCompression: true,
 	}
 
 	// create broker
@@ -111,6 +111,13 @@ func NewBroker(engine *engine.Engine) *Broker {
 
 // HTTPHandler upgrades incoming requests to websocket connections
 func (b *Broker) HTTPHandler(w http.ResponseWriter, r *http.Request) error {
+	// chimiddleware.WrapResponseWriter combined with chimiddleware.DefaultCompress
+	// interferes with Upgrade causing an error. Hack: unwrap chi wrapper (side effect:
+	// disables response size tracking -- doesn't matter here)
+	if ww, ok := w.(chimiddleware.WrapResponseWriter); ok {
+		w = ww.Unwrap()
+	}
+
 	// upgrade to a websocket connection
 	ws, err := b.upgrader.Upgrade(w, r, http.Header{
 		"Sec-Websocket-Protocol": []string{"graphql-ws"},
