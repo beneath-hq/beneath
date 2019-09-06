@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"google.golang.org/grpc/peer"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -48,9 +50,12 @@ func LoggerUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		tags := GetTags(ctx)
 		l := loggerWithTags(log.L, tags)
 
+		p, _ := peer.FromContext(ctx)
+
 		l.Info(
 			"grpc unary request",
 			zap.String("method", info.FullMethod),
+			zap.String("ip", p.Addr.String()),
 			zap.Uint32("code", uint32(status.Code(err))),
 			zap.Duration("time", time.Since(t1)),
 		)
@@ -68,9 +73,12 @@ func LoggerStreamServerInterceptor() grpc.StreamServerInterceptor {
 		tags := GetTags(ss.Context())
 		l := loggerWithTags(log.L, tags)
 
+		p, _ := peer.FromContext(ss.Context())
+
 		l.Info(
 			"grpc stream request",
 			zap.String("method", info.FullMethod),
+			zap.String("ip", p.Addr.String()),
 			zap.Uint32("code", uint32(status.Code(err))),
 			zap.Duration("time", time.Since(t1)),
 		)

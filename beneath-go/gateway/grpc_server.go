@@ -21,6 +21,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	// see https://github.com/grpc/grpc-go/blob/master/Documentation/encoding.md#using-a-compressor
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 const (

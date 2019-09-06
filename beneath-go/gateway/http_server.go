@@ -21,6 +21,7 @@ import (
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -34,7 +35,8 @@ func ListenAndServeHTTP(port int) error {
 func httpHandler() http.Handler {
 	handler := chi.NewRouter()
 
-	// handler.Use(chimiddleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	handler.Use(chimiddleware.RealIP)
+	handler.Use(chimiddleware.DefaultCompress)
 	handler.Use(middleware.InjectTags)
 	handler.Use(middleware.Logger)
 	handler.Use(middleware.Recoverer)
@@ -313,6 +315,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// write and finish
+	w.Header().Set("Content-Type", "application/json")
 	err = jsonutil.MarshalWriter(encode, w)
 	if err != nil {
 		return err
@@ -415,6 +418,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	encode := map[string]interface{}{"data": result}
 
 	// write and finish
+	w.Header().Set("Content-Type", "application/json")
 	err = jsonutil.MarshalWriter(encode, w)
 	if err != nil {
 		return err

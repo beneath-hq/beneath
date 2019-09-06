@@ -52,7 +52,10 @@ class Client:
 
   def _connect_grpc(self):
     self.request_metadata = [('authorization', 'Bearer {}'.format(self.secret))]
-    self.channel = grpc.insecure_channel(config.BENEATH_GATEWAY_HOST_GRPC)
+    self.channel = grpc.insecure_channel(
+      target=config.BENEATH_GATEWAY_HOST_GRPC,
+      compression=grpc.Compression.Gzip,
+    )
     self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
 
