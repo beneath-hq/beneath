@@ -31,6 +31,7 @@ func Logger(next http.Handler) http.Handler {
 		l.Info(
 			"http request",
 			zap.String("method", r.Method),
+			zap.String("proto", r.Proto),
 			zap.String("host", r.Host),
 			zap.String("path", r.RequestURI),
 			zap.String("ip", r.RemoteAddr),
