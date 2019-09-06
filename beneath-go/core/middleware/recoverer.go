@@ -27,9 +27,8 @@ func Recoverer(next http.Handler) http.Handler {
 				httpErr = httputil.NewError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
 			}
 		}()
-
 		next.ServeHTTP(w, r)
-		return httpErr
+		return nil
 	})
 }
 
