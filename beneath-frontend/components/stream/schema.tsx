@@ -25,10 +25,11 @@ export class Schema {
     this.columns = [];
     this.includeTimestamp = includeTimestamp;
     for (const field of this.avroSchema.fields) {
-      this.columns.push(new Column(field.name, field.name, field.type, (field as any).doc));
+      const key = this.keyFields.includes(field.name);
+      this.columns.push(new Column(field.name, field.name, field.type, key, (field as any).doc));
     }
     if (includeTimestamp) {
-      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago", undefined));
+      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago", false, undefined));
     }
   }
 
@@ -46,12 +47,14 @@ class Column {
   public name: string;
   public displayName: string;
   public type: avro.Type | TimeagoType;
+  public key: boolean;
   public doc: string | undefined;
 
-  constructor(name: string, displayName: string, type: avro.Type | TimeagoType, doc: string | undefined) {
+  constructor(name: string, displayName: string, type: avro.Type | TimeagoType, key: boolean, doc: string | undefined) {
     this.name = name;
     this.displayName = displayName;
     this.type = type;
+    this.key = key;
     this.doc = doc;
   }
 

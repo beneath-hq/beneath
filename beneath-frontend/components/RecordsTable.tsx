@@ -13,6 +13,7 @@ import {
   Tooltip,
 } from "@material-ui/core";
 import InfoIcon from "@material-ui/icons/InfoSharp";
+import SearchIcon from "@material-ui/icons/SearchSharp";
 
 import { Records_records_data } from "../apollo/types/Records";
 import { Schema } from "./stream/schema";
@@ -78,6 +79,13 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, highlightTopN })
                     <Tooltip title={column.doc} interactive>
                       <Icon className={classes.headerCellInfo}>
                         <InfoIcon fontSize="inherit" />
+                      </Icon>
+                    </Tooltip>
+                  )}
+                  {column.key && (
+                    <Tooltip title={"Column is part of an index"} interactive>
+                      <Icon className={classes.headerCellInfo}>
+                        <SearchIcon fontSize="inherit" />
                       </Icon>
                     </Tooltip>
                   )}
