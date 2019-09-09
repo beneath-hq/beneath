@@ -190,13 +190,13 @@ if __name__ == '__main__':
   # stream parser and subparsers
   _stream = _root.add_parser('stream').add_subparsers()
 
-  _stream_create_ext = _stream.add_parser('create-external')
+  _stream_create_ext = _stream.add_parser('create-root')
   _stream_create_ext.set_defaults(func=stream_create_ext)
   _stream_create_ext.add_argument('--project', type=str, required=True)
   _stream_create_ext.add_argument('--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
   _stream_create_ext.add_argument('--manual', type=str2bool)
 
-  _stream_update_ext = _stream.add_parser('update-external')
+  _stream_update_ext = _stream.add_parser('update-root')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
   _stream_update_ext.add_argument('--project', type=str, required=True)
