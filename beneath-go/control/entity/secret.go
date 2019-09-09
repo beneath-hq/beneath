@@ -38,9 +38,6 @@ type Secret struct {
 // SecretRole represents a role in a Secret
 type SecretRole string
 
-// BillingEntity represents the secret's billing entity
-// type BillingEntity string
-
 const (
 	// SecretRoleReadonly can only read data
 	SecretRoleReadonly SecretRole = "r"
@@ -50,10 +47,6 @@ const (
 
 	// SecretRoleManage can edit a user
 	SecretRoleManage SecretRole = "m"
-
-	// BillingEntityProject
-	// BillingEntityUser
-	// BillingEntityUser
 
 	// number of secrets to cache in local memory for extra speed
 	secretCacheLocalSize = 10000
@@ -314,4 +307,14 @@ func (k *Secret) WritesStream(stream *CachedStream) bool {
 	// 	return httputil.NewHTTPError(403, "token doesn't grant right to write to this stream")
 	// }
 	return k != nil
+}
+
+// GetBillingID gets the BillingID based on the BillingEntity
+func (k *Secret) GetBillingID() *uuid.UUID {
+	if k.UserID != nil {
+		return k.UserID
+	} else if k.ProjectID != nil {
+		return k.ProjectID
+	}
+	panic(fmt.Errorf("neither user id nor project id set"))
 }

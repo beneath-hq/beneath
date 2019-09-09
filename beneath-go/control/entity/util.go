@@ -13,7 +13,6 @@ func AssertFoundOne(err error) bool {
 			return false
 		}
 		panic(err)
-		return false
 	}
 	return true
 }
