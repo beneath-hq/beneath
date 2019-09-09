@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"context"
@@ -31,7 +31,8 @@ type Secret struct {
 	Project      *Project
 	CreatedOn    *time.Time `sql:",default:now()"`
 	UpdatedOn    *time.Time `sql:",default:now()"`
-	SecretString string     `sql:"-"`
+	DeletedOn    time.Time
+	SecretString string `sql:"-"`
 }
 
 // SecretRole represents a role in a Secret

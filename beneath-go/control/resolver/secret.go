@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/beneath-core/beneath-go/control/gql"
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -17,15 +17,15 @@ func (r *Resolver) Secret() gql.SecretResolver {
 
 type secretResolver struct{ *Resolver }
 
-func (r *secretResolver) SecretID(ctx context.Context, obj *model.Secret) (string, error) {
+func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (string, error) {
 	return obj.SecretID.String(), nil
 }
 
-func (r *secretResolver) Role(ctx context.Context, obj *model.Secret) (string, error) {
+func (r *secretResolver) Role(ctx context.Context, obj *entity.Secret) (string, error) {
 	return string(obj.Role), nil
 }
 
-func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*model.Secret, error) {
+func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
@@ -35,16 +35,16 @@ func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([
 		return nil, gqlerror.Errorf("Not allowed to read user's secrets")
 	}
 
-	return model.FindUserSecrets(ctx, userID), nil
+	return entity.FindUserSecrets(ctx, userID), nil
 }
 
-func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UUID) ([]*model.Secret, error) {
+func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to read project secrets")
 	}
 
-	return model.FindProjectSecrets(ctx, projectID), nil
+	return entity.FindProjectSecrets(ctx, projectID), nil
 }
 
 func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, description string) (*gql.NewSecret, error) {
@@ -53,12 +53,12 @@ func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, d
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
 
-	role := model.SecretRoleManage
+	role := entity.SecretRoleManage
 	if readonly {
-		role = model.SecretRoleReadonly
+		role = entity.SecretRoleReadonly
 	}
 
-	secret, err := model.CreateUserSecret(ctx, *authSecret.UserID, role, description)
+	secret, err := entity.CreateUserSecret(ctx, *authSecret.UserID, role, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -75,12 +75,12 @@ func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uui
 		return nil, gqlerror.Errorf("Not allowed to edit project")
 	}
 
-	role := model.SecretRoleReadWrite
+	role := entity.SecretRoleReadWrite
 	if readonly {
-		role = model.SecretRoleReadonly
+		role = entity.SecretRoleReadonly
 	}
 
-	secret, err := model.CreateProjectSecret(ctx, projectID, role, description)
+	secret, err := entity.CreateProjectSecret(ctx, projectID, role, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -92,7 +92,7 @@ func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uui
 }
 
 func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
-	secret := model.FindSecret(ctx, secretID)
+	secret := entity.FindSecret(ctx, secretID)
 	if secret == nil {
 		return false, gqlerror.Errorf("Secret not found")
 	}

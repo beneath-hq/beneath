@@ -6,7 +6,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/beneath-core/beneath-go/control/gql"
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	uuid "github.com/satori/go.uuid"
 )
@@ -18,12 +18,12 @@ func (r *Resolver) User() gql.UserResolver {
 
 type userResolver struct{ *Resolver }
 
-func (r *userResolver) UserID(ctx context.Context, obj *model.User) (string, error) {
+func (r *userResolver) UserID(ctx context.Context, obj *entity.User) (string, error) {
 	return obj.UserID.String(), nil
 }
 
-func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*model.User, error) {
-	user := model.FindUser(ctx, userID)
+func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
+	user := entity.FindUser(ctx, userID)
 	if user == nil {
 		return nil, gqlerror.Errorf("User %s not found", userID.String())
 	}
@@ -36,7 +36,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
 
-	user := model.FindUser(ctx, *secret.UserID)
+	user := entity.FindUser(ctx, *secret.UserID)
 	return userToMe(user), nil
 }
 
@@ -46,7 +46,7 @@ func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *stri
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
-	user := model.FindUser(ctx, *secret.UserID)
+	user := entity.FindUser(ctx, *secret.UserID)
 	err := user.UpdateDescription(ctx, name, bio)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *stri
 	return userToMe(user), nil
 }
 
-func userToMe(u *model.User) *gql.Me {
+func userToMe(u *entity.User) *gql.Me {
 	if u == nil {
 		return nil
 	}

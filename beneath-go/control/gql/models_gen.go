@@ -5,17 +5,17 @@ package gql
 import (
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 )
 
 type Me struct {
 	UserID    string      `json:"userID"`
-	User      *model.User `json:"user"`
+	User      *entity.User `json:"user"`
 	Email     string      `json:"email"`
 	UpdatedOn time.Time   `json:"updatedOn"`
 }
 
 type NewSecret struct {
-	Secret       *model.Secret `json:"secret"`
+	Secret       *entity.Secret `json:"secret"`
 	SecretString string        `json:"secretString"`
 }

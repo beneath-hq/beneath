@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"context"
@@ -25,14 +25,16 @@ type Project struct {
 	Public      bool      `sql:",notnull,default:true"`
 	CreatedOn   time.Time `sql:",default:now()"`
 	UpdatedOn   time.Time `sql:",default:now()"`
+	DeletedOn   time.Time
 	Secrets     []*Secret
 	Streams     []*Stream
+	Models      []*Model
 	Users       []*User `pg:"many2many:projects_users,fk:project_id,joinFK:user_id"`
 }
 
 // ProjectToUser represnts the many-to-many relationship between users and projects
 type ProjectToUser struct {
-	tableName struct{}  `sql:"projects_users,alias:up"`
+	tableName struct{}  `sql:"projects_users,alias:pu"`
 	ProjectID uuid.UUID `sql:",pk,type:uuid"`
 	Project   *Project
 	UserID    uuid.UUID `sql:",pk,type:uuid"`

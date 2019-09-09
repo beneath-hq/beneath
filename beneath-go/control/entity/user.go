@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"context"
@@ -16,16 +16,17 @@ import (
 
 // User represents a Beneath user
 type User struct {
-	UserID    uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Username  string     `sql:",unique",validate:"omitempty,gte=3,lte=16"`
-	Email     string     `sql:",unique,notnull",validate:"required,email"`
-	Name      string     `sql:",notnull",validate:"required,gte=4,lte=50"`
-	Bio       string     `validate:"omitempty,lte=255"`
-	PhotoURL  string     `validate:"omitempty,url,lte=255"`
-	GoogleID  string     `sql:",unique",validate:"omitempty,lte=255"`
-	GithubID  string     `sql:",unique",validate:"omitempty,lte=255"`
-	CreatedOn time.Time  `sql:",default:now()"`
-	UpdatedOn time.Time  `sql:",default:now()"`
+	UserID    uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Username  string    `sql:",unique",validate:"omitempty,gte=3,lte=16"`
+	Email     string    `sql:",unique,notnull",validate:"required,email"`
+	Name      string    `sql:",notnull",validate:"required,gte=4,lte=50"`
+	Bio       string    `validate:"omitempty,lte=255"`
+	PhotoURL  string    `validate:"omitempty,url,lte=255"`
+	GoogleID  string    `sql:",unique",validate:"omitempty,lte=255"`
+	GithubID  string    `sql:",unique",validate:"omitempty,lte=255"`
+	CreatedOn time.Time `sql:",default:now()"`
+	UpdatedOn time.Time `sql:",default:now()"`
+	DeletedOn time.Time
 	Projects  []*Project `pg:"many2many:projects_users,fk:user_id,joinFK:project_id"`
 	Secrets   []*Secret
 }

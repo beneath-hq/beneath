@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 
 	"github.com/go-pg/migrations"
 )
@@ -11,20 +11,21 @@ func init() {
 		// Stream
 		_, err = db.Exec(`
 			CREATE TABLE streams(
-				stream_id    UUID DEFAULT uuid_generate_v4(),
-				name         TEXT NOT NULL,
-				description  TEXT,
-				schema       TEXT NOT NULL,
-				avro_schema  JSON NOT NULL,
+				stream_id             UUID DEFAULT uuid_generate_v4(),
+				name                  TEXT NOT NULL,
+				description           TEXT,
+				schema                TEXT NOT NULL,
+				avro_schema           JSON NOT NULL,
 				canonical_avro_schema JSON NOT NULL,
-				bigquery_schema JSON NOT NULL,
-				key_fields   JSONB NOT NULL, 
-				external     BOOLEAN NOT NULL,
-				batch        BOOLEAN NOT NULL,
-				manual       BOOLEAN NOT NULL,
-				project_id   UUID NOT NULL,
-				created_on   TIMESTAMPTZ DEFAULT Now(),
-				updated_on   TIMESTAMPTZ DEFAULT Now(),
+				bigquery_schema       JSON NOT NULL,
+				key_fields            JSONB NOT NULL, 
+				external              BOOLEAN NOT NULL,
+				batch                 BOOLEAN NOT NULL,
+				manual                BOOLEAN NOT NULL,
+				project_id            UUID NOT NULL,
+				created_on            TIMESTAMPTZ DEFAULT Now(),
+				updated_on            TIMESTAMPTZ DEFAULT Now(),
+				deleted_on            TIMESTAMPTZ,
 				PRIMARY KEY (stream_id),
 				FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE RESTRICT
 			)
@@ -42,7 +43,7 @@ func init() {
 		}
 
 		// StreamInstance
-		err = db.Model(&model.StreamInstance{}).CreateTable(defaultCreateOptions)
+		err = db.Model(&entity.StreamInstance{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -61,13 +62,13 @@ func init() {
 		return nil
 	}, func(db migrations.DB) (err error) {
 		// StreamInstance
-		err = db.Model(&model.StreamInstance{}).DropTable(defaultDropOptions)
+		err = db.Model(&entity.StreamInstance{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}
 
 		// Stream
-		err = db.Model(&model.Stream{}).DropTable(defaultDropOptions)
+		err = db.Model(&entity.Stream{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

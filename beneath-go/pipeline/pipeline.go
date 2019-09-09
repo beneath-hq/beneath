@@ -7,7 +7,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	model "github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
@@ -61,7 +61,7 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error
 
 	// lookup stream for write request
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
 	}

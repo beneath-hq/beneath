@@ -1,4 +1,4 @@
-package model
+package entity
 
 import "gopkg.in/go-playground/validator.v9"
 

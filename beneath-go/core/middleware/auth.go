@@ -8,13 +8,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 )
 
 // GetSecret extracts the auth object from ctx
-func GetSecret(ctx context.Context) *model.Secret {
+func GetSecret(ctx context.Context) *entity.Secret {
 	tags := GetTags(ctx)
 	return tags.Secret
 }
@@ -23,7 +23,7 @@ func GetSecret(ctx context.Context) *model.Secret {
 // Sets ContextKey to nil if no authorization passed (contrary to gRPC)
 func Auth(next http.Handler) http.Handler {
 	return httputil.AppHandler(func(w http.ResponseWriter, r *http.Request) error {
-		var secret *model.Secret
+		var secret *entity.Secret
 
 		header := r.Header.Get("Authorization")
 		if header != "" {
@@ -33,7 +33,7 @@ func Auth(next http.Handler) http.Handler {
 
 			token := strings.TrimSpace(header[6:])
 
-			secret = model.AuthenticateSecretString(r.Context(), token)
+			secret = entity.AuthenticateSecretString(r.Context(), token)
 			if secret == nil {
 				return httputil.NewError(400, "unauthenticated")
 			}
@@ -55,7 +55,7 @@ func AuthInterceptor(ctx context.Context) (context.Context, error) {
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
 	}
 
-	secret := model.AuthenticateSecretString(ctx, token)
+	secret := entity.AuthenticateSecretString(ctx, token)
 
 	tags := GetTags(ctx)
 	tags.Secret = secret

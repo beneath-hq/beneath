@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
@@ -191,7 +191,7 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 	}
 
 	// get stream
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		panic(fmt.Errorf("cached stream is null for instance_id %s", instanceID.String()))
 	}
@@ -301,7 +301,7 @@ func (b *Broker) processStartRequest(r Request) {
 	instanceID := uuid.FromStringOrNil(query)
 
 	// get instanceID info
-	stream := model.FindCachedStreamByCurrentInstanceID(b.ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(b.ctx, instanceID)
 	if stream == nil {
 		r.Client.SendError(r.Message.ID, "Error! That instance_id doesn't exist")
 		return

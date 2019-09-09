@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"context"
@@ -29,11 +29,15 @@ type Stream struct {
 	Manual                  bool      `sql:",notnull"`
 	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project                 *Project
+	ModelID                 uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
+	Model                   *Model
+	DerivingModels          []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
 	StreamInstances         []*StreamInstance
 	CurrentStreamInstanceID *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
 	CurrentStreamInstance   *StreamInstance
 	CreatedOn               time.Time `sql:",default:now()"`
 	UpdatedOn               time.Time `sql:",default:now()"`
+	DeletedOn               time.Time
 }
 
 var (
@@ -247,9 +251,3 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	// done
 	return nil
 }
-
-/**
- * TODO: In the future
- * - belongs to model
- * - dependencies (models)
- */

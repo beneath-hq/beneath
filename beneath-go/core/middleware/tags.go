@@ -8,14 +8,14 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 )
 
 // Tags represents annotations on a request made available both up and down the
 // middleware/interceptor chain (e.g., secrets set down the chain becomes available
 // to logging middleware at the top of the chain).
 type Tags struct {
-	Secret *model.Secret
+	Secret *entity.Secret
 	Query  interface{}
 }
 

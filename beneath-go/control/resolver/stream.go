@@ -7,7 +7,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/beneath-core/beneath-go/control/gql"
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/middleware"
 )
 
@@ -18,12 +18,12 @@ func (r *Resolver) Stream() gql.StreamResolver {
 
 type streamResolver struct{ *Resolver }
 
-func (r *streamResolver) StreamID(ctx context.Context, obj *model.Stream) (string, error) {
+func (r *streamResolver) StreamID(ctx context.Context, obj *entity.Stream) (string, error) {
 	return obj.StreamID.String(), nil
 }
 
-func (r *queryResolver) Stream(ctx context.Context, name string, projectName string) (*model.Stream, error) {
-	stream := model.FindStreamByNameAndProject(ctx, name, projectName)
+func (r *queryResolver) Stream(ctx context.Context, name string, projectName string) (*entity.Stream, error) {
+	stream := entity.FindStreamByNameAndProject(ctx, name, projectName)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
 	}
@@ -36,13 +36,13 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 	return stream, nil
 }
 
-func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*model.Stream, error) {
+func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID)
 	}
 
-	stream := &model.Stream{
+	stream := &entity.Stream{
 		Schema:    schema,
 		External:  true,
 		Batch:     batch,
@@ -56,11 +56,11 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 	}
 
 	// done (using FindStream to get relations correctly)
-	return model.FindStream(ctx, stream.StreamID), nil
+	return entity.FindStream(ctx, stream.StreamID), nil
 }
 
-func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*model.Stream, error) {
-	stream := model.FindStream(ctx, streamID)
+func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error) {
+	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}

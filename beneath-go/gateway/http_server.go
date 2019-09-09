@@ -10,7 +10,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/core/log"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -91,13 +91,13 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	// get instance ID
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
+	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
 
 	// get stream details
-	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
@@ -133,7 +133,7 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
+	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
@@ -144,7 +144,7 @@ func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 func getLatestFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	projectName := chi.URLParam(r, "projectName")
 	streamName := chi.URLParam(r, "streamName")
-	instanceID := model.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
+	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}
@@ -175,7 +175,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	secret := middleware.GetSecret(r.Context())
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
@@ -329,7 +329,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	secret := middleware.GetSecret(r.Context())
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}
@@ -438,7 +438,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// get stream
-	stream := model.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
 		return httputil.NewError(404, "stream not found")
 	}

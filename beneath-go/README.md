@@ -43,6 +43,6 @@ These are the main libraries used in the control server
 ### Running migrations
 
 1. Add a migration file to `beneath-core/beneath-go/control/migrations`
-2. Update the relevant model(s) in `beneath-core/beneath-go/control/model` to match the migration
+2. Update the relevant model(s) in `beneath-core/beneath-go/control/entity` to match the migration
 3. The migration will automatically be applied when you start the control server
 4. (There is also a migration tool, which you can run with `go run cmd/control_migrate/main.go XXX`, where XXX can be `up`, `down` and `reset` -- `reset` is especially useful during development)

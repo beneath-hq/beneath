@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 
 	"github.com/go-pg/migrations"
 )
@@ -9,7 +9,7 @@ import (
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
 		// User
-		err = db.Model(&model.User{}).CreateTable(defaultCreateOptions)
+		err = db.Model(&entity.User{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -24,7 +24,7 @@ func init() {
 		}
 
 		// ProjectToUser
-		err = db.Model(&model.ProjectToUser{}).CreateTable(defaultCreateOptions)
+		err = db.Model(&entity.ProjectToUser{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -33,13 +33,13 @@ func init() {
 		return nil
 	}, func(db migrations.DB) (err error) {
 		// User
-		err = db.Model(&model.User{}).DropTable(defaultDropOptions)
+		err = db.Model(&entity.User{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}
 
 		// ProjectToUser
-		err = db.Model(&model.ProjectToUser{}).DropTable(defaultDropOptions)
+		err = db.Model(&entity.ProjectToUser{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

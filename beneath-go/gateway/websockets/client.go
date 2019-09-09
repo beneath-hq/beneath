@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	uuid "github.com/satori/go.uuid"
 
@@ -34,7 +34,7 @@ type Client struct {
 	WS *websocket.Conn
 
 	// Secret used by client to authenticate
-	Secret *model.Secret
+	Secret *entity.Secret
 
 	// Buffered channel of outbound messages to users
 	Outbound chan WebsocketMessage
@@ -213,7 +213,7 @@ func (c *Client) Init(payload map[string]interface{}) {
 	}
 
 	// authenticate
-	c.Secret = model.AuthenticateSecretString(c.Broker.ctx, token)
+	c.Secret = entity.AuthenticateSecretString(c.Broker.ctx, token)
 	if c.Secret == nil {
 		c.SendConnectionError("couldn't authenticate secret")
 		return

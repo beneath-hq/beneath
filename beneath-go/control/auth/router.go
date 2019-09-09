@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -70,13 +70,13 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// upsert user
-	user, err := model.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, info.Name, info.AvatarURL)
+	user, err := entity.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, info.Name, info.AvatarURL)
 	if err != nil {
 		return err
 	}
 
 	// create session secret
-	secret, err := model.CreateUserSecret(r.Context(), user.UserID, model.SecretRoleManage, "Browser session")
+	secret, err := entity.CreateUserSecret(r.Context(), user.UserID, entity.SecretRoleManage, "Browser session")
 	if err != nil {
 		return err
 	}

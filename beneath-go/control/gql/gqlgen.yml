@@ -16,12 +16,14 @@ models:
   UUID:
     model: github.com/beneath-core/beneath-go/control/gql.UUID
   Secret:
-    model: github.com/beneath-core/beneath-go/control/model.Secret
+    model: github.com/beneath-core/beneath-go/control/entity.Secret
   Project:
-    model: github.com/beneath-core/beneath-go/control/model.Project
+    model: github.com/beneath-core/beneath-go/control/entity.Project
+  Model:
+    model: github.com/beneath-core/beneath-go/control/entity.Model
   Stream:
-    model: github.com/beneath-core/beneath-go/control/model.Stream
+    model: github.com/beneath-core/beneath-go/control/entity.Stream
   StreamInstance:
-    model: github.com/beneath-core/beneath-go/control/model.StreamInstance
+    model: github.com/beneath-core/beneath-go/control/entity.StreamInstance
   User:
-    model: github.com/beneath-core/beneath-go/control/model.User
+    model: github.com/beneath-core/beneath-go/control/entity.User

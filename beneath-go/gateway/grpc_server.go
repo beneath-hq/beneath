@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/model"
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -92,13 +92,13 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	secret := middleware.GetSecret(ctx)
 
 	// get instance ID
-	instanceID := model.FindInstanceIDByNameAndProject(ctx, req.StreamName, req.ProjectName)
+	instanceID := entity.FindInstanceIDByNameAndProject(ctx, req.StreamName, req.ProjectName)
 	if instanceID == uuid.Nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
 	// get stream details
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -142,7 +142,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	)
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -234,7 +234,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	)
 
 	// get cached stream
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
@@ -298,7 +298,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	)
 
 	// get stream info
-	stream := model.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
