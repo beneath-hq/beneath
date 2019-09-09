@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/cache"
+	"github.com/go-redis/cache/v7"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/beneath-core/beneath-go/db"
@@ -32,10 +32,14 @@ type Secret struct {
 	CreatedOn    *time.Time `sql:",default:now()"`
 	UpdatedOn    *time.Time `sql:",default:now()"`
 	SecretString string     `sql:"-"`
+	// BillingEntity BillingEntity `sql:",notnull"`
 }
 
 // SecretRole represents a role in a Secret
 type SecretRole string
+
+// BillingEntity represents the secret's billing entity
+// type BillingEntity string
 
 const (
 	// SecretRoleReadonly can only read data
@@ -46,6 +50,10 @@ const (
 
 	// SecretRoleManage can edit a user
 	SecretRoleManage SecretRole = "m"
+
+	// BillingEntityProject
+	// BillingEntityUser
+	// BillingEntityUser
 
 	// number of secrets to cache in local memory for extra speed
 	secretCacheLocalSize = 10000

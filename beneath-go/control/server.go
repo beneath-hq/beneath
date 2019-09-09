@@ -80,6 +80,7 @@ func ListenAndServeHTTP(port int) error {
 	router.Use(middleware.Logger)
 	router.Use(chimiddleware.Recoverer)
 	router.Use(middleware.Auth)
+	router.Use(middleware.IPRateLimit())
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{

@@ -7,7 +7,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/go-pg/pg"
-	"github.com/go-redis/cache"
+	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 )
 

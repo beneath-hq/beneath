@@ -19,7 +19,10 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-redis/cache v6.4.0+incompatible
-	github.com/go-redis/redis v6.15.2+incompatible
+	github.com/go-redis/cache/v7 v7.0.0
+	github.com/go-redis/redis v6.15.5+incompatible
+	github.com/go-redis/redis/v7 v7.0.0-beta.4
+	github.com/go-redis/redis_rate/v8 v8.0.0-beta
 	github.com/go-test/deep v1.0.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/mock v1.3.1 // indirect
@@ -40,7 +43,7 @@ require (
 	github.com/markbates/goth v1.54.1
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.opencensus.io v0.22.0 // indirect
@@ -53,13 +56,11 @@ require (
 	golang.org/x/image v0.0.0-20190523035834-f03afa92d3ff // indirect
 	golang.org/x/mobile v0.0.0-20190607214518-6fa95d984e88 // indirect
 	golang.org/x/mod v0.1.0 // indirect
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190614084037-d442b75600c5 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/tools v0.0.0-20190613204242-ed0dc450797f // indirect
 	google.golang.org/api v0.6.0
-	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3 // indirect
 	google.golang.org/grpc v1.21.1
 	gopkg.in/go-playground/assert.v1 v1.2.1
