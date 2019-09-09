@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg"
-	"github.com/go-redis/cache"
+	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"

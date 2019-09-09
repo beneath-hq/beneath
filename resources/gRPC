@@ -3,3 +3,5 @@ https://www.grpc.io/docs/guides/
 https://www.grpc.io/docs/guides/concepts/
 https://grpc.io/docs/tutorials/basic/python/
 
+Load balancing:
+https://grpc.io/blog/loadbalancing/

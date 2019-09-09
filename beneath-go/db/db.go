@@ -3,7 +3,7 @@ package db
 import (
 	"github.com/beneath-core/beneath-go/engine"
 	"github.com/go-pg/pg"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 )
 
 var (
