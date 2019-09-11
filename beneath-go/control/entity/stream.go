@@ -29,7 +29,7 @@ type Stream struct {
 	Manual                  bool      `sql:",notnull"`
 	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project                 *Project
-	ModelID                 uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
+	ModelID                 *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
 	Model                   *Model
 	DerivingModels          []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
 	StreamInstances         []*StreamInstance
