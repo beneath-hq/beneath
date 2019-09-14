@@ -75,10 +75,11 @@ func init() {
 func ListenAndServeHTTP(port int) error {
 	router := chi.NewRouter()
 
-	// router.Use(chimiddleware.RealIP) // TODO: Uncomment if IPs are a problem behind nginx
+	router.Use(chimiddleware.RealIP)
+	router.Use(chimiddleware.DefaultCompress)
 	router.Use(middleware.InjectTags)
 	router.Use(middleware.Logger)
-	router.Use(chimiddleware.Recoverer)
+	router.Use(middleware.Recoverer)
 	router.Use(middleware.Auth)
 	router.Use(middleware.IPRateLimit())
 
@@ -108,6 +109,9 @@ func ListenAndServeHTTP(port int) error {
 		makeExecutableSchema(),
 		makeQueryLoggingMiddleware(),
 		makeGraphQLErrorPresenter(),
+		handler.RecoverFunc(func(ctx context.Context, err interface{}) error {
+			panic(err)
+		}),
 	))
 
 	// Serve
@@ -131,6 +135,10 @@ func makeExecutableSchema() graphql.ExecutableSchema {
 
 func makeGraphQLErrorPresenter() handler.Option {
 	return handler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+		tags := middleware.GetTags(ctx)
+		if q, ok := tags.Query.(map[string]interface{}); ok {
+			q["error"] = err
+		}
 		// Uncomment this line to print resolver error details in the console
 		// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
 		return graphql.DefaultErrorPresenter(ctx, err)

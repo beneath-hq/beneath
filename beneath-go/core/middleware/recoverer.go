@@ -19,9 +19,11 @@ func Recoverer(next http.Handler) http.Handler {
 	return httputil.AppHandler(func(w http.ResponseWriter, r *http.Request) (httpErr error) {
 		defer func() {
 			if r := recover(); r != nil {
+				err, _ := r.(error)
 				log.L.Error(
 					"http recovered panic",
-					zap.Reflect("error", r),
+					zap.Error(err),
+					zap.Reflect("error_raw", r),
 					zap.Stack("stack"),
 				)
 				httpErr = httputil.NewError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
