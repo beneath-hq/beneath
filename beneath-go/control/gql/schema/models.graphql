@@ -1,0 +1,44 @@
+extend type Query {
+  model(name: String!, projectName: String!): Model!
+}
+
+extend type Mutation {
+  createModel(input: CreateModelInput!): Model!
+  updateModel(input: UpdateModelInput!): Model!
+  deleteModel(modelID: UUID!): Boolean!
+  deleteExternalStream(streamID: UUID!): Boolean!
+  newBatch(modelID: UUID!): [StreamInstance!]!
+  commitBatch(instanceIDs: [UUID]!): Boolean!
+}
+
+type Model {
+  modelID: ID!
+  name: String!
+  description: String
+  sourceURL: String
+  kind: String!
+  createdOn: Time!
+  updatedOn: Time!
+  project: Project!
+  inputStreams: [Stream!]!
+  outputStreams: [Stream!]!
+}
+
+input CreateModelInput {
+  projectID: UUID!
+  name: String!
+  kind: String!
+  sourceURL: String
+  description: String
+  inputStreamIDs: [UUID!]!
+  outputStreamSchemas: [String!]!
+}
+
+input UpdateModelInput {
+  modelID: UUID!
+  kind: String
+  sourceURL: String
+  description: String
+  inputStreamIDs: [UUID!]
+  outputStreamSchemas: [String!]
+}

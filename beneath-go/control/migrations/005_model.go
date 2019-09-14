@@ -31,8 +31,8 @@ func init() {
 		// Stream.ModelID
 		_, err = db.Exec(`
 			ALTER TABLE streams
-			ADD model_id UUID,
-			ADD FOREIGN KEY (model_id) REFERENCES models (model_id) ON DELETE RESTRICT;
+			ADD source_model_id UUID,
+			ADD FOREIGN KEY (source_model_id) REFERENCES models (model_id) ON DELETE RESTRICT;
 		`)
 		if err != nil {
 			return err
@@ -43,7 +43,7 @@ func init() {
 	}, func(db migrations.DB) (err error) {
 		// Stream.ModelID
 		_, err = db.Exec(`
-			ALTER TABLE streams DROP model_id;
+			ALTER TABLE streams DROP source_model_id;
 		`)
 		if err != nil {
 			return err

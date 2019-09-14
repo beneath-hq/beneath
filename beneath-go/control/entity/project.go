@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/orm"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
@@ -49,8 +50,8 @@ var (
 	projectCache *cache.Codec
 )
 
-// configure constants and validator
 func init() {
+	orm.RegisterTable((*ProjectToUser)(nil))
 	projectNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
 	GetValidator().RegisterStructValidation(validateProject, Project{})
 }

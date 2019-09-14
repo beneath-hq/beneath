@@ -19,38 +19,21 @@ type StreamInstance struct {
 	Stream           *Stream
 	CreatedOn        time.Time `sql:",default:now()"`
 	UpdatedOn        time.Time `sql:",default:now()"`
+	CommittedOn      time.Time
 }
 
 // CreateStreamInstance creates a new instance
-func CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (*StreamInstance, error) {
-	var res *StreamInstance
-
-	err := db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		si, err := CreateStreamInstanceWithTx(tx, streamID)
-		if err != nil {
-			return err
-		}
-		res = si
-		return nil
+func CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (res *StreamInstance, err error) {
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		res, err = CreateStreamInstanceWithTx(tx, streamID)
+		return err
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return res, err
 }
 
 // CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
 func CreateStreamInstanceWithTx(tx *pg.Tx, streamID uuid.UUID) (*StreamInstance, error) {
-	si := &StreamInstance{
-		StreamID: streamID,
-	}
-
+	si := &StreamInstance{StreamID: streamID}
 	_, err := tx.Model(si).Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	return si, nil
+	return si, err
 }
