@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import json
+import glob
 import os
 
 from beneath import config
@@ -74,10 +75,44 @@ def model_sim(args):
   pass
 
 def model_stage(args):
-  print("model_stage")
-  print(args)
-  # client = get_client()
-  pass
+  # read config
+  with open("config.json", "r") as f:
+    config = json.load(f)
+
+  # read schemas
+  def _read_schema(path):
+    with open(path, "r") as f:
+      return f.read()
+  schemas = [_read_schema(p) for p in glob.glob("schemas/*.graphql")]
+
+  # get client
+  client = get_client()
+
+  # get project
+  result = client.get_project_by_name(config.get("project", None))
+  project_id = result['projectID']
+
+  # get input stream IDs
+  input_stream_ids = []
+  for dep in config.get("dependencies", []):
+    project, stream = dep.split("/")
+    details = client.get_stream_details(project, stream)
+    input_stream_ids.append(details["streamID"])
+  
+  # stage model
+  result = client.stage_model(
+    project_id=project_id,
+    name=config.get("name", None),
+    kind=config.get("kind", None),
+    source_url=config.get("source_url", None),
+    description=config.get("description", None),
+    input_stream_ids=input_stream_ids,
+    output_stream_schemas=schemas,
+  )
+
+  # print out model details
+  pretty_print_graphql_result(result, [
+  ])
 
 def model_deploy(args):
   print("model_deploy")
@@ -99,7 +134,7 @@ def stream_create_ext(args):
   
   # submit GraphQL mutation to create an external stream
   manual = args.manual
-  result = client.create_external_stream(project_id, schema, manual)
+  result = client.create_external_stream(project_id=project_id, schema=schema, manual=manual)
   
   # print out the stream's details to the user
   pretty_print_graphql_result(result, [
@@ -178,29 +213,29 @@ if __name__ == '__main__':
 
   _model_sim = _model.add_parser('simulate')
   _model_sim.set_defaults(func=model_sim)
-  _model_sim.add_argument('--sample-size', type=int, required=True)
+  _model_sim.add_argument('--sample-size', type=int)
 
   _model_stage = _model.add_parser('stage')
   _model_stage.set_defaults(func=model_stage)
 
   _model_deploy = _model.add_parser('deploy')
   _model_deploy.set_defaults(func=model_deploy)
-  _model_deploy.add_argument('--update', type=str, required=True)
+  _model_deploy.add_argument('--update', type=str)
 
   # stream parser and subparsers
   _stream = _root.add_parser('stream').add_subparsers()
 
   _stream_create_ext = _stream.add_parser('create-root')
   _stream_create_ext.set_defaults(func=stream_create_ext)
+  _stream_create_ext.add_argument('-f', '--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
   _stream_create_ext.add_argument('--project', type=str, required=True)
-  _stream_create_ext.add_argument('--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
   _stream_create_ext.add_argument('--manual', type=str2bool)
 
   _stream_update_ext = _stream.add_parser('update-root')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
+  _stream_update_ext.add_argument('-f', '--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
   _stream_update_ext.add_argument('--project', type=str, required=True)
-  _stream_update_ext.add_argument('--file', type=str, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
   _stream_update_ext.add_argument('--manual', type=str2bool)
 
   # parse the args and call the relevant function
