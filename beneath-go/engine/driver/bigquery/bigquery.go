@@ -89,11 +89,11 @@ func (b *BigQuery) RegisterProject(ctx context.Context, projectID uuid.UUID, pub
 	// create dataset for project
 	err := b.Client.Dataset(makeDatasetName(name)).Create(ctx, meta)
 	if err != nil {
-		status, ok := status.FromError(err)
-		if !ok || status.Code() != codes.AlreadyExists {
-			panic(fmt.Errorf("error creating dataset for project '%s': %v", name, err))
-		} else {
+		status, _ := status.FromError(err)
+		if status.Code() == codes.AlreadyExists || strings.Contains(err.Error(), "Error 409: Already Exists:") {
 			log.S.Errorf("trying to create dataset that already exists for project '%s'", name)
+		} else {
+			panic(fmt.Errorf("error creating dataset for project '%s': %v", name, err))
 		}
 	}
 
