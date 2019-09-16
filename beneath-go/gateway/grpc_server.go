@@ -13,6 +13,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/metrics"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -152,6 +153,13 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
 	}
 
+	// check quota
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	ok := secret.CheckReadQuota(usage)
+	if !ok {
+		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
+	}
+
 	// check limit is valid
 	if req.Limit == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "limit cannot be 0")
@@ -201,16 +209,22 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
+	bytesRead := 0
 	err = db.Engine.Tables.ReadRecordRange(ctx, instanceID, keyRange, int(req.Limit), func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:  avroData,
 			Timestamp: timeutil.UnixMilli(timestamp),
 		})
+		bytesRead += len(avroData)
 		return nil
 	})
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
+
+	// track read metrics
+	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
 	return response, nil
@@ -249,6 +263,13 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 		return nil, grpc.Errorf(codes.InvalidArgument, "cannot get latest records for batch streams")
 	}
 
+	// check quota
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	ok := secret.CheckReadQuota(usage)
+	if !ok {
+		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
+	}
+
 	// check limit is valid
 	if req.Limit == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "limit cannot be 0")
@@ -266,16 +287,22 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 
 	// read rows from engine
 	response := &pb.ReadRecordsResponse{}
+	bytesRead := 0
 	err := db.Engine.Tables.ReadLatestRecords(ctx, instanceID, int(req.Limit), before, func(avroData []byte, timestamp time.Time) error {
 		response.Records = append(response.Records, &pb.Record{
 			AvroData:  avroData,
 			Timestamp: timeutil.UnixMilli(timestamp),
 		})
+		bytesRead += len(avroData)
 		return nil
 	})
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
+
+	// track read metrics
+	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
 	return response, nil
@@ -313,7 +340,15 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		return nil, status.Error(codes.InvalidArgument, "records cannot be empty")
 	}
 
+	// check quota
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	ok := secret.CheckWriteQuota(usage)
+	if !ok {
+		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
+	}
+
 	// check each record is valid
+	bytesWritten := 0
 	for idx, record := range req.Records {
 		// set timestamp to current timestamp if it's 0
 		if record.Timestamp == 0 {
@@ -337,6 +372,9 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
+
+		// increment bytes written
+		bytesWritten += len(record.AvroData)
 	}
 
 	// write request to engine
@@ -344,6 +382,10 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
+
+	// track write metrics
+	Metrics.TrackWrite(instanceID, int64(len(req.Records)), int64(bytesWritten))
+	Metrics.TrackWrite(secret.BillingID(), int64(len(req.Records)), int64(bytesWritten))
 
 	return &pb.WriteRecordsResponse{}, nil
 }

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "network.beneath.proto";
+option java_outer_classname = "BeneathProto";
+
+package proto;
+
+message QuotaUsage {
+  int64 read_ops = 1;
+  int64 read_records = 2;
+  int64 read_bytes = 3;
+  int64 write_ops = 4;
+  int64 write_records = 5;
+  int64 write_bytes = 6;
+}
