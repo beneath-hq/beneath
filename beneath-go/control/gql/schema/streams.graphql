@@ -29,6 +29,14 @@ type Stream {
   manual: Boolean!
   project: Project!
   currentStreamInstanceID: UUID
+  sourceModel: Model
   createdOn: Time!
   updatedOn: Time!
+}
+
+type StreamInstance {
+  instanceID: ID!
+  stream: Stream!
+  createdOn: Time!
+  committedOn: Time!
 }

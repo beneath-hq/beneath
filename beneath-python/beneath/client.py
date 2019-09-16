@@ -70,7 +70,7 @@ class Client:
     pong = self._send_client_ping()
     self._check_pong_status(pong.status)
     if not pong.authenticated:
-      raise Exception("You must authenticate with 'beneath auth' or by passing the 'secret' arg")
+      raise Exception("You must authenticate with 'beneath auth'")
 
 
   def _check_pong_status(self, status):
@@ -224,6 +224,48 @@ class Client:
       """
     )
     return result['projectByName']
+
+
+  def stage_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
+    result = self._query_control(
+      variables={
+        "input": {
+          "projectID": project_id,
+          "name": name,
+          "kind": kind,
+          "sourceURL": source_url,
+          "description": description,
+          "inputStreamIDs": input_stream_ids,
+          "outputStreamSchemas": output_stream_schemas,
+        },
+      },
+      query="""
+        mutation CreateModel($input: CreateModelInput!) {
+          createModel(input: $input) {
+            modelID
+            name
+            description
+            sourceURL
+            kind
+            createdOn
+            updatedOn
+            project {
+              projectID
+              name
+            }
+            inputStreams {
+              streamID
+              name
+            }
+            outputStreams {
+              streamID
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['createModel']
 
 
   def get_stream_details(self, project_name, stream_name):

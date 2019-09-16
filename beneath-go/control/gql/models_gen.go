@@ -6,16 +6,36 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/satori/go.uuid"
 )
 
+type CreateModelInput struct {
+	ProjectID           uuid.UUID   `json:"projectID"`
+	Name                string      `json:"name"`
+	Kind                string      `json:"kind"`
+	SourceURL           *string     `json:"sourceURL"`
+	Description         *string     `json:"description"`
+	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
+	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
+}
+
 type Me struct {
-	UserID    string      `json:"userID"`
+	UserID    string       `json:"userID"`
 	User      *entity.User `json:"user"`
-	Email     string      `json:"email"`
-	UpdatedOn time.Time   `json:"updatedOn"`
+	Email     string       `json:"email"`
+	UpdatedOn time.Time    `json:"updatedOn"`
 }
 
 type NewSecret struct {
 	Secret       *entity.Secret `json:"secret"`
-	SecretString string        `json:"secretString"`
+	SecretString string         `json:"secretString"`
+}
+
+type UpdateModelInput struct {
+	ModelID             uuid.UUID   `json:"modelID"`
+	Kind                *string     `json:"kind"`
+	SourceURL           *string     `json:"sourceURL"`
+	Description         *string     `json:"description"`
+	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
+	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
 }

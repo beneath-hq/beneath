@@ -1,0 +1,4 @@
+type BlocksDaily @stream(name: "blocks-daily", key: "day") {
+  day: Timestamp!
+  count: Int!
+}

@@ -29,9 +29,9 @@ type Stream struct {
 	Manual                  bool      `sql:",notnull"`
 	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project                 *Project
-	ModelID                 *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
-	Model                   *Model
-	DerivingModels          []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
+	SourceModelID           *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
+	SourceModel             *Model
+	DerivedModels           []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
 	StreamInstances         []*StreamInstance
 	CurrentStreamInstanceID *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
 	CurrentStreamInstance   *StreamInstance
@@ -65,7 +65,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	stream := &Stream{
 		StreamID: streamID,
 	}
-	err := db.DB.ModelContext(ctx, stream).WherePK().Column("stream.*", "Project", "CurrentStreamInstance").Select()
+	err := db.DB.ModelContext(ctx, stream).WherePK().Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -76,7 +76,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 func FindStreamByNameAndProject(ctx context.Context, name string, projectName string) *Stream {
 	stream := &Stream{}
 	err := db.DB.ModelContext(ctx, stream).
-		Column("stream.*", "Project", "CurrentStreamInstance").
+		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel").
 		Where("lower(stream.name) = lower(?)", name).
 		Where("lower(project.name) = lower(?)", projectName).
 		Select()
@@ -154,9 +154,8 @@ func (s *Stream) UpdateDetails(ctx context.Context, newSchema *string, manual *b
 	return err
 }
 
-// CompileAndCreate compiles the schema, derives name and avro schemas and inserts
-// the stream into the database
-func (s *Stream) CompileAndCreate(ctx context.Context) error {
+// Compile compiles s.Schema and sets relevant fields
+func (s *Stream) Compile(ctx context.Context) error {
 	// compile schema
 	compiler := schema.NewCompiler(s.Schema)
 	err := compiler.Compile()
@@ -201,53 +200,67 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 		s.Project = FindProject(ctx, s.ProjectID)
 	}
 
-	// create stream (and a new stream instance ID if not batch)
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert stream
-		_, err := tx.Model(s).Insert()
-		if err != nil {
-			return err
-		}
+	return nil
+}
 
-		// create and set stream instance if not batch
-		if !s.Batch {
-			// create stream instance
-			si, err := CreateStreamInstanceWithTx(tx, s.StreamID)
-			if err != nil {
-				return err
-			}
-
-			// update stream with stream instance ID
-			s.CurrentStreamInstanceID = &si.StreamInstanceID
-			_, err = tx.Model(s).WherePK().Update()
-			if err != nil {
-				return err
-			}
-
-			// register instance
-			err = db.Engine.Warehouse.RegisterStreamInstance(
-				ctx,
-				s.ProjectID,
-				s.Project.Name,
-				s.StreamID,
-				s.Name,
-				s.Description,
-				s.BigQuerySchema,
-				s.KeyFields,
-				si.StreamInstanceID,
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		// done
-		return nil
-	})
+// CreateWithTx creates the stream and an associated instance (if streaming) using tx
+func (s *Stream) CreateWithTx(tx *pg.Tx) error {
+	// insert stream
+	_, err := tx.Model(s).Insert()
 	if err != nil {
 		return err
 	}
 
+	// create and set stream instance if not batch
+	if !s.Batch {
+		// create stream instance
+		si, err := CreateStreamInstanceWithTx(tx, s.StreamID)
+		if err != nil {
+			return err
+		}
+
+		// update stream with stream instance ID
+		s.CurrentStreamInstanceID = &si.StreamInstanceID
+		_, err = tx.Model(s).WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		// register instance
+		err = db.Engine.Warehouse.RegisterStreamInstance(
+			tx.Context(),
+			s.ProjectID,
+			s.Project.Name,
+			s.StreamID,
+			s.Name,
+			s.Description,
+			s.BigQuerySchema,
+			s.KeyFields,
+			si.StreamInstanceID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	// done
 	return nil
+}
+
+// CompileAndCreate compiles the schema, derives name and avro schemas and inserts
+// the stream into the database
+func (s *Stream) CompileAndCreate(ctx context.Context) error {
+	// compile
+	err := s.Compile(ctx)
+	if err != nil {
+		return err
+	}
+
+	// create stream (and a new stream instance ID if not batch)
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		return s.CreateWithTx(tx)
+	})
+
+	// done
+	return err
 }

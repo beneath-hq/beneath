@@ -1,0 +1,10 @@
+{
+  "name": "blocks-activity",
+  "project": "ethereum",
+  "kind": "streaming",
+  "source_url": null,
+  "description": null,
+  "dependencies": [
+    "ethereum/blocks"
+  ]
+}
