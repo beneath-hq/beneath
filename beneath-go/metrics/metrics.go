@@ -3,6 +3,8 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"log"
+	"runtime"
 	"sync"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
+	"golang.org/x/sync/semaphore"
 )
 
 // Broker coordinates the buffer and ticker
@@ -104,6 +107,11 @@ func (b *Broker) tick() {
 	}
 }
 
+var (
+	maxWorkers = runtime.GOMAXPROCS(0)
+	sem        = semaphore.NewWeighted(int64(maxWorkers))
+)
+
 // commitToTable commits a batch of accumulated metrics to BigTable every X seconds
 func (b *Broker) commitToTable() error {
 	ctx := context.Background()
@@ -115,24 +123,44 @@ func (b *Broker) commitToTable() error {
 
 	ts := time.Now()
 
-	// TODO: use "golang.org/x/sync/semaphore" to implement a worker pool of goroutines to upload metrics in batch
 	for id, usage := range buf {
-		// commit metrics to monthly count
-		rowKey := metricsKey(MonthlyPeriod, id, ts)
-
-		err := db.Engine.Tables.CommitUsage(ctx, rowKey, usage)
-		if err != nil {
-			return err
+		// when maxWorkers goroutines are in flight, Acquire blocks until one of the workers finishes.
+		if err := sem.Acquire(ctx, 1); err != nil {
+			log.Printf("Failed to acquire semaphore: %v", err)
+			break
 		}
 
-		// commit metrics to hourly count
-		rowKey = metricsKey(HourlyPeriod, id, ts)
-		err = db.Engine.Tables.CommitUsage(ctx, rowKey, usage)
-		if err != nil {
+		go func(id uuid.UUID, usage pb.QuotaUsage) error {
+			defer sem.Release(1)
+
+			// commit metrics to monthly count
+			rowKey := metricsKey(MonthlyPeriod, id, ts)
+
+			err := db.Engine.Tables.CommitUsage(ctx, rowKey, usage)
+			if err != nil {
+				return err
+			}
+
+			// commit metrics to hourly count
+			rowKey = metricsKey(HourlyPeriod, id, ts)
+			err = db.Engine.Tables.CommitUsage(ctx, rowKey, usage)
+			if err != nil {
+				return err
+			}
+
 			return err
-		}
+		}(id, usage)
 	}
 
+	// acquire all of the tokens to wait for any remaining workers to finish.
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		log.Printf("Failed to acquire semaphore: %v", err)
+	}
+
+	// release all the tokens to be ready for the next batch
+	sem.Release(int64(maxWorkers))
+
+	// done
 	return nil
 }
 
