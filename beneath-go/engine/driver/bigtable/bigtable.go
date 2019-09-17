@@ -2,11 +2,13 @@ package bigtable
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,6 +31,7 @@ type Bigtable struct {
 	Client  *bigtable.Client
 	Records *bigtable.Table
 	Latest  *bigtable.Table
+	Metrics *bigtable.Table
 }
 
 const (
@@ -39,6 +42,15 @@ const (
 	latestTableName        = "latest"
 	latestColumnFamilyName = "cf0"
 	latestColumnName       = "avro0"
+
+	metricsTableName            = "metrics"
+	metricsColumnFamilyName     = "cf0"
+	metricsReadOpsColumnName    = "ro"
+	metricsReadRowsColumnName   = "rr"
+	metricsReadBytesColumnName  = "rb"
+	metricsWriteOpsColumnName   = "wo"
+	metricsWriteRowsColumnName  = "wr"
+	metricsWriteBytesColumnName = "wb"
 
 	maxLatestRecords = 1000
 )
@@ -65,6 +77,7 @@ func New() *Bigtable {
 	// initialize tables if they don't exist
 	initializeRecordsTable(admin)
 	initializeLatestTable(admin)
+	initializeMetricsTable(admin)
 
 	// prepare BigTable client
 	client, err := bigtable.NewClient(context.Background(), config.ProjectID, config.InstanceID)
@@ -77,6 +90,7 @@ func New() *Bigtable {
 		Client:  client,
 		Records: client.Open(recordsTableName),
 		Latest:  client.Open(latestTableName),
+		Metrics: client.Open(metricsTableName),
 	}
 }
 
@@ -132,6 +146,88 @@ func (p *Bigtable) WriteRecords(ctx context.Context, instanceID uuid.UUID, keys 
 		}
 	}
 
+	return nil
+}
+
+// CommitUsage implements engine.TablesDriver
+func (p *Bigtable) CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error {
+	rmw := bigtable.NewReadModifyWrite()
+
+	if usage.ReadOps > 0 {
+		rmw.Increment(metricsColumnFamilyName, metricsReadOpsColumnName, usage.ReadOps)
+		rmw.Increment(metricsColumnFamilyName, metricsReadRowsColumnName, usage.ReadRecords)
+		rmw.Increment(metricsColumnFamilyName, metricsReadBytesColumnName, usage.ReadBytes)
+	}
+
+	if usage.WriteOps > 0 {
+		rmw.Increment(metricsColumnFamilyName, metricsWriteOpsColumnName, usage.WriteOps)
+		rmw.Increment(metricsColumnFamilyName, metricsWriteRowsColumnName, usage.WriteRecords)
+		rmw.Increment(metricsColumnFamilyName, metricsWriteBytesColumnName, usage.WriteBytes)
+	}
+
+	// apply
+	_, err := p.Metrics.ApplyReadModifyWrite(ctx, string(key), rmw)
+
+	return err
+}
+
+// ReadUsage implements engine.TablesDriver
+func (p *Bigtable) ReadUsage(ctx context.Context, keyPrefix []byte, fn func(key []byte, usage pb.QuotaUsage) error) error {
+	// define row range
+	rr := bigtable.PrefixRange(string(keyPrefix))
+
+	// add filter for latest cell value
+	filter := bigtable.RowFilter(bigtable.LatestNFilter(1))
+
+	// define callback triggered on each bigtable row
+	var idx uint
+	var cbErr error
+	cb := func(row bigtable.Row) bool {
+		// save key
+		key := []byte(row.Key())
+
+		// get metrics
+		u := pb.QuotaUsage{}
+
+		for _, cell := range row[metricsColumnFamilyName] {
+			colName := cell.Column[len(metricsColumnFamilyName)+1:]
+
+			switch colName {
+			case metricsReadOpsColumnName:
+				u.ReadOps = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsReadRowsColumnName:
+				u.ReadRecords = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsReadBytesColumnName:
+				u.ReadBytes = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteOpsColumnName:
+				u.WriteOps = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteRowsColumnName:
+				u.WriteRecords = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteBytesColumnName:
+				u.WriteBytes = int64(binary.BigEndian.Uint64(cell.Value))
+			}
+		}
+
+		// trigger callback
+		cbErr = fn(key, u)
+		if cbErr != nil {
+			return false // stop
+		}
+
+		// continue
+		idx++
+		return true
+	}
+
+	// read rows
+	err := p.Metrics.ReadRows(ctx, rr, cb, filter)
+	if err != nil {
+		return err
+	} else if cbErr != nil {
+		return cbErr
+	}
+
+	// done
 	return nil
 }
 
@@ -300,6 +396,32 @@ func initializeLatestTable(admin *bigtable.AdminClient) {
 
 	// set garbage collection policy
 	err = admin.SetGCPolicy(context.Background(), latestTableName, latestColumnFamilyName, bigtable.MaxVersionsPolicy(maxLatestRecords))
+	if err != nil {
+		panic(fmt.Errorf("error setting gc policy: %v", err))
+	}
+}
+
+func initializeMetricsTable(admin *bigtable.AdminClient) {
+	// create table
+	err := admin.CreateTable(context.Background(), metricsTableName)
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			panic(fmt.Errorf("error creating table '%s': %v", metricsTableName, err))
+		}
+	}
+
+	// create column family
+	err = admin.CreateColumnFamily(context.Background(), metricsTableName, metricsColumnFamilyName)
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			panic(fmt.Errorf("error creating column family '%s': %v", metricsColumnFamilyName, err))
+		}
+	}
+
+	// set garbage collection policy
+	err = admin.SetGCPolicy(context.Background(), metricsTableName, metricsColumnFamilyName, bigtable.MaxVersionsPolicy(maxLatestRecords))
 	if err != nil {
 		panic(fmt.Errorf("error setting gc policy: %v", err))
 	}

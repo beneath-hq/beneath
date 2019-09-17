@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/beneath-core/beneath-go/metrics"
+
 	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/entity"
@@ -41,6 +43,7 @@ func httpHandler() http.Handler {
 	handler.Use(middleware.Logger)
 	handler.Use(middleware.Recoverer)
 	handler.Use(middleware.Auth)
+	handler.Use(middleware.IPRateLimit())
 
 	// Add CORS
 	handler.Use(cors.New(cors.Options{
@@ -60,7 +63,7 @@ func httpHandler() http.Handler {
 	// handler.Get("/projects/{projectName}/graphql")
 
 	// create websocket broker and start accepting new connections on /ws
-	broker := websockets.NewBroker(db.Engine)
+	broker := websockets.NewBroker(db.Engine, Metrics)
 	handler.Method("GET", "/ws", httputil.AppHandler(broker.HTTPHandler))
 
 	// REST endpoints
@@ -185,6 +188,15 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
+	// check quota
+	if secret != nil {
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+		ok := secret.CheckReadQuota(usage)
+		if !ok {
+			return httputil.NewError(429, "you have exhausted your monthly quota")
+		}
+	}
+
 	// read body
 	var body map[string]interface{}
 	err := jsonutil.Unmarshal(r.Body, &body)
@@ -276,6 +288,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// begin json object
 	result := make([]interface{}, 0, 1)
+	bytesRead := 0
 
 	// read rows from engine
 	err = db.Engine.Tables.ReadRecordRange(r.Context(), instanceID, keyRange, limit, func(avroData []byte, timestamp time.Time) error {
@@ -296,6 +309,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 		// done
 		result = append(result, data)
+		bytesRead += len(avroData)
 		return nil
 	})
 	if err != nil {
@@ -321,6 +335,12 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		return err
 	}
 
+	// track read metrics
+	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	if secret != nil {
+		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
+	}
+
 	return nil
 }
 
@@ -342,6 +362,15 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	// check isn't batch
 	if stream.Batch {
 		return httputil.NewError(400, "cannot get latest records for batch streams")
+	}
+
+	// check quota
+	if secret != nil {
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+		ok := secret.CheckReadQuota(usage)
+		if !ok {
+			return httputil.NewError(429, "you have exhausted your monthly quota")
+		}
 	}
 
 	// read body
@@ -388,6 +417,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 	// begin json object
 	result := make([]interface{}, 0, limit)
+	bytesRead := 0
 
 	// read rows from engine
 	err = db.Engine.Tables.ReadLatestRecords(r.Context(), instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
@@ -408,6 +438,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 		// done
 		result = append(result, data)
+		bytesRead += len(avroData)
 		return nil
 	})
 	if err != nil {
@@ -422,6 +453,12 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	err = jsonutil.MarshalWriter(encode, w)
 	if err != nil {
 		return err
+	}
+
+	// track read metrics
+	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	if secret != nil {
+		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
 	}
 
 	return nil
@@ -448,6 +485,13 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return httputil.NewError(403, "token doesn't grant right to read this stream")
 	}
 
+	// check quota
+	usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+	ok := secret.CheckWriteQuota(usage)
+	if !ok {
+		return httputil.NewError(429, "you have exhausted your monthly quota")
+	}
+
 	// decode json body
 	var body interface{}
 	err = jsonutil.Unmarshal(r.Body, &body)
@@ -468,6 +512,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// convert objects into records
 	records := make([]*pb.Record, len(objects))
+	bytesWritten := 0
 	for idx, objV := range objects {
 		// check it's a map
 		obj, ok := objV.(map[string]interface{})
@@ -518,6 +563,9 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			AvroData:  avroData,
 			Timestamp: timeutil.UnixMilli(timestamp),
 		}
+
+		// increment bytes written
+		bytesWritten += len(avroData)
 	}
 
 	// queue write request (publishes to Pubsub)
@@ -527,6 +575,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	})
 	if err != nil {
 		return httputil.NewError(400, err.Error())
+	}
+
+	// track write metrics
+	Metrics.TrackWrite(instanceID, int64(len(records)), int64(bytesWritten))
+	if secret != nil {
+		Metrics.TrackWrite(secret.BillingID(), int64(len(records)), int64(bytesWritten))
 	}
 
 	// Done

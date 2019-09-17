@@ -3,6 +3,7 @@ package gateway
 import (
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/metrics"
 )
 
 type configSpecification struct {
@@ -23,10 +24,15 @@ const (
 var (
 	// Config for gateway
 	Config configSpecification
+
+	// Metrics collects stats on records read from/written to Beneath
+	Metrics *metrics.Broker
 )
 
 func init() {
 	core.LoadConfig("beneath", &Config)
+
+	Metrics = metrics.NewBroker()
 
 	db.InitPostgres(Config.PostgresURL)
 	db.InitRedis(Config.RedisURL)

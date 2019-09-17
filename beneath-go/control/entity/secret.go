@@ -12,6 +12,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/beneath-core/beneath-go/db"
+	pb "github.com/beneath-core/beneath-go/proto"
 	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
@@ -309,12 +310,32 @@ func (k *Secret) WritesStream(stream *CachedStream) bool {
 	return k != nil
 }
 
-// GetBillingID gets the BillingID based on the BillingEntity
-func (k *Secret) GetBillingID() *uuid.UUID {
+// BillingID gets the BillingID based on the BillingEntity
+func (k *Secret) BillingID() uuid.UUID {
 	if k.UserID != nil {
-		return k.UserID
+		return *k.UserID
 	} else if k.ProjectID != nil {
-		return k.ProjectID
+		return *k.ProjectID
 	}
 	panic(fmt.Errorf("neither user id nor project id set"))
+}
+
+// CheckReadQuota checks the user's read quota
+func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
+	// if any constraints are hit
+	// the user has hit its quota
+	// return false
+
+	// the user still has resources available
+	return true
+}
+
+// CheckWriteQuota checks the user's write quota
+func (k *Secret) CheckWriteQuota(u pb.QuotaUsage) bool {
+	// if any constraints are hit
+	// the user has hit its quota
+	// return false
+
+	// the user still has resources available
+	return true
 }

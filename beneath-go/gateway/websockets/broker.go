@@ -11,6 +11,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
+	"github.com/beneath-core/beneath-go/metrics"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
@@ -28,6 +29,7 @@ type Request struct {
 type Dispatch struct {
 	Filter  SubscriptionFilter
 	Records []map[string]interface{}
+	Bytes   int64
 }
 
 // Broker maintains the set of active clients and routes messages to the clients
@@ -50,6 +52,9 @@ type Broker struct {
 	// Reference to the engine that supplies new data
 	engine *engine.Engine
 
+	// Metrics broker
+	metrics *metrics.Broker
+
 	// used to manage websocket
 	upgrader *websocket.Upgrader
 
@@ -71,7 +76,7 @@ const (
 )
 
 // NewBroker initializes a new Broker
-func NewBroker(engine *engine.Engine) *Broker {
+func NewBroker(engine *engine.Engine, metricsBroker *metrics.Broker) *Broker {
 	// create upgrader
 	upgrader := &websocket.Upgrader{
 		EnableCompression: true,
@@ -88,6 +93,7 @@ func NewBroker(engine *engine.Engine) *Broker {
 		requests:        make(chan Request),
 		dispatch:        make(chan Dispatch),
 		engine:          engine,
+		metrics:         metricsBroker,
 		upgrader:        upgrader,
 		keepAliveTicker: time.NewTicker(connectionKeepAliveInterval),
 		clients:         make(map[*Client]bool),
@@ -197,6 +203,7 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 	}
 
 	// read and decode records matchin rep.Keys from Tables
+	var bytesRead int64
 	records := make([]map[string]interface{}, len(rep.Keys))
 	err := b.engine.Tables.ReadRecords(ctx, instanceID, rep.Keys, func(idx uint, avroData []byte, timestamp time.Time) error {
 		// decode the avro data
@@ -219,6 +226,9 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 		// assign key to value
 		records[idx] = data
 
+		// track bytes read
+		bytesRead += int64(len(avroData))
+
 		return nil
 	})
 
@@ -230,6 +240,7 @@ func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsRepo
 	b.dispatch <- Dispatch{
 		Filter:  filter,
 		Records: records,
+		Bytes:   bytesRead,
 	}
 
 	// log metrics
@@ -313,6 +324,14 @@ func (b *Broker) processStartRequest(r Request) {
 		return
 	}
 
+	// check quota
+	usage := b.metrics.GetCurrentUsage(b.ctx, r.Client.Secret.BillingID(), metrics.MonthlyPeriod)
+	ok = r.Client.Secret.CheckReadQuota(usage)
+	if !ok {
+		r.Client.SendError(r.Message.ID, "You have exhausted your monthly quota")
+		return
+	}
+
 	// "convert" to filter (in future, may be more elaborate)
 	filter := SubscriptionFilter(instanceID)
 
@@ -357,11 +376,18 @@ func (b *Broker) processMessage(d Dispatch) {
 	subscribers := b.subscriptions[d.Filter]
 	b.subscriptionsMu.RUnlock()
 
+	// get instance ID
+	instanceID := uuid.UUID(d.Filter)
+
 	// push records to all subscribers
 	for c := range subscribers {
 		subID := c.GetSubscriptionID(d.Filter)
 		for _, record := range d.Records {
 			c.SendData(subID, record)
 		}
+
+		// track read
+		b.metrics.TrackRead(instanceID, int64(len(d.Records)), d.Bytes)
+		b.metrics.TrackRead(c.Secret.BillingID(), int64(len(d.Records)), d.Bytes)
 	}
 }

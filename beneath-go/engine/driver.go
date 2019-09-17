@@ -54,6 +54,12 @@ type TablesDriver interface {
 
 	// ReadLatestRecords returns the latest records written to the instance
 	ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error
+
+	// CommitUsage writes a batch of usage metrics
+	CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error
+
+	// ReadUsage reads usage metrics for one or multiple keys and calls fn one by one
+	ReadUsage(ctx context.Context, keyPrefix []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
