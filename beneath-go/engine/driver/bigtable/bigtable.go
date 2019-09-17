@@ -421,7 +421,7 @@ func initializeMetricsTable(admin *bigtable.AdminClient) {
 	}
 
 	// set garbage collection policy
-	err = admin.SetGCPolicy(context.Background(), metricsTableName, metricsColumnFamilyName, bigtable.MaxVersionsPolicy(maxLatestRecords))
+	err = admin.SetGCPolicy(context.Background(), metricsTableName, metricsColumnFamilyName, bigtable.MaxVersionsPolicy(1))
 	if err != nil {
 		panic(fmt.Errorf("error setting gc policy: %v", err))
 	}
