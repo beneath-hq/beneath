@@ -1116,11 +1116,10 @@ input CreateModelInput {
 
 input UpdateModelInput {
   modelID: UUID!
-  kind: String
   sourceURL: String
   description: String
-  inputStreamIDs: [UUID!]
-  outputStreamSchemas: [String!]
+  inputStreamIDs: [UUID!]!
+  outputStreamSchemas: [String!]!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
@@ -6398,12 +6397,6 @@ func (ec *executionContext) unmarshalInputUpdateModelInput(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-		case "kind":
-			var err error
-			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "sourceURL":
 			var err error
 			it.SourceURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6418,13 +6411,13 @@ func (ec *executionContext) unmarshalInputUpdateModelInput(ctx context.Context, 
 			}
 		case "inputStreamIDs":
 			var err error
-			it.InputStreamIDs, err = ec.unmarshalOUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			it.InputStreamIDs, err = ec.unmarshalNUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "outputStreamSchemas":
 			var err error
-			it.OutputStreamSchemas, err = ec.unmarshalOString2ᚕstring(ctx, v)
+			it.OutputStreamSchemas, err = ec.unmarshalNString2ᚕstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8256,38 +8249,6 @@ func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.S
 	return graphql.MarshalString(v)
 }
 
-func (ec *executionContext) unmarshalOString2ᚕstring(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOString2ᚕstring(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -8309,38 +8270,6 @@ func (ec *executionContext) unmarshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐU
 
 func (ec *executionContext) marshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
 	return MarshalUUID(v)
-}
-
-func (ec *executionContext) unmarshalOUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) ([]uuid.UUID, error) {
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]uuid.UUID, len(vSlice))
-	for i := range vSlice {
-		res[i], err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v []uuid.UUID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, sel, v[i])
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {

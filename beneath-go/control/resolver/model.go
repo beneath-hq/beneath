@@ -68,7 +68,34 @@ func (r *mutationResolver) CreateModel(ctx context.Context, input gql.CreateMode
 }
 
 func (r *mutationResolver) UpdateModel(ctx context.Context, input gql.UpdateModelInput) (*entity.Model, error) {
-	panic("not implemented")
+	// get model
+	model := entity.FindModel(ctx, input.ModelID)
+	if model == nil {
+		return nil, gqlerror.Errorf("Model %s not found", input.ModelID.String())
+	}
+
+	// check allowed to edit
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(model.ProjectID) {
+		return nil, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	}
+
+	// update model
+	if input.SourceURL != nil {
+		model.SourceURL = DereferenceString(input.SourceURL)
+	}
+	if input.Description != nil {
+		model.Description = DereferenceString(input.Description)
+	}
+
+	// compile and update
+	err := model.CompileAndUpdate(ctx, input.InputStreamIDs, input.OutputStreamSchemas)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	// done (using FindModel to get relations correctly)
+	return entity.FindModel(ctx, model.ModelID), nil
 }
 
 func (r *mutationResolver) DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error) {

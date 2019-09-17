@@ -36,9 +36,8 @@ input CreateModelInput {
 
 input UpdateModelInput {
   modelID: UUID!
-  kind: String
   sourceURL: String
   description: String
-  inputStreamIDs: [UUID!]
-  outputStreamSchemas: [String!]
+  inputStreamIDs: [UUID!]!
+  outputStreamSchemas: [String!]!
 }
