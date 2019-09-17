@@ -100,15 +100,26 @@ def model_stage(args):
     input_stream_ids.append(details["streamID"])
   
   # stage model
-  result = client.stage_model(
-    project_id=project_id,
-    name=config.get("name", None),
-    kind=config.get("kind", None),
-    source_url=config.get("source_url", None),
-    description=config.get("description", None),
-    input_stream_ids=input_stream_ids,
-    output_stream_schemas=schemas,
-  )
+  name = config.get("name", None)
+  if args.update:
+    model = client.get_model_details(project, name)
+    result = client.update_model(
+      model_id=model["modelID"],
+      source_url=config.get("source_url", None),
+      description=config.get("description", None),
+      input_stream_ids=input_stream_ids,
+      output_stream_schemas=schemas,
+    )
+  else:
+    result = client.create_model(
+      project_id=project_id,
+      name=name,
+      kind=config.get("kind", None),
+      source_url=config.get("source_url", None),
+      description=config.get("description", None),
+      input_stream_ids=input_stream_ids,
+      output_stream_schemas=schemas,
+    )
 
   # print out model details
   pretty_print_graphql_result(result, [
@@ -217,6 +228,7 @@ if __name__ == '__main__':
 
   _model_stage = _model.add_parser('stage')
   _model_stage.set_defaults(func=model_stage)
+  _model_stage.add_argument('--update', type=str2bool, nargs='?', const=True, default=False)
 
   _model_deploy = _model.add_parser('deploy')
   _model_deploy.set_defaults(func=model_deploy)
@@ -229,14 +241,14 @@ if __name__ == '__main__':
   _stream_create_ext.set_defaults(func=stream_create_ext)
   _stream_create_ext.add_argument('-f', '--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
   _stream_create_ext.add_argument('--project', type=str, required=True)
-  _stream_create_ext.add_argument('--manual', type=str2bool)
+  _stream_create_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
   _stream_update_ext = _stream.add_parser('update-root')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
   _stream_update_ext.add_argument('-f', '--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
   _stream_update_ext.add_argument('--project', type=str, required=True)
-  _stream_update_ext.add_argument('--manual', type=str2bool)
+  _stream_update_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
   # parse the args and call the relevant function
   args = parser.parse_args()

@@ -3,11 +3,13 @@ package entity
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/beneath-go/db"
 )
@@ -51,8 +53,23 @@ const (
 	ModelKindStreaming ModelKind = "s"
 )
 
+var (
+	// used for validation
+	modelNameRegex *regexp.Regexp
+)
+
 func init() {
+	modelNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
 	orm.RegisterTable((*StreamIntoModel)(nil))
+	GetValidator().RegisterStructValidation(modelValidation, Model{})
+}
+
+// custom model validation
+func modelValidation(sl validator.StructLevel) {
+	m := sl.Current().Interface().(Model)
+	if !modelNameRegex.MatchString(m.Name) {
+		sl.ReportError(m.Name, "Name", "", "alphanumericorunderscore", "")
+	}
 }
 
 // ParseModelKind returns a matching ModelKind or false if invalid
@@ -117,23 +134,21 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 	// prepare output streams to create
 	outputStreams := make([]*Stream, len(outputStreamScheams))
 	for idx, schema := range outputStreamScheams {
-		stream := &Stream{
-			Schema:    schema,
-			External:  false,
-			Batch:     m.Kind == ModelKindBatch,
-			Manual:    false,
-			ProjectID: m.ProjectID,
-			Project:   m.Project,
-		}
-		err := stream.Compile(ctx)
+		stream, err := m.compileSchema(ctx, schema)
 		if err != nil {
 			return err
 		}
 		outputStreams[idx] = stream
 	}
 
+	// validate model
+	err := GetValidator().Struct(m)
+	if err != nil {
+		return err
+	}
+
 	// begin database transaction
-	err := db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert model
 		_, err := tx.Model(m).Insert()
 		if err != nil {
@@ -166,4 +181,143 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 
 	// done
 	return err
+}
+
+// CompileAndUpdate ...
+func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string) error {
+	// check inputStreamIDs contain all current input streams
+	for _, s := range m.InputStreams {
+		if !containsUUID(inputStreamIDs, s.StreamID) {
+			return fmt.Errorf("Cannot delete input streams from existing model")
+		}
+	}
+
+	// find new input streams
+	var newInputStreamIDs []uuid.UUID
+	for _, id := range inputStreamIDs {
+		// search for ID in InputStreams
+		found := false
+		for _, s := range m.InputStreams {
+			if s.StreamID == id {
+				found = true
+			}
+		}
+
+		// if not found, add to newInputStreamIDs
+		if !found {
+			newInputStreamIDs = append(newInputStreamIDs, id)
+		}
+	}
+
+	// update existing output stream schemas
+	var updateOutputStreams []*Stream
+	outputNames := make(map[string]bool)
+	for _, outputSchema := range outputStreamScheams {
+		// compile new to get information about it
+		new, err := m.compileSchema(ctx, outputSchema)
+		if err != nil {
+			return err
+		}
+
+		// check not multiple schemas with same name
+		if outputNames[new.Name] {
+			return fmt.Errorf("Found two output schemas with the name '%s'. "+"Stream names must be unique.", new.Name)
+		}
+		outputNames[new.Name] = true
+
+		// find matching existing stream
+		var existing *Stream
+		for _, s := range m.OutputStreams {
+			if s.Name == new.Name {
+				existing = s
+			}
+		}
+		if existing == nil {
+			return fmt.Errorf("Couldn't find existing output stream with name '%s'. "+
+				"You can only update existing streams, not add new streams.", new.Name)
+		}
+
+		// make sure new input streams aren't an existing output (weak cycle detection)
+		if containsUUID(newInputStreamIDs, existing.StreamID) {
+			return fmt.Errorf("You cannot use the output stream '%s' as input to this model (cycle)", existing.Name)
+		}
+
+		// skip if no changes
+		if existing.Schema == outputSchema {
+			continue
+		}
+
+		// update
+		existing.ProjectID = m.ProjectID
+		existing.Schema = outputSchema
+		err = existing.Compile(ctx, true)
+		if err != nil {
+			return err
+		}
+
+		// add for saving
+		updateOutputStreams = append(updateOutputStreams, existing)
+	}
+
+	// validate model
+	err := GetValidator().Struct(m)
+	if err != nil {
+		return err
+	}
+
+	// update
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		// update model
+		_, err := tx.Model(m).WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		// insert StreamIntoModels
+		for _, streamID := range newInputStreamIDs {
+			_, err = tx.Model(&StreamIntoModel{
+				ModelID:  m.ModelID,
+				StreamID: streamID,
+			}).Insert()
+			if err != nil {
+				return err
+			}
+		}
+
+		// insert outputStreams
+		for _, stream := range updateOutputStreams {
+			err := stream.UpdateWithTx(tx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// done
+		return nil
+	})
+}
+
+func (m *Model) compileSchema(ctx context.Context, schema string) (*Stream, error) {
+	stream := &Stream{
+		Schema:    schema,
+		External:  false,
+		Batch:     m.Kind == ModelKindBatch,
+		Manual:    false,
+		ProjectID: m.ProjectID,
+		Project:   m.Project,
+	}
+	err := stream.Compile(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	return stream, nil
+}
+
+func containsUUID(haystack []uuid.UUID, needle uuid.UUID) bool {
+	for _, id := range haystack {
+		if id == needle {
+			return true
+		}
+	}
+	return false
 }

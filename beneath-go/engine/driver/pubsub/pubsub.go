@@ -27,6 +27,8 @@ type configSpecification struct {
 	WriteRequestsSubscription      string `envconfig:"WRITE_REQUESTS_SUBSCRIPTION" required:"true"`
 	WriteReportsTopic              string `envconfig:"WRITE_REPORTS_TOPIC" required:"true"`
 	WriteReportsSubscriptionPrefix string `envconfig:"WRITE_REPORTS_SUBSCRIPTION_PREFIX" required:"true"`
+	TaskQueueTopic                 string `envconfig:"TASK_QUEUE_TOPIC" required:"true"`
+	TaskQueueSubscription          string `envconfig:"TASK_QUEUE_SUBSCRIPTION" required:"true"`
 }
 
 // Pubsub implements beneath.StreamsDriver
@@ -35,6 +37,7 @@ type Pubsub struct {
 	Client             *pubsub.Client
 	WriteRequestsTopic *pubsub.Topic
 	WriteReportsTopic  *pubsub.Topic
+	TaskQueueTopic     *pubsub.Topic
 }
 
 // New returns a new
@@ -55,35 +58,19 @@ func New() *Pubsub {
 		panic(err)
 	}
 
-	// create write requests topic
-	writeRequestsTopic, err := client.CreateTopic(context.Background(), config.WriteRequestsTopic)
-	if err != nil {
-		status, ok := status.FromError(err)
-		if !ok || status.Code() != codes.AlreadyExists {
-			panic(err)
-		} else {
-			writeRequestsTopic = client.Topic(config.WriteRequestsTopic)
-		}
-	}
-
-	// create write reports topic
-	writeReportsTopic, err := client.CreateTopic(context.Background(), config.WriteReportsTopic)
-	if err != nil {
-		status, ok := status.FromError(err)
-		if !ok || status.Code() != codes.AlreadyExists {
-			panic(err)
-		} else {
-			writeReportsTopic = client.Topic(config.WriteReportsTopic)
-		}
-	}
-
 	// create instance
-	return &Pubsub{
-		config:             &config,
-		Client:             client,
-		WriteRequestsTopic: writeRequestsTopic,
-		WriteReportsTopic:  writeReportsTopic,
+	p := &Pubsub{
+		config: &config,
+		Client: client,
 	}
+
+	// set topics
+	p.WriteRequestsTopic = p.makeTopic(config.WriteRequestsTopic)
+	p.WriteReportsTopic = p.makeTopic(config.WriteReportsTopic)
+	p.TaskQueueTopic = p.makeTopic(config.TaskQueueTopic)
+
+	// done
+	return p
 }
 
 // GetMaxMessageSize implements beneath.StreamsDriver
@@ -223,6 +210,86 @@ func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsRepor
 	return err
 }
 
+// QueueTask queues a task for processing
+func (p *Pubsub) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
+	// encode message
+	msg, err := proto.Marshal(t)
+	if err != nil {
+		panic(err)
+	}
+
+	// check encoded message size
+	if len(msg) > p.GetMaxMessageSize() {
+		return fmt.Errorf(
+			"task has invalid size <%d> (max message size is <%d bytes>)",
+			len(msg), p.GetMaxMessageSize(),
+		)
+	}
+
+	// push
+	result := p.TaskQueueTopic.Publish(ctx, &pubsub.Message{
+		Data: []byte(msg),
+	})
+
+	// blocks until ack'ed by pubsub
+	_, err = result.Get(ctx)
+	return err
+}
+
+// ReadTasks reads queued tasks
+func (p *Pubsub) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error {
+	// prepare subscription and context
+	sub := p.getTaskQueueSubscription()
+	cctx, cancel := context.WithCancel(context.Background())
+
+	// receive pubsub messages forever (or until error occurs)
+	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
+		// called for every single message on pubsub
+		// these messages will have been written by QueueTask
+
+		// unmarshal task from pubsub
+		t := &pb.QueuedTask{}
+		err := proto.Unmarshal(msg.Data, t)
+		if err != nil {
+			// standard error handling for pubsub library
+			log.S.Errorf("couldn't unmarshal queued task: %s", err.Error())
+			cancel()
+			return
+		}
+
+		// trigger callback function
+		err = fn(ctx, t)
+		if err != nil {
+			// TODO: we'll want to keep the pipeline going in the future when things are stable
+			// log error and cancel
+			log.S.Errorf("couldn't process write report: %s", err.Error())
+			cancel()
+			return
+		}
+
+		// ack the message -- all processing finished successfully
+		msg.Ack()
+	})
+
+	// pubsub stopped listening for new messages for some reason
+	// return the error
+	return err
+}
+
+// makeTopic returns a topic and creates it if it doesn't exist
+func (p *Pubsub) makeTopic(name string) *pubsub.Topic {
+	topic, err := p.Client.CreateTopic(context.Background(), name)
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			panic(err)
+		} else {
+			topic = p.Client.Topic(name)
+		}
+	}
+	return topic
+}
+
 // getSubscription finds or creates a topic subscription
 func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Subscription {
 	// create/get subscriber to topic
@@ -246,6 +313,11 @@ func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Su
 // get subscription for WriteRequests
 func (p *Pubsub) getWriteRequestsSubscription() *pubsub.Subscription {
 	return p.getSubscription(p.WriteRequestsTopic, p.config.WriteRequestsSubscription)
+}
+
+// get subscription for TaskQueue
+func (p *Pubsub) getTaskQueueSubscription() *pubsub.Subscription {
+	return p.getSubscription(p.TaskQueueTopic, p.config.TaskQueueTopic)
 }
 
 // get Metrics subscription for the relevant subscriber

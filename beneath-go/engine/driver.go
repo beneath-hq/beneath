@@ -27,6 +27,12 @@ type StreamsDriver interface {
 
 	// ReadWriteReports reads messages from the Metrics topic
 	ReadWriteReports(fn func(context.Context, *pb.WriteRecordsReport) error) error
+
+	// QueueTask queues a task for processing
+	QueueTask(ctx context.Context, t *pb.QueuedTask) error
+
+	// ReadTasks reads queued tasks
+	ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error
 }
 
 // TablesDriver defines the functions necessary to encapsulate Beneath's operational datastore needs

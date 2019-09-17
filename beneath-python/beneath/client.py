@@ -226,7 +226,35 @@ class Client:
     return result['projectByName']
 
 
-  def stage_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
+  def get_model_details(self, project_name, model_name):
+    result = self._query_control(
+      variables={"name": model_name, "projectName": project_name},
+      query="""
+        query Model($name: String!, $projectName: String!) {
+          model(name: $name, projectName: $projectName) {
+            modelID
+            name
+            description
+            sourceURL
+            kind
+            createdOn
+            updatedOn
+            inputStreams {
+              streamID
+              name
+            }
+            outputStreams {
+              streamID
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['model']
+
+
+  def create_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
     result = self._query_control(
       variables={
         "input": {
@@ -266,6 +294,46 @@ class Client:
       """
     )
     return result['createModel']
+
+
+  def update_model(self, model_id, source_url, description, input_stream_ids, output_stream_schemas):
+    result = self._query_control(
+        variables={
+            "input": {
+                "modelID": model_id,
+                "sourceURL": source_url,
+                "description": description,
+                "inputStreamIDs": input_stream_ids,
+                "outputStreamSchemas": output_stream_schemas,
+            },
+        },
+        query="""
+        mutation UpdateModel($input: UpdateModelInput!) {
+          updateModel(input: $input) {
+            modelID
+            name
+            description
+            sourceURL
+            kind
+            createdOn
+            updatedOn
+            project {
+              projectID
+              name
+            }
+            inputStreams {
+              streamID
+              name
+            }
+            outputStreams {
+              streamID
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['updateModel']
 
 
   def get_stream_details(self, project_name, stream_name):

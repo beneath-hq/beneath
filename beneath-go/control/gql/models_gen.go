@@ -33,7 +33,6 @@ type NewSecret struct {
 
 type UpdateModelInput struct {
 	ModelID             uuid.UUID   `json:"modelID"`
-	Kind                *string     `json:"kind"`
 	SourceURL           *string     `json:"sourceURL"`
 	Description         *string     `json:"description"`
 	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`

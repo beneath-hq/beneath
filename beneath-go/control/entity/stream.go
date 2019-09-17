@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 	"time"
 
@@ -96,66 +97,8 @@ func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UU
 	return getStreamCache().get(ctx, instanceID)
 }
 
-// UpdateDetails updates a stream (only exposes fields where updates are permitted)
-func (s *Stream) UpdateDetails(ctx context.Context, newSchema *string, manual *bool) error {
-	if manual != nil {
-		s.Manual = *manual
-	}
-
-	// we allow updating the schema with new docs/layout, but not semantic updates
-	if newSchema != nil {
-		// compile schema
-		compiler := schema.NewCompiler(*newSchema)
-		err := compiler.Compile()
-		if err != nil {
-			return fmt.Errorf("Error compiling schema: %s", err.Error())
-		}
-		streamDef := compiler.GetStream()
-
-		// get canonical avro
-		canonicalAvro, err := streamDef.BuildCanonicalAvroSchema()
-		if err != nil {
-			return fmt.Errorf("Error compiling schema: %s", err.Error())
-		}
-
-		// check canonical avro is the same
-		if canonicalAvro != s.CanonicalAvroSchema {
-			return fmt.Errorf("Unfortunately we do not currently support changing a stream's data structure; you can only edit its documentation")
-		}
-
-		// get avro schemas
-		avro, err := streamDef.BuildAvroSchema()
-		if err != nil {
-			return fmt.Errorf("Error compiling schema: %s", err.Error())
-		}
-
-		// compute bigquery schema
-		bqSchema, err := streamDef.BuildBigQuerySchema()
-		if err != nil {
-			return fmt.Errorf("Error compiling schema: %s", err.Error())
-		}
-
-		// set update avro and bigquery
-		s.AvroSchema = avro
-		s.BigQuerySchema = bqSchema
-		s.Description = streamDef.Description
-	}
-
-	// validate
-	err := GetValidator().Struct(s)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Update schema in BigQuery
-
-	// update
-	_, err = db.DB.ModelContext(ctx, s).Column("description", "manual").WherePK().Update()
-	return err
-}
-
 // Compile compiles s.Schema and sets relevant fields
-func (s *Stream) Compile(ctx context.Context) error {
+func (s *Stream) Compile(ctx context.Context, update bool) error {
 	// compile schema
 	compiler := schema.NewCompiler(s.Schema)
 	err := compiler.Compile()
@@ -164,13 +107,21 @@ func (s *Stream) Compile(ctx context.Context) error {
 	}
 	streamDef := compiler.GetStream()
 
-	// get avro schemas
-	avro, err := streamDef.BuildAvroSchema()
+	// get canonical avro schema
+	canonicalAvro, err := streamDef.BuildCanonicalAvroSchema()
 	if err != nil {
 		return fmt.Errorf("Error compiling schema: %s", err.Error())
 	}
 
-	canonicalAvro, err := streamDef.BuildCanonicalAvroSchema()
+	// if update, check canonical avro is the same
+	if update {
+		if canonicalAvro != s.CanonicalAvroSchema {
+			return fmt.Errorf("Unfortunately we do not currently support changing a stream's data structure; you can only edit its documentation")
+		}
+	}
+
+	// get avro schemas
+	avro, err := streamDef.BuildAvroSchema()
 	if err != nil {
 		return fmt.Errorf("Error compiling schema: %s", err.Error())
 	}
@@ -179,6 +130,16 @@ func (s *Stream) Compile(ctx context.Context) error {
 	bqSchema, err := streamDef.BuildBigQuerySchema()
 	if err != nil {
 		return fmt.Errorf("Error compiling schema: %s", err.Error())
+	}
+
+	// check no critical changes on update
+	if update {
+		if s.Name != streamDef.Name {
+			return fmt.Errorf("Cannot change stream name in an update")
+		}
+		if !reflect.DeepEqual(s.KeyFields, streamDef.KeyFields) {
+			return fmt.Errorf("Cannot change stream keys in an update")
+		}
 	}
 
 	// set missing stream fields
@@ -247,11 +208,20 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 	return nil
 }
 
+// UpdateWithTx updates the stream (if streaming) using tx
+func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
+	// TODO: Update schema in BigQuery
+
+	// update
+	_, err := tx.Model(s).WherePK().Update()
+	return err
+}
+
 // CompileAndCreate compiles the schema, derives name and avro schemas and inserts
 // the stream into the database
 func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	// compile
-	err := s.Compile(ctx)
+	err := s.Compile(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -263,4 +233,21 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 
 	// done
 	return err
+}
+
+// CompileAndUpdate updates a stream.
+// We allow updating the schema with new docs/layout, but not semantic updates.
+func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual *bool) error {
+	if manual != nil {
+		s.Manual = *manual
+	}
+
+	if newSchema != nil {
+		s.Schema = *newSchema
+		s.Compile(ctx, true)
+	}
+
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		return s.UpdateWithTx(tx)
+	})
 }

@@ -70,7 +70,7 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID,
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
-	err := stream.UpdateDetails(ctx, schema, manual)
+	err := stream.CompileAndUpdate(ctx, schema, manual)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
