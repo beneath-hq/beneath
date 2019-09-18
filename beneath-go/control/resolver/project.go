@@ -5,8 +5,8 @@ import (
 
 	"github.com/beneath-core/beneath-go/core/middleware"
 
-	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/control/gql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -135,6 +135,25 @@ func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uui
 	}
 
 	err := project.RemoveUser(ctx, userID)
+	if err != nil {
+		return false, gqlerror.Errorf(err.Error())
+	}
+
+	return true, nil
+}
+
+func (r *mutationResolver) DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(projectID) {
+		return false, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
+	}
+
+	project := entity.FindProject(ctx, projectID)
+	if project == nil {
+		return false, gqlerror.Errorf("Project %s not found", projectID.String())
+	}
+
+	err := project.Delete(ctx)
 	if err != nil {
 		return false, gqlerror.Errorf(err.Error())
 	}

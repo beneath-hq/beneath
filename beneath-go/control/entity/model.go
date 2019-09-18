@@ -33,9 +33,9 @@ type Model struct {
 // StreamIntoModel represnts the many-to-many relationship between input streams and models
 type StreamIntoModel struct {
 	tableName struct{}  `sql:"streams_into_models,alias:sm"`
-	StreamID  uuid.UUID `sql:",pk,type:uuid"`
+	StreamID  uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Stream    *Stream
-	ModelID   uuid.UUID `sql:",pk,type:uuid"`
+	ModelID   uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Model     *Model
 }
 
@@ -187,7 +187,7 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string) error {
 	// check inputStreamIDs contain all current input streams
 	for _, s := range m.InputStreams {
-		if !containsUUID(inputStreamIDs, s.StreamID) {
+		if !m.containsUUID(inputStreamIDs, s.StreamID) {
 			return fmt.Errorf("Cannot delete input streams from existing model")
 		}
 	}
@@ -238,7 +238,7 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 		}
 
 		// make sure new input streams aren't an existing output (weak cycle detection)
-		if containsUUID(newInputStreamIDs, existing.StreamID) {
+		if m.containsUUID(newInputStreamIDs, existing.StreamID) {
 			return fmt.Errorf("You cannot use the output stream '%s' as input to this model (cycle)", existing.Name)
 		}
 
@@ -313,11 +313,32 @@ func (m *Model) compileSchema(ctx context.Context, schema string) (*Stream, erro
 	return stream, nil
 }
 
-func containsUUID(haystack []uuid.UUID, needle uuid.UUID) bool {
+func (m *Model) containsUUID(haystack []uuid.UUID, needle uuid.UUID) bool {
 	for _, id := range haystack {
 		if id == needle {
 			return true
 		}
 	}
 	return false
+}
+
+// Delete deletes the model and it's dependent streams
+func (m *Model) Delete(ctx context.Context) error {
+	if m.OutputStreams == nil {
+		panic(fmt.Errorf("OutputStreams not loaded in Delete"))
+	}
+
+	for _, stream := range m.OutputStreams {
+		err := stream.Delete(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := db.DB.WithContext(ctx).Delete(m)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

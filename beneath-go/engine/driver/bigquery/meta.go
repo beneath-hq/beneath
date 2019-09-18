@@ -235,7 +235,7 @@ func (b *BigQuery) UpdateStreamInstance(ctx context.Context, projectName string,
 }
 
 // DeregisterStreamInstance implements engine.WarehouseDriver
-func (b *BigQuery) DeregisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, instanceID uuid.UUID) error {
+func (b *BigQuery) DeregisterStreamInstance(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID) error {
 	// delete internal table
 	table := b.Client.Dataset(internalDatasetName()).Table(internalTableName(instanceID))
 	err := table.Delete(ctx)

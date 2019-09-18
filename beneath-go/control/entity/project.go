@@ -174,14 +174,41 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 		return err
 	}
 
-	// TODO: Also update in BigQuery
+	// update in tx with call to bigquery
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		_, err = db.DB.WithContext(ctx).Model(p).
+			Column("display_name", "site", "description", "photo_url").
+			WherePK().
+			Update()
+		if err != nil {
+			return err
+		}
 
-	// update
-	_, err = db.DB.WithContext(ctx).Model(p).
-		Column("display_name", "site", "description", "photo_url").
-		WherePK().
-		Update()
-	return err
+		// update in warehouse
+		err = db.Engine.Warehouse.UpdateProject(ctx, p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+// Delete safely deletes the project (fails if the project still has content)
+func (p *Project) Delete(ctx context.Context) error {
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		err := db.DB.WithContext(ctx).Delete(p)
+		if err != nil {
+			return err
+		}
+
+		err = db.Engine.Warehouse.DeregisterProject(ctx, p.ProjectID, p.Name)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func getProjectCache() *cache.Codec {

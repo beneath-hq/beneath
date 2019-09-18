@@ -262,6 +262,11 @@ func (p *Bigtable) ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, 
 	return nil
 }
 
+// ClearRecords implements engine.TablesDriver
+func (p *Bigtable) ClearRecords(ctx context.Context, instanceID uuid.UUID) error {
+	return p.Admin.DropRowRange(ctx, recordsTableName, string(instanceID[:]))
+}
+
 // CommitUsage implements engine.TablesDriver
 func (p *Bigtable) CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error {
 	rmw := bigtable.NewReadModifyWrite()

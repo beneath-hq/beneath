@@ -81,6 +81,7 @@ type ComplexityRoot struct {
 		CreateProject         func(childComplexity int, name string, displayName string, site *string, description *string, photoURL *string) int
 		DeleteExternalStream  func(childComplexity int, streamID uuid.UUID) int
 		DeleteModel           func(childComplexity int, modelID uuid.UUID) int
+		DeleteProject         func(childComplexity int, projectID uuid.UUID) int
 		Empty                 func(childComplexity int) int
 		IssueProjectSecret    func(childComplexity int, projectID uuid.UUID, readonly bool, description string) int
 		IssueUserSecret       func(childComplexity int, readonly bool, description string) int
@@ -189,6 +190,7 @@ type MutationResolver interface {
 	CommitBatch(ctx context.Context, instanceIDs []*uuid.UUID) (bool, error)
 	CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*entity.Project, error)
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*entity.Project, error)
+	DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error)
 	AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*entity.User, error)
 	RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error)
 	IssueUserSecret(ctx context.Context, readonly bool, description string) (*NewSecret, error)
@@ -428,6 +430,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteModel(childComplexity, args["modelID"].(uuid.UUID)), true
+
+	case "Mutation.deleteProject":
+		if e.complexity.Mutation.DeleteProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProject(childComplexity, args["projectID"].(uuid.UUID)), true
 
 	case "Mutation.empty":
 		if e.complexity.Mutation.Empty == nil {
@@ -1131,6 +1145,7 @@ input UpdateModelInput {
 extend type Mutation {
   createProject(name: String!, displayName: String!, site: String, description: String, photoURL: String): Project!
   updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoURL: String): Project!
+  deleteProject(projectID: UUID!): Boolean!
   addUserToProject(email: String!, projectID: UUID!): User
   removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
@@ -1407,6 +1422,20 @@ func (ec *executionContext) field_Mutation_deleteModel_args(ctx context.Context,
 		}
 	}
 	args["modelID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectID"] = arg0
 	return args, nil
 }
 
@@ -2684,6 +2713,50 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteProject_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteProject(rctx, args["projectID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addUserToProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6615,6 +6688,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateProject":
 			out.Values[i] = ec._Mutation_updateProject(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteProject":
+			out.Values[i] = ec._Mutation_deleteProject(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

@@ -13,6 +13,8 @@ import (
 
 	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/taskqueue"
+	"github.com/beneath-core/beneath-go/taskqueue/task"
 )
 
 // Stream represents a collection of data
@@ -190,13 +192,25 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 		// register instance
 		err = db.Engine.Warehouse.RegisterStreamInstance(
 			tx.Context(),
-			s.ProjectID,
 			s.Project.Name,
 			s.StreamID,
 			s.Name,
 			s.Description,
 			s.BigQuerySchema,
 			s.KeyFields,
+			si.StreamInstanceID,
+		)
+		if err != nil {
+			return err
+		}
+
+		// promote to current instance
+		err = db.Engine.Warehouse.PromoteStreamInstance(
+			tx.Context(),
+			s.Project.Name,
+			s.StreamID,
+			s.Name,
+			s.Description,
 			si.StreamInstanceID,
 		)
 		if err != nil {
@@ -210,10 +224,21 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 
 // UpdateWithTx updates the stream (if streaming) using tx
 func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
-	// TODO: Update schema in BigQuery
-
 	// update
 	_, err := tx.Model(s).WherePK().Update()
+
+	// update in bigquery
+	if s.CurrentStreamInstanceID != nil {
+		db.Engine.Warehouse.UpdateStreamInstance(
+			tx.Context(),
+			s.Project.Name,
+			s.Name,
+			s.Description,
+			s.BigQuerySchema,
+			*s.CurrentStreamInstanceID,
+		)
+	}
+
 	return err
 }
 
@@ -250,4 +275,39 @@ func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.UpdateWithTx(tx)
 	})
+}
+
+// Delete deletes a stream and all its related instances
+func (s *Stream) Delete(ctx context.Context) error {
+	var instances []*StreamInstance
+	err := db.DB.ModelContext(ctx, instances).
+		Where("stream_id = ?", s.StreamID).
+		Select()
+	if err != nil {
+		return err
+	}
+
+	for _, inst := range instances {
+		err := db.DB.WithContext(ctx).Delete(inst)
+		if err != nil {
+			return err
+		}
+		err = taskqueue.Submit(ctx, &task.CleanupInstance{
+			InstanceID:  inst.StreamInstanceID,
+			StreamID:    s.StreamID,
+			StreamName:  s.Name,
+			ProjectID:   s.ProjectID,
+			ProjectName: s.Project.Name,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = db.DB.WithContext(ctx).Delete(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

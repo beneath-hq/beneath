@@ -55,6 +55,9 @@ type TablesDriver interface {
 	// ReadLatestRecords returns the latest records written to the instance
 	ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, limit int, before time.Time, fn func(avroData []byte, timestamp time.Time) error) error
 
+	// ClearRecords removes all records for an instance
+	ClearRecords(ctx context.Context, instanceID uuid.UUID) error
+
 	// CommitUsage writes a batch of usage metrics
 	CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error
 
@@ -89,5 +92,5 @@ type WarehouseDriver interface {
 	UpdateStreamInstance(ctx context.Context, projectName string, streamName string, streamDescription string, schemaJSON string, instanceID uuid.UUID) error
 
 	// DeregisterStreamInstance should be called to remove a stream instance
-	DeregisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, instanceID uuid.UUID) error
+	DeregisterStreamInstance(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID) error
 }

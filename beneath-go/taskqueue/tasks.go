@@ -6,6 +6,4 @@ import (
 
 func init() {
 	registerTask(&task.CleanupInstance{})
-	registerTask(&task.CleanupStream{})
-	registerTask(&task.CleanupProject{})
 }
