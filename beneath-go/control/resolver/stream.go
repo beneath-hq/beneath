@@ -77,3 +77,22 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID,
 
 	return stream, nil
 }
+
+func (r *mutationResolver) DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error) {
+	stream := entity.FindStream(ctx, streamID)
+	if stream == nil {
+		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(stream.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	}
+
+	err := stream.Delete(ctx)
+	if err != nil {
+		return false, gqlerror.Errorf("%s", err.Error())
+	}
+
+	return true, nil
+}

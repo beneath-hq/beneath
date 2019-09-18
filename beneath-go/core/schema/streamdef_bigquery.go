@@ -20,11 +20,6 @@ func (s *StreamDef) BuildBigQuerySchema() (string, error) {
 			"mode": "REQUIRED",
 		},
 		map[string]interface{}{
-			"name": "__data",
-			"type": "BYTES",
-			"mode": "REQUIRED",
-		},
-		map[string]interface{}{
 			"name": "__timestamp",
 			"type": "TIMESTAMP",
 			"mode": "REQUIRED",

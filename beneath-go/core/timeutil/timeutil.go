@@ -17,6 +17,15 @@ func FromUnixMilli(ms int64) time.Time {
 	return time.Unix(0, ms*int64(time.Millisecond))
 }
 
+// ToBytes returns the time.Time in a binary representation
+func ToBytes(t time.Time) []byte {
+	b, err := t.MarshalBinary()
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 // Parse makes a best effort to parse val as a time.Time.
 // Input will typically come from a user.
 func Parse(val interface{}, allowNil bool) (time.Time, error) {

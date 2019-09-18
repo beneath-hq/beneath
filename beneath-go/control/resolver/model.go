@@ -99,14 +99,29 @@ func (r *mutationResolver) UpdateModel(ctx context.Context, input gql.UpdateMode
 }
 
 func (r *mutationResolver) DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error) {
-	panic("not implemented")
-}
+	// get model
+	model := entity.FindModel(ctx, modelID)
+	if model == nil {
+		return false, gqlerror.Errorf("Model %s not found", modelID.String())
+	}
 
-func (r *mutationResolver) DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error) {
-	panic("not implemented")
+	// check allowed to edit
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(model.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	}
+
+	// delete model
+	err := model.Delete(ctx)
+	if err != nil {
+		return false, gqlerror.Errorf(err.Error())
+	}
+
+	return true, nil
 }
 
 func (r *mutationResolver) NewBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error) {
+	// what about new batches of root streams?
 	panic("not implemented")
 }
 
