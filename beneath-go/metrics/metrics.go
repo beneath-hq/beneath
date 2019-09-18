@@ -3,14 +3,15 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"log"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
+	"github.com/bluele/gcache"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 )
@@ -25,6 +26,9 @@ type Broker struct {
 
 	// Lock
 	mu sync.RWMutex
+
+	// usage cache
+	usageCache gcache.Cache
 }
 
 // OpType defines a read or write operation
@@ -37,7 +41,7 @@ const (
 )
 
 const (
-	commitInterval = 5 * time.Second
+	commitInterval = 30 * time.Second
 
 	// MonthlyPeriod represents the duration for which usage is monitored
 	MonthlyPeriod = "M"
@@ -58,6 +62,7 @@ func NewBroker() *Broker {
 	b := &Broker{
 		buffer:       make(map[uuid.UUID]pb.QuotaUsage),
 		commitTicker: time.NewTicker(commitInterval),
+		usageCache:   gcache.New(1000).LRU().Build(),
 	}
 
 	// start ticking for batch commits to BigTable
@@ -126,7 +131,7 @@ func (b *Broker) commitToTable() error {
 	for id, usage := range buf {
 		// when maxWorkers goroutines are in flight, Acquire blocks until one of the workers finishes.
 		if err := sem.Acquire(ctx, 1); err != nil {
-			log.Printf("Failed to acquire semaphore: %v", err)
+			log.S.Errorf("Failed to acquire semaphore: %v", err)
 			break
 		}
 
@@ -154,11 +159,22 @@ func (b *Broker) commitToTable() error {
 
 	// acquire all of the tokens to wait for any remaining workers to finish.
 	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
-		log.Printf("Failed to acquire semaphore: %v", err)
+		log.S.Errorf("Failed to acquire semaphore: %v", err)
 	}
 
 	// release all the tokens to be ready for the next batch
 	sem.Release(int64(maxWorkers))
+
+	// reset usage cache
+	b.usageCache.Purge()
+
+	// log
+	elapsed := time.Since(ts)
+	log.S.Infow(
+		"metrics write",
+		"ids", len(buf),
+		"elapsed", elapsed,
+	)
 
 	// done
 	return nil
@@ -169,11 +185,20 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, id uuid.UUID, period strin
 	// create row filter
 	keyPrefix := metricsKey(period, id, time.Now())
 
-	usage := pb.QuotaUsage{}
+	// first, check cache for usage else get usage from bigtable
+	usage, err := b.usageCache.Get(string(keyPrefix))
+	if err == nil {
+		return usage.(pb.QuotaUsage)
+	} else if err.Error() == "Key not found." {
+	} else {
+		panic(err)
+	}
+
+	usage = pb.QuotaUsage{}
 	counter := 0
 
 	// read table and collect metrics
-	err := db.Engine.Tables.ReadUsage(ctx, keyPrefix, func(key []byte, u pb.QuotaUsage) error {
+	err = db.Engine.Tables.ReadUsage(ctx, keyPrefix, func(key []byte, u pb.QuotaUsage) error {
 		if counter != 0 {
 			return fmt.Errorf("the metrics lookup returned multiple keys")
 		}
@@ -185,7 +210,10 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, id uuid.UUID, period strin
 		panic(fmt.Errorf("Error reading from Metrics table: %s", err.Error()))
 	}
 
-	return usage
+	// write usage to cache
+	b.usageCache.Set(string(keyPrefix), usage)
+
+	return usage.(pb.QuotaUsage)
 }
 
 // metricsKeyPrefix
