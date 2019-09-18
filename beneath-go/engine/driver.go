@@ -67,12 +67,27 @@ type WarehouseDriver interface {
 	// GetMaxDataSize returns the maximum accepted row size in bytes
 	GetMaxDataSize() int
 
+	// WriteRecords saves one or multiple records to the data warehouse
+	WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
+
 	// RegisterProject should be called when a new project is created to create a corresponding dataset in the warehouse
 	RegisterProject(ctx context.Context, projectID uuid.UUID, public bool, name, displayName, description string) error
 
-	// RegisterStreamInstance should be called when a new stream instance is created to create a corresponding table in the warehouse
-	RegisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
+	// UpdateProject should be called to update metadata on a project
+	UpdateProject(ctx context.Context, projectID uuid.UUID, public bool, name, displayName, description string) error
 
-	// WriteRecords saves one or multiple records to the data warehouse
-	WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
+	// DeregisterProject should be called when a project is deleted
+	DeregisterProject(ctx context.Context, projectID uuid.UUID, name string) error
+
+	// RegisterStreamInstance should be called when a new stream instance is created to create a corresponding table in the warehouse
+	RegisterStreamInstance(ctx context.Context, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error
+
+	// PromoteStreamInstance should be called to promote an instance to the current data source for the stream
+	PromoteStreamInstance(ctx context.Context, projectName string, streamID uuid.UUID, streamName string, streamDescription string, instanceID uuid.UUID) error
+
+	// UpdateStreamInstance should be called to update metadata on a stream instance
+	UpdateStreamInstance(ctx context.Context, projectName string, streamName string, streamDescription string, schemaJSON string, instanceID uuid.UUID) error
+
+	// DeregisterStreamInstance should be called to remove a stream instance
+	DeregisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, instanceID uuid.UUID) error
 }

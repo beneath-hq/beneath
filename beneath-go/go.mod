@@ -66,4 +66,5 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1
 	gopkg.in/go-playground/validator.v9 v9.29.0
 	honnef.co/go/tools v0.0.0-20190614002413-cb51c254f01b // indirect
+	robpike.io/filter v0.0.0-20150108201509-2984852a2183
 )

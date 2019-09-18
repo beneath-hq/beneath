@@ -80,8 +80,22 @@ func (p *Pubsub) GetMaxMessageSize() int {
 
 // QueueWriteRequest implements beneath.StreamsDriver
 func (p *Pubsub) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
+	return p.queueProto(ctx, p.WriteRequestsTopic, req)
+}
+
+// QueueWriteReport implements beneath.StreamsDriver
+func (p *Pubsub) QueueWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error {
+	return p.queueProto(ctx, p.WriteReportsTopic, rep)
+}
+
+// QueueTask implements beneath.StreamsDriver
+func (p *Pubsub) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
+	return p.queueProto(ctx, p.TaskQueueTopic, t)
+}
+
+func (p *Pubsub) queueProto(ctx context.Context, topic *pubsub.Topic, pb proto.Message) error {
 	// encode message
-	msg, err := proto.Marshal(req)
+	msg, err := proto.Marshal(pb)
 	if err != nil {
 		panic(err)
 	}
@@ -89,13 +103,13 @@ func (p *Pubsub) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequ
 	// check encoded message size
 	if len(msg) > p.GetMaxMessageSize() {
 		return fmt.Errorf(
-			"write request has invalid size <%d> (max message size is <%d bytes>)",
+			"message has invalid size <%d> (max message size is <%d bytes>)",
 			len(msg), p.GetMaxMessageSize(),
 		)
 	}
 
 	// push
-	result := p.WriteRequestsTopic.Publish(ctx, &pubsub.Message{
+	result := topic.Publish(ctx, &pubsub.Message{
 		Data: []byte(msg),
 	})
 
@@ -106,20 +120,15 @@ func (p *Pubsub) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequ
 
 // ReadWriteRequests implements beneath.StreamsDriver
 func (p *Pubsub) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequest) error) error {
-	// prepare subscription and context
-	sub := p.getWriteRequestsSubscription()
+	sub := p.getSubscription(p.WriteRequestsTopic, p.config.WriteRequestsSubscription)
 	cctx, cancel := context.WithCancel(context.Background())
 
-	// receive pubsub messages forever (or until error occurs)
-	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		// called for every single message on pubsub
-		// these messages will have been written by QueueWriteRequest
-
+	// receive messages forever (or until error occurs)
+	return sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
 		// unmarshal write request from pubsub
 		req := &pb.WriteRecordsRequest{}
 		err := proto.Unmarshal(msg.Data, req)
 		if err != nil {
-			// standard error handling for pubsub library
 			log.S.Errorf("couldn't unmarshal write records request: %s", err.Error())
 			cancel()
 			return
@@ -129,66 +138,43 @@ func (p *Pubsub) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequ
 		err = fn(ctx, req)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			// log error and cancel
 			log.S.Errorf("couldn't process write request: %s", err.Error())
 			cancel()
 			return
 		}
 
-		// ack the message -- all processing finished successfully
+		// ack after processing
 		msg.Ack()
 	})
-
-	// pubsub stopped listening for new messages for some reason
-	// return the error
-	return err
-}
-
-// QueueWriteReport implements beneath.StreamsDriver
-func (p *Pubsub) QueueWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error {
-	// encode message
-	msg, err := proto.Marshal(rep)
-	if err != nil {
-		panic(err)
-	}
-
-	// check encoded message size
-	if len(msg) > p.GetMaxMessageSize() {
-		return fmt.Errorf(
-			"write report has invalid size <%d> (max message size is <%d bytes>)",
-			len(msg), p.GetMaxMessageSize(),
-		)
-	}
-
-	// push
-	result := p.WriteReportsTopic.Publish(ctx, &pubsub.Message{
-		Data: []byte(msg),
-	})
-
-	// blocks until ack'ed by pubsub
-	_, err = result.Get(ctx)
-	return err
 }
 
 // ReadWriteReports implements beneath.StreamsDriver
 func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsReport) error) error {
-	// prepare subscription and context
-	sub := p.getWriteReportsSubscription()
+	// prepare context
 	cctx, cancel := context.WithCancel(context.Background())
 
-	// receive pubsub messages forever (or until error occurs)
-	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		// ack the message -- all processing finished successfully
+	// prepare subscription (seek to now, skipping messages from downtime)
+	subname := fmt.Sprintf("%s-%s", p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
+	sub := p.getSubscription(p.WriteReportsTopic, subname)
+	err := sub.SeekToTime(cctx, time.Now())
+	if err != nil {
+		status, ok := status.FromError(err)
+		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
+			// Seek not implemented on Emulator, ignore
+		} else {
+			panic(fmt.Errorf("error seeking on subscription '%s': %v", subname, err))
+		}
+	}
+
+	// receive messages forever (or until error occurs)
+	return sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
+		// ack first -- don't want reprocessing on failure
 		msg.Ack()
 
-		// called for every single message on pubsub
-		// these messages will have been written by QueueWriteReport
-
-		// unmarshal write report from pubsub
+		// unmarshal write report
 		rep := &pb.WriteRecordsReport{}
 		err := proto.Unmarshal(msg.Data, rep)
 		if err != nil {
-			// standard error handling for pubsub library
 			log.S.Errorf("couldn't unmarshal write report: %s", err.Error())
 			cancel()
 			return
@@ -198,60 +184,25 @@ func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsRepor
 		err = fn(ctx, rep)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			// log error and cancel
 			log.S.Errorf("couldn't process write report: %s", err.Error())
 			cancel()
 			return
 		}
 	})
-
-	// pubsub stopped listening for new messages for some reason
-	// return the error
-	return err
-}
-
-// QueueTask queues a task for processing
-func (p *Pubsub) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
-	// encode message
-	msg, err := proto.Marshal(t)
-	if err != nil {
-		panic(err)
-	}
-
-	// check encoded message size
-	if len(msg) > p.GetMaxMessageSize() {
-		return fmt.Errorf(
-			"task has invalid size <%d> (max message size is <%d bytes>)",
-			len(msg), p.GetMaxMessageSize(),
-		)
-	}
-
-	// push
-	result := p.TaskQueueTopic.Publish(ctx, &pubsub.Message{
-		Data: []byte(msg),
-	})
-
-	// blocks until ack'ed by pubsub
-	_, err = result.Get(ctx)
-	return err
 }
 
 // ReadTasks reads queued tasks
 func (p *Pubsub) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error {
 	// prepare subscription and context
-	sub := p.getTaskQueueSubscription()
+	sub := p.getSubscription(p.TaskQueueTopic, p.config.TaskQueueTopic)
 	cctx, cancel := context.WithCancel(context.Background())
 
-	// receive pubsub messages forever (or until error occurs)
-	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		// called for every single message on pubsub
-		// these messages will have been written by QueueTask
-
+	// receive messages forever (or until error occurs)
+	return sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
 		// unmarshal task from pubsub
 		t := &pb.QueuedTask{}
 		err := proto.Unmarshal(msg.Data, t)
 		if err != nil {
-			// standard error handling for pubsub library
 			log.S.Errorf("couldn't unmarshal queued task: %s", err.Error())
 			cancel()
 			return
@@ -261,19 +212,14 @@ func (p *Pubsub) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error
 		err = fn(ctx, t)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			// log error and cancel
 			log.S.Errorf("couldn't process write report: %s", err.Error())
 			cancel()
 			return
 		}
 
-		// ack the message -- all processing finished successfully
+		// ack after processing
 		msg.Ack()
 	})
-
-	// pubsub stopped listening for new messages for some reason
-	// return the error
-	return err
 }
 
 // makeTopic returns a topic and creates it if it doesn't exist
@@ -308,30 +254,4 @@ func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Su
 	}
 
 	return subscription
-}
-
-// get subscription for WriteRequests
-func (p *Pubsub) getWriteRequestsSubscription() *pubsub.Subscription {
-	return p.getSubscription(p.WriteRequestsTopic, p.config.WriteRequestsSubscription)
-}
-
-// get subscription for TaskQueue
-func (p *Pubsub) getTaskQueueSubscription() *pubsub.Subscription {
-	return p.getSubscription(p.TaskQueueTopic, p.config.TaskQueueTopic)
-}
-
-// get Metrics subscription for the relevant subscriber
-func (p *Pubsub) getWriteReportsSubscription() *pubsub.Subscription {
-	subname := fmt.Sprintf("%s-%s", p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
-	sub := p.getSubscription(p.WriteReportsTopic, subname)
-	err := sub.SeekToTime(context.Background(), time.Now())
-	if err != nil {
-		status, ok := status.FromError(err)
-		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
-			// Seek not implemented on Emulator, ignore
-		} else {
-			panic(fmt.Errorf("error seeking on subscription '%s': %v", subname, err))
-		}
-	}
-	return sub
 }

@@ -2,21 +2,16 @@ package bigquery
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"strings"
-	"time"
-
-	"github.com/beneath-core/beneath-go/core/log"
 
 	bq "cloud.google.com/go/bigquery"
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/beneath-core/beneath-go/core"
-	uuid "github.com/satori/go.uuid"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -39,6 +34,9 @@ const (
 
 	// InstanceIDLabel is a bigquery label key for an instance ID
 	InstanceIDLabel = "instance_id"
+
+	// InternalDatasetName is the dataset that stores all raw records
+	InternalDatasetName = "__internal"
 )
 
 // New returns a new
@@ -59,189 +57,46 @@ func New() *BigQuery {
 	}
 }
 
-// GetMaxDataSize implements engine.WarehouseDriver
-func (b *BigQuery) GetMaxDataSize() int {
-	return 1000000
+func isAlreadyExists(err error) bool {
+	if err == nil {
+		return false
+	}
+	status, _ := status.FromError(err)
+	return status.Code() == codes.AlreadyExists || strings.Contains(err.Error(), "Error 409: Already Exists:")
 }
 
-// RegisterProject  implements engine.WarehouseDriver
-func (b *BigQuery) RegisterProject(ctx context.Context, projectID uuid.UUID, public bool, name, displayName, description string) error {
-	// prepare access entries if public (otherwise leaving as default)
-	var access []*bq.AccessEntry
-	if public {
-		access = append(access, &bq.AccessEntry{
-			Role:       bq.ReaderRole,
-			EntityType: bq.SpecialGroupEntity,
-			Entity:     "allAuthenticatedUsers",
-		})
+func isExpiredETag(err error) bool {
+	if err == nil {
+		return false
 	}
-
-	// prepare dataset metadata
-	meta := &bq.DatasetMetadata{
-		Name:        displayName,
-		Description: description,
-		Labels: map[string]string{
-			ProjectIDLabel: projectID.String(),
-		},
-		Access: access,
-	}
-
-	// create dataset for project
-	err := b.Client.Dataset(makeDatasetName(name)).Create(ctx, meta)
-	if err != nil {
-		status, _ := status.FromError(err)
-		if status.Code() == codes.AlreadyExists || strings.Contains(err.Error(), "Error 409: Already Exists:") {
-			log.S.Errorf("trying to create dataset that already exists for project '%s'", name)
-		} else {
-			panic(fmt.Errorf("error creating dataset for project '%s': %v", name, err))
-		}
-	}
-
-	// done
-	return nil
+	return strings.Contains(err.Error(), "Error 400: Precondition check failed")
 }
 
-// RegisterStreamInstance implements engine.WarehouseDriver
-func (b *BigQuery) RegisterStreamInstance(ctx context.Context, projectID uuid.UUID, projectName string, streamID uuid.UUID, streamName string, streamDescription string, schemaJSON string, keyFields []string, instanceID uuid.UUID) error {
-	// build schema object
-	schema, err := bq.SchemaFromJSON([]byte(schemaJSON))
-	if err != nil {
-		return err
+func isNotFound(err error) bool {
+	if err == nil {
+		return false
 	}
-
-	// build meta
-	meta := &bq.TableMetadata{
-		Description:      streamDescription,
-		Schema:           schema,
-		TimePartitioning: &bq.TimePartitioning{
-			// TODO:
-		},
-		Clustering: &bq.Clustering{
-			Fields: keyFields,
-		},
-		Labels: map[string]string{
-			ProjectIDLabel:  projectID.String(),
-			StreamIDLabel:   streamID.String(),
-			InstanceIDLabel: instanceID.String(),
-		},
-	}
-
-	// create table
-	dataset := b.Client.Dataset(makeDatasetName(projectName))
-	table := dataset.Table(makeTableName(streamName, instanceID))
-	err = table.Create(ctx, meta)
-	if err != nil {
-		// TODO: very unlikely, but should probably delete old table and create new (to ensure correct schema)
-		return err
-	}
-
-	// create view
-	viewMeta := &bq.TableMetadata{
-		Description: meta.Description,
-		Labels:      meta.Labels,
-		ViewQuery:   fmt.Sprintf("select * except(`__key`, `__data`, `__timestamp`) from `%s`", fullyQualifiedName(table)),
-	}
-	table = dataset.Table(makeViewName(streamName))
-	err = table.Create(ctx, viewMeta)
-	if err != nil {
-		return err
-	}
-
-	// done
-	return nil
+	return strings.Contains(err.Error(), "Error 404: Not found")
 }
 
-// Row represents a record and implements bigquery.ValueSaver for use in WriteRecord
-type Row struct {
-	Data     map[string]interface{}
-	InsertID string
+func internalDatasetName() string {
+	return InternalDatasetName
 }
 
-// Save implements bigquery.ValueSaver
-func (r *Row) Save() (row map[string]bq.Value, insertID string, err error) {
-	data := make(map[string]bq.Value, len(r.Data))
-	for k, v := range r.Data {
-		data[k] = r.recursiveSerialize(v)
-	}
-	return data, r.InsertID, nil
+func internalTableName(instanceID uuid.UUID) string {
+	return strings.ReplaceAll(instanceID.String(), "-", "_")
 }
 
-// the bigquery client serializes every type correctly except big numbers and byte arrays;
-// we handle those by a recursive search
-// note: overrides in place
-func (r *Row) recursiveSerialize(valT interface{}) bq.Value {
-	switch val := valT.(type) {
-	case *big.Int:
-		return val.String()
-	case *big.Rat:
-		return val.FloatString(0)
-	case []byte:
-		return "0x" + hex.EncodeToString(val)
-	case map[string]interface{}:
-		for k, v := range val {
-			val[k] = r.recursiveSerialize(v)
-		}
-	case []interface{}:
-		for i, v := range val {
-			val[i] = r.recursiveSerialize(v)
-		}
-	}
-	return valT
-}
-
-// WriteRecords implements engine.WarehouseDriver
-func (b *BigQuery) WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error {
-	// ensure all WriteRequest objects the same length
-	if !(len(keys) == len(records) && len(keys) == len(avros) && len(keys) == len(timestamps)) {
-		return fmt.Errorf("error: keys, avros, data, and timestamps do not all have the same length")
-	}
-
-	// create bigquery uploader
-	dataset := makeDatasetName(projectName)
-	table := makeTableName(streamName, instanceID)
-	u := b.Client.Dataset(dataset).Table(table).Inserter()
-
-	// create a BigQuery Row out of each of the records in the WriteRequest
-	rows := make([]*Row, len(keys))
-	for i, key := range keys {
-		// add meta fields to be uploaded
-		records[i]["__key"] = key
-		records[i]["__data"] = avros[i]
-		records[i]["__timestamp"] = timestamps[i]
-
-		// data to be uploaded
-		timestampBytes, err := timestamps[i].MarshalBinary()
-		if err != nil {
-			panic(err)
-		}
-		insertIDBytes := append(key, timestampBytes...)
-		insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
-		rows[i] = &Row{
-			Data:     records[i],
-			InsertID: insertID,
-		}
-	}
-
-	// upload all the rows at once
-	err := u.Put(ctx, rows)
-	if err != nil {
-		return err
-	}
-
-	// done
-	return nil
-}
-
-func makeDatasetName(projectName string) string {
+func externalDatasetName(projectName string) string {
 	return strings.ReplaceAll(projectName, "-", "_")
 }
 
-func makeTableName(streamName string, instanceID uuid.UUID) string {
+func externalTableName(streamName string, instanceID uuid.UUID) string {
 	name := strings.ReplaceAll(streamName, "-", "_")
 	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[0:4]))
 }
 
-func makeViewName(streamName string) string {
+func externalStreamViewName(streamName string) string {
 	return strings.ReplaceAll(streamName, "-", "_")
 }
 
