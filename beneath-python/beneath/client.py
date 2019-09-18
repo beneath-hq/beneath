@@ -254,6 +254,78 @@ class Client:
     return result['model']
 
 
+  def create_project(self, name, display_name, description=None, site_url=None, photo_url=None):
+    result = self._query_control(
+      variables={
+        "name": name,
+        "displayName": display_name,
+        "description": description,
+        "site": site_url,
+        "photoURL": photo_url,
+      },
+      query="""
+        mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoURL: String) {
+          createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+            projectID
+            name
+            displayName
+            site
+            description
+            photoURL
+            createdOn
+            updatedOn
+            users {
+              userID
+              name
+              username
+              photoURL
+            }
+          }
+        }
+      """
+    )
+    return result['createProject']
+
+
+  def update_project(self, project_id, display_name, description=None, site_url=None, photo_url=None):
+    result = self._query_control(
+      variables={
+        "projectID": project_id,
+        "displayName": display_name,
+        "description": description,
+        "site": site_url,
+        "photoURL": photo_url,
+      },
+      query="""
+        mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
+          updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+            projectID
+            displayName
+            site
+            description
+            photoURL
+            updatedOn
+          }
+        }
+      """
+    )
+    return result['updateProject']
+
+
+  def delete_project(self, project_id):
+    result = self._query_control(
+      variables={
+        "projectID": project_id,
+      },
+      query="""
+        mutation DeleteProject($projectID: UUID!) {
+          deleteProject(projectID: $projectID)
+        }
+      """
+    )
+    return result['deleteProject']
+
+
   def create_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
     result = self._query_control(
       variables={

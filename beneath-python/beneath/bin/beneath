@@ -29,7 +29,8 @@ def auth(args):
     config.write_secret("")
     print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
 
-def list_projects(args):
+
+def project_list(args):
   # start client with the secret stored in .beneath/secret
   client = get_client()
 
@@ -46,7 +47,40 @@ def list_projects(args):
     print(project['name'])
   return
 
-def list_streams(args):
+
+def project_create(args):
+  client = get_client()
+  result = client.create_project(
+    name=args.name,
+    display_name=args.display_name,
+    description=args.description,
+    site_url=args.site_url,
+    photo_url=args.photo_url,
+  )
+  pretty_print_graphql_result(result, [])
+  
+
+def project_update(args):
+  client = get_client()
+  project = client.get_project_by_name(args.name)
+  result = client.update_project(
+    project_id=project['projectID'],
+    display_name=args.display_name,
+    description=args.description,
+    site_url=args.site_url,
+    photo_url=args.photo_url,
+  )
+  pretty_print_graphql_result(result, [])
+
+
+def project_delete(args):
+  client = get_client()
+  project = client.get_project_by_name(args.name)
+  result = client.delete_project(project_id=project['projectID'])
+  pretty_print_graphql_result(result, [])
+
+
+def stream_list(args):
   # start client with the secret stored in .beneath/secret
   client = get_client()
 
@@ -204,15 +238,31 @@ if __name__ == '__main__':
   _auth.set_defaults(func=auth)
   _auth.add_argument('secret', type=str)
 
-  # list parser and subparsers
-  _list = _root.add_parser('list').add_subparsers()
+  # project parser and subparsers
+  _project = _root.add_parser('project').add_subparsers()
 
-  _list_projects = _list.add_parser('projects')
-  _list_projects.set_defaults(func=list_projects)
+  _project_list = _project.add_parser('list')
+  _project_list.set_defaults(func=project_list)
 
-  _list_streams = _list.add_parser('streams')
-  _list_streams.set_defaults(func=list_streams)
-  _list_streams.add_argument('--project', type=str, required=True)
+  _project_create = _project.add_parser('create')
+  _project_create.set_defaults(func=project_create)
+  _project_create.add_argument('name', type=str)
+  _project_create.add_argument('--display-name', type=str, required=True)
+  _project_create.add_argument('--description', type=str)
+  _project_create.add_argument('--site-url', type=str)
+  _project_create.add_argument('--photo-url', type=str)
+
+  _project_update = _project.add_parser('update')
+  _project_update.set_defaults(func=project_update)
+  _project_update.add_argument('name', type=str)
+  _project_update.add_argument('--display-name', type=str, required=True)
+  _project_update.add_argument('--description', type=str)
+  _project_update.add_argument('--site-url', type=str)
+  _project_update.add_argument('--photo-url', type=str)
+
+  _project_delete = _project.add_parser('delete')
+  _project_delete.set_defaults(func=project_delete)
+  _project_delete.add_argument('name', type=str)
 
   # model parser and subparsers
   _model = _root.add_parser('model').add_subparsers()
@@ -236,6 +286,10 @@ if __name__ == '__main__':
 
   # stream parser and subparsers
   _stream = _root.add_parser('stream').add_subparsers()
+
+  _stream_list = _stream.add_parser('list')
+  _stream_list.set_defaults(func=stream_list)
+  _stream_list.add_argument('--project', type=str, required=True)
 
   _stream_create_ext = _stream.add_parser('create-root')
   _stream_create_ext.set_defaults(func=stream_create_ext)

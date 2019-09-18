@@ -36,9 +36,9 @@ type Project struct {
 // ProjectToUser represnts the many-to-many relationship between users and projects
 type ProjectToUser struct {
 	tableName struct{}  `sql:"projects_users,alias:pu"`
-	ProjectID uuid.UUID `sql:",pk,type:uuid"`
+	ProjectID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Project   *Project
-	UserID    uuid.UUID `sql:",pk,type:uuid"`
+	UserID    uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	User      *User
 }
 
