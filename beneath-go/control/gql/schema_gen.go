@@ -88,10 +88,10 @@ type ComplexityRoot struct {
 		NewBatch              func(childComplexity int, modelID uuid.UUID) int
 		RemoveUserFromProject func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeSecret          func(childComplexity int, secretID uuid.UUID) int
+		UpdateExternalStream  func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateMe              func(childComplexity int, name *string, bio *string) int
 		UpdateModel           func(childComplexity int, input UpdateModelInput) int
 		UpdateProject         func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
-		UpdateStream          func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 	}
 
 	NewSecret struct {
@@ -185,7 +185,6 @@ type MutationResolver interface {
 	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
 	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
 	DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error)
-	DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error)
 	NewBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error)
 	CommitBatch(ctx context.Context, instanceIDs []*uuid.UUID) (bool, error)
 	CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*entity.Project, error)
@@ -197,7 +196,8 @@ type MutationResolver interface {
 	IssueProjectSecret(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*NewSecret, error)
 	RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
 	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error)
-	UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error)
+	UpdateExternalStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error)
+	DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error)
 	UpdateMe(ctx context.Context, name *string, bio *string) (*Me, error)
 }
 type ProjectResolver interface {
@@ -510,6 +510,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
+	case "Mutation.updateExternalStream":
+		if e.complexity.Mutation.UpdateExternalStream == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateExternalStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateExternalStream(childComplexity, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool)), true
+
 	case "Mutation.updateMe":
 		if e.complexity.Mutation.UpdateMe == nil {
 			break
@@ -545,18 +557,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
-
-	case "Mutation.updateStream":
-		if e.complexity.Mutation.UpdateStream == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateStream_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateStream(childComplexity, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool)), true
 
 	case "NewSecret.secret":
 		if e.complexity.NewSecret.Secret == nil {
@@ -1100,7 +1100,6 @@ extend type Mutation {
   createModel(input: CreateModelInput!): Model!
   updateModel(input: UpdateModelInput!): Model!
   deleteModel(modelID: UUID!): Boolean!
-  deleteExternalStream(streamID: UUID!): Boolean!
   newBatch(modelID: UUID!): [StreamInstance!]!
   commitBatch(instanceIDs: [UUID]!): Boolean!
 }
@@ -1199,11 +1198,12 @@ extend type Mutation {
     batch: Boolean!,
     manual: Boolean!
   ): Stream!
-  updateStream(
+  updateExternalStream(
     streamID: UUID!,
     schema: String,
     manual: Boolean,
   ): Stream!
+  deleteExternalStream(streamID: UUID!): Boolean!
 }
 
 type Stream {
@@ -1541,6 +1541,36 @@ func (ec *executionContext) field_Mutation_revokeSecret_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateExternalStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["schema"]; ok {
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schema"] = arg1
+	var arg2 *bool
+	if tmp, ok := rawArgs["manual"]; ok {
+		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["manual"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateMe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1620,36 +1650,6 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 		}
 	}
 	args["photoURL"] = arg4
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["schema"]; ok {
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["schema"] = arg1
-	var arg2 *bool
-	if tmp, ok := rawArgs["manual"]; ok {
-		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["manual"] = arg2
 	return args, nil
 }
 
@@ -2495,50 +2495,6 @@ func (ec *executionContext) _Mutation_deleteModel(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_deleteExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteExternalStream_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteExternalStream(rctx, args["streamID"].(uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_newBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -3020,7 +2976,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3037,7 +2993,7 @@ func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field gr
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateStream_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateExternalStream_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3046,7 +3002,7 @@ func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStream(rctx, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool))
+		return ec.resolvers.Mutation().UpdateExternalStream(rctx, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3062,6 +3018,50 @@ func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field gr
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteExternalStream_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteExternalStream(rctx, args["streamID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6666,11 +6666,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "deleteExternalStream":
-			out.Values[i] = ec._Mutation_deleteExternalStream(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "newBatch":
 			out.Values[i] = ec._Mutation_newBatch(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -6723,8 +6718,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "updateStream":
-			out.Values[i] = ec._Mutation_updateStream(ctx, field)
+		case "updateExternalStream":
+			out.Values[i] = ec._Mutation_updateExternalStream(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteExternalStream":
+			out.Values[i] = ec._Mutation_deleteExternalStream(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

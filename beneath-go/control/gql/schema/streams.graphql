@@ -9,11 +9,12 @@ extend type Mutation {
     batch: Boolean!,
     manual: Boolean!
   ): Stream!
-  updateStream(
+  updateExternalStream(
     streamID: UUID!,
     schema: String,
     manual: Boolean,
   ): Stream!
+  deleteExternalStream(streamID: UUID!): Boolean!
 }
 
 type Stream {

@@ -59,10 +59,14 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 	return entity.FindStream(ctx, stream.StreamID), nil
 }
 
-func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error) {
+func (r *mutationResolver) UpdateExternalStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error) {
 	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	if !stream.External {
+		return nil, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -82,6 +86,10 @@ func (r *mutationResolver) DeleteExternalStream(ctx context.Context, streamID uu
 	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	if !stream.External {
+		return false, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)

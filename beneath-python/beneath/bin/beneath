@@ -230,6 +230,14 @@ def stream_update_ext(args):
     "keyFields",
   ])
 
+
+def stream_delete_ext(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.delete_root_stream(stream_id)
+  pretty_print_graphql_result(result)
+
 def pretty_print_graphql_result(result, fields=[]):
   if len(fields) == 0:
     selected = result
@@ -316,6 +324,11 @@ if __name__ == '__main__':
   _stream_update_ext.add_argument('-f', '--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
   _stream_update_ext.add_argument('--project', type=str, required=True)
   _stream_update_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
+
+  _stream_delete_ext = _stream.add_parser('delete-root')
+  _stream_delete_ext.set_defaults(func=stream_delete_ext)
+  _stream_delete_ext.add_argument('stream', type=str)
+  _stream_delete_ext.add_argument('--project', type=str, required=True)
 
   # parse the args and call the relevant function
   args = parser.parse_args()

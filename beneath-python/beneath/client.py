@@ -505,8 +505,8 @@ class Client:
     result = self._query_control(
       variables=variables,
       query="""
-        mutation UpdateStream($streamID: UUID!, $schema: String, $manual: Boolean) {
-          updateStream(
+        mutation UpdateExternalStream($streamID: UUID!, $schema: String, $manual: Boolean) {
+          updateExternalStream(
             streamID: $streamID,
             schema: $schema,
             manual: $manual
@@ -531,4 +531,17 @@ class Client:
         }
       """
     )
-    return result['updateStream']
+    return result['updateExternalStream']
+
+  def delete_root_stream(self, stream_id):
+    result = self._query_control(
+      variables={
+        "streamID": stream_id,
+      },
+      query="""
+        mutation DeleteExternalStream($streamID: UUID!) {
+          deleteExternalStream(streamID: $streamID)
+        }
+      """
+    )
+    return result['deleteExternalStream']
