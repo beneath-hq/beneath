@@ -255,7 +255,7 @@ if __name__ == '__main__':
   _project_update = _project.add_parser('update')
   _project_update.set_defaults(func=project_update)
   _project_update.add_argument('name', type=str)
-  _project_update.add_argument('--display-name', type=str, required=True)
+  _project_update.add_argument('--display-name', type=str)
   _project_update.add_argument('--description', type=str)
   _project_update.add_argument('--site-url', type=str)
   _project_update.add_argument('--photo-url', type=str)
