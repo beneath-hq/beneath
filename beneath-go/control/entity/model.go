@@ -325,10 +325,18 @@ func (m *Model) containsUUID(haystack []uuid.UUID, needle uuid.UUID) bool {
 // Delete deletes the model and it's dependent streams
 func (m *Model) Delete(ctx context.Context) error {
 	if m.OutputStreams == nil {
-		panic(fmt.Errorf("OutputStreams not loaded in Delete"))
+		m = FindModel(ctx, m.ModelID)
+		if m == nil {
+			return nil
+		}
 	}
 
 	for _, stream := range m.OutputStreams {
+		if stream.Project == nil {
+			// faster than fetching individually
+			stream.Project = m.Project
+		}
+
 		err := stream.Delete(ctx)
 		if err != nil {
 			return err

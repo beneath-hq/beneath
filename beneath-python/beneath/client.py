@@ -408,6 +408,20 @@ class Client:
     return result['updateModel']
 
 
+  def delete_model(self, model_id):
+    result = self._query_control(
+      variables={
+        'modelID': model_id,
+      },
+      query="""
+        mutation DeleteModel($modelID: UUID!) {
+          deleteModel(modelID: $modelID) 
+        }
+      """
+    )
+    return result['deleteModel']
+
+
   def get_stream_details(self, project_name, stream_name):
     result = self._query_control(
       variables={

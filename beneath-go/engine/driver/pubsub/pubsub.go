@@ -212,7 +212,7 @@ func (p *Pubsub) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error
 		err = fn(ctx, t)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			log.S.Errorf("couldn't process write report: %s", err.Error())
+			log.S.Errorf("couldn't process queued task: %s", err.Error())
 			cancel()
 			return
 		}

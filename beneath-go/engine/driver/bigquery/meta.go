@@ -133,7 +133,7 @@ func (b *BigQuery) PromoteStreamInstance(ctx context.Context, projectName string
 	}
 
 	// check underlying exists
-	_, err := underlying.Metadata(ctx)
+	md, err := underlying.Metadata(ctx)
 	if err != nil {
 		if isNotFound(err) {
 			log.S.Infof("couldn't promote instance '%s' because its underlying table doesn't exist", instanceID.String())
@@ -149,7 +149,15 @@ func (b *BigQuery) PromoteStreamInstance(ctx context.Context, projectName string
 		ViewQuery:   viewQuery,
 		Labels:      labels,
 	})
-	if err != nil {
+	if err == nil {
+		// trigger update to set view field descriptions (not possible with Create for stupid reasons)
+		_, err = view.Update(ctx, bq.TableMetadataToUpdate{
+			Schema: b.tableSchemaToViewSchema(md.Schema),
+		}, "")
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		if !isAlreadyExists(err) {
 			return err
 		}
@@ -184,7 +192,7 @@ func (b *BigQuery) UpdateStreamInstance(ctx context.Context, projectName string,
 	// get current metadata (for Etag)
 	dataset := b.Client.Dataset(externalDatasetName(projectName))
 	table := dataset.Table(externalTableName(streamName, instanceID))
-	md, err := table.Metadata(ctx)
+	mdt, err := table.Metadata(ctx)
 	if err != nil {
 		if isNotFound(err) {
 			log.S.Infof("couldn't update instance '%s' because its table doesn't exist", instanceID.String())
@@ -198,7 +206,7 @@ func (b *BigQuery) UpdateStreamInstance(ctx context.Context, projectName string,
 		Name:        streamName,
 		Description: streamDescription,
 		Schema:      schema,
-	}, md.ETag)
+	}, mdt.ETag)
 	if err != nil {
 		if isExpiredETag(err) {
 			return nil
@@ -208,7 +216,7 @@ func (b *BigQuery) UpdateStreamInstance(ctx context.Context, projectName string,
 
 	// get view metadata (for ETag)
 	view := dataset.Table(externalStreamViewName(streamName))
-	md, err = view.Metadata(ctx)
+	mdv, err := view.Metadata(ctx)
 	if err != nil {
 		if isNotFound(err) {
 			log.S.Infof("couldn't update instance '%s' because its view doesn't exist", instanceID.String())
@@ -218,11 +226,12 @@ func (b *BigQuery) UpdateStreamInstance(ctx context.Context, projectName string,
 	}
 
 	// update view if same instance
-	if md.Labels[InstanceIDLabel] == instanceID.String() {
+	if mdv.Labels[InstanceIDLabel] == instanceID.String() {
 		_, err = view.Update(ctx, bq.TableMetadataToUpdate{
 			Name:        streamName,
 			Description: streamDescription,
-		}, md.ETag)
+			Schema:      b.tableSchemaToViewSchema(schema),
+		}, mdv.ETag)
 		if err != nil {
 			if isExpiredETag(err) {
 				return nil
@@ -271,6 +280,24 @@ func (b *BigQuery) DeregisterStreamInstance(ctx context.Context, projectName str
 	}
 
 	return nil
+}
+
+func (b *BigQuery) tableSchemaToViewSchema(schema bq.Schema) bq.Schema {
+	schemaI := filter.Choose(schema, func(f *bq.FieldSchema) bool {
+		return f.Name != "__key" && f.Name != "__timestamp"
+	})
+	schema = schemaI.(bq.Schema)
+	b.recursivelyMakeSchemaFieldsNullable(schema)
+	return schema
+}
+
+func (b *BigQuery) recursivelyMakeSchemaFieldsNullable(schema bq.Schema) {
+	for _, f := range schema {
+		f.Required = false
+		if f.Schema != nil {
+			b.recursivelyMakeSchemaFieldsNullable(f.Schema)
+		}
+	}
 }
 
 func makeAccess(public bool, access []*bq.AccessEntry) []*bq.AccessEntry {

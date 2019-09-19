@@ -125,6 +125,7 @@ def model_stage(args):
   # get project
   result = client.get_project_by_name(config.get("project", None))
   project_id = result['projectID']
+  project_name = result['name']
 
   # get input stream IDs
   input_stream_ids = []
@@ -136,7 +137,7 @@ def model_stage(args):
   # stage model
   name = config.get("name", None)
   if args.update:
-    model = client.get_model_details(project, name)
+    model = client.get_model_details(project_name, name)
     result = client.update_model(
       model_id=model["modelID"],
       source_url=config.get("source_url", None),
@@ -156,8 +157,16 @@ def model_stage(args):
     )
 
   # print out model details
-  pretty_print_graphql_result(result, [
-  ])
+  pretty_print_graphql_result(result, [])
+
+def model_delete(args):
+  with open("config.json", "r") as f:
+    config = json.load(f)
+
+  client = get_client()
+  model = client.get_model_details(project_name=config.get("project", None), model_name=config.get("name", None))
+  result = client.delete_model(model["modelID"])
+  pretty_print_graphql_result(result, [])
 
 def model_deploy(args):
   print("model_deploy")
@@ -279,6 +288,10 @@ if __name__ == '__main__':
   _model_stage = _model.add_parser('stage')
   _model_stage.set_defaults(func=model_stage)
   _model_stage.add_argument('--update', type=str2bool, nargs='?', const=True, default=False)
+
+  _model_delete = _model.add_parser('delete')
+  _model_delete.set_defaults(func=model_delete)
+  _model_delete.add_argument('--confirm', type=str2bool, required=True, nargs='?', const=True, default=False)
 
   _model_deploy = _model.add_parser('deploy')
   _model_deploy.set_defaults(func=model_deploy)

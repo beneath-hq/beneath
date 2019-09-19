@@ -51,6 +51,12 @@ func New() *BigQuery {
 		panic(err)
 	}
 
+	// create internal dataset if doesn't exist
+	err = client.Dataset(internalDatasetName()).Create(context.Background(), &bq.DatasetMetadata{})
+	if err != nil && !isAlreadyExists(err) {
+		panic(err)
+	}
+
 	// create instance
 	return &BigQuery{
 		Client: client,

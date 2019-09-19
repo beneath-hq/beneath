@@ -226,10 +226,13 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 	// update
 	_, err := tx.Model(s).WherePK().Update()
+	if err != nil {
+		return err
+	}
 
 	// update in bigquery
 	if s.CurrentStreamInstanceID != nil {
-		db.Engine.Warehouse.UpdateStreamInstance(
+		err = db.Engine.Warehouse.UpdateStreamInstance(
 			tx.Context(),
 			s.Project.Name,
 			s.Name,
@@ -237,9 +240,12 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 			s.BigQuerySchema,
 			*s.CurrentStreamInstanceID,
 		)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 // CompileAndCreate compiles the schema, derives name and avro schemas and inserts
@@ -255,9 +261,11 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.CreateWithTx(tx)
 	})
+	if err != nil {
+		return err
+	}
 
-	// done
-	return err
+	return nil
 }
 
 // CompileAndUpdate updates a stream.
@@ -279,14 +287,23 @@ func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual
 
 // Delete deletes a stream and all its related instances
 func (s *Stream) Delete(ctx context.Context) error {
+	// set current_instance_id to null
+	s.CurrentStreamInstanceID = nil
+	_, err := db.DB.ModelContext(ctx, s).Column("current_stream_instance_id").WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	// get instances
 	var instances []*StreamInstance
-	err := db.DB.ModelContext(ctx, instances).
+	err = db.DB.ModelContext(ctx, &instances).
 		Where("stream_id = ?", s.StreamID).
 		Select()
 	if err != nil {
 		return err
 	}
 
+	// delete instances
 	for _, inst := range instances {
 		err := db.DB.WithContext(ctx).Delete(inst)
 		if err != nil {
@@ -304,6 +321,7 @@ func (s *Stream) Delete(ctx context.Context) error {
 		}
 	}
 
+	// delete stream
 	err = db.DB.WithContext(ctx).Delete(s)
 	if err != nil {
 		return err

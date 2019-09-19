@@ -26,12 +26,21 @@ func registerTask(task Task) {
 	if taskRegistry == nil {
 		taskRegistry = make(map[string]reflect.Type)
 	}
+
 	t := reflect.TypeOf(task)
-	taskRegistry[t.Name()] = t
+	if t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
+		panic("task is not a pointer to a struct")
+	}
+
+	taskRegistry[t.Elem().Name()] = t.Elem()
 }
 
 func encodeTask(task Task) (*pb.QueuedTask, error) {
 	t := reflect.TypeOf(task)
+	if t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
+		panic("task is not a pointer to a struct")
+	}
+
 	data, err := msgpack.Marshal(task)
 	if err != nil {
 		return nil, err
@@ -39,7 +48,7 @@ func encodeTask(task Task) (*pb.QueuedTask, error) {
 
 	return &pb.QueuedTask{
 		UniqueId:  uuid.NewV4().String(),
-		Name:      t.Name(),
+		Name:      t.Elem().Name(),
 		Timestamp: timeutil.UnixMilli(time.Now()),
 		Data:      data,
 	}, nil
@@ -51,8 +60,8 @@ func decodeTask(qt *pb.QueuedTask) (Task, error) {
 		return nil, fmt.Errorf("cannot find task with name '%s'", qt.Name)
 	}
 
-	tval := reflect.New(t)
-	task, ok := tval.Interface().(Task)
+	tval := reflect.New(t)              // pointer to underlying; underlying is raw struct
+	task, ok := tval.Interface().(Task) // pointer to struct
 	if !ok {
 		return nil, fmt.Errorf("cannot cast type '%s' to Task", qt.Name)
 	}
