@@ -30,6 +30,8 @@ type Secret struct {
 	User         *User
 	ProjectID    *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
 	Project      *Project
+	ReadQuota    int64
+	WriteQuota   int64
 	CreatedOn    *time.Time `sql:",default:now()"`
 	UpdatedOn    *time.Time `sql:",default:now()"`
 	DeletedOn    time.Time
@@ -51,6 +53,18 @@ const (
 
 	// number of secrets to cache in local memory for extra speed
 	secretCacheLocalSize = 10000
+
+	// ProjectSecretReadQuota is the default read quota for project secrets (in gigabytes)
+	ProjectSecretReadQuota = 100000000
+
+	// UserSecretReadQuota is the default read quota for user secrets (in gigabytes)
+	UserSecretReadQuota = 100000000
+
+	// ProjectSecretWriteQuota is the default write quota for project secrets (in gigabytes)
+	ProjectSecretWriteQuota = 100000000
+
+	// UserSecretWriteQuota is the default write quota for user secrets (in gigabytes)
+	UserSecretWriteQuota = 100000000
 )
 
 var (
@@ -153,7 +167,7 @@ func FindProjectSecrets(ctx context.Context, projectID uuid.UUID) []*Secret {
 	return secrets
 }
 
-// NewSecret creates a new, unconfigured secret -- use NewUserSecret or NewProjectSecret instead
+// NewSecret creates a new, unconfigured secret -- use CreateUserSecret or CreateProjectSecret instead
 func NewSecret() *Secret {
 	secretStr := GenerateSecretString()
 	return &Secret{
@@ -170,6 +184,8 @@ func CreateUserSecret(ctx context.Context, userID uuid.UUID, role SecretRole, de
 	secret.Description = description
 	secret.Role = role
 	secret.UserID = &userID
+	secret.ReadQuota = UserSecretReadQuota
+	secret.WriteQuota = UserSecretWriteQuota
 
 	// validate
 	err := GetValidator().Struct(secret)
@@ -194,6 +210,8 @@ func CreateProjectSecret(ctx context.Context, projectID uuid.UUID, role SecretRo
 	secret.Description = description
 	secret.Role = role
 	secret.ProjectID = &projectID
+	secret.ReadQuota = ProjectSecretReadQuota
+	secret.WriteQuota = ProjectSecretWriteQuota
 
 	// validate
 	err := GetValidator().Struct(secret)
@@ -322,9 +340,10 @@ func (k *Secret) BillingID() uuid.UUID {
 
 // CheckReadQuota checks the user's read quota
 func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit
-	// the user has hit its quota
-	// return false
+	// if any constraints are hit, the user has hit its quota
+	if u.ReadBytes >= k.ReadQuota {
+		return false
+	}
 
 	// the user still has resources available
 	return true
@@ -332,9 +351,10 @@ func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
 
 // CheckWriteQuota checks the user's write quota
 func (k *Secret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit
-	// the user has hit its quota
-	// return false
+	// if any constraints are hit, the user has hit its quota
+	if u.WriteBytes >= k.WriteQuota {
+		return false
+	}
 
 	// the user still has resources available
 	return true
