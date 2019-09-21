@@ -456,12 +456,12 @@ class Client:
     return result['stream']
     
 
-  def create_external_stream(self, project_id, schema, manual=None):
+  def create_external_stream(self, project_id, schema, manual=False, batch=False):
     result = self._query_control(
       variables={
         "projectID": project_id,
         "schema": schema,
-        "batch": False,
+        "batch": batch,
         "manual": bool(manual),
       },
       query="""
@@ -533,7 +533,7 @@ class Client:
     )
     return result['updateExternalStream']
 
-  def delete_root_stream(self, stream_id):
+  def delete_external_stream(self, stream_id):
     result = self._query_control(
       variables={
         "streamID": stream_id,
@@ -545,3 +545,89 @@ class Client:
       """
     )
     return result['deleteExternalStream']
+
+  def create_external_stream_batch(self, stream_id):
+    result = self._query_control(
+      variables={
+        "streamID": stream_id,
+      },
+      query="""
+        mutation CreateExternalStreamBatch($streamID: UUID!) {
+          createExternalStreamBatch(streamID: $streamID) {
+            instanceID
+          }
+        }
+      """
+    )
+    return result['createExternalStreamBatch']
+
+  def commit_external_stream_batch(self, instance_id):
+    result = self._query_control(
+      variables={
+        "instanceID": instance_id,
+      },
+      query="""
+        mutation CommitExternalStreamBatch($instanceID: UUID!) {
+          commitExternalStreamBatch(instanceID: $instanceID)
+        }
+      """
+    )
+    return result['commitExternalStreamBatch']
+
+  def clear_pending_external_stream_batches(self, stream_id):
+    result = self._query_control(
+      variables={
+        "streamID": stream_id,
+      },
+      query="""
+        mutation ClearPendingExternalStreamBatches($streamID: UUID!) {
+          clearPendingExternalStreamBatches(streamID: $streamID) 
+        }
+      """
+    )
+    return result['clearPendingExternalStreamBatches']
+
+  def create_model_batch(self, model_id):
+    result = self._query_control(
+      variables={
+        "modelID": model_id,
+      },
+      query="""
+        mutation CreateModelBatch($modelID: UUID!) {
+          createModelBatch(modelID: $modelID) {
+            instanceID
+            stream {
+              streamID
+            }
+          }
+        }
+      """
+    )
+    return result['createModelBatch']
+
+  def commit_model_batch(self, model_id, instance_ids):
+    result = self._query_control(
+      variables={
+        "modelID": model_id,
+        "instanceIDs": instance_ids,
+      },
+      query="""
+        mutation CommitModelBatch($modelID: UUID!, $instanceIDs: [UUID!]!) {
+          commitModelBatch(modelID: $modelID, instanceIDs: $instanceIDs)
+        }
+      """
+    )
+    return result['commitModelBatch']
+
+  def clear_pending_model_batches(self, model_id):
+    result = self._query_control(
+      variables={
+        "modelID": model_id,
+      },
+      query="""
+        mutation ClearPendingModelBatches($modelID: UUID!) {
+          clearPendingModelBatches(modelID: $modelID)
+        }
+      """
+    )
+    return result['clearPendingModelBatches']

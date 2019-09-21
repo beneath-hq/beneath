@@ -187,8 +187,7 @@ def stream_create_ext(args):
     schema = f.read()
   
   # submit GraphQL mutation to create an external stream
-  manual = args.manual
-  result = client.create_external_stream(project_id=project_id, schema=schema, manual=manual)
+  result = client.create_external_stream(project_id=project_id, schema=schema, manual=args.manual, batch=args.batch)
   
   # print out the stream's details to the user
   pretty_print_graphql_result(result, [
@@ -235,9 +234,32 @@ def stream_delete_ext(args):
   client = get_client()
   result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
   stream_id = result['streamID']
-  result = client.delete_root_stream(stream_id)
+  result = client.delete_external_stream(stream_id)
   pretty_print_graphql_result(result)
 
+
+def stream_ext_batch_create(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.create_external_stream_batch(stream_id)
+  pretty_print_graphql_result(result)
+  
+
+def stream_ext_batch_commit(args):
+  client = get_client()
+  result = client.commit_external_stream_batch(instance_id=args.instance)
+  pretty_print_graphql_result(result)
+  
+
+def stream_ext_batches_clear(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.clear_pending_external_stream_batches(stream_id)
+  pretty_print_graphql_result(result)
+  
+  
 def pretty_print_graphql_result(result, fields=[]):
   if len(fields) == 0:
     selected = result
@@ -310,25 +332,46 @@ if __name__ == '__main__':
 
   _stream_list = _stream.add_parser('list')
   _stream_list.set_defaults(func=stream_list)
-  _stream_list.add_argument('--project', type=str, required=True)
+  _stream_list.add_argument('-p', '--project', type=str, required=True)
 
-  _stream_create_ext = _stream.add_parser('create-root')
+  # root-stream parser and subparsers
+  _stream_root = _root.add_parser('root-stream').add_subparsers()
+
+  _stream_create_ext = _stream_root.add_parser('create')
   _stream_create_ext.set_defaults(func=stream_create_ext)
   _stream_create_ext.add_argument('-f', '--file', type=str, required=True, help="this file should contain the GraphQL schema for the stream you would like to create")
-  _stream_create_ext.add_argument('--project', type=str, required=True)
+  _stream_create_ext.add_argument('-p', '--project', type=str, required=True)
   _stream_create_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
+  _stream_create_ext.add_argument('--batch', type=str2bool, nargs='?', const=True, default=False)
 
-  _stream_update_ext = _stream.add_parser('update-root')
+  _stream_update_ext = _stream_root.add_parser('update')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
   _stream_update_ext.add_argument('-f', '--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
-  _stream_update_ext.add_argument('--project', type=str, required=True)
+  _stream_update_ext.add_argument('-p', '--project', type=str, required=True)
   _stream_update_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
-  _stream_delete_ext = _stream.add_parser('delete-root')
+  _stream_delete_ext = _stream_root.add_parser('delete')
   _stream_delete_ext.set_defaults(func=stream_delete_ext)
   _stream_delete_ext.add_argument('stream', type=str)
-  _stream_delete_ext.add_argument('--project', type=str, required=True)
+  _stream_delete_ext.add_argument('-p', '--project', type=str, required=True)
+
+  # root-stream batch parser and subparsers
+  _stream_root_batch = _stream_root.add_parser('batch').add_subparsers()
+
+  _stream_ext_batch_create = _stream_root_batch.add_parser('create')
+  _stream_ext_batch_create.set_defaults(func=stream_ext_batch_create)
+  _stream_ext_batch_create.add_argument('stream', type=str)
+  _stream_ext_batch_create.add_argument('-p', '--project', type=str, required=True)
+
+  _stream_ext_batch_commit = _stream_root_batch.add_parser('commit')
+  _stream_ext_batch_commit.set_defaults(func=stream_ext_batch_commit)
+  _stream_ext_batch_commit.add_argument('instance', type=str)
+
+  _stream_ext_batches_clear = _stream_root_batch.add_parser('clear')
+  _stream_ext_batches_clear.set_defaults(func=stream_ext_batches_clear)
+  _stream_ext_batches_clear.add_argument('stream', type=str)
+  _stream_ext_batches_clear.add_argument('-p', '--project', type=str, required=True)
 
   # parse the args and call the relevant function
   args = parser.parse_args()

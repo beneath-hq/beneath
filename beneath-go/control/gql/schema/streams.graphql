@@ -15,6 +15,10 @@ extend type Mutation {
     manual: Boolean,
   ): Stream!
   deleteExternalStream(streamID: UUID!): Boolean!
+
+  createExternalStreamBatch(streamID: UUID!): StreamInstance!
+  commitExternalStreamBatch(instanceID: UUID!): Boolean!
+  clearPendingExternalStreamBatches(streamID: UUID!): Boolean!
 }
 
 type Stream {

@@ -2,12 +2,12 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/go-pg/pg"
-	uuid "github.com/satori/go.uuid"
-
 	"github.com/beneath-core/beneath-go/db"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // StreamInstance represents a single version of a stream (for a streaming stream,
@@ -22,18 +22,18 @@ type StreamInstance struct {
 	CommittedOn      time.Time
 }
 
-// CreateStreamInstance creates a new instance
-func CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (res *StreamInstance, err error) {
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		res, err = CreateStreamInstanceWithTx(tx, streamID)
-		return err
-	})
-	return res, err
-}
-
-// CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
-func CreateStreamInstanceWithTx(tx *pg.Tx, streamID uuid.UUID) (*StreamInstance, error) {
-	si := &StreamInstance{StreamID: streamID}
-	_, err := tx.Model(si).Insert()
-	return si, err
+// FindStreamInstance finds an instance and related stream details
+func FindStreamInstance(ctx context.Context, instanceID uuid.UUID) *StreamInstance {
+	si := &StreamInstance{
+		StreamInstanceID: instanceID,
+	}
+	err := db.DB.ModelContext(ctx, si).WherePK().Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	si.Stream = FindStream(ctx, si.StreamID)
+	if si.Stream == nil {
+		panic(fmt.Errorf("stream for instance is nil"))
+	}
+	return si
 }
