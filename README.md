@@ -11,7 +11,7 @@ The project structure is currently:
 - beneath-frontend contains JavaScript/TypeScript code for the frontend
 - beneath-go contains all Go code, which spans the control plane, the data gateway and the core data pipelines
 
-Checkout the git repo with: `git clone https://github.com/beneathcrypto/beneath-core.git`
+Checkout the git repo with: `git clone https://gitlab.com/_beneath/beneath-core.git`
 
 ## Setting up a development environment
 
