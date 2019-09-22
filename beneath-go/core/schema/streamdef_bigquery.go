@@ -39,14 +39,15 @@ func (s *StreamDef) BuildBigQuerySchema() (string, error) {
 func (s *StreamDef) buildBigQueryFields(fields []*Field) interface{} {
 	schema := make([]interface{}, len(fields))
 	for idx, field := range fields {
-		schema[idx] = s.buildBigQueryField(field.Type, field.Name)
+		schema[idx] = s.buildBigQueryField(field.Type, field.Name, field.Doc)
 	}
 	return schema
 }
 
-func (s *StreamDef) buildBigQueryField(tr *TypeRef, name string) interface{} {
+func (s *StreamDef) buildBigQueryField(tr *TypeRef, name string, doc string) interface{} {
 	schema := map[string]interface{}{
-		"name": name,
+		"name":        name,
+		"description": doc,
 	}
 
 	// set mode
@@ -119,5 +120,4 @@ func (s *StreamDef) buildBigQueryPrimitiveTypeName(name string) interface{} {
 	}
 
 	panic(fmt.Errorf("type '%v' is not a primitive", name))
-	return nil
 }

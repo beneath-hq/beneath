@@ -116,6 +116,8 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	user.Email = email
 	user.Name = name
 	user.PhotoURL = photoURL
+	user.ReadQuota = DefaultUserReadQuota
+	user.WriteQuota = DefaultUserWriteQuota
 
 	// validate
 	err = GetValidator().Struct(user)

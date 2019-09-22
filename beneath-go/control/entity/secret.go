@@ -152,8 +152,6 @@ func CreateUserSecret(ctx context.Context, userID uuid.UUID, description string)
 	secret := NewSecret()
 	secret.Description = description
 	secret.UserID = &userID
-	secret.User.ReadQuota = DefaultServiceReadQuota // how best to accept an optional input to overwrite this?
-	secret.User.WriteQuota = DefaultServiceWriteQuota
 
 	// validate
 	err := GetValidator().Struct(secret)
@@ -177,8 +175,6 @@ func CreateServiceSecret(ctx context.Context, serviceID uuid.UUID, description s
 	secret := NewSecret()
 	secret.Description = description
 	secret.ServiceID = &serviceID
-	secret.Service.ReadQuota = DefaultServiceReadQuota // how best to accept an optional input to overwrite this?
-	secret.Service.WriteQuota = DefaultServiceWriteQuota
 
 	// validate
 	err := GetValidator().Struct(secret)
@@ -211,7 +207,7 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 		Func: func() (interface{}, error) {
 			selectedSecret := &Secret{}
 			err := db.DB.ModelContext(ctx, selectedSecret).
-				Column("secret_id", "role", "user_id", "project_id").
+				Column("secret_id", "user_id", "service_id").
 				Where("hashed_secret = ?", hashed).
 				Select()
 			if err != nil && err != pg.ErrNoRows {

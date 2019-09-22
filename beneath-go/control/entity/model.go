@@ -61,7 +61,7 @@ var (
 )
 
 func init() {
-	modelNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	modelNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	orm.RegisterTable((*StreamIntoModel)(nil))
 	GetValidator().RegisterStructValidation(modelValidation, Model{})
 }
@@ -387,10 +387,18 @@ func (m *Model) containsUUID(haystack []uuid.UUID, needle uuid.UUID) bool {
 // Delete deletes the model and it's dependent streams
 func (m *Model) Delete(ctx context.Context) error {
 	if m.OutputStreams == nil {
-		panic(fmt.Errorf("OutputStreams not loaded in Delete"))
+		m = FindModel(ctx, m.ModelID)
+		if m == nil {
+			return nil
+		}
 	}
 
 	for _, stream := range m.OutputStreams {
+		if stream.Project == nil {
+			// faster than fetching individually
+			stream.Project = m.Project
+		}
+
 		err := stream.Delete(ctx)
 		if err != nil {
 			return err
@@ -410,4 +418,67 @@ func (m *Model) Delete(ctx context.Context) error {
 
 		return nil
 	})
+}
+
+// CreateBatch prepares a new batch of stream instances for OutputStreams
+func (m *Model) CreateBatch(ctx context.Context) ([]*StreamInstance, error) {
+	instances := make([]*StreamInstance, len(m.OutputStreams))
+	for i, stream := range m.OutputStreams {
+		stream.Project = m.Project
+		si, err := stream.CreateStreamInstance(ctx)
+		if err != nil {
+			return nil, err
+		}
+		instances[i] = si
+	}
+	return instances, nil
+}
+
+// CommitBatch commits a batch created with CreateBatch
+func (m *Model) CommitBatch(ctx context.Context, instanceIDs []uuid.UUID) error {
+	// get instances
+	var instances []*StreamInstance
+	err := db.DB.ModelContext(ctx, &instances).
+		Where("stream_instance_id in (?)", pg.In(instanceIDs)).
+		Relation("Stream", func(q *orm.Query) (*orm.Query, error) {
+			return q.Where("source_model_id = ?", m.ModelID), nil
+		}).
+		Select()
+	if err != nil {
+		return err
+	}
+
+	// We want to guard against being supplied instance IDs that don't belong to streams of this model.
+	// And also against being supplied bad instance IDs or fewer instance IDs than there are output streams.
+	// These checks should guard againts all that.
+	if len(instances) != len(instanceIDs) || len(instances) != len(m.OutputStreams) {
+		return fmt.Errorf("found one or more unexpected instance IDs in commit")
+	}
+	for _, instance := range instances {
+		if instance.Stream == nil {
+			return fmt.Errorf("found instance that don't belong to stream of this model")
+		}
+	}
+
+	// commit
+	for _, instance := range instances {
+		instance.Stream.Project = m.Project
+		err := instance.Stream.CommitStreamInstance(ctx, instance)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ClearPendingBatches clears all instance IDs not promoted to current
+func (m *Model) ClearPendingBatches(ctx context.Context) error {
+	for _, stream := range m.OutputStreams {
+		stream.Project = m.Project
+		err := stream.ClearPendingBatches(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

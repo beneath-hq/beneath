@@ -6,9 +6,10 @@ extend type Mutation {
   createModel(input: CreateModelInput!): Model!
   updateModel(input: UpdateModelInput!): Model!
   deleteModel(modelID: UUID!): Boolean!
-  deleteExternalStream(streamID: UUID!): Boolean!
-  newBatch(modelID: UUID!): [StreamInstance!]!
-  commitBatch(instanceIDs: [UUID]!): Boolean!
+
+  createModelBatch(modelID: UUID!): [StreamInstance!]!
+  commitModelBatch(modelID: UUID!, instanceIDs: [UUID!]!): Boolean!
+  clearPendingModelBatches(modelID: UUID!): Boolean!
 }
 
 type Model {

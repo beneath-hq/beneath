@@ -1,6 +1,8 @@
 package resolver
 
-import "github.com/vektah/gqlparser/gqlerror"
+import (
+	"github.com/vektah/gqlparser/gqlerror"
+)
 
 // DereferenceString does what it says it does
 func DereferenceString(ptr *string) string {

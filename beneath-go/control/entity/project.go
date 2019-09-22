@@ -42,7 +42,7 @@ var (
 )
 
 func init() {
-	projectNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	projectNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	GetValidator().RegisterStructValidation(validateProject, Project{})
 }
 

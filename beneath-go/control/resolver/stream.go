@@ -59,10 +59,14 @@ func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID u
 	return entity.FindStream(ctx, stream.StreamID), nil
 }
 
-func (r *mutationResolver) UpdateStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error) {
+func (r *mutationResolver) UpdateExternalStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error) {
 	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	if !stream.External {
+		return nil, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -84,12 +88,97 @@ func (r *mutationResolver) DeleteExternalStream(ctx context.Context, streamID uu
 		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}
 
+	if !stream.External {
+		return false, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
+	}
+
 	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(stream.ProjectID) {
 		return false, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
 	err := stream.Delete(ctx)
+	if err != nil {
+		return false, gqlerror.Errorf("%s", err.Error())
+	}
+
+	return true, nil
+}
+
+func (r *mutationResolver) CreateExternalStreamBatch(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error) {
+	stream := entity.FindStream(ctx, streamID)
+	if stream == nil {
+		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	if !stream.External {
+		return nil, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
+	}
+
+	if !stream.Batch {
+		return nil, gqlerror.Errorf("Stream '%s' is not a batch stream", streamID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(stream.ProjectID) {
+		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	}
+
+	si, err := stream.CreateStreamInstance(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return si, nil
+}
+
+func (r *mutationResolver) CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error) {
+	instance := entity.FindStreamInstance(ctx, instanceID)
+	if instance == nil {
+		return false, gqlerror.Errorf("Stream instance '%s' not found", instanceID.String())
+	}
+
+	if !instance.Stream.External {
+		return false, gqlerror.Errorf("Stream '%s/%s' is not a root stream", instance.Stream.Name, instance.Stream.Project.Name)
+	}
+
+	if !instance.Stream.Batch {
+		return false, gqlerror.Errorf("Stream '%s' is not a batch stream", instance.StreamID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(instance.Stream.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to update stream in project %s", instance.Stream.Project.Name)
+	}
+
+	err := instance.Stream.CommitStreamInstance(ctx, instance)
+	if err != nil {
+		return false, gqlerror.Errorf("%s", err.Error())
+	}
+
+	return true, nil
+}
+
+func (r *mutationResolver) ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error) {
+	stream := entity.FindStream(ctx, streamID)
+	if stream == nil {
+		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
+	}
+
+	if !stream.External {
+		return false, gqlerror.Errorf("Stream '%s' is not a root stream", streamID.String())
+	}
+
+	if !stream.Batch {
+		return false, gqlerror.Errorf("Stream '%s' is not a batch stream", streamID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(stream.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	}
+
+	err := stream.ClearPendingBatches(ctx)
 	if err != nil {
 		return false, gqlerror.Errorf("%s", err.Error())
 	}

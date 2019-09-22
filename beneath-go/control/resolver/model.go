@@ -3,11 +3,12 @@ package resolver
 import (
 	"context"
 
+	uuid "github.com/satori/go.uuid"
+	"github.com/vektah/gqlparser/gqlerror"
+
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/core/middleware"
-	uuid "github.com/satori/go.uuid"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
 // Model returns the gql.ModelResolver
@@ -120,11 +121,83 @@ func (r *mutationResolver) DeleteModel(ctx context.Context, modelID uuid.UUID) (
 	return true, nil
 }
 
-func (r *mutationResolver) NewBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error) {
-	// what about new batches of root streams?
-	panic("not implemented")
+func (r *mutationResolver) CreateModelBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error) {
+	// get model
+	model := entity.FindModel(ctx, modelID)
+	if model == nil {
+		return nil, gqlerror.Errorf("Model '%s' not found", modelID.String())
+	}
+
+	// check allowed to edit
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(model.ProjectID) {
+		return nil, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	}
+
+	// check is batch
+	if model.Kind != entity.ModelKindBatch {
+		return nil, gqlerror.Errorf("Cannot manage batches for streaming or microbatch model")
+	}
+
+	// make instances
+	instances, err := model.CreateBatch(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf("Error creating model batch: %s", err.Error())
+	}
+
+	return instances, nil
 }
 
-func (r *mutationResolver) CommitBatch(ctx context.Context, instanceIDs []*uuid.UUID) (bool, error) {
-	panic("not implemented")
+func (r *mutationResolver) CommitModelBatch(ctx context.Context, modelID uuid.UUID, instanceIDs []uuid.UUID) (bool, error) {
+	// get model
+	model := entity.FindModel(ctx, modelID)
+	if model == nil {
+		return false, gqlerror.Errorf("Model '%s' not found", modelID.String())
+	}
+
+	// check allowed to edit
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(model.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	}
+
+	// check is batch
+	if model.Kind != entity.ModelKindBatch {
+		return false, gqlerror.Errorf("Cannot manage batches for streaming or microbatch model")
+	}
+
+	// commit
+	err := model.CommitBatch(ctx, instanceIDs)
+	if err != nil {
+		return false, gqlerror.Errorf("Error committing batch: %s", err.Error())
+	}
+
+	return true, nil
+}
+
+func (r *mutationResolver) ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error) {
+	// get model
+	model := entity.FindModel(ctx, modelID)
+	if model == nil {
+		return false, gqlerror.Errorf("Model '%s' not found", modelID.String())
+	}
+
+	// check allowed to edit
+	secret := middleware.GetSecret(ctx)
+	if !secret.EditsProject(model.ProjectID) {
+		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	}
+
+	// check is batch
+	if model.Kind != entity.ModelKindBatch {
+		return false, gqlerror.Errorf("Cannot manage batches for streaming or microbatch model")
+	}
+
+	// delete
+	err := model.ClearPendingBatches(ctx)
+	if err != nil {
+		return false, gqlerror.Errorf("Error committing batch: %s", err.Error())
+	}
+
+	return true, nil
 }

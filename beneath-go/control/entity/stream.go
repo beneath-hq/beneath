@@ -50,7 +50,7 @@ var (
 
 func init() {
 	// configure validation
-	streamNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	streamNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	GetValidator().RegisterStructValidation(streamValidation, Stream{})
 }
 
@@ -177,42 +177,13 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 	// create and set stream instance if not batch
 	if !s.Batch {
 		// create stream instance
-		si, err := CreateStreamInstanceWithTx(tx, s.StreamID)
+		si, err := s.CreateStreamInstanceWithTx(tx)
 		if err != nil {
 			return err
 		}
 
-		// update stream with stream instance ID
-		s.CurrentStreamInstanceID = &si.StreamInstanceID
-		_, err = tx.Model(s).WherePK().Update()
-		if err != nil {
-			return err
-		}
-
-		// register instance
-		err = db.Engine.Warehouse.RegisterStreamInstance(
-			tx.Context(),
-			s.Project.Name,
-			s.StreamID,
-			s.Name,
-			s.Description,
-			s.BigQuerySchema,
-			s.KeyFields,
-			si.StreamInstanceID,
-		)
-		if err != nil {
-			return err
-		}
-
-		// promote to current instance
-		err = db.Engine.Warehouse.PromoteStreamInstance(
-			tx.Context(),
-			s.Project.Name,
-			s.StreamID,
-			s.Name,
-			s.Description,
-			si.StreamInstanceID,
-		)
+		// commit instance
+		err = s.CommitStreamInstanceWithTx(tx, si)
 		if err != nil {
 			return err
 		}
@@ -226,10 +197,13 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 	// update
 	_, err := tx.Model(s).WherePK().Update()
+	if err != nil {
+		return err
+	}
 
 	// update in bigquery
 	if s.CurrentStreamInstanceID != nil {
-		db.Engine.Warehouse.UpdateStreamInstance(
+		err = db.Engine.Warehouse.UpdateStreamInstance(
 			tx.Context(),
 			s.Project.Name,
 			s.Name,
@@ -237,9 +211,12 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 			s.BigQuerySchema,
 			*s.CurrentStreamInstanceID,
 		)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 // CompileAndCreate compiles the schema, derives name and avro schemas and inserts
@@ -255,9 +232,11 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.CreateWithTx(tx)
 	})
+	if err != nil {
+		return err
+	}
 
-	// done
-	return err
+	return nil
 }
 
 // CompileAndUpdate updates a stream.
@@ -279,34 +258,198 @@ func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual
 
 // Delete deletes a stream and all its related instances
 func (s *Stream) Delete(ctx context.Context) error {
+	// get instances
 	var instances []*StreamInstance
-	err := db.DB.ModelContext(ctx, instances).
+	err := db.DB.ModelContext(ctx, &instances).
 		Where("stream_id = ?", s.StreamID).
 		Select()
 	if err != nil {
 		return err
 	}
 
+	// delete instances
 	for _, inst := range instances {
-		err := db.DB.WithContext(ctx).Delete(inst)
+		err := s.DeleteStreamInstance(ctx, inst)
 		if err != nil {
 			return err
 		}
-		err = taskqueue.Submit(ctx, &task.CleanupInstance{
-			InstanceID:  inst.StreamInstanceID,
-			StreamID:    s.StreamID,
-			StreamName:  s.Name,
-			ProjectID:   s.ProjectID,
-			ProjectName: s.Project.Name,
+	}
+
+	// delete stream
+	err = db.DB.WithContext(ctx).Delete(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateStreamInstance creates a new instance
+func (s *Stream) CreateStreamInstance(ctx context.Context) (res *StreamInstance, err error) {
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		res, err = s.CreateStreamInstanceWithTx(tx)
+		return err
+	})
+	return res, err
+}
+
+// CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
+func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) {
+	// check uncommited instances count
+	var count int
+	_, err := tx.QueryOne(pg.Scan(&count), `
+		select count(*)
+		from streams s
+		join stream_instances si on s.stream_id = si.stream_id
+		where s.stream_id = ?
+		and s.current_stream_instance_id is distinct from si.stream_instance_id`, s.StreamID)
+	if err != nil {
+		return nil, err
+	}
+	if count > 0 {
+		return nil, fmt.Errorf("Another batch is already outstanding for stream '%s/%s' – commit or clear it before continuing", s.Project.Name, s.Name)
+	}
+
+	// create new
+	si := &StreamInstance{StreamID: s.StreamID}
+	_, err = tx.Model(si).Insert()
+	if err != nil {
+		return nil, err
+	}
+	si.Stream = s
+
+	// register instance
+	err = db.Engine.Warehouse.RegisterStreamInstance(
+		tx.Context(),
+		s.Project.Name,
+		s.StreamID,
+		s.Name,
+		s.Description,
+		s.BigQuerySchema,
+		s.KeyFields,
+		si.StreamInstanceID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return si, nil
+}
+
+// CommitStreamInstance promotes an instance to current_instance_id and deletes the old instance
+func (s *Stream) CommitStreamInstance(ctx context.Context, instance *StreamInstance) error {
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		return s.CommitStreamInstanceWithTx(tx, instance)
+	})
+}
+
+// CommitStreamInstanceWithTx is the same as CommitStreamInstance, but in a database transaction
+// Note must support multiple calls (idempotence)
+func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance) error {
+	// check
+	if instance.StreamID != s.StreamID {
+		return fmt.Errorf("Cannot commit instance '%s' because it doesn't belong to stream '%s'", instance.StreamInstanceID.String(), s.StreamID.String())
+	}
+
+	// update stream with stream instance ID
+	prevInstanceID := s.CurrentStreamInstanceID
+	s.CurrentStreamInstanceID = &instance.StreamInstanceID
+	_, err := tx.Model(s).WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	// call on warehouse
+	err = db.Engine.Warehouse.PromoteStreamInstance(
+		tx.Context(),
+		s.Project.Name,
+		s.StreamID,
+		s.Name,
+		s.Description,
+		instance.StreamInstanceID,
+	)
+	if err != nil {
+		return err
+	}
+
+	// delete old instance (unless idempotence)
+	if prevInstanceID != nil && *prevInstanceID != instance.StreamInstanceID {
+		err := s.DeleteStreamInstanceWithTx(tx, &StreamInstance{
+			StreamID:         s.StreamID,
+			StreamInstanceID: *prevInstanceID,
 		})
 		if err != nil {
 			return err
 		}
 	}
 
-	err = db.DB.WithContext(ctx).Delete(s)
+	return nil
+}
+
+// DeleteStreamInstance deletes and deregisters a stream instance
+func (s *Stream) DeleteStreamInstance(ctx context.Context, si *StreamInstance) error {
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		return s.DeleteStreamInstanceWithTx(tx, si)
+	})
+}
+
+// DeleteStreamInstanceWithTx is like DeleteStreamInstance in a tx
+func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error {
+	// check
+	if si.StreamID != s.StreamID {
+		return fmt.Errorf("Cannot delete instance '%s' because it doesn't belong to stream '%s'", si.StreamInstanceID.String(), s.StreamID.String())
+	}
+
+	// remove as current stream instance (if necessary)
+	if s.CurrentStreamInstanceID != nil && *s.CurrentStreamInstanceID == si.StreamInstanceID {
+		s.CurrentStreamInstanceID = nil
+		_, err := tx.Model(s).Column("current_stream_instance_id").WherePK().Update()
+		if err != nil {
+			return err
+		}
+	}
+
+	// delete
+	err := tx.Delete(si)
 	if err != nil {
 		return err
+	}
+
+	// deregister
+	err = taskqueue.Submit(tx.Context(), &task.CleanupInstance{
+		InstanceID:  si.StreamInstanceID,
+		StreamID:    s.StreamID,
+		StreamName:  s.Name,
+		ProjectID:   s.ProjectID,
+		ProjectName: s.Project.Name,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ClearPendingBatches clears instance IDs that are not current
+func (s *Stream) ClearPendingBatches(ctx context.Context) error {
+	// get instances
+	if len(s.StreamInstances) == 0 {
+		err := db.DB.ModelContext(ctx, (*StreamInstance)(nil)).
+			Where("stream_id = ?", s.StreamID).
+			Select(&s.StreamInstances)
+		if err != nil {
+			return err
+		}
+	}
+
+	// loop
+	for _, si := range s.StreamInstances {
+		if s.CurrentStreamInstanceID == nil || *s.CurrentStreamInstanceID != si.StreamInstanceID {
+			err := s.DeleteStreamInstance(ctx, si)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
