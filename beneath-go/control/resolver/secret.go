@@ -3,11 +3,12 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/beneath-go/control/gql"
-	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/core/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
+
+	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/control/gql"
+	"github.com/beneath-core/beneath-go/core/middleware"
 )
 
 // Secret returns the gql.SecretResolver
@@ -19,10 +20,6 @@ type secretResolver struct{ *Resolver }
 
 func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (string, error) {
 	return obj.SecretID.String(), nil
-}
-
-func (r *secretResolver) Role(ctx context.Context, obj *entity.Secret) (string, error) {
-	return string(obj.Role), nil
 }
 
 func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
@@ -38,27 +35,22 @@ func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([
 	return entity.FindUserSecrets(ctx, userID), nil
 }
 
-func (r *queryResolver) SecretsForProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Secret, error) {
+func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to read project secrets")
+	if !secret.EditsProject(serviceID) {
+		return nil, gqlerror.Errorf("Not allowed to read service secrets")
 	}
 
-	return entity.FindProjectSecrets(ctx, projectID), nil
+	return entity.FindServiceSecrets(ctx, serviceID), nil
 }
 
-func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, description string) (*gql.NewSecret, error) {
+func (r *mutationResolver) IssueUserSecret(ctx context.Context, description string) (*gql.NewSecret, error) {
 	authSecret := middleware.GetSecret(ctx)
 	if !authSecret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
 
-	role := entity.SecretRoleManage
-	if readonly {
-		role = entity.SecretRoleReadonly
-	}
-
-	secret, err := entity.CreateUserSecret(ctx, *authSecret.UserID, role, description)
+	secret, err := entity.CreateUserSecret(ctx, *authSecret.UserID, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -69,18 +61,13 @@ func (r *mutationResolver) IssueUserSecret(ctx context.Context, readonly bool, d
 	}, nil
 }
 
-func (r *mutationResolver) IssueProjectSecret(ctx context.Context, projectID uuid.UUID, readonly bool, description string) (*gql.NewSecret, error) {
+func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*gql.NewSecret, error) {
 	authSecret := middleware.GetSecret(ctx)
-	if !authSecret.EditsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project")
+	if !authSecret.EditsOrganization(serviceID) {
+		return nil, gqlerror.Errorf("Not allowed to edit service")
 	}
 
-	role := entity.SecretRoleReadWrite
-	if readonly {
-		role = entity.SecretRoleReadonly
-	}
-
-	secret, err := entity.CreateProjectSecret(ctx, projectID, role, description)
+	secret, err := entity.CreateServiceSecret(ctx, serviceID, description)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -98,7 +85,7 @@ func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID)
 	}
 
 	authSecret := middleware.GetSecret(ctx)
-	if secret.ProjectID != nil && !authSecret.EditsProject(*secret.ProjectID) {
+	if secret.ServiceID != nil && !authSecret.EditsProject(*secret.ServiceID) {
 		return false, gqlerror.Errorf("Not allowed to edit secret")
 	} else if secret.UserID != nil && *authSecret.UserID != *secret.UserID {
 		return false, gqlerror.Errorf("Not allowed to edit secret")

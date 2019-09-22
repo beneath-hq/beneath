@@ -16,15 +16,20 @@ func init() {
 
 		// User email index
 		_, err = db.Exec(`
-			ALTER TABLE users DROP CONSTRAINT users_email_key;
 			CREATE UNIQUE INDEX users_email_key ON public.users USING btree ((lower(email)));
 		`)
 		if err != nil {
 			return err
 		}
 
-		// ProjectToUser
-		err = db.Model(&entity.ProjectToUser{}).CreateTable(defaultCreateOptions)
+		// PermissionsUsersProjects
+		err = db.Model(&entity.PermissionsUsersProjects{}).CreateTable(defaultCreateOptions)
+		if err != nil {
+			return err
+		}
+
+		// PermissionsUsersOrganizations
+		err = db.Model(&entity.PermissionsUsersOrganizations{}).CreateTable(defaultCreateOptions)
 		if err != nil {
 			return err
 		}
@@ -32,14 +37,20 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// User
-		err = db.Model(&entity.User{}).DropTable(defaultDropOptions)
+		// PermissionsUsersProjects
+		err = db.Model(&entity.PermissionsUsersProjects{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}
 
-		// ProjectToUser
-		err = db.Model(&entity.ProjectToUser{}).DropTable(defaultDropOptions)
+		// PermissionsUsersOrganizations
+		err = db.Model(&entity.PermissionsUsersOrganizations{}).DropTable(defaultDropOptions)
+		if err != nil {
+			return err
+		}
+
+		// User
+		err = db.Model(&entity.User{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

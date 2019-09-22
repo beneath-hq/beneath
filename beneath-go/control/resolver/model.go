@@ -59,7 +59,7 @@ func (r *mutationResolver) CreateModel(ctx context.Context, input gql.CreateMode
 		ProjectID:   input.ProjectID,
 	}
 
-	err := model.CompileAndCreate(ctx, input.InputStreamIDs, input.OutputStreamSchemas)
+	err := model.CompileAndCreate(ctx, input.InputStreamIDs, input.OutputStreamSchemas, int64(input.ReadQuota), int64(input.WriteQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -90,7 +90,7 @@ func (r *mutationResolver) UpdateModel(ctx context.Context, input gql.UpdateMode
 	}
 
 	// compile and update
-	err := model.CompileAndUpdate(ctx, input.InputStreamIDs, input.OutputStreamSchemas)
+	err := model.CompileAndUpdate(ctx, input.InputStreamIDs, input.OutputStreamSchemas, int64(*input.ReadQuota), int64(*input.WriteQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

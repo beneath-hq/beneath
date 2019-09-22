@@ -27,3 +27,7 @@ models:
     model: github.com/beneath-core/beneath-go/control/entity.StreamInstance
   User:
     model: github.com/beneath-core/beneath-go/control/entity.User
+  Organization:
+    model: github.com/beneath-core/beneath-go/control/entity.Organization
+  Service:
+    model: github.com/beneath-core/beneath-go/control/entity.Service

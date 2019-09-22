@@ -344,10 +344,10 @@ func (c *Client) log(msg string, keysAndValues ...interface{}) {
 				"secret", c.Secret.SecretID.String(),
 				"user", c.Secret.UserID.String(),
 			)
-		} else if c.Secret.ProjectID != nil {
+		} else if c.Secret.ServiceID != nil {
 			l = l.With(
 				"secret", c.Secret.SecretID.String(),
-				"project", c.Secret.ProjectID.String(),
+				"service", c.Secret.ServiceID.String(),
 			)
 		}
 	}

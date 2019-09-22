@@ -15,11 +15,15 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
+  readQuota: Int!
+  writeQuota: Int!
 }
 
 type Me {
   userID: ID!
   user: User!
   email: String!
+  organizations: [Organization!]
+  mainOrganization: Organization
   updatedOn: Time!
 }

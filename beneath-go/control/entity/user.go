@@ -16,23 +16,36 @@ import (
 
 // User represents a Beneath user
 type User struct {
-	UserID    uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Username  string    `sql:",unique",validate:"omitempty,gte=3,lte=16"`
-	Email     string    `sql:",unique,notnull",validate:"required,email"`
-	Name      string    `sql:",notnull",validate:"required,gte=4,lte=50"`
-	Bio       string    `validate:"omitempty,lte=255"`
-	PhotoURL  string    `validate:"omitempty,url,lte=255"`
-	GoogleID  string    `sql:",unique",validate:"omitempty,lte=255"`
-	GithubID  string    `sql:",unique",validate:"omitempty,lte=255"`
-	CreatedOn time.Time `sql:",default:now()"`
-	UpdatedOn time.Time `sql:",default:now()"`
-	DeletedOn time.Time
-	Projects  []*Project `pg:"many2many:projects_users,fk:user_id,joinFK:project_id"`
-	Secrets   []*Secret
+	UserID             uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Username           string    `sql:",unique",validate:"omitempty,gte=3,lte=16"`
+	Email              string    `sql:",notnull",validate:"required,email"`
+	Name               string    `sql:",notnull",validate:"required,gte=4,lte=50"`
+	Bio                string    `validate:"omitempty,lte=255"`
+	PhotoURL           string    `validate:"omitempty,url,lte=255"`
+	GoogleID           string    `sql:",unique",validate:"omitempty,lte=255"`
+	GithubID           string    `sql:",unique",validate:"omitempty,lte=255"`
+	CreatedOn          time.Time `sql:",default:now()"`
+	UpdatedOn          time.Time `sql:",default:now()"`
+	DeletedOn          time.Time
+	MainOrganizationID *uuid.UUID `sql:",type:uuid"`
+	MainOrganization   *Organization
+	Projects           []*Project      `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
+	Organizations      []*Organization `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
+	Secrets            []*Secret
+	ReadQuota          int64
+	WriteQuota         int64
 }
 
 var (
 	userUsernameRegex *regexp.Regexp
+)
+
+const (
+	// DefaultUserReadQuota is the default read quota for user keys
+	DefaultUserReadQuota = 100000000
+
+	// DefaultUserWriteQuota is the default write quota for user keys
+	DefaultUserWriteQuota = 100000000
 )
 
 // configure constants and validator
@@ -103,6 +116,8 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	user.Email = email
 	user.Name = name
 	user.PhotoURL = photoURL
+	user.ReadQuota = DefaultUserReadQuota
+	user.WriteQuota = DefaultUserWriteQuota
 
 	// validate
 	err = GetValidator().Struct(user)

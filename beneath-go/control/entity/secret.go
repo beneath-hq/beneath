@@ -25,30 +25,17 @@ type Secret struct {
 	Description  string     `validate:"omitempty,lte=32"`
 	Prefix       string     `sql:",notnull",validate:"required,len=4"`
 	HashedSecret string     `sql:",unique,notnull",validate:"required,lte=64"`
-	Role         SecretRole `sql:",notnull",validate:"required,lte=3"`
 	UserID       *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
 	User         *User
-	ProjectID    *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
-	Project      *Project
-	CreatedOn    *time.Time `sql:",default:now()"`
-	UpdatedOn    *time.Time `sql:",default:now()"`
+	ServiceID    *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
+	Service      *Service
+	CreatedOn    time.Time `sql:",notnull,default:now()"`
+	UpdatedOn    time.Time `sql:",notnull,default:now()"`
 	DeletedOn    time.Time
 	SecretString string `sql:"-"`
 }
 
-// SecretRole represents a role in a Secret
-type SecretRole string
-
 const (
-	// SecretRoleReadonly can only read data
-	SecretRoleReadonly SecretRole = "r"
-
-	// SecretRoleReadWrite can read and write data
-	SecretRoleReadWrite SecretRole = "rw"
-
-	// SecretRoleManage can edit a user
-	SecretRoleManage SecretRole = "m"
-
 	// number of secrets to cache in local memory for extra speed
 	secretCacheLocalSize = 10000
 )
@@ -67,12 +54,8 @@ func init() {
 func validateSecret(sl validator.StructLevel) {
 	k := sl.Current().Interface().(Secret)
 
-	if k.UserID == nil && k.ProjectID == nil {
-		sl.ReportError(k.ProjectID, "ProjectID", "", "projectid_userid_empty", "")
-	}
-
-	if k.Role != "r" && k.Role != "rw" && k.Role != "m" {
-		sl.ReportError(k.Role, "Role", "", "bad_role", "")
+	if k.UserID == nil && k.ServiceID == nil {
+		sl.ReportError(k.ServiceID, "ServiceID", "", "serviceid_userid_empty", "")
 	}
 }
 
@@ -143,17 +126,17 @@ func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*Secret {
 	return secrets
 }
 
-// FindProjectSecrets finds all the project's secrets
-func FindProjectSecrets(ctx context.Context, projectID uuid.UUID) []*Secret {
+// FindServiceSecrets finds all the service's secrets
+func FindServiceSecrets(ctx context.Context, serviceID uuid.UUID) []*Secret {
 	var secrets []*Secret
-	err := db.DB.ModelContext(ctx, &secrets).Where("project_id = ?", projectID).Limit(1000).Select()
+	err := db.DB.ModelContext(ctx, &secrets).Where("service_id = ?", serviceID).Limit(1000).Select()
 	if err != nil {
 		panic(err)
 	}
 	return secrets
 }
 
-// NewSecret creates a new, unconfigured secret -- use NewUserSecret or NewProjectSecret instead
+// NewSecret creates a new, unconfigured secret -- use CreateUserSecret or CreateProjectSecret instead
 func NewSecret() *Secret {
 	secretStr := GenerateSecretString()
 	return &Secret{
@@ -164,11 +147,10 @@ func NewSecret() *Secret {
 }
 
 // CreateUserSecret creates a new secret to manage a user
-func CreateUserSecret(ctx context.Context, userID uuid.UUID, role SecretRole, description string) (*Secret, error) {
+func CreateUserSecret(ctx context.Context, userID uuid.UUID, description string) (*Secret, error) {
 	// create
 	secret := NewSecret()
 	secret.Description = description
-	secret.Role = role
 	secret.UserID = &userID
 
 	// validate
@@ -187,13 +169,12 @@ func CreateUserSecret(ctx context.Context, userID uuid.UUID, role SecretRole, de
 	return secret, nil
 }
 
-// CreateProjectSecret creates a new read or readwrite secret for a project
-func CreateProjectSecret(ctx context.Context, projectID uuid.UUID, role SecretRole, description string) (*Secret, error) {
+// CreateServiceSecret creates a new secret for a service
+func CreateServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*Secret, error) {
 	// create
 	secret := NewSecret()
 	secret.Description = description
-	secret.Role = role
-	secret.ProjectID = &projectID
+	secret.ServiceID = &serviceID
 
 	// validate
 	err := GetValidator().Struct(secret)
@@ -226,7 +207,7 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 		Func: func() (interface{}, error) {
 			selectedSecret := &Secret{}
 			err := db.DB.ModelContext(ctx, selectedSecret).
-				Column("secret_id", "role", "user_id", "project_id").
+				Column("secret_id", "user_id", "service_id").
 				Where("hashed_secret = ?", hashed).
 				Select()
 			if err != nil && err != pg.ErrNoRows {
@@ -288,8 +269,24 @@ func (k *Secret) ReadsProject(projectID uuid.UUID) bool {
 	return true
 }
 
+// EditsOrganization returns true iff the secret gives permission to edit the organization
+func (k *Secret) EditsOrganization(organizationID uuid.UUID) bool {
+	// TODO
+	if k == nil {
+	}
+	return true
+}
+
 // EditsProject returns true iff the secret gives permission to edit the project
 func (k *Secret) EditsProject(projectID uuid.UUID) bool {
+	// TODO
+	if k == nil {
+	}
+	return true
+}
+
+// EditsService returns true iff the secret gives permission to edit the service
+func (k *Secret) EditsService(serviceID uuid.UUID) bool {
 	// TODO
 	if k == nil {
 	}
@@ -314,28 +311,58 @@ func (k *Secret) WritesStream(stream *CachedStream) bool {
 func (k *Secret) BillingID() uuid.UUID {
 	if k.UserID != nil {
 		return *k.UserID
-	} else if k.ProjectID != nil {
-		return *k.ProjectID
+	} else if k.ServiceID != nil {
+		return *k.ServiceID
 	}
-	panic(fmt.Errorf("neither user id nor project id set"))
+	panic(fmt.Errorf("neither user id nor service id set"))
 }
 
 // CheckReadQuota checks the user's read quota
 func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit
-	// the user has hit its quota
-	// return false
+	if k.UserID != nil {
+		// if any constraints are hit, the user has hit its quota
+		if u.ReadBytes >= k.User.ReadQuota {
+			return false
+		}
 
-	// the user still has resources available
-	return true
+		// the user still has resources available
+		return true
+	}
+	if k.ServiceID != nil {
+		// if any constraints are hit, the user has hit its quota
+		if u.ReadBytes >= k.Service.ReadQuota {
+			return false
+		}
+
+		// the user still has resources available
+		return true
+	}
+
+	// this should never be hit
+	return false
 }
 
 // CheckWriteQuota checks the user's write quota
 func (k *Secret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit
-	// the user has hit its quota
-	// return false
+	if k.UserID != nil {
+		// if any constraints are hit, the user has hit its quota
+		if u.WriteBytes >= k.User.WriteQuota {
+			return false
+		}
 
-	// the user still has resources available
-	return true
+		// the user still has resources available
+		return true
+	}
+	if k.ServiceID != nil {
+		// if any constraints are hit, the user has hit its quota
+		if u.WriteBytes >= k.Service.WriteQuota {
+			return false
+		}
+
+		// the user still has resources available
+		return true
+	}
+
+	// this should never be hit
+	return false
 }

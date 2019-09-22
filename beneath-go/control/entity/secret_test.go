@@ -21,7 +21,7 @@ func TestSecretIntegration(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, user)
 
-	secret1, err := CreateUserSecret(ctx, user.UserID, SecretRoleManage, "Test secret")
+	secret1, err := CreateUserSecret(ctx, user.UserID, "Test secret")
 	assert.Nil(t, err)
 	assert.NotNil(t, secret1)
 	assert.NotEmpty(t, secret1.SecretString)

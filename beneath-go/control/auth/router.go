@@ -76,7 +76,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// create session secret
-	secret, err := entity.CreateUserSecret(r.Context(), user.UserID, entity.SecretRoleManage, "Browser session")
+	secret, err := entity.CreateUserSecret(r.Context(), user.UserID, "Browser session")
 	if err != nil {
 		return err
 	}
