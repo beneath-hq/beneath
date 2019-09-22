@@ -59,7 +59,7 @@ var (
 )
 
 func init() {
-	modelNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	modelNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	orm.RegisterTable((*StreamIntoModel)(nil))
 	GetValidator().RegisterStructValidation(modelValidation, Model{})
 }
