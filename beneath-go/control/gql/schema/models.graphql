@@ -22,6 +22,7 @@ type Model {
   project: Project!
   inputStreams: [Stream!]!
   outputStreams: [Stream!]!
+  service: Service!
 }
 
 input CreateModelInput {
@@ -32,6 +33,8 @@ input CreateModelInput {
   description: String
   inputStreamIDs: [UUID!]!
   outputStreamSchemas: [String!]!
+  readQuota: Int!
+  writeQuota: Int!
 }
 
 input UpdateModelInput {
@@ -40,4 +43,6 @@ input UpdateModelInput {
   description: String
   inputStreamIDs: [UUID!]!
   outputStreamSchemas: [String!]!
+  readQuota: Int
+  writeQuota: Int
 }

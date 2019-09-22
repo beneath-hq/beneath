@@ -48,7 +48,7 @@ func main() {
 		group.Go(func() error {
 			k := i
 
-			secret, err := entity.CreateUserSecret(context.Background(), user.UserID, entity.SecretRoleReadWrite, "")
+			secret, err := entity.CreateUserSecret(context.Background(), user.UserID, "")
 			if err != nil {
 				return err
 			}

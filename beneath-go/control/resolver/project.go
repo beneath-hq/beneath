@@ -69,7 +69,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		Public:      true,
 	}
 
-	err := project.CreateWithUser(ctx, *secret.UserID)
+	err := project.CreateWithUser(ctx, *secret.UserID, true, true, true)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 	return project, nil
 }
 
-func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID) (*entity.User, error) {
+func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID, read bool, write bool, modify bool) (*entity.User, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.EditsProject(projectID) {
 		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
@@ -111,7 +111,7 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 		ProjectID: projectID,
 	}
 
-	err := project.AddUser(ctx, user.UserID)
+	err := project.AddUser(ctx, user.UserID, read, write, modify)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

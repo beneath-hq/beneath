@@ -28,6 +28,8 @@ type Model struct {
 	Project       *Project
 	InputStreams  []*Stream `pg:"many2many:streams_into_models,fk:model_id,joinFK:stream_id"`
 	OutputStreams []*Stream `pg:"fk:source_model_id"`
+	ServiceID     uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
+	Service       *Service
 }
 
 // StreamIntoModel represnts the many-to-many relationship between input streams and models
@@ -94,6 +96,7 @@ func FindModel(ctx context.Context, modelID uuid.UUID) *Model {
 		Relation("Project").
 		Relation("OutputStreams").
 		Relation("InputStreams").
+		Relation("Service").
 		WherePK().
 		Select()
 	if !AssertFoundOne(err) {
@@ -110,6 +113,7 @@ func FindModelByNameAndProject(ctx context.Context, name string, projectName str
 		Relation("Project").
 		Relation("OutputStreams").
 		Relation("InputStreams").
+		Relation("Service").
 		Where("lower(model.name) = lower(?)", name).
 		Where("lower(project.name) = lower(?)", projectName).
 		Select()
@@ -120,7 +124,7 @@ func FindModelByNameAndProject(ctx context.Context, name string, projectName str
 }
 
 // CompileAndCreate creates the model and its dependencies
-func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string) error {
+func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string, readQuota int64, writeQuota int64) error {
 	// Populate m.Project if not set
 	// We do it to set Project on output streams, so they won't each look it up separately
 	// They would otherwise look it up separately to get the project name to create itself in Warehouse
@@ -150,12 +154,32 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 	// begin database transaction
 	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert model
-		_, err := tx.Model(m).Insert()
+		_, err = tx.Model(m).Insert()
 		if err != nil {
 			return err
 		}
 
-		// insert StreamIntoModels
+		// create service
+		service := &Service{
+			Name:           fmt.Sprintf("Model %s (%s)", m.ModelID.String(), m.Name),
+			Kind:           ServiceKindModel,
+			OrganizationID: m.Project.OrganizationID,
+			ReadQuota:      readQuota,
+			WriteQuota:     writeQuota,
+		}
+		_, err := tx.Model(service).Insert()
+		if err != nil {
+			return err
+		}
+
+		// update model with service ID
+		m.ServiceID = service.ServiceID
+		_, err = tx.Model(m).WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		// insert StreamIntoModels and PermissionsServicesStreams
 		for _, streamID := range inputStreamIDs {
 			_, err = tx.Model(&StreamIntoModel{
 				ModelID:  m.ModelID,
@@ -164,12 +188,32 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 			if err != nil {
 				return err
 			}
+
+			_, err = tx.Model(&PermissionsServicesStreams{
+				ServiceID: m.ServiceID,
+				StreamID:  streamID,
+				Read:      true,
+				Write:     false,
+			}).Insert()
+			if err != nil {
+				return err
+			}
 		}
 
-		// insert outputStreams
+		// insert outputStreams and PermissionsServicesStreams
 		for _, stream := range outputStreams {
 			stream.SourceModelID = &m.ModelID
 			err := stream.CreateWithTx(tx)
+			if err != nil {
+				return err
+			}
+
+			_, err = tx.Model(&PermissionsServicesStreams{
+				ServiceID: m.ServiceID,
+				StreamID:  stream.StreamID,
+				Read:      true,
+				Write:     true,
+			}).Insert()
 			if err != nil {
 				return err
 			}
@@ -184,7 +228,7 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 }
 
 // CompileAndUpdate ...
-func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string) error {
+func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID, outputStreamScheams []string, readQuota int64, writeQuota int64) error {
 	// check inputStreamIDs contain all current input streams
 	for _, s := range m.InputStreams {
 		if !m.containsUUID(inputStreamIDs, s.StreamID) {
@@ -273,11 +317,29 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 			return err
 		}
 
-		// insert StreamIntoModels
+		// update quotas
+		m.Service.ReadQuota = readQuota
+		m.Service.WriteQuota = writeQuota
+		_, err = tx.Model(m.Service).Column("read_quota", "write_quota").WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		// insert StreamIntoModels and PermissionsServicesStreams
 		for _, streamID := range newInputStreamIDs {
 			_, err = tx.Model(&StreamIntoModel{
 				ModelID:  m.ModelID,
 				StreamID: streamID,
+			}).Insert()
+			if err != nil {
+				return err
+			}
+
+			_, err = tx.Model(&PermissionsServicesStreams{
+				ServiceID: m.ServiceID,
+				StreamID:  streamID,
+				Read:      true,
+				Write:     false,
 			}).Insert()
 			if err != nil {
 				return err
@@ -335,10 +397,17 @@ func (m *Model) Delete(ctx context.Context) error {
 		}
 	}
 
-	err := db.DB.WithContext(ctx).Delete(m)
-	if err != nil {
-		return err
-	}
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		err := tx.Delete(m)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		err = tx.Delete(&Service{ServiceID: m.ServiceID})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
@@ -17,29 +16,21 @@ import (
 
 // Project represents a Beneath project
 type Project struct {
-	ProjectID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name        string    `sql:",unique,notnull",validate:"required,gte=3,lte=16"`
-	DisplayName string    `sql:",notnull",validate:"required,gte=3,lte=40"`
-	Site        string    `validate:"omitempty,url,lte=255"`
-	Description string    `validate:"omitempty,lte=255"`
-	PhotoURL    string    `validate:"omitempty,url,lte=255"`
-	Public      bool      `sql:",notnull,default:true"`
-	CreatedOn   time.Time `sql:",default:now()"`
-	UpdatedOn   time.Time `sql:",default:now()"`
-	DeletedOn   time.Time
-	Secrets     []*Secret
-	Streams     []*Stream
-	Models      []*Model
-	Users       []*User `pg:"many2many:projects_users,fk:project_id,joinFK:user_id"`
-}
-
-// ProjectToUser represnts the many-to-many relationship between users and projects
-type ProjectToUser struct {
-	tableName struct{}  `sql:"projects_users,alias:pu"`
-	ProjectID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
-	Project   *Project
-	UserID    uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
-	User      *User
+	ProjectID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name           string    `sql:",notnull",validate:"required,gte=3,lte=16"`
+	DisplayName    string    `sql:",notnull",validate:"required,gte=3,lte=40"`
+	Site           string    `validate:"omitempty,url,lte=255"`
+	Description    string    `validate:"omitempty,lte=255"`
+	PhotoURL       string    `validate:"omitempty,url,lte=255"`
+	Public         bool      `sql:",notnull,default:true"`
+	OrganizationID uuid.UUID `sql:",notnull,type:uuid"`
+	Organization   *Organization
+	CreatedOn      time.Time `sql:",default:now()"`
+	UpdatedOn      time.Time `sql:",default:now()"`
+	DeletedOn      time.Time
+	Streams        []*Stream
+	Models         []*Model
+	Users          []*User `pg:"many2many:permissions_users_projects,fk:project_id,joinFK:user_id"`
 }
 
 var (
@@ -51,7 +42,6 @@ var (
 )
 
 func init() {
-	orm.RegisterTable((*ProjectToUser)(nil))
 	projectNameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
 	GetValidator().RegisterStructValidation(validateProject, Project{})
 }
@@ -101,14 +91,14 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 }
 
 // CreateWithUser creates a project and makes user a member
-func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID) error {
+func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, read bool, write bool, modify bool) error {
 	// validate
 	err := GetValidator().Struct(p)
 	if err != nil {
 		return err
 	}
 
-	// create project and ProjectToUser in one transaction
+	// create project and PermissionsUsersProjects in one transaction
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert project
 		_, err := tx.Model(p).Insert()
@@ -117,9 +107,12 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID) error {
 		}
 
 		// connect project to userID
-		err = tx.Insert(&ProjectToUser{
-			ProjectID: p.ProjectID,
+		err = tx.Insert(&PermissionsUsersProjects{
 			UserID:    userID,
+			ProjectID: p.ProjectID,
+			Read:      read,
+			Write:     write,
+			Modify:    modify,
 		})
 		if err != nil {
 			return err
@@ -135,10 +128,13 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID) error {
 }
 
 // AddUser makes user a member of project
-func (p *Project) AddUser(ctx context.Context, userID uuid.UUID) error {
-	return db.DB.WithContext(ctx).Insert(&ProjectToUser{
-		ProjectID: p.ProjectID,
+func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, read bool, write bool, modify bool) error {
+	return db.DB.WithContext(ctx).Insert(&PermissionsUsersProjects{
 		UserID:    userID,
+		ProjectID: p.ProjectID,
+		Read:      read,
+		Write:     write,
+		Modify:    modify,
 	})
 }
 
@@ -146,9 +142,9 @@ func (p *Project) AddUser(ctx context.Context, userID uuid.UUID) error {
 func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	// TODO remove from cache
 	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
-	return db.DB.WithContext(ctx).Delete(&ProjectToUser{
-		ProjectID: p.ProjectID,
+	return db.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
 		UserID:    userID,
+		ProjectID: p.ProjectID,
 	})
 }
 

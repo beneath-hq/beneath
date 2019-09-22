@@ -1,0 +1,8 @@
+type Organization {
+  organizationID: ID!
+  name: String!
+  createdOn: Time!
+  updatedOn: Time!
+  services: [Service!]
+  users: [User!]
+}

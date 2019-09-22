@@ -95,10 +95,10 @@ func loggerWithTags(l *zap.Logger, tags *Tags) *zap.Logger {
 				zap.String("secret", tags.Secret.SecretID.String()),
 				zap.String("user", tags.Secret.UserID.String()),
 			)
-		} else if tags.Secret.ProjectID != nil {
+		} else if tags.Secret.ServiceID != nil {
 			l = l.With(
 				zap.String("secret", tags.Secret.SecretID.String()),
-				zap.String("project", tags.Secret.ProjectID.String()),
+				zap.String("service", tags.Secret.ServiceID.String()),
 			)
 		}
 	}

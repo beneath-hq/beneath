@@ -1,0 +1,11 @@
+extend type Query {
+  service(serviceID: UUID!): Service
+}
+
+type Service {
+  serviceID: ID!
+  kind: String!
+  organization: Organization!
+  readQuota: Int!
+  writeQuota: Int!
+}

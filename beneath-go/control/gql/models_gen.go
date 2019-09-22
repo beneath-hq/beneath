@@ -17,13 +17,17 @@ type CreateModelInput struct {
 	Description         *string     `json:"description"`
 	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
 	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
+	ReadQuota           int         `json:"readQuota"`
+	WriteQuota          int         `json:"writeQuota"`
 }
 
 type Me struct {
-	UserID    string       `json:"userID"`
-	User      *entity.User `json:"user"`
-	Email     string       `json:"email"`
-	UpdatedOn time.Time    `json:"updatedOn"`
+	UserID           string                 `json:"userID"`
+	User             *entity.User           `json:"user"`
+	Email            string                 `json:"email"`
+	Organizations    []*entity.Organization `json:"organizations"`
+	MainOrganization *entity.Organization   `json:"mainOrganization"`
+	UpdatedOn        time.Time              `json:"updatedOn"`
 }
 
 type NewSecret struct {
@@ -37,4 +41,6 @@ type UpdateModelInput struct {
 	Description         *string     `json:"description"`
 	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
 	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
+	ReadQuota           *int        `json:"readQuota"`
+	WriteQuota          *int        `json:"writeQuota"`
 }
