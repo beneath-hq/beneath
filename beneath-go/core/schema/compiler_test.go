@@ -7,16 +7,16 @@ import (
 )
 
 func TestSDL1(t *testing.T) {
-	err := NewCompiler(`
-		type TestA @stream(name: "test-example-1", key: ["aAaa", "aBbb"]) {
-			aAaa: String!
-			aBbb: Timestamp!
-			aCcc: [TestB!]
+	c := NewCompiler(`
+		type TestExample1 @stream(key: ["a_aaa", "a_bbb"]) {
+			a_aaa: String!
+			a_bbb: Timestamp!
+			a_ccc: [TestB!]
 		}
 		type TestB {
-			bAaa: Int
-			bBbb: Bytes
-			bCcc: TestC!
+			b_aaa: Int
+			b_bbb: Bytes
+			b_ccc: TestC!
 		}
 		enum TestC {
 			Aaa
@@ -24,11 +24,12 @@ func TestSDL1(t *testing.T) {
 			Ccc
 		}
 		type TestD {
-			aAaa: String!
-			aBbb: Timestamp!
-			aCcc: [TestA!]
+			a_aaa: String!
+			a_bbb: Timestamp!
+			a_ccc: [TestExample1!]
 		}
-	`).Compile()
+	`)
+	err := c.Compile()
 	assert.Nil(t, err)
 }
 
@@ -72,7 +73,7 @@ func TestSDL5(t *testing.T) {
 		}
 	`).Compile()
 	assert.NotNil(t, err)
-	assert.Regexp(t, "missing arg 'name' in @stream", err.Error())
+	assert.Regexp(t, "missing arg 'key' in @stream", err.Error())
 }
 
 func TestSDL6(t *testing.T) {
@@ -85,29 +86,9 @@ func TestSDL6(t *testing.T) {
 	assert.Regexp(t, "unknown @stream arg 'testA'", err.Error())
 }
 
-func TestSDL7(t *testing.T) {
-	err := NewCompiler(`
-		type Test @stream(name: 20) {
-			a: Int!
-		}
-	`).Compile()
-	assert.NotNil(t, err)
-	assert.Regexp(t, "stream arg 'name' at .* is not a string", err.Error())
-}
-
-func TestSDL8(t *testing.T) {
-	err := NewCompiler(`
-		type Test @stream(name: "test") {
-			a: Int!
-		}
-	`).Compile()
-	assert.NotNil(t, err)
-	assert.Regexp(t, "missing arg 'key' in @stream", err.Error())
-}
-
 func TestSDL9(t *testing.T) {
 	err := NewCompiler(`
-		type Test @stream(name: "test", key: [0, 1]) {
+		type Test @stream(key: [0, 1]) {
 			a: Int!
 		}
 	`).Compile()
@@ -117,7 +98,7 @@ func TestSDL9(t *testing.T) {
 
 func TestSDL10(t *testing.T) {
 	err := NewCompiler(`
-		type Test @stream(name: "test", key: ["a", "b"], external: whatever) {
+		type Test @stream(key: ["a", "b"], external: whatever) {
 			a: Int!
 			b: Int!
 		}
@@ -126,22 +107,22 @@ func TestSDL10(t *testing.T) {
 	assert.Regexp(t, "parse error: .* unexpected \"whatever\" \\(expected .*\\)", err.Error())
 }
 
-func TestSDL11(t *testing.T) {
-	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
-			a: Int!
-		}
-		type TestB @stream(name: "test", key: "a") {
-			a: Int!
-		}
-	`).Compile()
-	assert.NotNil(t, err)
-	assert.Regexp(t, "stream name 'test' used twice", err.Error())
-}
+// func TestSDL11(t *testing.T) {
+// 	err := NewCompiler(`
+// 		type Test @stream(key: "a") {
+// 			a: Int!
+// 		}
+// 		type Test @stream(key: "a") {
+// 			a: Int!
+// 		}
+// 	`).Compile()
+// 	assert.NotNil(t, err)
+// 	assert.Regexp(t, "stream name 'test' used twice", err.Error())
+// }
 
 func TestSDL12(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "k") {
+		type TestA @stream(key: "k") {
 			k: Int!
 			k: String
 		}
@@ -152,7 +133,7 @@ func TestSDL12(t *testing.T) {
 
 func TestSDL13(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "k") {
+		type TestA @stream(key: "k") {
 			k: Int!
 			a: TestB!
 		}
@@ -169,7 +150,7 @@ func TestSDL13(t *testing.T) {
 
 func TestSDL14(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "k") {
+		type TestA @stream(key: "k") {
 			k: Int!
 		}
 		type TestB {
@@ -181,7 +162,7 @@ func TestSDL14(t *testing.T) {
 
 func TestSDL15(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "k") {
+		type TestA @stream(key: "k") {
 			k: Int!
 			b: TestB
 		}
@@ -192,7 +173,7 @@ func TestSDL15(t *testing.T) {
 
 func TestSDL16(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: ["a", "b"]) {
+		type TestA @stream(key: ["a", "b"]) {
 			a: Int!
 			b: [Int!]
 		}
@@ -203,7 +184,7 @@ func TestSDL16(t *testing.T) {
 
 func TestSDL17(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int
 		}
 	`).Compile()
@@ -213,7 +194,7 @@ func TestSDL17(t *testing.T) {
 
 func TestSDL18(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: TestB!
 		}
 		type TestB {
@@ -226,7 +207,7 @@ func TestSDL18(t *testing.T) {
 
 func TestSDL19(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "b") {
+		type TestA @stream(key: "b") {
 			a: Int!
 		}
 	`).Compile()
@@ -236,7 +217,7 @@ func TestSDL19(t *testing.T) {
 
 func TestSDL20(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: ["a", "b"]) {
+		type TestA @stream(key: ["a", "b"]) {
 			a: Int!
 			b: Int
 		}
@@ -247,7 +228,7 @@ func TestSDL20(t *testing.T) {
 
 func TestSDL21(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: ["a", "a"]) {
+		type TestA @stream(key: ["a", "a"]) {
 			a: Int!
 		}
 	`).Compile()
@@ -257,7 +238,7 @@ func TestSDL21(t *testing.T) {
 
 func TestSDL22(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 		}
 		enum TestE {
@@ -269,7 +250,7 @@ func TestSDL22(t *testing.T) {
 
 func TestSDL23(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 		}
 		enum TestE {
@@ -283,7 +264,7 @@ func TestSDL23(t *testing.T) {
 
 func TestSDL24(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 			b: [Int]!
 		}
@@ -294,7 +275,7 @@ func TestSDL24(t *testing.T) {
 
 func TestSDL25(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 		}
 		enum Bytes20 {
@@ -308,7 +289,7 @@ func TestSDL25(t *testing.T) {
 
 func TestSDL26(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 			b: [[Int!]!]
 		}
@@ -319,7 +300,7 @@ func TestSDL26(t *testing.T) {
 
 func TestSDL27(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 			bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: Int!
 		}
@@ -330,7 +311,7 @@ func TestSDL27(t *testing.T) {
 
 func TestSDL28(t *testing.T) {
 	err := NewCompiler(`
-		type TestA @stream(name: "test", key: "a") {
+		type TestA @stream(key: "a") {
 			a: Int!
 			__timestamp: Int!
 		}
