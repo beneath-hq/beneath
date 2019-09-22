@@ -7,8 +7,8 @@ import (
 )
 
 type configSpecification struct {
-	HTTPPort        int    `envconfig:"GATEWAY_PORT" default:"5000"`
-	GRPCPort        int    `envconfig:"GATEWAY_PORT_GRPC" default:"50051"`
+	HTTPPort        int    `envconfig:"GATEWAY_PORT" default:"8080"`
+	GRPCPort        int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
 	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
 	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`

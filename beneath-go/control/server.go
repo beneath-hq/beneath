@@ -24,7 +24,7 @@ import (
 )
 
 type configSpecification struct {
-	ControlPort  int    `envconfig:"CONTROL_PORT" required:"true"`
+	ControlPort  int    `envconfig:"CONTROL_PORT" required:"true" default:"8080"`
 	ControlHost  string `envconfig:"CONTROL_HOST" required:"true"`
 	FrontendHost string `envconfig:"FRONTEND_HOST" required:"true"`
 
