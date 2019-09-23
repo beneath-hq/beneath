@@ -253,22 +253,40 @@ class Client:
     )
     return result['model']
 
+  def create_organization(self, name):
+    result = self._query_control(
+        variables={
+          "name": name,
+        },
+        query="""
+        mutation CreateOrganization($name: String!) {
+          createOrganization(name: $name) {
+            name
+            createdOn
+            updatedOn
+          }
+        }
+      """
+    )
+    return result['createOrganization']
 
-  def create_project(self, name, display_name, description=None, site_url=None, photo_url=None):
+  def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
         "name": name,
         "displayName": display_name,
+        "organizationID": organization_id,
         "description": description,
         "site": site_url,
         "photoURL": photo_url,
       },
       query="""
-        mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoURL: String) {
-          createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+        mutation CreateProject($name: String!, $displayName: String!, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
+          createProject(name: $name, displayName: $displayName, organizationID: $organizationID, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             name
             displayName
+            organizationID
             site
             description
             photoURL

@@ -5,10 +5,10 @@ extend type Query {
 }
 
 extend type Mutation {
-  createProject(name: String!, displayName: String!, site: String, description: String, photoURL: String): Project!
+  createProject(name: String!, displayName: String!, organizationID: UUID!, site: String, description: String, photoURL: String): Project!
   updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoURL: String): Project!
   deleteProject(projectID: UUID!): Boolean!
-  addUserToProject(email: String!, projectID: UUID!, read: Boolean!, write: Boolean!, modify: Boolean!): User
+  addUserToProject(email: String!, projectID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): User
   removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
 
@@ -20,7 +20,7 @@ type Project {
   description: String
   photoURL: String
   public: Boolean!
-  organization: Organization
+  organizationID: UUID!
   createdOn: Time!
   updatedOn: Time!
   streams: [Stream!]!

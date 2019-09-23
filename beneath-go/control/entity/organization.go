@@ -1,8 +1,11 @@
 package entity
 
 import (
+	"context"
 	"time"
 
+	"github.com/beneath-core/beneath-go/db"
+	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -15,4 +18,25 @@ type Organization struct {
 	DeletedOn      time.Time
 	Services       []*Service
 	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
+}
+
+// Create creates an organization
+func (o *Organization) Create(ctx context.Context, name string) error {
+	// validate
+	err := GetValidator().Struct(o) // check this out
+	if err != nil {
+		return err
+	}
+
+	// create organization
+	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		// insert project
+		_, err := tx.Model(o).Insert()
+		if err != nil {
+			return err
+		}
+
+		// done
+		return nil
+	})
 }

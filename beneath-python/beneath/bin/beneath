@@ -30,6 +30,13 @@ def auth(args):
     print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
 
 
+def organization_create(args):
+  client = get_client()
+  result = client.create_organization(
+    name=args.name,
+  )
+  pretty_print_graphql_result(result, [])
+
 def project_list(args):
   # start client with the secret stored in .beneath/secret
   client = get_client()
@@ -53,6 +60,7 @@ def project_create(args):
   result = client.create_project(
     name=args.name,
     display_name=args.display_name,
+    organization_id=args.organization_id,
     description=args.description,
     site_url=args.site_url,
     photo_url=args.photo_url,
@@ -277,6 +285,13 @@ if __name__ == '__main__':
   _auth.set_defaults(func=auth)
   _auth.add_argument('secret', type=str)
 
+  # organization parser and subparsers
+  _organization = _root.add_parser('organization').add_subparsers()
+
+  _organization_create = _organization.add_parser('create')
+  _organization_create.set_defaults(func=organization_create)
+  _organization_create.add_argument('name', type=str)
+
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
 
@@ -287,6 +302,7 @@ if __name__ == '__main__':
   _project_create.set_defaults(func=project_create)
   _project_create.add_argument('name', type=str)
   _project_create.add_argument('--display-name', type=str, required=True)
+  _project_create.add_argument('--organization-id', type=str, required=True)
   _project_create.add_argument('--description', type=str)
   _project_create.add_argument('--site-url', type=str)
   _project_create.add_argument('--photo-url', type=str)

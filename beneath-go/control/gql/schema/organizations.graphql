@@ -1,3 +1,7 @@
+extend type Mutation {
+  createOrganization(name: String!): Organization!
+}
+
 type Organization {
   organizationID: ID!
   name: String!
