@@ -10,9 +10,6 @@ import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 
-import { QUERY_USER } from "../apollo/queries/user";
-import { User, UserVariables } from "../apollo/types/User";
-
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
     paddingLeft: theme.spacing(1),
@@ -57,7 +54,7 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
   } else if (router.route === "/user") {
     crumbs = [
       <ExploreCrumb key={0} />,
-      <UserCrumb key={1} isCurrent userID={router.query.id as string} />,
+      <UserCrumb key={1} isCurrent username={router.query.name as string} />,
     ];
   }
 
@@ -127,21 +124,17 @@ const StreamCrumb: FC<StreamCrumbProps> = ({ project, stream, isCurrent }) => (
 );
 
 interface UserCrumbProps {
-  userID: string;
+  username: string;
   isCurrent?: boolean;
 }
 
-const UserCrumb: FC<UserCrumbProps> = ({ userID, isCurrent }) => {
+const UserCrumb: FC<UserCrumbProps> = ({ username, isCurrent }) => {
   return (
-    <Query<User, UserVariables> query={QUERY_USER} variables={{ userID }}>
-      {({ loading, error, data }) => (
-        <Crumb
-          isCurrent={isCurrent}
-          href={`/user?id=${userID}`}
-          as={`/users/${userID}`}
-          label={data && data.user ? data.user.name : error ? "Not found" : ""}
-        />
-      )}
-    </Query>
+    <Crumb
+      isCurrent={isCurrent}
+      href={`/user?name=${username}`}
+      as={`/users/${username}`}
+      label={username}
+    />
   );
 };

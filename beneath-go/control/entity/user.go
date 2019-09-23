@@ -91,6 +91,16 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 	return user
 }
 
+// FindUserByUsername returns user with username (if exists)
+func FindUserByUsername(ctx context.Context, username string) *User {
+	user := &User{}
+	err := db.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return user
+}
+
 // CreateOrUpdateUser consolidates and returns the user matching the args
 func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname, name, photoURL string) (*User, error) {
 	user := &User{}
@@ -204,7 +214,10 @@ func (u *User) Delete(ctx context.Context) error {
 }
 
 // UpdateDescription updates user's name and/or bio
-func (u *User) UpdateDescription(ctx context.Context, name *string, bio *string) error {
+func (u *User) UpdateDescription(ctx context.Context, username *string, name *string, bio *string) error {
+	if username != nil {
+		u.Username = *username
+	}
 	if name != nil {
 		u.Name = *name
 	}
@@ -218,7 +231,7 @@ func (u *User) UpdateDescription(ctx context.Context, name *string, bio *string)
 		return err
 	}
 
-	_, err = db.DB.ModelContext(ctx, u).Column("name", "bio").WherePK().Update()
+	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio").WherePK().Update()
 	return err
 }
 

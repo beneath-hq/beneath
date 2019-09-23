@@ -43,7 +43,7 @@ app.prepare().then(() => {
   server.get("/auth/logout", (req, res) => {
     // If the user is logged in, we'll let the backend logout the token (i.e. delete the token from it's registries)
     // Can't do it with a direct <a> on the client because we have to set the token in the header
-    let token = req.cookies["token"];
+    let token = req.cookies.token;
     if (token) {
       let headers = { authorization: `Bearer ${token}` };
       let x = fetch(`${connection.API_URL}/auth/logout`, { headers }).then((r) => {
@@ -89,8 +89,8 @@ app.prepare().then(() => {
   addRoute("/projects/:project_name/streams/:name/:tab", "/stream");
   addRoute("/projects/:name", "/project");
   addRoute("/projects/:name/:tab", "/project");
-  addRoute("/users/:id", "/user");
-  addRoute("/users/:id/:tab", "/user");
+  addRoute("/users/:name", "/user");
+  addRoute("/users/:name/:tab", "/user");
 
   // Next.js handlers
   server.get("*", (req, res) => {
@@ -99,7 +99,9 @@ app.prepare().then(() => {
 
   // Run server
   server.listen(port, err => {
-    if (err) throw err;
+    if (err) {
+      throw err;
+    }
     console.log(`Ready on ${port}`);
   });
 });

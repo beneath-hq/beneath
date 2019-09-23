@@ -11,7 +11,6 @@ export interface SecretsForUser_secretsForUser {
   secretID: string;
   description: string;
   prefix: string;
-  role: string;
   createdOn: ControlTime;
 }
 

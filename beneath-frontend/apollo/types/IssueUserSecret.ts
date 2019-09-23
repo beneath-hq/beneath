@@ -11,7 +11,6 @@ export interface IssueUserSecret_issueUserSecret_secret {
   secretID: string;
   description: string;
   prefix: string;
-  role: string;
   createdOn: ControlTime;
 }
 
@@ -26,6 +25,5 @@ export interface IssueUserSecret {
 }
 
 export interface IssueUserSecretVariables {
-  readonly: boolean;
   description: string;
 }

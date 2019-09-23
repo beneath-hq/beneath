@@ -9,8 +9,6 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/project/EditProject";
-import ManageMembers from "../components/project/ManageMembers";
-import { ManageProjectSecrets } from "../components/secret/ManageSecrets";
 import ViewStreams from "../components/project/ViewStreams";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
@@ -31,19 +29,20 @@ const ProjectPage = ({ router, me }) => (
         let isProjectMember = me && project.users.some((user) => user.userID === me.userID);
 
         let tabs = [
-          { value: "streams", label: "Streams", render: () => (<ViewStreams project={project} />) },
-          { value: "members", label: "Members", render: () => (<ManageMembers project={project} editable={isProjectMember} />) },
+          { value: "streams", label: "Streams", render: () => <ViewStreams project={project} /> },
         ];
         if (isProjectMember) {
-          tabs.push({ value: "edit", label: "Edit", render: () => (<EditProject project={project} />) });
-          tabs.push({ value: "secrets", label: "Secrets", render: () => (<ManageProjectSecrets projectID={project.projectID} />) });
+          tabs.push({ value: "edit", label: "Edit", render: () => <EditProject project={project} /> });
         }
 
         return (
           <React.Fragment>
             <PageTitle title={project.displayName} />
-            <ProfileHero name={project.displayName} site={project.site}
-              description={project.description} avatarURL={project.photoURL}
+            <ProfileHero
+              name={project.displayName}
+              site={project.site}
+              description={project.description}
+              avatarURL={project.photoURL}
             />
             <SubrouteTabs defaultValue="streams" tabs={tabs} />
           </React.Fragment>

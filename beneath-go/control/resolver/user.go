@@ -30,6 +30,14 @@ func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*entity.Use
 	return user, nil
 }
 
+func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*entity.User, error) {
+	user := entity.FindUserByUsername(ctx, username)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", username)
+	}
+	return user, nil
+}
+
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
@@ -40,14 +48,14 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	return userToMe(user), nil
 }
 
-func (r *mutationResolver) UpdateMe(ctx context.Context, name *string, bio *string) (*gql.Me, error) {
+func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
 	user := entity.FindUser(ctx, *secret.UserID)
-	err := user.UpdateDescription(ctx, name, bio)
+	err := user.UpdateDescription(ctx, username, name, bio)
 	if err != nil {
 		return nil, err
 	}

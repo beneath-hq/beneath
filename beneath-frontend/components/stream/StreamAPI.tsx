@@ -34,8 +34,8 @@ client = Client()
 stream = client.stream(project_name="${stream.project.name}", stream_name="${stream.name}")
 df = stream.read()`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
-        You must first install our Python library with <code>pip install beneath</code>.
+        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page. You
+        must first install our Python library with <code>pip install beneath</code>.
       </Typography>
       <VSpace units={4} />
 
@@ -46,9 +46,9 @@ df = stream.read()`}</CodeBlock>
         You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
         very important that you only use read-only secrets in your front-end.
       </Typography>
-      <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${
-        stream.name
-      }", {
+      <CodeBlock
+        language={"javascript"}
+      >{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
@@ -66,8 +66,8 @@ df = stream.read()`}</CodeBlock>
         BigQuery
       </Typography>
       <Typography variant="body2" paragraph>
-        You can query this stream however you want using its public BigQuery dataset. Here's an example of how to
-        query it from the BigQuery{" "}
+        You can query this stream however you want using its public BigQuery dataset. Here's an example of how to query
+        it from the BigQuery{" "}
         <MUILink href="https://console.cloud.google.com/bigquery" className={classes.link}>
           console
         </MUILink>
@@ -91,11 +91,7 @@ df = stream.read()`}</CodeBlock>
         {`curl -H "Authorization: TOKEN" ${GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}`}
       </CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace TOKEN with a read-only secret, which you can obtain{" "}
-        <Link href={"/user?id=me&tab=secrets"} as={"/users/me/secrets"}>
-          <MUILink className={classes.link}>here</MUILink>
-        </Link>
-        .
+        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
       </Typography>
       <VSpace units={4} />
     </Container>

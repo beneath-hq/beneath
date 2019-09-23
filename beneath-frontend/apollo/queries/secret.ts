@@ -6,48 +6,19 @@ export const QUERY_USER_SECRETS = gql`
       secretID
       description
       prefix
-      role
-      createdOn
-    }
-  }
-`;
-
-export const QUERY_PROJECT_SECRETS = gql`
-  query SecretsForProject($projectID: UUID!) {
-    secretsForProject(projectID: $projectID) {
-      secretID
-      description
-      prefix
-      role
       createdOn
     }
   }
 `;
 
 export const ISSUE_USER_SECRET = gql`
-  mutation IssueUserSecret($readonly: Boolean!, $description: String!) {
-    issueUserSecret(readonly: $readonly, description: $description) {
+  mutation IssueUserSecret($description: String!) {
+    issueUserSecret(description: $description) {
       secretString
       secret {
         secretID
         description
         prefix
-        role
-        createdOn
-      }
-    }
-  }
-`;
-
-export const ISSUE_PROJECT_SECRET = gql`
-  mutation IssueProjectSecret($projectID: UUID!, $readonly: Boolean!, $description: String!) {
-    issueProjectSecret(projectID: $projectID, readonly: $readonly, description: $description) {
-      secretString
-      secret {
-        secretID
-        description
-        prefix
-        role
         createdOn
       }
     }

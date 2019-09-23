@@ -98,7 +98,7 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeSecret                      func(childComplexity int, secretID uuid.UUID) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
-		UpdateMe                          func(childComplexity int, name *string, bio *string) int
+		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
 	}
@@ -146,6 +146,7 @@ type ComplexityRoot struct {
 		Service           func(childComplexity int, serviceID uuid.UUID) int
 		Stream            func(childComplexity int, name string, projectName string) int
 		User              func(childComplexity int, userID uuid.UUID) int
+		UserByUsername    func(childComplexity int, username string) int
 	}
 
 	Secret struct {
@@ -235,7 +236,7 @@ type MutationResolver interface {
 	CreateExternalStreamBatch(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error)
 	CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error)
-	UpdateMe(ctx context.Context, name *string, bio *string) (*Me, error)
+	UpdateMe(ctx context.Context, username *string, name *string, bio *string) (*Me, error)
 }
 type OrganizationResolver interface {
 	OrganizationID(ctx context.Context, obj *entity.Organization) (string, error)
@@ -256,6 +257,7 @@ type QueryResolver interface {
 	Stream(ctx context.Context, name string, projectName string) (*entity.Stream, error)
 	Me(ctx context.Context) (*Me, error)
 	User(ctx context.Context, userID uuid.UUID) (*entity.User, error)
+	UserByUsername(ctx context.Context, username string) (*entity.User, error)
 }
 type SecretResolver interface {
 	SecretID(ctx context.Context, obj *entity.Secret) (string, error)
@@ -644,7 +646,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateMe(childComplexity, args["name"].(*string), args["bio"].(*string)), true
+		return e.complexity.Mutation.UpdateMe(childComplexity, args["username"].(*string), args["name"].(*string), args["bio"].(*string)), true
 
 	case "Mutation.updateModel":
 		if e.complexity.Mutation.UpdateModel == nil {
@@ -940,6 +942,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.User(childComplexity, args["userID"].(uuid.UUID)), true
+
+	case "Query.userByUsername":
+		if e.complexity.Query.UserByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_userByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserByUsername(childComplexity, args["username"].(string)), true
 
 	case "Secret.createdOn":
 		if e.complexity.Secret.CreatedOn == nil {
@@ -1513,10 +1527,11 @@ type StreamInstance {
 	&ast.Source{Name: "control/gql/schema/users.graphql", Input: `extend type Query {
   me: Me
   user(userID: UUID!): User
+  userByUsername(username: String!): User
 }
 
 extend type Mutation {
-  updateMe(name: String, bio: String): Me!
+  updateMe(username: String, name: String, bio: String): Me!
 }
 
 type User {
@@ -1930,21 +1945,29 @@ func (ec *executionContext) field_Mutation_updateMe_args(ctx context.Context, ra
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
-	if tmp, ok := rawArgs["name"]; ok {
+	if tmp, ok := rawArgs["username"]; ok {
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["username"] = arg0
 	var arg1 *string
-	if tmp, ok := rawArgs["bio"]; ok {
+	if tmp, ok := rawArgs["name"]; ok {
 		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["bio"] = arg1
+	args["name"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["bio"]; ok {
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["bio"] = arg2
 	return args, nil
 }
 
@@ -2133,6 +2156,20 @@ func (ec *executionContext) field_Query_stream_args(ctx context.Context, rawArgs
 		}
 	}
 	args["projectName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_userByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -3740,7 +3777,7 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateMe(rctx, args["name"].(*string), args["bio"].(*string))
+		return ec.resolvers.Mutation().UpdateMe(rctx, args["username"].(*string), args["name"].(*string), args["bio"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4985,6 +5022,47 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().User(rctx, args["userID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entity.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_userByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_userByUsername_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().UserByUsername(rctx, args["username"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8436,6 +8514,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_user(ctx, field)
+				return res
+			})
+		case "userByUsername":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userByUsername(ctx, field)
 				return res
 			})
 		case "__type":
