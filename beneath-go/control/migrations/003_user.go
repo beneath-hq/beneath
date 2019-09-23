@@ -14,7 +14,15 @@ func init() {
 			return err
 		}
 
-		// User email index
+		// Username unique index
+		_, err = db.Exec(`
+			CREATE UNIQUE INDEX users_username_key ON public.users USING btree ((lower(username)));
+		`)
+		if err != nil {
+			return err
+		}
+
+		// User email unique index
 		_, err = db.Exec(`
 			CREATE UNIQUE INDEX users_email_key ON public.users USING btree ((lower(email)));
 		`)

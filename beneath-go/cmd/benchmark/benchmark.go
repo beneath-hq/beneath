@@ -37,7 +37,7 @@ func init() {
 func main() {
 	group := new(errgroup.Group)
 
-	user, err := entity.CreateOrUpdateUser(context.Background(), "abc", "", "test@example.com", "Mr. Test", "")
+	user, err := entity.CreateOrUpdateUser(context.Background(), "abc", "", "test@example.com", "test", "Mr. Test", "")
 	if err != nil {
 		log.Fatal(err)
 	}

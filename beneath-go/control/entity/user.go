@@ -3,23 +3,24 @@ package entity
 import (
 	"context"
 	"regexp"
+	"strings"
 	"time"
-
-	"github.com/beneath-core/beneath-go/core/log"
+	"unicode"
 
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
 
 // User represents a Beneath user
 type User struct {
 	UserID             uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Username           string    `sql:",unique",validate:"omitempty,gte=3,lte=16"`
+	Username           string    `sql:",notnull",validate:"gte=3,lte=50"`
 	Email              string    `sql:",notnull",validate:"required,email"`
-	Name               string    `sql:",notnull",validate:"required,gte=4,lte=50"`
+	Name               string    `sql:",notnull",validate:"required,gte=1,lte=50"`
 	Bio                string    `validate:"omitempty,lte=255"`
 	PhotoURL           string    `validate:"omitempty,url,lte=255"`
 	GoogleID           string    `sql:",unique",validate:"omitempty,lte=255"`
@@ -37,7 +38,8 @@ type User struct {
 }
 
 var (
-	userUsernameRegex *regexp.Regexp
+	userUsernameRegex    *regexp.Regexp
+	nonAlphanumericRegex *regexp.Regexp
 )
 
 const (
@@ -46,11 +48,15 @@ const (
 
 	// DefaultUserWriteQuota is the default write quota for user keys
 	DefaultUserWriteQuota = 100000000
+
+	usernameMinLength = 3
+	usernameMaxLength = 50
 )
 
 // configure constants and validator
 func init() {
 	userUsernameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
+	nonAlphanumericRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
 	GetValidator().RegisterStructValidation(userValidation, User{})
 }
 
@@ -58,10 +64,8 @@ func init() {
 func userValidation(sl validator.StructLevel) {
 	u := sl.Current().Interface().(User)
 
-	if u.Username != "" {
-		if !userUsernameRegex.MatchString(u.Username) {
-			sl.ReportError(u.Username, "Username", "", "alphanumericorunderscore", "")
-		}
+	if !userUsernameRegex.MatchString(u.Username) {
+		sl.ReportError(u.Username, "Username", "", "alphanumericorunderscore", "")
 	}
 }
 
@@ -88,29 +92,36 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 }
 
 // CreateOrUpdateUser consolidates and returns the user matching the args
-func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, photoURL string) (*User, error) {
+func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname, name, photoURL string) (*User, error) {
 	user := &User{}
 	create := false
 
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // defer rollback on error
+
+	// find user by ID
 	var query *orm.Query
 	if githubID != "" {
-		query = db.DB.ModelContext(ctx, user).Where("github_id = ?", githubID)
+		query = tx.Model(user).Where("github_id = ?", githubID)
 	} else if googleID != "" {
-		query = db.DB.ModelContext(ctx, user).Where("google_id = ?", googleID)
+		query = tx.Model(user).Where("google_id = ?", googleID)
 	} else {
 		panic("CreateOrUpdateUser neither githubID nor googleID set")
 	}
 
-	err := query.Select()
+	err = query.For("UPDATE").Select()
 	if !AssertFoundOne(err) {
-		userByEmail := FindUserByEmail(ctx, email)
-		if userByEmail == nil {
+		// find user by email
+		err = tx.Model(user).Where("lower(email) = lower(?)", email).For("UPDATE").Select()
+		if !AssertFoundOne(err) {
 			create = true
-		} else {
-			user = userByEmail
 		}
 	}
 
+	// set user fields
 	user.GithubID = githubID
 	user.GoogleID = googleID
 	user.Email = email
@@ -119,6 +130,12 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	user.ReadQuota = DefaultUserReadQuota
 	user.WriteQuota = DefaultUserWriteQuota
 
+	// set username
+	usernameSeeds := user.usernameSeeds(nickname)
+	if create {
+		user.Username = usernameSeeds[0]
+	}
+
 	// validate
 	err = GetValidator().Struct(user)
 	if err != nil {
@@ -126,13 +143,42 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, name, ph
 	}
 
 	// insert or update
-	err = nil
-	if create {
-		err = db.DB.WithContext(ctx).Insert(user)
+	if !create {
+		err = tx.Update(user)
 	} else {
-		err = db.DB.WithContext(ctx).Update(user)
+		// try out all username seeds
+		for _, username := range usernameSeeds {
+			// savepoint in case insert fails
+			_, err = tx.Exec("SAVEPOINT bi")
+			if err != nil {
+				return nil, err
+			}
+
+			// insert
+			user.Username = username
+			err = tx.Insert(user)
+			if err == nil {
+				// success
+				break
+			} else if isUniqueUsernameError(err) {
+				// rollback to before error, then try next username
+				_, err = tx.Exec("ROLLBACK TO SAVEPOINT bi")
+				if err != nil {
+					return nil, err
+				}
+				continue
+			} else {
+				// unexpected error
+				return nil, err
+			}
+		}
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -174,4 +220,66 @@ func (u *User) UpdateDescription(ctx context.Context, name *string, bio *string)
 
 	_, err = db.DB.ModelContext(ctx, u).Column("name", "bio").WherePK().Update()
 	return err
+}
+
+func (u *User) usernameSeeds(nickname string) []string {
+	// gather candidates
+	var seeds []string
+	var shortest string
+
+	// base on nickname
+	username := nonAlphanumericRegex.ReplaceAllString(nickname, "")
+	if len(username) >= usernameMinLength {
+		seeds = append(seeds, finalizeUsernameSeed(username))
+		shortest = username
+	}
+	if len(username) < len(shortest) {
+		shortest = username
+	}
+
+	// base on email
+	username = strings.Split(u.Email, "@")[0]
+	username = nonAlphanumericRegex.ReplaceAllString(username, "")
+	if len(username) >= usernameMinLength {
+		seeds = append(seeds, finalizeUsernameSeed(username))
+	}
+	if len(username) < len(shortest) {
+		shortest = username
+	}
+
+	// base on name
+	username = nonAlphanumericRegex.ReplaceAllString(u.Name, "")
+	if len(username) >= usernameMinLength {
+		seeds = append(seeds, finalizeUsernameSeed(username))
+	}
+	if len(username) < len(shortest) {
+		shortest = username
+	}
+
+	// final fallback -- a uuid
+	username = shortest + uuid.NewV4().String()[0:8]
+	seeds = append(seeds, finalizeUsernameSeed(username))
+
+	return seeds
+}
+
+func finalizeUsernameSeed(seed string) string {
+	seed = strings.ToLower(seed)
+	if len(seed) == (usernameMinLength-1) && seed[0] != '_' {
+		seed = "_" + seed
+	}
+	if unicode.IsDigit(rune(seed[0])) {
+		seed = "b" + seed
+	}
+	if len(seed) > usernameMaxLength {
+		seed = seed[0:usernameMaxLength]
+	}
+	return seed
+}
+
+func isUniqueUsernameError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(err.Error()), "violates unique constraint \"users_username_key\"")
 }
