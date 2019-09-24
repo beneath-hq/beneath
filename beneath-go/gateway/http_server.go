@@ -106,8 +106,11 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to read stream
-	if !secret.ReadsProject(stream.ProjectID) {
-		return httputil.NewError(403, "token doesn't grant right to read this stream")
+	if !stream.Public {
+		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
+		if !perms.Read {
+			return httputil.NewError(403, "secret doesn't grant right to read this stream")
+		}
 	}
 
 	// create json response
@@ -183,9 +186,12 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		return httputil.NewError(404, "stream not found")
 	}
 
-	// check permissions
-	if !secret.ReadsProject(stream.ProjectID) {
-		return httputil.NewError(403, "token doesn't grant right to read this stream")
+	// check allowed to read stream
+	if !stream.Public {
+		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
+		if !perms.Read {
+			return httputil.NewError(403, "secret doesn't grant right to read this stream")
+		}
 	}
 
 	// check quota
@@ -354,9 +360,12 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 		return httputil.NewError(404, "stream not found")
 	}
 
-	// check permissions
-	if !secret.ReadsProject(stream.ProjectID) {
-		return httputil.NewError(403, "token doesn't grant right to read this stream")
+	// check allowed to read stream
+	if !stream.Public {
+		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
+		if !perms.Read {
+			return httputil.NewError(403, "secret doesn't grant right to read this stream")
+		}
 	}
 
 	// check isn't batch
@@ -481,8 +490,9 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to write stream
-	if !secret.WritesStream(stream) {
-		return httputil.NewError(403, "token doesn't grant right to read this stream")
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
+	if !perms.Write {
+		return httputil.NewError(403, "secret doesn't grant right to write this stream")
 	}
 
 	// check quota

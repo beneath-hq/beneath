@@ -37,7 +37,9 @@ func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([
 
 func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(serviceID) {
+	service := entity.FindService(ctx, serviceID)
+	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.View {
 		return nil, gqlerror.Errorf("Not allowed to read service secrets")
 	}
 
@@ -63,8 +65,10 @@ func (r *mutationResolver) IssueUserSecret(ctx context.Context, description stri
 
 func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*gql.NewSecret, error) {
 	authSecret := middleware.GetSecret(ctx)
-	if !authSecret.EditsOrganization(serviceID) {
-		return nil, gqlerror.Errorf("Not allowed to edit service")
+	service := entity.FindService(ctx, serviceID)
+	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in the organization")
 	}
 
 	secret, err := entity.CreateServiceSecret(ctx, serviceID, description)
@@ -79,16 +83,28 @@ func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uui
 }
 
 func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
+	authSecret := middleware.GetSecret(ctx)
+	if authSecret == nil {
+		return false, gqlerror.Errorf("Not allowed to edit secret")
+	}
+
 	secret := entity.FindSecret(ctx, secretID)
 	if secret == nil {
 		return false, gqlerror.Errorf("Secret not found")
 	}
 
-	authSecret := middleware.GetSecret(ctx)
-	if secret.ServiceID != nil && !authSecret.EditsProject(*secret.ServiceID) {
-		return false, gqlerror.Errorf("Not allowed to edit secret")
-	} else if secret.UserID != nil && *authSecret.UserID != *secret.UserID {
-		return false, gqlerror.Errorf("Not allowed to edit secret")
+	if secret.UserID != nil {
+		// we're revoking a personal user secret
+		if authSecret.UserID == nil || *authSecret.UserID != *secret.UserID {
+			return false, gqlerror.Errorf("Not allowed to edit secret")
+		}
+	} else if secret.ServiceID != nil {
+		// we're revoking a service secret
+		service := entity.FindService(ctx, *secret.ServiceID)
+		perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
+		if !perms.Admin {
+			return false, gqlerror.Errorf("Not allowed to edit secret")
+		}
 	}
 
 	secret.Revoke(ctx)

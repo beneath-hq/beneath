@@ -91,6 +91,9 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 
 	// get auth
 	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
 
 	// get instance ID
 	instanceID := entity.FindInstanceIDByNameAndProject(ctx, req.StreamName, req.ProjectName)
@@ -105,7 +108,8 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	}
 
 	// check permissions
-	if !secret.ReadsProject(stream.ProjectID) {
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
@@ -127,6 +131,9 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -149,8 +156,9 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// check permissions
-	if !secret.ReadsProject(stream.ProjectID) {
-		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	if !perms.Read {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
 	// check quota
@@ -233,6 +241,9 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRecordsRequest) (*pb.ReadRecordsResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -254,8 +265,9 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// check permissions
-	if !secret.ReadsProject(stream.ProjectID) {
-		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read from this stream")
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	if !perms.Read {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
 	// check isn't batch
@@ -311,6 +323,9 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
 
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
@@ -331,8 +346,9 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// check permissions
-	if !secret.WritesStream(stream) {
-		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to write to this stream")
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	if !perms.Write {
+		return nil, grpc.Errorf(codes.PermissionDenied, "secret doesn't grant right to write to this stream")
 	}
 
 	// check records supplied

@@ -207,17 +207,18 @@ func (c *Client) GetSubscriptionID(filter SubscriptionFilter) SubscriptionID {
 func (c *Client) Init(payload map[string]interface{}) {
 	// get token
 	token, ok := payload["secret"].(string)
-	if !ok {
-		c.SendConnectionError("websocket must pass a secret")
-		return
+	if ok {
+		// authenticate
+		c.Secret = entity.AuthenticateSecretString(c.Broker.ctx, token)
+		if c.Secret == nil {
+			c.SendConnectionError("couldn't authenticate secret")
+			return
+		}
 	}
-
-	// authenticate
-	c.Secret = entity.AuthenticateSecretString(c.Broker.ctx, token)
-	if c.Secret == nil {
-		c.SendConnectionError("couldn't authenticate secret")
-		return
-	}
+	// if !ok {
+	// 	c.SendConnectionError("websocket must pass a secret")
+	// 	return
+	// }
 
 	// send ack
 	c.SendConnectionAck()

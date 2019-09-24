@@ -18,6 +18,7 @@ import (
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
+	StreamID    uuid.UUID
 	Public      bool
 	External    bool
 	Batch       bool
@@ -29,6 +30,7 @@ type CachedStream struct {
 }
 
 type internalCachedStream struct {
+	StreamID            uuid.UUID
 	Public              bool
 	External            bool
 	Batch               bool
@@ -43,6 +45,7 @@ type internalCachedStream struct {
 // MarshalBinary serializes for storage in cache
 func (c CachedStream) MarshalBinary() ([]byte, error) {
 	wrapped := internalCachedStream{
+		StreamID:    c.StreamID,
 		Public:      c.Public,
 		External:    c.External,
 		Batch:       c.Batch,
@@ -170,6 +173,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 		internalResult := &internalCachedStream{}
 		_, err := db.DB.QueryContext(ctx, internalResult, `
 				select
+					s.stream_id,
 					p.public,
 					s.external,
 					s.batch,
@@ -199,6 +203,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 }
 
 func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStream) (err error) {
+	target.StreamID = source.StreamID
 	target.Public = source.Public
 	target.External = source.External
 	target.Batch = source.Batch

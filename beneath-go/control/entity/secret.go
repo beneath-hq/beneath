@@ -35,6 +35,25 @@ type Secret struct {
 	SecretString string `sql:"-"`
 }
 
+// ProjectPermissions represents permissions that a secret has for a given project
+type ProjectPermissions struct {
+	View   bool
+	Create bool
+	Admin  bool
+}
+
+// StreamPermissions represents permissions that a secret has for a given strea
+type StreamPermissions struct {
+	Read  bool
+	Write bool
+}
+
+// OrganizationPermissions represents permissions that a secret has for a given organization
+type OrganizationPermissions struct {
+	View  bool
+	Admin bool
+}
+
 const (
 	// number of secrets to cache in local memory for extra speed
 	secretCacheLocalSize = 10000
@@ -261,60 +280,71 @@ func (k *Secret) IsPersonal() bool {
 	return k != nil && k.UserID != nil
 }
 
-// ReadsProject returns true iff the secret gives permission to read the project
-func (k *Secret) ReadsProject(projectID uuid.UUID) bool {
-	// TODO
+// StreamPermissions returns the secret's permissions for a given stream
+func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, external bool) StreamPermissions {
 	if k == nil {
+		return StreamPermissions{}
 	}
-	return true
+
+	if k.ServiceID != nil {
+		return CachedServiceStreamPermissions(ctx, streamID, projectID)
+	} else if k.UserID != nil {
+		res := CachedUserProjectPermissions(ctx, *k.UserID, projectID)
+		return StreamPermissions{
+			Read:  res.View,
+			Write: res.Create && external,
+		}
+	}
+
+	panic("expected userID or service ID to be set")
 }
 
-// EditsOrganization returns true iff the secret gives permission to edit the organization
-func (k *Secret) EditsOrganization(organizationID uuid.UUID) bool {
-	// TODO
+// ProjectPermissions returns the secret's permissions for a given project
+func (k *Secret) ProjectPermissions(ctx context.Context, projectID uuid.UUID) ProjectPermissions {
 	if k == nil {
+		return ProjectPermissions{}
 	}
-	return true
+
+	if k.ServiceID != nil {
+		return ProjectPermissions{}
+	} else if k.UserID != nil {
+		return CachedUserProjectPermissions(ctx, *k.UserID, projectID)
+	}
+
+	panic("expected userID or service ID to be set")
 }
 
-// EditsProject returns true iff the secret gives permission to edit the project
-func (k *Secret) EditsProject(projectID uuid.UUID) bool {
-	// TODO
+// OrganizationPermissions returns the secret's permissions for a given organization
+func (k *Secret) OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions {
 	if k == nil {
+		return OrganizationPermissions{}
 	}
-	return true
+
+	if k.ServiceID != nil {
+		return OrganizationPermissions{}
+	} else if k.UserID != nil {
+		return CachedUserOrganizationPermissions(ctx, *k.UserID, organizationID)
+	}
+
+	panic("expected userID or service ID to be set")
 }
 
-// EditsService returns true iff the secret gives permission to edit the service
-func (k *Secret) EditsService(serviceID uuid.UUID) bool {
-	// TODO
-	if k == nil {
-	}
-	return true
-}
-
-// WritesStream returns true iff the secret gives permission to write to the stream
-func (k *Secret) WritesStream(stream *CachedStream) bool {
-	// TODO
-	// role, err := RoleCache.Get(string(auth), stream.ProjectID)
-	// if err != nil {
-	// 	return httputil.NewHTTPError(404, err.Error())
-	// }
-
-	// if !role.Write && !(stream.Manual && role.Manage) {
-	// 	return httputil.NewHTTPError(403, "token doesn't grant right to write to this stream")
-	// }
-	return k != nil
+// ManagesModelBatches returns true if the secret can manage model batches
+func (k *Secret) ManagesModelBatches(model *Model) bool {
+	return k.ServiceID != nil && *k.ServiceID == model.ServiceID
 }
 
 // BillingID gets the BillingID based on the BillingEntity
 func (k *Secret) BillingID() uuid.UUID {
-	if k.UserID != nil {
+	if k == nil {
+		panic(fmt.Errorf("cannot get billing id for nil secret"))
+	} else if k.UserID != nil {
 		return *k.UserID
 	} else if k.ServiceID != nil {
 		return *k.ServiceID
 	}
-	panic(fmt.Errorf("neither user id nor service id set"))
+
+	panic("expected userID or service ID to be set")
 }
 
 // CheckReadQuota checks the user's read quota

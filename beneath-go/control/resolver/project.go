@@ -32,41 +32,48 @@ func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*entity
 		return nil, gqlerror.Errorf("Project %s not found", name)
 	}
 
-	secret := middleware.GetSecret(ctx)
-	if !secret.ReadsProject(project.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to read project %s", name)
+	if !project.Public {
+		secret := middleware.GetSecret(ctx)
+		perms := secret.ProjectPermissions(ctx, project.ProjectID)
+		if !perms.View {
+			return nil, gqlerror.Errorf("Not allowed to read project %s", name)
+		}
 	}
 
 	return project, nil
 }
 
 func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.ReadsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to read project %s", projectID.String())
-	}
-
 	project := entity.FindProject(ctx, projectID)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
 
+	if !project.Public {
+		secret := middleware.GetSecret(ctx)
+		perms := secret.ProjectPermissions(ctx, projectID)
+		if !perms.View {
+			return nil, gqlerror.Errorf("Not allowed to read project %s", projectID.String())
+		}
+	}
+
 	return project, nil
 }
 
-func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName string, site *string, description *string, photoURL *string) (*entity.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, gqlerror.Errorf("Not allowed to create project")
 	}
 
 	project := &entity.Project{
-		Name:        name,
-		DisplayName: displayName,
-		Site:        DereferenceString(site),
-		Description: DereferenceString(description),
-		PhotoURL:    DereferenceString(photoURL),
-		Public:      true,
+		Name:           name,
+		DisplayName:    displayName,
+		OrganizationID: organizationID,
+		Site:           DereferenceString(site),
+		Description:    DereferenceString(description),
+		PhotoURL:       DereferenceString(photoURL),
+		Public:         true,
 	}
 
 	err := project.CreateWithUser(ctx, *secret.UserID, true, true, true)
@@ -79,8 +86,9 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*entity.Project, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
+	perms := secret.ProjectPermissions(ctx, projectID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
 	}
 
 	project := entity.FindProject(ctx, projectID)
@@ -96,10 +104,11 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 	return project, nil
 }
 
-func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID, read bool, write bool, modify bool) (*entity.User, error) {
+func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
+	perms := secret.ProjectPermissions(ctx, projectID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
 	}
 
 	user := entity.FindUserByEmail(ctx, email)
@@ -111,7 +120,7 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 		ProjectID: projectID,
 	}
 
-	err := project.AddUser(ctx, user.UserID, read, write, modify)
+	err := project.AddUser(ctx, user.UserID, view, create, admin)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
@@ -121,8 +130,9 @@ func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, p
 
 func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return false, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
+	perms := secret.ProjectPermissions(ctx, projectID)
+	if !perms.Admin {
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", projectID.String())
 	}
 
 	project := entity.FindProject(ctx, projectID)
@@ -144,8 +154,9 @@ func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uui
 
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return false, gqlerror.Errorf("Not allowed to edit project %s", projectID.String())
+	perms := secret.ProjectPermissions(ctx, projectID)
+	if !perms.Admin {
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", projectID.String())
 	}
 
 	project := entity.FindProject(ctx, projectID)

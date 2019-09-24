@@ -28,9 +28,12 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
 	}
 
-	secret := middleware.GetSecret(ctx)
-	if !secret.ReadsProject(stream.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
+	if !stream.Project.Public {
+		secret := middleware.GetSecret(ctx)
+		perms := secret.ProjectPermissions(ctx, stream.ProjectID)
+		if !perms.View {
+			return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
+		}
 	}
 
 	return stream, nil
@@ -38,8 +41,9 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 
 func (r *mutationResolver) CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(projectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project %s", projectID)
+	perms := secret.ProjectPermissions(ctx, projectID)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to create content in project %s", projectID)
 	}
 
 	stream := &entity.Stream{
@@ -70,7 +74,8 @@ func (r *mutationResolver) UpdateExternalStream(ctx context.Context, streamID uu
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(stream.ProjectID) {
+	perms := secret.ProjectPermissions(ctx, stream.ProjectID)
+	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
 	}
 
@@ -93,8 +98,9 @@ func (r *mutationResolver) DeleteExternalStream(ctx context.Context, streamID uu
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(stream.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	perms := secret.ProjectPermissions(ctx, stream.ProjectID)
+	if !perms.Create {
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", stream.Project.Name)
 	}
 
 	err := stream.Delete(ctx)
@@ -120,8 +126,9 @@ func (r *mutationResolver) CreateExternalStreamBatch(ctx context.Context, stream
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(stream.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	perms := secret.ProjectPermissions(ctx, stream.ProjectID)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to create content in project %s", stream.Project.Name)
 	}
 
 	si, err := stream.CreateStreamInstance(ctx)
@@ -147,8 +154,9 @@ func (r *mutationResolver) CommitExternalStreamBatch(ctx context.Context, instan
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(instance.Stream.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to update stream in project %s", instance.Stream.Project.Name)
+	perms := secret.ProjectPermissions(ctx, instance.Stream.ProjectID)
+	if !perms.Create {
+		return false, gqlerror.Errorf("Not allowed to create content in project %s", instance.Stream.Project.Name)
 	}
 
 	err := instance.Stream.CommitStreamInstance(ctx, instance)
@@ -174,8 +182,9 @@ func (r *mutationResolver) ClearPendingExternalStreamBatches(ctx context.Context
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(stream.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to update stream in project %s", stream.Project.Name)
+	perms := secret.ProjectPermissions(ctx, stream.ProjectID)
+	if !perms.Create {
+		return false, gqlerror.Errorf("Not allowed to create content in project %s", stream.Project.Name)
 	}
 
 	err := stream.ClearPendingBatches(ctx)

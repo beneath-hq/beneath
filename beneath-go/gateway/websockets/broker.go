@@ -318,18 +318,23 @@ func (b *Broker) processStartRequest(r Request) {
 		return
 	}
 
-	// check auth
-	if !r.Client.Secret.ReadsProject(stream.ProjectID) {
-		r.Client.SendError(r.Message.ID, "Error! You don't have permission to read that stream.")
-		return
+	// check allowed to read stream
+	if !stream.Public {
+		perms := r.Client.Secret.StreamPermissions(b.ctx, stream.StreamID, stream.ProjectID, stream.External)
+		if !perms.Read {
+			r.Client.SendError(r.Message.ID, "Error! You don't have permission to read that stream.")
+			return
+		}
 	}
 
 	// check quota
-	usage := b.metrics.GetCurrentUsage(b.ctx, r.Client.Secret.BillingID(), metrics.MonthlyPeriod)
-	ok = r.Client.Secret.CheckReadQuota(usage)
-	if !ok {
-		r.Client.SendError(r.Message.ID, "You have exhausted your monthly quota")
-		return
+	if r.Client.Secret != nil {
+		usage := b.metrics.GetCurrentUsage(b.ctx, r.Client.Secret.BillingID(), metrics.MonthlyPeriod)
+		ok = r.Client.Secret.CheckReadQuota(usage)
+		if !ok {
+			r.Client.SendError(r.Message.ID, "You have exhausted your monthly quota")
+			return
+		}
 	}
 
 	// "convert" to filter (in future, may be more elaborate)
@@ -388,6 +393,8 @@ func (b *Broker) processMessage(d Dispatch) {
 
 		// track read
 		b.metrics.TrackRead(instanceID, int64(len(d.Records)), d.Bytes)
-		b.metrics.TrackRead(c.Secret.BillingID(), int64(len(d.Records)), d.Bytes)
+		if c.Secret != nil {
+			b.metrics.TrackRead(c.Secret.BillingID(), int64(len(d.Records)), d.Bytes)
+		}
 	}
 }

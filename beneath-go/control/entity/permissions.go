@@ -12,9 +12,9 @@ type PermissionsUsersProjects struct {
 	User      *User
 	ProjectID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Project   *Project
-	Read      bool `sql:",notnull"`
-	Write     bool `sql:",notnull"`
-	Modify    bool `sql:",notnull"`
+	View      bool `sql:",notnull"`
+	Create    bool `sql:",notnull"`
+	Admin     bool `sql:",notnull"`
 }
 
 // PermissionsUsersOrganizations represnts the many-to-many relationship between users and organizations
@@ -24,7 +24,7 @@ type PermissionsUsersOrganizations struct {
 	User           *User
 	OrganizationID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Organization   *Organization
-	Read           bool `sql:",notnull"`
+	View           bool `sql:",notnull"`
 	Admin          bool `sql:",notnull"`
 }
 

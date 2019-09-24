@@ -32,9 +32,12 @@ func (r *queryResolver) Model(ctx context.Context, name string, projectName stri
 		return nil, gqlerror.Errorf("Model %s/%s not found", projectName, name)
 	}
 
-	secret := middleware.GetSecret(ctx)
-	if !secret.ReadsProject(model.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, name)
+	if !model.Project.Public {
+		secret := middleware.GetSecret(ctx)
+		perms := secret.ProjectPermissions(ctx, model.ProjectID)
+		if !perms.View {
+			return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, name)
+		}
 	}
 
 	return model, nil
@@ -42,8 +45,9 @@ func (r *queryResolver) Model(ctx context.Context, name string, projectName stri
 
 func (r *mutationResolver) CreateModel(ctx context.Context, input gql.CreateModelInput) (*entity.Model, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(input.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project %s", input.ProjectID)
+	perms := secret.ProjectPermissions(ctx, input.ProjectID)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to modify resources in project %s", input.ProjectID)
 	}
 
 	kind, ok := entity.ParseModelKind(input.Kind)
@@ -77,8 +81,9 @@ func (r *mutationResolver) UpdateModel(ctx context.Context, input gql.UpdateMode
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(model.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	perms := secret.ProjectPermissions(ctx, model.ProjectID)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to modify resources in project '%s'", model.ProjectID)
 	}
 
 	// update model
@@ -108,8 +113,9 @@ func (r *mutationResolver) DeleteModel(ctx context.Context, modelID uuid.UUID) (
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(model.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	perms := secret.ProjectPermissions(ctx, model.ProjectID)
+	if !perms.Create {
+		return false, gqlerror.Errorf("Not allowed to modify resources in project '%s'", model.ProjectID)
 	}
 
 	// delete model
@@ -128,10 +134,10 @@ func (r *mutationResolver) CreateModelBatch(ctx context.Context, modelID uuid.UU
 		return nil, gqlerror.Errorf("Model '%s' not found", modelID.String())
 	}
 
-	// check allowed to edit
+	// check permissions
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(model.ProjectID) {
-		return nil, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	if !secret.ManagesModelBatches(model) {
+		return nil, gqlerror.Errorf("Not allowed to modify model '%s'", model.ModelID)
 	}
 
 	// check is batch
@@ -157,8 +163,8 @@ func (r *mutationResolver) CommitModelBatch(ctx context.Context, modelID uuid.UU
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(model.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	if !secret.ManagesModelBatches(model) {
+		return false, gqlerror.Errorf("Not allowed to modify model '%s'", model.ModelID)
 	}
 
 	// check is batch
@@ -184,8 +190,8 @@ func (r *mutationResolver) ClearPendingModelBatches(ctx context.Context, modelID
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	if !secret.EditsProject(model.ProjectID) {
-		return false, gqlerror.Errorf("Not allowed to edit project '%s'", model.ProjectID)
+	if !secret.ManagesModelBatches(model) {
+		return false, gqlerror.Errorf("Not allowed to modify model '%s'", model.ModelID)
 	}
 
 	// check is batch

@@ -91,7 +91,7 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 }
 
 // CreateWithUser creates a project and makes user a member
-func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, read bool, write bool, modify bool) error {
+func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
 	// validate
 	err := GetValidator().Struct(p)
 	if err != nil {
@@ -110,9 +110,9 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, read boo
 		err = tx.Insert(&PermissionsUsersProjects{
 			UserID:    userID,
 			ProjectID: p.ProjectID,
-			Read:      read,
-			Write:     write,
-			Modify:    modify,
+			View:      view,
+			Create:    create,
+			Admin:     admin,
 		})
 		if err != nil {
 			return err
@@ -128,13 +128,13 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, read boo
 }
 
 // AddUser makes user a member of project
-func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, read bool, write bool, modify bool) error {
+func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
 	return db.DB.WithContext(ctx).Insert(&PermissionsUsersProjects{
 		UserID:    userID,
 		ProjectID: p.ProjectID,
-		Read:      read,
-		Write:     write,
-		Modify:    modify,
+		View:      view,
+		Create:    create,
+		Admin:     admin,
 	})
 }
 
