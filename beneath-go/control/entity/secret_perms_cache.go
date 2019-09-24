@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"reflect"
 	"time"
 
 	"github.com/go-pg/pg"
@@ -16,7 +17,7 @@ import (
 // PermissionsCache encapsulates the secret's permissions and how to access the permissions in short-term and long-term memory
 type PermissionsCache struct {
 	codec     *cache.Codec
-	prototype interface{}
+	prototype reflect.Type
 	query     string
 }
 
@@ -40,47 +41,59 @@ var permsCacheConfig = struct {
 	},
 }
 
-func init() {
-	userOrganizationPermissions = NewPermissionsCache(OrganizationPermissions{}, `
-		select p.view, p.admin
-		from permissions_users_organizations p
-		where p.user_id = ? and p.organization_id = ?
-	`)
+func getUserOrganizationPermissionsCache() *PermissionsCache {
+	if userOrganizationPermissions == nil {
+		userOrganizationPermissions = NewPermissionsCache(OrganizationPermissions{}, `
+			select p.view, p.admin
+			from permissions_users_organizations p
+			where p.user_id = ? and p.organization_id = ?
+		`)
+	}
 
-	// TODO: pascal case to snake case
-	userProjectPermissions = NewPermissionsCache(ProjectPermissions{}, `
-		select p.view, p.create, p.admin
-		from permissions_users_projects p
-		where p.user_id = ? and p.project_id = ?
-	`)
+	return userOrganizationPermissions
+}
+func getUserProjectPermissionsCache() *PermissionsCache {
+	if userProjectPermissions == nil {
+		userProjectPermissions = NewPermissionsCache(ProjectPermissions{}, `
+			select p.view, p.create, p.admin
+			from permissions_users_projects p
+			where p.user_id = ? and p.project_id = ?
+		`)
+	}
 
-	// TODO: pascal case to snake case
-	serviceStreamPermissions = NewPermissionsCache(StreamPermissions{}, `
-		select p.view, p.create, p.admin
-		from permissions_services_streams p
-		where p.service_id = ? and p.stream_id = ?
-	`)
+	return userProjectPermissions
+}
+func getServiceStreamPermissionsCache() *PermissionsCache {
+	if serviceStreamPermissions == nil {
+		serviceStreamPermissions = NewPermissionsCache(StreamPermissions{}, `
+			select p.view, p.create, p.admin
+			from permissions_services_streams p
+			where p.service_id = ? and p.stream_id = ?
+		`)
+	}
+
+	return serviceStreamPermissions
 }
 
 // CachedUserOrganizationPermissions returns organization permissions for a given owner-resource combo
 func CachedUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) OrganizationPermissions {
-	return userOrganizationPermissions.Get(ctx, userID, organizationID).(OrganizationPermissions)
+	return getUserOrganizationPermissionsCache().Get(ctx, userID, organizationID).(OrganizationPermissions)
 }
 
 // CachedUserProjectPermissions returns project permissions for a given owner-resource combo
 func CachedUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) ProjectPermissions {
-	return userProjectPermissions.Get(ctx, userID, projectID).(ProjectPermissions)
+	return getUserProjectPermissionsCache().Get(ctx, userID, projectID).(ProjectPermissions)
 }
 
 // CachedServiceStreamPermissions returns stream permissions for a given owner-resource combo
 func CachedServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID) StreamPermissions {
-	return serviceStreamPermissions.Get(ctx, serviceID, streamID).(StreamPermissions)
+	return getServiceStreamPermissionsCache().Get(ctx, serviceID, streamID).(StreamPermissions)
 }
 
 // NewPermissionsCache initializes a PermissionCache object for a given prototype (organization/project/stream)
 func NewPermissionsCache(prototype interface{}, query string) *PermissionsCache {
 	pm := &PermissionsCache{}
-	pm.prototype = prototype
+	pm.prototype = reflect.TypeOf(prototype)
 	pm.query = query
 	pm.codec = &cache.Codec{
 		Redis:     db.Redis,
@@ -93,17 +106,17 @@ func NewPermissionsCache(prototype interface{}, query string) *PermissionsCache 
 
 // Get fetches permissions by applying the cached query to the given parameters
 func (c *PermissionsCache) Get(ctx context.Context, ownerID uuid.UUID, resourceID uuid.UUID) interface{} {
-	res := c.prototype
+	res := reflect.New(c.prototype)
 	err := c.codec.Once(&cache.Item{
 		Key:        permsCacheConfig.redisKeyFn(ownerID, resourceID),
-		Object:     &res,
+		Object:     res.Interface(),
 		Expiration: permsCacheConfig.cacheTime,
 		Func:       c.getterFunc(ctx, ownerID, resourceID),
 	})
 	if err != nil {
 		panic(err)
 	}
-	return res
+	return res.Elem().Interface()
 }
 
 func (c PermissionsCache) marshal(v interface{}) ([]byte, error) {
@@ -127,11 +140,11 @@ func (c PermissionsCache) unmarshal(b []byte, v interface{}) (err error) {
 
 func (c PermissionsCache) getterFunc(ctx context.Context, ownerID uuid.UUID, resourceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
-		res := c.prototype
-		_, err := db.DB.QueryContext(ctx, pg.Scan(&res), c.query, ownerID, resourceID)
+		res := reflect.New(c.prototype)
+		_, err := db.DB.QueryContext(ctx, res.Interface(), c.query, ownerID, resourceID)
 		if err != nil && err != pg.ErrNoRows {
 			panic(err)
 		}
-		return res, nil
+		return res.Elem().Interface(), nil
 	}
 }
