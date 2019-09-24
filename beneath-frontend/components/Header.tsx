@@ -114,8 +114,8 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
               >
                 {makeMenuItem("Profile", {
                   onClick: closeMenu,
-                  as: `/users/${me.user.userID}`,
-                  href: `/user?id=${me.user.userID}`,
+                  as: `/users/${me.user.username}`,
+                  href: `/user?name=${me.user.username}`,
                 })}
                 {makeMenuItem("Logout", {
                   href: `/auth/logout`,

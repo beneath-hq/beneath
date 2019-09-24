@@ -3,10 +3,13 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
 	"github.com/golang-collections/collections/set"
+	"github.com/iancoleman/strcase"
+	"github.com/jinzhu/inflection"
 )
 
 // Compiler represents a single compilation input
@@ -21,6 +24,14 @@ type Compiler struct {
 const (
 	maxFieldNameLen = 64
 )
+
+var (
+	snakeCaseRegex *regexp.Regexp
+)
+
+func init() {
+	snakeCaseRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
+}
 
 // MustCompileToAvro is a helper function very useful in tests.
 // It compiles the schema to avro and panics on any errors.
@@ -161,12 +172,20 @@ func (c *Compiler) Compile() error {
 
 		// check type field names and stream keys
 		if declaration.Type != nil {
-			// check not declared twice
+			// index fields by name -> type
 			fields := make(map[string]*TypeRef, len(declaration.Type.Fields))
 			for _, field := range declaration.Type.Fields {
+				// check not declared twice
 				if fields[field.Name] != nil {
 					return fmt.Errorf("field '%v' declared twice in type '%v'", field.Name, declaration.Type.Name)
 				}
+
+				// check is snake case
+				if !snakeCaseRegex.MatchString(field.Name) {
+					return fmt.Errorf("field name '%v' in type '%v' is not underscore case", field.Name, declaration.Type.Name)
+				}
+
+				// store it
 				fields[field.Name] = field.Type
 			}
 
@@ -313,17 +332,13 @@ func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 		return nil, fmt.Errorf("annotation @%v not supported", a.Name)
 	}
 
+	// parse name
+	streamName := strcase.ToSnake(inflection.Plural(declaration.Type.Name))
+
 	// read params
-	var streamName string
 	var streamKey []string
-	var streamExternal bool
 	for _, arg := range a.Arguments {
 		switch arg.Name {
-		case "name":
-			if arg.Value.String == "" {
-				return nil, fmt.Errorf("stream arg 'name' at %v is not a string", arg.Pos.String())
-			}
-			streamName = arg.Value.String
 		case "key":
 			err := fmt.Errorf("stream arg 'key' at %v is not a string or array of strings", arg.Pos.String())
 			if arg.Value.String != "" {
@@ -339,17 +354,12 @@ func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 			} else {
 				return nil, err
 			}
-		case "external":
-			streamExternal = (arg.Value.Symbol == "true")
 		default:
 			return nil, fmt.Errorf("unknown @stream arg '%v' at %v", arg.Name, arg.Pos.String())
 		}
 	}
 
 	// check params
-	if len(streamName) == 0 {
-		return nil, fmt.Errorf("missing arg 'name' in @stream at %v", declaration.Pos.String())
-	}
 	if len(streamKey) == 0 {
 		return nil, fmt.Errorf("missing arg 'key' in @stream at %v", declaration.Pos.String())
 	}
@@ -360,7 +370,6 @@ func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 		Description: strings.TrimSpace(declaration.Type.Doc),
 		TypeName:    declaration.Type.Name,
 		KeyFields:   streamKey,
-		External:    streamExternal,
 		Compiler:    c,
 	}, nil
 }

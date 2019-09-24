@@ -22,8 +22,12 @@ const EditMe = () => {
   return (
     <Query query={QUERY_ME}>
       {({ loading, error, data }) => {
-        if (loading) return <Loading justify="center" />;
-        if (error) return <p>Error: {JSON.stringify(error)}</p>;
+        if (loading) {
+          return <Loading justify="center" />;
+        }
+        if (error) {
+          return <p>Error: {JSON.stringify(error)}</p>;
+        }
 
         let { me } = data;
         return <EditMeForm me={me} />;
@@ -36,6 +40,7 @@ export default EditMe;
 
 const EditMeForm = ({ me }) => {
   const [values, setValues] = React.useState({
+    username: me.user.username || "",
     email: me.email || "",
     name: me.user.name || "",
     bio: me.user.bio || "",
@@ -51,46 +56,95 @@ const EditMeForm = ({ me }) => {
     <Mutation mutation={UPDATE_ME}>
       {(updateMe, { loading, error }) => (
         <div>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            updateMe({ variables: { name: values.name, bio: values.bio } });
-          }}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateMe({ variables: { username: values.username, name: values.name, bio: values.bio } });
+            }}
           >
-            <TextField id="name" label="Name" value={values.name}
-              margin="normal" fullWidth required
+            <TextField
+              id="username"
+              label="Username"
+              value={values.username}
+              margin="normal"
+              fullWidth
+              required
+              onChange={handleChange("username")}
+            />
+            <TextField
+              id="name"
+              label="Name"
+              value={values.name}
+              margin="normal"
+              fullWidth
+              required
               onChange={handleChange("name")}
             />
-            <TextField id="bio" label="Bio" value={values.bio}
-              margin="normal" fullWidth multiline rows={1} rowsMax={3}
+            <TextField
+              id="bio"
+              label="Bio"
+              value={values.bio}
+              margin="normal"
+              fullWidth
+              multiline
+              rows={1}
+              rowsMax={3}
               onChange={handleChange("bio")}
             />
-            <TextField id="email" label="Email" value={values.email}
-              margin="normal" fullWidth disabled
+            <TextField
+              id="email"
+              label="Email"
+              value={values.email}
+              margin="normal"
+              fullWidth
+              disabled
               onChange={handleChange("email")}
             />
-            <TextField id="photo-url" label="Photo URL" value={values.photoURL || ""}
-              margin="normal" fullWidth disabled
+            <TextField
+              id="photo-url"
+              label="Photo URL"
+              value={values.photoURL || ""}
+              margin="normal"
+              fullWidth
+              disabled
               onChange={handleChange("photoURL")}
             />
-            <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
+            <Button
+              type="submit"
+              variant="outlined"
+              color="primary"
+              className={classes.submitButton}
               disabled={
-                loading
-                || !(values.name && values.name.length >= 4 && values.name.length <= 50)
-                || !(values.bio === "" || values.bio.length < 256)
-              }>
+                loading ||
+                !(
+                  values.username &&
+                  values.username.length >= 3 &&
+                  values.username.length <= 40 &&
+                  values.username.match(/^[_a-z][_a-z0-9]+$/)
+                ) ||
+                !(values.name && values.name.length >= 4 && values.name.length <= 50) ||
+                !(values.bio === "" || values.bio.length < 256)
+              }
+            >
               Save changes
             </Button>
             {error && (
-              <Typography variant="body1" color="error">An error occurred</Typography>
+              <Typography variant="body1" color="error">
+                {isUsernameError(error) ? "Username already taken" : `An error occurred: ${JSON.stringify(error)}`}
+              </Typography>
             )}
           </form>
           <VSpace units={2} />
           <Typography variant="subtitle1" color="textSecondary">
-            You signed up <Moment fromNow date={me.user.createdOn} /> and
-            last updated your profile <Moment fromNow date={me.updatedOn} />.
+            You signed up <Moment fromNow date={me.user.createdOn} /> and last updated your profile{" "}
+            <Moment fromNow date={me.updatedOn} />.
           </Typography>
         </div>
       )}
     </Mutation>
   );
+};
+
+const isUsernameError = (error) => {
+  return error.message.match(/duplicate key value violates unique constraint/);
 };

@@ -6,6 +6,5 @@ type StreamDef struct {
 	Description string
 	TypeName    string
 	KeyFields   []string
-	External    bool
 	Compiler    *Compiler
 }

@@ -41,27 +41,6 @@ export const QUERY_PROJECT = gql`
   }
 `;
 
-export const NEW_PROJECT = gql`
-  mutation CreateProject($name: String!, $displayName: String!, $site: String, $description: String, $photoURL: String) {
-    createProject(name: $name, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
-      projectID
-      name
-      displayName
-      site
-      description
-      photoURL
-      createdOn
-      updatedOn
-      users {
-        userID
-        name
-        username
-        photoURL
-      }
-    }
-  }
-`;
-
 export const UPDATE_PROJECT = gql`
   mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
     updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
@@ -72,22 +51,5 @@ export const UPDATE_PROJECT = gql`
       photoURL
       updatedOn
     }
-  }
-`;
-
-export const ADD_MEMBER = gql`
-  mutation AddUserToProject($email: String!, $projectID: UUID!) {
-    addUserToProject(email: $email, projectID: $projectID) {
-      userID
-      name
-      username
-      photoURL
-    }
-  }
-`;
-
-export const REMOVE_MEMBER = gql`
-  mutation RemoveUserFromProject($userID: UUID!, $projectID: UUID!) {
-    removeUserFromProject(userID: $userID, projectID: $projectID)
   }
 `;

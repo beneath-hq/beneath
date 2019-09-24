@@ -30,7 +30,8 @@
       true,
       "as-needed"
     ],
-    "interface-name": false
+    "interface-name": false,
+    "no-shadowed-variable": false
   },
   "rulesDirectory": []
 }

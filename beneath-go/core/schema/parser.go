@@ -56,6 +56,7 @@ type Declaration struct {
 
 // Enum declaration
 type Enum struct {
+	Doc     string   "@String?"
 	Name    string   `"enum" @Ident`
 	Members []string `"{" @Ident* "}"`
 }

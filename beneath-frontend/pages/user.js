@@ -11,21 +11,21 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/user/EditMe";
 import ViewProjects from "../components/user/ViewProjects";
-import { ManageUserSecrets } from "../components/secret/ManageSecrets";
+import IssueSecret from "../components/user/IssueSecret";
+import ViewSecrets from "../components/user/ViewSecrets";
 
 import withMe from "../hocs/withMe";
-import { QUERY_USER } from "../apollo/queries/user";
+import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
 
-const useStyles = makeStyles((theme) => ({
-}));
+const useStyles = makeStyles((theme) => ({}));
 
 const UserPage = ({ router, me }) => {
   const classes = useStyles();
-  let userID = router.query.id;
+  let username = router.query.name;
   return (
     <Page title="User" subheader>
       <div>
-        <Query query={QUERY_USER} variables={{ userID }} fetchPolicy="cache-and-network">
+        <Query query={QUERY_USER_BY_USERNAME} variables={{ username }} fetchPolicy="cache-and-network">
           {({ loading, error, data }) => {
             if (loading) {
               return <Loading justify="center" />;
@@ -34,14 +34,21 @@ const UserPage = ({ router, me }) => {
               return <p>Error: {JSON.stringify(error)}</p>;
             }
 
-            let { user } = data;
-            let isMe = userID === me.userID;
-            let tabs = [
-              { value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> },
-            ];
+            let user = data.userByUsername;
+            let isMe = user.userID === me.userID;
+            let tabs = [{ value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> }];
             if (isMe) {
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-              tabs.push({ value: "secrets", label: "Secrets", render: () => <ManageUserSecrets userID={user.userID} /> });
+              tabs.push({
+                value: "secrets",
+                label: "Secrets",
+                render: () => (
+                  <>
+                    <IssueSecret userID={user.userID} />
+                    <ViewSecrets userID={user.userID} />
+                  </>
+                ),
+              });
             }
 
             return (

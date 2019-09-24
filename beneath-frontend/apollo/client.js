@@ -96,4 +96,4 @@ const makeErrorHook = ({ token, res }) => {
       }
     }
   };
-}
+};

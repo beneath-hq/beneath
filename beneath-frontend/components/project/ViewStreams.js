@@ -14,11 +14,13 @@ const ViewStreams = ({ project }) => {
       {project.streams.map(({ streamID, name, description, external }) => (
         <ListItem
           key={streamID}
-          component={NextMuiLink} as={`/projects/${project.name}/streams/${name}`} href={`/stream?name=${name}&project_name=${project.name}`}
+          component={NextMuiLink}
+          as={`/projects/${project.name}/streams/${name}`}
+          href={`/stream?name=${name}&project_name=${project.name}`}
           button
           disableGutters
         >
-          <ListItemAvatar><Avatar size="list" label={external ? "External" : "Internal"} /></ListItemAvatar>
+          <ListItemAvatar><Avatar size="list" label={external ? "Root" : "Derived"} /></ListItemAvatar>
           <ListItemText primary={name} secondary={description} />
         </ListItem>
       ))}

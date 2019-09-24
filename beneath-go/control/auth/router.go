@@ -69,8 +69,14 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 		return httputil.NewError(500, "expected provider to be 'google' or 'github'")
 	}
 
+	// we only want to use Github's nicknames
+	var nickname string
+	if githubID != "" {
+		nickname = info.NickName
+	}
+
 	// upsert user
-	user, err := entity.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, info.Name, info.AvatarURL)
+	user, err := entity.CreateOrUpdateUser(r.Context(), githubID, googleID, info.Email, nickname, info.Name, info.AvatarURL)
 	if err != nil {
 		return err
 	}

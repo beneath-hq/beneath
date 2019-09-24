@@ -174,7 +174,7 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 
 		// update model with service ID
 		m.ServiceID = service.ServiceID
-		_, err = tx.Model(m).WherePK().Update()
+		_, err = tx.Model(m).Column("service_id").WherePK().Update()
 		if err != nil {
 			return err
 		}

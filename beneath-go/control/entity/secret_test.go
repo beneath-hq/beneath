@@ -17,7 +17,7 @@ func TestSecretIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	// create a user
-	user, err := CreateOrUpdateUser(ctx, "tmp", "", "test@example.org", "Test Test", "")
+	user, err := CreateOrUpdateUser(ctx, "tmp", "", "test@example.org", "test", "Test Test", "")
 	assert.Nil(t, err)
 	assert.NotNil(t, user)
 

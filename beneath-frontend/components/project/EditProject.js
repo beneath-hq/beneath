@@ -70,7 +70,7 @@ const EditProject = ({ project }) => {
               Save changes
             </Button>
             {error && (
-              <Typography variant="body1" color="error">An error occurred</Typography>
+              <Typography variant="body1" color="error">An error occurred: {JSON.stringify(error)}</Typography>
             )}
           </form>
           <VSpace units={2} />

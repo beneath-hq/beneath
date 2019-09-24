@@ -25,6 +25,7 @@ export interface UpdateMe {
 }
 
 export interface UpdateMeVariables {
+  username?: string | null;
   name?: string | null;
   bio?: string | null;
 }
