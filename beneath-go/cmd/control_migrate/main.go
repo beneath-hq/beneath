@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 const usageText = `This program runs command on the db. Supported commands are:
@@ -26,7 +26,9 @@ Usage:
 `
 
 type configSpecification struct {
-	PostgresURL string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
+	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
+	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
+	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 }
 
 func main() {
@@ -35,7 +37,7 @@ func main() {
 
 	var config configSpecification
 	core.LoadConfig("beneath", &config)
-	db.InitPostgres(config.PostgresURL)
+	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 
 	oldVersion, newVersion, err := migrations.Run(db.DB, flag.Args()...)
 	if err != nil {

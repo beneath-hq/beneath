@@ -7,13 +7,15 @@ import (
 )
 
 type configSpecification struct {
-	HTTPPort        int    `envconfig:"GATEWAY_PORT" default:"8080"`
-	GRPCPort        int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
-	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
-	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
-	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
-	RedisURL        string `envconfig:"CONTROL_REDIS_URL" required:"true"`
-	PostgresURL     string `envconfig:"CONTROL_POSTGRES_URL" required:"true"`
+	HTTPPort         int    `envconfig:"GATEWAY_PORT" default:"8080"`
+	GRPCPort         int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
+	StreamsDriver    string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
+	TablesDriver     string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
+	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
+	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
+	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
+	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 }
 
 const (
@@ -34,7 +36,7 @@ func init() {
 
 	Metrics = metrics.NewBroker()
 
-	db.InitPostgres(Config.PostgresURL)
+	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 }

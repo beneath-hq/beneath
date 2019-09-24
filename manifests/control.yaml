@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control
+  labels:
+    app: control
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: control
+  template:
+    metadata:
+      labels:
+        app: control
+    spec:
+      containers:
+      - name: control
+        image: <CONTAINER-IMAGE>
+        ports:
+        - name: control-port
+          containerPort: 8080
+        env:
+        - name: ENV
+          value: production
+        - name: BENEATH_CONTROL_HOST
+          value: "https://control.beneath.network"
+        - name: BENEATH_FRONTEND_HOST
+          value: "https://beneath.network"
+        - name: BENEATH_CONTROL_REDIS_URL
+          value: "redis://10.0.0.3/"
+        - name: BENEATH_CONTROL_POSTGRES_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: BENEATH_CONTROL_POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        - name: BENEATH_CONTROL_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: BENEATH_CONTROL_SESSION_SECRET
+          value: "nrh327fh289fhd238hd0931alo10nvuw"
+        - name: BENEATH_CONTROL_GITHUB_AUTH_ID
+          value: "09c42344d8584e6491a9"
+        - name: BENEATH_CONTROL_GITHUB_AUTH_SECRET
+          value: "28423f2efa5a0eeca7399d4986d1523f624e44dd"
+        - name: BENEATH_CONTROL_GOOGLE_AUTH_ID
+          value: "683298639202-bn3k0gio4f3phgv5d0sjjuma6gp5a99c.apps.googleusercontent.com"
+        - name: BENEATH_CONTROL_GOOGLE_AUTH_SECRET
+          value: "i8pb4M2sdD6B-JD4qS3-7N3p"
+        - name: BENEATH_ENGINE_STREAMS_DRIVER
+          value: "pubsub"
+        - name: BENEATH_ENGINE_TABLES_DRIVER
+          value: "bigtable"
+        - name: BENEATH_ENGINE_WAREHOUSE_DRIVER
+          value: "bigquery"
+        - name: BENEATH_ENGINE_BIGQUERY_PROJECT_ID
+          value: "beneathcrypto"
+        - name: BENEATH_ENGINE_BIGTABLE_PROJECT_ID
+          value: "beneathcrypto"
+        - name: BENEATH_ENGINE_BIGTABLE_INSTANCE_ID
+          value: "beneath"
+        - name: BENEATH_ENGINE_PUBSUB_PROJECT_ID
+          value: "beneathcrypto"
+        - name: BENEATH_ENGINE_PUBSUB_SUBSCRIBER_ID
+          value
+        - name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_TOPIC
+          value: "beneath-write-requests"
+        - name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_SUBSCRIPTION
+          value: "beneath-write-requests-sub"
+        - name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_TOPIC
+          value: "beneath-write-reports"
+        - name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_SUBSCRIPTION_PREFIX
+          value: "beneath-write-reports-sub"
+        - name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_TOPIC
+          value: "beneath-task-queue"
+        - name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_SUBSCRIPTION
+          value: "beneath-task-queue-sub"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: control-service
+  labels:
+    app: control
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: control-port
+    protocol: TCP
+  selector:
+    app: control

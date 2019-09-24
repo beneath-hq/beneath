@@ -6,7 +6,7 @@ const WEBSOCKET_PROTOCOL = IS_PRODUCTION ? "wss" : "ws";
 const CLIENT_HOST = IS_PRODUCTION ? "beneath.network" : "localhost:3000";
 const CLIENT_URL = `${HTTP_PROTOCOL}://${CLIENT_HOST}`;
 
-const API_HOST = IS_PRODUCTION ? "api.beneath.network" : "localhost:4000";
+const API_HOST = IS_PRODUCTION ? "control.beneath.network" : "localhost:4000";
 const API_URL = `${HTTP_PROTOCOL}://${API_HOST}`;
 
 const GATEWAY_HOST = IS_PRODUCTION ? "data.beneath.network" : "localhost:5000";

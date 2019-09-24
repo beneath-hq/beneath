@@ -1,0 +1,56 @@
+# see all options here: https://github.com/jupyterhub/zero-to-jupyterhub-k8s/blob/master/jupyterhub/schema.yaml
+
+proxy:
+  secretToken: "19d1f084f09fdbf6994be847635304e090081c93be426e13f6045feda1a0f80a"
+  https:
+    enabled: true
+    type: offload
+  service:
+    type: NodePort
+
+ingress:
+  enabled: true
+  hosts:
+  - lab.beneath.network
+  tls:
+  - secretName: lab-beneath-network-tls
+    hosts:
+    - lab.beneath.network
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    certmanager.k8s.io/issuer: "letsencrypt-prod"
+    certmanager.k8s.io/acme-challenge-type: http01
+  
+hub:
+  extraConfig: |-
+    c.Spawner.cmd = ['jupyter-labhub']
+    c.NotebookApp.allow_password_change = True
+
+singleuser:
+  defaultUrl: "/lab"
+  image:
+    name: gcr.io/beneathcrypto/jupyter
+    tag: c0347cba7c22
+
+  # memory:
+  #   limit: "2048Mi"
+  #   guarantee: "1024Mi"
+  # cpu:
+  #   limit: "1000m"
+  #   guarantee: "250m"
+
+cull:
+  enabled: false
+
+auth:
+  # see https://github.com/jupyterhub/zero-to-jupyterhub-k8s/blob/master/images/hub/jupyterhub_config.py
+  type: dummy
+  dummy:
+    password: x988b5mr
+  whitelist:
+    users:
+      - beneath
+      - makerdao
+  admin:
+    users:
+      - beneath

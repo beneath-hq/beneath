@@ -6,13 +6,12 @@ import (
 	"github.com/go-pg/pg"
 )
 
-func newDatabase(postgresURL string) *pg.DB {
-	opts, err := pg.ParseURL(postgresURL)
-	if err != nil {
-		panic(err)
-	}
-
-	db := pg.Connect(opts)
+func newDatabase(host, username, password string) *pg.DB {
+	db := pg.Connect(&pg.Options{
+		Addr:     host + ":5432",
+		User:     username,
+		Password: password,
+	})
 
 	// Uncomment to log database queries
 	// db.AddQueryHook(queryLoggerHook{})
