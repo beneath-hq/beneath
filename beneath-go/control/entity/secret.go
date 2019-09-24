@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-pg/pg/orm"
+
 	"github.com/go-redis/cache/v7"
 	"github.com/vmihailenco/msgpack"
 
@@ -32,7 +34,11 @@ type Secret struct {
 	CreatedOn    time.Time `sql:",notnull,default:now()"`
 	UpdatedOn    time.Time `sql:",notnull,default:now()"`
 	DeletedOn    time.Time
+
+	// non-persistent fields
 	SecretString string `sql:"-"`
+	ReadQuota    int64  `sql:"-"`
+	WriteQuota   int64  `sql:"-"`
 }
 
 // ProjectPermissions represents permissions that a secret has for a given project
@@ -226,12 +232,29 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 		Func: func() (interface{}, error) {
 			selectedSecret := &Secret{}
 			err := db.DB.ModelContext(ctx, selectedSecret).
+				Relation("User", func(q *orm.Query) (*orm.Query, error) {
+					return q.Column("read_quota", "write_quota"), nil
+				}).
+				Relation("Service", func(q *orm.Query) (*orm.Query, error) {
+					return q.Column("read_quota", "write_quota"), nil
+				}).
 				Column("secret_id", "user_id", "service_id").
 				Where("hashed_secret = ?", hashed).
 				Select()
 			if err != nil && err != pg.ErrNoRows {
 				return nil, err
 			}
+
+			if selectedSecret.User != nil {
+				selectedSecret.ReadQuota = selectedSecret.User.ReadQuota
+				selectedSecret.WriteQuota = selectedSecret.User.WriteQuota
+				selectedSecret.User = nil
+			} else if selectedSecret.Service != nil {
+				selectedSecret.ReadQuota = selectedSecret.Service.ReadQuota
+				selectedSecret.WriteQuota = selectedSecret.Service.WriteQuota
+				selectedSecret.Service = nil
+			}
+
 			return selectedSecret, nil
 		},
 	})
@@ -349,50 +372,22 @@ func (k *Secret) BillingID() uuid.UUID {
 
 // CheckReadQuota checks the user's read quota
 func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
-	if k.UserID != nil {
-		// if any constraints are hit, the user has hit its quota
-		if u.ReadBytes >= k.User.ReadQuota {
-			return false
-		}
-
-		// the user still has resources available
-		return true
-	}
-	if k.ServiceID != nil {
-		// if any constraints are hit, the user has hit its quota
-		if u.ReadBytes >= k.Service.ReadQuota {
-			return false
-		}
-
-		// the user still has resources available
-		return true
+	// if any constraints are hit, the user has hit its quota
+	if u.ReadBytes >= k.ReadQuota {
+		return false
 	}
 
-	// this should never be hit
-	return false
+	// the user still has resources available
+	return true
 }
 
 // CheckWriteQuota checks the user's write quota
 func (k *Secret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	if k.UserID != nil {
-		// if any constraints are hit, the user has hit its quota
-		if u.WriteBytes >= k.User.WriteQuota {
-			return false
-		}
-
-		// the user still has resources available
-		return true
-	}
-	if k.ServiceID != nil {
-		// if any constraints are hit, the user has hit its quota
-		if u.WriteBytes >= k.Service.WriteQuota {
-			return false
-		}
-
-		// the user still has resources available
-		return true
+	// if any constraints are hit, the user has hit its quota
+	if u.WriteBytes >= k.WriteQuota {
+		return false
 	}
 
-	// this should never be hit
-	return false
+	// the user still has resources available
+	return true
 }
