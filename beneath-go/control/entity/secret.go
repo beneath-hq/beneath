@@ -233,12 +233,12 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 			selectedSecret := &Secret{}
 			err := db.DB.ModelContext(ctx, selectedSecret).
 				Relation("User", func(q *orm.Query) (*orm.Query, error) {
-					return q.Column("read_quota", "write_quota"), nil
+					return q.Column("user.read_quota", "user.write_quota"), nil
 				}).
 				Relation("Service", func(q *orm.Query) (*orm.Query, error) {
-					return q.Column("read_quota", "write_quota"), nil
+					return q.Column("service.read_quota", "service.write_quota"), nil
 				}).
-				Column("secret_id", "user_id", "service_id").
+				Column("secret_id", "secret.user_id", "secret.service_id").
 				Where("hashed_secret = ?", hashed).
 				Select()
 			if err != nil && err != pg.ErrNoRows {
