@@ -1,6 +1,6 @@
 import { createMuiTheme } from "@material-ui/core/styles";
 
-// const baseTheme = createMuiTheme();
+const baseTheme = createMuiTheme();
 
 export default createMuiTheme({
   palette: {
@@ -56,7 +56,26 @@ export default createMuiTheme({
   overrides: {
     MuiButton: {
       root: {
-        borderRadius: 0,
+        borderRadius: 2,
+      },
+      sizeLarge: {
+        padding: "10px 30px",
+        fontSize: baseTheme.typography.pxToRem(18),
+      },
+      outlined: {
+        borderWidth: 2,
+      },
+      outlinedPrimary: {
+        borderWidth: 2,
+        "&:hover": {
+          borderWidth: 2,
+        },
+      },
+      outlinedSecondary: {
+        borderWidth: 2,
+        "&:hover": {
+          borderWidth: 2,
+        },
       },
     },
     MuiAppBar: {

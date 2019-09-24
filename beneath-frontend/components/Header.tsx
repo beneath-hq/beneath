@@ -95,11 +95,12 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
         </Tabs>
         {/* Login-specific stuff */}
         <React.Fragment>
-          {!me && makeButton("Login", {
-            color: "inherit",
-            size: "small",
-            href: "/auth",
-          })}
+          {!me &&
+            makeButton("Login", {
+              color: "inherit",
+              size: "small",
+              href: "/auth",
+            })}
           {me && (
             <React.Fragment>
               <IconButton edge="end" aria-haspopup="true" onClick={openMenu} color="inherit">
@@ -116,6 +117,11 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
                   onClick: closeMenu,
                   as: `/users/${me.user.username}`,
                   href: `/user?name=${me.user.username}`,
+                })}
+                {makeMenuItem("Secrets", {
+                  onClick: closeMenu,
+                  as: `/users/${me.user.username}/secrets`,
+                  href: `/user?name=${me.user.username}&tab=secrets`,
                 })}
                 {makeMenuItem("Logout", {
                   href: `/auth/logout`,

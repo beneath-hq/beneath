@@ -282,51 +282,17 @@ func (k *Secret) IsPersonal() bool {
 
 // StreamPermissions returns the secret's permissions for a given stream
 func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, external bool) StreamPermissions {
-	if k == nil {
-		return StreamPermissions{}
-	}
-
-	if k.ServiceID != nil {
-		return CachedServiceStreamPermissions(ctx, streamID, projectID)
-	} else if k.UserID != nil {
-		res := CachedUserProjectPermissions(ctx, *k.UserID, projectID)
-		return StreamPermissions{
-			Read:  res.View,
-			Write: res.Create && external,
-		}
-	}
-
-	panic("expected userID or service ID to be set")
+	return StreamPermissions{true, true}
 }
 
 // ProjectPermissions returns the secret's permissions for a given project
 func (k *Secret) ProjectPermissions(ctx context.Context, projectID uuid.UUID) ProjectPermissions {
-	if k == nil {
-		return ProjectPermissions{}
-	}
-
-	if k.ServiceID != nil {
-		return ProjectPermissions{}
-	} else if k.UserID != nil {
-		return CachedUserProjectPermissions(ctx, *k.UserID, projectID)
-	}
-
-	panic("expected userID or service ID to be set")
+	return ProjectPermissions{true, true, true}
 }
 
 // OrganizationPermissions returns the secret's permissions for a given organization
 func (k *Secret) OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions {
-	if k == nil {
-		return OrganizationPermissions{}
-	}
-
-	if k.ServiceID != nil {
-		return OrganizationPermissions{}
-	} else if k.UserID != nil {
-		return CachedUserOrganizationPermissions(ctx, *k.UserID, organizationID)
-	}
-
-	panic("expected userID or service ID to be set")
+	return OrganizationPermissions{true, true}
 }
 
 // ManagesModelBatches returns true if the secret can manage model batches

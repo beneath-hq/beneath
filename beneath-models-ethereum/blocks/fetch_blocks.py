@@ -33,14 +33,14 @@ def save_block(block):
     "number": block["number"],
     "timestamp": datetime.fromtimestamp(block["timestamp"]),
     "hash": bytes(block["hash"]),
-    "parentHash": bytes(block["parentHash"]),
+    "parent_hash": bytes(block["parentHash"]),
     "miner": bytes(HexBytes(block["miner"])),
     "size": block["size"],
     "transactions": len(block["transactions"]),
     "difficulty": Decimal(block["difficulty"]),
-    "extraData": bytes(block["extraData"]),
-    "gasLimit": block["gasLimit"],
-    "gasUsed": block["gasUsed"],
+    "extra_data": bytes(block["extraData"]),
+    "gas_limit": block["gasLimit"],
+    "gas_used": block["gasUsed"],
   }
   stream.write(instance_id=stream.current_instance_id, records=[save])
   print("Saved block {}".format(save["number"]))

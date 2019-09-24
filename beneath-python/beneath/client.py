@@ -261,6 +261,7 @@ class Client:
         query="""
         mutation CreateOrganization($name: String!) {
           createOrganization(name: $name) {
+            organizationID
             name
             createdOn
             updatedOn

@@ -28,8 +28,14 @@ const ProfileHero = ({ name, description, site, avatarURL }) => {
         <Avatar size="hero" label={name} src={avatarURL} />
       </Grid>
       <Grid item>
-        <Typography component="h1" variant="h1" gutterBottom>{name}</Typography>
-        {site && <Link href={site} variant="subtitle2" className={classes.site} gutterBottom>{site}</Link>}
+        <Typography component="h1" variant="h1" gutterBottom={!site}>
+          {name}
+        </Typography>
+        {site && (
+          <Link href={site} variant="subtitle2" className={classes.site} gutterBottom>
+            {site}
+          </Link>
+        )}
         <Typography variant="body1">{description}</Typography>
       </Grid>
     </Grid>
