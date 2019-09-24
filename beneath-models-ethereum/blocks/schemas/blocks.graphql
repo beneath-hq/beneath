@@ -1,5 +1,5 @@
 " Blocks loaded from Ethereum "
-type Block @stream(name: "blocks", key: "number") {
+type Block @stream(key: "number") {
   " Block number "
   number: Int!
 
@@ -10,7 +10,7 @@ type Block @stream(name: "blocks", key: "number") {
   hash: Bytes32!
 
   " Hash of parent block "
-  parentHash: Bytes32!
+  parent_hash: Bytes32!
 
   " Address of block miner "
   miner: Bytes20!
@@ -25,11 +25,11 @@ type Block @stream(name: "blocks", key: "number") {
   difficulty: Numeric!
 
   " Extra data embedded in block by miner "
-  extraData: Bytes!
+  extra_data: Bytes!
 
   " Gas limit "
-  gasLimit: Int!
+  gas_limit: Int!
 
   " Gas used "
-  gasUsed: Int!
+  gas_used: Int!
 }
