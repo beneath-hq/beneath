@@ -1,21 +1,6 @@
-# image: docker:latest
-# services:
-#   - docker:dind
-
-
-# build:
-#    stage: build
-#    services: 
-#       - docker:dind
-#    image: docker
-#    only:
-#       - master
-#       - dev
-#       - merge_requests
-#    tags:
-#       - docker
-#    script:
-#       - docker build .
+image: docker
+services:
+  - docker:dind
 
 stages:
   - build
@@ -61,7 +46,7 @@ deploy_control:
     url: https://beneath.network
 
 deploy_gateway:
-  stage: build
+  stage: deploy
   when: manual
   only:
     - master
