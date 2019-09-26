@@ -1,4 +1,4 @@
-image: docker
+image: docker:stable
 services:
   - docker:dind
 
@@ -6,33 +6,64 @@ stages:
   - build
   - deploy
 
+before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+
 build_control:
   stage: build
   when: manual
   only:
     - master
   variables:
-    CONTAINER_IMAGE: gcr.io/beneathcrypto/control:${CI_COMMIT_SHORT_SHA}
+    CMD_NAME: control
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   script: 
-    - echo "Building the app"
-    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-    - docker build -t ${CONTAINER_IMAGE} -f ./beneath-go/control.Dockerfile ./beneath-go
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
-    - docker push ${CONTAINER_IMAGE}
-  
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
 build_gateway:
   stage: build
   when: manual
   only:
     - master
   variables:
-    CONTAINER_IMAGE: gcr.io/beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
+    CMD_NAME: gateway
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   script: 
-    - echo "Building the app"
-    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-    - docker build -t ${CONTAINER_IMAGE} -f ./beneath-go/gateway.Dockerfile ./beneath-go
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
-    - docker push ${CONTAINER_IMAGE}
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_pipeline:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: pipeline
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_taskqueue:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: taskqueue
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
 
 deploy_control:
   stage: deploy
