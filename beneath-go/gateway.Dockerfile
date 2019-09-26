@@ -4,7 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build -a -o main cmd/gateway/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o main cmd/gateway/main.go
 
 # Create run image
 FROM alpine:latest

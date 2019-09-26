@@ -1,0 +1,75 @@
+# image: docker:latest
+# services:
+#   - docker:dind
+
+
+# build:
+#    stage: build
+#    services: 
+#       - docker:dind
+#    image: docker
+#    only:
+#       - master
+#       - dev
+#       - merge_requests
+#    tags:
+#       - docker
+#    script:
+#       - docker build .
+
+stages:
+  - build
+  - deploy
+
+build_control:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CONTAINER_IMAGE: beneathcrypto/control:${CI_COMMIT_SHORT_SHA}
+  script: 
+    - echo "Building the app"
+    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+    - docker build -t ${CONTAINER_IMAGE} -f ./control.Dockerfile ./beneath-go
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE}
+  
+build_gateway:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CONTAINER_IMAGE: beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
+  script: 
+    - echo "Building the app"
+    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+    - docker build -t ${CONTAINER_IMAGE} -f ./gateway.Dockerfile ./beneath-go
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE}
+
+deploy_control:
+  stage: deploy
+  when: manual
+  only:
+  - master
+  script:
+    - echo "Deploy to production server"
+  environment:
+    name: production
+    url: https://beneath.network
+
+deploy_gateway:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CONTAINER_IMAGE: beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
+  script: 
+    - echo "Building the app"
+    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+    - docker build -t ${CONTAINER_IMAGE} -f ./gateway.Dockerfile ./beneath-go
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE}
