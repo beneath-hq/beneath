@@ -16,7 +16,7 @@ build_control:
   script: 
     - echo "Building the app"
     - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-    - docker build -t ${CONTAINER_IMAGE} -f ./control.Dockerfile ./beneath-go
+    - docker build -t ${CONTAINER_IMAGE} -f ./beneath-go/control.Dockerfile ./beneath-go
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE}
   
@@ -30,7 +30,7 @@ build_gateway:
   script: 
     - echo "Building the app"
     - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-    - docker build -t ${CONTAINER_IMAGE} -f ./gateway.Dockerfile ./beneath-go
+    - docker build -t ${CONTAINER_IMAGE} -f ./beneath-go/gateway.Dockerfile ./beneath-go
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE}
 
@@ -39,11 +39,11 @@ deploy_control:
   when: manual
   only:
   - master
-  script:
-    - echo "Deploy to production server"
   environment:
     name: production
     url: https://beneath.network
+  script:
+    - echo "Deploy to production server"
 
 deploy_gateway:
   stage: deploy
@@ -52,9 +52,6 @@ deploy_gateway:
     - master
   variables:
     CONTAINER_IMAGE: beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
-  script: 
-    - echo "Building the app"
-    - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-    - docker build -t ${CONTAINER_IMAGE} -f ./gateway.Dockerfile ./beneath-go
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
-    - docker push ${CONTAINER_IMAGE}
+  script:
+    - echo "Deploy to production server"
+
