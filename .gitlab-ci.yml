@@ -5,9 +5,22 @@ services:
 stages:
   - build
   - deploy
-
+  
 before_script:
   - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+
+build_frontend:
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    IMAGE: gcr.io/beneathcrypto/frontend
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-frontend/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-frontend
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
 
 build_control:
   stage: build
