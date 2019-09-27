@@ -31,3 +31,9 @@ models:
     model: github.com/beneath-core/beneath-go/control/entity.Organization
   Service:
     model: github.com/beneath-core/beneath-go/control/entity.Service
+  PermissionsUsersProjects:
+    model: github.com/beneath-core/beneath-go/control/entity.PermissionsUsersProjects
+  PermissionsUsersOrganizations:
+    model: github.com/beneath-core/beneath-go/control/entity.PermissionsUsersOrganizations
+  PermissionsServicesStreams:
+    model: github.com/beneath-core/beneath-go/control/entity.PermissionsServicesStreams

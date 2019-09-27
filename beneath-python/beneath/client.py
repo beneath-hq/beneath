@@ -253,6 +253,34 @@ class Client:
     )
     return result['model']
 
+
+  def get_metrics(self, entity_ids, period, from_, until):
+    result = self._query_control(
+        variables={
+            "entityIDs": entity_ids,
+            "period": period,
+            "from": from_,
+            "until": until,
+        },
+        query="""
+            mutation GetMetrics($entityIDs: [UUID!]!, $period: String!, $from: Time!, $until: Time!) {
+              getMetrics(entityIDs: $entityIDs, period: $period, from: $from, until: $until) {
+                entityID
+                period
+                time
+                readOps
+                readBytes
+                readRecords
+                writeOps
+                writeBytes
+                writeRecords
+              }
+            }
+          """
+    )
+    return result['getMetrics']
+
+
   def create_organization(self, name):
     result = self._query_control(
         variables={
@@ -270,6 +298,7 @@ class Client:
       """
     )
     return result['createOrganization']
+
 
   def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
     result = self._query_control(
@@ -343,6 +372,89 @@ class Client:
       """
     )
     return result['deleteProject']
+
+
+  def create_service(self, name, organization_id, read_bytes_quota, write_bytes_quota):
+    result = self._query_control(
+        variables={
+            "name": name,
+            "organizationID": organization_id,
+            "readBytesQuota": read_bytes_quota,
+            "writeBytesQuota": write_bytes_quota,
+        },
+        query="""
+        mutation CreateService($name: String!, $organizationID: UUID!, $readBytesQuota: Int!, $writeBytesQuota: Int!) {
+          createService(name: $name, organizationID: $organizationID, readBytesQuota: $readBytesQuota, writeBytesQuota: $writeBytesQuota) {
+            serviceID
+            name
+            kind
+            readBytesQuota
+            writeBytesQuota
+          }
+        }
+      """
+    )
+    return result['createService']
+
+
+  def update_service(self, service_id, name, organization_id, read_bytes_quota, write_bytes_quota):
+    result = self._query_control(
+        variables={
+            "serviceID": service_id,
+            "name": name,
+            "organizationID": organization_id,
+            "readBytesQuota": read_bytes_quota,
+            "writeBytesQuota": write_bytes_quota,
+        },
+        query="""
+        mutation UpdateService($serviceID: UUID!, $name: String, $organizationID: UUID, $readBytesQuota: Int, $writeBytesQuota: Int) {
+          updateService(serviceID: $serviceID, name: $name, organizationID: $organizationID, readBytesQuota: $readBytesQuota, writeBytesQuota: $writeBytesQuota) {
+            serviceID
+            name
+            kind
+            readBytesQuota
+            writeBytesQuota
+          }
+        }
+      """
+    )
+    return result['updateService']
+
+
+  def delete_service(self, service_id):
+    result = self._query_control(
+        variables={
+            "serviceID": service_id,
+        },
+        query="""
+        mutation DeleteService($serviceID: UUID!) {
+          deleteService(serviceID: $serviceID)
+        }
+      """
+    )
+    return result['deleteService']
+
+
+  def update_service_permissions(self, service_id, stream_id, read, write):
+    result = self._query_control(
+        variables={
+            "serviceID": service_id,
+            "streamID": stream_id,
+            "read": read,
+            "write": write,
+        },
+        query="""
+        mutation UpdateServicePermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean!, $write: Boolean!) {
+          updateServicePermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
+            serviceID
+            streamID
+            read
+            write
+          }
+        }
+      """
+    )
+    return result['updateServicePermissions']
 
 
   def create_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
