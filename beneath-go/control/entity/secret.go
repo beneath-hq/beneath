@@ -48,7 +48,7 @@ type ProjectPermissions struct {
 	Admin  bool
 }
 
-// StreamPermissions represents permissions that a secret has for a given strea
+// StreamPermissions represents permissions that a secret has for a given stream
 type StreamPermissions struct {
 	Read  bool
 	Write bool

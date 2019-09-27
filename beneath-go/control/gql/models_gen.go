@@ -30,6 +30,18 @@ type Me struct {
 	UpdatedOn        time.Time              `json:"updatedOn"`
 }
 
+type Metrics struct {
+	EntityID     uuid.UUID `json:"entityID"`
+	Period       string    `json:"period"`
+	Time         time.Time `json:"time"`
+	ReadOps      int       `json:"readOps"`
+	ReadBytes    int       `json:"readBytes"`
+	ReadRecords  int       `json:"readRecords"`
+	WriteOps     int       `json:"writeOps"`
+	WriteBytes   int       `json:"writeBytes"`
+	WriteRecords int       `json:"writeRecords"`
+}
+
 type NewSecret struct {
 	Secret       *entity.Secret `json:"secret"`
 	SecretString string         `json:"secretString"`

@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 	uuid "github.com/satori/go.uuid"
 )
@@ -28,12 +29,6 @@ const (
 
 	// ServiceKindModel is a service key for models
 	ServiceKindModel ServiceKind = "model"
-
-	// DefaultServiceReadQuota is the default read quota for service keys
-	DefaultServiceReadQuota = 100000000
-
-	// DefaultServiceWriteQuota is the default write quota for service keys
-	DefaultServiceWriteQuota = 100000000
 )
 
 // FindService returns the matching service or nil
@@ -47,4 +42,94 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 	}
 
 	return service
+}
+
+// CreateService consolidates and returns the service matching the args
+func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) (*Service, error) {
+	s := &Service{}
+
+	// set service fields
+	s.Name = name
+	s.Kind = kind
+	s.OrganizationID = organizationID
+	s.ReadQuota = int64(readBytesQuota)
+	s.WriteQuota = int64(writeBytesQuota)
+
+	// validate
+	err := GetValidator().Struct(s)
+	if err != nil {
+		return nil, err
+	}
+
+	// insert
+	err = db.DB.Insert(s)
+	if err != nil {
+		return nil, err
+	}
+
+	log.S.Infow(
+		"control created service",
+		"service_id", s.ServiceID,
+	)
+
+	return s, nil
+}
+
+// UpdateDetails consolidates and returns the service matching the args
+func (s *Service) UpdateDetails(ctx context.Context, name *string, organizationID *uuid.UUID, readBytesQuota *int, writeBytesQuota *int) (*Service, error) {
+	// set fields
+	if name != nil {
+		s.Name = *name
+	}
+	if organizationID != nil {
+		s.OrganizationID = *organizationID
+	}
+	if readBytesQuota != nil {
+		s.ReadQuota = int64(*readBytesQuota)
+	}
+	if writeBytesQuota != nil {
+		s.WriteQuota = int64(*writeBytesQuota)
+	}
+
+	// validate
+	err := GetValidator().Struct(s)
+	if err != nil {
+		return nil, err
+	}
+
+	// update
+	_, err = db.DB.ModelContext(ctx, s).Column("name", "organization_id", "read_quota", "write_quota").WherePK().Update()
+	return s, err
+}
+
+// Delete removes a service from the database
+func (s *Service) Delete(ctx context.Context) error {
+	_, err := db.DB.ModelContext(ctx, s).WherePK().Delete()
+	return err
+}
+
+// UpdatePermissions updates a service's permissions for a given stream
+// UpdatePermissions sets permissions if they do not exist yet
+func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, read bool, write bool) (*PermissionsServicesStreams, error) {
+	// change data
+	pss := &PermissionsServicesStreams{
+		ServiceID: s.ServiceID,
+		StreamID:  streamID,
+		Read:      read,
+		Write:     write,
+	}
+
+	// validate
+	err := GetValidator().Struct(pss)
+	if err != nil {
+		return nil, err
+	}
+
+	// update
+	_, err = db.DB.ModelContext(ctx, pss).
+		OnConflict("(service_id, stream_id) DO UPDATE").
+		Set("read = EXCLUDED.read").
+		Set("write = EXCLUDED.write").
+		Insert()
+	return pss, err
 }
