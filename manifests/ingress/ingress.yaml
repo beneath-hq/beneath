@@ -4,7 +4,7 @@ metadata:
   name: web-ingress
   annotations:
     kubernetes.io/ingress.class: nginx
-    certmanager.k8s.io/issuer: "letsencrypt-prod"
+    certmanager.k8s.io/issuer: "letsencrypt-prod" # TODO
     certmanager.k8s.io/acme-challenge-type: http01
     nginx.com/health-checks: "true"
     nginx.org/websocket-services: "gateway-service"
@@ -12,6 +12,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.org/grpc-services: "gateway-service"
 spec:
   tls:

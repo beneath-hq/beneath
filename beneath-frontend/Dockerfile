@@ -1,10 +1,10 @@
 FROM node:12-alpine
 
-COPY ./beneath-frontend/package.json ./beneath-frontend/yarn.lock /source/beneath-frontend/
-WORKDIR /source/beneath-frontend
+COPY ./package.json ./yarn.lock /source/
+WORKDIR /source/
 RUN yarn install
 
-COPY ./beneath-frontend /source/beneath-frontend
+COPY . /source
 RUN yarn build
 
 EXPOSE 3000
