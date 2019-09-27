@@ -82,12 +82,15 @@ deploy_control:
   stage: deploy
   when: manual
   only:
-  - master
+    - master
+  variables:
+    CMD_NAME: control
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   environment:
     name: production
     url: https://beneath.network
   script:
-    - echo "Deploy to production server"
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/control/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=production
 
 deploy_gateway:
   stage: deploy

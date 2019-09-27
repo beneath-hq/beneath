@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "control.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "control.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "control.chart" . }}
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: control-port
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ include "control.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
