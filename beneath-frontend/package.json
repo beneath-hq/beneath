@@ -13,7 +13,6 @@
     "@material-ui/core": "^4.2.1",
     "@material-ui/icons": "^4.2.1",
     "@segment/snippet": "^4.4.0",
-    "@types/numeral": "^0.0.26",
     "apollo-boost": "^0.4.3",
     "apollo-cache-inmemory": "^1.6.2",
     "apollo-client": "^2.6.3",
@@ -50,6 +49,7 @@
     "validator": "^11.1.0"
   },
   "devDependencies": {
+    "@types/numeral": "^0.0.26",
     "@types/graphql": "^14.2.3",
     "@types/lodash": "^4.14.136",
     "@types/node": "^12.6.8",

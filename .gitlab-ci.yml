@@ -1,0 +1,122 @@
+stages:
+  - build
+  - deploy
+  
+build_frontend:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    IMAGE: gcr.io/beneathcrypto/frontend
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-frontend/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-frontend
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_control:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: control
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_gateway:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: gateway
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_pipeline:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: pipeline
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+build_taskqueue:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  stage: build
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: taskqueue
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+deploy_control:
+  stage: deploy
+  when: manual
+  only:
+    - master
+  variables:
+    CMD_NAME: control
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+  environment:
+    name: production
+    url: https://beneath.network
+  script:
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/control/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=production
+
+deploy_gateway:
+  stage: deploy
+  when: manual
+  only:
+    - master
+  variables:
+    CONTAINER_IMAGE: beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
+  script:
+    - echo "Deploy to production server"
+

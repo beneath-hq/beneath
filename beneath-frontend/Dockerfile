@@ -1,14 +1,11 @@
-FROM gcr.io/google_appengine/nodejs
-RUN /usr/local/bin/install_node '>=8.11.1'
+FROM node:12-alpine
 
-COPY ./web-frontend/package.json ./web-frontend/yarn.lock /source/web-frontend/
-WORKDIR /source/web-frontend
+COPY ./package.json ./yarn.lock /source/
+WORKDIR /source/
 RUN yarn install
 
-# Copy code
-COPY ./web-frontend /source/web-frontend
+COPY . /source
 RUN yarn build
 
-# Run npm start when booted
 EXPOSE 3000
 CMD ["yarn", "start"]
