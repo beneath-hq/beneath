@@ -52,9 +52,7 @@ env:
 - name: BENEATH_ENGINE_PUBSUB_PROJECT_ID
   value: "beneathcrypto"
 - name: BENEATH_ENGINE_PUBSUB_SUBSCRIBER_ID
-  valueFrom:
-    fieldRef:
-      fieldPath: metadata.name
+  value: "pipeline"
 - name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_TOPIC
   value: "beneath-write-requests"
 - name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_SUBSCRIPTION
