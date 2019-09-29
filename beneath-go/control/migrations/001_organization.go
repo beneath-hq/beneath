@@ -3,7 +3,7 @@ package migrations
 import (
 	"github.com/beneath-core/beneath-go/control/entity"
 
-	"github.com/go-pg/migrations"
+	"github.com/go-pg/migrations/v7"
 )
 
 func init() {

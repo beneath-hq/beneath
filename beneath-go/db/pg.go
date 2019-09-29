@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v9"
 )
 
 func newDatabase(host, username, password string) *pg.DB {

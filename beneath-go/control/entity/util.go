@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v9"
 )
 
 // AssertFoundOne uses the error from a QueryOne operation

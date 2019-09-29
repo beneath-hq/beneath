@@ -3,9 +3,9 @@ package migrations
 import (
 	"log"
 
-	"github.com/go-pg/migrations"
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/migrations/v7"
+	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 )
 
 var (
@@ -24,7 +24,7 @@ func init() {
 	}
 }
 
-// Run forwards args to https://godoc.org/github.com/go-pg/migrations#Run
+// Run forwards args to https://godoc.org/github.com/go-pg/migrations/v7#Run
 func Run(db *pg.DB, a ...string) (oldVersion, newVersion int64, err error) {
 	return migrations.Run(db, a...)
 }

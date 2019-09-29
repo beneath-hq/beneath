@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 )
 

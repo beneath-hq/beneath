@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v9/orm"
 
 	"github.com/go-redis/cache/v7"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )

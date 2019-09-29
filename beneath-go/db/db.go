@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/beneath-core/beneath-go/engine"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/redis/v7"
 )
 

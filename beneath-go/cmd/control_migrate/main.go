@@ -1,5 +1,5 @@
 // Command line tool to run/rollback migrations
-// Essentially stolen from https://github.com/go-pg/migrations/blob/master/example/main.go
+// Essentially stolen from https://github.com/go-pg/migrations/v7/blob/master/example/main.go
 
 package main
 

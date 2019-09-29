@@ -28,7 +28,7 @@ For now, we put helper scripts right in the `beneath-go` folder. Guide to helper
 
 These are the main libraries used in the control server
 
-- [`go-pg`](https://github.com/go-pg/pg): For interacting with the Postgres database. It's vaguely like an ORM. See the [wiki](https://github.com/go-pg/pg/wiki) for good examples on how to use it, especially the ["Model Definition"](https://github.com/go-pg/pg/wiki/Model-Definition) and ["Writing Queries"](https://github.com/go-pg/pg/wiki/Writing-Queries) pages. We're using [this helper library](https://github.com/go-pg/migrations) to run migrations (see below). 
+- [`go-pg`](https://github.com/go-pg/pg): For interacting with the Postgres database. It's vaguely like an ORM. See the [wiki](https://github.com/go-pg/pg/v9/wiki) for good examples on how to use it, especially the ["Model Definition"](https://github.com/go-pg/pg/v9/wiki/Model-Definition) and ["Writing Queries"](https://github.com/go-pg/pg/v9/wiki/Writing-Queries) pages. We're using [this helper library](https://github.com/go-pg/migrations/v7) to run migrations (see below). 
 - [`gqlgen`](https://gqlgen.com/): For defining the GraphQL server. It generates Go files based on GraphQL schema files (see below). Not the most common choice, but it seems many people think it's now the best GraphQL library for Go.
 - [`goth`](https://github.com/markbates/goth): For setting up authentication with Google and Github
 - [`chi`](https://github.com/go-chi/chi): For HTTP routing

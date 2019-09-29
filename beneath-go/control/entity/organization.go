@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 )
 
