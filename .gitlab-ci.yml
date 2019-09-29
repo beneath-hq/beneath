@@ -1,17 +1,20 @@
 stages:
   - build
   - deploy
-  
-build_frontend:
+
+.build:
+  stage: build
   image: docker:stable
   services:
-    - docker:dind
+  - docker:dind
   before_script:
   - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-  stage: build
   when: manual
   only:
     - master
+
+build_frontend:
+  extends: .build
   variables:
     IMAGE: gcr.io/beneathcrypto/frontend
   script: 
@@ -20,19 +23,7 @@ build_frontend:
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
 
-build_control:
-  image: docker:stable
-  services:
-    - docker:dind
-  before_script:
-  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-  stage: build
-  when: manual
-  only:
-    - master
-  variables:
-    CMD_NAME: control
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+.build_go:
   script: 
     - docker pull ${IMAGE}:builder || true
     - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder ./beneath-go
@@ -41,87 +32,63 @@ build_control:
     - docker push ${IMAGE}:latest
     - docker push ${IMAGE}:builder
 
+build_control:
+  extends:
+  - .build
+  - .build_go
+  variables:
+    CMD_NAME: control
+    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+
 build_gateway:
-  image: docker:stable
-  services:
-    - docker:dind
-  before_script:
-  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-  stage: build
-  when: manual
-  only:
-    - master
+  extends:
+  - .build
+  - .build_go
   variables:
     CMD_NAME: gateway
     IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
-  script: 
-    - docker pull ${IMAGE}:latest || true
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
-    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${IMAGE}:latest
 
 build_pipeline:
-  image: docker:stable
-  services:
-    - docker:dind
-  before_script:
-  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-  stage: build
-  when: manual
-  only:
-    - master
+  extends:
+  - .build
+  - .build_go
   variables:
     CMD_NAME: pipeline
     IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
-  script: 
-    - docker pull ${IMAGE}:latest || true
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
-    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${IMAGE}:latest
 
 build_taskqueue:
-  image: docker:stable
-  services:
-    - docker:dind
-  before_script:
-  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
-  stage: build
-  when: manual
-  only:
-    - master
+  extends:
+  - .build
+  - .build_go
   variables:
     CMD_NAME: taskqueue
     IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
-  script: 
-    - docker pull ${IMAGE}:latest || true
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
-    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${IMAGE}:latest
 
-deploy_control:
+.deploy:
   stage: deploy
-  image: alpine/helm
+  image: alpine/helm:2.14.3
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
   when: manual
   only:
     - master
+
+.deploy_prod:
   variables:
     KUBE_NAMESPACE: production
-    CMD_NAME: control
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   environment:
     name: production
     url: https://beneath.network
-  script:
-    - helm init --client-only
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=production
 
-deploy_gateway:
-  stage: deploy
-  when: manual
-  only:
-    - master
+.deploy_go:
+  script:
+    - helm init --client-only --service-account tiller
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
+
+deploy_control:
+  extends:
+  - .deploy
+  - .deploy_prod
+  - .deploy_go
   variables:
-    CONTAINER_IMAGE: beneathcrypto/gateway:${CI_COMMIT_SHORT_SHA}
-  script:
-    - echo "Deploy to production server"
-
+    CMD_NAME: control
