@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "gateway.fullname" . }}
   labels:
@@ -9,6 +9,7 @@ metadata:
     helm.sh/chart: {{ include "gateway.chart" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "gateway.fullname" . }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "gateway.name" . }}
