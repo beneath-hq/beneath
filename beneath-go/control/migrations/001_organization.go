@@ -8,6 +8,14 @@ import (
 
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+		// Extensions
+		_, err = db.Exec(`
+			CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+		`)
+		if err != nil {
+			return err
+		}
+
 		// Organization
 		err = db.Model(&entity.Organization{}).CreateTable(defaultCreateOptions)
 		if err != nil {
@@ -19,6 +27,14 @@ func init() {
 	}, func(db migrations.DB) (err error) {
 		// Organization
 		err = db.Model(&entity.Organization{}).DropTable(defaultDropOptions)
+		if err != nil {
+			return err
+		}
+
+		// Extensions
+		_, err = db.Exec(`
+			DROP EXTENSION "uuid-ossp";
+		`)
 		if err != nil {
 			return err
 		}
