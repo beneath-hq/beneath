@@ -70,6 +70,9 @@ build_taskqueue:
   when: manual
   only:
     - master
+  script:
+    - helm init --client-only --service-account tiller
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
 
 .deploy_prod:
   variables:
@@ -78,16 +81,17 @@ build_taskqueue:
     name: production
     url: https://beneath.network
 
-.deploy_go:
-  script:
-    - helm init --client-only --service-account tiller
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
+deploy_frontend:
+  extends:
+  - .deploy
+  - .deploy_prod
+  variables:
+    CMD_NAME: frontend
 
 deploy_control:
   extends:
   - .deploy
   - .deploy_prod
-  - .deploy_go
   variables:
     CMD_NAME: control
 
@@ -95,7 +99,6 @@ deploy_gateway:
   extends:
   - .deploy
   - .deploy_prod
-  - .deploy_go
   variables:
     CMD_NAME: gateway
 
@@ -103,7 +106,6 @@ deploy_pipeline:
   extends:
   - .deploy
   - .deploy_prod
-  - .deploy_go
   variables:
     CMD_NAME: pipeline
 
@@ -111,6 +113,5 @@ deploy_taskqueue:
   extends:
   - .deploy
   - .deploy_prod
-  - .deploy_go
   variables:
     CMD_NAME: taskqueue
