@@ -66,7 +66,7 @@ build_taskqueue:
 
 .deploy:
   stage: deploy
-  image: alpine/helm:2.14.3
+  image: dtzar/helm-kubectl:2.14.3
   when: manual
   only:
     - master
