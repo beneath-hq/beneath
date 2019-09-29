@@ -19,6 +19,10 @@ spec:
         app.kubernetes.io/name: {{ include "control.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      volumes:
+      - name: {{ .Values.serviceAccount.secretName }}
+        secret:
+          secretName: {{ .Values.serviceAccount.secretName }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -34,7 +38,13 @@ spec:
           httpGet:
             path: /healthz
             port: control-port
+        volumeMounts:
+        - name: {{ .Values.serviceAccount.secretName }}
+          mountPath: /var/secrets/google
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         env:
-          {{- toYaml .Values.env | nindent 8 }}
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/{{ .Values.serviceAccount.fileName }}
+        {{- toYaml .Values.env | nindent 8 }}
+

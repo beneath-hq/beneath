@@ -3,6 +3,10 @@ fullnameOverride: ""
 
 replicaCount: 1
 
+serviceAccount:
+  secretName: control-sa-key
+  fileName: key.json 
+
 image:
   pullPolicy: IfNotPresent
   repository: gcr.io/beneathcrypto/control
@@ -22,6 +26,8 @@ resources: {}
 env:
 - name: ENV
   value: production
+- name: BENEATH_CONTROL_PORT
+  value: "8080"
 - name: BENEATH_CONTROL_HOST
   value: "https://control.beneath.network"
 - name: BENEATH_FRONTEND_HOST

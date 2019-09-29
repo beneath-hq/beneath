@@ -10,19 +10,16 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
     nginx.com/health-checks: "true"
-    # nginx.org/grpc-services: {{ include "control.fullname" . }}
-    # nginx.org/websocket-services: {{ include "control.fullname" . }}
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   tls:
-    - secretName: {{ include "control.name" . }}-tls
-      hosts: 
-      - {{ .Values.ingress.host }}
+  - secretName: {{ include "control.name" . }}-tls
+    hosts: 
+    - {{ .Values.ingress.host }}
   rules:
   - host: {{ .Values.ingress.host }}
     http:
