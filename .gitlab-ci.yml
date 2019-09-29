@@ -81,8 +81,7 @@ build_taskqueue:
 .deploy_go:
   script:
     - helm init --client-only --service-account tiller
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=d1ad0c1d --namespace=${KUBE_NAMESPACE}
-    # - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
 
 deploy_control:
   extends:
@@ -91,3 +90,27 @@ deploy_control:
   - .deploy_go
   variables:
     CMD_NAME: control
+
+deploy_gateway:
+  extends:
+  - .deploy
+  - .deploy_prod
+  - .deploy_go
+  variables:
+    CMD_NAME: gateway
+
+deploy_pipeline:
+  extends:
+  - .deploy
+  - .deploy_prod
+  - .deploy_go
+  variables:
+    CMD_NAME: pipeline
+
+deploy_taskqueue:
+  extends:
+  - .deploy
+  - .deploy_prod
+  - .deploy_go
+  variables:
+    CMD_NAME: taskqueue
