@@ -34,10 +34,12 @@ build_control:
     CMD_NAME: control
     IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   script: 
-    - docker pull ${IMAGE}:latest || true
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./beneath-go
+    - docker pull ${IMAGE}:builder || true
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder ./beneath-go
+    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder ./beneath-go
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
+    - docker push ${IMAGE}:builder
 
 build_gateway:
   image: docker:stable
@@ -102,9 +104,8 @@ deploy_control:
   when: manual
   only:
     - master
-  dependencies:
-    - build_control
   variables:
+    KUBE_NAMESPACE: production
     CMD_NAME: control
     IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
   environment:
@@ -112,7 +113,7 @@ deploy_control:
     url: https://beneath.network
   script:
     - helm init --client-only
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/control/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=production
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=production
 
 deploy_gateway:
   stage: deploy
