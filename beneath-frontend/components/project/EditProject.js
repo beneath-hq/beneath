@@ -6,7 +6,7 @@ import Moment from "react-moment";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core";
-import isUrl from "validator/lib/isUrl";
+import validator from "validator";
 
 import VSpace from "../VSpace";
 
@@ -63,9 +63,9 @@ const EditProject = ({ project }) => {
               disabled={
                 loading
                 || !(values.displayName && values.displayName.length >= 4 && values.displayName.length <= 40)
-                || !(values.site === "" || isUrl(values.site))
+                || !(values.site === "" || validator.isUrl(values.site))
                 || !(values.description === "" || values.description.length < 256)
-                || !(values.photoURL === "" || isUrl(values.photoURL))
+                || !(values.photoURL === "" || validator.isUrl(values.photoURL))
               }>
               Save changes
             </Button>

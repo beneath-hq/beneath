@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ include "gateway.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "gateway.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "gateway.chart" . }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    nginx.com/health-checks: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.org/grpc-services: {{ include "gateway.fullname" . }}
+    nginx.org/websocket-services: {{ include "gateway.fullname" . }}
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  tls:
+  - secretName: {{ include "gateway.name" . }}-tls
+    hosts: 
+    - {{ .Values.ingress.host }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /proto.Gateway
+        backend:
+          serviceName: {{ include "gateway.fullname" . }}
+          servicePort: 9090
+      - path: /*
+        backend:
+          serviceName: {{ include "gateway.fullname" . }}
+          servicePort: 8080

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gateway.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "gateway.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "gateway.chart" . }}
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    name: gw-port
+    targetPort: gw-port
+    protocol: TCP
+  - port: 9090
+    name: gw-grpc-port
+    targetPort: gw-grpc-port
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ include "gateway.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

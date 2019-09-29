@@ -1,0 +1,80 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+serviceAccount:
+  secretName: control-sa-key
+  fileName: key.json 
+
+image:
+  pullPolicy: IfNotPresent
+  repository: gcr.io/beneathcrypto/gateway
+  tag: latest
+
+ingress:
+  host: data.beneath.network
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+env:
+- name: ENV
+  value: production
+- name: BENEATH_GATEWAY_PORT
+  value: "8080"
+- name: BENEATH_GATEWAY_PORT_GRPC
+  value: "9090"
+- name: BENEATH_CONTROL_HOST
+  value: "https://control.beneath.network"
+- name: BENEATH_FRONTEND_HOST
+  value: "https://beneath.network"
+- name: BENEATH_CONTROL_REDIS_URL
+  value: "redis://10.0.0.3/"
+- name: BENEATH_CONTROL_POSTGRES_HOST
+  value: "10.76.112.3"
+- name: BENEATH_CONTROL_POSTGRES_USER
+  valueFrom:
+    secretKeyRef:
+      name: control-secrets
+      key: pg-user
+- name: BENEATH_CONTROL_POSTGRES_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: control-secrets
+      key: pg-password
+- name: BENEATH_ENGINE_STREAMS_DRIVER
+  value: "pubsub"
+- name: BENEATH_ENGINE_TABLES_DRIVER
+  value: "bigtable"
+- name: BENEATH_ENGINE_WAREHOUSE_DRIVER
+  value: "bigquery"
+- name: BENEATH_ENGINE_BIGQUERY_PROJECT_ID
+  value: "beneathcrypto"
+- name: BENEATH_ENGINE_BIGTABLE_PROJECT_ID
+  value: "beneathcrypto"
+- name: BENEATH_ENGINE_BIGTABLE_INSTANCE_ID
+  value: "beneath"
+- name: BENEATH_ENGINE_PUBSUB_PROJECT_ID
+  value: "beneathcrypto"
+- name: BENEATH_ENGINE_PUBSUB_SUBSCRIBER_ID
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.name
+- name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_TOPIC
+  value: "beneath-write-requests"
+- name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_SUBSCRIPTION
+  value: "beneath-write-requests-sub"
+- name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_TOPIC
+  value: "beneath-write-reports"
+- name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_SUBSCRIPTION_PREFIX
+  value: "beneath-write-reports-sub"
+- name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_TOPIC
+  value: "beneath-task-queue"
+- name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_SUBSCRIPTION
+  value: "beneath-task-queue-sub"
