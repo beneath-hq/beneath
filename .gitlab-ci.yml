@@ -67,8 +67,6 @@ build_taskqueue:
 .deploy:
   stage: deploy
   image: alpine/helm:2.14.3
-  before_script:
-  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
   when: manual
   only:
     - master
@@ -83,7 +81,8 @@ build_taskqueue:
 .deploy_go:
   script:
     - helm init --client-only --service-account tiller
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=d1ad0c1d --namespace=${KUBE_NAMESPACE}
+    # - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
 
 deploy_control:
   extends:
