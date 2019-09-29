@@ -31,7 +31,7 @@ func Run(db *pg.DB, a ...string) (oldVersion, newVersion int64, err error) {
 
 // MustRunUp initializes migrations (if necessary) then applies all new migrations; it panics on error
 func MustRunUp(db *pg.DB) {
-	// disable searching for migrations
+	// disable searching for sql files (after go build, migrations folder no longer exists in Docker image)
 	migrations.DefaultCollection.DisableSQLAutodiscover(true)
 
 	// init migrations if not already initialized
