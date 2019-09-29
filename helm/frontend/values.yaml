@@ -1,0 +1,30 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+  repository: gcr.io/beneathcrypto/frontend
+  tag: latest
+
+ingress:
+  hosts:
+  - beneath.network
+  - www.beneath.network
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+env:
+- name: ENV
+  value: "production"
+- name: NODE_ENV
+  value: "production"
+- name: PORT
+  value: "8080"
