@@ -105,5 +105,5 @@ const bigQueryName = (stream: QueryStream_stream) => {
   const streamName = stream.name.replace(/-/g, "_");
   // const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;
   const idSlug = null;
-  return `beneathcrypto.${projectName}.${streamName}${idSlug ? "_" + idSlug : ""}`;
+  return `beneath.${projectName}.${streamName}${idSlug ? "_" + idSlug : ""}`;
 };
