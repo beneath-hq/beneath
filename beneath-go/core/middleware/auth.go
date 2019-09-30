@@ -27,7 +27,7 @@ func Auth(next http.Handler) http.Handler {
 
 		header := r.Header.Get("Authorization")
 		if header != "" {
-			if !strings.HasPrefix(header, "Bearer ") {
+			if len(header) < 6 || !strings.EqualFold(header[0:6], "bearer") {
 				return httputil.NewError(400, "bearer authorization header required")
 			}
 
