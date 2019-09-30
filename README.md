@@ -2,10 +2,10 @@
 
 This repository contains the source code for the [Beneath](https://beneath.network) Python library. Learn more about it with these resources:
 
-- [Getting started tutorial](https://docs.beneath.network)
-- [Reading data from Beneath](https://docs.beneath.network)
-- [Using the command-line interface](https://docs.beneath.network)
-- [Writing new analytics to Beneath](https://docs.beneath.network)
+- [Getting started tutorial](https://about.beneath.network/docs)
+- [Reading data from Beneath](https://about.beneath.network/docs)
+- [Using the command-line interface](https://about.beneath.network/docs)
+- [Writing new analytics to Beneath](https://about.beneath.network/docs)
 
 ### Providing feedback
 
