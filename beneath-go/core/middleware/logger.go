@@ -28,6 +28,10 @@ func Logger(next http.Handler) http.Handler {
 		tags := GetTags(r.Context())
 		l := loggerWithTags(log.L, tags)
 
+		if r.RequestURI == "/healthz" {
+			return
+		}
+
 		l.Info(
 			"http request",
 			zap.String("method", r.Method),
