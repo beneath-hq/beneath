@@ -15,7 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/beneath-core/beneath-go/control/entity"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 )
@@ -101,7 +101,7 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeSecret                      func(childComplexity int, secretID uuid.UUID) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
-		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string) int
+		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
 		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, organizationID *uuid.UUID, readBytesQuota *int, writeBytesQuota *int) int
@@ -254,7 +254,7 @@ type MutationResolver interface {
 	CreateExternalStreamBatch(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error)
 	CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error)
-	UpdateMe(ctx context.Context, username *string, name *string, bio *string) (*Me, error)
+	UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*Me, error)
 }
 type OrganizationResolver interface {
 	OrganizationID(ctx context.Context, obj *entity.Organization) (string, error)
@@ -702,7 +702,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateMe(childComplexity, args["username"].(*string), args["name"].(*string), args["bio"].(*string)), true
+		return e.complexity.Mutation.UpdateMe(childComplexity, args["username"].(*string), args["name"].(*string), args["bio"].(*string), args["photoURL"].(*string)), true
 
 	case "Mutation.updateModel":
 		if e.complexity.Mutation.UpdateModel == nil {
@@ -1664,7 +1664,7 @@ type StreamInstance {
 }
 
 extend type Mutation {
-  updateMe(username: String, name: String, bio: String): Me!
+  updateMe(username: String, name: String, bio: String, photoURL: String): Me!
 }
 
 type User {
@@ -2175,6 +2175,14 @@ func (ec *executionContext) field_Mutation_updateMe_args(ctx context.Context, ra
 		}
 	}
 	args["bio"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["photoURL"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["photoURL"] = arg3
 	return args, nil
 }
 
@@ -4288,7 +4296,7 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateMe(rctx, args["username"].(*string), args["name"].(*string), args["bio"].(*string))
+		return ec.resolvers.Mutation().UpdateMe(rctx, args["username"].(*string), args["name"].(*string), args["bio"].(*string), args["photoURL"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

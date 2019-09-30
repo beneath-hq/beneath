@@ -48,14 +48,14 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	return userToMe(user), nil
 }
 
-func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string) (*gql.Me, error) {
+func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsPersonal() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
 	user := entity.FindUser(ctx, *secret.UserID)
-	err := user.UpdateDescription(ctx, username, name, bio)
+	err := user.UpdateDescription(ctx, username, name, bio, photoURL)
 	if err != nil {
 		return nil, err
 	}

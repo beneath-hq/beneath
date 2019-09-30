@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	db.InitPostgres("postgresql://postgres@localhost:5432/postgres?sslmode=disable")
+	db.InitPostgres("localhost", "postgres", "")
 	db.InitRedis("redis://localhost/")
 }
 

@@ -22,7 +22,7 @@ type User struct {
 	Email              string    `sql:",notnull",validate:"required,email"`
 	Name               string    `sql:",notnull",validate:"required,gte=1,lte=50"`
 	Bio                string    `validate:"omitempty,lte=255"`
-	PhotoURL           string    `validate:"omitempty,url,lte=255"`
+	PhotoURL           string    `validate:"omitempty,url,lte=400"`
 	GoogleID           string    `sql:",unique",validate:"omitempty,lte=255"`
 	GithubID           string    `sql:",unique",validate:"omitempty,lte=255"`
 	CreatedOn          time.Time `sql:",default:now()"`
@@ -214,7 +214,7 @@ func (u *User) Delete(ctx context.Context) error {
 }
 
 // UpdateDescription updates user's name and/or bio
-func (u *User) UpdateDescription(ctx context.Context, username *string, name *string, bio *string) error {
+func (u *User) UpdateDescription(ctx context.Context, username *string, name *string, bio *string, photoURL *string) error {
 	if username != nil {
 		u.Username = *username
 	}
@@ -224,6 +224,9 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 	if bio != nil {
 		u.Bio = *bio
 	}
+	if photoURL != nil {
+		u.PhotoURL = *photoURL
+	}
 
 	// validate
 	err := GetValidator().Struct(u)
@@ -231,7 +234,7 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 		return err
 	}
 
-	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio").WherePK().Update()
+	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url").WherePK().Update()
 	return err
 }
 

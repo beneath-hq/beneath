@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/vektah/gqlparser/ast"
+
 	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/auth"
@@ -149,12 +151,28 @@ func makeGraphQLErrorPresenter() handler.Option {
 
 func makeQueryLoggingMiddleware() handler.Option {
 	return handler.RequestMiddleware(func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
-		reqCtx := graphql.GetRequestContext(ctx)
 		tags := middleware.GetTags(ctx)
+		reqCtx := graphql.GetRequestContext(ctx)
 		tags.Query = map[string]interface{}{
-			"query": reqCtx.RawQuery,
-			"vars":  reqCtx.Variables,
+			"q":    logInfoFromRequestContext(reqCtx),
+			"vars": reqCtx.Variables,
 		}
 		return next(ctx)
 	})
+}
+
+func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
+	var queries []interface{}
+	for _, op := range ctx.Doc.Operations {
+		for _, sel := range op.SelectionSet {
+			if field, ok := sel.(*ast.Field); ok {
+				queries = append(queries, map[string]interface{}{
+					"op":    op.Operation,
+					"name":  op.Name,
+					"field": field.Name,
+				})
+			}
+		}
+	}
+	return queries
 }
