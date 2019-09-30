@@ -153,10 +153,12 @@ func makeQueryLoggingMiddleware() handler.Option {
 	return handler.RequestMiddleware(func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
 		tags := middleware.GetTags(ctx)
 		reqCtx := graphql.GetRequestContext(ctx)
-		tags.Query = map[string]interface{}{
-			"q":    logInfoFromRequestContext(reqCtx),
-			"vars": reqCtx.Variables,
-		}
+		tags.Query = logInfoFromRequestContext(reqCtx)
+		// The following also includes variables, but not good for right to be forgotten (GDPR)
+		// tags.Query = map[string]interface{}{
+		// 	"q":    logInfoFromRequestContext(reqCtx),
+		// 	"vars": reqCtx.Variables,
+		// }
 		return next(ctx)
 	})
 }

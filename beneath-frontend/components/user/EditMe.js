@@ -80,6 +80,12 @@ const EditMeForm = ({ me, router }) => {
               label="Username"
               value={values.username}
               margin="normal"
+              helperText={
+                !validateUsername(values.username)
+                  ? "Lowercase letters, numbers and underscores allowed (minimum 3 characters)"
+                  : undefined
+              }
+              error={!validateUsername(values.username)}
               fullWidth
               required
               onChange={handleChange("username")}
@@ -89,6 +95,8 @@ const EditMeForm = ({ me, router }) => {
               label="Name"
               value={values.name}
               margin="normal"
+              helperText={!validateName(values.name) ? "Should be between 1 and 50 characters" : undefined}
+              error={!validateName(values.name)}
               fullWidth
               required
               onChange={handleChange("name")}
@@ -98,6 +106,8 @@ const EditMeForm = ({ me, router }) => {
               label="Bio"
               value={values.bio}
               margin="normal"
+              helperText={!validateBio(values.bio) ? "Should be less than 255 characters" : undefined}
+              error={!validateBio(values.bio)}
               fullWidth
               multiline
               rows={1}
@@ -128,15 +138,7 @@ const EditMeForm = ({ me, router }) => {
               color="primary"
               className={classes.submitButton}
               disabled={
-                loading ||
-                !(
-                  values.username &&
-                  values.username.length >= 3 &&
-                  values.username.length <= 40 &&
-                  values.username.match(/^[_a-z][_a-z0-9]+$/)
-                ) ||
-                !(values.name && values.name.length >= 4 && values.name.length <= 50) ||
-                !(values.bio === "" || values.bio.length < 256)
+                loading || !validateUsername(values.username) || !validateName(values.name) || !validateBio(values.bio)
               }
             >
               Save changes
@@ -158,6 +160,18 @@ const EditMeForm = ({ me, router }) => {
   );
 };
 
+const validateUsername = (val) => {
+  return val && val.length >= 3 && val.length <= 40 && val.match(/^[_a-z][_a-z0-9]+$/);
+};
+
+const validateName = (val) => {
+  return val && val.length >= 1 && val.length <= 50;
+};
+
+const validateBio = (val) => {
+  return val.length < 256;
+};
+
 const isUsernameError = (error) => {
-  return error.message.match(/duplicate key value violates unique constraint/);
+  return error && error.message.match(/duplicate key value violates unique constraint/);
 };

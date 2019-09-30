@@ -16,6 +16,7 @@ import {
   Tab,
   Tabs,
   Toolbar,
+  Typography,
 } from "@material-ui/core";
 
 import {
@@ -39,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up("sm")]: {
       display: "none",
     },
+  },
+  menuItemHeader: {
+    borderBottom: `1px solid rgba(255, 255, 255, 0.35)`,
   },
 }));
 
@@ -113,6 +117,12 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
                 anchorOrigin={{ vertical: "top", horizontal: "right" }}
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
               >
+                <MenuItem disabled className={classes.menuItemHeader}>
+                  <div>
+                    <Typography variant="h4">{me.user.name}</Typography>
+                    <Typography variant="subtitle1" gutterBottom>@{me.user.username}</Typography>
+                  </div>
+                </MenuItem>
                 {makeMenuItem("Profile", {
                   onClick: closeMenu,
                   as: `/users/${me.user.username}`,

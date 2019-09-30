@@ -132,18 +132,35 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	}
 
 	// set user fields
-	user.GithubID = githubID
-	user.GoogleID = googleID
-	user.Email = email
-	user.Name = name
-	user.PhotoURL = photoURL
-	user.ReadQuota = DefaultUserReadQuota
-	user.WriteQuota = DefaultUserWriteQuota
+	if githubID != "" {
+		user.GithubID = githubID
+	}
+	if googleID != "" {
+		user.GoogleID = googleID
+	}
+	if email != "" {
+		user.Email = email
+	}
+	if user.Name == "" {
+		user.Name = name
+	}
+	if user.PhotoURL == "" {
+		user.PhotoURL = photoURL
+	}
+	if user.ReadQuota == 0 {
+		user.ReadQuota = DefaultUserReadQuota
+	}
+	if user.WriteQuota == 0 {
+		user.WriteQuota = DefaultUserWriteQuota
+	}
 
 	// set username
 	usernameSeeds := user.usernameSeeds(nickname)
 	if create {
 		user.Username = usernameSeeds[0]
+		if user.Name == "" {
+			user.Name = user.Username
+		}
 	}
 
 	// validate
