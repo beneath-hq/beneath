@@ -312,6 +312,7 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 	// update
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// update model
+		m.UpdatedOn = time.Now()
 		_, err := tx.Model(m).WherePK().Update()
 		if err != nil {
 			return err

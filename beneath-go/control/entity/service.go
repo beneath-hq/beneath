@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"time"
 
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
@@ -17,6 +18,8 @@ type Service struct {
 	Organization   *Organization
 	ReadQuota      int64
 	WriteQuota     int64
+	CreatedOn      time.Time `sql:",notnull,default:now()"`
+	UpdatedOn      time.Time `sql:",notnull,default:now()"`
 	Secrets        []*Secret
 }
 
@@ -98,7 +101,8 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, organizationI
 	}
 
 	// update
-	_, err = db.DB.ModelContext(ctx, s).Column("name", "organization_id", "read_quota", "write_quota").WherePK().Update()
+	s.UpdatedOn = time.Now()
+	_, err = db.DB.ModelContext(ctx, s).Column("name", "organization_id", "read_quota", "write_quota", "updated_on").WherePK().Update()
 	return s, err
 }
 

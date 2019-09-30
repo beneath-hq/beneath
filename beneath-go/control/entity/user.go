@@ -171,6 +171,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 
 	// insert or update
 	if !create {
+		user.UpdatedOn = time.Now()
 		err = tx.Update(user)
 	} else {
 		// try out all username seeds
@@ -251,7 +252,8 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 		return err
 	}
 
-	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url").WherePK().Update()
+	u.UpdatedOn = time.Now()
+	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url", "updated_on").WherePK().Update()
 	return err
 }
 

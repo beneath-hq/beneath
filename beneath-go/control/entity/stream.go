@@ -196,6 +196,7 @@ func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 // UpdateWithTx updates the stream (if streaming) using tx
 func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 	// update
+	s.UpdatedOn = time.Now()
 	_, err := tx.Model(s).WherePK().Update()
 	if err != nil {
 		return err
@@ -354,7 +355,8 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 	// update stream with stream instance ID
 	prevInstanceID := s.CurrentStreamInstanceID
 	s.CurrentStreamInstanceID = &instance.StreamInstanceID
-	_, err := tx.Model(s).WherePK().Update()
+	s.UpdatedOn = time.Now()
+	_, err := tx.Model(s).Column("current_stream_instance_id", "updated_on").WherePK().Update()
 	if err != nil {
 		return err
 	}
@@ -403,7 +405,8 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error
 	// remove as current stream instance (if necessary)
 	if s.CurrentStreamInstanceID != nil && *s.CurrentStreamInstanceID == si.StreamInstanceID {
 		s.CurrentStreamInstanceID = nil
-		_, err := tx.Model(s).Column("current_stream_instance_id").WherePK().Update()
+		s.UpdatedOn = time.Now()
+		_, err := tx.Model(s).Column("current_stream_instance_id", "updated_on").WherePK().Update()
 		if err != nil {
 			return err
 		}

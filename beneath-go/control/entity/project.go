@@ -172,6 +172,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 
 	// update in tx with call to bigquery
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		p.UpdatedOn = time.Now()
 		_, err = db.DB.WithContext(ctx).Model(p).
 			Column("display_name", "site", "description", "photo_url").
 			WherePK().
