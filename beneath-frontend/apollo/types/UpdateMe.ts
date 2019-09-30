@@ -9,8 +9,10 @@
 export interface UpdateMe_updateMe_user {
   __typename: "User";
   userID: string;
+  username: string | null;
   name: string;
   bio: string | null;
+  photoURL: string | null;
 }
 
 export interface UpdateMe_updateMe {

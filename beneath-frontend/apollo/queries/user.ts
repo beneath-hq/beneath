@@ -71,8 +71,10 @@ export const UPDATE_ME = gql`
       userID
       user {
         userID
+        username
         name
         bio
+        photoURL
       }
       updatedOn
     }

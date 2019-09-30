@@ -19,5 +19,3 @@ The primary libraries used in the frontend are:
 Regenerate types for Apollo queries (currently only covers queries in queries/*):
 
 ```yarn apollo:generate```
-
-Then delete the empty file `apollo/types/globalTypes.ts`

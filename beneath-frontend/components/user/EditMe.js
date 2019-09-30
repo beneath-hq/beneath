@@ -1,3 +1,4 @@
+import { withRouter } from "next/router";
 import React from "react";
 import { Query, Mutation } from "react-apollo";
 
@@ -18,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const EditMe = () => {
+const EditMe = ({ router }) => {
   return (
     <Query query={QUERY_ME}>
       {({ loading, error, data }) => {
@@ -30,15 +31,15 @@ const EditMe = () => {
         }
 
         let { me } = data;
-        return <EditMeForm me={me} />;
+        return <EditMeForm router={router} me={me} />;
       }}
     </Query>
   );
 };
 
-export default EditMe;
+export default withRouter(EditMe);
 
-const EditMeForm = ({ me }) => {
+const EditMeForm = ({ me, router }) => {
   const [values, setValues] = React.useState({
     username: me.user.username || "",
     email: me.email || "",
@@ -53,7 +54,19 @@ const EditMeForm = ({ me }) => {
 
   const classes = useStyles();
   return (
-    <Mutation mutation={UPDATE_ME}>
+    <Mutation
+      mutation={UPDATE_ME}
+      onCompleted={(data) => {
+        if (data.updateMe) {
+          const username = data.updateMe.user.username;
+          if (username !== router.query.name) {
+            const href = `/user?name=${username}&tab=edit`;
+            const as = `/users/${username}/edit`;
+            router.replace(href, as, { shallow: true });
+          }
+        }
+      }}
+    >
       {(updateMe, { loading, error }) => (
         <div>
           <form
