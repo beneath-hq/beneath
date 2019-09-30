@@ -20,7 +20,7 @@ This chart relies on the existance of a service account in `key.json` in the `co
 
     gcloud beta iam service-accounts create control-service --display-name "Beneath Control Service Account"
     gcloud iam service-accounts list
-    gcloud iam service-accounts keys create ~/key.json --iam-account control-service@beneathcrypto.iam.gserviceaccount.com
+    gcloud iam service-accounts keys create key.json --iam-account control-service@beneathcrypto.iam.gserviceaccount.com
     kubectl create secret generic control-sa-key --from-file key.json --namespace production
     rm key.json
 

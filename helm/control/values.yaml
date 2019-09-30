@@ -65,12 +65,12 @@ env:
   valueFrom:
     secretKeyRef:
       name: control-secrets
-      key: github-auth-secret
+      key: google-auth-id
 - name: BENEATH_CONTROL_GOOGLE_AUTH_SECRET
   valueFrom:
     secretKeyRef:
       name: control-secrets
-      key: github-auth-secret
+      key: google-auth-secret
 - name: BENEATH_ENGINE_STREAMS_DRIVER
   value: "pubsub"
 - name: BENEATH_ENGINE_TABLES_DRIVER
