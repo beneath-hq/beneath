@@ -1,6 +1,0 @@
-" Block numbers are numbered blocks. "
-type BlockNumbers @stream(name: "block-numbers-2", key: "number") {
-  number: Int! 
-  hash: Bytes32! 
-  parentHash: Bytes32!
-}
