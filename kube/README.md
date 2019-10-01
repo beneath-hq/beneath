@@ -19,7 +19,7 @@ To use Helm to manage packages, we must run tiller. It runs in the kube-system n
 
 Nginx ingress handles load balancing and routing. It runs in the default namespace. We installed it using Helm:
 
-    helm install stable/nginx-ingress --name nginx-ingress --set rbac.create=true
+    helm install stable/nginx-ingress --name nginx-ingress --set rbac.create=true --set controller.service.loadBalancerIP="35.231.50.185"
 
 ### cert-manager
 

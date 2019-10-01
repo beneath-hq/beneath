@@ -15,7 +15,6 @@ metadata:
     nginx.com/health-checks: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   tls:
   - secretName: {{ $fullName }}-tls
@@ -28,7 +27,7 @@ spec:
   - host: {{ . | quote }}
     http:
       paths:
-      - path: /*
+      - path: /
         backend:
           serviceName: {{ $fullName }}
           servicePort: 8080
