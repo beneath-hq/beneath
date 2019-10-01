@@ -19,8 +19,8 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='beneath/proto/engine.proto',
   package='proto',
   syntax='proto3',
-  serialized_options=_b('\n\025network.beneath.protoB\005ProtoP\001'),
-  serialized_pb=_b('\n\x1a\x62\x65neath/proto/engine.proto\x12\x05proto\".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"J\n\x13WriteRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x1e\n\x07records\x18\x02 \x03(\x0b\x32\r.proto.Record\"N\n\x12WriteRecordsReport\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x15\n\rbytes_written\x18\x02 \x01(\x03\x12\x0c\n\x04keys\x18\x03 \x03(\x0c\x42 \n\x15network.beneath.protoB\x05ProtoP\x01\x62\x06proto3')
+  serialized_options=_b('\n\025network.beneath.protoB\014BeneathProtoP\001'),
+  serialized_pb=_b('\n\x1a\x62\x65neath/proto/engine.proto\x12\x05proto\".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"J\n\x13WriteRecordsRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x1e\n\x07records\x18\x02 \x03(\x0b\x32\r.proto.Record\"N\n\x12WriteRecordsReport\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x15\n\rbytes_written\x18\x02 \x01(\x03\x12\x0c\n\x04keys\x18\x03 \x03(\x0c\x42\'\n\x15network.beneath.protoB\x0c\x42\x65neathProtoP\x01\x62\x06proto3')
 )
 
 
