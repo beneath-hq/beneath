@@ -1,331 +1,25 @@
 #!/usr/bin/env python
-import argparse
-import json
+
 import glob
-import os
+import json
+
+import argparse
 
 from beneath import config
-from beneath.client import Client
+from beneath.client import BeneathError, Client
 
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def get_client():
-  return Client()
-
-def auth(args):
+def main():
+  parser = create_argument_parser()
+  args = parser.parse_args()
   try:
-    Client(secret=args.secret)
-    config.write_secret(args.secret)
-    print("You have authenticated successfully!")
-  except:
-    config.write_secret("")
-    print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
-
-def get_metrics(args):
-  client = get_client()
-  result = client.get_metrics(
-    entity_ids=args.entity_ids, 
-    period=args.period,
-    from_=args.from_, 
-    until=args.until,
-  )
-  pretty_print_graphql_result(result, [])
-
-def organization_create(args):
-  client = get_client()
-  result = client.create_organization(name=args.name)
-  pretty_print_graphql_result(result, [])
-
-def project_list(args):
-  # start client with the secret stored in .beneath/secret
-  client = get_client()
-
-  # submit GraphQL query to get the user's ID
-  result = client.get_me()
-  userID = result['userID']
-
-  # submit GraphQL query to get the user's projects
-  result = client.get_user_by_id(userID)
-  projects = result['projects']
-
-  # print out the projects to the user
-  for project in projects:
-    print(project['name'])
-  return
+    func = args.func
+  except AttributeError:
+    parser.error("too few arguments")
+  func(args)
 
 
-def project_create(args):
-  client = get_client()
-  result = client.create_project(
-    name=args.name,
-    display_name=args.display_name,
-    organization_id=args.organization_id,
-    description=args.description,
-    site_url=args.site_url,
-    photo_url=args.photo_url,
-  )
-  pretty_print_graphql_result(result, [])
-  
-
-def project_update(args):
-  client = get_client()
-  project = client.get_project_by_name(args.name)
-  result = client.update_project(
-    project_id=project['projectID'],
-    display_name=args.display_name,
-    description=args.description,
-    site_url=args.site_url,
-    photo_url=args.photo_url,
-  )
-  pretty_print_graphql_result(result, [])
-
-
-def project_delete(args):
-  client = get_client()
-  project = client.get_project_by_name(args.name)
-  result = client.delete_project(project_id=project['projectID'])
-  pretty_print_graphql_result(result, [])
-
-
-def service_create(args):
-  client = get_client()
-  result = client.create_service(
-    name=args.name,
-    organization_id=args.organization_id,
-    read_bytes_quota=args.read_bytes_quota,
-    write_bytes_quota=args.write_bytes_quota,
-  )
-  pretty_print_graphql_result(result, [])
-
-
-def service_update(args):
-  client = get_client()
-  result = client.update_service(
-      service_id=args.serviceid,
-      name=args.name,
-      organization_id=args.organization_id,
-      read_bytes_quota=args.read_bytes_quota,
-      write_bytes_quota=args.write_bytes_quota,
-  )
-  pretty_print_graphql_result(result, [])
-
-
-def service_delete(args):
-  client = get_client()
-  result = client.delete_service(
-    service_id=args.serviceid,
-  )
-  pretty_print_graphql_result(result, [])
-
-
-def service_permissions(args):
-  client = get_client()
-  result = client.update_service_permissions(
-    service_id=args.serviceid,
-    stream_id=args.streamid,
-    read=args.read,
-    write=args.write,
-  )
-  pretty_print_graphql_result(result, [])
-
-
-def stream_list(args):
-  # start client with the secret stored in .beneath/secret
-  client = get_client()
-
-  # submit GraphQL query to get a project's streams
-  result = client.get_project_by_name(args.project)
-  streams = result['streams']
-
-  # print out the streams to the user
-  for streamname in streams:
-      print(streamname['name'])
-
-  if len(streams) == 0:
-    print("There are no streams currently in this project")
-  return
-
-def model_init(args):
-  print("init")
-  print(args)
-  # client = get_client()
-  pass
-
-def model_sim(args):
-  print("model_sim")
-  print(args)
-  # client = get_client()
-  pass
-
-def model_stage(args):
-  # read config
-  with open("config.json", "r") as f:
-    config = json.load(f)
-
-  # read schemas
-  def _read_schema(path):
-    with open(path, "r") as f:
-      return f.read()
-  schemas = [_read_schema(p) for p in glob.glob("schemas/*.graphql")]
-
-  # get client
-  client = get_client()
-
-  # get project
-  result = client.get_project_by_name(config.get("project", None))
-  project_id = result['projectID']
-  project_name = result['name']
-
-  # get input stream IDs
-  input_stream_ids = []
-  for dep in config.get("dependencies", []):
-    project, stream = dep.split("/")
-    details = client.get_stream_details(project, stream)
-    input_stream_ids.append(details["streamID"])
-  
-  # stage model
-  name = config.get("name", None)
-  if args.update:
-    model = client.get_model_details(project_name, name)
-    result = client.update_model(
-      model_id=model["modelID"],
-      source_url=config.get("source_url", None),
-      description=config.get("description", None),
-      input_stream_ids=input_stream_ids,
-      output_stream_schemas=schemas,
-    )
-  else:
-    result = client.create_model(
-      project_id=project_id,
-      name=name,
-      kind=config.get("kind", None),
-      source_url=config.get("source_url", None),
-      description=config.get("description", None),
-      input_stream_ids=input_stream_ids,
-      output_stream_schemas=schemas,
-    )
-
-  # print out model details
-  pretty_print_graphql_result(result, [])
-
-def model_delete(args):
-  with open("config.json", "r") as f:
-    config = json.load(f)
-
-  client = get_client()
-  model = client.get_model_details(project_name=config.get("project", None), model_name=config.get("name", None))
-  result = client.delete_model(model["modelID"])
-  pretty_print_graphql_result(result, [])
-
-def model_deploy(args):
-  print("model_deploy")
-  print(args)
-  # client = get_client()
-  pass
-
-def stream_create_ext(args):
-  # start client with the secret stored in .beneath/secret
-  client = get_client()
-
-  # submit GraphQL query to get the projectID from the user-supplied projectName
-  result = client.get_project_by_name(args.project)
-  project_id = result['projectID']
-  
-  # read schema from the user-supplied file
-  with open(args.file, "r") as f:
-    schema = f.read()
-  
-  # submit GraphQL mutation to create an external stream
-  result = client.create_external_stream(project_id=project_id, schema=schema, manual=args.manual, batch=args.batch)
-  
-  # print out the stream's details to the user
-  pretty_print_graphql_result(result, [
-    "name",
-    "description",
-    "external",
-    "batch",
-    "manual",
-    "project",
-    "keyFields",
-  ])
-
-def stream_update_ext(args):
-  # start client with the secret stored in .beneath/secret
-  client = get_client()
-
-  # get stream id
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-
-  # read schema from the user-supplied file
-  schema = None
-  if args.file:
-    with open(args.file, "r") as f:
-      schema = f.read()
-
-  # submit GraphQL mutation to update stream
-  manual = args.manual
-  result = client.update_external_stream(stream_id, schema, manual)
-  
-  # print out the stream's details to the user 
-  pretty_print_graphql_result(result, [
-    "name",
-    "description",
-    "external",
-    "batch",
-    "manual",
-    "project",
-    "keyFields",
-  ])
-
-
-def stream_delete_ext(args):
-  client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.delete_external_stream(stream_id)
-  pretty_print_graphql_result(result)
-
-
-def stream_ext_batch_create(args):
-  client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.create_external_stream_batch(stream_id)
-  pretty_print_graphql_result(result)
-  
-
-def stream_ext_batch_commit(args):
-  client = get_client()
-  result = client.commit_external_stream_batch(instance_id=args.instance)
-  pretty_print_graphql_result(result)
-  
-
-def stream_ext_batches_clear(args):
-  client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.clear_pending_external_stream_batches(stream_id)
-  pretty_print_graphql_result(result)
-  
-  
-def pretty_print_graphql_result(result, fields=[]):
-  if len(fields) == 0:
-    selected = result
-  else:
-    selected = { k: v for k, v in result.items() if k in fields }
-  pretty = json.dumps(selected, indent=True)
-  print(pretty)
-
-if __name__ == '__main__':
+def create_argument_parser():
   parser = argparse.ArgumentParser()
   _root = parser.add_subparsers()
 
@@ -384,7 +78,7 @@ if __name__ == '__main__':
 
   _service_update = _service.add_parser('update')
   _service_update.set_defaults(func=service_update)
-  _service_update.add_argument('serviceid', type=str)
+  _service_update.add_argument('service-id', type=str)
   _service_update.add_argument('--name', type=str)
   _service_update.add_argument('--organization-id', type=str)
   _service_update.add_argument('--read-bytes-quota', type=int)
@@ -392,12 +86,12 @@ if __name__ == '__main__':
 
   _service_delete = _service.add_parser('delete')
   _service_delete.set_defaults(func=service_delete)
-  _service_delete.add_argument('serviceid', type=str)
+  _service_delete.add_argument('service-id', type=str)
 
   _service_add_perm = _service.add_parser('update-permissions')
   _service_add_perm.set_defaults(func=service_permissions)
-  _service_add_perm.add_argument('serviceid', type=str)
-  _service_add_perm.add_argument('streamid', type=str)
+  _service_add_perm.add_argument('service-id', type=str)
+  _service_add_perm.add_argument('stream-id', type=str)
   _service_add_perm.add_argument('--read', type=str2bool, required=True)
   _service_add_perm.add_argument('--write', type=str2bool, required=True)
 
@@ -471,11 +165,332 @@ if __name__ == '__main__':
   _stream_ext_batches_clear.add_argument('stream', type=str)
   _stream_ext_batches_clear.add_argument('-p', '--project', type=str, required=True)
 
-  # parse the args and call the relevant function
-  args = parser.parse_args()
-  try:
-    func = args.func
-  except AttributeError:
-    parser.error("too few arguments")
-  func(args)
+  return parser
 
+
+def get_client():
+  return Client()
+
+
+def pretty_print_graphql_result(result, fields=None):
+  if fields:
+    result = {k: v for k, v in result.items() if k in fields}
+  pretty = json.dumps(result, indent=True)
+  print(pretty)
+
+
+def str2bool(v):
+  if isinstance(v, bool):
+    return v
+  if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    return True
+  if v.lower() in ('no', 'false', 'f', 'n', '0'):
+    return False
+  raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def auth(args):
+  try:
+    Client(secret=args.secret)
+    config.write_secret(args.secret)
+    print("You have authenticated successfully!")
+  except BeneathError:
+    config.write_secret("")
+    print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
+
+
+def organization_create(args):
+  client = get_client()
+  result = client.create_organization(name=args.name)
+  pretty_print_graphql_result(result)
+
+
+def project_list(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get the user's ID
+  result = client.get_me()
+  user_id = result['userID']
+
+  # submit GraphQL query to get the user's projects
+  result = client.get_user_by_id(user_id)
+  projects = result['projects']
+
+  # print out the projects to the user
+  for project in projects:
+    print(project['name'])
+
+
+def project_create(args):
+  client = get_client()
+  result = client.create_project(
+    name=args.name,
+    display_name=args.display_name,
+    organization_id=args.organization_id,
+    description=args.description,
+    site_url=args.site_url,
+    photo_url=args.photo_url,
+  )
+  pretty_print_graphql_result(result)
+
+
+def project_update(args):
+  client = get_client()
+  project = client.get_project_by_name(args.name)
+  result = client.update_project(
+    project_id=project['projectID'],
+    display_name=args.display_name,
+    description=args.description,
+    site_url=args.site_url,
+    photo_url=args.photo_url,
+  )
+  pretty_print_graphql_result(result)
+
+
+def project_delete(args):
+  client = get_client()
+  project = client.get_project_by_name(args.name)
+  result = client.delete_project(project_id=project['projectID'])
+  pretty_print_graphql_result(result)
+
+
+def service_create(args):
+  client = get_client()
+  result = client.create_service(
+    name=args.name,
+    organization_id=args.organization_id,
+    read_bytes_quota=args.read_bytes_quota,
+    write_bytes_quota=args.write_bytes_quota,
+  )
+  pretty_print_graphql_result(result)
+
+
+def service_update(args):
+  client = get_client()
+  result = client.update_service(
+    service_id=args.service_id,
+    name=args.name,
+    organization_id=args.organization_id,
+    read_bytes_quota=args.read_bytes_quota,
+    write_bytes_quota=args.write_bytes_quota,
+  )
+  pretty_print_graphql_result(result)
+
+
+def service_delete(args):
+  client = get_client()
+  result = client.delete_service(
+    service_id=args.service_id,
+  )
+  pretty_print_graphql_result(result)
+
+
+def service_permissions(args):
+  client = get_client()
+  result = client.update_service_permissions(
+    service_id=args.service_id,
+    stream_id=args.stream_id,
+    read=args.read,
+    write=args.write,
+  )
+  pretty_print_graphql_result(result)
+
+
+def stream_list(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get a project's streams
+  result = client.get_project_by_name(args.project)
+  streams = result['streams']
+
+  # print out the streams to the user
+  for streamname in streams:
+    print(streamname['name'])
+
+  if len(streams) == 0:
+    print("There are no streams currently in this project")
+
+
+def model_init(args):
+  # TODO
+  raise Exception("Not implemented")
+
+
+def model_sim(args):
+  # TODO
+  raise Exception("Not implemented")
+
+
+def model_stage(args):
+  # read config
+  with open("config.json", "r") as f:
+    conf = json.load(f)
+
+  # read schemas
+  def _read_schema(path):
+    with open(path, "r") as f:
+      return f.read()
+  schemas = [_read_schema(p) for p in glob.glob("schemas/*.graphql")]
+
+  # get client
+  client = get_client()
+
+  # get project
+  result = client.get_project_by_name(conf.get("project", None))
+  project_id = result['projectID']
+  project_name = result['name']
+
+  # get input stream IDs
+  input_stream_ids = []
+  for dep in conf.get("dependencies", []):
+    project, stream = dep.split("/")
+    details = client.get_stream_details(project, stream)
+    input_stream_ids.append(details["streamID"])
+
+  # stage model
+  name = conf.get("name", None)
+  if args.update:
+    model = client.get_model_details(project_name, name)
+    result = client.update_model(
+      model_id=model["modelID"],
+      source_url=conf.get("source_url", None),
+      description=conf.get("description", None),
+      input_stream_ids=input_stream_ids,
+      output_stream_schemas=schemas,
+    )
+  else:
+    result = client.create_model(
+      project_id=project_id,
+      name=name,
+      kind=conf.get("kind", None),
+      source_url=conf.get("source_url", None),
+      description=conf.get("description", None),
+      input_stream_ids=input_stream_ids,
+      output_stream_schemas=schemas,
+    )
+
+  # print out model details
+  pretty_print_graphql_result(result)
+
+
+def model_delete(args):
+  with open("config.json", "r") as f:
+    conf = json.load(f)
+
+  client = get_client()
+  model = client.get_model_details(
+    project_name=conf.get("project", None),
+    model_name=conf.get("name", None),
+  )
+
+  result = client.delete_model(model["modelID"])
+  pretty_print_graphql_result(result)
+
+
+def model_deploy(args):
+  # TODO
+  raise Exception("Not implemented")
+
+
+def stream_create_ext(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # submit GraphQL query to get the projectID from the user-supplied projectName
+  result = client.get_project_by_name(args.project)
+  project_id = result['projectID']
+
+  # read schema from the user-supplied file
+  with open(args.file, "r") as f:
+    schema = f.read()
+
+  # submit GraphQL mutation to create an external stream
+  result = client.create_external_stream(project_id=project_id, schema=schema, manual=args.manual, batch=args.batch)
+
+  # print out the stream's details to the user
+  pretty_print_graphql_result(result, [
+    "name",
+    "description",
+    "external",
+    "batch",
+    "manual",
+    "project",
+    "keyFields",
+  ])
+
+
+def stream_update_ext(args):
+  # start client with the secret stored in .beneath/secret
+  client = get_client()
+
+  # get stream id
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+
+  # read schema from the user-supplied file
+  schema = None
+  if args.file:
+    with open(args.file, "r") as f:
+      schema = f.read()
+
+  # submit GraphQL mutation to update stream
+  manual = args.manual
+  result = client.update_external_stream(stream_id, schema, manual)
+
+  # print out the stream's details to the user
+  pretty_print_graphql_result(result, [
+    "name",
+    "description",
+    "external",
+    "batch",
+    "manual",
+    "project",
+    "keyFields",
+  ])
+
+
+def stream_delete_ext(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.delete_external_stream(stream_id)
+  pretty_print_graphql_result(result)
+
+
+def stream_ext_batch_create(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.create_external_stream_batch(stream_id)
+  pretty_print_graphql_result(result)
+
+
+def stream_ext_batch_commit(args):
+  client = get_client()
+  result = client.commit_external_stream_batch(instance_id=args.instance)
+  pretty_print_graphql_result(result)
+
+
+def stream_ext_batches_clear(args):
+  client = get_client()
+  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
+  stream_id = result['streamID']
+  result = client.clear_pending_external_stream_batches(stream_id)
+  pretty_print_graphql_result(result)
+
+
+def get_metrics(args):
+  client = get_client()
+  result = client.get_metrics(
+    entity_ids=args.entity_ids,
+    period=args.period,
+    from_time=args.from_time,
+    until=args.until,
+  )
+  pretty_print_graphql_result(result)
+
+
+if __name__ == '__main__':
+  main()
