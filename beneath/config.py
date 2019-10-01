@@ -16,7 +16,7 @@ else:
   BENEATH_FRONTEND_HOST = "https://beneath.network"
   BENEATH_CONTROL_HOST = "https://control.beneath.network"
   BENEATH_GATEWAY_HOST = "https://data.beneath.network"
-  BENEATH_GATEWAY_HOST_GRPC = "data.beneath.network"
+  BENEATH_GATEWAY_HOST_GRPC = "grpc.data.beneath.network"
 
 
 def read_secret():
