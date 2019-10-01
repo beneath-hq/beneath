@@ -22,7 +22,7 @@ func (r *organizationResolver) OrganizationID(ctx context.Context, obj *entity.O
 
 func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, gqlerror.Errorf("Not allowed to create organization")
 	}
 

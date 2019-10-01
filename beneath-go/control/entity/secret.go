@@ -298,8 +298,8 @@ func (k *Secret) IsAnonymous() bool {
 	return k == nil || k.SecretID == uuid.Nil
 }
 
-// IsPersonal returns true iff the secret gives manage rights on a user
-func (k *Secret) IsPersonal() bool {
+// IsUser returns true iff the secret gives manage rights on a user
+func (k *Secret) IsUser() bool {
 	return k != nil && k.UserID != nil
 }
 

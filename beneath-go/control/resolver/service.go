@@ -42,7 +42,7 @@ func (r *queryResolver) Service(ctx context.Context, serviceID uuid.UUID) (*enti
 
 func (r *mutationResolver) CreateService(ctx context.Context, name string, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) (*entity.Service, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, gqlerror.Errorf("Not allowed to create service")
 	}
 
@@ -57,7 +57,7 @@ func (r *mutationResolver) CreateService(ctx context.Context, name string, organ
 
 func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, organizationID *uuid.UUID, readBytesQuota *int, writeBytesQuota *int) (*entity.Service, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, gqlerror.Errorf("Not allowed to update service")
 	}
 
@@ -102,7 +102,7 @@ func (r *mutationResolver) DeleteService(ctx context.Context, serviceID uuid.UUI
 
 func (r *mutationResolver) UpdateServicePermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read bool, write bool) (*entity.PermissionsServicesStreams, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, gqlerror.Errorf("Not allowed to update service permissions")
 	}
 
