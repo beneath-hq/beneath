@@ -319,3 +319,15 @@ func TestSDL28(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Regexp(t, "field name '__timestamp' is a reserved identifier", err.Error())
 }
+
+func TestSDL29(t *testing.T) {
+	c := NewCompiler(`
+		type TestA @stream(name: "test", key: "a") {
+			a: Int!
+			b: Int!
+		}
+	`)
+	err := c.Compile()
+	assert.Nil(t, err)
+	assert.Equal(t, "test", c.GetStream().Name)
+}
