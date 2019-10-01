@@ -420,7 +420,13 @@ function-naming-style=snake_case
 good-names=i,
            j,
            k,
+           x,
+           y,
+           z,
+           dt,
            ex,
+           tx,
+           me,
            Run,
            _
 
@@ -535,10 +541,10 @@ valid-metaclass-classmethod-first-arg=cls
 [DESIGN]
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=20
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=7
+max-attributes=10
 
 # Maximum number of boolean expressions in an if statement.
 max-bool-expr=5
