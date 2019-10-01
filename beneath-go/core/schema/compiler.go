@@ -339,6 +339,13 @@ func (c *Compiler) parseStream(declaration *Declaration) (*StreamDef, error) {
 	var streamKey []string
 	for _, arg := range a.Arguments {
 		switch arg.Name {
+		case "name":
+			if arg.Value.String != "" {
+				streamName = strings.ReplaceAll(arg.Value.String, "-", "_")
+				if !snakeCaseRegex.MatchString(streamName) {
+					return nil, fmt.Errorf("stream arg 'name' at %v is not a valid stream name (only alphanumeric characters, '-' and '_' allowed)", arg.Pos.String())
+				}
+			}
 		case "key":
 			err := fmt.Errorf("stream arg 'key' at %v is not a string or array of strings", arg.Pos.String())
 			if arg.Value.String != "" {
