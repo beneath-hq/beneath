@@ -1,7 +1,8 @@
-import grpc
 import uuid
-import requests
 import warnings
+
+import grpc
+import requests
 
 from beneath import __version__
 from beneath import config
@@ -15,6 +16,10 @@ class GraphQLError(Exception):
   def __init__(self, message, errors):
     super().__init__(message)
     self.errors = errors
+
+
+class BeneathError(Exception):
+  pass
 
 
 class Client:
@@ -31,12 +36,16 @@ class Client:
     if self.secret is None:
       self.secret = config.read_secret()
     if not isinstance(self.secret, str):
-      raise TypeError("secret must be a string")    
+      raise TypeError("secret must be a string")
+
+    self.channel = None
+    self.request_metadata = None
+    self.stub = None
     self._prepare()
 
 
   def __getstate__(self):
-    return { "secret": self.secret }
+    return {"secret": self.secret}
 
 
   def __setstate__(self, obj):
@@ -70,10 +79,11 @@ class Client:
     pong = self._send_client_ping()
     self._check_pong_status(pong.status)
     if not pong.authenticated:
-      raise Exception("You must authenticate with 'beneath auth'")
+      raise BeneathError("You must authenticate with 'beneath auth'")
 
 
-  def _check_pong_status(self, status):
+  @classmethod
+  def _check_pong_status(cls, status):
     if status == "warning":
       warnings.warn(
         "This version of the Beneath python library will soon be deprecated."
@@ -88,17 +98,28 @@ class Client:
 
   def _query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
-    headers = {"Authorization": "Bearer " + self.secret}
-    response = requests.post(
-      config.BENEATH_CONTROL_HOST + '/graphql', 
-      json={'query': query, 'variables': variables},
-      headers=headers
-    )
+    url = config.BENEATH_CONTROL_HOST + '/graphql'
+    headers = {'Authorization': 'Bearer ' + self.secret}
+    response = requests.post(url, headers=headers, json={
+      'query': query,
+      'variables': variables,
+    })
     response.raise_for_status()
     obj = response.json()
     if 'errors' in obj:
       raise GraphQLError(obj['errors'][0]['message'], obj['errors'])
     return obj['data']
+
+
+  def read_latest(self, instance_id, limit, after):
+    response = self.stub.ReadLatestRecords(
+      gateway_pb2.ReadLatestRecordsRequest(
+        instance_id=instance_id.bytes,
+        limit=limit,
+        after=after,
+      ), metadata=self.request_metadata
+    )
+    return response.records
 
 
   def read_batch(self, instance_id, where, limit, after):
@@ -172,7 +193,9 @@ class Client:
 
   def get_user_by_id(self, user_id):
     result = self._query_control(
-      variables={ "userID": user_id },
+      variables={
+        'userID': user_id,
+      },
       query="""
         query User($userID: UUID!) {
           user(
@@ -201,25 +224,27 @@ class Client:
 
   def get_project_by_name(self, name):
     result = self._query_control(
-        variables={ "name": name },
-        query="""
-          query ProjectByName($name: String!) {
-            projectByName(name: $name) {
-              projectID
-              name
-              displayName
-              site
-              description
-              photoURL
-              createdOn
-              updatedOn
-              users {
-                username
-              }
-              streams {
-                name
-              }
+      variables={
+        'name': name,
+      },
+      query="""
+        query ProjectByName($name: String!) {
+          projectByName(name: $name) {
+            projectID
+            name
+            displayName
+            site
+            description
+            photoURL
+            createdOn
+            updatedOn
+            users {
+              username
             }
+            streams {
+              name
+            }
+          }
         }
       """
     )
@@ -228,7 +253,10 @@ class Client:
 
   def get_model_details(self, project_name, model_name):
     result = self._query_control(
-      variables={"name": model_name, "projectName": project_name},
+      variables={
+        'name': model_name,
+        'projectName': project_name,
+      },
       query="""
         query Model($name: String!, $projectName: String!) {
           model(name: $name, projectName: $projectName) {
@@ -254,39 +282,39 @@ class Client:
     return result['model']
 
 
-  def get_metrics(self, entity_ids, period, from_, until):
+  def get_metrics(self, entity_ids, period, from_time, until):
     result = self._query_control(
-        variables={
-            "entityIDs": entity_ids,
-            "period": period,
-            "from": from_,
-            "until": until,
-        },
-        query="""
-            mutation GetMetrics($entityIDs: [UUID!]!, $period: String!, $from: Time!, $until: Time!) {
-              getMetrics(entityIDs: $entityIDs, period: $period, from: $from, until: $until) {
-                entityID
-                period
-                time
-                readOps
-                readBytes
-                readRecords
-                writeOps
-                writeBytes
-                writeRecords
-              }
-            }
-          """
+      variables={
+        'entityIDs': entity_ids,
+        'period': period,
+        'from': from_time,
+        'until': until,
+      },
+      query="""
+        mutation GetMetrics($entityIDs: [UUID!]!, $period: String!, $from: Time!, $until: Time!) {
+          getMetrics(entityIDs: $entityIDs, period: $period, from: $from, until: $until) {
+            entityID
+            period
+            time
+            readOps
+            readBytes
+            readRecords
+            writeOps
+            writeBytes
+            writeRecords
+          }
+        }
+      """
     )
     return result['getMetrics']
 
 
   def create_organization(self, name):
     result = self._query_control(
-        variables={
-          "name": name,
-        },
-        query="""
+      variables={
+        'name': name,
+      },
+      query="""
         mutation CreateOrganization($name: String!) {
           createOrganization(name: $name) {
             organizationID
@@ -303,12 +331,12 @@ class Client:
   def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
-        "name": name,
-        "displayName": display_name,
-        "organizationID": organization_id,
-        "description": description,
-        "site": site_url,
-        "photoURL": photo_url,
+        'name': name,
+        'displayName': display_name,
+        'organizationID': organization_id,
+        'description': description,
+        'site': site_url,
+        'photoURL': photo_url,
       },
       query="""
         mutation CreateProject($name: String!, $displayName: String!, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
@@ -338,11 +366,11 @@ class Client:
   def update_project(self, project_id, display_name, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
-        "projectID": project_id,
-        "displayName": display_name,
-        "description": description,
-        "site": site_url,
-        "photoURL": photo_url,
+        'projectID': project_id,
+        'displayName': display_name,
+        'description': description,
+        'site': site_url,
+        'photoURL': photo_url,
       },
       query="""
         mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
@@ -363,7 +391,7 @@ class Client:
   def delete_project(self, project_id):
     result = self._query_control(
       variables={
-        "projectID": project_id,
+        'projectID': project_id,
       },
       query="""
         mutation DeleteProject($projectID: UUID!) {
@@ -376,13 +404,13 @@ class Client:
 
   def create_service(self, name, organization_id, read_bytes_quota, write_bytes_quota):
     result = self._query_control(
-        variables={
-            "name": name,
-            "organizationID": organization_id,
-            "readBytesQuota": read_bytes_quota,
-            "writeBytesQuota": write_bytes_quota,
-        },
-        query="""
+      variables={
+        'name': name,
+        'organizationID': organization_id,
+        'readBytesQuota': read_bytes_quota,
+        'writeBytesQuota': write_bytes_quota,
+      },
+      query="""
         mutation CreateService($name: String!, $organizationID: UUID!, $readBytesQuota: Int!, $writeBytesQuota: Int!) {
           createService(name: $name, organizationID: $organizationID, readBytesQuota: $readBytesQuota, writeBytesQuota: $writeBytesQuota) {
             serviceID
@@ -399,14 +427,14 @@ class Client:
 
   def update_service(self, service_id, name, organization_id, read_bytes_quota, write_bytes_quota):
     result = self._query_control(
-        variables={
-            "serviceID": service_id,
-            "name": name,
-            "organizationID": organization_id,
-            "readBytesQuota": read_bytes_quota,
-            "writeBytesQuota": write_bytes_quota,
-        },
-        query="""
+      variables={
+        'serviceID': service_id,
+        'name': name,
+        'organizationID': organization_id,
+        'readBytesQuota': read_bytes_quota,
+        'writeBytesQuota': write_bytes_quota,
+      },
+      query="""
         mutation UpdateService($serviceID: UUID!, $name: String, $organizationID: UUID, $readBytesQuota: Int, $writeBytesQuota: Int) {
           updateService(serviceID: $serviceID, name: $name, organizationID: $organizationID, readBytesQuota: $readBytesQuota, writeBytesQuota: $writeBytesQuota) {
             serviceID
@@ -423,10 +451,10 @@ class Client:
 
   def delete_service(self, service_id):
     result = self._query_control(
-        variables={
-            "serviceID": service_id,
-        },
-        query="""
+      variables={
+        'serviceID': service_id,
+      },
+      query="""
         mutation DeleteService($serviceID: UUID!) {
           deleteService(serviceID: $serviceID)
         }
@@ -437,13 +465,13 @@ class Client:
 
   def update_service_permissions(self, service_id, stream_id, read, write):
     result = self._query_control(
-        variables={
-            "serviceID": service_id,
-            "streamID": stream_id,
-            "read": read,
-            "write": write,
-        },
-        query="""
+      variables={
+        'serviceID': service_id,
+        'streamID': stream_id,
+        'read': read,
+        'write': write,
+      },
+      query="""
         mutation UpdateServicePermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean!, $write: Boolean!) {
           updateServicePermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
             serviceID
@@ -460,14 +488,14 @@ class Client:
   def create_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
     result = self._query_control(
       variables={
-        "input": {
-          "projectID": project_id,
-          "name": name,
-          "kind": kind,
-          "sourceURL": source_url,
-          "description": description,
-          "inputStreamIDs": input_stream_ids,
-          "outputStreamSchemas": output_stream_schemas,
+        'input': {
+          'projectID': project_id,
+          'name': name,
+          'kind': kind,
+          'sourceURL': source_url,
+          'description': description,
+          'inputStreamIDs': input_stream_ids,
+          'outputStreamSchemas': output_stream_schemas,
         },
       },
       query="""
@@ -501,16 +529,16 @@ class Client:
 
   def update_model(self, model_id, source_url, description, input_stream_ids, output_stream_schemas):
     result = self._query_control(
-        variables={
-            "input": {
-                "modelID": model_id,
-                "sourceURL": source_url,
-                "description": description,
-                "inputStreamIDs": input_stream_ids,
-                "outputStreamSchemas": output_stream_schemas,
-            },
+      variables={
+        'input': {
+          'modelID': model_id,
+          'sourceURL': source_url,
+          'description': description,
+          'inputStreamIDs': input_stream_ids,
+          'outputStreamSchemas': output_stream_schemas,
         },
-        query="""
+      },
+      query="""
         mutation UpdateModel($input: UpdateModelInput!) {
           updateModel(input: $input) {
             modelID
@@ -585,15 +613,15 @@ class Client:
       """
     )
     return result['stream']
-    
+
 
   def create_external_stream(self, project_id, schema, manual=False, batch=False):
     result = self._query_control(
       variables={
-        "projectID": project_id,
-        "schema": schema,
-        "batch": batch,
-        "manual": bool(manual),
+        'projectID': project_id,
+        'schema': schema,
+        'batch': batch,
+        'manual': bool(manual),
       },
       query="""
         mutation CreateExternalStream($projectID: UUID!, $schema: String!, $batch: Boolean!, $manual: Boolean!) {
@@ -627,12 +655,12 @@ class Client:
 
 
   def update_external_stream(self, stream_id, schema=None, manual=None):
-    variables = { "streamID": stream_id }
-    if schema != None:
-      variables["schema"] = schema
-    if manual != None:
-      variables["manual"] = bool(manual)
-      
+    variables = {'streamID': stream_id}
+    if schema:
+      variables['schema'] = schema
+    if manual:
+      variables['manual'] = bool(manual)
+
     result = self._query_control(
       variables=variables,
       query="""
@@ -667,7 +695,7 @@ class Client:
   def delete_external_stream(self, stream_id):
     result = self._query_control(
       variables={
-        "streamID": stream_id,
+        'streamID': stream_id,
       },
       query="""
         mutation DeleteExternalStream($streamID: UUID!) {
@@ -680,7 +708,7 @@ class Client:
   def create_external_stream_batch(self, stream_id):
     result = self._query_control(
       variables={
-        "streamID": stream_id,
+        'streamID': stream_id,
       },
       query="""
         mutation CreateExternalStreamBatch($streamID: UUID!) {
@@ -695,7 +723,7 @@ class Client:
   def commit_external_stream_batch(self, instance_id):
     result = self._query_control(
       variables={
-        "instanceID": instance_id,
+        'instanceID': instance_id,
       },
       query="""
         mutation CommitExternalStreamBatch($instanceID: UUID!) {
@@ -708,7 +736,7 @@ class Client:
   def clear_pending_external_stream_batches(self, stream_id):
     result = self._query_control(
       variables={
-        "streamID": stream_id,
+        'streamID': stream_id,
       },
       query="""
         mutation ClearPendingExternalStreamBatches($streamID: UUID!) {
@@ -721,7 +749,7 @@ class Client:
   def create_model_batch(self, model_id):
     result = self._query_control(
       variables={
-        "modelID": model_id,
+        'modelID': model_id,
       },
       query="""
         mutation CreateModelBatch($modelID: UUID!) {
@@ -739,8 +767,8 @@ class Client:
   def commit_model_batch(self, model_id, instance_ids):
     result = self._query_control(
       variables={
-        "modelID": model_id,
-        "instanceIDs": instance_ids,
+        'modelID': model_id,
+        'instanceIDs': instance_ids,
       },
       query="""
         mutation CommitModelBatch($modelID: UUID!, $instanceIDs: [UUID!]!) {
@@ -753,7 +781,7 @@ class Client:
   def clear_pending_model_batches(self, model_id):
     result = self._query_control(
       variables={
-        "modelID": model_id,
+        'modelID': model_id,
       },
       query="""
         mutation ClearPendingModelBatches($modelID: UUID!) {

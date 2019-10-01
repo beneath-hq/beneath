@@ -1,25 +1,36 @@
 import os
 
-READ_BATCH_SIZE = 1000
-MAX_READ_MB = 10
 
+BIGQUERY_PROJECT = "beneath"
 PYTHON_CLIENT_ID = "beneath-python"
 
-BIGQUERY_PROJECT = "beneathcrypto"
+MAX_READ_MB = 10
+READ_BATCH_SIZE = 1000
 
-BENEATH_FRONTEND_HOST = "http://localhost:3000"
-BENEATH_CONTROL_HOST = "http://localhost:4000"
-BENEATH_GATEWAY_HOST = "http://localhost:5000"
-BENEATH_GATEWAY_HOST_GRPC = "localhost:50051"
+if os.environ.get('ENV') == 'development':
+  BENEATH_FRONTEND_HOST = "http://localhost:3000"
+  BENEATH_CONTROL_HOST = "http://localhost:4000"
+  BENEATH_GATEWAY_HOST = "http://localhost:5000"
+  BENEATH_GATEWAY_HOST_GRPC = "localhost:50051"
+else:
+  BENEATH_FRONTEND_HOST = "https://beneath.network"
+  BENEATH_CONTROL_HOST = "https://control.beneath.network"
+  BENEATH_GATEWAY_HOST = "https://data.beneath.network"
+  BENEATH_GATEWAY_HOST_GRPC = "data.beneath.network"
+
 
 def read_secret():
   with open(_secret_file_path(), "r") as f:
     return f.read()
 
 
-def write_secret(SECRET):
-  with open(_secret_file_path(), "w+") as f:
-    return f.write(SECRET)
+def write_secret(secret):
+  with open(_secret_file_path(), "w") as f:
+    return f.write(secret)
+
+
+def _secret_file_path():
+  return os.path.join(_config_dir(), "secret.txt")
 
 
 def _config_dir():
@@ -27,7 +38,3 @@ def _config_dir():
   if not os.path.exists(p):
     os.makedirs(p)
   return p
-
-
-def _secret_file_path():
-  return os.path.join(_config_dir(), "secret.txt")
