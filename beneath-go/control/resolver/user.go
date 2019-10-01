@@ -40,7 +40,7 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*e
 
 func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
 
@@ -50,7 +50,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 
 func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 

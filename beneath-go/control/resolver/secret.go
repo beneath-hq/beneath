@@ -24,7 +24,7 @@ func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (stri
 
 func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsPersonal() {
+	if !secret.IsUser() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
 
@@ -48,7 +48,7 @@ func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UU
 
 func (r *mutationResolver) IssueUserSecret(ctx context.Context, description string) (*gql.NewSecret, error) {
 	authSecret := middleware.GetSecret(ctx)
-	if !authSecret.IsPersonal() {
+	if !authSecret.IsUser() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
 

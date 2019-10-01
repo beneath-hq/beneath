@@ -99,7 +99,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 func logoutHandler(w http.ResponseWriter, r *http.Request) error {
 	secret := middleware.GetSecret(r.Context())
 	if secret != nil {
-		if secret.IsPersonal() {
+		if secret.IsUser() {
 			secret.Revoke(r.Context())
 			log.S.Infow(
 				"control user logout",
