@@ -104,6 +104,11 @@ class Client:
       )
 
 
+  @classmethod
+  def _format_resource_name(cls, name):
+    return name.replace("-", "_")
+
+
   def _query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
     url = config.BENEATH_CONTROL_HOST + '/graphql'
@@ -159,7 +164,7 @@ class Client:
       project (str): Name of the project that contains the stream.
       stream (str): Name of the stream.
     """
-    details = self.get_stream_details(project_name, stream_name)
+    details = self.get_stream_details(self._format_resource_name(project_name), self._format_resource_name(stream_name))
     return Stream(
       client=self,
       project_name=details['project']['name'],
@@ -233,7 +238,7 @@ class Client:
   def get_project_by_name(self, name):
     result = self._query_control(
       variables={
-        'name': name,
+        'name': self._format_resource_name(name),
       },
       query="""
         query ProjectByName($name: String!) {
@@ -263,7 +268,7 @@ class Client:
     result = self._query_control(
       variables={
         'name': model_name,
-        'projectName': project_name,
+        'projectName': self._format_resource_name(project_name),
       },
       query="""
         query Model($name: String!, $projectName: String!) {
@@ -320,7 +325,7 @@ class Client:
   def create_organization(self, name):
     result = self._query_control(
       variables={
-        'name': name,
+        'name': self._format_resource_name(name),
       },
       query="""
         mutation CreateOrganization($name: String!) {
@@ -339,7 +344,7 @@ class Client:
   def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
-        'name': name,
+        'name': self._format_resource_name(name),
         'displayName': display_name,
         'organizationID': organization_id,
         'description': description,
@@ -413,7 +418,7 @@ class Client:
   def create_service(self, name, organization_id, read_bytes_quota, write_bytes_quota):
     result = self._query_control(
       variables={
-        'name': name,
+        'name': self._format_resource_name(name),
         'organizationID': organization_id,
         'readBytesQuota': read_bytes_quota,
         'writeBytesQuota': write_bytes_quota,
@@ -437,7 +442,7 @@ class Client:
     result = self._query_control(
       variables={
         'serviceID': service_id,
-        'name': name,
+        'name': self._format_resource_name(name),
         'organizationID': organization_id,
         'readBytesQuota': read_bytes_quota,
         'writeBytesQuota': write_bytes_quota,
@@ -498,7 +503,7 @@ class Client:
       variables={
         'input': {
           'projectID': project_id,
-          'name': name,
+          'name': self._format_resource_name(name),
           'kind': kind,
           'sourceURL': source_url,
           'description': description,
@@ -592,8 +597,8 @@ class Client:
   def get_stream_details(self, project_name, stream_name):
     result = self._query_control(
       variables={
-        'name': stream_name,
-        'projectName': project_name,
+        'name': self._format_resource_name(stream_name),
+        'projectName': self._format_resource_name(project_name),
       },
       query="""
         query Stream($name: String!, $projectName: String!) {
