@@ -38,7 +38,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
           const { stream } = data;
 
           const tabs = [];
-          tabs.push({ value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> });
+          tabs.push({ value: "lookup", label: "Lookup", render: () => <ExploreStream stream={stream} /> });
 
           if (!stream.batch) {
             tabs.push({
@@ -60,7 +60,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
             <React.Fragment>
               <PageTitle title={`${stream.project.name}/${stream.name}`} />
               <ModelHero name={stream.name} description={stream.description} />
-              <SubrouteTabs defaultValue="explore" tabs={tabs} />
+              <SubrouteTabs defaultValue="lookup" tabs={tabs} />
             </React.Fragment>
           );
         }}
