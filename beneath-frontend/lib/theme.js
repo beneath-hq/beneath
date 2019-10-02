@@ -56,7 +56,7 @@ export default createMuiTheme({
   overrides: {
     MuiButton: {
       root: {
-        borderRadius: 2,
+        borderRadius: "2px",
       },
       sizeLarge: {
         padding: "10px 30px",
