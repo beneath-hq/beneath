@@ -60,15 +60,16 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 	return project, nil
 }
 
-func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, gqlerror.Errorf("Not allowed to create project")
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
 	project := &entity.Project{
 		Name:           name,
-		DisplayName:    displayName,
+		DisplayName:    DereferenceString(displayName),
 		OrganizationID: organizationID,
 		Site:           DereferenceString(site),
 		Description:    DereferenceString(description),

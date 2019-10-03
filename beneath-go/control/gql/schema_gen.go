@@ -89,7 +89,7 @@ type ComplexityRoot struct {
 		CreateModel                       func(childComplexity int, input CreateModelInput) int
 		CreateModelBatch                  func(childComplexity int, modelID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
-		CreateProject                     func(childComplexity int, name string, displayName string, organizationID uuid.UUID, site *string, description *string, photoURL *string) int
+		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) int
 		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) int
 		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
 		DeleteModel                       func(childComplexity int, modelID uuid.UUID) int
@@ -237,7 +237,7 @@ type MutationResolver interface {
 	CommitModelBatch(ctx context.Context, modelID uuid.UUID, instanceIDs []uuid.UUID) (bool, error)
 	ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error)
 	CreateOrganization(ctx context.Context, name string) (*entity.Organization, error)
-	CreateProject(ctx context.Context, name string, displayName string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error)
+	CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error)
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*entity.Project, error)
 	DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error)
 	AddUserToProject(ctx context.Context, email string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error)
@@ -565,7 +565,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["name"].(string), args["displayName"].(string), args["organizationID"].(uuid.UUID), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["name"].(string), args["displayName"].(*string), args["organizationID"].(uuid.UUID), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
 
 	case "Mutation.createService":
 		if e.complexity.Mutation.CreateService == nil {
@@ -1552,7 +1552,7 @@ type Organization {
 }
 
 extend type Mutation {
-  createProject(name: String!, displayName: String!, organizationID: UUID!, site: String, description: String, photoURL: String): Project!
+  createProject(name: String!, displayName: String, organizationID: UUID!, site: String, description: String, photoURL: String): Project!
   updateProject(projectID: UUID!, displayName: String, site: String, description: String, photoURL: String): Project!
   deleteProject(projectID: UUID!): Boolean!
   addUserToProject(email: String!, projectID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): User
@@ -1927,9 +1927,9 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 		}
 	}
 	args["name"] = arg0
-	var arg1 string
+	var arg1 *string
 	if tmp, ok := rawArgs["displayName"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3539,7 +3539,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateProject(rctx, args["name"].(string), args["displayName"].(string), args["organizationID"].(uuid.UUID), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string))
+		return ec.resolvers.Mutation().CreateProject(rctx, args["name"].(string), args["displayName"].(*string), args["organizationID"].(uuid.UUID), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

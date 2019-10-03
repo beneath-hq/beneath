@@ -154,10 +154,10 @@ const Explore = ({ me }) => {
                       <Paper className={classes.paper}>
                         <Grid container wrap="nowrap" spacing={0}>
                           <Grid item className={classes.avatar}>
-                            <Avatar size="list" label={displayName} src={photoURL} />
+                            <Avatar size="list" label={displayName || name} src={photoURL} />
                           </Grid>
                           <Grid item>
-                            <Typography variant="h2">{displayName}</Typography>
+                            <Typography variant="h2">{displayName || name}</Typography>
                             <Typography color="textSecondary" variant="body2" gutterBottom>
                               /projects/{name}
                             </Typography>
