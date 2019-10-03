@@ -65,7 +65,7 @@ def create_argument_parser():
   # service parser and subparsers
   _service = _root.add_parser('service').add_subparsers()
 
-  # TODO
+  #TODO
   # _service_list = _service.add_parser('list')
   # _service_list.set_defaults(func=service_list)
 
@@ -78,7 +78,7 @@ def create_argument_parser():
 
   _service_update = _service.add_parser('update')
   _service_update.set_defaults(func=service_update)
-  _service_update.add_argument('service-id', type=str)
+  _service_update.add_argument('service_id', type=str)
   _service_update.add_argument('--name', type=str)
   _service_update.add_argument('--organization-id', type=str)
   _service_update.add_argument('--read-bytes-quota', type=int)
@@ -86,14 +86,27 @@ def create_argument_parser():
 
   _service_delete = _service.add_parser('delete')
   _service_delete.set_defaults(func=service_delete)
-  _service_delete.add_argument('service-id', type=str)
+  _service_delete.add_argument('service_id', type=str)
 
   _service_add_perm = _service.add_parser('update-permissions')
   _service_add_perm.set_defaults(func=service_permissions)
-  _service_add_perm.add_argument('service-id', type=str)
-  _service_add_perm.add_argument('stream-id', type=str)
+  _service_add_perm.add_argument('service_id', type=str)
+  _service_add_perm.add_argument('stream_id', type=str)
   _service_add_perm.add_argument('--read', type=str2bool, required=True)
   _service_add_perm.add_argument('--write', type=str2bool, required=True)
+
+  _service_issue_secret = _service.add_parser('issue-secret')
+  _service_issue_secret.set_defaults(func=service_issue_secret)
+  _service_issue_secret.add_argument('service_id', type=str)
+  _service_issue_secret.add_argument('--description', type=str, required=True)
+
+  _service_list_secrets = _service.add_parser('list-secrets')
+  _service_list_secrets.set_defaults(func=service_list_secrets)
+  _service_list_secrets.add_argument('service_id', type=str)
+
+  _service_revoke_secret = _service.add_parser('revoke-secret')
+  _service_revoke_secret.set_defaults(func=revoke_secret)
+  _service_revoke_secret.add_argument('secret_id', type=str)
 
   # model parser and subparsers
   _model = _root.add_parser('model').add_subparsers()
@@ -255,6 +268,13 @@ def project_delete(args):
   pretty_print_graphql_result(result)
 
 
+# TODO
+# def service_list(args):
+#   client = get_client()
+#   result = client.list_services(organization_id=args.organization_id)
+#   pretty_print_graphql_result(result)
+
+
 def service_create(args):
   client = get_client()
   result = client.create_service(
@@ -293,6 +313,30 @@ def service_permissions(args):
     stream_id=args.stream_id,
     read=args.read,
     write=args.write,
+  )
+  pretty_print_graphql_result(result)
+
+
+def service_issue_secret(args):
+  client = get_client()
+  result = client.issue_service_secret(
+    service_id=args.service_id,
+    description=args.description,
+  )
+  print("\n" + "Keep your secret safe. You won't be shown it again." + "\n")
+  pretty_print_graphql_result(result)
+
+
+def service_list_secrets(args):
+  client = get_client()
+  result = client.list_service_secrets(service_id=args.service_id)
+  pretty_print_graphql_result(result)
+
+
+def revoke_secret(args):
+  client = get_client()
+  result = client.revoke_secret(
+    secret_id=args.secret_id,
   )
   pretty_print_graphql_result(result)
 
