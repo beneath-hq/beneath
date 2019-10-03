@@ -142,6 +142,15 @@ func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStrea
 	return cachedStream
 }
 
+func (c streamCache) clear(ctx context.Context, instanceID uuid.UUID) {
+	key := c.redisKey(instanceID)
+	c.lru.Remove(key)
+	err := c.codec.Delete(key)
+	if err != nil && err != cache.ErrCacheMiss {
+		panic(err)
+	}
+}
+
 func (c streamCache) cacheTime() time.Duration {
 	return time.Hour
 }

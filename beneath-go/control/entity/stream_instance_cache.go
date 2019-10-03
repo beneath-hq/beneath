@@ -51,6 +51,13 @@ func (c instanceCache) get(ctx context.Context, streamName string, projectName s
 	return instanceID
 }
 
+func (c instanceCache) clear(ctx context.Context, streamName string, projectName string) {
+	err := c.codec.Delete(c.redisKey(streamName, projectName))
+	if err != nil && err != cache.ErrCacheMiss {
+		panic(err)
+	}
+}
+
 func (c instanceCache) cacheTime() time.Duration {
 	return time.Hour
 }
