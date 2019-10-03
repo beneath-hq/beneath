@@ -493,6 +493,57 @@ class Client:
     return result['updateServicePermissions']
 
 
+  def issue_service_secret(self, service_id, description):
+    result = self._query_control(
+      variables={
+        'serviceID': service_id,
+        'description': description,
+      },
+      query="""
+        mutation IssueServiceSecret($serviceID: UUID!, $description: String!) {
+          issueServiceSecret(serviceID: $serviceID, description: $description) {
+            secretString
+          }
+        }
+      """
+    )
+    return result['issueServiceSecret']
+
+
+  def list_service_secrets(self, service_id):
+    result = self._query_control(
+      variables={
+        'serviceID': service_id,
+      },
+      query="""
+        query SecretsForService($serviceID: UUID!) {
+          secretsForService(serviceID: $serviceID) {
+            secretID
+            description
+            prefix
+            createdOn
+            updatedOn
+          }
+        }
+      """
+    )
+    return result['secretsForService']
+
+
+  def revoke_secret(self, secret_id):
+    result = self._query_control(
+      variables={
+        'secretID': secret_id,
+      },
+      query="""
+        mutation RevokeSecret($secretID: UUID!) {
+          revokeSecret(secretID: $secretID)
+        }
+      """
+    )
+    return result['revokeSecret']
+
+
   def create_model(self, project_id, name, kind, source_url, description, input_stream_ids, output_stream_schemas):
     result = self._query_control(
       variables={
