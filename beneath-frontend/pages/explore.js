@@ -134,7 +134,7 @@ const Explore = ({ me }) => {
         <Typography className={classes.exploreTitle} variant="h3" gutterBottom align="center">
           Top projects
           <Typography className={classes.exploreTitleJoke} variant="body2" gutterBottom align="center">
-            ... well, currently the only projects.
+            ... well, currently the only projects
           </Typography>
         </Typography>
         <Query query={EXPLORE_PROJECTS}>
