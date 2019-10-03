@@ -40,3 +40,16 @@ func (o *Organization) Create(ctx context.Context, name string) error {
 		return nil
 	})
 }
+
+// FindOrganizationByName finds a organization by name
+func FindOrganizationByName(ctx context.Context, name string) *Organization {
+	organization := &Organization{}
+	err := db.DB.ModelContext(ctx, organization).
+		Where("lower(organization.name) = lower(?)", name).
+		Column("organization.*", "Services", "Users").
+		Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return organization
+}

@@ -1,3 +1,7 @@
+extend type Query {
+  organizationByName(name: String!): Organization
+}
+
 extend type Mutation {
   createOrganization(name: String!): Organization!
 }
