@@ -70,7 +70,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 // FindProjects returns a sample of projects
 func FindProjects(ctx context.Context) []*Project {
 	var projects []*Project
-	err := db.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Select()
+	err := db.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Select()
 	if err != nil {
 		panic(err)
 	}

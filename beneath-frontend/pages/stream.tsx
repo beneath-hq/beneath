@@ -14,6 +14,7 @@ import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
+import { toBackendName, toURLName } from "../lib/names";
 
 interface IProps {
   router: SingletonRouter;
@@ -21,8 +22,8 @@ interface IProps {
 
 const StreamPage: FC<IProps> = ({ router }) => {
   const variables: QueryStreamVariables = {
-    name: router.query.name as string,
-    projectName: router.query.project_name as string,
+    name: toBackendName(router.query.name as string),
+    projectName: toBackendName(router.query.project_name as string),
   };
   return (
     <Page title="Stream" subheader>
@@ -38,7 +39,7 @@ const StreamPage: FC<IProps> = ({ router }) => {
           const { stream } = data;
 
           const tabs = [];
-          tabs.push({ value: "explore", label: "Explore", render: () => <ExploreStream stream={stream} /> });
+          tabs.push({ value: "lookup", label: "Lookup", render: () => <ExploreStream stream={stream} /> });
 
           if (!stream.batch) {
             tabs.push({
@@ -58,9 +59,9 @@ const StreamPage: FC<IProps> = ({ router }) => {
 
           return (
             <React.Fragment>
-              <PageTitle title={`${stream.project.name}/${stream.name}`} />
-              <ModelHero name={stream.name} description={stream.description} />
-              <SubrouteTabs defaultValue="explore" tabs={tabs} />
+              <PageTitle title={`${toURLName(stream.project.name)}/${toURLName(stream.name)}`} />
+              <ModelHero name={toURLName(stream.name)} description={stream.description} />
+              <SubrouteTabs defaultValue="lookup" tabs={tabs} />
             </React.Fragment>
           );
         }}

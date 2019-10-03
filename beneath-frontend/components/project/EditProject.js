@@ -35,48 +35,71 @@ const EditProject = ({ project }) => {
     <Mutation mutation={UPDATE_PROJECT}>
       {(updateProject, { loading, error }) => (
         <div>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            updateProject({ variables: { projectID: project.projectID, ...values } });
-          }}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateProject({ variables: { projectID: project.projectID, ...values } });
+            }}
           >
-            <TextField id="name" label="Name" value={project.name}
-              margin="normal" fullWidth disabled
-            />
-            <TextField id="displayName" label="Display Name" value={values.displayName}
-              margin="normal" fullWidth required
+            <TextField id="name" label="Name" value={project.name} margin="normal" fullWidth disabled />
+            <TextField
+              id="displayName"
+              label="Display Name"
+              value={values.displayName}
+              margin="normal"
+              fullWidth
+              required
               onChange={handleChange("displayName")}
             />
-            <TextField id="site" label="Site" value={values.site}
-              margin="normal" fullWidth
+            <TextField
+              id="site"
+              label="Site"
+              value={values.site}
+              margin="normal"
+              fullWidth
               onChange={handleChange("site")}
             />
-            <TextField id="description" label="Description" value={values.description}
-              margin="normal" fullWidth
+            <TextField
+              id="description"
+              label="Description"
+              value={values.description}
+              margin="normal"
+              fullWidth
               onChange={handleChange("description")}
             />
-            <TextField id="photoURL" label="Photo Url" value={values.photoURL}
-              margin="normal" fullWidth
+            <TextField
+              id="photoURL"
+              label="Photo Url"
+              value={values.photoURL}
+              margin="normal"
+              fullWidth
               onChange={handleChange("photoURL")}
             />
-            <Button type="submit" variant="outlined" color="primary" className={classes.submitButton}
+            <Button
+              type="submit"
+              variant="outlined"
+              color="primary"
+              className={classes.submitButton}
               disabled={
-                loading
-                || !(values.displayName && values.displayName.length >= 4 && values.displayName.length <= 40)
-                || !(values.site === "" || validator.isUrl(values.site))
-                || !(values.description === "" || values.description.length < 256)
-                || !(values.photoURL === "" || validator.isUrl(values.photoURL))
-              }>
+                loading ||
+                !(values.displayName && values.displayName.length >= 4 && values.displayName.length <= 40) ||
+                !(values.site === "" || validator.isURL(values.site)) ||
+                !(values.description === "" || values.description.length < 256) ||
+                !(values.photoURL === "" || validator.isURL(values.photoURL))
+              }
+            >
               Save changes
             </Button>
             {error && (
-              <Typography variant="body1" color="error">An error occurred: {JSON.stringify(error)}</Typography>
+              <Typography variant="body1" color="error">
+                An error occurred: {JSON.stringify(error)}
+              </Typography>
             )}
           </form>
           <VSpace units={2} />
           <Typography variant="subtitle1" color="textSecondary">
-            The project was created <Moment fromNow date={project.createdOn} /> and
-            last updated <Moment fromNow date={project.updatedOn} />.
+            The project was created <Moment fromNow date={project.createdOn} /> and last updated{" "}
+            <Moment fromNow date={project.updatedOn} />.
           </Typography>
         </div>
       )}

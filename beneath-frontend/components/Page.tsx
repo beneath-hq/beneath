@@ -21,6 +21,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
   },
   content: ({ contentMarginTop }: IStylesProps) => ({
+    marginBottom: theme.spacing(12),
     marginTop: (
       contentMarginTop === "normal"
         ? theme.spacing(6)

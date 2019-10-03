@@ -23,22 +23,26 @@ import Loading from "../components/Loading";
 import Page from "../components/Page";
 import NextMuiLink from "../components/NextMuiLink";
 import withMe from "../hocs/withMe";
+import { toURLName } from "../lib/names";
 
 const useStyles = makeStyles((theme) => ({
   title: {
-    fontSize: theme.typography.pxToRem(48),
+    fontSize: theme.typography.pxToRem(52),
     marginBottom: theme.spacing(5),
   },
   subtitle: {
-    fontSize: theme.typography.pxToRem(24),
-    marginBottom: theme.spacing(8),
+    fontSize: theme.typography.pxToRem(20),
+    marginBottom: theme.spacing(6),
   },
   buttons: {
-    marginBottom: theme.spacing(8),
+    marginBottom: theme.spacing(6),
   },
   exploreTitle: {
     fontSize: theme.typography.pxToRem(24),
     marginBottom: theme.spacing(8),
+  },
+  exploreTitleJoke: {
+    marginTop: theme.spacing(2),
   },
   button: {},
   primaryButton: {},
@@ -76,7 +80,7 @@ const Explore = ({ me }) => {
           <Grid className={classes.buttons} container spacing={2} justify="center">
             <Grid item>
               <Button
-                size="large"
+                size="medium"
                 color="default"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
@@ -87,7 +91,7 @@ const Explore = ({ me }) => {
             </Grid>
             <Grid item>
               <Button
-                size="large"
+                size="medium"
                 color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.primaryButton)}
@@ -128,7 +132,10 @@ const Explore = ({ me }) => {
       </Container>
       <Container maxWidth="lg">
         <Typography className={classes.exploreTitle} variant="h3" gutterBottom align="center">
-          ... or start exploring right away ...
+          Top projects
+          <Typography className={classes.exploreTitleJoke} variant="body2" gutterBottom align="center">
+            ... well, currently the only projects.
+          </Typography>
         </Typography>
         <Query query={EXPLORE_PROJECTS}>
           {({ loading, error, data }) => {
@@ -143,7 +150,7 @@ const Explore = ({ me }) => {
               <Grid container spacing={3} justify="center">
                 {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL }) => (
                   <Grid key={projectID} item lg={4} md={6} xs={12}>
-                    <Link href={`/project?name=${name}`} as={`/projects/${name}`}>
+                    <Link href={`/project?name=${toURLName(name)}`} as={`/projects/${toURLName(name)}`}>
                       <Paper className={classes.paper}>
                         <Grid container wrap="nowrap" spacing={0}>
                           <Grid item className={classes.avatar}>
