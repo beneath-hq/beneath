@@ -13,10 +13,11 @@ import ViewStreams from "../components/project/ViewStreams";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
 import withMe from "../hocs/withMe";
+import { toBackendName, toURLName } from "../lib/names";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" subheader>
-    <Query query={QUERY_PROJECT} variables={{ name: router.query.name }} fetchPolicy="cache-and-network">
+    <Query query={QUERY_PROJECT} variables={{ name: toBackendName(router.query.name) }} fetchPolicy="cache-and-network">
       {({ loading, error, data }) => {
         if (loading) {
           return <Loading justify="center" />;
@@ -28,9 +29,7 @@ const ProjectPage = ({ router, me }) => (
         let project = data.projectByName;
         let isProjectMember = me && project.users.some((user) => user.userID === me.userID);
 
-        let tabs = [
-          { value: "streams", label: "Streams", render: () => <ViewStreams project={project} /> },
-        ];
+        let tabs = [{ value: "streams", label: "Streams", render: () => <ViewStreams project={project} /> }];
         if (isProjectMember) {
           tabs.push({ value: "edit", label: "Edit", render: () => <EditProject project={project} /> });
         }

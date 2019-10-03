@@ -23,6 +23,7 @@ import Loading from "../components/Loading";
 import Page from "../components/Page";
 import NextMuiLink from "../components/NextMuiLink";
 import withMe from "../hocs/withMe";
+import { toURLName } from "../lib/names";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -149,7 +150,7 @@ const Explore = ({ me }) => {
               <Grid container spacing={3} justify="center">
                 {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL }) => (
                   <Grid key={projectID} item lg={4} md={6} xs={12}>
-                    <Link href={`/project?name=${name}`} as={`/projects/${name}`}>
+                    <Link href={`/project?name=${toURLName(name)}`} as={`/projects/${toURLName(name)}`}>
                       <Paper className={classes.paper}>
                         <Grid container wrap="nowrap" spacing={0}>
                           <Grid item className={classes.avatar}>

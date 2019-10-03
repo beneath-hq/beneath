@@ -5,6 +5,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 
+import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import NextMuiLink from "../NextMuiLink";
 
@@ -15,13 +16,15 @@ const ViewStreams = ({ project }) => {
         <ListItem
           key={streamID}
           component={NextMuiLink}
-          as={`/projects/${project.name}/streams/${name}`}
-          href={`/stream?name=${name}&project_name=${project.name}`}
+          as={`/projects/${toURLName(project.name)}/streams/${toURLName(name)}`}
+          href={`/stream?name=${toURLName(name)}&project_name=${toURLName(project.name)}`}
           button
           disableGutters
         >
-          <ListItemAvatar><Avatar size="list" label={external ? "Root" : "Derived"} /></ListItemAvatar>
-          <ListItemText primary={name} secondary={description} />
+          <ListItemAvatar>
+            <Avatar size="list" label={external ? "Root" : "Derived"} />
+          </ListItemAvatar>
+          <ListItemText primary={toURLName(name)} secondary={description} />
         </ListItem>
       ))}
     </List>
