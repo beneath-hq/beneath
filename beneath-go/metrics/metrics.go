@@ -126,6 +126,11 @@ func (b *Broker) commitToTable() error {
 	b.buffer = make(map[uuid.UUID]pb.QuotaUsage)
 	b.mu.Unlock()
 
+	// skip if nothing to upload
+	if len(buf) == 0 {
+		return nil
+	}
+
 	ts := time.Now()
 
 	for id, usage := range buf {
