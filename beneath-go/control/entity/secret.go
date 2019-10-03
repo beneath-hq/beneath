@@ -305,17 +305,32 @@ func (k *Secret) IsUser() bool {
 
 // StreamPermissions returns the secret's permissions for a given stream
 func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, external bool) StreamPermissions {
-	return StreamPermissions{true, true}
+	if k.ServiceID != nil {
+		return CachedServiceStreamPermissions(ctx, *k.ServiceID, streamID)
+	} else if k.UserID != nil {
+		projectPerms := CachedUserProjectPermissions(ctx, *k.UserID, projectID)
+		return StreamPermissions{
+			Read:  projectPerms.View,
+			Write: projectPerms.Create,
+		}
+	}
+	panic("expected k.ServiceID or k.UserID to be set")
 }
 
 // ProjectPermissions returns the secret's permissions for a given project
 func (k *Secret) ProjectPermissions(ctx context.Context, projectID uuid.UUID) ProjectPermissions {
-	return ProjectPermissions{true, true, true}
+	if k.UserID != nil {
+		return CachedUserProjectPermissions(ctx, *k.UserID, projectID)
+	}
+	panic("expected k.UserID to be set")
 }
 
 // OrganizationPermissions returns the secret's permissions for a given organization
 func (k *Secret) OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions {
-	return OrganizationPermissions{true, true}
+	if k.UserID != nil {
+		return CachedUserOrganizationPermissions(ctx, *k.UserID, organizationID)
+	}
+	panic("expected k.UserID to be set")
 }
 
 // ManagesModelBatches returns true if the secret can manage model batches
