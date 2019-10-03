@@ -5,7 +5,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemText from "@material-ui/core/ListItemText";
 
-import { toURLName } from "../lib/names";
+import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import NextMuiLink from "../NextMuiLink";
 
