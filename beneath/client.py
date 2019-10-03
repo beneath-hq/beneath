@@ -264,6 +264,40 @@ class Client:
     return result['projectByName']
 
 
+  def get_organization_by_name(self, name):
+    result = self._query_control(
+      variables={
+        'name': self._format_resource_name(name),
+      },
+      query="""
+        query OrganizationByName($name: String!) {
+          organizationByName(name: $name) {
+            organizationID
+            name
+            createdOn
+            updatedOn
+            services {
+              serviceID
+              name
+              kind
+              readBytesQuota
+              writeBytesQuota
+            }
+            users {
+              userID
+              username
+              name
+              createdOn
+              readQuota
+              writeQuota
+            }
+          }
+        }
+      """
+    )
+    return result['organizationByName']
+
+
   def get_model_details(self, project_name, model_name):
     result = self._query_control(
       variables={

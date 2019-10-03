@@ -35,6 +35,10 @@ def create_argument_parser():
   _organization_create.set_defaults(func=organization_create)
   _organization_create.add_argument('name', type=str)
 
+  _organization_info = _organization.add_parser('info')
+  _organization_info.set_defaults(func=organization_info)
+  _organization_info.add_argument('--name', type=str, required=True)
+
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
 
@@ -65,9 +69,9 @@ def create_argument_parser():
   # service parser and subparsers
   _service = _root.add_parser('service').add_subparsers()
 
-  #TODO
-  # _service_list = _service.add_parser('list')
-  # _service_list.set_defaults(func=service_list)
+  _service_list = _service.add_parser('list')
+  _service_list.set_defaults(func=service_list)
+  _service_list.add_argument('--organization-name', type=str, required=True)
 
   _service_create = _service.add_parser('create')
   _service_create.set_defaults(func=service_create)
@@ -218,6 +222,12 @@ def organization_create(args):
   pretty_print_graphql_result(result)
 
 
+def organization_info(args):
+  client = get_client()
+  result = client.get_organization_by_name(name=args.name)
+  pretty_print_graphql_result(result)
+
+
 def project_list(args):
   # start client with the secret stored in .beneath/secret
   client = get_client()
@@ -268,11 +278,12 @@ def project_delete(args):
   pretty_print_graphql_result(result)
 
 
-# TODO
-# def service_list(args):
-#   client = get_client()
-#   result = client.list_services(organization_id=args.organization_id)
-#   pretty_print_graphql_result(result)
+def service_list(args):
+  client = get_client()
+  result = client.get_organization_by_name(name=args.organization_name)
+  services = result['services']
+  for service in services:
+    pretty_print_graphql_result(service)
 
 
 def service_create(args):
