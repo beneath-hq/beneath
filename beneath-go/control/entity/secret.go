@@ -322,7 +322,7 @@ func (k *Secret) ProjectPermissions(ctx context.Context, projectID uuid.UUID) Pr
 	if k.UserID != nil {
 		return CachedUserProjectPermissions(ctx, *k.UserID, projectID)
 	}
-	panic("expected k.UserID to be set")
+	return ProjectPermissions{}
 }
 
 // OrganizationPermissions returns the secret's permissions for a given organization
@@ -330,7 +330,7 @@ func (k *Secret) OrganizationPermissions(ctx context.Context, organizationID uui
 	if k.UserID != nil {
 		return CachedUserOrganizationPermissions(ctx, *k.UserID, organizationID)
 	}
-	panic("expected k.UserID to be set")
+	return OrganizationPermissions{}
 }
 
 // ManagesModelBatches returns true if the secret can manage model batches
