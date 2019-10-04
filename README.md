@@ -14,7 +14,12 @@ Beneath is just entering public beta, so there's bound to be some rough edges. B
 ### Developing the library
 
 - Make sure Python 3 is installed and available as `python3`
-- Initialize and source the Python virtual environment with `./init-venv.sh`
+- Initialize and source the Python virtual environment with:
+
+    python3 -m venv .env
+    source .env/bin/activate
+    pip install -r requirements.txt
+
 - Run tests with `pytest` (though it's sparse on tests at moment)
 - Run `deactivate` to exit the virtual environment and `source .env/bin/activate` to re-activate it
 - For use in VS Code, open `beneath-python` as a workspace root folder. Press `CMD+Shift+P`, search for `Python: Select Interpreter`, and select the Python 3 executable in the `.env` virtual environment.
