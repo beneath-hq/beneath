@@ -7,7 +7,9 @@ PYTHON_CLIENT_ID = "beneath-python"
 MAX_READ_MB = 10
 READ_BATCH_SIZE = 1000
 
-if os.environ.get('ENV') == 'development':
+DEV = os.environ.get('ENV') in ['dev', 'development']
+
+if DEV:
   BENEATH_FRONTEND_HOST = "http://localhost:3000"
   BENEATH_CONTROL_HOST = "http://localhost:4000"
   BENEATH_GATEWAY_HOST = "http://localhost:5000"
@@ -30,7 +32,8 @@ def write_secret(secret):
 
 
 def _secret_file_path():
-  return os.path.join(_config_dir(), "secret.txt")
+  name = "secret_dev.txt" if DEV else "secret.txt"
+  return os.path.join(_config_dir(), name)
 
 
 def _config_dir():
