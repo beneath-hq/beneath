@@ -23,26 +23,27 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 
 	// if until is not provided, set to 0 (metrics.GetUsage sets this to the current time)
 	if until == nil {
-		until := time.Time{}
-	} else {
-		until := &until
+		until = &time.Time{}
 	}
 
-	usagePackets := metrics.GetUsage(ctx, serviceID, period, from, until)
-	metrics := make([]*gql.Metrics, len(usagePackets))
+	timePeriods, usagePackets, err := metrics.GetUsage(ctx, streamID, period, from, *until)
+	if err != nil {
+		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
+	}
 
 	// unpack usagePackets and craft output
+	metrics := make([]*gql.Metrics, len(usagePackets))
 	for i, usage := range usagePackets {
-		metrics[i] = *gql.Metrics{
+		metrics[i] = &gql.Metrics{
 			EntityID:     streamID,
 			Period:       period,
-			Time:         from,
-			ReadOps:      usage.ReadOps,
-			ReadBytes:    usage.ReadBytes,
-			ReadRecords:  usage.ReadRecords,
-			WriteOps:     usage.WriteOps,
-			WriteBytes:   usage.WriteBytes,
-			WriteRecords: usage.WriteRecords,
+			Time:         timePeriods[i],
+			ReadOps:      int(usage.ReadOps),
+			ReadBytes:    int(usage.ReadBytes),
+			ReadRecords:  int(usage.ReadRecords),
+			WriteOps:     int(usage.WriteOps),
+			WriteBytes:   int(usage.WriteBytes),
+			WriteRecords: int(usage.WriteRecords),
 		}
 	}
 
@@ -54,33 +55,34 @@ func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, pe
 	secret := middleware.GetSecret(ctx)
 	user := entity.FindUser(ctx, userID)
 
-	perms := secret.OrganizationPermissions(ctx, user.OrganizationID)
+	perms := secret.OrganizationPermissions(ctx, *user.MainOrganizationID)
 	if !perms.View {
 		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
 	}
 
 	// if until is not provided, set to 0 (metrics.GetUsage sets this to the current time)
 	if until == nil {
-		until := time.Time{}
-	} else {
-		until := &until
+		until = &time.Time{}
 	}
 
-	metricsPackets := metrics.GetUsage(ctx, serviceID, period, from, until)
-	metrics := make([]*gql.Metrics, len(metricsPackets))
+	timePeriods, usagePackets, err := metrics.GetUsage(ctx, userID, period, from, *until)
+	if err != nil {
+		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
+	}
 
-	// unpack metricsPackets and craft output
-	for i, usage := range metricsPackets {
-		metrics[i] = *gql.Metrics{
-			EntityID:     serviceID,
+	// unpack usagePackets and craft output
+	metrics := make([]*gql.Metrics, len(usagePackets))
+	for i, usage := range usagePackets {
+		metrics[i] = &gql.Metrics{
+			EntityID:     userID,
 			Period:       period,
-			Time:         from,
-			ReadOps:      usage.ReadOps,
-			ReadBytes:    usage.ReadBytes,
-			ReadRecords:  usage.ReadRecords,
-			WriteOps:     usage.WriteOps,
-			WriteBytes:   usage.WriteBytes,
-			WriteRecords: usage.WriteRecords,
+			Time:         timePeriods[i],
+			ReadOps:      int(usage.ReadOps),
+			ReadBytes:    int(usage.ReadBytes),
+			ReadRecords:  int(usage.ReadRecords),
+			WriteOps:     int(usage.WriteOps),
+			WriteBytes:   int(usage.WriteBytes),
+			WriteRecords: int(usage.WriteRecords),
 		}
 	}
 
@@ -99,26 +101,27 @@ func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UU
 
 	// if until is not provided, set to 0 (metrics.GetUsage sets this to the current time)
 	if until == nil {
-		until := time.Time{}
-	} else {
-		until := &until
+		until = &time.Time{}
 	}
 
-	metricsPackets := metrics.GetUsage(ctx, serviceID, period, from, until)
-	metrics := make([]*gql.Metrics, len(metricsPackets))
+	timePeriods, usagePackets, err := metrics.GetUsage(ctx, serviceID, period, from, *until)
+	if err != nil {
+		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
+	}
 
-	// unpack metricsPackets and craft output
-	for i, usage := range metricsPackets {
-		metrics[i] = *gql.Metrics{
+	// unpack usagePackets and craft output
+	metrics := make([]*gql.Metrics, len(usagePackets))
+	for i, usage := range usagePackets {
+		metrics[i] = &gql.Metrics{
 			EntityID:     serviceID,
 			Period:       period,
-			Time:         from,
-			ReadOps:      usage.ReadOps,
-			ReadBytes:    usage.ReadBytes,
-			ReadRecords:  usage.ReadRecords,
-			WriteOps:     usage.WriteOps,
-			WriteBytes:   usage.WriteBytes,
-			WriteRecords: usage.WriteRecords,
+			Time:         timePeriods[i],
+			ReadOps:      int(usage.ReadOps),
+			ReadBytes:    int(usage.ReadBytes),
+			ReadRecords:  int(usage.ReadRecords),
+			WriteOps:     int(usage.WriteOps),
+			WriteBytes:   int(usage.WriteBytes),
+			WriteRecords: int(usage.WriteRecords),
 		}
 	}
 

@@ -246,6 +246,24 @@ func metricsKey(period string, id uuid.UUID, ts time.Time) []byte {
 	return append(metricsKeyPrefix(period, id), timeEncoded...)
 }
 
+// decodeMetricsKey decodes the binary representation of the key
+func decodeMetricsKey(key []byte) (period string, id uuid.UUID, ts time.Time) {
+	period = string(key[0])
+
+	id, err := uuid.FromBytes(key[1:17])
+	if err != nil {
+		panic(err)
+	}
+
+	tup, err := tuple.Unpack(key[17:])
+	if err != nil {
+		panic(err)
+	}
+	ts = time.Unix(tup[0].(int64), 0)
+
+	return period, id, ts
+}
+
 // MonthlyTimeFloor returns the timestamp rounded down to the nearest month
 func MonthlyTimeFloor(ts time.Time) time.Time {
 	return time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, 0, time.UTC)

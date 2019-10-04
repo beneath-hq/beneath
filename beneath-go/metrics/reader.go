@@ -11,7 +11,7 @@ import (
 )
 
 // GetUsage returns metrics packets for the given length of time
-func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.Time, until time.Time) ([]pb.QuotaUsage, error) {
+func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.Time, until time.Time) ([]time.Time, []pb.QuotaUsage, error) {
 	// if "until" is 0 (it wasn't provided), set it to the current time
 	if until.IsZero() {
 		if period == HourlyPeriod {
@@ -26,18 +26,18 @@ func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 	// check that the provided time range corresponds to keys in the table
 	if period == HourlyPeriod {
 		if (from != HourlyTimeFloor(from)) || (until != HourlyTimeFloor(until)) {
-			return nil, fmt.Errorf("the provided time range must be exactly hourly")
+			return nil, nil, fmt.Errorf("the provided times must be the exact beginning of the hour")
 		}
 	} else if period == MonthlyPeriod {
 		if (from != MonthlyTimeFloor(from)) || (until != MonthlyTimeFloor(until)) {
-			return nil, fmt.Errorf("the provided time range must be exactly monthly")
+			return nil, nil, fmt.Errorf("the provided times must be the exact beginning of the month")
 		}
 	}
 
 	// prevent the retrieval of too many packets at once
 	numPeriods := countPeriods(period, from, until)
 	if numPeriods > 100 {
-		return nil, fmt.Errorf("the given length of time is too long")
+		return nil, nil, fmt.Errorf("the given length of time is too long")
 	}
 
 	// create key range
@@ -46,9 +46,11 @@ func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 
 	// read usage table and collect usage metrics
 	usagePackets := make([]pb.QuotaUsage, numPeriods)
+	timePeriods := make([]time.Time, numPeriods)
 	counter := 0
 	err := db.Engine.Tables.ReadUsageRange(ctx, fromKey, toKey, func(key []byte, u pb.QuotaUsage) error {
 		usagePackets[counter] = u
+		_, _, timePeriods[counter] = decodeMetricsKey(key)
 		counter++
 		return nil
 	})
@@ -56,7 +58,19 @@ func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 		panic(fmt.Errorf("Error reading from Metrics table: %s", err.Error()))
 	}
 
-	return usagePackets, nil
+	// get rid of empty usagePackets
+	idx := 0
+	for i, v := range usagePackets {
+		if (v.ReadOps > 0) || (v.WriteOps > 0) {
+			usagePackets[idx] = v
+			timePeriods[idx] = timePeriods[i]
+			idx++
+		}
+	}
+	usagePackets = usagePackets[:idx]
+	timePeriods = timePeriods[:idx]
+
+	return timePeriods, usagePackets, nil
 }
 
 func countPeriods(period string, from time.Time, until time.Time) int {
