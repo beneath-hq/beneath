@@ -329,31 +329,33 @@ class Client:
     return result['model']
 
 
-  def get_metrics(self, entity_ids, period, from_time, until):
+  def get_usage(self, user_id, period, from_time, until_time):
     result = self._query_control(
       variables={
-        'entityIDs': entity_ids,
+        'userID': user_id,
         'period': period,
         'from': from_time,
-        'until': until,
+        'until': until_time,
       },
       query="""
-        mutation GetMetrics($entityIDs: [UUID!]!, $period: String!, $from: Time!, $until: Time!) {
-          getMetrics(entityIDs: $entityIDs, period: $period, from: $from, until: $until) {
-            entityID
-            period
-            time
-            readOps
-            readBytes
-            readRecords
-            writeOps
-            writeBytes
-            writeRecords
+        query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
+          getUserMetrics(userID: $userID, period: $period, from: $from, until: $until) {
+            metrics {
+              entityID
+              period
+              time
+              readOps
+              readBytes
+              readRecords
+              writeOps
+              writeBytes
+              writeRecords
+            }
           }
         }
       """
     )
-    return result['getMetrics']
+    return result['getUserMetrics']
 
 
   def create_organization(self, name):
