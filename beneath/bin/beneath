@@ -536,16 +536,5 @@ def stream_ext_batches_clear(args):
   pretty_print_graphql_result(result)
 
 
-def get_metrics(args):
-  client = get_client()
-  result = client.get_metrics(
-    entity_ids=args.entity_ids,
-    period=args.period,
-    from_time=args.from_time,
-    until=args.until,
-  )
-  pretty_print_graphql_result(result)
-
-
 if __name__ == '__main__':
   main()

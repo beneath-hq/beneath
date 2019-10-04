@@ -2,6 +2,7 @@ import os
 import uuid
 import warnings
 
+from datetime import datetime
 import grpc
 import requests
 
@@ -88,22 +89,22 @@ class Client:
 
   def _check_auth_and_version(self):
     pong = self._send_client_ping()
-    self._check_pong_status(pong.status)
+    self._check_pong_status(pong)
     if not pong.authenticated:
       raise BeneathError("You must authenticate with 'beneath auth'")
 
 
   @classmethod
-  def _check_pong_status(cls, status):
-    if status == "warning":
+  def _check_pong_status(cls, pong):
+    if pong.status == "warning":
       warnings.warn(
-        "This version of the Beneath python library will soon be deprecated."
-        "Update with 'pip install --upgrade beneath'."
+        "This version ({}) of the Beneath python library will soon be deprecated (recommended: {}). "
+        "Update with 'pip install --upgrade beneath'.".format(__version__, pong.recommended_version)
       )
-    elif status == "deprecated":
+    elif pong.status == "deprecated":
       raise Exception(
-        "This version of the Beneath python library is out-of-date."
-        "Update with 'pip install --upgrade beneath' to continue."
+        "This version ({}) of the Beneath python library is out-of-date (recommended: {}). "
+        "Update with 'pip install --upgrade beneath' to continue.".format(__version__, pong.recommended_version)
       )
 
 
@@ -332,17 +333,20 @@ class Client:
     return result['model']
 
 
-  def get_metrics(self, entity_ids, period, from_time, until):
+  # or should this leverage "GetCurrentUsage"???
+  def get_usage(self, user_id, period=None, from_time=None, until=None):
+    today = datetime.today()
+    month_today = datetime(today.year, today.month, 1)
     result = self._query_control(
       variables={
-        'entityIDs': entity_ids,
-        'period': period,
-        'from': from_time,
-        'until': until,
+        'userID': user_id,
+        'period': period if period else 'M',
+        'from': from_time.isoformat() if from_time else month_today.isoformat(),
+        'until': until.isoformat() if until else None
       },
       query="""
-        mutation GetMetrics($entityIDs: [UUID!]!, $period: String!, $from: Time!, $until: Time!) {
-          getMetrics(entityIDs: $entityIDs, period: $period, from: $from, until: $until) {
+        query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
+          getUserMetrics(userID: $userID, period: $period, from: $from, until: $until) {
             entityID
             period
             time
@@ -356,7 +360,7 @@ class Client:
         }
       """
     )
-    return result['getMetrics']
+    return result['getUserMetrics']
 
 
   def create_organization(self, name):
