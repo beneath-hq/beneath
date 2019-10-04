@@ -110,11 +110,6 @@ class Client:
     return name.replace("-", "_")
 
 
-  @classmethod
-  def _datetime_to_ms(cls, dt):
-    return int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
-
-
   def _query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
     url = config.BENEATH_CONTROL_HOST + '/graphql'
@@ -337,14 +332,14 @@ class Client:
 
   # or should this leverage "GetCurrentUsage"???
   def get_usage(self, user_id, period=None, from_time=None, until=None):
-    period = period if period else 'M'
-    from_time = self._datetime_to_ms(from_time) if from_time else  # TODO: get beginning of current month
-    until = self._datetime_to_ms(until) if until else None
+    today = datetime.today()
+    month_today = datetime(today.year, today.month, 1)
     result = self._query_control(
       variables={
         'userID': user_id,
-        'period': 'M',
-        'from': str(round((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds()))
+        'period': period if period else 'M',
+        'from': from_time.isoformat() if from_time else month_today.isoformat(),
+        'until': until.isoformat() if until else None
       },
       query="""
         query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
