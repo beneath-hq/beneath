@@ -157,7 +157,7 @@ const Explore = ({ me }) => {
                             <Avatar size="list" label={displayName || name} src={photoURL} />
                           </Grid>
                           <Grid item>
-                            <Typography variant="h2">{displayName || name}</Typography>
+                            <Typography variant="h2">{displayName || toURLName(name)}</Typography>
                             <Typography color="textSecondary" variant="body2" gutterBottom>
                               /projects/{toURLName(name)}
                             </Typography>
