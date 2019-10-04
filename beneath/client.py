@@ -388,7 +388,7 @@ class Client:
         'photoURL': photo_url,
       },
       query="""
-        mutation CreateProject($name: String!, $displayName: String!, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
+        mutation CreateProject($name: String!, $displayName: String, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
           createProject(name: $name, displayName: $displayName, organizationID: $organizationID, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             name

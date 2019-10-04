@@ -48,7 +48,7 @@ def create_argument_parser():
   _project_create = _project.add_parser('create')
   _project_create.set_defaults(func=project_create)
   _project_create.add_argument('name', type=str)
-  _project_create.add_argument('--display-name', type=str, required=True)
+  _project_create.add_argument('--display-name', type=str)
   _project_create.add_argument('--organization-id', type=str, required=True)
   _project_create.add_argument('--description', type=str)
   _project_create.add_argument('--site-url', type=str)
