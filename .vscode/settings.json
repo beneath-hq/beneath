@@ -12,7 +12,7 @@
   "python.formatting.provider": "yapf",
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
-  "python.pythonPath": ".env/bin/python3",
+  "python.pythonPath": ".env/bin/python",
   "python.testing.unittestArgs": [
     "-v",
     "-s",
