@@ -12,7 +12,7 @@ with open('beneath/_version.py', 'r') as f:
       break
 
 setuptools.setup(
-  name="beneath-python",
+  name="beneath",
   version=VERSION,
   author="Beneath Systems",
   author_email="hello@beneath.network",
@@ -26,7 +26,7 @@ setuptools.setup(
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
   ],
-  scripts=['bin/beneath'],
+  scripts=['beneath/bin/beneath'],
   install_requires=[
     'apache_beam[gpc]>=2.14.0',
     'argparse>=1.1',

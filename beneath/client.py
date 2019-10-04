@@ -1,6 +1,7 @@
 import uuid
 import warnings
 
+from datetime import datetime
 import grpc
 import requests
 
@@ -85,28 +86,33 @@ class Client:
 
   def _check_auth_and_version(self):
     pong = self._send_client_ping()
-    self._check_pong_status(pong.status)
+    self._check_pong_status(pong)
     if not pong.authenticated:
       raise BeneathError("You must authenticate with 'beneath auth'")
 
 
   @classmethod
-  def _check_pong_status(cls, status):
-    if status == "warning":
+  def _check_pong_status(cls, pong):
+    if pong.status == "warning":
       warnings.warn(
-        "This version of the Beneath python library will soon be deprecated."
-        "Update with 'pip install --upgrade beneath'."
+        "This version ({}) of the Beneath python library will soon be deprecated (recommended: {}). "
+        "Update with 'pip install --upgrade beneath'.".format(__version__, pong.recommended_version)
       )
-    elif status == "deprecated":
+    elif pong.status == "deprecated":
       raise Exception(
-        "This version of the Beneath python library is out-of-date."
-        "Update with 'pip install --upgrade beneath' to continue."
+        "This version ({}) of the Beneath python library is out-of-date (recommended: {}). "
+        "Update with 'pip install --upgrade beneath' to continue.".format(__version__, pong.recommended_version)
       )
 
 
   @classmethod
   def _format_resource_name(cls, name):
     return name.replace("-", "_")
+
+
+  @classmethod
+  def _datetime_to_ms(cls, dt):
+    return int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
 
 
   def _query_control(self, query, variables):
@@ -329,28 +335,29 @@ class Client:
     return result['model']
 
 
-  def get_usage(self, user_id, period, from_time, until_time):
+  # or should this leverage "GetCurrentUsage"???
+  def get_usage(self, user_id, period=None, from_time=None, until=None):
+    period = period if period else 'M'
+    from_time = self._datetime_to_ms(from_time) if from_time else  # TODO: get beginning of current month
+    until = self._datetime_to_ms(until) if until else None
     result = self._query_control(
       variables={
         'userID': user_id,
-        'period': period,
-        'from': from_time,
-        'until': until_time,
+        'period': 'M',
+        'from': str(round((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds()))
       },
       query="""
         query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
           getUserMetrics(userID: $userID, period: $period, from: $from, until: $until) {
-            metrics {
-              entityID
-              period
-              time
-              readOps
-              readBytes
-              readRecords
-              writeOps
-              writeBytes
-              writeRecords
-            }
+            entityID
+            period
+            time
+            readOps
+            readBytes
+            readRecords
+            writeOps
+            writeBytes
+            writeRecords
           }
         }
       """
