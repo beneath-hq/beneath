@@ -417,19 +417,20 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=i,
+good-names=f,
+           i,
            j,
            k,
+           p,
+           v,
            x,
            y,
            z,
-           f,
-           p,
-           v,
            dt,
            ex,
-           tx,
            me,
+           ms,
+           tx,
            Run,
            _
 
