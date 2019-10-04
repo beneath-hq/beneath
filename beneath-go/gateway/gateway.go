@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"strings"
+
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/metrics"
@@ -39,4 +41,8 @@ func init() {
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
+}
+
+func toBackendName(s string) string {
+	return strings.ReplaceAll(s, "-", "_")
 }

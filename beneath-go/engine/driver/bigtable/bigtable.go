@@ -264,7 +264,17 @@ func (p *Bigtable) ReadLatestRecords(ctx context.Context, instanceID uuid.UUID, 
 
 // ClearRecords implements engine.TablesDriver
 func (p *Bigtable) ClearRecords(ctx context.Context, instanceID uuid.UUID) error {
-	return p.Admin.DropRowRange(ctx, recordsTableName, string(instanceID[:]))
+	err := p.Admin.DropRowRange(ctx, recordsTableName, string(instanceID[:]))
+	if err != nil {
+		return err
+	}
+
+	err = p.Admin.DropRowRange(ctx, latestTableName, string(instanceID[:]))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CommitUsage implements engine.TablesDriver

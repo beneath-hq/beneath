@@ -48,7 +48,6 @@ const EditProject = ({ project }) => {
               value={values.displayName}
               margin="normal"
               fullWidth
-              required
               onChange={handleChange("displayName")}
             />
             <TextField
@@ -82,7 +81,7 @@ const EditProject = ({ project }) => {
               className={classes.submitButton}
               disabled={
                 loading ||
-                !(values.displayName && values.displayName.length >= 4 && values.displayName.length <= 40) ||
+                !(values.displayName.length <= 40) ||
                 !(values.site === "" || validator.isURL(values.site)) ||
                 !(values.description === "" || values.description.length < 256) ||
                 !(values.photoURL === "" || validator.isURL(values.photoURL))

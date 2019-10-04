@@ -83,6 +83,10 @@ func ListenAndServeGRPC(port int) error {
 type gRPCServer struct{}
 
 func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetailsRequest) (*pb.StreamDetailsResponse, error) {
+	// to backend names
+	req.StreamName = toBackendName(req.StreamName)
+	req.ProjectName = toBackendName(req.ProjectName)
+
 	// set query (for logging)
 	middleware.SetTagsQuery(ctx,
 		"stream", req.StreamName,

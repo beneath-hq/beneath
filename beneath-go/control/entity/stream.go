@@ -202,6 +202,21 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 		return err
 	}
 
+	// get instances
+	if len(s.StreamInstances) == 0 {
+		err := tx.Model((*StreamInstance)(nil)).
+			Where("stream_id = ?", s.StreamID).
+			Select(&s.StreamInstances)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Clear stream cache
+	for _, si := range s.StreamInstances {
+		getStreamCache().clear(tx.Context(), si.StreamInstanceID)
+	}
+
 	// update in bigquery
 	if s.CurrentStreamInstanceID != nil {
 		err = db.Engine.Warehouse.UpdateStreamInstance(
@@ -360,6 +375,9 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 	if err != nil {
 		return err
 	}
+
+	// clear instance cache in redis
+	getInstanceCache().clear(tx.Context(), s.Name, s.Project.Name)
 
 	// call on warehouse
 	err = db.Engine.Warehouse.PromoteStreamInstance(

@@ -94,7 +94,7 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 // FindUserByUsername returns user with username (if exists)
 func FindUserByUsername(ctx context.Context, username string) *User {
 	user := &User{}
-	err := db.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Select()
+	err := db.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Relation("Projects").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}

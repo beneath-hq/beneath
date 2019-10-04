@@ -18,7 +18,7 @@ import (
 type Project struct {
 	ProjectID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name           string    `sql:",notnull",validate:"required,gte=3,lte=16"`
-	DisplayName    string    `sql:",notnull",validate:"required,gte=3,lte=40"`
+	DisplayName    string    `validate:"omitempty,lte=40"`
 	Site           string    `validate:"omitempty,url,lte=255"`
 	Description    string    `validate:"omitempty,lte=255"`
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`

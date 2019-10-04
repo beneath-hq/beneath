@@ -134,7 +134,7 @@ const Explore = ({ me }) => {
         <Typography className={classes.exploreTitle} variant="h3" gutterBottom align="center">
           Top projects
           <Typography className={classes.exploreTitleJoke} variant="body2" gutterBottom align="center">
-            ... well, currently the only projects.
+            ... well, currently the only projects
           </Typography>
         </Typography>
         <Query query={EXPLORE_PROJECTS}>
@@ -154,12 +154,12 @@ const Explore = ({ me }) => {
                       <Paper className={classes.paper}>
                         <Grid container wrap="nowrap" spacing={0}>
                           <Grid item className={classes.avatar}>
-                            <Avatar size="list" label={displayName} src={photoURL} />
+                            <Avatar size="list" label={displayName || name} src={photoURL} />
                           </Grid>
                           <Grid item>
-                            <Typography variant="h2">{displayName}</Typography>
+                            <Typography variant="h2">{displayName || name}</Typography>
                             <Typography color="textSecondary" variant="body2" gutterBottom>
-                              /projects/{name}
+                              /projects/{toURLName(name)}
                             </Typography>
                           </Grid>
                         </Grid>

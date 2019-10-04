@@ -2,22 +2,45 @@ package entity
 
 import (
 	"context"
+	"regexp"
 	"time"
 
-	"github.com/beneath-core/beneath-go/db"
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/beneath-core/beneath-go/db"
 )
 
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
 	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string    `sql:",notnull",validate:"required,gte=1,lte=40"`
+	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
 	Services       []*Service
 	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
+}
+
+var (
+	// used for validation
+	organizationNameRegex *regexp.Regexp
+)
+
+func init() {
+	// configure validation
+	organizationNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
+	GetValidator().RegisterStructValidation(organizationValidation, Organization{})
+}
+
+// custom stream validation
+func organizationValidation(sl validator.StructLevel) {
+	s := sl.Current().Interface().(Organization)
+
+	if !organizationNameRegex.MatchString(s.Name) {
+		sl.ReportError(s.Name, "Name", "", "alphanumericorunderscore", "")
+	}
 }
 
 // Create creates an organization
