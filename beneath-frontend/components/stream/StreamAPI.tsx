@@ -8,6 +8,7 @@ import Typography from "@material-ui/core/Typography";
 
 import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
 import { GATEWAY_URL } from "../../lib/connection";
+import { toURLName } from "../../lib/names";
 
 import CodeBlock from "../CodeBlock";
 import VSpace from "../VSpace";
@@ -31,7 +32,7 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
       </Typography>
       <CodeBlock language={"python"}>{`from beneath.client import Client
 client = Client()
-stream = client.stream(project_name="${stream.project.name}", stream_name="${stream.name}")
+stream = client.stream(project_name="${toURLName(stream.project.name)}", stream_name="${toURLName(stream.name)}")
 df = stream.read()`}</CodeBlock>
       <Typography variant="body2" paragraph>
         Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page. You
@@ -46,9 +47,9 @@ df = stream.read()`}</CodeBlock>
         You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
         very important that you only use read-only secrets in your front-end.
       </Typography>
-      <CodeBlock
-        language={"javascript"}
-      >{`fetch("${GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}", {
+      <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${toURLName(
+        stream.project.name
+      )}/streams/${toURLName(stream.name)}", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
@@ -88,7 +89,9 @@ df = stream.read()`}</CodeBlock>
         from the command line:
       </Typography>
       <CodeBlock language={"bash"}>
-        {`curl -H "Authorization: TOKEN" ${GATEWAY_URL}/projects/${stream.project.name}/streams/${stream.name}`}
+        {`curl -H "Authorization: TOKEN" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/streams/${
+          toURLName(stream.name)
+        }`}
       </CodeBlock>
       <Typography variant="body2" paragraph>
         Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
