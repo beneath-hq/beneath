@@ -27,5 +27,5 @@ Beneath is just entering public beta, so there's bound to be some rough edges. B
 ### Publishing to PyPI
 
 - Increment the version number in `beneath/_version.py`
-- Run `./beneath-build.sh`
+- Run `./pypi-publish.sh`
 - Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/beneath-go/gateway/grpc_server.go`
