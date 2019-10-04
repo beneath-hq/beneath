@@ -1,3 +1,4 @@
+import os
 import uuid
 import warnings
 
@@ -10,7 +11,7 @@ from beneath.stream import Stream
 from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
-
+from beneath.utils import datetime_to_ms
 
 class GraphQLError(Exception):
   def __init__(self, message, errors):
@@ -33,6 +34,8 @@ class Client:
       secret (str): A beneath secret to use for authentication. If not set, reads secret from ~/.beneath.
     """
     self.secret = secret
+    if self.secret is None:
+      self.secret = os.getenv("BENEATH_SECRET", default=None)
     if self.secret is None:
       self.secret = config.read_secret()
     if not isinstance(self.secret, str):
@@ -124,12 +127,12 @@ class Client:
     return obj['data']
 
 
-  def read_latest(self, instance_id, limit, after):
+  def read_latest_batch(self, instance_id, limit, before=None):
     response = self.stub.ReadLatestRecords(
       gateway_pb2.ReadLatestRecordsRequest(
         instance_id=instance_id.bytes,
         limit=limit,
-        after=after,
+        before=datetime_to_ms(before) if before else 0,
       ), metadata=self.request_metadata
     )
     return response.records

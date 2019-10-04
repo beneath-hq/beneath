@@ -1,14 +1,20 @@
 import io
-from datetime import datetime, timezone
+from datetime import datetime
 import json
 import sys
 import warnings
 
-from fastavro import schemaless_writer, schemaless_reader, parse_schema
+from fastavro import parse_schema
+from fastavro import schemaless_reader
+from fastavro import schemaless_writer
 import pandas as pd
 
 from beneath import config
 from beneath.proto import engine_pb2
+from beneath.utils import datetime_to_ms
+from beneath.utils import timestamp_to_ms
+from beneath.utils import ms_to_datetime
+from beneath.utils import ms_to_pd_timestamp
 
 class Stream:
   """
@@ -67,26 +73,47 @@ class Stream:
     self.client.write_batch(instance_id, encoded_records)
 
 
-  def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True):
+  def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
     instance_id = self._instance_id_or_default(instance_id)
     where = self._parse_where(where)
 
-    def read(limit, after):
+    def read(limit, last):
+      after = None
+      if last:
+        after = {field: last[field] for field in self.key_fields}
+        after = json.dumps(after, default=self._json_encode)
       return self.client.read_batch(instance_id=instance_id, where=where, limit=limit, after=after)
 
-    return self._constrained_read(read, max_rows=max_rows, max_megabytes=max_megabytes, to_dataframe=to_dataframe)
+    return self._constrained_read(
+      read_fn=read,
+      max_rows=max_rows,
+      max_megabytes=max_megabytes,
+      to_dataframe=to_dataframe,
+      warn_max=warn_max,
+    )
 
 
-  def latest(self, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True):
+  def latest(self, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
     instance_id = self._instance_id_or_default(instance_id)
 
-    def read(limit, after):
-      return self.client.read_latest_batch(instance_id=instance_id, limit=limit, after=after)
+    def read(limit, last):
+      before = None
+      if last:
+        before = last["@meta.timestamp"]
+        if to_dataframe:
+          before = before.to_pydatetime()
+      return self.client.read_latest_batch(instance_id=instance_id, limit=limit, before=before)
 
-    return self._constrained_read(read, max_rows=max_rows, max_megabytes=max_megabytes, to_dataframe=to_dataframe)
+    return self._constrained_read(
+      read_fn=read,
+      max_rows=max_rows,
+      max_megabytes=max_megabytes,
+      to_dataframe=to_dataframe,
+      warn_max=warn_max,
+    )
 
 
-  def _constrained_read(self, read_fn, max_rows=None, max_megabytes=None, to_dataframe=True):
+  def _constrained_read(self, read_fn, max_rows=None, max_megabytes=None, to_dataframe=True, warn_max=True):
     # adding 1 to turn <= into <
     max_rows = max_rows + 1 if max_rows else sys.maxsize
     max_megabytes = max_megabytes if max_megabytes else config.MAX_READ_MB
@@ -98,22 +125,23 @@ class Stream:
     bytes_loaded = 0
 
     while rows_loaded < max_rows and bytes_loaded < max_bytes:
-      after = None
+      last = None
       if len(records) > 0:
-        after = {field: records[-1][field] for field in self.key_fields}
-        after = json.dumps(after, default=self._json_encode)
+        last = records[-1]
 
       limit = min(max_rows - rows_loaded, config.READ_BATCH_SIZE)
       if limit == 0:
         break
 
-      batch = read_fn(limit=limit, after=after)
+      batch = read_fn(limit=limit, last=last)
       if len(batch) == 0:
         complete = True
         break
 
       for record in batch:
-        records.append(self._decode_avro(record.avro_data))
+        obj = self._decode_avro(record.avro_data)
+        obj["@meta.timestamp"] = ms_to_pd_timestamp(record.timestamp) if to_dataframe else ms_to_datetime(record.timestamp)
+        records.append(obj)
         rows_loaded += 1
         bytes_loaded += len(record.avro_data)
         if bytes_loaded >= max_bytes:
@@ -123,9 +151,9 @@ class Stream:
         complete = True
         break
 
-    if not complete:
+    if not complete and warn_max:
       # Jupyter doesn't always display warnings, so also print
-      # Note: rememberr max_rows and max_bytes are +1
+      # Note: remember max_rows and max_bytes are +1
       if rows_loaded >= max_rows:
         err = "Stopped loading because stream length exceeds max_rows={}".format(max_rows - 1)
         print(err)
@@ -171,7 +199,7 @@ class Stream:
   @classmethod
   def _extract_record_timestamp(cls, record):
     if ("@meta" in record) and ("timestamp" in record["@meta"]):
-      return cls._timestamp_to_ms(record["@meta"]["timestamp"])
+      return timestamp_to_ms(record["@meta"]["timestamp"])
     return 0 # 0 tells the server to set timestamp to its current time
 
 
@@ -218,19 +246,5 @@ class Stream:
     if isinstance(val, bytes):
       return "0x" + val.hex()
     if isinstance(val, datetime):
-      return cls._datetime_to_ms(val)
+      return datetime_to_ms(val)
     raise TypeError("expected only bytes or datetime")
-
-
-  @classmethod
-  def _timestamp_to_ms(cls, timestamp):
-    if isinstance(timestamp, datetime):
-      return cls._datetime_to_ms(timestamp)
-    if not isinstance(timestamp, int):
-      raise TypeError("couldn't parse {} as a timestamp".format(timestamp))
-    return timestamp
-
-
-  @classmethod
-  def _datetime_to_ms(cls, dt):
-    return int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
