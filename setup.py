@@ -17,7 +17,7 @@ setuptools.setup(
   author="Beneath Systems",
   author_email="hello@beneath.network",
   description="Python client for Beneath (https://beneath.network/)",
-  url="https://beneath.network/",
+  url="https://gitlab.com/_beneath/beneath-python",
   long_description=LONG_DESCRIPTION,
   long_description_content_type='text/markdown',
   packages=setuptools.find_packages(),
