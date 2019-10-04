@@ -23,3 +23,9 @@ Beneath is just entering public beta, so there's bound to be some rough edges. B
 - Run tests with `pytest` (though it's sparse on tests at moment)
 - Run `deactivate` to exit the virtual environment and `source .env/bin/activate` to re-activate it
 - For use in VS Code, open `beneath-python` as a workspace root folder. Press `CMD+Shift+P`, search for `Python: Select Interpreter`, and select the Python 3 executable in the `.env` virtual environment.
+
+### Publishing to PyPI
+
+- Increment the version number in `beneath/_version.py`
+- Run `./beneath-build.sh`
+- Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/beneath-go/gateway/grpc_server.go`
