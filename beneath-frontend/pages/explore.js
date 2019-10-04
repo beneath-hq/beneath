@@ -159,7 +159,7 @@ const Explore = ({ me }) => {
                           <Grid item>
                             <Typography variant="h2">{displayName || name}</Typography>
                             <Typography color="textSecondary" variant="body2" gutterBottom>
-                              /projects/{name}
+                              /projects/{toURLName(name)}
                             </Typography>
                           </Grid>
                         </Grid>
