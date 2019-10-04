@@ -45,8 +45,8 @@ func (s clientVersionSpec) IsZero() bool {
 var clientSpecs = map[string]clientVersionSpec{
 	"beneath-python": clientVersionSpec{
 		DeprecatedVersion:  "0.0.1",
-		WarningVersion:     "0.0.1",
-		RecommendedVersion: "1.0.0",
+		WarningVersion:     "1.0.0",
+		RecommendedVersion: "1.0.1",
 	},
 }
 
