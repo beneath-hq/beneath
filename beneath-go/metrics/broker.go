@@ -216,7 +216,6 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, id uuid.UUID, period strin
 	return usage.(pb.QuotaUsage)
 }
 
-// metricsKeyPrefix
 func metricsKeyPrefix(period string, id uuid.UUID) []byte {
 	return append([]byte(period), id.Bytes()...)
 }
@@ -227,9 +226,9 @@ func metricsKey(period string, id uuid.UUID, ts time.Time) []byte {
 	ts = ts.UTC()
 	switch period {
 	case HourlyPeriod:
-		ts = time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), 0, 0, 0, time.UTC)
+		ts = HourlyTimeFloor(ts)
 	case MonthlyPeriod:
-		ts = time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, 0, time.UTC)
+		ts = MonthlyTimeFloor(ts)
 	default:
 		panic(fmt.Errorf("unknown period '%s'", period))
 	}
@@ -240,4 +239,14 @@ func metricsKey(period string, id uuid.UUID, ts time.Time) []byte {
 
 	// append to metrics key prefix
 	return append(metricsKeyPrefix(period, id), timeEncoded...)
+}
+
+// MonthlyTimeFloor returns the timestamp rounded down to the nearest month
+func MonthlyTimeFloor(ts time.Time) time.Time {
+	return time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, 0, time.UTC)
+}
+
+// HourlyTimeFloor returns the timestamp rounded down to the nearest hour
+func HourlyTimeFloor(ts time.Time) time.Time {
+	return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), 0, 0, 0, time.UTC)
 }

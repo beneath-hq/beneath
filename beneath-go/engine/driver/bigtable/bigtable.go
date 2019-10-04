@@ -349,6 +349,63 @@ func (p *Bigtable) ReadUsage(ctx context.Context, keyPrefix []byte, fn func(key 
 	return nil
 }
 
+// ReadUsageRange implements engine.TablesDriver
+func (p *Bigtable) ReadUsageRange(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error {
+	// convert keyRange to RowSet
+	rr := bigtable.NewRange(string(fromKey), string(toKey))
+
+	// define callback triggered on each bigtable row
+	var idx uint
+	var cbErr error
+	cb := func(row bigtable.Row) bool {
+		// save key
+		key := []byte(row.Key())
+
+		// get metrics
+		u := pb.QuotaUsage{}
+
+		for _, cell := range row[metricsColumnFamilyName] {
+			colName := cell.Column[len(metricsColumnFamilyName)+1:]
+
+			switch colName {
+			case metricsReadOpsColumnName:
+				u.ReadOps = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsReadRowsColumnName:
+				u.ReadRecords = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsReadBytesColumnName:
+				u.ReadBytes = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteOpsColumnName:
+				u.WriteOps = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteRowsColumnName:
+				u.WriteRecords = int64(binary.BigEndian.Uint64(cell.Value))
+			case metricsWriteBytesColumnName:
+				u.WriteBytes = int64(binary.BigEndian.Uint64(cell.Value))
+			}
+		}
+
+		// trigger callback
+		cbErr = fn(key, u)
+		if cbErr != nil {
+			return false // stop
+		}
+
+		// continue
+		idx++
+		return true
+	}
+
+	// read rows
+	err := p.Metrics.ReadRows(ctx, rr, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	if err != nil {
+		return err
+	} else if cbErr != nil {
+		return cbErr
+	}
+
+	// done
+	return nil
+}
+
 func (p *Bigtable) openTable(name string, cfName string, maxVersions int) *bigtable.Table {
 	// create table
 	err := p.Admin.CreateTable(context.Background(), name)

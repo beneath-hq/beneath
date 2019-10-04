@@ -63,6 +63,9 @@ type TablesDriver interface {
 
 	// ReadUsage reads usage metrics for one or multiple keys and calls fn one by one
 	ReadUsage(ctx context.Context, keyPrefix []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
+
+	// ReadUsageRange reads usage metrics for multiple periods and calls fn one by one
+	ReadUsageRange(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs
