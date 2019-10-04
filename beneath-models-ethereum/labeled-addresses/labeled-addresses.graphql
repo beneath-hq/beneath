@@ -1,9 +1,0 @@
-type LabeledAddress @stream(name: "labeled-addresses", key: "address") {
-  address: Bytes20!
-  labels: [Label!]!
-}
-
-type Label {
-  category: String!
-  label: String!
-}

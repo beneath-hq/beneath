@@ -1,4 +1,0 @@
-type BlocksMonthly @stream(name: "blocks-monthly", key: "month") {
-  month: Timestamp!
-  count: Int!
-}
