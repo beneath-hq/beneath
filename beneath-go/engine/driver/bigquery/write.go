@@ -28,7 +28,7 @@ var (
 func init() {
 	internalRowSchema = bq.Schema{
 		{Name: "key", Required: true, Type: bq.BytesFieldType},
-		{Name: "data", Repeated: false, Type: bq.BytesFieldType},
+		{Name: "data", Required: false, Type: bq.BytesFieldType},
 		{Name: "timestamp", Required: true, Type: bq.TimestampFieldType},
 	}
 }
@@ -44,7 +44,13 @@ type ExternalRow struct {
 func (r *ExternalRow) Save() (row map[string]bq.Value, insertID string, err error) {
 	data := make(map[string]bq.Value, len(r.Data))
 	for k, v := range r.Data {
-		data[k] = r.recursiveSerialize(v)
+		// we map []byte to hex normally, but mustn't do that for __key
+		// (or else the hex encoding will be interpretted as base64 by BQ with terrible consequences)
+		if k == "__key" {
+			data[k] = base64.StdEncoding.EncodeToString(v.([]byte))
+		} else {
+			data[k] = r.recursiveSerialize(v)
+		}
 	}
 	return data, r.InsertID, nil
 }
