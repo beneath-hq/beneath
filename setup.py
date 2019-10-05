@@ -28,7 +28,7 @@ setuptools.setup(
   ],
   scripts=['beneath/bin/beneath'],
   install_requires=[
-    'apache_beam[gpc]>=2.14.0',
+    'apache_beam[gcp]>=2.14.0',
     'argparse>=1.1',
     'fastavro>=0.21.24',
     'grpcio>=1.23.0',
