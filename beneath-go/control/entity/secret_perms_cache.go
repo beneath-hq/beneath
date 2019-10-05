@@ -66,7 +66,7 @@ func getUserProjectPermissionsCache() *PermissionsCache {
 func getServiceStreamPermissionsCache() *PermissionsCache {
 	if serviceStreamPermissions == nil {
 		serviceStreamPermissions = NewPermissionsCache(StreamPermissions{}, `
-			select p.view, p.create, p.admin
+			select p.read, p.write
 			from permissions_services_streams p
 			where p.service_id = ? and p.stream_id = ?
 		`)
