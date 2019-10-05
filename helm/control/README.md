@@ -28,3 +28,11 @@ This chart relies on the existance of a service account in `key.json` in the `co
     gcloud projects add-iam-policy-binding beneathcrypto --member serviceAccount:control-service@beneathcrypto.iam.gserviceaccount.com --role roles/bigtable.admin
     gcloud projects add-iam-policy-binding beneathcrypto --member serviceAccount:control-service@beneathcrypto.iam.gserviceaccount.com --role roles/redis.admin
     gcloud projects add-iam-policy-binding beneathcrypto --member serviceAccount:control-service@beneathcrypto.iam.gserviceaccount.com --role roles/bigquery.admin
+
+### Postgres in production
+
+You can access the production Postgres instance by running the Google Cloud SQL proxy on your local machine. 
+
+- Follow the instructions [here](https://cloud.google.com/sql/docs/postgres/quickstart-proxy-test) to get the `cloud_sql_proxy` binary on your local machine
+- Run the proxy with `./cloud_sql_proxy -instances=beneathcrypto:us-east1:beneath-network=tcp:5432`
+- Connect to the database on `localhost` using a credentials for the production database (only for administrators)
