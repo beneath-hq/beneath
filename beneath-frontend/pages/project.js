@@ -36,9 +36,9 @@ const ProjectPage = ({ router, me }) => (
 
         return (
           <React.Fragment>
-            <PageTitle title={project.displayName || project.name} />
+            <PageTitle title={project.displayName || toURLName(project.name)} />
             <ProfileHero
-              name={project.displayName || project.name}
+              name={project.displayName || toURLName(project.name)}
               site={project.site}
               description={project.description}
               avatarURL={project.photoURL}
