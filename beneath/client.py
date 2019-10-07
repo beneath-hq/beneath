@@ -41,6 +41,7 @@ class Client:
       self.secret = config.read_secret()
     if not isinstance(self.secret, str):
       raise TypeError("secret must be a string")
+    self.secret = self.secret.strip()
 
     self.channel = None
     self.request_metadata = None
