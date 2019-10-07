@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -56,7 +57,7 @@ func InjectTagsStreamServerInterceptor() grpc.StreamServerInterceptor {
 func GetTags(ctx context.Context) *Tags {
 	tags, ok := ctx.Value(TagsContextKey{}).(*Tags)
 	if !ok {
-		panic("couldn't get tags from context")
+		panic(fmt.Errorf("couldn't get tags from context"))
 	}
 	return tags
 }
@@ -68,7 +69,7 @@ func SetTagsQuery(ctx context.Context, keyValuePairs ...interface{}) {
 	}
 
 	if len(keyValuePairs)%2 != 0 {
-		panic("must pass key value pairs as argument")
+		panic(fmt.Errorf("must pass key value pairs as argument"))
 	}
 
 	i := 0
@@ -76,7 +77,7 @@ func SetTagsQuery(ctx context.Context, keyValuePairs ...interface{}) {
 	for i < len(keyValuePairs) {
 		k, ok := keyValuePairs[i].(string)
 		if !ok {
-			panic("keys passed to SetTagsQuery must be a string")
+			panic(fmt.Errorf("keys passed to SetTagsQuery must be a string"))
 		}
 		q[k] = keyValuePairs[i+1]
 		i += 2

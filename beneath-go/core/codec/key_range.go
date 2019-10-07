@@ -214,11 +214,11 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 		}
 
 		// if we got here, something went terribly wrong
-		panic("RangeFromQuery: impossible state")
+		panic(fmt.Errorf("RangeFromQuery: impossible state"))
 	}
 
 	// if we got here, something went terribly wrong
-	panic("RangeFromQuery: impossible state")
+	panic(fmt.Errorf("RangeFromQuery: impossible state"))
 }
 
 // converts a query arg to a native value

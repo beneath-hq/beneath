@@ -29,7 +29,7 @@ func registerTask(task Task) {
 
 	t := reflect.TypeOf(task)
 	if t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
-		panic("task is not a pointer to a struct")
+		panic(fmt.Errorf("task is not a pointer to a struct"))
 	}
 
 	taskRegistry[t.Elem().Name()] = t.Elem()
@@ -38,7 +38,7 @@ func registerTask(task Task) {
 func encodeTask(task Task) (*pb.QueuedTask, error) {
 	t := reflect.TypeOf(task)
 	if t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
-		panic("task is not a pointer to a struct")
+		panic(fmt.Errorf("task is not a pointer to a struct"))
 	}
 
 	data, err := msgpack.Marshal(task)

@@ -118,7 +118,7 @@ func (c *Codec) UnmarshalAvro(data []byte) (map[string]interface{}, error) {
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		panic("Decoding avro data did not yield map")
+		panic(fmt.Errorf("Decoding avro data did not yield map"))
 	}
 
 	return res, nil
@@ -127,7 +127,7 @@ func (c *Codec) UnmarshalAvro(data []byte) (map[string]interface{}, error) {
 // ConvertToAvroNative converts a record (possibly decoded from JSON) to avro native representation
 func (c *Codec) ConvertToAvroNative(data map[string]interface{}, convertFromJSONTypes bool) (map[string]interface{}, error) {
 	if !convertFromJSONTypes {
-		panic("ConvertToAvroNative currently only supports convertFromJSONTypes == true")
+		panic(fmt.Errorf("ConvertToAvroNative currently only supports convertFromJSONTypes == true"))
 	}
 
 	obj, err := jsonNativeToAvroNative(c.avroSchema, data, map[string]interface{}{})
@@ -137,7 +137,7 @@ func (c *Codec) ConvertToAvroNative(data map[string]interface{}, convertFromJSON
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		panic("Output type of jsonNativeToAvroNative does not match input type")
+		panic(fmt.Errorf("Output type of jsonNativeToAvroNative does not match input type"))
 	}
 
 	return res, nil
@@ -153,7 +153,7 @@ func (c *Codec) ConvertFromAvroNative(avroNative map[string]interface{}, convert
 
 	res, ok := obj.(map[string]interface{})
 	if !ok {
-		panic("Output type of avroNativeToJSONNative does not match input type")
+		panic(fmt.Errorf("Output type of avroNativeToJSONNative does not match input type"))
 	}
 
 	return res, nil
