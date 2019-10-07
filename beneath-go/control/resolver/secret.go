@@ -24,12 +24,8 @@ func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (stri
 
 func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
-	}
-
-	if userID != *secret.UserID {
-		return nil, gqlerror.Errorf("Not allowed to read user's secrets")
+	if !secret.IsUser() || *secret.UserID != userID {
+		return nil, MakeUnauthenticatedError("Must be authenticated as userID")
 	}
 
 	return entity.FindUserSecrets(ctx, userID), nil

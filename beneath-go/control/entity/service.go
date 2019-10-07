@@ -4,15 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 	uuid "github.com/satori/go.uuid"
 )
 
 // Service represents external service keys, models, and, in the future, charts, all of which need OrganizationIDs for billing
 type Service struct {
-	ServiceID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string
+	ServiceID      uuid.UUID   `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name           string      `validate:"required,gte=1,lte=40"`
 	Kind           ServiceKind `sql:",notnull"`
 	OrganizationID uuid.UUID   `sql:"on_delete:cascade,notnull,type:uuid"`
 	Organization   *Organization
@@ -70,22 +69,14 @@ func CreateService(ctx context.Context, name string, kind ServiceKind, organizat
 		return nil, err
 	}
 
-	log.S.Infow(
-		"control created service",
-		"service_id", s.ServiceID,
-	)
-
 	return s, nil
 }
 
 // UpdateDetails consolidates and returns the service matching the args
-func (s *Service) UpdateDetails(ctx context.Context, name *string, organizationID *uuid.UUID, readBytesQuota *int, writeBytesQuota *int) (*Service, error) {
+func (s *Service) UpdateDetails(ctx context.Context, name *string, readBytesQuota *int, writeBytesQuota *int) (*Service, error) {
 	// set fields
 	if name != nil {
 		s.Name = *name
-	}
-	if organizationID != nil {
-		s.OrganizationID = *organizationID
 	}
 	if readBytesQuota != nil {
 		s.ReadQuota = int64(*readBytesQuota)
@@ -102,7 +93,7 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, organizationI
 
 	// update
 	s.UpdatedOn = time.Now()
-	_, err = db.DB.ModelContext(ctx, s).Column("name", "organization_id", "read_quota", "write_quota", "updated_on").WherePK().Update()
+	_, err = db.DB.ModelContext(ctx, s).Column("name", "read_quota", "write_quota", "updated_on").WherePK().Update()
 	return s, err
 }
 
@@ -123,17 +114,22 @@ func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, rea
 		Write:     write,
 	}
 
-	// validate
-	err := GetValidator().Struct(pss)
-	if err != nil {
-		return nil, err
+	// if neither read nor write, delete permission (if exists) -- else update
+	if !read && !write {
+		_, err := db.DB.ModelContext(ctx, pss).WherePK().Delete()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err := db.DB.ModelContext(ctx, pss).
+			OnConflict("(service_id, stream_id) DO UPDATE").
+			Set("read = EXCLUDED.read").
+			Set("write = EXCLUDED.write").
+			Insert()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// update
-	_, err = db.DB.ModelContext(ctx, pss).
-		OnConflict("(service_id, stream_id) DO UPDATE").
-		Set("read = EXCLUDED.read").
-		Set("write = EXCLUDED.write").
-		Insert()
-	return pss, err
+	return pss, nil
 }

@@ -39,16 +39,12 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) 
 }
 
 func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*entity.Organization, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, gqlerror.Errorf("Service keys are unable to view organizations")
-	}
-
 	organization := entity.FindOrganizationByName(ctx, name)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", name)
 	}
 
+	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
 	if !perms.View {
 		return nil, gqlerror.Errorf("Not allowed to view organization %s", name)

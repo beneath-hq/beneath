@@ -311,7 +311,7 @@ func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, proj
 		projectPerms := CachedUserProjectPermissions(ctx, *k.UserID, projectID)
 		return StreamPermissions{
 			Read:  projectPerms.View,
-			Write: projectPerms.Create,
+			Write: projectPerms.Create && external,
 		}
 	}
 	panic("expected k.ServiceID or k.UserID to be set")
