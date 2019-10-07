@@ -329,7 +329,7 @@ func (b *Broker) processStartRequest(r Request) {
 
 	// check quota
 	if r.Client.Secret != nil {
-		usage := b.metrics.GetCurrentUsage(b.ctx, r.Client.Secret.BillingID(), metrics.MonthlyPeriod)
+		usage := b.metrics.GetCurrentUsage(b.ctx, r.Client.Secret.BillingID())
 		ok = r.Client.Secret.CheckReadQuota(usage)
 		if !ok {
 			r.Client.SendError(r.Message.ID, "You have exhausted your monthly quota")

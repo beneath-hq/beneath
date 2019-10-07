@@ -298,9 +298,14 @@ func (k *Secret) IsAnonymous() bool {
 	return k == nil || k.SecretID == uuid.Nil
 }
 
-// IsUser returns true iff the secret gives manage rights on a user
+// IsUser returns true iff the secret has a user
 func (k *Secret) IsUser() bool {
 	return k != nil && k.UserID != nil
+}
+
+// IsUserID returns true iff the secret is the given user
+func (k *Secret) IsUserID(userID uuid.UUID) bool {
+	return k.IsUser() && *k.UserID == userID
 }
 
 // StreamPermissions returns the secret's permissions for a given stream
@@ -314,7 +319,7 @@ func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, proj
 			Write: projectPerms.Create && external,
 		}
 	}
-	panic("expected k.ServiceID or k.UserID to be set")
+	panic(fmt.Errorf("expected k.ServiceID or k.UserID to be set"))
 }
 
 // ProjectPermissions returns the secret's permissions for a given project
@@ -348,7 +353,7 @@ func (k *Secret) BillingID() uuid.UUID {
 		return *k.ServiceID
 	}
 
-	panic("expected userID or service ID to be set")
+	panic(fmt.Errorf("expected userID or service ID to be set"))
 }
 
 // CheckReadQuota checks the user's read quota

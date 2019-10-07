@@ -7,6 +7,25 @@ import (
 	"time"
 )
 
+// Floor truncates ts to the given period
+func Floor(ts time.Time, p Period) time.Time {
+	ts = ts.UTC()
+	switch p {
+	case PeriodMinute:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute(), 0, 0, time.UTC)
+	case PeriodHour:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), 0, 0, 0, time.UTC)
+	case PeriodDay:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, time.UTC)
+	case PeriodMonth:
+		return time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, 0, time.UTC)
+	case PeriodYear:
+		return time.Date(ts.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	default:
+		panic(fmt.Errorf("unknown period '%d'", p))
+	}
+}
+
 // UnixMilli converts t to milliseconds since 1970
 func UnixMilli(t time.Time) int64 {
 	return t.UnixNano() / int64(time.Millisecond)

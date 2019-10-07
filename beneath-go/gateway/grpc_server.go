@@ -13,7 +13,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/metrics"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -166,7 +165,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
 	ok := secret.CheckReadQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
@@ -280,7 +279,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
 	ok := secret.CheckReadQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
@@ -361,7 +360,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID(), metrics.MonthlyPeriod)
+	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
 	ok := secret.CheckWriteQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -119,7 +120,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	} else if googleID != "" {
 		query = tx.Model(user).Where("google_id = ?", googleID)
 	} else {
-		panic("CreateOrUpdateUser neither githubID nor googleID set")
+		panic(fmt.Errorf("CreateOrUpdateUser neither githubID nor googleID set"))
 	}
 
 	err = query.For("UPDATE").Select()

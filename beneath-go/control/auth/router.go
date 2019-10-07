@@ -19,7 +19,7 @@ import (
 func Router() http.Handler {
 	// check config set
 	if gothConfig == nil {
-		panic("Call InitGoth before AuthHandler")
+		panic(fmt.Errorf("Call InitGoth before AuthHandler"))
 	}
 
 	// prepare router

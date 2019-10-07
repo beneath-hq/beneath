@@ -29,11 +29,11 @@ var (
 // InitGoth configures goth
 func InitGoth(config *GothConfig) {
 	if config == nil {
-		panic("GothConfig cannot be nil")
+		panic(fmt.Errorf("GothConfig cannot be nil"))
 	}
 
 	if gothConfig != nil {
-		panic("InitGoth called twice")
+		panic(fmt.Errorf("InitGoth called twice"))
 	}
 
 	gothConfig = config

@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/beneath-core/beneath-go/metrics"
-
 	"github.com/beneath-core/beneath-go/core/log"
 
 	"github.com/beneath-core/beneath-go/control/entity"
@@ -196,7 +194,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// check quota
 	if secret != nil {
-		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
 		ok := secret.CheckReadQuota(usage)
 		if !ok {
 			return httputil.NewError(429, "you have exhausted your monthly quota")
@@ -375,7 +373,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 	// check quota
 	if secret != nil {
-		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
 		ok := secret.CheckReadQuota(usage)
 		if !ok {
 			return httputil.NewError(429, "you have exhausted your monthly quota")
@@ -496,7 +494,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID(), metrics.MonthlyPeriod)
+	usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
 	ok := secret.CheckWriteQuota(usage)
 	if !ok {
 		return httputil.NewError(429, "you have exhausted your monthly quota")

@@ -61,11 +61,11 @@ type TablesDriver interface {
 	// CommitUsage writes a batch of usage metrics
 	CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error
 
-	// ReadUsage reads usage metrics for one or multiple keys and calls fn one by one
-	ReadUsage(ctx context.Context, keyPrefix []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
+	// ReadSingleUsage reads usage metrics for one key
+	ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsage, error)
 
-	// ReadUsageRange reads usage metrics for multiple periods and calls fn one by one
-	ReadUsageRange(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
+	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
+	ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
 }
 
 // WarehouseDriver defines the functions necessary to encapsulate Beneath's data archiving needs

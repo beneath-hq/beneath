@@ -24,7 +24,7 @@ func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (stri
 
 func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() || *secret.UserID != userID {
+	if !secret.IsUserID(userID) {
 		return nil, MakeUnauthenticatedError("Must be authenticated as userID")
 	}
 
