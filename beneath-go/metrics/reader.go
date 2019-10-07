@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
+
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 	uuid "github.com/satori/go.uuid"
@@ -43,15 +45,15 @@ func GetUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 	// create key range
 	fromKey := metricsKey(period, entityID, from)
 	toKey := metricsKey(period, entityID, until)
+	toKey = tuple.Successor(toKey)
 
 	// read usage table and collect usage metrics
-	usagePackets := make([]pb.QuotaUsage, numPeriods)
-	timePeriods := make([]time.Time, numPeriods)
-	counter := 0
+	var usagePackets []pb.QuotaUsage
+	var timePeriods []time.Time
 	err := db.Engine.Tables.ReadUsageRange(ctx, fromKey, toKey, func(key []byte, u pb.QuotaUsage) error {
-		usagePackets[counter] = u
-		_, _, timePeriods[counter] = decodeMetricsKey(key)
-		counter++
+		usagePackets = append(usagePackets, u)
+		_, _, timePeriod := decodeMetricsKey(key)
+		timePeriods = append(timePeriods, timePeriod)
 		return nil
 	})
 	if err != nil {
