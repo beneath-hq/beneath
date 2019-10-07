@@ -145,7 +145,6 @@ func (b *Broker) commitToTable() error {
 
 			// commit metrics to monthly count
 			rowKey := metricsKey(MonthlyPeriod, id, ts)
-
 			err := db.Engine.Tables.CommitUsage(ctx, rowKey, usage)
 			if err != nil {
 				return err
