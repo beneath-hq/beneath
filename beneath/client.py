@@ -114,6 +114,12 @@ class Client:
     return name.replace("-", "_")
 
 
+  @classmethod
+  # time must be provided in datetime format in UTC
+  def _format_time(cls, time):
+    return time.isoformat() + 'Z'
+
+
   def _query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
     url = config.BENEATH_CONTROL_HOST + '/graphql'
@@ -334,16 +340,20 @@ class Client:
     return result['model']
 
 
-  # or should this leverage "GetCurrentUsage"???
   def get_usage(self, user_id, period=None, from_time=None, until=None):
     today = datetime.today()
-    month_today = datetime(today.year, today.month, 1)
+
+    if (period is None) | (period == 'M'):
+      default_time = datetime(today.year, today.month, 1)
+    if period == 'H':
+      default_time = datetime(today.year, today.month, today.day, today.hour)
+
     result = self._query_control(
       variables={
         'userID': user_id,
         'period': period if period else 'M',
-        'from': from_time.isoformat() if from_time else month_today.isoformat(),
-        'until': until.isoformat() if until else None
+        'from': self._format_time(from_time) if from_time else self._format_time(default_time),
+        'until': self._format_time(until) if until else None
       },
       query="""
         query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
