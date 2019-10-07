@@ -1,4 +1,5 @@
 import React, { FunctionComponent } from "react";
+
 import Avatar, { AvatarProps } from "@material-ui/core/Avatar";
 import { makeStyles, Theme } from "@material-ui/core/styles";
 
@@ -24,13 +25,13 @@ const useStyles = makeStyles((theme: Theme) => ({
 interface BetterAvatarProps extends AvatarProps {
   size: string;
   label: string;
-  src: string;
+  src?: string;
 }
 
 const BetterAvatar: FunctionComponent<BetterAvatarProps> = ({ size, label, src, ...other }) => {
-  const classes = useStyles(undefined);
+  const classes = useStyles();
 
-  let className = undefined;
+  let className;
   if (size === "hero") {
     className = classes.hero;
   } else if (size === "list") {
@@ -38,7 +39,7 @@ const BetterAvatar: FunctionComponent<BetterAvatarProps> = ({ size, label, src, 
   } else if (size === "dense-list") {
     className = classes.denseList;
   }
-  
+
   return (
     <Avatar className={className} src={src} alt={label} {...other}>
       {!src && !!label && label.slice(0, 2)}
