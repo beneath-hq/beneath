@@ -17,6 +17,7 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	version "github.com/hashicorp/go-version"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -32,21 +33,33 @@ const (
 )
 
 type clientVersionSpec struct {
-	DeprecatedVersion  string
-	WarningVersion     string
-	RecommendedVersion string
+	RecommendedVersion *version.Version
+	WarningVersion     *version.Version
+	DeprecatedVersion  *version.Version
 }
 
 func (s clientVersionSpec) IsZero() bool {
-	return s.DeprecatedVersion == "" || s.WarningVersion == "" || s.RecommendedVersion == ""
+	return s.DeprecatedVersion == nil && s.WarningVersion == nil && s.RecommendedVersion == nil
+}
+
+func newClientVersionSpec(recommended, warning, deprecated string) clientVersionSpec {
+	return clientVersionSpec{
+		RecommendedVersion: newVersionOrPanic(recommended),
+		WarningVersion:     newVersionOrPanic(warning),
+		DeprecatedVersion:  newVersionOrPanic(deprecated),
+	}
+}
+
+func newVersionOrPanic(str string) *version.Version {
+	v, err := version.NewVersion(str)
+	if err != nil {
+		panic(err)
+	}
+	return v
 }
 
 var clientSpecs = map[string]clientVersionSpec{
-	"beneath-python": clientVersionSpec{
-		DeprecatedVersion:  "0.0.1",
-		WarningVersion:     "1.0.0",
-		RecommendedVersion: "1.0.1",
-	},
+	"beneath-python": newClientVersionSpec("1.0.2", "1.0.1", "0.0.1"),
 }
 
 // ListenAndServeGRPC serves a gRPC API
@@ -421,15 +434,24 @@ func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*p
 		return nil, grpc.Errorf(codes.InvalidArgument, "unrecognized client ID")
 	}
 
-	status := "deprecated"
-	if req.ClientVersion == spec.RecommendedVersion {
+	v, err := version.NewVersion(req.ClientVersion)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "client version is not a valid semver")
+	}
+
+	status := ""
+	if v.GreaterThanOrEqual(spec.RecommendedVersion) {
 		status = "stable"
+	} else if v.GreaterThanOrEqual(spec.WarningVersion) {
+		status = "warning"
+	} else {
+		status = "deprecated"
 	}
 
 	secret := middleware.GetSecret(ctx)
 	return &pb.ClientPong{
 		Authenticated:      !secret.IsAnonymous(),
 		Status:             status,
-		RecommendedVersion: spec.RecommendedVersion,
+		RecommendedVersion: spec.RecommendedVersion.String(),
 	}, nil
 }
