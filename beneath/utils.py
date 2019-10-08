@@ -24,3 +24,7 @@ def timestamp_to_ms(timestamp):
 
 def datetime_to_ms(dt):
   return int(dt.replace(tzinfo=timezone.utc).timestamp() * 1000)
+
+
+def format_graphql_time(dt):
+  return dt.isoformat() + 'Z'

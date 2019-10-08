@@ -14,6 +14,7 @@ from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
 from beneath.utils import datetime_to_ms
 from beneath.utils import format_entity_name
+from beneath.utils import format_graphql_time
 
 class GraphQLError(Exception):
   def __init__(self, message, errors):
@@ -42,6 +43,7 @@ class Client:
       self.secret = config.read_secret()
     if not isinstance(self.secret, str):
       raise TypeError("secret must be a string")
+    self.secret = self.secret.strip()
 
     self.channel = None
     self.request_metadata = None
@@ -329,16 +331,19 @@ class Client:
     return result['model']
 
 
-  # or should this leverage "GetCurrentUsage"???
   def get_usage(self, user_id, period=None, from_time=None, until=None):
     today = datetime.today()
-    month_today = datetime(today.year, today.month, 1)
+    if (period is None) or (period == 'M'):
+      default_time = datetime(today.year, today.month, 1)
+    elif period == 'H':
+      default_time = datetime(today.year, today.month, today.day, today.hour)
+
     result = self._query_control(
       variables={
         'userID': user_id,
         'period': period if period else 'M',
-        'from': from_time.isoformat() if from_time else month_today.isoformat(),
-        'until': until.isoformat() if until else None
+        'from': format_graphql_time(from_time) if from_time else format_graphql_time(default_time),
+        'until': format_graphql_time(until) if until else None
       },
       query="""
         query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
