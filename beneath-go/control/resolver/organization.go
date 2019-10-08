@@ -20,24 +20,6 @@ func (r *organizationResolver) OrganizationID(ctx context.Context, obj *entity.O
 	return obj.OrganizationID.String(), nil
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, gqlerror.Errorf("Not allowed to create organization")
-	}
-
-	organization := &entity.Organization{
-		Name: name,
-	}
-
-	err := organization.Create(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return organization, nil
-}
-
 func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*entity.Organization, error) {
 	organization := entity.FindOrganizationByName(ctx, name)
 	if organization == nil {
@@ -51,4 +33,18 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 	}
 
 	return organization, nil
+}
+
+func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsUser() {
+		return nil, gqlerror.Errorf("Not allowed to create organization")
+	}
+
+	org, err := entity.CreateOrganizationWithUser(ctx, name, *secret.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
 }

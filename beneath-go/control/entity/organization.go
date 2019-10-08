@@ -43,27 +43,6 @@ func organizationValidation(sl validator.StructLevel) {
 	}
 }
 
-// Create creates an organization
-func (o *Organization) Create(ctx context.Context, name string) error {
-	// validate
-	err := GetValidator().Struct(o) // check this out
-	if err != nil {
-		return err
-	}
-
-	// create organization
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert project
-		_, err := tx.Model(o).Insert()
-		if err != nil {
-			return err
-		}
-
-		// done
-		return nil
-	})
-}
-
 // FindOrganizationByName finds a organization by name
 func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
@@ -75,4 +54,46 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 		return nil
 	}
 	return organization
+}
+
+// CreateOrganizationWithUser creates an organization
+func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID) (*Organization, error) {
+	// create
+	org := &Organization{
+		Name: name,
+	}
+
+	// validate
+	err := GetValidator().Struct(org)
+	if err != nil {
+		return nil, err
+	}
+
+	// create organization
+	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		// insert org
+		_, err := tx.Model(org).Insert()
+		if err != nil {
+			return err
+		}
+
+		// add user
+		err = tx.Insert(&PermissionsUsersOrganizations{
+			UserID:         userID,
+			OrganizationID: org.OrganizationID,
+			View:           true,
+			Admin:          true,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
 }
