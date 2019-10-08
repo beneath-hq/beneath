@@ -2,16 +2,18 @@ package entity
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"github.com/beneath-core/beneath-go/db"
 	uuid "github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 // Service represents external service keys, models, and, in the future, charts, all of which need OrganizationIDs for billing
 type Service struct {
 	ServiceID      uuid.UUID   `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string      `validate:"required,gte=1,lte=40"`
+	Name           string      `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
 	Kind           ServiceKind `sql:",notnull"`
 	OrganizationID uuid.UUID   `sql:"on_delete:cascade,notnull,type:uuid"`
 	Organization   *Organization
@@ -33,6 +35,26 @@ const (
 	ServiceKindModel ServiceKind = "model"
 )
 
+var (
+	// used for validation
+	serviceNameRegex *regexp.Regexp
+)
+
+func init() {
+	// configure validation
+	serviceNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
+	GetValidator().RegisterStructValidation(serviceValidation, Service{})
+}
+
+// custom service validation
+func serviceValidation(sl validator.StructLevel) {
+	s := sl.Current().Interface().(Service)
+
+	if !serviceNameRegex.MatchString(s.Name) {
+		sl.ReportError(s.Name, "Name", "", "alphanumericorunderscore", "")
+	}
+}
+
 // FindService returns the matching service or nil
 func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 	service := &Service{
@@ -43,6 +65,20 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 		return nil
 	}
 
+	return service
+}
+
+// FindServiceByNameAndOrganization returns the matching service or nil
+func FindServiceByNameAndOrganization(ctx context.Context, name, organizationName string) *Service {
+	service := &Service{}
+	err := db.DB.ModelContext(ctx, service).
+		Column("service.*", "Organization").
+		Where("lower(service.name) = lower(?)", name).
+		Where("lower(organization.name) = lower(?)", organizationName).
+		Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
 	return service
 }
 
