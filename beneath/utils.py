@@ -1,6 +1,11 @@
 from datetime import datetime, timezone
 import pandas as pd
 
+
+def format_entity_name(name):
+  return name.replace("-", "_").lower()
+
+
 def ms_to_datetime(ms):
   return datetime.utcfromtimestamp(float(ms) / 1000.)
 

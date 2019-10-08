@@ -31,13 +31,13 @@ def create_argument_parser():
   # organization parser and subparsers
   _organization = _root.add_parser('organization').add_subparsers()
 
+  _organization_info = _organization.add_parser('info')
+  _organization_info.set_defaults(func=organization_info)
+  _organization_info.add_argument('name', type=str)
+
   _organization_create = _organization.add_parser('create')
   _organization_create.set_defaults(func=organization_create)
   _organization_create.add_argument('name', type=str)
-
-  _organization_info = _organization.add_parser('info')
-  _organization_info.set_defaults(func=organization_info)
-  _organization_info.add_argument('--name', type=str, required=True)
 
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
@@ -49,7 +49,7 @@ def create_argument_parser():
   _project_create.set_defaults(func=project_create)
   _project_create.add_argument('name', type=str)
   _project_create.add_argument('--display-name', type=str)
-  _project_create.add_argument('--organization-id', type=str, required=True)
+  _project_create.add_argument('-o', '--organization', type=str)
   _project_create.add_argument('--description', type=str)
   _project_create.add_argument('--site-url', type=str)
   _project_create.add_argument('--photo-url', type=str)
@@ -71,42 +71,47 @@ def create_argument_parser():
 
   _service_list = _service.add_parser('list')
   _service_list.set_defaults(func=service_list)
-  _service_list.add_argument('--organization-name', type=str, required=True)
+  _service_list.add_argument('organization', type=str)
 
   _service_create = _service.add_parser('create')
   _service_create.set_defaults(func=service_create)
   _service_create.add_argument('name', type=str)
-  _service_create.add_argument('--organization-id', type=str, required=True)
-  _service_create.add_argument('--read-bytes-quota', type=int, required=True)
-  _service_create.add_argument('--write-bytes-quota', type=int, required=True)
+  _service_create.add_argument('-o', '--organization', type=str)
+  _service_create.add_argument('--read-quota-mb', type=int, required=True)
+  _service_create.add_argument('--write-quota-mb', type=int, required=True)
 
   _service_update = _service.add_parser('update')
   _service_update.set_defaults(func=service_update)
-  _service_update.add_argument('service_id', type=str)
-  _service_update.add_argument('--name', type=str)
-  _service_update.add_argument('--organization-id', type=str)
-  _service_update.add_argument('--read-bytes-quota', type=int)
-  _service_update.add_argument('--write-bytes-quota', type=int)
+  _service_update.add_argument('name', type=str)
+  _service_update.add_argument('-o', '--organization', type=str)
+  _service_update.add_argument('--new-name', type=str)
+  _service_update.add_argument('--read-quota-mb', type=int)
+  _service_update.add_argument('--write-quota-mb', type=int)
 
   _service_delete = _service.add_parser('delete')
   _service_delete.set_defaults(func=service_delete)
-  _service_delete.add_argument('service_id', type=str)
+  _service_delete.add_argument('name', type=str)
+  _service_delete.add_argument('-o', '--organization', type=str)
 
-  _service_add_perm = _service.add_parser('update-permissions')
-  _service_add_perm.set_defaults(func=service_permissions)
-  _service_add_perm.add_argument('service_id', type=str)
-  _service_add_perm.add_argument('stream_id', type=str)
-  _service_add_perm.add_argument('--read', type=str2bool, required=True)
-  _service_add_perm.add_argument('--write', type=str2bool, required=True)
+  _service_add_perm = _service.add_parser('update-permission')
+  _service_add_perm.set_defaults(func=service_update_permission)
+  _service_add_perm.add_argument('service_name', type=str)
+  _service_add_perm.add_argument('-o', '--service-organization', type=str)
+  _service_add_perm.add_argument('stream_name', type=str)
+  _service_add_perm.add_argument('-p', '--stream-project', type=str)
+  _service_add_perm.add_argument('--read', type=str2bool, nargs='?', const=True, default=None)
+  _service_add_perm.add_argument('--write', type=str2bool, nargs='?', const=True, default=None)
 
   _service_issue_secret = _service.add_parser('issue-secret')
   _service_issue_secret.set_defaults(func=service_issue_secret)
-  _service_issue_secret.add_argument('service_id', type=str)
-  _service_issue_secret.add_argument('--description', type=str, required=True)
+  _service_issue_secret.add_argument('service_name', type=str)
+  _service_issue_secret.add_argument('-o', '--organization', type=str)
+  _service_issue_secret.add_argument('--description', type=str)
 
   _service_list_secrets = _service.add_parser('list-secrets')
   _service_list_secrets.set_defaults(func=service_list_secrets)
-  _service_list_secrets.add_argument('service_id', type=str)
+  _service_list_secrets.add_argument('service_name', type=str)
+  _service_list_secrets.add_argument('-o', '--organization', type=str)
 
   _service_revoke_secret = _service.add_parser('revoke-secret')
   _service_revoke_secret.set_defaults(func=revoke_secret)
@@ -118,7 +123,7 @@ def create_argument_parser():
   _model_init = _model.add_parser('init')
   _model_init.set_defaults(func=model_init)
   _model_init.add_argument('model', type=str)
-  _model_init.add_argument('--project', type=str, required=True)
+  _model_init.add_argument('-p', '--project', type=str, required=True)
 
   _model_sim = _model.add_parser('simulate')
   _model_sim.set_defaults(func=model_sim)
@@ -156,14 +161,14 @@ def create_argument_parser():
   _stream_update_ext = _stream_root.add_parser('update')
   _stream_update_ext.set_defaults(func=stream_update_ext)
   _stream_update_ext.add_argument('stream', type=str)
+  _stream_update_ext.add_argument('-p', '--project', type=str)
   _stream_update_ext.add_argument('-f', '--file', type=str, required=True, help="This file should contain the stream's schema and an updated description. Only the description should change, the schema itself should not change.")
-  _stream_update_ext.add_argument('-p', '--project', type=str, required=True)
   _stream_update_ext.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
   _stream_delete_ext = _stream_root.add_parser('delete')
   _stream_delete_ext.set_defaults(func=stream_delete_ext)
   _stream_delete_ext.add_argument('stream', type=str)
-  _stream_delete_ext.add_argument('-p', '--project', type=str, required=True)
+  _stream_delete_ext.add_argument('-p', '--project', type=str)
 
   # root-stream batch parser and subparsers
   _stream_root_batch = _stream_root.add_parser('batch').add_subparsers()
@@ -171,7 +176,7 @@ def create_argument_parser():
   _stream_ext_batch_create = _stream_root_batch.add_parser('create')
   _stream_ext_batch_create.set_defaults(func=stream_ext_batch_create)
   _stream_ext_batch_create.add_argument('stream', type=str)
-  _stream_ext_batch_create.add_argument('-p', '--project', type=str, required=True)
+  _stream_ext_batch_create.add_argument('-p', '--project', type=str)
 
   _stream_ext_batch_commit = _stream_root_batch.add_parser('commit')
   _stream_ext_batch_commit.set_defaults(func=stream_ext_batch_commit)
@@ -180,7 +185,7 @@ def create_argument_parser():
   _stream_ext_batches_clear = _stream_root_batch.add_parser('clear')
   _stream_ext_batches_clear.set_defaults(func=stream_ext_batches_clear)
   _stream_ext_batches_clear.add_argument('stream', type=str)
-  _stream_ext_batches_clear.add_argument('-p', '--project', type=str, required=True)
+  _stream_ext_batches_clear.add_argument('-p', '--project', type=str)
 
   return parser
 
@@ -206,6 +211,25 @@ def str2bool(v):
   raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
+def mb_to_bytes(v):
+  return v * 1000000
+
+
+def parse_names(name, explicit_group, group_type):
+  names = name.split('/')
+  if (len(names) > 0) and names[0] == '':
+    names = names[1:]
+  if len(names) > 2:
+    raise argparse.ArgumentTypeError("Cannot parse identifier with more than one '/'")
+  if (len(names) == 2) and (explicit_group is not None):
+    raise argparse.ArgumentTypeError("Cannot read {} set in both name (before the '/') and as explicit arg".format(group_type))
+  if len(names) == 2:
+    return names[1], names[0]
+  if not explicit_group:
+    raise argparse.ArgumentTypeError("Must specify {}".format(group_type))
+  return names[0], explicit_group
+
+
 def auth(args):
   try:
     Client(secret=args.secret)
@@ -216,15 +240,15 @@ def auth(args):
     print("Your attempt to authenticate failed. Are you using an API secret generated in the Beneath web app?")
 
 
-def organization_create(args):
-  client = get_client()
-  result = client.create_organization(name=args.name)
-  pretty_print_graphql_result(result)
-
-
 def organization_info(args):
   client = get_client()
   result = client.get_organization_by_name(name=args.name)
+  pretty_print_graphql_result(result)
+
+
+def organization_create(args):
+  client = get_client()
+  result = client.create_organization(name=args.name)
   pretty_print_graphql_result(result)
 
 
@@ -247,10 +271,12 @@ def project_list(args):
 
 def project_create(args):
   client = get_client()
+  name, org_name = parse_names(args.name, args.organization, "organization")
+  org = client.get_organization_by_name(org_name)
   result = client.create_project(
-    name=args.name,
+    name=name,
     display_name=args.display_name,
-    organization_id=args.organization_id,
+    organization_id=org['organizationID'],
     description=args.description,
     site_url=args.site_url,
     photo_url=args.photo_url,
@@ -280,48 +306,58 @@ def project_delete(args):
 
 def service_list(args):
   client = get_client()
-  result = client.get_organization_by_name(name=args.organization_name)
-  services = result['services']
+  org = client.get_organization_by_name(name=args.organization)
+  services = org['services']
+  if (services is None) or len(services) == 0:
+    print("No services found in organization")
+    return
   for service in services:
     pretty_print_graphql_result(service)
 
 
 def service_create(args):
   client = get_client()
+  name, org_name = parse_names(args.name, args.organization, "organization")
+  org = client.get_organization_by_name(org_name)
   result = client.create_service(
-    name=args.name,
-    organization_id=args.organization_id,
-    read_bytes_quota=args.read_bytes_quota,
-    write_bytes_quota=args.write_bytes_quota,
+    name=name,
+    organization_id=org['organizationID'],
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb),
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb),
   )
   pretty_print_graphql_result(result)
 
 
 def service_update(args):
   client = get_client()
+  name, org_name = parse_names(args.name, args.organization, "organization")
+  service = client.get_service_by_name_and_organization(name, org_name)
   result = client.update_service(
-    service_id=args.service_id,
-    name=args.name,
-    organization_id=args.organization_id,
-    read_bytes_quota=args.read_bytes_quota,
-    write_bytes_quota=args.write_bytes_quota,
+    service_id=service['serviceID'],
+    name=args.new_name,
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )
   pretty_print_graphql_result(result)
 
 
 def service_delete(args):
   client = get_client()
-  result = client.delete_service(
-    service_id=args.service_id,
-  )
+  name, org_name = parse_names(args.name, args.organization, "organization")
+  service = client.get_service_by_name_and_organization(name, org_name)
+  result = client.delete_service(service_id=service['serviceID'])
   pretty_print_graphql_result(result)
 
 
-def service_permissions(args):
+def service_update_permission(args):
   client = get_client()
+  service_name, org_name = parse_names(args.service_name, args.service_organization, "organization")
+  stream_name, project_name = parse_names(args.stream_name, args.stream_project, "project")
+  service = client.get_service_by_name_and_organization(service_name, org_name)
+  stream = client.get_stream_details(project_name=project_name, stream_name=stream_name)
   result = client.update_service_permissions(
-    service_id=args.service_id,
-    stream_id=args.stream_id,
+    service_id=service['serviceID'],
+    stream_id=stream['streamID'],
     read=args.read,
     write=args.write,
   )
@@ -330,17 +366,21 @@ def service_permissions(args):
 
 def service_issue_secret(args):
   client = get_client()
+  name, org_name = parse_names(args.service_name, args.organization, "organization")
+  service = client.get_service_by_name_and_organization(name, org_name)
   result = client.issue_service_secret(
-    service_id=args.service_id,
-    description=args.description,
-  )
-  print("\n" + "Keep your secret safe. You won't be shown it again." + "\n")
+    service_id=service['serviceID'],
+    description=args.description if args.description is not None else "Command-line issued secret",
+  )  
+  print("\n" + "Keep your secret string safe. You won't be shown it again." + "\n")
   pretty_print_graphql_result(result)
 
 
 def service_list_secrets(args):
   client = get_client()
-  result = client.list_service_secrets(service_id=args.service_id)
+  name, org_name = parse_names(args.service_name, args.organization, "organization")
+  service = client.get_service_by_name_and_organization(name, org_name)
+  result = client.list_service_secrets(service_id=service['serviceID'])
   pretty_print_graphql_result(result)
 
 
@@ -477,12 +517,9 @@ def stream_create_ext(args):
 
 
 def stream_update_ext(args):
-  # start client with the secret stored in .beneath/secret
   client = get_client()
-
-  # get stream id
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
+  name, project_name = parse_names(args.stream, args.project, "project")
+  stream = client.get_stream_details(project_name=project_name, stream_name=name)
 
   # read schema from the user-supplied file
   schema = None
@@ -490,11 +527,7 @@ def stream_update_ext(args):
     with open(args.file, "r") as f:
       schema = f.read()
 
-  # submit GraphQL mutation to update stream
-  manual = args.manual
-  result = client.update_external_stream(stream_id, schema, manual)
-
-  # print out the stream's details to the user
+  result = client.update_external_stream(stream['streamID'], schema, args.manual)
   pretty_print_graphql_result(result, [
     "name",
     "description",
@@ -508,17 +541,17 @@ def stream_update_ext(args):
 
 def stream_delete_ext(args):
   client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.delete_external_stream(stream_id)
+  name, project_name = parse_names(args.stream, args.project, "project")
+  stream = client.get_stream_details(project_name=project_name, stream_name=name)
+  result = client.delete_external_stream(stream['streamID'])
   pretty_print_graphql_result(result)
 
 
 def stream_ext_batch_create(args):
   client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.create_external_stream_batch(stream_id)
+  name, project_name = parse_names(args.stream, args.project, "project")
+  stream = client.get_stream_details(project_name=project_name, stream_name=name)
+  result = client.create_external_stream_batch(stream['streamID'])
   pretty_print_graphql_result(result)
 
 
@@ -530,9 +563,9 @@ def stream_ext_batch_commit(args):
 
 def stream_ext_batches_clear(args):
   client = get_client()
-  result = client.get_stream_details(project_name=args.project, stream_name=args.stream)
-  stream_id = result['streamID']
-  result = client.clear_pending_external_stream_batches(stream_id)
+  name, project_name = parse_names(args.stream, args.project, "project")
+  stream = client.get_stream_details(project_name=project_name, stream_name=name)
+  result = client.clear_pending_external_stream_batches(stream['streamID'])
   pretty_print_graphql_result(result)
 
 
