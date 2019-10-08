@@ -47,15 +47,15 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 }
 
 // CreateService consolidates and returns the service matching the args
-func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) (*Service, error) {
+func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readQuota int, writeQuota int) (*Service, error) {
 	s := &Service{}
 
 	// set service fields
 	s.Name = name
 	s.Kind = kind
 	s.OrganizationID = organizationID
-	s.ReadQuota = int64(readBytesQuota)
-	s.WriteQuota = int64(writeBytesQuota)
+	s.ReadQuota = int64(readQuota)
+	s.WriteQuota = int64(writeQuota)
 
 	// validate
 	err := GetValidator().Struct(s)
@@ -73,16 +73,16 @@ func CreateService(ctx context.Context, name string, kind ServiceKind, organizat
 }
 
 // UpdateDetails consolidates and returns the service matching the args
-func (s *Service) UpdateDetails(ctx context.Context, name *string, readBytesQuota *int, writeBytesQuota *int) (*Service, error) {
+func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *int, writeQuota *int) (*Service, error) {
 	// set fields
 	if name != nil {
 		s.Name = *name
 	}
-	if readBytesQuota != nil {
-		s.ReadQuota = int64(*readBytesQuota)
+	if readQuota != nil {
+		s.ReadQuota = int64(*readQuota)
 	}
-	if writeBytesQuota != nil {
-		s.WriteQuota = int64(*writeBytesQuota)
+	if writeQuota != nil {
+		s.WriteQuota = int64(*writeQuota)
 	}
 
 	// validate
@@ -105,27 +105,37 @@ func (s *Service) Delete(ctx context.Context) error {
 
 // UpdatePermissions updates a service's permissions for a given stream
 // UpdatePermissions sets permissions if they do not exist yet
-func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, read bool, write bool) (*PermissionsServicesStreams, error) {
-	// change data
+func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, read *bool, write *bool) (*PermissionsServicesStreams, error) {
+	// create perm
 	pss := &PermissionsServicesStreams{
 		ServiceID: s.ServiceID,
 		StreamID:  streamID,
-		Read:      read,
-		Write:     write,
+	}
+	if read != nil {
+		pss.Read = *read
+	}
+	if write != nil {
+		pss.Write = *write
 	}
 
 	// if neither read nor write, delete permission (if exists) -- else update
-	if !read && !write {
+	if !pss.Read && !pss.Write {
 		_, err := db.DB.ModelContext(ctx, pss).WherePK().Delete()
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		_, err := db.DB.ModelContext(ctx, pss).
-			OnConflict("(service_id, stream_id) DO UPDATE").
-			Set("read = EXCLUDED.read").
-			Set("write = EXCLUDED.write").
-			Insert()
+		// build upsert
+		q := db.DB.ModelContext(ctx, pss).OnConflict("(service_id, stream_id) DO UPDATE")
+		if read != nil {
+			q = q.Set("read = EXCLUDED.read")
+		}
+		if write != nil {
+			q = q.Set("write = EXCLUDED.write")
+		}
+
+		// run upsert
+		_, err := q.Insert()
 		if err != nil {
 			return nil, err
 		}

@@ -102,7 +102,7 @@ type ComplexityRoot struct {
 		CreateModelBatch                  func(childComplexity int, modelID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) int
-		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) int
+		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota int, writeQuota int) int
 		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
 		DeleteModel                       func(childComplexity int, modelID uuid.UUID) int
 		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
@@ -116,8 +116,8 @@ type ComplexityRoot struct {
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
-		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, readBytesQuota *int, writeBytesQuota *int) int
-		UpdateServicePermissions          func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read bool, write bool) int
+		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) int
+		UpdateServicePermissions          func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 	}
 
 	NewSecret struct {
@@ -188,12 +188,12 @@ type ComplexityRoot struct {
 	}
 
 	Service struct {
-		Kind            func(childComplexity int) int
-		Name            func(childComplexity int) int
-		Organization    func(childComplexity int) int
-		ReadBytesQuota  func(childComplexity int) int
-		ServiceID       func(childComplexity int) int
-		WriteBytesQuota func(childComplexity int) int
+		Kind         func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Organization func(childComplexity int) int
+		ReadQuota    func(childComplexity int) int
+		ServiceID    func(childComplexity int) int
+		WriteQuota   func(childComplexity int) int
 	}
 
 	Stream struct {
@@ -260,10 +260,10 @@ type MutationResolver interface {
 	IssueUserSecret(ctx context.Context, description string) (*NewSecret, error)
 	IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*NewSecret, error)
 	RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
-	CreateService(ctx context.Context, name string, organizationID uuid.UUID, readBytesQuota int, writeBytesQuota int) (*entity.Service, error)
-	UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, readBytesQuota *int, writeBytesQuota *int) (*entity.Service, error)
+	CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota int, writeQuota int) (*entity.Service, error)
+	UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) (*entity.Service, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
-	UpdateServicePermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read bool, write bool) (*entity.PermissionsServicesStreams, error)
+	UpdateServicePermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error)
 	UpdateExternalStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error)
 	DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error)
@@ -302,9 +302,6 @@ type SecretResolver interface {
 }
 type ServiceResolver interface {
 	Kind(ctx context.Context, obj *entity.Service) (string, error)
-
-	ReadBytesQuota(ctx context.Context, obj *entity.Service) (int, error)
-	WriteBytesQuota(ctx context.Context, obj *entity.Service) (int, error)
 }
 type StreamResolver interface {
 	StreamID(ctx context.Context, obj *entity.Stream) (string, error)
@@ -658,7 +655,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateService(childComplexity, args["name"].(string), args["organizationID"].(uuid.UUID), args["readBytesQuota"].(int), args["writeBytesQuota"].(int)), true
+		return e.complexity.Mutation.CreateService(childComplexity, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(int), args["writeQuota"].(int)), true
 
 	case "Mutation.deleteExternalStream":
 		if e.complexity.Mutation.DeleteExternalStream == nil {
@@ -821,7 +818,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateService(childComplexity, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readBytesQuota"].(*int), args["writeBytesQuota"].(*int)), true
+		return e.complexity.Mutation.UpdateService(childComplexity, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int)), true
 
 	case "Mutation.updateServicePermissions":
 		if e.complexity.Mutation.UpdateServicePermissions == nil {
@@ -833,7 +830,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateServicePermissions(childComplexity, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(bool), args["write"].(bool)), true
+		return e.complexity.Mutation.UpdateServicePermissions(childComplexity, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(*bool), args["write"].(*bool)), true
 
 	case "NewSecret.secret":
 		if e.complexity.NewSecret.Secret == nil {
@@ -1264,12 +1261,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Service.Organization(childComplexity), true
 
-	case "Service.readBytesQuota":
-		if e.complexity.Service.ReadBytesQuota == nil {
+	case "Service.readQuota":
+		if e.complexity.Service.ReadQuota == nil {
 			break
 		}
 
-		return e.complexity.Service.ReadBytesQuota(childComplexity), true
+		return e.complexity.Service.ReadQuota(childComplexity), true
 
 	case "Service.serviceID":
 		if e.complexity.Service.ServiceID == nil {
@@ -1278,12 +1275,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Service.ServiceID(childComplexity), true
 
-	case "Service.writeBytesQuota":
-		if e.complexity.Service.WriteBytesQuota == nil {
+	case "Service.writeQuota":
+		if e.complexity.Service.WriteQuota == nil {
 			break
 		}
 
-		return e.complexity.Service.WriteBytesQuota(childComplexity), true
+		return e.complexity.Service.WriteQuota(childComplexity), true
 
 	case "Stream.avroSchema":
 		if e.complexity.Stream.AvroSchema == nil {
@@ -1741,10 +1738,10 @@ type NewSecret {
 }
 
 extend type Mutation {
-  createService(name: String!, organizationID: UUID!, readBytesQuota: Int!, writeBytesQuota: Int!): Service!
-  updateService(serviceID: UUID!, name: String, readBytesQuota: Int, writeBytesQuota: Int): Service!
+  createService(name: String!, organizationID: UUID!, readQuota: Int!, writeQuota: Int!): Service!
+  updateService(serviceID: UUID!, name: String, readQuota: Int, writeQuota: Int): Service!
   deleteService(serviceID: UUID!): Boolean!
-  updateServicePermissions(serviceID: UUID!, streamID: UUID!, read: Boolean!, write: Boolean!): PermissionsServicesStreams!
+  updateServicePermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
 }
 
 type Service {
@@ -1752,8 +1749,8 @@ type Service {
   name: String!
   kind: String!
   organization: Organization!
-  readBytesQuota: Int!
-  writeBytesQuota: Int!
+  readQuota: Int!
+  writeQuota: Int!
 }
 
 type PermissionsServicesStreams {
@@ -2125,21 +2122,21 @@ func (ec *executionContext) field_Mutation_createService_args(ctx context.Contex
 	}
 	args["organizationID"] = arg1
 	var arg2 int
-	if tmp, ok := rawArgs["readBytesQuota"]; ok {
+	if tmp, ok := rawArgs["readQuota"]; ok {
 		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["readBytesQuota"] = arg2
+	args["readQuota"] = arg2
 	var arg3 int
-	if tmp, ok := rawArgs["writeBytesQuota"]; ok {
+	if tmp, ok := rawArgs["writeQuota"]; ok {
 		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["writeBytesQuota"] = arg3
+	args["writeQuota"] = arg3
 	return args, nil
 }
 
@@ -2418,17 +2415,17 @@ func (ec *executionContext) field_Mutation_updateServicePermissions_args(ctx con
 		}
 	}
 	args["streamID"] = arg1
-	var arg2 bool
+	var arg2 *bool
 	if tmp, ok := rawArgs["read"]; ok {
-		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["read"] = arg2
-	var arg3 bool
+	var arg3 *bool
 	if tmp, ok := rawArgs["write"]; ok {
-		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg3, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2457,21 +2454,21 @@ func (ec *executionContext) field_Mutation_updateService_args(ctx context.Contex
 	}
 	args["name"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["readBytesQuota"]; ok {
+	if tmp, ok := rawArgs["readQuota"]; ok {
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["readBytesQuota"] = arg2
+	args["readQuota"] = arg2
 	var arg3 *int
-	if tmp, ok := rawArgs["writeBytesQuota"]; ok {
+	if tmp, ok := rawArgs["writeQuota"]; ok {
 		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["writeBytesQuota"] = arg3
+	args["writeQuota"] = arg3
 	return args, nil
 }
 
@@ -4462,7 +4459,7 @@ func (ec *executionContext) _Mutation_createService(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateService(rctx, args["name"].(string), args["organizationID"].(uuid.UUID), args["readBytesQuota"].(int), args["writeBytesQuota"].(int))
+		return ec.resolvers.Mutation().CreateService(rctx, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(int), args["writeQuota"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4506,7 +4503,7 @@ func (ec *executionContext) _Mutation_updateService(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateService(rctx, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readBytesQuota"].(*int), args["writeBytesQuota"].(*int))
+		return ec.resolvers.Mutation().UpdateService(rctx, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4594,7 +4591,7 @@ func (ec *executionContext) _Mutation_updateServicePermissions(ctx context.Conte
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateServicePermissions(rctx, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(bool), args["write"].(bool))
+		return ec.resolvers.Mutation().UpdateServicePermissions(rctx, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(*bool), args["write"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7002,7 +6999,7 @@ func (ec *executionContext) _Service_organization(ctx context.Context, field gra
 	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Service_readBytesQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
+func (ec *executionContext) _Service_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7015,13 +7012,13 @@ func (ec *executionContext) _Service_readBytesQuota(ctx context.Context, field g
 		Object:   "Service",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Service().ReadBytesQuota(rctx, obj)
+		return obj.ReadQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7033,13 +7030,13 @@ func (ec *executionContext) _Service_readBytesQuota(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Service_writeBytesQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
+func (ec *executionContext) _Service_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7052,13 +7049,13 @@ func (ec *executionContext) _Service_writeBytesQuota(ctx context.Context, field 
 		Object:   "Service",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Service().WriteBytesQuota(rctx, obj)
+		return obj.WriteQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7070,10 +7067,10 @@ func (ec *executionContext) _Service_writeBytesQuota(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_streamID(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -10318,34 +10315,16 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "readBytesQuota":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Service_readBytesQuota(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "writeBytesQuota":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Service_writeBytesQuota(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+		case "readQuota":
+			out.Values[i] = ec._Service_readQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "writeQuota":
+			out.Values[i] = ec._Service_writeQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
