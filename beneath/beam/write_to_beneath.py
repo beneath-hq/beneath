@@ -25,20 +25,28 @@ Here is an example of WriteToBeneath's usage in a Beam pipeline:
 import apache_beam as beam
 
 class _GatewayWriteFn(beam.DoFn):
-  def __init__(self, stream):
+
+  _BATCH_SIZE = 1000
+
+  def __init__(self, stream, instance_id):
     if stream is None:
       raise Exception("Error! The provided stream is not valid")
+    if instance_id is None:
+      raise Exception("Error! The provided instance ID is not valid")
     self.stream = stream
+    self.instance_id = instance_id
     self.bundle = None
 
   def __getstate__(self):
     return {
       "stream": self.stream,
+      "instance_id": self.instance_id,
       "bundle": self.bundle,
     }
 
   def __setstate__(self, obj):
     self.stream = obj["stream"]
+    self.instance_id = obj["instance_id"]
     self.bundle = obj["bundle"]
 
   def start_bundle(self):
@@ -46,29 +54,25 @@ class _GatewayWriteFn(beam.DoFn):
 
   def process(self, row):
     self.bundle.append(row)
+    if len(self.bundle) >= self._BATCH_SIZE:
+      self._flush()
 
   def finish_bundle(self):
-    self.stream.write(self.stream.current_instance_id, self.bundle)
-    self.bundle = None
+    self._flush()
 
+  def _flush(self):
+    if len(self.bundle) != 0:
+      self.stream.write(records=self.bundle, instance_id=self.instance_id)
+      self.bundle = []
 
 class WriteToBeneath(beam.PTransform):
-  def __init__(self, stream):
+  def __init__(self, stream, instance_id=None):
     self.stream = stream
-
-    # check to see if the stream is a batch or stream (aka the data is bounded or unbounded)
-    if self.stream.batch == True:
-      # TODO: if batch, 1) "prepare new batch" call gRPC, get back a "new" instance id
-      # 2) add data to that instance
-      # 3) promote the instance to be the "current instance"
-      pass
-    else:
-      # if streaming, lookup and write to current instance id (as is currently happening)
-      pass
+    self.instance_id = instance_id if instance_id else stream.current_instance_id
 
   def expand(self, pvalue):
-    stream = self.stream
-    return (
+    p = (
       pvalue
-      | beam.ParDo(_GatewayWriteFn(stream))
+      | 'Write' >> beam.ParDo(_GatewayWriteFn(self.stream, self.instance_id))
     )
+    return p
