@@ -22,6 +22,8 @@ github.com/apache/beam v2.13.0+incompatible h1:3QvMwms4UOvL0O1cjEOmYAv6JEYWhJMb2
 github.com/apache/beam v2.13.0+incompatible/go.mod h1:/8NX3Qi8vGstDLLaeaU7+lzVEu/ACaQhYjeefzQ0y1o=
 github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d h1:1sQ4WMjUO7N8rx5WNLVzIa3rzyk0yWWHahNoUWNK4Bg=
 github.com/apple/foundationdb/bindings/go v0.0.0-20190618175917-455bf3b3ec9d/go.mod h1:OMVSB21p9+xQUIqlGizHPZfjK+SHws1ht+ZytVDoz9U=
+github.com/bem7/goavro/v2 v2.0.0-20191009165622-2e928607d532 h1:9GlWukYKXZLUVt+twk+yHJ8g3w6bffkFKB2Mn+ATR2s=
+github.com/bem7/goavro/v2 v2.0.0-20191009165622-2e928607d532/go.mod h1:UgQUb2N/pmueQYH9bfqFioWxzYCZXSfF8Jw03O5sjqA=
 github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833 h1:yCfXxYaelOyqnia8F/Yng47qhmfC9nKTRIbYRrRueq4=
 github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833/go.mod h1:8c4/i2VlovMO2gBnHGQPN5EJw+H0lx1u/5p+cgsXtCk=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=

@@ -385,6 +385,7 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 					}
 					return val, nil
 				case []byte:
+					// TODO: Remove soon if nobody objects to this:https://github.com/linkedin/goavro/pull/178
 					n := new(big.Int)
 					n.SetBytes(val)
 					if len(val) > 0 && val[0]&0x80 > 0 {

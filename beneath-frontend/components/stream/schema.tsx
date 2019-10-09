@@ -1,7 +1,7 @@
 import avro from "avsc";
 import _ from "lodash";
 import dynamic from "next/dynamic";
-import numeral from "numeral";
+import numbro from "numbro";
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import { QueryStream_stream } from "../../apollo/types/QueryStream";
@@ -81,15 +81,15 @@ class Column {
       }
 
       if (avro.Type.isType(this.type, "int", "long")) {
-        return numeral(val).format("0,0");
+        return numbro(val).format("0,0");
       }
 
       if (avro.Type.isType(this.type, "float", "double")) {
-        return numeral(val).format("0,0.000");
+        return numbro(val).format("0,0.000");
       }
 
       if (avro.Type.isType(this.type, "logical:decimal")) {
-        return numeral(val).format("0,0");
+        return numbro(val).format({ thousandSeparated: true, mantissa: 0 });
       }
 
       return val.toString();

@@ -69,3 +69,5 @@ require (
 	honnef.co/go/tools v0.0.0-20190614002413-cb51c254f01b // indirect
 	robpike.io/filter v0.0.0-20150108201509-2984852a2183
 )
+
+replace github.com/linkedin/goavro/v2 => github.com/bem7/goavro/v2 v2.0.0-20191009165622-2e928607d532
