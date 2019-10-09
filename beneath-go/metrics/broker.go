@@ -6,13 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
-
 	"github.com/bluele/gcache"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
