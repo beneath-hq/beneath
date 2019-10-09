@@ -11,6 +11,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	uuid "github.com/satori/go.uuid"
 )
 
 // GetSecret extracts the auth object from ctx
@@ -41,6 +42,7 @@ func Auth(next http.Handler) http.Handler {
 
 		tags := GetTags(r.Context())
 		tags.Secret = secret
+		tags.AnonymousID = uuid.FromStringOrNil(r.Header.Get("X-Beneath-AID"))
 
 		next.ServeHTTP(w, r)
 		return nil

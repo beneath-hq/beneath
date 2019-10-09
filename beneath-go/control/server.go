@@ -17,7 +17,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
@@ -25,6 +24,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/gqlerror"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type configSpecification struct {
@@ -195,19 +195,37 @@ func SegmentMiddleware(next http.Handler) http.Handler {
 		// when the gql library is done
 		tags := middleware.GetTags(r.Context())
 
-		// UserID or ServiceID, and SecretID (can be null)
-		for _, query := range tags.Query.([]map[string]interface{}) {
-			segment.Client.Enqueue(analytics.Track{
-				UserId: "test123", // tags.anonymousID,
-				Event:  "GraphQL Event",
-				Properties: analytics.NewProperties().
-					Set("secretID", tags.Secret.SecretID).
-					Set("userID", tags.Secret.UserID).
-					Set("serviceID", tags.Secret.ServiceID).
+		if tags.Query != nil {
+			for _, queryT := range tags.Query.([]interface{}) {
+				query := queryT.(map[string]interface{})
+
+				props := analytics.NewProperties().
 					Set("ipAdress", r.RemoteAddr).
-					Set("gqlOp", query["op"]).
-					Set("gqlOpName", query["name"]),
-			})
+					Set("gqlOp", query["op"])
+
+				// SecretID, UserID, and ServiceID can be null
+				userID := ""
+				if tags.Secret != nil {
+					props.Set("secretID", tags.Secret.SecretID.String())
+					if tags.Secret.UserID != nil {
+						userID = tags.Secret.UserID.String()
+					} else if tags.Secret.ServiceID != nil {
+						userID = tags.Secret.ServiceID.String()
+					} else {
+						panic(fmt.Errorf("expected UserID or ServiceID to be set"))
+					}
+				}
+
+				err := segment.Client.Enqueue(analytics.Track{
+					Event:       query["name"].(string),
+					AnonymousId: tags.AnonymousID.String(),
+					UserId:      userID,
+					Properties:  props,
+				})
+				if err != nil {
+					log.S.Errorf("Segment error %s", err.Error())
+				}
+			}
 		}
 	})
 }
