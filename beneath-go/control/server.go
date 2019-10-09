@@ -15,7 +15,9 @@ import (
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
@@ -44,6 +46,8 @@ type configSpecification struct {
 	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
 	GoogleAuthID     string `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
 	GoogleAuthSecret string `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
+
+	SegmentServersideKey string `envconfig:"SEGMENT_SERVERSIDE_KEY" required:"true"`
 }
 
 var (
@@ -73,6 +77,9 @@ func init() {
 		GoogleAuthID:     Config.GoogleAuthID,
 		GoogleAuthSecret: Config.GoogleAuthSecret,
 	})
+
+	// init segment
+	segment.InitClient(Config.SegmentServersideKey)
 }
 
 // ListenAndServeHTTP serves the GraphQL API on HTTP
@@ -86,6 +93,7 @@ func ListenAndServeHTTP(port int) error {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Auth)
 	router.Use(middleware.IPRateLimit())
+	router.Use(SegmentMiddleware)
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{
@@ -177,4 +185,29 @@ func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
 		}
 	}
 	return queries
+}
+
+// SegmentMiddleware tracks the event and sends data to segment
+func SegmentMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// before reaching the gql library
+		next.ServeHTTP(w, r)
+		// when the gql library is done
+		tags := middleware.GetTags(r.Context())
+
+		// UserID or ServiceID, and SecretID (can be null)
+		for _, query := range tags.Query.([]map[string]interface{}) {
+			segment.Client.Enqueue(analytics.Track{
+				UserId: "test123", // tags.anonymousID,
+				Event:  "GraphQL Event",
+				Properties: analytics.NewProperties().
+					Set("secretID", tags.Secret.SecretID).
+					Set("userID", tags.Secret.UserID).
+					Set("serviceID", tags.Secret.ServiceID).
+					Set("ipAdress", r.RemoteAddr).
+					Set("gqlOp", query["op"]).
+					Set("gqlOpName", query["name"]),
+			})
+		}
+	})
 }
