@@ -158,23 +158,24 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Empty              func(childComplexity int) int
-		ExploreProjects    func(childComplexity int) int
-		GetServiceMetrics  func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamMetrics   func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetUserMetrics     func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
-		Me                 func(childComplexity int) int
-		Model              func(childComplexity int, name string, projectName string) int
-		OrganizationByName func(childComplexity int, name string) int
-		Ping               func(childComplexity int) int
-		ProjectByID        func(childComplexity int, projectID uuid.UUID) int
-		ProjectByName      func(childComplexity int, name string) int
-		SecretsForService  func(childComplexity int, serviceID uuid.UUID) int
-		SecretsForUser     func(childComplexity int, userID uuid.UUID) int
-		Service            func(childComplexity int, serviceID uuid.UUID) int
-		Stream             func(childComplexity int, name string, projectName string) int
-		User               func(childComplexity int, userID uuid.UUID) int
-		UserByUsername     func(childComplexity int, username string) int
+		Empty                        func(childComplexity int) int
+		ExploreProjects              func(childComplexity int) int
+		GetServiceMetrics            func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamMetrics             func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetUserMetrics               func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
+		Me                           func(childComplexity int) int
+		Model                        func(childComplexity int, name string, projectName string) int
+		OrganizationByName           func(childComplexity int, name string) int
+		Ping                         func(childComplexity int) int
+		ProjectByID                  func(childComplexity int, projectID uuid.UUID) int
+		ProjectByName                func(childComplexity int, name string) int
+		SecretsForService            func(childComplexity int, serviceID uuid.UUID) int
+		SecretsForUser               func(childComplexity int, userID uuid.UUID) int
+		Service                      func(childComplexity int, serviceID uuid.UUID) int
+		ServiceByNameAndOrganization func(childComplexity int, name string, organizationName string) int
+		Stream                       func(childComplexity int, name string, projectName string) int
+		User                         func(childComplexity int, userID uuid.UUID) int
+		UserByUsername               func(childComplexity int, username string) int
 	}
 
 	Secret struct {
@@ -292,6 +293,7 @@ type QueryResolver interface {
 	SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error)
 	SecretsForService(ctx context.Context, serviceID uuid.UUID) ([]*entity.Secret, error)
 	Service(ctx context.Context, serviceID uuid.UUID) (*entity.Service, error)
+	ServiceByNameAndOrganization(ctx context.Context, name string, organizationName string) (*entity.Service, error)
 	Stream(ctx context.Context, name string, projectName string) (*entity.Stream, error)
 	Me(ctx context.Context) (*Me, error)
 	User(ctx context.Context, userID uuid.UUID) (*entity.User, error)
@@ -1155,6 +1157,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Service(childComplexity, args["serviceID"].(uuid.UUID)), true
 
+	case "Query.serviceByNameAndOrganization":
+		if e.complexity.Query.ServiceByNameAndOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Query_serviceByNameAndOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ServiceByNameAndOrganization(childComplexity, args["name"].(string), args["organizationName"].(string)), true
+
 	case "Query.stream":
 		if e.complexity.Query.Stream == nil {
 			break
@@ -1735,6 +1749,7 @@ type NewSecret {
 `},
 	&ast.Source{Name: "control/gql/schema/services.graphql", Input: `extend type Query {
   service(serviceID: UUID!): Service
+  serviceByNameAndOrganization(name: String!, organizationName: String!): Service
 }
 
 extend type Mutation {
@@ -2689,6 +2704,28 @@ func (ec *executionContext) field_Query_secretsForUser_args(ctx context.Context,
 		}
 	}
 	args["userID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_serviceByNameAndOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["organizationName"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationName"] = arg1
 	return args, nil
 }
 
@@ -6349,6 +6386,47 @@ func (ec *executionContext) _Query_service(ctx context.Context, field graphql.Co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Service(rctx, args["serviceID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_serviceByNameAndOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ServiceByNameAndOrganization(rctx, args["name"].(string), args["organizationName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10151,6 +10229,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_service(ctx, field)
+				return res
+			})
+		case "serviceByNameAndOrganization":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_serviceByNameAndOrganization(ctx, field)
 				return res
 			})
 		case "stream":

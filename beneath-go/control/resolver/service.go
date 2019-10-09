@@ -30,6 +30,28 @@ func (r *queryResolver) Service(ctx context.Context, serviceID uuid.UUID) (*enti
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
 	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("Not allowed to view organization resources")
+	}
+
+	return service, nil
+}
+
+func (r *queryResolver) ServiceByNameAndOrganization(ctx context.Context, name string, organizationName string) (*entity.Service, error) {
+	service := entity.FindServiceByNameAndOrganization(ctx, name, organizationName)
+	if service == nil {
+		return nil, gqlerror.Errorf("Service %s/%s not found", organizationName, name)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("Not allowed to view organization resources")
+	}
+
 	return service, nil
 }
 
