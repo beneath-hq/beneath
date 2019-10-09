@@ -44,9 +44,11 @@ require (
 	github.com/markbates/goth v1.54.1
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.opencensus.io v0.22.0 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
@@ -66,6 +68,7 @@ require (
 	google.golang.org/grpc v1.21.1
 	gopkg.in/go-playground/assert.v1 v1.2.1
 	gopkg.in/go-playground/validator.v9 v9.29.0
+	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	honnef.co/go/tools v0.0.0-20190614002413-cb51c254f01b // indirect
 	robpike.io/filter v0.0.0-20150108201509-2984852a2183
 )

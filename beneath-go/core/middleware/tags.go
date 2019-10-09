@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"net/http"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-
-	"google.golang.org/grpc"
-
 	"github.com/beneath-core/beneath-go/control/entity"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	uuid "github.com/satori/go.uuid"
+	"google.golang.org/grpc"
 )
 
 // Tags represents annotations on a request made available both up and down the
 // middleware/interceptor chain (e.g., secrets set down the chain becomes available
 // to logging middleware at the top of the chain).
 type Tags struct {
-	Secret *entity.Secret
-	Query  interface{}
+	Secret      *entity.Secret
+	Query       interface{}
+	AnonymousID uuid.UUID
 }
 
 // TagsContextKey is the request context key for the request's Tags object

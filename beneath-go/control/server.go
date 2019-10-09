@@ -15,6 +15,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -23,6 +24,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/gqlerror"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type configSpecification struct {
@@ -44,6 +46,8 @@ type configSpecification struct {
 	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
 	GoogleAuthID     string `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
 	GoogleAuthSecret string `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
+
+	SegmentServersideKey string `envconfig:"SEGMENT_SERVERSIDE_KEY" required:"true"`
 }
 
 var (
@@ -73,6 +77,9 @@ func init() {
 		GoogleAuthID:     Config.GoogleAuthID,
 		GoogleAuthSecret: Config.GoogleAuthSecret,
 	})
+
+	// init segment
+	segment.InitClient(Config.SegmentServersideKey)
 }
 
 // ListenAndServeHTTP serves the GraphQL API on HTTP
@@ -86,6 +93,7 @@ func ListenAndServeHTTP(port int) error {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Auth)
 	router.Use(middleware.IPRateLimit())
+	router.Use(SegmentMiddleware)
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{
@@ -177,4 +185,47 @@ func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
 		}
 	}
 	return queries
+}
+
+// SegmentMiddleware tracks the event and sends data to segment
+func SegmentMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// before reaching the gql library
+		next.ServeHTTP(w, r)
+		// when the gql library is done
+		tags := middleware.GetTags(r.Context())
+
+		if tags.Query != nil {
+			for _, queryT := range tags.Query.([]interface{}) {
+				query := queryT.(map[string]interface{})
+
+				props := analytics.NewProperties().
+					Set("ipAdress", r.RemoteAddr).
+					Set("gqlOp", query["op"])
+
+				// SecretID, UserID, and ServiceID can be null
+				userID := ""
+				if tags.Secret != nil {
+					props.Set("secretID", tags.Secret.SecretID.String())
+					if tags.Secret.UserID != nil {
+						userID = tags.Secret.UserID.String()
+					} else if tags.Secret.ServiceID != nil {
+						userID = tags.Secret.ServiceID.String()
+					} else {
+						panic(fmt.Errorf("expected UserID or ServiceID to be set"))
+					}
+				}
+
+				err := segment.Client.Enqueue(analytics.Track{
+					Event:       query["name"].(string),
+					AnonymousId: tags.AnonymousID.String(),
+					UserId:      userID,
+					Properties:  props,
+				})
+				if err != nil {
+					log.S.Errorf("Segment error %s", err.Error())
+				}
+			}
+		}
+	})
 }

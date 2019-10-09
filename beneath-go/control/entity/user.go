@@ -212,6 +212,14 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		return nil, err
 	}
 
+	// send "identify" call to Segment
+	// userID should be the user.UserID, secretID or the browserID?
+	// Segment.Client.Enqueue(analytics.Identify{
+	// UserId: user.UserID,
+	// Traits: analytics.NewTraits().
+	//   Set("organization", user.MainOrganizationID),
+	// })
+
 	if create {
 		log.S.Infow(
 			"control created user",
