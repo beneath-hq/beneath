@@ -21,7 +21,7 @@ class Stream:
   Stream enables read and write operations on Beneath streams
   """
 
-  def __init__(self, client, project_name, stream_name, schema, key_fields, avro_schema, batch, current_instance_id):
+  def __init__(self, client, stream_id, project_name, stream_name, schema, key_fields, avro_schema, batch, current_instance_id):
     """
     Args:
       client (Client): Connection to Beneath.
@@ -34,6 +34,7 @@ class Stream:
       current_instance_id (UUID): ID of current stream instance for data reads.
     """
     self.client = client
+    self.stream_id = stream_id
     self.project_name = project_name
     self.stream_name = stream_name
     self.schema = schema
@@ -46,6 +47,7 @@ class Stream:
   def __getstate__(self):
     return {
       'client': self.client,
+      'stream_id': self.stream_id,
       'project_name': self.project_name,
       'stream_name': self.stream_name,
       'schema': self.schema,
@@ -58,6 +60,7 @@ class Stream:
 
   def __setstate__(self, obj):
     self.client = obj['client']
+    self.stream_id = obj['stream_id']
     self.project_name = obj['project_name']
     self.stream_name = obj['stream_name']
     self.schema = obj['schema']

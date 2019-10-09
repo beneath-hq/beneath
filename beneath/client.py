@@ -113,6 +113,9 @@ class Client:
 
   def _query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
+    for k, v in variables.items():
+      if isinstance(v, uuid.UUID):
+        variables[k] = v.hex
     url = config.BENEATH_CONTROL_HOST + '/graphql'
     headers = {'Authorization': 'Bearer ' + self.secret}
     response = requests.post(url, headers=headers, json={
@@ -167,15 +170,19 @@ class Client:
       stream (str): Name of the stream.
     """
     details = self.get_stream_details(format_entity_name(project_name), format_entity_name(stream_name))
+    current_instance_id = details['currentStreamInstanceID']
+    if current_instance_id is not None:
+      current_instance_id = uuid.UUID(hex=current_instance_id)
     return Stream(
       client=self,
+      stream_id=uuid.UUID(hex=details['streamID']),
       project_name=details['project']['name'],
       stream_name=details['name'],
       schema=details['schema'],
       key_fields=details['keyFields'],
       avro_schema=details['avroSchema'],
       batch=details['batch'],
-      current_instance_id=uuid.UUID(hex=details['currentStreamInstanceID']),
+      current_instance_id=current_instance_id,
     )
 
 
