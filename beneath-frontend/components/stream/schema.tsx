@@ -81,7 +81,11 @@ class Column {
       }
 
       if (avro.Type.isType(this.type, "int", "long")) {
-        return numbro(val).format("0,0");
+        try {
+          return Number(val).toLocaleString("en-US");
+        } catch (e) {
+          return Number(val).toLocaleString();
+        }
       }
 
       if (avro.Type.isType(this.type, "float", "double")) {
@@ -89,7 +93,12 @@ class Column {
       }
 
       if (avro.Type.isType(this.type, "logical:decimal")) {
-        return numbro(val).format({ thousandSeparated: true, mantissa: 0 });
+        try {
+          // @ts-ignore
+          return BigInt(val).toLocaleString("en-US");
+        } catch (e) {
+          return BigInt(val).toLocaleString();
+        }
       }
 
       return val.toString();
