@@ -92,7 +92,9 @@ func (c instanceCache) getterFunc(ctx context.Context, streamName string, projec
 			select s.current_stream_instance_id
 			from streams s
 			join projects p on s.project_id = p.project_id
-			where lower(s.name) = lower(?) and lower(p.name) = lower(?)
+			where lower(s.name) = lower(?)
+			and lower(p.name) = lower(?)
+			and current_stream_instance_id is not null
 		`, streamName, projectName)
 		if err == pg.ErrNoRows {
 			return res, nil
