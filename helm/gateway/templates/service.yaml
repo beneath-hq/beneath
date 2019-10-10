@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     helm.sh/chart: {{ include "gateway.chart" . }}
 spec:
-  type: NodePort
   ports:
   - port: 8080
     name: gw-port
