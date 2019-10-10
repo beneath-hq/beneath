@@ -28,11 +28,11 @@ setuptools.setup(
   ],
   scripts=['beneath/bin/beneath'],
   install_requires=[
-    'apache_beam[gcp]>=2.14.0',
-    'argparse>=1.1',
-    'fastavro>=0.21.24',
-    'grpcio>=1.23.0',
-    'pandas>=0.24.2',
-    'six>=1.12.0',
+    'apache_beam[gcp]==2.16.0',
+    'argparse==1.4',
+    'fastavro==0.21.24',
+    'grpcio==1.24.1',
+    'pandas==0.25.1',
+    'six==1.12.0',
   ]
 )
