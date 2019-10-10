@@ -30,6 +30,7 @@ setuptools.setup(
   install_requires=[
     'apache_beam[gcp]==2.16.0',
     'argparse==1.4',
+    'Cython==0.29.13',
     'fastavro==0.21.24',
     'grpcio==1.24.1',
     'pandas==0.25.1',
