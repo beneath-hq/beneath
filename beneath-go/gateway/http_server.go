@@ -135,8 +135,8 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
-	projectName := chi.URLParam(r, "projectName")
-	streamName := chi.URLParam(r, "streamName")
+	projectName := toBackendName(chi.URLParam(r, "projectName"))
+	streamName := toBackendName(chi.URLParam(r, "streamName"))
 	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
@@ -146,8 +146,8 @@ func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getLatestFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
-	projectName := chi.URLParam(r, "projectName")
-	streamName := chi.URLParam(r, "streamName")
+	projectName := toBackendName(chi.URLParam(r, "projectName"))
+	streamName := toBackendName(chi.URLParam(r, "streamName"))
 	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")

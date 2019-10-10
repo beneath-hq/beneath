@@ -44,5 +44,5 @@ func init() {
 }
 
 func toBackendName(s string) string {
-	return strings.ReplaceAll(s, "-", "_")
+	return strings.ToLower(strings.ReplaceAll(s, "-", "_"))
 }
