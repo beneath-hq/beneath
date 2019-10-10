@@ -72,7 +72,7 @@ build_taskqueue:
     - master
   script:
     - helm init --client-only --service-account tiller
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --namespace=${KUBE_NAMESPACE}
+    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
 
 .deploy_prod:
   variables:
@@ -87,6 +87,8 @@ deploy_frontend:
   - .deploy_prod
   variables:
     CMD_NAME: frontend
+    REPLICAS: ${REPLICAS_FRONTEND}
+    REPLICAS_FRONTEND: 2
 
 deploy_control:
   extends:
@@ -94,6 +96,8 @@ deploy_control:
   - .deploy_prod
   variables:
     CMD_NAME: control
+    REPLICAS: ${REPLICAS_CONTROL}
+    REPLICAS_CONTROL: 2
 
 deploy_gateway:
   extends:
@@ -101,6 +105,8 @@ deploy_gateway:
   - .deploy_prod
   variables:
     CMD_NAME: gateway
+    REPLICAS: ${REPLICAS_GATEWAY}
+    REPLICAS_GATEWAY: 2
 
 deploy_pipeline:
   extends:
@@ -108,6 +114,8 @@ deploy_pipeline:
   - .deploy_prod
   variables:
     CMD_NAME: pipeline
+    REPLICAS: ${REPLICAS_PIPELINE}
+    REPLICAS_PIPELINE: 1
 
 deploy_taskqueue:
   extends:
@@ -115,3 +123,5 @@ deploy_taskqueue:
   - .deploy_prod
   variables:
     CMD_NAME: taskqueue
+    REPLICAS: ${REPLICAS_TASKQUEUE}
+    REPLICAS_TASKQUEUE: 1
