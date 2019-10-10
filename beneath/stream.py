@@ -39,7 +39,8 @@ class Stream:
     self.stream_name = stream_name
     self.schema = schema
     self.key_fields = key_fields
-    self.avro_schema = parse_schema(json.loads(avro_schema))
+    self.avro_schema = avro_schema
+    self.parsed_avro_schema = parse_schema(json.loads(avro_schema))
     self.batch = batch
     self.current_instance_id = current_instance_id
 
@@ -66,6 +67,7 @@ class Stream:
     self.schema = obj['schema']
     self.key_fields = obj['key_fields']
     self.avro_schema = obj['avro_schema']
+    self.parsed_avro_schema = parse_schema(json.loads(self.avro_schema))
     self.batch = obj['batch']
     self.current_instance_id = obj['current_instance_id']
 
@@ -173,7 +175,7 @@ class Stream:
 
   @property
   def _columns(self):
-    return [field["name"] for field in self.avro_schema["fields"]]
+    return [field["name"] for field in self.parsed_avro_schema["fields"]]
 
 
   @property
@@ -220,14 +222,14 @@ class Stream:
 
   def _decode_avro(self, data):
     reader = io.BytesIO(data)
-    record = schemaless_reader(reader, self.avro_schema)
+    record = schemaless_reader(reader, self.parsed_avro_schema)
     reader.close()
     return record
 
 
   def _encode_avro(self, record):
     writer = io.BytesIO()
-    schemaless_writer(writer, self.avro_schema, record)
+    schemaless_writer(writer, self.parsed_avro_schema, record)
     result = writer.getvalue()
     writer.close()
     return result
