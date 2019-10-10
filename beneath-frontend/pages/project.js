@@ -17,7 +17,11 @@ import { toBackendName, toURLName } from "../lib/names";
 
 const ProjectPage = ({ router, me }) => (
   <Page title="Project" subheader>
-    <Query query={QUERY_PROJECT} variables={{ name: toBackendName(router.query.name) }} fetchPolicy="cache-and-network">
+    <Query
+      query={QUERY_PROJECT}
+      variables={{ name: toBackendName(router.query.name) }}
+      fetchPolicy="cache-and-network"
+    >
       {({ loading, error, data }) => {
         if (loading) {
           return <Loading justify="center" />;

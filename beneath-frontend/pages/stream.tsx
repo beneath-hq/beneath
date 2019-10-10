@@ -39,29 +39,33 @@ const StreamPage: FC<IProps> = ({ router }) => {
           const { stream } = data;
 
           const tabs = [];
-          tabs.push({ value: "lookup", label: "Lookup", render: () => <ExploreStream stream={stream} /> });
 
-          if (!stream.batch) {
-            tabs.push({
-              value: "streaming",
-              label: "Streaming",
-              render: ((props: SubrouteTabProps) => <StreamLatest stream={stream} {...props} />),
-            });
+          if (stream.currentStreamInstanceID) {
+            tabs.push({ value: "lookup", label: "Lookup", render: () => <ExploreStream stream={stream} /> });
+
+            if (!stream.batch) {
+              tabs.push({
+                value: "streaming",
+                label: "Streaming",
+                render: ((props: SubrouteTabProps) => <StreamLatest stream={stream} {...props} />),
+              });
+            }
           }
 
           tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
 
-          if (stream.manual) {
+          if (stream.manual && !stream.batch) {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
 
           tabs.push({ value: "metrics", label: "Metrics", render: () => <p>Metrics</p> });
 
+          const defaultValue = stream.currentStreamInstanceID ? "lookup" : "api";
           return (
             <React.Fragment>
               <PageTitle title={`${toURLName(stream.project.name)}/${toURLName(stream.name)}`} />
               <ModelHero name={toURLName(stream.name)} description={stream.description} />
-              <SubrouteTabs defaultValue="lookup" tabs={tabs} />
+              <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
             </React.Fragment>
           );
         }}
