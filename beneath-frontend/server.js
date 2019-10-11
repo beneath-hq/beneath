@@ -7,6 +7,7 @@ const fetch = require("isomorphic-unfetch");
 const helmet = require("helmet");
 const compression = require("compression");
 const redirectToHTTPS = require("express-http-to-https").redirectToHTTPS;
+const uuidv4 = require("uuid/v4");
 
 global.fetch = require("isomorphic-unfetch"); // Polyfill fetch() on the server (used by apollo-client)
 
@@ -14,6 +15,7 @@ const port = parseInt(process.env.PORT, 10) || 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
+const cookieAge = 20 * 365 * 24 * 60 * 60 * 1000;
 
 app.prepare().then(() => {
   const server = express();
@@ -39,6 +41,15 @@ app.prepare().then(() => {
   // Parse cookies for logout route
   server.use(cookieParser());
 
+  // Set anonymous id
+  server.use((req, res, next) => {
+    const aid = req.cookies.aid;
+    if (!aid) {
+      res.cookie("aid", uuidv4(), { maxAge: cookieAge, secure: !dev });
+    }
+    next();
+  });
+
   // Logout
   server.get("/auth/logout", (req, res) => {
     // If the user is logged in, we'll let the backend logout the token (i.e. delete the token from it's registries)
@@ -60,7 +71,7 @@ app.prepare().then(() => {
   server.get("/auth/callback/login", (req, res) => {
     let token = req.query.token;
     if (token) {
-      res.cookie("token", token);
+      res.cookie("token", token, { secure: !dev });
     } else {
       res.clearCookie("token");
     }

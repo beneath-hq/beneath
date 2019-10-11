@@ -3,7 +3,7 @@ import { ErrorLink } from "apollo-link-error";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
 import { resolvers, typeDefs } from "./schema";
-import { GET_TOKEN } from "./queries/local/token";
+import { GET_AID, GET_TOKEN } from "./queries/local/token";
 
 let apolloClient = null;
 
@@ -21,19 +21,22 @@ export const getApolloClient = (options) => {
   return apolloClient;
 };
 
-const createApolloClient = ({ initialState, token, res }) => {
+const createApolloClient = ({ initialState, anonymousID, token, res }) => {
   const linkOptions = {
     uri: `${API_URL}/graphql`,
     credentials: "include",
   };
 
+  linkOptions.headers = {};
   if (token) {
-    linkOptions.headers = {
-      Authorization: `Bearer ${token}`,
-    };
+    linkOptions.headers.Authorization = `Bearer ${token}`;
+  }
+  if (anonymousID) {
+    linkOptions.headers["X-Beneath-Aid"] = anonymousID;
   }
 
   const cache = new InMemoryCache({ dataIdFromObject }).restore(initialState || {});
+  cache.writeQuery({ query: GET_AID, data: { aid: anonymousID } });
   cache.writeQuery({ query: GET_TOKEN, data: { token } });
 
   const apolloOptions = {

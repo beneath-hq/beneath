@@ -11,6 +11,7 @@ export const withApolloClient = (App) => {
     constructor(props) {
       super(props);
       this.apolloClient = getApolloClient({
+        anonymousID: props.anonymousID,
         token: props.token,
         initialState: props.apolloState,
       });
@@ -23,8 +24,11 @@ export const withApolloClient = (App) => {
         ctx: { req, res },
       } = ctx;
 
-      // read token from token
+      // read token from cookie
       let token = readTokenFromCookie(req);
+
+      // read anonymous id from cookie
+      let anonymousID = readAnonymousIDFromCookie(req);
 
       // Get app props to pass on
       let appProps = {};
@@ -33,7 +37,7 @@ export const withApolloClient = (App) => {
       }
 
       // Get apollo client
-      const apollo = getApolloClient({ token, res });
+      const apollo = getApolloClient({ anonymousID, token, res });
 
       // Run all GraphQL queries in the component tree
       // and extract the resulting data
@@ -41,7 +45,14 @@ export const withApolloClient = (App) => {
         try {
           // Run all GraphQL queries
           await getDataFromTree(
-            <App {...appProps} Component={Component} router={router} apolloClient={apollo} token={token} />
+            <App
+              {...appProps}
+              Component={Component}
+              router={router}
+              apolloClient={apollo}
+              token={token}
+              anonymousID={anonymousID}
+            />
           );
         } catch (error) {
           // Prevent Apollo Client GraphQL errors from crashing SSR.
@@ -62,6 +73,7 @@ export const withApolloClient = (App) => {
         ...appProps,
         apolloState,
         token,
+        anonymousID,
       };
     }
 
@@ -90,4 +102,25 @@ const readTokenFromCookie = (maybeReq) => {
     }
   }
   return token;
+};
+
+const readAnonymousIDFromCookie = (maybeReq) => {
+  let aid = null;
+  let cookie = null;
+  if (maybeReq) {
+    cookie = maybeReq.headers.cookie;
+  } else if (document) {
+    cookie = document.cookie;
+  }
+  if (cookie) {
+    cookie = cookie.split(";").find((c) => c.trim().startsWith("aid="));
+    if (cookie) {
+      aid = cookie.replace(/^\s*aid=/, "");
+      aid = decodeURIComponent(aid);
+      if (aid.length === 0) {
+        aid = null;
+      }
+    }
+  }
+  return aid;
 };

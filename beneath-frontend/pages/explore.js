@@ -106,7 +106,7 @@ const Explore = ({ me }) => {
           <Grid className={classes.buttons} container spacing={2} justify="center">
             <Grid item>
               <Button
-                size="large"
+                size="medium"
                 color="default"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
@@ -117,7 +117,7 @@ const Explore = ({ me }) => {
             </Grid>
             <Grid item>
               <Button
-                size="large"
+                size="medium"
                 color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.primaryButton)}

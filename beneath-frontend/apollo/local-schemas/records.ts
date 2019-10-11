@@ -3,7 +3,7 @@ import { ApolloCache } from "apollo-cache";
 import gql from "graphql-tag";
 
 import connection from "../../lib/connection";
-import { GET_TOKEN } from "../queries/local/token";
+import { GET_AID, GET_TOKEN } from "../queries/local/token";
 import { QUERY_STREAM } from "../queries/stream";
 import { CreateRecordsVariables } from "../types/CreateRecords";
 import { LatestRecordsVariables } from "../types/LatestRecords";
@@ -82,11 +82,7 @@ export const resolvers = {
       }
 
       // build headers with authorization
-      const headers: any = { "Content-Type": "application/json" };
-      const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+      const headers = makeHeaders(cache);
 
       // fetch
       const res = await fetch(url, { headers });
@@ -145,11 +141,7 @@ export const resolvers = {
       }
 
       // build headers with authorization
-      const headers: any = { "Content-Type": "application/json" };
-      const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+      const headers = makeHeaders(cache);
 
       // fetch
       const res = await fetch(url, { headers });
@@ -235,4 +227,17 @@ const makeUniqueIdentifier = (keyFields: string[], data: any, includeTimestamp: 
     id = `${id}-${ts || ""}`;
   }
   return id;
+};
+
+const makeHeaders = (cache: ApolloCache<any>) => {
+  const headers: any = { "Content-Type": "application/json" };
+  const { aid } = cache.readQuery({ query: GET_AID }) as any;
+  const { token } = cache.readQuery({ query: GET_TOKEN }) as any;
+  if (aid) {
+    headers["X-Beneath-Aid"] = aid;
+  }  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
 };

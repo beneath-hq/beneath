@@ -46,6 +46,7 @@
     "recompose": "^0.30.0",
     "subscriptions-transport-ws": "^0.9.16",
     "tslint": "^5.18.0",
+    "uuid": "^3.3.3",
     "validator": "^11.1.0"
   },
   "devDependencies": {
