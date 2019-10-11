@@ -5,10 +5,8 @@ import Document, { Head, Main, NextScript } from "next/document";
 import React from "react";
 import flush from "styled-jsx/server";
 import { ServerStyleSheets } from "@material-ui/styles";
-import * as snippet from "@segment/snippet";
 
 import theme from "../lib/theme";
-import { IS_PRODUCTION, SEGMENT_WRITE_KEY } from "../lib/connection";
 
 export default class MyDocument extends Document {
   static async getInitialProps(ctx) {
@@ -36,21 +34,6 @@ export default class MyDocument extends Document {
     };
   }
 
-  renderSegmentSnippet() {
-    const opts = {
-      apiKey: SEGMENT_WRITE_KEY,
-      // note: the page option only covers SSR tracking.
-      // _app.js is used to track other events using `window.analytics.page()`
-      page: true,
-      host: "cdn.happy.beneath.network",
-    };
-
-    if (IS_PRODUCTION) {
-      return snippet.min(opts);
-    }
-    return snippet.max(opts);
-  }
-
   render() {
     return (
       <html>
@@ -69,9 +52,6 @@ export default class MyDocument extends Document {
           />
 
           {/* <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono:300,300i,600" rel="stylesheet" /> */}
-
-          {/* Segment Analytics.js snippet */}
-          <script dangerouslySetInnerHTML={{ __html: this.renderSegmentSnippet() }} />
         </Head>
         <body>
           <Main />
