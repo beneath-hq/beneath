@@ -43,15 +43,21 @@ func TrackHTTP(r *http.Request, name string, payload interface{}) {
 		}
 	}
 
+	// anonymous id
+	aid := ""
+	if tags.AnonymousID != uuid.Nil {
+		aid = tags.AnonymousID.String()
+	}
+
 	// Doesn't make sense to log events we know nothing about
-	if userID == "" && tags.AnonymousID == uuid.Nil {
+	if userID == "" && aid == "" {
 		return
 	}
 
 	err := Client.Enqueue(analytics.Track{
 		Event:       name,
 		UserId:      userID,
-		AnonymousId: tags.AnonymousID.String(),
+		AnonymousId: aid,
 		Properties:  props,
 	})
 	if err != nil {

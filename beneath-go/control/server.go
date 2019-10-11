@@ -144,10 +144,11 @@ func makeExecutableSchema() graphql.ExecutableSchema {
 }
 
 type gqlLog struct {
-	Op    string `json:"op"`
-	Name  string `json:"name,omitempty"`
-	Field string `json:"field"`
-	Error error  `json:"error,omitempty"`
+	Op    string                 `json:"op"`
+	Name  string                 `json:"name,omitempty"`
+	Field string                 `json:"field"`
+	Error error                  `json:"error,omitempty"`
+	Vars  map[string]interface{} `json:"vars,omitempty"`
 }
 
 func makeQueryLoggingMiddleware() handler.Option {
@@ -171,6 +172,7 @@ func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
 					Op:    string(op.Operation),
 					Name:  name,
 					Field: field.Name,
+					Vars:  ctx.Variables,
 				})
 			}
 		}
@@ -196,12 +198,12 @@ func segmentMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 		tags := middleware.GetTags(r.Context())
-		gqlLogs, ok := tags.Payload.([]gqlLog)
+		logs, ok := tags.Payload.([]gqlLog)
 		if !ok {
 			return
 		}
 
-		for _, l := range gqlLogs {
+		for _, l := range logs {
 			name := "GQL: " + l.Name
 			segment.TrackHTTP(r, name, l)
 		}
