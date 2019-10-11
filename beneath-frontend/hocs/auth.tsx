@@ -1,39 +1,37 @@
-import React, { FunctionComponent } from "react";
-import { Query } from "react-apollo";
+import React, { FC } from "react";
+import { Query, useQuery } from "react-apollo";
 
 import { GET_TOKEN } from "../apollo/queries/local/token";
 import { Token } from "../apollo/types/Token";
 import Error from "../pages/_error";
 
 interface ITokenConsumerProps {
-  children: (token: string | null) => React.ReactNode;
+  children: (token: string | null) => JSX.Element;
 }
 
-export const TokenConsumer: FunctionComponent<ITokenConsumerProps> = (props) => {
-  return (
-    <Query<Token> query={GET_TOKEN}>
-      {({ loading, error, data }) => {
-        if (data) {
-          const { token } = data;
-          return props.children(token);
-        } else {
-          return props.children(null);
-        }
-      }}
-    </Query>
-  );
+export const TokenConsumer: FC<ITokenConsumerProps> = (props) => {
+  const { loading, error, data } = useQuery<Token>(GET_TOKEN);
+  if (data) {
+    const { token } = data;
+    return props.children(token);
+  }
+
+  return props.children(null);
 };
 
-export const AuthRequired: FunctionComponent = (props) => {
+interface IAuthRequiredProps {
+  children: JSX.Element;
+}
+
+export const AuthRequired: FC<IAuthRequiredProps> = (props) => {
   return (
     <TokenConsumer>
       {(token) => {
         if (token) {
           return props.children;
-        } else {
-          return <Error statusCode={401} />;
         }
+        return <Error statusCode={401} />;
       }}
     </TokenConsumer>
   );
-}
+};

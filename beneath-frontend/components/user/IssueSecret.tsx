@@ -90,7 +90,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
           closeDialog();
         }}
         update={(cache, { data }) => {
-          if (data !== undefined) {
+          if (data) {
             const queryData = cache.readQuery({ query: QUERY_USER_SECRETS, variables: { userID } }) as any;
             cache.writeQuery({
               query: QUERY_USER_SECRETS,
