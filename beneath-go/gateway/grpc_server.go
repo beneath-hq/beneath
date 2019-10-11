@@ -99,11 +99,11 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	req.StreamName = toBackendName(req.StreamName)
 	req.ProjectName = toBackendName(req.ProjectName)
 
-	// set query (for logging)
-	middleware.SetTagsQuery(ctx,
-		"stream", req.StreamName,
-		"project", req.ProjectName,
-	)
+	// set log payload
+	middleware.SetTagsPayload(ctx, streamDetailsLog{
+		Stream:  req.StreamName,
+		Project: req.ProjectName,
+	})
 
 	// get auth
 	secret := middleware.GetSecret(ctx)
@@ -157,13 +157,13 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
 
-	// set query (for logging)
-	middleware.SetTagsQuery(ctx,
-		"instance_id", instanceID.String(),
-		"limit", req.Limit,
-		"where", req.Where,
-		"after", req.After,
-	)
+	// set log payload
+	middleware.SetTagsPayload(ctx, readRecordsLog{
+		InstanceID: instanceID.String(),
+		Limit:      req.Limit,
+		Where:      req.Where,
+		After:      req.After,
+	})
 
 	// get cached stream
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -267,12 +267,12 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
 
-	// set query (for logging)
-	middleware.SetTagsQuery(ctx,
-		"instance_id", instanceID.String(),
-		"limit", req.Limit,
-		"before", req.Before,
-	)
+	// set log payload
+	middleware.SetTagsPayload(ctx, readLatestLog{
+		InstanceID: instanceID.String(),
+		Limit:      req.Limit,
+		Before:     req.Before,
+	})
 
 	// get cached stream
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -349,11 +349,11 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
 	}
 
-	// set query (for logging)
-	middleware.SetTagsQuery(ctx,
-		"instance_id", instanceID.String(),
-		"records_count", len(req.Records),
-	)
+	// set log payload
+	middleware.SetTagsPayload(ctx, writeRecordsLog{
+		InstanceID:   instanceID.String(),
+		RecordsCount: len(req.Records),
+	})
 
 	// get stream info
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -423,11 +423,11 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 }
 
 func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*pb.ClientPong, error) {
-	// set query (for logging)
-	middleware.SetTagsQuery(ctx,
-		"client_id", req.ClientId,
-		"client_version", req.ClientVersion,
-	)
+	// set log payload
+	middleware.SetTagsPayload(ctx, clientPingLog{
+		ClientID:      req.ClientId,
+		ClientVersion: req.ClientVersion,
+	})
 
 	spec := clientSpecs[req.ClientId]
 	if spec.IsZero() {

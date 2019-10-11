@@ -46,6 +46,11 @@ env:
     secretKeyRef:
       name: control-secrets
       key: pg-password
+- name: BENEATH_CONTROL_SEGMENT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: control-secrets
+      key: segment-secret
 - name: BENEATH_CONTROL_SESSION_SECRET
   valueFrom:
     secretKeyRef:

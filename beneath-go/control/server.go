@@ -24,7 +24,6 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/gqlerror"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type configSpecification struct {
@@ -41,13 +40,12 @@ type configSpecification struct {
 	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 
+	SegmentSecret    string `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
 	SessionSecret    string `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
 	GithubAuthID     string `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
 	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
 	GoogleAuthID     string `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
 	GoogleAuthSecret string `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
-
-	SegmentServersideKey string `envconfig:"SEGMENT_SERVERSIDE_KEY" required:"true"`
 }
 
 var (
@@ -67,6 +65,9 @@ func init() {
 	// run migrations
 	migrations.MustRunUp(db.DB)
 
+	// init segment
+	segment.InitClient(Config.SegmentSecret)
+
 	// configure auth
 	auth.InitGoth(&auth.GothConfig{
 		ClientHost:       Config.FrontendHost,
@@ -77,9 +78,6 @@ func init() {
 		GoogleAuthID:     Config.GoogleAuthID,
 		GoogleAuthSecret: Config.GoogleAuthSecret,
 	})
-
-	// init segment
-	segment.InitClient(Config.SegmentServersideKey)
 }
 
 // ListenAndServeHTTP serves the GraphQL API on HTTP
@@ -93,7 +91,7 @@ func ListenAndServeHTTP(port int) error {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Auth)
 	router.Use(middleware.IPRateLimit())
-	router.Use(SegmentMiddleware)
+	router.Use(segmentMiddleware)
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{
@@ -145,41 +143,34 @@ func makeExecutableSchema() graphql.ExecutableSchema {
 	return gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{}})
 }
 
-func makeGraphQLErrorPresenter() handler.Option {
-	return handler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
-		tags := middleware.GetTags(ctx)
-		if q, ok := tags.Query.(map[string]interface{}); ok {
-			q["error"] = err
-		}
-		// Uncomment this line to print resolver error details in the console
-		// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
-		return graphql.DefaultErrorPresenter(ctx, err)
-	})
+type gqlLog struct {
+	Op    string `json:"op"`
+	Name  string `json:"name,omitempty"`
+	Field string `json:"field"`
+	Error error  `json:"error,omitempty"`
 }
 
 func makeQueryLoggingMiddleware() handler.Option {
 	return handler.RequestMiddleware(func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
-		tags := middleware.GetTags(ctx)
 		reqCtx := graphql.GetRequestContext(ctx)
-		tags.Query = logInfoFromRequestContext(reqCtx)
-		// The following also includes variables, but not good for right to be forgotten (GDPR)
-		// tags.Query = map[string]interface{}{
-		// 	"q":    logInfoFromRequestContext(reqCtx),
-		// 	"vars": reqCtx.Variables,
-		// }
+		middleware.SetTagsPayload(ctx, logInfoFromRequestContext(reqCtx))
 		return next(ctx)
 	})
 }
 
 func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
-	var queries []interface{}
+	var queries []gqlLog
 	for _, op := range ctx.Doc.Operations {
 		for _, sel := range op.SelectionSet {
 			if field, ok := sel.(*ast.Field); ok {
-				queries = append(queries, map[string]interface{}{
-					"op":    op.Operation,
-					"name":  op.Name,
-					"field": field.Name,
+				name := op.Name
+				if name == "" {
+					name = "Unnamed"
+				}
+				queries = append(queries, gqlLog{
+					Op:    string(op.Operation),
+					Name:  name,
+					Field: field.Name,
 				})
 			}
 		}
@@ -187,45 +178,32 @@ func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
 	return queries
 }
 
-// SegmentMiddleware tracks the event and sends data to segment
-func SegmentMiddleware(next http.Handler) http.Handler {
+func makeGraphQLErrorPresenter() handler.Option {
+	return handler.ErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+		tags := middleware.GetTags(ctx)
+		if q, ok := tags.Payload.(gqlLog); ok {
+			q.Error = err
+		}
+		// Uncomment this line to print resolver error details in the console
+		// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
+		return graphql.DefaultErrorPresenter(ctx, err)
+	})
+}
+
+func segmentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// before reaching the gql library
+		// run the request first, thus setting tags.Payload
 		next.ServeHTTP(w, r)
-		// when the gql library is done
+
 		tags := middleware.GetTags(r.Context())
+		gqlLogs, ok := tags.Payload.([]gqlLog)
+		if !ok {
+			return
+		}
 
-		if tags.Query != nil {
-			for _, queryT := range tags.Query.([]interface{}) {
-				query := queryT.(map[string]interface{})
-
-				props := analytics.NewProperties().
-					Set("ipAdress", r.RemoteAddr).
-					Set("gqlOp", query["op"])
-
-				// SecretID, UserID, and ServiceID can be null
-				userID := ""
-				if tags.Secret != nil {
-					props.Set("secretID", tags.Secret.SecretID.String())
-					if tags.Secret.UserID != nil {
-						userID = tags.Secret.UserID.String()
-					} else if tags.Secret.ServiceID != nil {
-						userID = tags.Secret.ServiceID.String()
-					} else {
-						panic(fmt.Errorf("expected UserID or ServiceID to be set"))
-					}
-				}
-
-				err := segment.Client.Enqueue(analytics.Track{
-					Event:       query["name"].(string),
-					AnonymousId: tags.AnonymousID.String(),
-					UserId:      userID,
-					Properties:  props,
-				})
-				if err != nil {
-					log.S.Errorf("Segment error %s", err.Error())
-				}
-			}
+		for _, l := range gqlLogs {
+			name := "GQL: " + l.Name
+			segment.TrackHTTP(r, name, l)
 		}
 	})
 }

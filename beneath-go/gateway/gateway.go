@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/metrics"
 )
@@ -11,6 +12,7 @@ import (
 type configSpecification struct {
 	HTTPPort         int    `envconfig:"GATEWAY_PORT" default:"8080"`
 	GRPCPort         int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
+	SegmentSecret    string `envconfig:"GATEWAY_SEGMENT_SECRET" required:"true"`
 	StreamsDriver    string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
 	TablesDriver     string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
 	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
@@ -41,8 +43,38 @@ func init() {
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
+
+	segment.InitClient(Config.SegmentSecret)
 }
 
 func toBackendName(s string) string {
 	return strings.ToLower(strings.ReplaceAll(s, "-", "_"))
+}
+
+type streamDetailsLog struct {
+	Stream  string `json:"stream"`
+	Project string `json:"project"`
+}
+
+type readRecordsLog struct {
+	InstanceID string `json:"instance_id,omitempty"`
+	Limit      int32  `json:"limit,omitempty"`
+	Where      string `json:"where,omitempty"`
+	After      string `json:"after,omitempty"`
+}
+
+type readLatestLog struct {
+	InstanceID string `json:"instance_id,omitempty"`
+	Limit      int32  `json:"limit,omitempty"`
+	Before     int64  `json:"before,omitempty"`
+}
+
+type writeRecordsLog struct {
+	InstanceID   string `json:"instance_id,omitempty"`
+	RecordsCount int    `json:"records_count,omitempty"`
+}
+
+type clientPingLog struct {
+	ClientID      string `json:"client_id,omitempty"`
+	ClientVersion string `json:"client_version,omitempty"`
 }

@@ -7,6 +7,7 @@ This chart relies on the existance of the secret `control-secrets` in the `produ
     kubectl create secret generic control-secrets --namespace production --dry-run -o yaml \
       --from-literal pg-user=INSERT \
       --from-literal pg-password=INSERT \
+      --from-literal segment-secret=INSERT \
       --from-literal session-secret=INSERT \
       --from-literal github-auth-id=INSERT \
       --from-literal github-auth-secret=INSERT \

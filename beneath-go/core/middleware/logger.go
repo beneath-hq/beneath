@@ -107,9 +107,9 @@ func loggerWithTags(l *zap.Logger, tags *Tags) *zap.Logger {
 		}
 	}
 
-	if tags.Query != nil {
+	if tags.Payload != nil {
 		l = l.With(
-			zap.Reflect("query", tags.Query),
+			zap.Reflect("payload", tags.Payload),
 		)
 	}
 

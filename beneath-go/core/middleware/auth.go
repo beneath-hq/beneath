@@ -42,7 +42,7 @@ func Auth(next http.Handler) http.Handler {
 
 		tags := GetTags(r.Context())
 		tags.Secret = secret
-		tags.AnonymousID = uuid.FromStringOrNil(r.Header.Get("X-Beneath-AID"))
+		tags.AnonymousID = uuid.FromStringOrNil(r.Header.Get("X-Beneath-Aid"))
 
 		next.ServeHTTP(w, r)
 		return nil
