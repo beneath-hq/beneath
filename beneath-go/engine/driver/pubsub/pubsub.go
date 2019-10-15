@@ -153,17 +153,7 @@ func (p *Pubsub) ReadWriteReports(fn func(context.Context, *pb.WriteRecordsRepor
 	cctx, cancel := context.WithCancel(context.Background())
 
 	// prepare subscription (seek to now, skipping messages from downtime)
-	subname := fmt.Sprintf("%s-%s", p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
-	sub := p.getSubscription(p.WriteReportsTopic, subname)
-	err := sub.SeekToTime(cctx, time.Now())
-	if err != nil {
-		status, ok := status.FromError(err)
-		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
-			// Seek not implemented on Emulator, ignore
-		} else {
-			panic(fmt.Errorf("error seeking on subscription '%s': %v", subname, err))
-		}
-	}
+	sub := p.getEphemeralSubscription(p.WriteReportsTopic, p.config.WriteReportsSubscriptionPrefix, p.config.SubscriberID)
 
 	// receive messages forever (or until error occurs)
 	return sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
@@ -249,6 +239,44 @@ func (p *Pubsub) getSubscription(topic *pubsub.Topic, subname string) *pubsub.Su
 			panic(fmt.Errorf("error creating subscription '%s': %v", subname, err))
 		} else {
 			subscription = p.Client.Subscription(subname)
+		}
+	}
+
+	return subscription
+}
+
+// getEphemeralSubscription produces a subscription that does its best to not keep a backlog and to delete itself when
+// you stop using it
+func (p *Pubsub) getEphemeralSubscription(topic *pubsub.Topic, subPrefix string, subID string) *pubsub.Subscription {
+	// compose name
+	subname := fmt.Sprintf("%s-%s", subPrefix, subID)
+
+	// create/get subscriber to topic
+	subscription, err := p.Client.CreateSubscription(context.Background(), subname, pubsub.SubscriptionConfig{
+		Topic:             topic,
+		AckDeadline:       20 * time.Second,
+		RetentionDuration: 10 * time.Minute, // minimum
+		ExpirationPolicy:  24 * time.Hour,   // minimum
+	})
+
+	// fail only if error is not an already exists error
+	if err != nil {
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.AlreadyExists {
+			panic(fmt.Errorf("error creating subscription '%s': %v", subname, err))
+		} else {
+			subscription = p.Client.Subscription(subname)
+		}
+	}
+
+	// in case the subscription already exists, skip accummulated data on it
+	err = subscription.SeekToTime(context.Background(), time.Now())
+	if err != nil {
+		status, ok := status.FromError(err)
+		if ok && status.Code() == codes.Unimplemented && p.config.EmulatorHost != "" {
+			// Seek not implemented on Emulator, ignore
+		} else {
+			panic(fmt.Errorf("error seeking on subscription '%s': %v", subname, err))
 		}
 	}
 
