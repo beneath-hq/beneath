@@ -10,7 +10,7 @@ export default createMuiTheme({
       white: "rgba(255, 255, 255, 1)",
     },
     background: {
-      paper: "rgba(35, 47, 74, 1)",
+      paper: "rgba(27, 35, 65, 1)",
       default: "rgba(16, 24, 46, 1)",
     },
     divider: "rgba(45, 51, 71, 1)",
