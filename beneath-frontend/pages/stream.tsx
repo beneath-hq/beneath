@@ -59,7 +59,9 @@ const StreamPage: FC<IProps> = ({ router }) => {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
 
-          tabs.push({ value: "monitoring", label: "Monitoring", render: () => <StreamMetrics stream={stream} /> });
+          if (stream.currentStreamInstanceID) {
+            tabs.push({ value: "monitoring", label: "Monitoring", render: () => <StreamMetrics stream={stream} /> });
+          }
 
           const defaultValue = stream.currentStreamInstanceID ? "lookup" : "api";
           return (

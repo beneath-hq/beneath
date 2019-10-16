@@ -265,9 +265,7 @@ const MetricsChart: FC<{ metrics: MetricsWithTime[] }> = ({ metrics }) => {
           className={classes.vegaChart}
           actions={false}
           renderer="svg"
-          // tooltip={(handler, event, item, value) => {
-          //   console.log("here: ", item);
-          // }}
+          // onNewView={(view) => {}} // HINT: To do SSR, must not return until this has triggered
         />
       </Paper>
     </Grid>
