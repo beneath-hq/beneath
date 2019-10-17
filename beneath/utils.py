@@ -7,7 +7,7 @@ def format_entity_name(name):
 
 
 def ms_to_datetime(ms):
-  return datetime.utcfromtimestamp(float(ms) / 1000.)
+  return datetime.fromtimestamp(float(ms) / 1000., timezone.utc)
 
 
 def ms_to_pd_timestamp(ms):
