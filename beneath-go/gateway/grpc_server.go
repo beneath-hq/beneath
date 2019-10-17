@@ -409,8 +409,14 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		bytesWritten += len(record.AvroData)
 	}
 
+	// check the batch length is valid
+	err := db.Engine.CheckBatchLength(len(req.Records))
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding batch: %v", err.Error()))
+	}
+
 	// write request to engine
-	err := db.Engine.Streams.QueueWriteRequest(ctx, req)
+	err = db.Engine.Streams.QueueWriteRequest(ctx, req)
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}

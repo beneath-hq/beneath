@@ -43,6 +43,9 @@ type TablesDriver interface {
 	// GetMaxDataSize returns the maximum accepted value size in bytes
 	GetMaxDataSize() int
 
+	// GetMaxBatchLength returns the maximum accepted number of rows per batch
+	GetMaxBatchLength() int
+
 	// WriteRecords saves one or multiple records. It does not save records if timestamp is lower than that of a previous write to the same key
 	WriteRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error
 
@@ -72,6 +75,9 @@ type TablesDriver interface {
 type WarehouseDriver interface {
 	// GetMaxDataSize returns the maximum accepted row size in bytes
 	GetMaxDataSize() int
+
+	// GetMaxBatchLength returns the maximum accepted number of rows per batch
+	GetMaxBatchLength() int
 
 	// WriteRecords saves one or multiple records to the data warehouse
 	WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error
