@@ -77,6 +77,20 @@ class Stream:
     encoded_records = (self._encode_record(record) for record in records)
     self.client.write_batch(instance_id, encoded_records)
 
+  @classmethod
+  def _mb_to_b(cls, mbs):
+    return mbs * 1000000
+
+  def big_write(self, records, instance_id=None):
+    instance_id = self._instance_id_or_default(instance_id)
+    encoded_records = [self._encode_record(record) for record in records]
+    while len(encoded_records) > 0:
+      idx = 0
+      while (sys.getsizeof(encoded_records[0:idx]) < self._mb_to_b(config.MAX_WRITE_MB)) & (idx < config.WRITE_BATCH_SIZE):
+        idx += 1
+      self.client.write_batch(instance_id, encoded_records[0:min(idx-1, len(encoded_records))])
+      encoded_records = encoded_records[idx-1:]
+
 
   def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
     instance_id = self._instance_id_or_default(instance_id)
