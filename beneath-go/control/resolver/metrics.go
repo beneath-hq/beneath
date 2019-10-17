@@ -29,7 +29,14 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 		}
 	}
 
-	return getUsage(ctx, streamID, period, from, until)
+	// lookup stream ID for batch, instance ID for streaming
+	if stream.Batch {
+		return getUsage(ctx, stream.StreamID, period, from, until)
+	} else if stream.CurrentStreamInstanceID != nil {
+		return getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
+	}
+
+	return nil, nil
 }
 
 func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {

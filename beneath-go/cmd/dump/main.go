@@ -21,7 +21,7 @@ func main() {
 	}
 
 	// create table
-	table := client.Open("records")
+	table := client.Open("metrics")
 
 	// dump all rows
 	rr := bigtable.PrefixRange("")

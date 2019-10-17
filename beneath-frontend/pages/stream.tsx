@@ -9,6 +9,7 @@ import PageTitle from "../components/PageTitle";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import StreamLatest from "../components/stream/StreamLatest";
+import StreamMetrics from "../components/stream/StreamMetrics";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
@@ -58,7 +59,9 @@ const StreamPage: FC<IProps> = ({ router }) => {
             tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
           }
 
-          tabs.push({ value: "metrics", label: "Metrics", render: () => <p>Metrics</p> });
+          if (stream.currentStreamInstanceID) {
+            tabs.push({ value: "monitoring", label: "Monitoring", render: () => <StreamMetrics stream={stream} /> });
+          }
 
           const defaultValue = stream.currentStreamInstanceID ? "lookup" : "api";
           return (
