@@ -83,6 +83,11 @@ func (b *BigQuery) GetMaxDataSize() int {
 	return 1000000
 }
 
+// GetMaxBatchLength implements engine.WarehouseDriver
+func (b *BigQuery) GetMaxBatchLength() int {
+	return 10000
+}
+
 // WriteRecords implements engine.WarehouseDriver
 func (b *BigQuery) WriteRecords(ctx context.Context, projectName string, streamName string, instanceID uuid.UUID, keys [][]byte, avros [][]byte, records []map[string]interface{}, timestamps []time.Time) error {
 	// ensure all WriteRequest objects the same length

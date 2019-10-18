@@ -104,6 +104,11 @@ func (p *Bigtable) GetMaxDataSize() int {
 	return 1000000
 }
 
+// GetMaxBatchLength implements engine.TablesDriver
+func (p *Bigtable) GetMaxBatchLength() int {
+	return 10000
+}
+
 // WriteRecords implements engine.TablesDriver
 func (p *Bigtable) WriteRecords(ctx context.Context, instanceID uuid.UUID, keys [][]byte, avroData [][]byte, timestamps []time.Time, saveLatest bool) error {
 	// ensure all WriteRequest objects the same length
