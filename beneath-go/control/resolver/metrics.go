@@ -2,16 +2,17 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"github.com/beneath-core/beneath-go/core/timeutil"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
+	"github.com/beneath-core/beneath-go/core/mathutil"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/metrics"
 )
 
@@ -31,12 +32,28 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 
 	// lookup stream ID for batch, instance ID for streaming
 	if stream.Batch {
-		return getUsage(ctx, stream.StreamID, period, from, until)
-	} else if stream.CurrentStreamInstanceID != nil {
-		return getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
+		reads, err := getUsage(ctx, stream.StreamID, period, from, until)
+		if err != nil {
+			return nil, err
+		}
+
+		if stream.CurrentStreamInstanceID == nil {
+			return reads, nil
+		}
+
+		writes, err := getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
+		if err != nil {
+			return nil, err
+		}
+
+		return mergeUsage(reads, writes), nil
 	}
 
-	return nil, nil
+	if stream.CurrentStreamInstanceID == nil {
+		return nil, nil
+	}
+
+	return getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
 }
 
 func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
@@ -107,4 +124,55 @@ func getUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 	}
 
 	return metrics, nil
+}
+
+func mergeUsage(xs []*gql.Metrics, ys []*gql.Metrics) []*gql.Metrics {
+	if len(xs) == 0 {
+		return ys
+	}
+	if len(ys) == 0 {
+		return xs
+	}
+
+	n := mathutil.MaxInt(len(xs), len(ys))
+	zs := make([]*gql.Metrics, 0, n)
+
+	var i, j int
+	for i < len(xs) && j < len(ys) {
+		diff := xs[i].Time.Sub(ys[j].Time)
+		if diff == 0 {
+			zs = append(zs, addMetrics(xs[i], ys[j]))
+			i++
+			j++
+		} else if diff < 0 {
+			zs = append(zs, xs[i])
+			i++
+		} else if diff > 0 {
+			zs = append(zs, ys[j])
+			j++
+		}
+		panic(fmt.Errorf("impossible state in mergeUsage"))
+	}
+
+	for i < len(xs) {
+		zs = append(zs, xs[i])
+		i++
+	}
+
+	for j < len(ys) {
+		zs = append(zs, ys[j])
+		j++
+	}
+
+	return zs
+}
+
+func addMetrics(target, other *gql.Metrics) *gql.Metrics {
+	target.ReadOps += other.ReadOps
+	target.ReadBytes += other.ReadBytes
+	target.ReadRecords += other.ReadRecords
+	target.WriteOps += other.WriteOps
+	target.WriteBytes += other.WriteBytes
+	target.WriteRecords += other.WriteRecords
+	return target
 }

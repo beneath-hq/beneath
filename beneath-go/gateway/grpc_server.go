@@ -247,7 +247,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
 	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
@@ -329,7 +329,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
 	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done

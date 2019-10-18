@@ -340,7 +340,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
 	if secret != nil {
 		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
 	}
@@ -463,7 +463,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
 	if secret != nil {
 		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
 	}
