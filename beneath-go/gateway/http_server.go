@@ -518,6 +518,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return httputil.NewError(400, "request body must be an array or an object")
 	}
 
+	// check the batch length is valid
+	err = db.Engine.CheckBatchLength(len(objects))
+	if err != nil {
+		return httputil.NewError(400, fmt.Sprintf("error encoding batch: %v", err.Error()))
+	}
+
 	// convert objects into records
 	records := make([]*pb.Record, len(objects))
 	bytesWritten := 0

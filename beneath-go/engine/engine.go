@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
@@ -79,8 +78,14 @@ func (e *Engine) CheckSize(keyBytesLen int, avroBytesLen int) error {
 
 // CheckBatchLength validates that the number of records in a batch fits within the constraints of the underlying infrastructure
 func (e *Engine) CheckBatchLength(length int) error {
-	limit := math.Min(float64(e.Tables.GetMaxBatchLength()), float64(e.Warehouse.GetMaxBatchLength()))
-	if length > int(limit) {
+	limit1 := e.Tables.GetMaxBatchLength()
+	limit2 := e.Warehouse.GetMaxBatchLength()
+	limit := limit1
+	if limit > limit2 {
+		limit = limit2
+	}
+
+	if length > limit {
 		return fmt.Errorf("invalid batch size <%d rows> (max batch size is <%d rows>)", length, limit)
 	}
 
