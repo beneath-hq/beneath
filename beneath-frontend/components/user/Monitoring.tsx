@@ -71,7 +71,7 @@ const UserMetricsWeek: FC<MeProps> = ({ me }) => {
 
   return (
     <>
-      <WeekChart metrics={metrics} y1={"readBytes"} title="Bytes read in the last 7 days" />
+      <WeekChart metrics={metrics} y1={"readBytes"} title="Data read in the last 7 days" />
       {error && <ErrorNote error={error} />}
     </>
   );
