@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-pg/pg/v9"
@@ -22,9 +23,11 @@ func newDatabase(host, username, password string) *pg.DB {
 // queryLoggerHook logs every database query
 type queryLoggerHook struct{}
 
-func (h queryLoggerHook) BeforeQuery(q *pg.QueryEvent) {
+func (h queryLoggerHook) BeforeQuery(ctx context.Context, q *pg.QueryEvent) (context.Context, error) {
 	fmt.Print(q.FormattedQuery())
+	return ctx, nil
 }
 
-func (h queryLoggerHook) AfterQuery(q *pg.QueryEvent) {
+func (h queryLoggerHook) AfterQuery(ctx context.Context, q *pg.QueryEvent) (context.Context, error) {
+	return ctx, nil
 }
