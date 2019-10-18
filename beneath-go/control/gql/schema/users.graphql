@@ -16,8 +16,6 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
-  readQuota: Int!
-  writeQuota: Int!
 }
 
 type Me {
@@ -26,5 +24,9 @@ type Me {
   email: String!
   organizations: [Organization!]
   mainOrganization: Organization
+  readUsage: Int!
+  readQuota: Int!
+  writeUsage: Int!
+  writeQuota: Int!
   updatedOn: Time!
 }

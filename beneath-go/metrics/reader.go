@@ -17,6 +17,20 @@ const (
 	maxPeriods = 175 // roughly one week on an hourly basis
 )
 
+// GetCurrentUsage returns an ID's usage for the current monthly period
+func GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.QuotaUsage {
+	// create row filter
+	key := metricsKey(timeutil.PeriodMonth, entityID, time.Now())
+
+	// load from bigtable
+	usage, err := db.Engine.Tables.ReadSingleUsage(ctx, key)
+	if err != nil {
+		panic(fmt.Errorf("error reading metrics: %s", err.Error()))
+	}
+
+	return usage
+}
+
 // GetHistoricalUsage returns usage info for the given length of time
 func GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, period timeutil.Period, from time.Time, until time.Time) ([]time.Time, []pb.QuotaUsage, error) {
 	// check is supported period

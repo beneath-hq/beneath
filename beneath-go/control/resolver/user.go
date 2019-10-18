@@ -8,6 +8,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/metrics"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -45,7 +46,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 	}
 
 	user := entity.FindUser(ctx, *secret.UserID)
-	return userToMe(user), nil
+	return userToMe(ctx, user), nil
 }
 
 func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*gql.Me, error) {
@@ -60,17 +61,24 @@ func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name 
 		return nil, err
 	}
 
-	return userToMe(user), nil
+	return userToMe(ctx, user), nil
 }
 
-func userToMe(u *entity.User) *gql.Me {
+func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 	if u == nil {
 		return nil
 	}
+
+	usage := metrics.GetCurrentUsage(ctx, u.UserID)
+
 	return &gql.Me{
-		UserID:    u.UserID.String(),
-		User:      u,
-		Email:     u.Email,
-		UpdatedOn: u.UpdatedOn,
+		UserID:     u.UserID.String(),
+		User:       u,
+		Email:      u.Email,
+		ReadUsage:  int(usage.ReadBytes),
+		ReadQuota:  int(u.ReadQuota),
+		WriteUsage: int(usage.WriteBytes),
+		WriteQuota: int(u.WriteQuota),
+		UpdatedOn:  u.UpdatedOn,
 	}
 }

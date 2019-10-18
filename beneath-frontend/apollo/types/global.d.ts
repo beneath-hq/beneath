@@ -1,6 +1,6 @@
 // GraphQL (control) custom scalars
 type ControlUUID = string;
-type ControlTime = Date;
+type ControlTime = string;
 type ControlJSON = any;
 
 declare namespace NodeJS {

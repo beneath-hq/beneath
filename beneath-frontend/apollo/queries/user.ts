@@ -45,6 +45,10 @@ export const QUERY_ME = gql`
     me {
       userID
       email
+      readUsage
+      readQuota
+      writeUsage
+      writeQuota
       updatedOn
       user {
         userID
@@ -69,6 +73,11 @@ export const UPDATE_ME = gql`
   mutation UpdateMe($username: String, $name: String, $bio: String) {
     updateMe(username: $username, name: $name, bio: $bio) {
       userID
+      readUsage
+      readQuota
+      writeUsage
+      writeQuota
+      updatedOn
       user {
         userID
         username
@@ -76,7 +85,6 @@ export const UPDATE_ME = gql`
         bio
         photoURL
       }
-      updatedOn
     }
   }
 `;
