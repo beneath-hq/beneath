@@ -10,8 +10,9 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditMe from "../components/user/EditMe";
-import ViewProjects from "../components/user/ViewProjects";
 import IssueSecret from "../components/user/IssueSecret";
+import Monitoring from "../components/user/Monitoring";
+import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
 
 import withMe from "../hocs/withMe";
@@ -38,6 +39,7 @@ const UserPage = ({ router, me }) => {
             let isMe = user.userID === me.userID;
             let tabs = [{ value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> }];
             if (isMe) {
+              tabs.push({ value: "monitoring", label: "Monitoring", render: () => <Monitoring me={me} /> });
               tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
               tabs.push({
                 value: "secrets",
