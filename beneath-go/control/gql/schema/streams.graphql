@@ -33,6 +33,8 @@ type Stream {
   manual: Boolean!
   project: Project!
   currentStreamInstanceID: UUID
+  instancesCreatedCount: Int!
+  instancesCommittedCount: Int!
   sourceModel: Model
   createdOn: Time!
   updatedOn: Time!

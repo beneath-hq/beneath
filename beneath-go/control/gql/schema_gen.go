@@ -209,6 +209,8 @@ type ComplexityRoot struct {
 		CurrentStreamInstanceID func(childComplexity int) int
 		Description             func(childComplexity int) int
 		External                func(childComplexity int) int
+		InstancesCommittedCount func(childComplexity int) int
+		InstancesCreatedCount   func(childComplexity int) int
 		KeyFields               func(childComplexity int) int
 		Manual                  func(childComplexity int) int
 		Name                    func(childComplexity int) int
@@ -1375,6 +1377,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.External(childComplexity), true
 
+	case "Stream.instancesCommittedCount":
+		if e.complexity.Stream.InstancesCommittedCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesCommittedCount(childComplexity), true
+
+	case "Stream.instancesCreatedCount":
+		if e.complexity.Stream.InstancesCreatedCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesCreatedCount(childComplexity), true
+
 	case "Stream.keyFields":
 		if e.complexity.Stream.KeyFields == nil {
 			break
@@ -1826,6 +1842,8 @@ type Stream {
   manual: Boolean!
   project: Project!
   currentStreamInstanceID: UUID
+  instancesCreatedCount: Int!
+  instancesCommittedCount: Int!
   sourceModel: Model
   createdOn: Time!
   updatedOn: Time!
@@ -7755,6 +7773,80 @@ func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context,
 	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_instancesCreatedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstancesCreatedCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstancesCommittedCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -10611,6 +10703,16 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "currentStreamInstanceID":
 			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
+		case "instancesCreatedCount":
+			out.Values[i] = ec._Stream_instancesCreatedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "instancesCommittedCount":
+			out.Values[i] = ec._Stream_instancesCommittedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "sourceModel":
 			out.Values[i] = ec._Stream_sourceModel(ctx, field, obj)
 		case "createdOn":
@@ -11045,6 +11147,20 @@ func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v interface{}) (int32, error) {
+	return graphql.UnmarshalInt32(v)
+}
+
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
