@@ -6,6 +6,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
@@ -47,4 +48,53 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) 
 	}
 
 	return org, nil
+}
+
+func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error) {
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
+	}
+
+	user := entity.FindUserByUsername(ctx, username)
+	if user == nil {
+		return nil, gqlerror.Errorf("No user found with that username")
+	}
+
+	organization := &entity.Organization{
+		OrganizationID: organizationID,
+	}
+
+	err := organization.AddUser(ctx, user.UserID, view, admin)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return user, nil
+}
+
+// func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, name string) (bool, error) {
+func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) (bool, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return false, gqlerror.Errorf("Organization %s not found", organizationID)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+	if !perms.Admin {
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organization.OrganizationID.String())
+	}
+
+	if len(organization.Users) < 2 {
+		return false, gqlerror.Errorf("Can't remove last member of organization")
+	}
+
+	err := organization.RemoveUser(ctx, userID)
+	if err != nil {
+		return false, gqlerror.Errorf(err.Error())
+	}
+
+	return true, nil
 }

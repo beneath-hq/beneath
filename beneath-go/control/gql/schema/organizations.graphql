@@ -4,6 +4,8 @@ extend type Query {
 
 extend type Mutation {
   createOrganization(name: String!): Organization!
+  addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
+  removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
 }
 
 type Organization {

@@ -105,16 +105,16 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 	return project, nil
 }
 
-func (r *mutationResolver) AddUserToProject(ctx context.Context, email string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error) {
+func (r *mutationResolver) AddUserToProject(ctx context.Context, username string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error) {
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, projectID)
 	if !perms.Admin {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
 	}
 
-	user := entity.FindUserByEmail(ctx, email)
+	user := entity.FindUserByUsername(ctx, username)
 	if user == nil {
-		return nil, gqlerror.Errorf("No user found with that email")
+		return nil, gqlerror.Errorf("No user found with that username")
 	}
 
 	project := &entity.Project{

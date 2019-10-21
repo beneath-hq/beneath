@@ -43,6 +43,18 @@ func organizationValidation(sl validator.StructLevel) {
 	}
 }
 
+// FindOrganization finds a organization by ID
+func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organization {
+	organization := &Organization{
+		OrganizationID: organizationID,
+	}
+	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users").Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return organization
+}
+
 // FindOrganizationByName finds a organization by name
 func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
@@ -96,4 +108,24 @@ func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UU
 	}
 
 	return org, nil
+}
+
+// AddUser makes user a member of organization
+func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+	return db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
+		UserID:         userID,
+		OrganizationID: o.OrganizationID,
+		View:           view,
+		Admin:          admin,
+	})
+}
+
+// RemoveUser removes a member from the organization
+func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
+	// TODO remove from cache?
+	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)?
+	return db.DB.WithContext(ctx).Delete(&PermissionsUsersOrganizations{
+		UserID:         userID,
+		OrganizationID: o.OrganizationID,
+	})
 }
