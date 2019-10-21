@@ -336,6 +336,13 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 	}
 	si.Stream = s
 
+	// increment count
+	s.InstancesCreatedCount++
+	_, err = tx.Model(s).Set("instances_created_count = instances_created_count + 1").WherePK().Update()
+	if err != nil {
+		return nil, err
+	}
+
 	// register instance
 	err = db.Engine.Warehouse.RegisterStreamInstance(
 		tx.Context(),
@@ -380,6 +387,13 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 
 	// clear instance cache in redis
 	getInstanceCache().clear(tx.Context(), s.Name, s.Project.Name)
+
+	// increment count
+	s.InstancesCommittedCount++
+	_, err = tx.Model(s).Set("instances_committed_count = instances_committed_count + 1").WherePK().Update()
+	if err != nil {
+		return err
+	}
 
 	// call on warehouse
 	err = db.Engine.Warehouse.PromoteStreamInstance(
