@@ -119,6 +119,14 @@ func (c *PermissionsCache) Get(ctx context.Context, ownerID uuid.UUID, resourceI
 	return res.Elem().Interface()
 }
 
+// Clear removes a key from the cache
+func (c *PermissionsCache) Clear(ctx context.Context, ownerID uuid.UUID, resourceID uuid.UUID) {
+	err := c.codec.Delete(permsCacheConfig.redisKeyFn(ownerID, resourceID))
+	if err != nil && err != cache.ErrCacheMiss {
+		panic(err)
+	}
+}
+
 func (c PermissionsCache) marshal(v interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)

@@ -122,8 +122,12 @@ func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool,
 
 // RemoveUser removes a member from the organization
 func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
-	// TODO remove from cache?
-	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)?
+	// TODO: only if not last user (there's a check in resolver, but it should be part of db tx)
+
+	// clear cache
+	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
+
+	// delete
 	return db.DB.WithContext(ctx).Delete(&PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,

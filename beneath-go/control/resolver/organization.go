@@ -51,6 +51,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) 
 }
 
 func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.Admin {
@@ -62,10 +67,6 @@ func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username s
 		return nil, gqlerror.Errorf("No user found with that username")
 	}
 
-	organization := &entity.Organization{
-		OrganizationID: organizationID,
-	}
-
 	err := organization.AddUser(ctx, user.UserID, view, admin)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
@@ -74,17 +75,16 @@ func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username s
 	return user, nil
 }
 
-// func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, name string) (bool, error) {
 func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) (bool, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
-		return false, gqlerror.Errorf("Organization %s not found", organizationID)
+		return false, gqlerror.Errorf("Organization %s not found", organizationID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.Admin {
-		return false, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organization.OrganizationID.String())
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
 	if len(organization.Users) < 2 {
