@@ -383,6 +383,10 @@ func (b *Broker) processMessage(d Dispatch) {
 
 	// get instance ID
 	instanceID := uuid.UUID(d.Filter)
+	stream := entity.FindCachedStreamByCurrentInstanceID(b.ctx, instanceID)
+	if stream == nil {
+		panic(fmt.Errorf("processMessage got instance ID without stream: %s", instanceID.String()))
+	}
 
 	// push records to all subscribers
 	for c := range subscribers {
@@ -392,7 +396,7 @@ func (b *Broker) processMessage(d Dispatch) {
 		}
 
 		// track read
-		b.metrics.TrackRead(instanceID, int64(len(d.Records)), d.Bytes)
+		b.metrics.TrackRead(stream.StreamID, int64(len(d.Records)), d.Bytes)
 		if c.Secret != nil {
 			b.metrics.TrackRead(c.Secret.BillingID(), int64(len(d.Records)), d.Bytes)
 		}

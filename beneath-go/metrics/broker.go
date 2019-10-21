@@ -196,10 +196,7 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.Quo
 		panic(err)
 	} else {
 		// load from bigtable
-		usage, err = db.Engine.Tables.ReadSingleUsage(ctx, key)
-		if err != nil {
-			panic(fmt.Errorf("error reading metrics: %s", err.Error()))
-		}
+		usage := GetCurrentUsage(ctx, entityID)
 
 		// write back to cache
 		b.usageCache.Set(string(key), usage)

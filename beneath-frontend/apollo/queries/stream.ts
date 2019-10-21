@@ -17,6 +17,8 @@ export const QUERY_STREAM = gql`
         name
       }
       currentStreamInstanceID
+      instancesCreatedCount
+      instancesCommittedCount
       createdOn
       updatedOn
     }

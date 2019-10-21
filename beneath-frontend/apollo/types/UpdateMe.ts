@@ -18,8 +18,12 @@ export interface UpdateMe_updateMe_user {
 export interface UpdateMe_updateMe {
   __typename: "Me";
   userID: string;
-  user: UpdateMe_updateMe_user;
+  readUsage: number;
+  readQuota: number;
+  writeUsage: number;
+  writeQuota: number;
   updatedOn: ControlTime;
+  user: UpdateMe_updateMe_user;
 }
 
 export interface UpdateMe {

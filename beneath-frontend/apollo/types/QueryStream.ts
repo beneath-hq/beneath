@@ -25,6 +25,8 @@ export interface QueryStream_stream {
   manual: boolean;
   project: QueryStream_stream_project;
   currentStreamInstanceID: ControlUUID | null;
+  instancesCreatedCount: number;
+  instancesCommittedCount: number;
   createdOn: ControlTime;
   updatedOn: ControlTime;
 }

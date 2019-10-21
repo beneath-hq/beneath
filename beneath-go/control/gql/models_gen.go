@@ -27,6 +27,10 @@ type Me struct {
 	Email            string                 `json:"email"`
 	Organizations    []*entity.Organization `json:"organizations"`
 	MainOrganization *entity.Organization   `json:"mainOrganization"`
+	ReadUsage        int                    `json:"readUsage"`
+	ReadQuota        int                    `json:"readQuota"`
+	WriteUsage       int                    `json:"writeUsage"`
+	WriteQuota       int                    `json:"writeQuota"`
 	UpdatedOn        time.Time              `json:"updatedOn"`
 }
 

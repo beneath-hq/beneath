@@ -3,6 +3,7 @@ import React, { FC } from "react";
 
 import { Me } from "../apollo/types/Me";
 import withMe from "../hocs/withMe";
+import UsageIndicator from "./metrics/user/UsageIndicator";
 import NextMuiLink from "./NextMuiLink";
 
 import {
@@ -42,7 +43,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   menuItemHeader: {
-    borderBottom: `1px solid rgba(255, 255, 255, 0.35)`,
+  },
+  menuItemUsage: {
+    borderTop: `1px solid rgba(255, 255, 255, 0.175)`,
+    borderBottom: `1px solid rgba(255, 255, 255, 0.175)`,
   },
 }));
 
@@ -62,7 +66,7 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
   const selectedTab = tabs.find((tab) => !!router.pathname.match(tab.selectRegex));
   const classes = useStyles();
 
-  const makeMenuItem = (text: string, props: any) => {
+  const makeMenuItem = (text: string | JSX.Element, props: any) => {
     return (
       <MenuItem component={NextMuiLink} {...props}>{text}</MenuItem>
     );
@@ -120,9 +124,20 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
                 <MenuItem disabled className={classes.menuItemHeader}>
                   <div>
                     <Typography variant="h4">{me.user.name}</Typography>
-                    <Typography variant="subtitle1" gutterBottom>@{me.user.username}</Typography>
+                    <Typography variant="subtitle1" gutterBottom>
+                      @{me.user.username}
+                    </Typography>
                   </div>
                 </MenuItem>
+                {makeMenuItem(
+                  <UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />,
+                  {
+                    onClick: closeMenu,
+                    as: `/users/${me.user.username}/monitoring`,
+                    href: `/user?name=${me.user.username}&tab=monitoring`,
+                    className: classes.menuItemUsage,
+                  }
+                )}
                 {makeMenuItem("Profile", {
                   onClick: closeMenu,
                   as: `/users/${me.user.username}`,

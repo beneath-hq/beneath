@@ -247,7 +247,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
 	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
@@ -329,7 +329,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
 	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
@@ -379,6 +379,12 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
 	}
 
+	// check the batch length is valid
+	err := db.Engine.CheckBatchLength(len(req.Records))
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding batch: %v", err.Error()))
+	}
+
 	// check each record is valid
 	bytesWritten := 0
 	for idx, record := range req.Records {
@@ -407,12 +413,6 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 		// increment bytes written
 		bytesWritten += len(record.AvroData)
-	}
-
-	// check the batch length is valid
-	err := db.Engine.CheckBatchLength(len(req.Records))
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding batch: %v", err.Error()))
 	}
 
 	// write request to engine

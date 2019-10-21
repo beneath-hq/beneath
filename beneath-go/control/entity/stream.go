@@ -30,6 +30,8 @@ type Stream struct {
 	External                bool      `sql:",notnull"`
 	Batch                   bool      `sql:",notnull"`
 	Manual                  bool      `sql:",notnull"`
+	InstancesCreatedCount   int32     `sql:",notnull,default:0"`
+	InstancesCommittedCount int32     `sql:",notnull,default:0"`
 	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project                 *Project
 	SourceModelID           *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`

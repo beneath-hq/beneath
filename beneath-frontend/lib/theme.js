@@ -88,6 +88,14 @@ export default createMuiTheme({
         borderRadius: "10%",
       },
     },
+    MuiLinearProgress: {
+      colorPrimary: {
+        backgroundColor: "rgba(60, 170, 255, 0.25)",
+      },
+      barColorPrimary: {
+        backgroundColor: "rgb(60, 170, 255)",
+      },
+    },
   },
   transitions: {
     duration: {

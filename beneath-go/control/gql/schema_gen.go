@@ -59,9 +59,13 @@ type ComplexityRoot struct {
 		Email            func(childComplexity int) int
 		MainOrganization func(childComplexity int) int
 		Organizations    func(childComplexity int) int
+		ReadQuota        func(childComplexity int) int
+		ReadUsage        func(childComplexity int) int
 		UpdatedOn        func(childComplexity int) int
 		User             func(childComplexity int) int
 		UserID           func(childComplexity int) int
+		WriteQuota       func(childComplexity int) int
+		WriteUsage       func(childComplexity int) int
 	}
 
 	Metrics struct {
@@ -207,6 +211,8 @@ type ComplexityRoot struct {
 		CurrentStreamInstanceID func(childComplexity int) int
 		Description             func(childComplexity int) int
 		External                func(childComplexity int) int
+		InstancesCommittedCount func(childComplexity int) int
+		InstancesCreatedCount   func(childComplexity int) int
 		KeyFields               func(childComplexity int) int
 		Manual                  func(childComplexity int) int
 		Name                    func(childComplexity int) int
@@ -229,15 +235,13 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Bio        func(childComplexity int) int
-		CreatedOn  func(childComplexity int) int
-		Name       func(childComplexity int) int
-		PhotoURL   func(childComplexity int) int
-		Projects   func(childComplexity int) int
-		ReadQuota  func(childComplexity int) int
-		UserID     func(childComplexity int) int
-		Username   func(childComplexity int) int
-		WriteQuota func(childComplexity int) int
+		Bio       func(childComplexity int) int
+		CreatedOn func(childComplexity int) int
+		Name      func(childComplexity int) int
+		PhotoURL  func(childComplexity int) int
+		Projects  func(childComplexity int) int
+		UserID    func(childComplexity int) int
+		Username  func(childComplexity int) int
 	}
 }
 
@@ -358,6 +362,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Me.Organizations(childComplexity), true
 
+	case "Me.readQuota":
+		if e.complexity.Me.ReadQuota == nil {
+			break
+		}
+
+		return e.complexity.Me.ReadQuota(childComplexity), true
+
+	case "Me.readUsage":
+		if e.complexity.Me.ReadUsage == nil {
+			break
+		}
+
+		return e.complexity.Me.ReadUsage(childComplexity), true
+
 	case "Me.updatedOn":
 		if e.complexity.Me.UpdatedOn == nil {
 			break
@@ -378,6 +396,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Me.UserID(childComplexity), true
+
+	case "Me.writeQuota":
+		if e.complexity.Me.WriteQuota == nil {
+			break
+		}
+
+		return e.complexity.Me.WriteQuota(childComplexity), true
+
+	case "Me.writeUsage":
+		if e.complexity.Me.WriteUsage == nil {
+			break
+		}
+
+		return e.complexity.Me.WriteUsage(childComplexity), true
 
 	case "Metrics.entityID":
 		if e.complexity.Metrics.EntityID == nil {
@@ -1373,6 +1405,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.External(childComplexity), true
 
+	case "Stream.instancesCommittedCount":
+		if e.complexity.Stream.InstancesCommittedCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesCommittedCount(childComplexity), true
+
+	case "Stream.instancesCreatedCount":
+		if e.complexity.Stream.InstancesCreatedCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesCreatedCount(childComplexity), true
+
 	case "Stream.keyFields":
 		if e.complexity.Stream.KeyFields == nil {
 			break
@@ -1499,13 +1545,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Projects(childComplexity), true
 
-	case "User.readQuota":
-		if e.complexity.User.ReadQuota == nil {
-			break
-		}
-
-		return e.complexity.User.ReadQuota(childComplexity), true
-
 	case "User.userID":
 		if e.complexity.User.UserID == nil {
 			break
@@ -1519,13 +1558,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Username(childComplexity), true
-
-	case "User.writeQuota":
-		if e.complexity.User.WriteQuota == nil {
-			break
-		}
-
-		return e.complexity.User.WriteQuota(childComplexity), true
 
 	}
 	return 0, false
@@ -1840,6 +1872,8 @@ type Stream {
   manual: Boolean!
   project: Project!
   currentStreamInstanceID: UUID
+  instancesCreatedCount: Int!
+  instancesCommittedCount: Int!
   sourceModel: Model
   createdOn: Time!
   updatedOn: Time!
@@ -1870,8 +1904,6 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
-  readQuota: Int!
-  writeQuota: Int!
 }
 
 type Me {
@@ -1880,6 +1912,10 @@ type Me {
   email: String!
   organizations: [Organization!]
   mainOrganization: Organization
+  readUsage: Int!
+  readQuota: Int!
+  writeUsage: Int!
+  writeQuota: Int!
   updatedOn: Time!
 }
 `},
@@ -3096,6 +3132,154 @@ func (ec *executionContext) _Me_mainOrganization(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Me_readUsage(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Me",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadUsage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Me_readQuota(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Me",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Me_writeUsage(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Me",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteUsage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Me_writeQuota(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Me",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_updatedOn(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -7764,6 +7948,80 @@ func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context,
 	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_instancesCreatedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstancesCreatedCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstancesCommittedCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8296,80 +8554,6 @@ func (ec *executionContext) _User_projects(ctx context.Context, field graphql.Co
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReadQuota, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.WriteQuota, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -9681,6 +9865,26 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			out.Values[i] = ec._Me_organizations(ctx, field, obj)
 		case "mainOrganization":
 			out.Values[i] = ec._Me_mainOrganization(ctx, field, obj)
+		case "readUsage":
+			out.Values[i] = ec._Me_readUsage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readQuota":
+			out.Values[i] = ec._Me_readQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeUsage":
+			out.Values[i] = ec._Me_writeUsage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeQuota":
+			out.Values[i] = ec._Me_writeQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updatedOn":
 			out.Values[i] = ec._Me_updatedOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -10681,6 +10885,16 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "currentStreamInstanceID":
 			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
+		case "instancesCreatedCount":
+			out.Values[i] = ec._Stream_instancesCreatedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "instancesCommittedCount":
+			out.Values[i] = ec._Stream_instancesCommittedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "sourceModel":
 			out.Values[i] = ec._Stream_sourceModel(ctx, field, obj)
 		case "createdOn":
@@ -10818,16 +11032,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "projects":
 			out.Values[i] = ec._User_projects(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "readQuota":
-			out.Values[i] = ec._User_readQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "writeQuota":
-			out.Values[i] = ec._User_writeQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -11125,6 +11329,20 @@ func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v interface{}) (int32, error) {
+	return graphql.UnmarshalInt32(v)
+}
+
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

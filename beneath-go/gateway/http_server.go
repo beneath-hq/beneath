@@ -340,7 +340,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
 	if secret != nil {
 		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
 	}
@@ -463,7 +463,7 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	}
 
 	// track read metrics
-	Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
+	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
 	if secret != nil {
 		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
 	}
@@ -516,6 +516,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		objects = []interface{}{bodyT}
 	default:
 		return httputil.NewError(400, "request body must be an array or an object")
+	}
+
+	// check the batch length is valid
+	err = db.Engine.CheckBatchLength(len(objects))
+	if err != nil {
+		return httputil.NewError(400, fmt.Sprintf("error encoding batch: %v", err.Error()))
 	}
 
 	// convert objects into records

@@ -30,6 +30,10 @@ export interface Me_me {
   __typename: "Me";
   userID: string;
   email: string;
+  readUsage: number;
+  readQuota: number;
+  writeUsage: number;
+  writeQuota: number;
   updatedOn: ControlTime;
   user: Me_me_user;
 }
