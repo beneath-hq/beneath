@@ -244,6 +244,37 @@ class Client:
     return result['user']
 
 
+  def get_user_by_username(self, username):
+    result = self._query_control(
+      variables={
+        'username': username,
+      },
+      query="""
+        query UserByUsername($username: String!) {
+          userByUsername(
+            username: $username
+          ) {
+            userID
+            username
+            name
+            bio
+            photoURL
+            createdOn
+            projects {
+              name
+              createdOn
+              updatedOn
+              streams {
+                name
+              }
+            }
+          }
+        }
+      """
+    )
+    return result['userByUsername']
+
+
   def get_project_by_name(self, name):
     result = self._query_control(
       variables={
@@ -390,6 +421,48 @@ class Client:
     return result['createOrganization']
 
 
+  def add_user_to_organization(self, username, organization_id, view, admin):
+    result = self._query_control(
+      variables={
+        'username': username,
+        'organizationID': organization_id,
+        'view': view,
+        'admin': admin,
+      },
+      query="""
+        mutation AddUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
+          addUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
+            userID
+            username
+            name
+            createdOn
+            projects {
+              name
+            }
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['addUserToOrganization']
+
+
+  def rm_user_from_organization(self, user_id, organization_id):
+    result = self._query_control(
+      variables={
+        'userID': user_id,
+        'organizationID': organization_id,
+      },
+      query="""
+        mutation RemoveUserFromOrganization($userID: UUID!, $organizationID: UUID!) {
+          removeUserFromOrganization(userID: $userID, organizationID: $organizationID)
+        }
+      """
+    )
+    return result['removeUserFromOrganization']
+
+
   def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
@@ -462,6 +535,49 @@ class Client:
       """
     )
     return result['deleteProject']
+
+
+  def add_user_to_project(self, username, project_id, view, create, admin):
+    result = self._query_control(
+      variables={
+        'username': username,
+        'projectID': project_id,
+        'view': view,
+        'create': create,
+        'admin': admin,
+      },
+      query="""
+        mutation AddUserToProject($username: String!, $projectID: UUID!, $view: Boolean!, $create: Boolean!, $admin: Boolean!) {
+          addUserToProject(username: $username, projectID: $projectID, view: $view, create: $create, admin: $admin) {
+            userID
+            username
+            name
+            createdOn
+            projects {
+              name
+            }
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['addUserToProject']
+
+
+  def rm_user_from_project(self, user_id, project_id):
+    result = self._query_control(
+      variables={
+        'userID': user_id,
+        'projectID': project_id,
+      },
+      query="""
+        mutation RemoveUserFromProject($userID: UUID!, $projectID: UUID!) {
+          removeUserFromProject(userID: $userID, projectID: $projectID)
+        }
+      """
+    )
+    return result['removeUserFromProject']
 
 
   def get_service_by_name_and_organization(self, name, organization_name):

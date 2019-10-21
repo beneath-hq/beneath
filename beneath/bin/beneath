@@ -41,6 +41,18 @@ def create_argument_parser():
   _organization_create.set_defaults(func=organization_create)
   _organization_create.add_argument('name', type=str)
 
+  _organization_add_user = _organization.add_parser('add-user')
+  _organization_add_user.set_defaults(func=organization_add_user)
+  _organization_add_user.add_argument('username', type=str)
+  _organization_add_user.add_argument('-o', '--organization', type=str, required=True)
+  _organization_add_user.add_argument('--view', type=str2bool, nargs='?', const=True, default=True)
+  _organization_add_user.add_argument('--admin', type=str2bool, nargs='?', const=True, default=False)
+
+  _organization_rm_user = _organization.add_parser('rm-user')
+  _organization_rm_user.set_defaults(func=organization_rm_user)
+  _organization_rm_user.add_argument('username', type=str)
+  _organization_rm_user.add_argument('-o', '--organization', type=str, required=True)
+
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
 
@@ -67,6 +79,19 @@ def create_argument_parser():
   _project_delete = _project.add_parser('delete')
   _project_delete.set_defaults(func=project_delete)
   _project_delete.add_argument('name', type=str)
+
+  _project_add_user = _project.add_parser('add-user')
+  _project_add_user.set_defaults(func=project_add_user)
+  _project_add_user.add_argument('username', type=str)
+  _project_add_user.add_argument('-p', '--project-name', type=str, required=True)
+  _project_add_user.add_argument('--view', type=str2bool, nargs='?', const=True, default=True)
+  _project_add_user.add_argument('--create', type=str2bool, nargs='?', const=True, default=True)
+  _project_add_user.add_argument('--admin', type=str2bool, nargs='?', const=True, default=False)
+
+  _project_rm_user = _project.add_parser('rm-user')
+  _project_rm_user.set_defaults(func=project_rm_user)
+  _project_rm_user.add_argument('username', type=str)
+  _project_rm_user.add_argument('-p', '--project-name', type=str, required=True)
 
   # service parser and subparsers
   _service = _root.add_parser('service').add_subparsers()
@@ -254,6 +279,29 @@ def organization_create(args):
   pretty_print_graphql_result(result)
 
 
+def organization_add_user(args):
+  client = get_client()
+  organization = client.get_organization_by_name(args.organization)
+  result = client.add_user_to_organization(
+    username=args.username,
+    organization_id=organization['organizationID'],
+    view=args.view,
+    admin=args.admin,
+  )
+  pretty_print_graphql_result(result)
+
+
+def organization_rm_user(args):
+  client = get_client()
+  user = client.get_user_by_username(args.username)
+  organization = client.get_organization_by_name(args.organization)
+  result = client.rm_user_from_organization(
+    user_id=user['userID'],
+    organization_id=organization['organizationID'],
+  )
+  pretty_print_graphql_result(result)
+
+
 def project_list(args):
   # start client with the secret stored in .beneath/secret
   client = get_client()
@@ -303,6 +351,30 @@ def project_delete(args):
   client = get_client()
   project = client.get_project_by_name(args.name)
   result = client.delete_project(project_id=project['projectID'])
+  pretty_print_graphql_result(result)
+
+
+def project_add_user(args):
+  client = get_client()
+  project = client.get_project_by_name(args.project_name)
+  result = client.add_user_to_project(
+    username=args.username,
+    project_id=project['projectID'],
+    view=args.view,
+    create=args.create,
+    admin=args.admin,
+  )
+  pretty_print_graphql_result(result)
+
+
+def project_rm_user(args):
+  client = get_client()
+  user = client.get_user_by_username(args.username)
+  project = client.get_project_by_name(args.project_name)
+  result = client.rm_user_from_project(
+    user_id=user['userID'],
+    project_id=project['projectID'],
+  )
   pretty_print_graphql_result(result)
 
 
@@ -373,7 +445,7 @@ def service_issue_secret(args):
   result = client.issue_service_secret(
     service_id=service['serviceID'],
     description=args.description if args.description is not None else "Command-line issued secret",
-  )  
+  )
   print("\n" + "Keep your secret string safe. You won't be shown it again." + "\n")
   pretty_print_graphql_result(result)
 
