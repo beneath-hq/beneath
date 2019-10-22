@@ -150,8 +150,9 @@ func mergeUsage(xs []*gql.Metrics, ys []*gql.Metrics) []*gql.Metrics {
 		} else if diff > 0 {
 			zs = append(zs, ys[j])
 			j++
+		} else {
+			panic(fmt.Errorf("impossible state in mergeUsage"))
 		}
-		panic(fmt.Errorf("impossible state in mergeUsage"))
 	}
 
 	for i < len(xs) {
