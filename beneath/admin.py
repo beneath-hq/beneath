@@ -153,8 +153,6 @@ class AdminClient(BaseClient):
               username
               name
               createdOn
-              readQuota
-              writeQuota
             }
           }
         }
