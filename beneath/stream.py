@@ -97,7 +97,7 @@ class Stream:
     flush()
 
 
-  def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
+  def read(self, limit=None, where=None, to_dataframe=True, max_rows=None, max_megabytes=None, instance_id=None, warn_max=True):
     instance_id = self._instance_id_or_default(instance_id)
     where = self._parse_where(where)
 
@@ -110,14 +110,15 @@ class Stream:
 
     return self._constrained_read(
       read_fn=read,
+      limit=limit,
+      to_dataframe=to_dataframe,
       max_rows=max_rows,
       max_megabytes=max_megabytes,
-      to_dataframe=to_dataframe,
       warn_max=warn_max,
     )
 
 
-  def latest(self, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
+  def latest(self, limit=None, to_dataframe=True, max_rows=None, max_megabytes=None, instance_id=None, warn_max=True):
     instance_id = self._instance_id_or_default(instance_id)
 
     def read(limit, last):
@@ -130,16 +131,77 @@ class Stream:
 
     return self._constrained_read(
       read_fn=read,
+      limit=limit,
+      to_dataframe=to_dataframe,
       max_rows=max_rows,
       max_megabytes=max_megabytes,
-      to_dataframe=to_dataframe,
       warn_max=warn_max,
     )
 
 
-  def _constrained_read(self, read_fn, max_rows=None, max_megabytes=None, to_dataframe=True, warn_max=True):
+  def search_range_end(self, target, end_max, where=None):
+    # defaults
+    where = where if where else {}
+
+    # validate fields
+    if target not in self.key_fields:
+      raise ValueError(f"target field ('{target}') is not a key field")
+    if target in where:
+      raise ValueError(f"cannot search target field ('{target}') when it is specified in the where arg")
+    for f in self.key_fields:
+      if f == target:
+        break
+      if f not in where:
+        raise ValueError(f"for fields that are to the left of the target field ('{target}') in the stream key, you must set the where arg")
+
+    # the function we use to divide 
+    middle = None
+    if self._column_is_integral(target):
+      middle = lambda x1, x2: x1 + int((x2 - x1) / 2)
+    elif self._column_is_timestamp(target):
+      middle = lambda t1, t2: ms_to_datetime(datetime_to_ms(t1 + ((t2 - t1) / 2)))
+
+    # invariant: we know it's between these
+    start = None
+    end = end_max
+
+    # check there exists a maximum (and handle the easy case where there's only one row)
+    where[target] = { "_lt": end }
+    rows = self.read(where=where, limit=2, to_dataframe=False)
+    if len(rows) == 0:
+      return None
+    elif len(rows) == 1:
+      return rows[0][target]
+    else:
+      start = rows[-1][target]
+
+    # search
+    iterations = 0
+    while iterations < 64:
+      mid = middle(start, end)
+      if start == mid: 
+        # for non-complete keys, can be multiple rows with max, which would cause infinite loop
+        # note: == is well-defined for datetime
+        return start
+
+      where[target] = { "_gte": mid, "_lt": end }
+      rows = self.read(where=where, limit=2, to_dataframe=False)
+      
+      if len(rows) == 0: # too far
+        end = mid
+      elif len(rows) == 1: # found it
+        return rows[0][target]
+      else: # not far enough
+        start = rows[-1][target]
+      
+      iterations += 1
+    
+    raise RuntimeError(f"stuck in infinite search at start={start} end={end}")
+
+
+  def _constrained_read(self, read_fn, limit=None, to_dataframe=True, max_rows=None, max_megabytes=None, warn_max=True):
     # adding 1 to turn <= into <
-    max_rows = max_rows + 1 if max_rows else sys.maxsize
+    max_rows = min(x for x in [limit, max_rows, sys.maxsize] if x)
     max_megabytes = max_megabytes if max_megabytes else config.DEFAULT_MAX_READ_MB
     max_bytes = self._mb_to_bytes(max_megabytes) + 1
 
@@ -153,11 +215,11 @@ class Stream:
       if len(records) > 0:
         last = records[-1]
 
-      limit = min(max_rows - rows_loaded, config.READ_BATCH_SIZE)
-      if limit == 0:
+      lim = min(max_rows - rows_loaded, config.READ_BATCH_SIZE)
+      if lim == 0:
         break
 
-      batch = read_fn(limit=limit, last=last)
+      batch = read_fn(limit=lim, last=last)
       if len(batch) == 0:
         complete = True
         break
@@ -171,15 +233,18 @@ class Stream:
         if bytes_loaded >= max_bytes:
           break
 
-      if len(batch) < limit:
+      if len(batch) < lim:
         complete = True
         break
 
+      if limit and rows_loaded == limit:
+        # fundamentally the difference between limit and max_rows
+        complete = True
+
     if not complete and warn_max:
       # Jupyter doesn't always display warnings, so also print
-      # Note: remember max_rows and max_bytes are +1
       if rows_loaded >= max_rows:
-        err = "Stopped loading because stream length exceeds max_rows={}".format(max_rows - 1)
+        err = "Stopped loading because stream length exceeds max_rows={}".format(max_rows)
         print(err)
         warnings.warn(err)
       elif bytes_loaded >= max_bytes:
@@ -200,6 +265,22 @@ class Stream:
   @property
   def bigquery_table(self):
     return self.get_bigquery_table()
+
+
+  def _column_is_integral(self, name):
+    for field in self.parsed_avro_schema["fields"]:
+      if field["name"] == name:
+        return field["type"] == "int" or field["type"] == "long"
+    raise ValueError(f"field '{name}' not found")
+
+
+  def _column_is_timestamp(self, name):
+    for field in self.parsed_avro_schema["fields"]:
+      if field["name"] == name:
+        if isinstance(field["type"], dict):
+          return field["type"].get("logicalType", None) == "timestamp-millis"
+        return False
+    raise ValueError(f"field '{name}' not found")
 
 
   def get_bigquery_table(self, view=True, instance_id=None):
