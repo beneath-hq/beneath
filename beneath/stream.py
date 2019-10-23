@@ -75,21 +75,26 @@ class Stream:
   def write(self, records, instance_id=None):
     instance_id = self._instance_id_or_default(instance_id)
     encoded_records = (self._encode_record(record) for record in records)
-    self.client.write_batch(instance_id, encoded_records)
 
-  @classmethod
-  def _mb_to_b(cls, mbs):
-    return mbs * 1000000
+    batch = []
+    batch_bytes = 0
+    def flush():
+      nonlocal batch
+      nonlocal batch_bytes
+      if len(batch) > 0:
+        self.client.write_batch(instance_id, batch)
+        batch = []
+        batch_bytes = 0
+    
+    for er in encoded_records:
+      if len(batch) == config.WRITE_BATCH_SIZE:
+        flush()
+      if batch_bytes + len(er.avro_data) > config.WRITE_BATCH_BYTES:
+        flush()
+      batch.append(er)
+      batch_bytes += len(er.avro_data)
 
-  def big_write(self, records, instance_id=None):
-    instance_id = self._instance_id_or_default(instance_id)
-    encoded_records = [self._encode_record(record) for record in records]
-    while len(encoded_records) > 0:
-      idx = 0
-      while (sys.getsizeof(encoded_records[0:idx]) < self._mb_to_b(config.MAX_WRITE_MB)) & (idx < config.WRITE_BATCH_SIZE):
-        idx += 1
-      self.client.write_batch(instance_id, encoded_records[0:min(idx-1, len(encoded_records))])
-      encoded_records = encoded_records[idx-1:]
+    flush()
 
 
   def read(self, where=None, max_rows=None, max_megabytes=None, instance_id=None, to_dataframe=True, warn_max=True):
@@ -135,8 +140,8 @@ class Stream:
   def _constrained_read(self, read_fn, max_rows=None, max_megabytes=None, to_dataframe=True, warn_max=True):
     # adding 1 to turn <= into <
     max_rows = max_rows + 1 if max_rows else sys.maxsize
-    max_megabytes = max_megabytes if max_megabytes else config.MAX_READ_MB
-    max_bytes = max_megabytes * (2**20) + 1
+    max_megabytes = max_megabytes if max_megabytes else config.DEFAULT_MAX_READ_MB
+    max_bytes = self._mb_to_bytes(max_megabytes) + 1
 
     records = []
     complete = False
@@ -178,7 +183,7 @@ class Stream:
         print(err)
         warnings.warn(err)
       elif bytes_loaded >= max_bytes:
-        err = "Stopped loading because download size exceeds max_megabytes={}MB".format(max_megabytes - 1)
+        err = "Stopped loading because download size exceeds max_megabytes={}MB".format(max_megabytes)
         print(err)
         warnings.warn(err)
 
@@ -247,6 +252,11 @@ class Stream:
     result = writer.getvalue()
     writer.close()
     return result
+
+
+  @classmethod
+  def _mb_to_bytes(cls, mbs):
+    return mbs * (2**20)
 
 
   @classmethod

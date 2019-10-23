@@ -1,13 +1,13 @@
 import os
 
-
 BIGQUERY_PROJECT = "beneath"
 PYTHON_CLIENT_ID = "beneath-python"
 
-MAX_READ_MB = 10
+DEFAULT_MAX_READ_MB = 10
+
 READ_BATCH_SIZE = 1000
-MAX_WRITE_MB = 10
 WRITE_BATCH_SIZE = 10000
+WRITE_BATCH_BYTES = 10 * (2**20)
 
 DEV = os.environ.get('ENV') in ['dev', 'development']
 
