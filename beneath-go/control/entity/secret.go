@@ -4,13 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"time"
 
 	"github.com/go-pg/pg/v9/orm"
-
 	"github.com/go-redis/cache/v7"
+	"github.com/mr-tron/base58"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/beneath-core/beneath-go/db"
@@ -104,8 +103,8 @@ func GenerateSecretString() string {
 		panic(err.Error())
 	}
 
-	// encode as base64 string
-	encoded := base64.StdEncoding.EncodeToString(dest)
+	// encode as base62 string
+	encoded := base58.Encode(dest)
 
 	// done
 	return encoded
@@ -113,8 +112,8 @@ func GenerateSecretString() string {
 
 // HashSecretString safely hashes secretString
 func HashSecretString(secretString string) string {
-	// decode bytes from base64
-	bytes, err := base64.StdEncoding.DecodeString(secretString)
+	// decode bytes from base58
+	bytes, err := base58.Decode(secretString)
 	if err != nil {
 		return ""
 	}
@@ -122,8 +121,8 @@ func HashSecretString(secretString string) string {
 	// use sha256 digest
 	hashed := sha256.Sum256(bytes)
 
-	// encode hashed bytes as base64
-	encoded := base64.StdEncoding.EncodeToString(hashed[:])
+	// encode hashed bytes as base62
+	encoded := base58.Encode(hashed[:])
 
 	// done
 	return encoded
@@ -223,6 +222,9 @@ func AuthenticateSecretString(ctx context.Context, secretString string) *Secret 
 	// to prevent database crash if someone is spamming with a bad secret
 
 	hashed := HashSecretString(secretString)
+	if hashed == "" {
+		return nil
+	}
 
 	secret := &Secret{}
 	err := getSecretCache().Once(&cache.Item{

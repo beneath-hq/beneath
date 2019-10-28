@@ -42,6 +42,7 @@ require (
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/linkedin/goavro/v2 v2.8.5
 	github.com/markbates/goth v1.54.1
+	github.com/mr-tron/base58 v1.1.2
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c // indirect
