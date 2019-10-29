@@ -2,380 +2,81 @@ package entity
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"fmt"
 	"time"
 
-	"github.com/go-pg/pg/v9/orm"
-	"github.com/go-redis/cache/v7"
-	"github.com/mr-tron/base58"
-	"github.com/vmihailenco/msgpack"
+	"github.com/beneath-core/beneath-go/core/secrettoken"
 
-	"github.com/beneath-core/beneath-go/db"
 	pb "github.com/beneath-core/beneath-go/proto"
-	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
-	"gopkg.in/go-playground/validator.v9"
 )
-
-// Secret represents an access token to read/write data or a user session token
-type Secret struct {
-	_msgpack     struct{}   `msgpack:",omitempty"`
-	SecretID     uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Description  string     `validate:"omitempty,lte=32"`
-	Prefix       string     `sql:",notnull",validate:"required,len=4"`
-	HashedSecret string     `sql:",unique,notnull",validate:"required,lte=64"`
-	UserID       *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
-	User         *User
-	ServiceID    *uuid.UUID `sql:"on_delete:CASCADE,type:uuid"`
-	Service      *Service
-	CreatedOn    time.Time `sql:",notnull,default:now()"`
-	UpdatedOn    time.Time `sql:",notnull,default:now()"`
-	DeletedOn    time.Time
-
-	// non-persistent fields
-	SecretString string `sql:"-"`
-	ReadQuota    int64  `sql:"-"`
-	WriteQuota   int64  `sql:"-"`
-}
-
-// ProjectPermissions represents permissions that a secret has for a given project
-type ProjectPermissions struct {
-	View   bool
-	Create bool
-	Admin  bool
-}
-
-// StreamPermissions represents permissions that a secret has for a given stream
-type StreamPermissions struct {
-	Read  bool
-	Write bool
-}
-
-// OrganizationPermissions represents permissions that a secret has for a given organization
-type OrganizationPermissions struct {
-	View  bool
-	Admin bool
-}
 
 const (
-	// number of secrets to cache in local memory for extra speed
-	secretCacheLocalSize = 10000
+	// TokenFlagsService is used as flags byte for service secret tokens
+	TokenFlagsService = byte(0x80)
+
+	// TokenFlagsUser is used as flags byte for user secret tokens
+	TokenFlagsUser = byte(0x81)
 )
 
-var (
-	// redis cache for authenticated secrets
-	secretCache *cache.Codec
-)
+// Secret represents an access token to Beneath
+type Secret interface {
+	// GetSecretID returns a unique identifier of the secret
+	GetSecretID() uuid.UUID
 
-func init() {
-	// configure validator
-	GetValidator().RegisterStructValidation(validateSecret, Secret{})
+	// GetOwnerID returns the ID of the secret's owner, i.e. a user or service (or uuid.Nil for anonymous)
+	GetOwnerID() uuid.UUID
+
+	// IsAnonymous is true iff the secret is anonymous
+	IsAnonymous() bool
+
+	// IsService is true iff the secret is a service
+	IsService() bool
+
+	// IsUser is true iff the secret is a user
+	IsUser() bool
+
+	// Checks if the secret owner is within its read quota
+	CheckReadQuota(u pb.QuotaUsage) bool
+
+	// Checks if the secret owner is within its write quota
+	CheckWriteQuota(u pb.QuotaUsage) bool
+
+	// StreamPermissions returns the secret's permissions for a given stream
+	StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions
+
+	// ProjectPermissions returns the secret's permissions for a given project
+	ProjectPermissions(ctx context.Context, projectID uuid.UUID, public bool) ProjectPermissions
+
+	// OrganizationPermissions returns the secret's permissions for a given organization
+	OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions
+
+	// ManagesModelBatches is a hack for until we have ModelPermissions
+	ManagesModelBatches(model *Model) bool
+
+	// Revokes the secret
+	Revoke(ctx context.Context)
 }
 
-// custom secret validation
-func validateSecret(sl validator.StructLevel) {
-	k := sl.Current().Interface().(Secret)
+// BaseSecret is the "abstract" base of structs that implement the Secret interface
+type BaseSecret struct {
+	_msgpack    struct{}  `msgpack:",omitempty"`
+	Prefix      string    `sql:",notnull",validate:"required,len=4"`
+	HashedToken string    `sql:",unique,notnull",validate:"required,lte=64"`
+	Description string    `validate:"omitempty,lte=32"`
+	CreatedOn   time.Time `sql:",notnull,default:now()"`
+	UpdatedOn   time.Time `sql:",notnull,default:now()"`
 
-	if k.UserID == nil && k.ServiceID == nil {
-		sl.ReportError(k.ServiceID, "ServiceID", "", "serviceid_userid_empty", "")
-	}
+	Token      secrettoken.Token `sql:"-"`
+	ReadQuota  int64             `sql:"-"`
+	WriteQuota int64             `sql:"-"`
 }
 
-func getSecretCache() *cache.Codec {
-	if secretCache == nil {
-		secretCache = &cache.Codec{
-			Redis:     db.Redis,
-			Marshal:   msgpack.Marshal,
-			Unmarshal: msgpack.Unmarshal,
-		}
-		secretCache.UseLocalCache(secretCacheLocalSize, 1*time.Minute)
-	}
-	return secretCache
+// CheckReadQuota implements Secret
+func (s *BaseSecret) CheckReadQuota(u pb.QuotaUsage) bool {
+	return u.ReadBytes < s.ReadQuota
 }
 
-// GenerateSecretString returns a random generated secret string
-func GenerateSecretString() string {
-	// generate 32 random bytes
-	dest := make([]byte, 32)
-	if _, err := rand.Read(dest); err != nil {
-		panic(err.Error())
-	}
-
-	// encode as base62 string
-	encoded := base58.Encode(dest)
-
-	// done
-	return encoded
-}
-
-// HashSecretString safely hashes secretString
-func HashSecretString(secretString string) string {
-	// decode bytes from base58
-	bytes, err := base58.Decode(secretString)
-	if err != nil {
-		return ""
-	}
-
-	// use sha256 digest
-	hashed := sha256.Sum256(bytes)
-
-	// encode hashed bytes as base62
-	encoded := base58.Encode(hashed[:])
-
-	// done
-	return encoded
-}
-
-// FindSecret finds a secret
-func FindSecret(ctx context.Context, secretID uuid.UUID) *Secret {
-	secret := &Secret{
-		SecretID: secretID,
-	}
-	err := db.DB.ModelContext(ctx, secret).WherePK().Select()
-	if !AssertFoundOne(err) {
-		return nil
-	}
-	return secret
-}
-
-// FindUserSecrets finds all the user's secrets
-func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*Secret {
-	var secrets []*Secret
-	err := db.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
-	if err != nil {
-		panic(err)
-	}
-	return secrets
-}
-
-// FindServiceSecrets finds all the service's secrets
-func FindServiceSecrets(ctx context.Context, serviceID uuid.UUID) []*Secret {
-	var secrets []*Secret
-	err := db.DB.ModelContext(ctx, &secrets).Where("service_id = ?", serviceID).Limit(1000).Select()
-	if err != nil {
-		panic(err)
-	}
-	return secrets
-}
-
-// NewSecret creates a new, unconfigured secret -- use CreateUserSecret or CreateProjectSecret instead
-func NewSecret() *Secret {
-	secretStr := GenerateSecretString()
-	return &Secret{
-		SecretString: secretStr,
-		HashedSecret: HashSecretString(secretStr),
-		Prefix:       secretStr[0:4],
-	}
-}
-
-// CreateUserSecret creates a new secret to manage a user
-func CreateUserSecret(ctx context.Context, userID uuid.UUID, description string) (*Secret, error) {
-	// create
-	secret := NewSecret()
-	secret.Description = description
-	secret.UserID = &userID
-
-	// validate
-	err := GetValidator().Struct(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	// insert
-	err = db.DB.WithContext(ctx).Insert(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	// done
-	return secret, nil
-}
-
-// CreateServiceSecret creates a new secret for a service
-func CreateServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*Secret, error) {
-	// create
-	secret := NewSecret()
-	secret.Description = description
-	secret.ServiceID = &serviceID
-
-	// validate
-	err := GetValidator().Struct(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	// insert
-	err = db.DB.WithContext(ctx).Insert(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	// done
-	return secret, nil
-}
-
-// AuthenticateSecretString returns the secret object matching secretString or nil
-func AuthenticateSecretString(ctx context.Context, secretString string) *Secret {
-	// note: we're also caching empty secrets (i.e. where secretString doesn't match a secret)
-	// to prevent database crash if someone is spamming with a bad secret
-
-	hashed := HashSecretString(secretString)
-	if hashed == "" {
-		return nil
-	}
-
-	secret := &Secret{}
-	err := getSecretCache().Once(&cache.Item{
-		Key:        redisKeyForHashedSecret(hashed),
-		Object:     secret,
-		Expiration: 1 * time.Hour,
-		Func: func() (interface{}, error) {
-			selectedSecret := &Secret{}
-			err := db.DB.ModelContext(ctx, selectedSecret).
-				Relation("User", func(q *orm.Query) (*orm.Query, error) {
-					return q.Column("user.read_quota", "user.write_quota"), nil
-				}).
-				Relation("Service", func(q *orm.Query) (*orm.Query, error) {
-					return q.Column("service.read_quota", "service.write_quota"), nil
-				}).
-				Column("secret_id", "secret.user_id", "secret.service_id").
-				Where("hashed_secret = ?", hashed).
-				Select()
-			if err != nil && err != pg.ErrNoRows {
-				return nil, err
-			}
-
-			if selectedSecret.User != nil {
-				selectedSecret.ReadQuota = selectedSecret.User.ReadQuota
-				selectedSecret.WriteQuota = selectedSecret.User.WriteQuota
-				selectedSecret.User = nil
-			} else if selectedSecret.Service != nil {
-				selectedSecret.ReadQuota = selectedSecret.Service.ReadQuota
-				selectedSecret.WriteQuota = selectedSecret.Service.WriteQuota
-				selectedSecret.Service = nil
-			}
-
-			return selectedSecret, nil
-		},
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	// see note above
-	if secret.SecretID == uuid.Nil {
-		return nil
-	}
-
-	// not cached in redis
-	secret.HashedSecret = hashed
-
-	return secret
-}
-
-// Revoke deletes the secret
-func (k *Secret) Revoke(ctx context.Context) {
-	// delete from db
-	err := db.DB.WithContext(ctx).Delete(k)
-	if err != nil && err != pg.ErrNoRows {
-		panic(err)
-	}
-
-	// remove from redis (ignore error)
-	err = getSecretCache().Delete(redisKeyForHashedSecret(k.HashedSecret))
-	if err != nil && err != cache.ErrCacheMiss {
-		panic(err)
-	}
-}
-
-func redisKeyForHashedSecret(hashedSecret string) string {
-	return fmt.Sprintf("secret:%s", hashedSecret)
-}
-
-// IsAnonymous returns true iff the secret doesn't exist
-func (k *Secret) IsAnonymous() bool {
-	return k == nil || k.SecretID == uuid.Nil
-}
-
-// IsUser returns true iff the secret has a user
-func (k *Secret) IsUser() bool {
-	return k != nil && k.UserID != nil
-}
-
-// IsUserID returns true iff the secret is the given user
-func (k *Secret) IsUserID(userID uuid.UUID) bool {
-	return k.IsUser() && *k.UserID == userID
-}
-
-// StreamPermissions returns the secret's permissions for a given stream
-func (k *Secret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, external bool) StreamPermissions {
-	if k.ServiceID != nil {
-		return CachedServiceStreamPermissions(ctx, *k.ServiceID, streamID)
-	} else if k.UserID != nil {
-		projectPerms := CachedUserProjectPermissions(ctx, *k.UserID, projectID)
-		return StreamPermissions{
-			Read:  projectPerms.View,
-			Write: projectPerms.Create && external,
-		}
-	}
-	panic(fmt.Errorf("expected k.ServiceID or k.UserID to be set"))
-}
-
-// ProjectPermissions returns the secret's permissions for a given project
-func (k *Secret) ProjectPermissions(ctx context.Context, projectID uuid.UUID) ProjectPermissions {
-	if k.UserID != nil {
-		return CachedUserProjectPermissions(ctx, *k.UserID, projectID)
-	}
-	return ProjectPermissions{}
-}
-
-// OrganizationPermissions returns the secret's permissions for a given organization
-func (k *Secret) OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions {
-	if k.UserID != nil {
-		return CachedUserOrganizationPermissions(ctx, *k.UserID, organizationID)
-	}
-	return OrganizationPermissions{}
-}
-
-// ManagesModelBatches returns true if the secret can manage model batches
-func (k *Secret) ManagesModelBatches(model *Model) bool {
-	return k.ServiceID != nil && *k.ServiceID == model.ServiceID
-}
-
-// BillingID gets the BillingID based on the BillingEntity
-func (k *Secret) BillingID() uuid.UUID {
-	if k == nil {
-		panic(fmt.Errorf("cannot get billing id for nil secret"))
-	} else if k.UserID != nil {
-		return *k.UserID
-	} else if k.ServiceID != nil {
-		return *k.ServiceID
-	}
-
-	panic(fmt.Errorf("expected userID or service ID to be set"))
-}
-
-// CheckReadQuota checks the user's read quota
-func (k *Secret) CheckReadQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit, the user has hit its quota
-	if u.ReadBytes >= k.ReadQuota {
-		return false
-	}
-
-	// the user still has resources available
-	return true
-}
-
-// CheckWriteQuota checks the user's write quota
-func (k *Secret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	// if any constraints are hit, the user has hit its quota
-	if u.WriteBytes >= k.WriteQuota {
-		return false
-	}
-
-	// the user still has resources available
-	return true
+// CheckWriteQuota implements Secret
+func (s *BaseSecret) CheckWriteQuota(u pb.QuotaUsage) bool {
+	return u.WriteBytes < s.WriteQuota
 }

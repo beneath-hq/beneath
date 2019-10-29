@@ -7,11 +7,13 @@
 // ====================================================
 
 export interface SecretsForUser_secretsForUser {
-  __typename: "Secret";
-  secretID: string;
+  __typename: "UserSecret";
+  userSecretID: string;
   description: string;
   prefix: string;
   createdOn: ControlTime;
+  readOnly: boolean;
+  publicOnly: boolean;
 }
 
 export interface SecretsForUser {

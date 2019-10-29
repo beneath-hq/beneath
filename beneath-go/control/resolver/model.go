@@ -32,12 +32,10 @@ func (r *queryResolver) Model(ctx context.Context, name string, projectName stri
 		return nil, gqlerror.Errorf("Model %s/%s not found", projectName, name)
 	}
 
-	if !model.Project.Public {
-		secret := middleware.GetSecret(ctx)
-		perms := secret.ProjectPermissions(ctx, model.ProjectID)
-		if !perms.View {
-			return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, name)
-		}
+	secret := middleware.GetSecret(ctx)
+	perms := secret.ProjectPermissions(ctx, model.ProjectID, model.Project.Public)
+	if !perms.View {
+		return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, name)
 	}
 
 	return model, nil
@@ -45,7 +43,7 @@ func (r *queryResolver) Model(ctx context.Context, name string, projectName stri
 
 func (r *mutationResolver) CreateModel(ctx context.Context, input gql.CreateModelInput) (*entity.Model, error) {
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, input.ProjectID)
+	perms := secret.ProjectPermissions(ctx, input.ProjectID, false)
 	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to modify resources in project %s", input.ProjectID)
 	}
@@ -81,7 +79,7 @@ func (r *mutationResolver) UpdateModel(ctx context.Context, input gql.UpdateMode
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, model.ProjectID)
+	perms := secret.ProjectPermissions(ctx, model.ProjectID, false)
 	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to modify resources in project '%s'", model.ProjectID)
 	}
@@ -113,7 +111,7 @@ func (r *mutationResolver) DeleteModel(ctx context.Context, modelID uuid.UUID) (
 
 	// check allowed to edit
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, model.ProjectID)
+	perms := secret.ProjectPermissions(ctx, model.ProjectID, false)
 	if !perms.Create {
 		return false, gqlerror.Errorf("Not allowed to modify resources in project '%s'", model.ProjectID)
 	}

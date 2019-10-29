@@ -86,7 +86,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
       <Mutation<IssueUserSecret, IssueUserSecretVariables>
         mutation={ISSUE_USER_SECRET}
         onCompleted={(data) => {
-          setNewSecretString(data.issueUserSecret.secretString);
+          setNewSecretString(data.issueUserSecret.token);
           closeDialog();
         }}
         update={(cache, { data }) => {
@@ -130,7 +130,11 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
                   disabled={loading}
                   onClick={() => {
                     issueSecret({
-                      variables: { description: input.value },
+                      variables: {
+                        description: input.value,
+                        publicOnly: false,
+                        readOnly: false,
+                      },
                     });
                   }}
                 >

@@ -7,16 +7,18 @@
 // ====================================================
 
 export interface IssueUserSecret_issueUserSecret_secret {
-  __typename: "Secret";
-  secretID: string;
+  __typename: "UserSecret";
+  userSecretID: string;
   description: string;
   prefix: string;
   createdOn: ControlTime;
+  readOnly: boolean;
+  publicOnly: boolean;
 }
 
 export interface IssueUserSecret_issueUserSecret {
-  __typename: "NewSecret";
-  secretString: string;
+  __typename: "NewUserSecret";
+  token: string;
   secret: IssueUserSecret_issueUserSecret_secret;
 }
 
@@ -26,4 +28,6 @@ export interface IssueUserSecret {
 
 export interface IssueUserSecretVariables {
   description: string;
+  readOnly: boolean;
+  publicOnly: boolean;
 }

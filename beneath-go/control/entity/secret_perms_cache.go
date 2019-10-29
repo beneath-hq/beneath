@@ -14,6 +14,25 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 )
 
+// ProjectPermissions represents permissions that a secret has for a given project
+type ProjectPermissions struct {
+	View   bool
+	Create bool
+	Admin  bool
+}
+
+// StreamPermissions represents permissions that a secret has for a given stream
+type StreamPermissions struct {
+	Read  bool
+	Write bool
+}
+
+// OrganizationPermissions represents permissions that a secret has for a given organization
+type OrganizationPermissions struct {
+	View  bool
+	Admin bool
+}
+
 // PermissionsCache encapsulates the secret's permissions and how to access the permissions in short-term and long-term memory
 type PermissionsCache struct {
 	codec     *cache.Codec
@@ -52,6 +71,7 @@ func getUserOrganizationPermissionsCache() *PermissionsCache {
 
 	return userOrganizationPermissions
 }
+
 func getUserProjectPermissionsCache() *PermissionsCache {
 	if userProjectPermissions == nil {
 		userProjectPermissions = NewPermissionsCache(ProjectPermissions{}, `
@@ -63,6 +83,7 @@ func getUserProjectPermissionsCache() *PermissionsCache {
 
 	return userProjectPermissions
 }
+
 func getServiceStreamPermissionsCache() *PermissionsCache {
 	if serviceStreamPermissions == nil {
 		serviceStreamPermissions = NewPermissionsCache(StreamPermissions{}, `

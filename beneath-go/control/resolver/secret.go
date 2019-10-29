@@ -11,27 +11,38 @@ import (
 	"github.com/beneath-core/beneath-go/core/middleware"
 )
 
-// Secret returns the gql.SecretResolver
-func (r *Resolver) Secret() gql.SecretResolver {
-	return &secretResolver{r}
+// ServiceSecret returns the gql.ServiceSecretResolver
+func (r *Resolver) ServiceSecret() gql.ServiceSecretResolver {
+	return &serviceSecretResolver{r}
 }
 
-type secretResolver struct{ *Resolver }
+type serviceSecretResolver struct{ *Resolver }
 
-func (r *secretResolver) SecretID(ctx context.Context, obj *entity.Secret) (string, error) {
-	return obj.SecretID.String(), nil
+func (r *serviceSecretResolver) ServiceSecretID(ctx context.Context, obj *entity.ServiceSecret) (string, error) {
+	return obj.ServiceSecretID.String(), nil
 }
 
-func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Secret, error) {
+// UserSecret returns the gql.UserSecretResolver
+func (r *Resolver) UserSecret() gql.UserSecretResolver {
+	return &userSecretResolver{r}
+}
+
+type userSecretResolver struct{ *Resolver }
+
+func (r *userSecretResolver) UserSecretID(ctx context.Context, obj *entity.UserSecret) (string, error) {
+	return obj.UserSecretID.String(), nil
+}
+
+func (r *queryResolver) SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.UserSecret, error) {
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsUserID(userID) {
+	if secret.GetOwnerID() != userID {
 		return nil, MakeUnauthenticatedError("Must be authenticated as userID")
 	}
 
 	return entity.FindUserSecrets(ctx, userID), nil
 }
 
-func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UUID) ([]*entity.Secret, error) {
+func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UUID) ([]*entity.ServiceSecret, error) {
 	service := entity.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service not found")
@@ -46,24 +57,24 @@ func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UU
 	return entity.FindServiceSecrets(ctx, serviceID), nil
 }
 
-func (r *mutationResolver) IssueUserSecret(ctx context.Context, description string) (*gql.NewSecret, error) {
+func (r *mutationResolver) IssueUserSecret(ctx context.Context, description string, readOnly bool, publicOnly bool) (*gql.NewUserSecret, error) {
 	authSecret := middleware.GetSecret(ctx)
 	if !authSecret.IsUser() {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal secret")
 	}
 
-	secret, err := entity.CreateUserSecret(ctx, *authSecret.UserID, description)
+	secret, err := entity.CreateUserSecret(ctx, authSecret.GetOwnerID(), description, publicOnly, readOnly)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	return &gql.NewSecret{
-		Secret:       secret,
-		SecretString: secret.SecretString,
+	return &gql.NewUserSecret{
+		Secret: secret,
+		Token:  secret.Token.String(),
 	}, nil
 }
 
-func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*gql.NewSecret, error) {
+func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*gql.NewServiceSecret, error) {
 	service := entity.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service not found")
@@ -84,43 +95,54 @@ func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uui
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	return &gql.NewSecret{
-		Secret:       secret,
-		SecretString: secret.SecretString,
+	return &gql.NewServiceSecret{
+		Secret: secret,
+		Token:  secret.Token.String(),
 	}, nil
 }
 
-func (r *mutationResolver) RevokeSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
+func (r *mutationResolver) RevokeServiceSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
 	authSecret := middleware.GetSecret(ctx)
-	if authSecret == nil {
+	if authSecret.IsAnonymous() {
 		return false, gqlerror.Errorf("Not allowed to edit secret")
 	}
 
-	secret := entity.FindSecret(ctx, secretID)
+	secret := entity.FindServiceSecret(ctx, secretID)
 	if secret == nil {
 		return false, gqlerror.Errorf("Secret not found")
 	}
 
-	if secret.UserID != nil {
-		// we're revoking a personal user secret
-		if authSecret.UserID == nil || *authSecret.UserID != *secret.UserID {
-			return false, gqlerror.Errorf("Not allowed to edit secret")
-		}
-	} else if secret.ServiceID != nil {
-		// we're revoking a service secret
-		service := entity.FindService(ctx, *secret.ServiceID)
-		if service == nil {
-			return false, gqlerror.Errorf("Service not found")
-		}
+	service := entity.FindService(ctx, secret.ServiceID)
+	if service == nil {
+		return false, gqlerror.Errorf("Service not found")
+	}
 
-		perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
-		if !perms.Admin {
-			return false, gqlerror.Errorf("Not allowed to edit secret")
-		}
+	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.Admin {
+		return false, gqlerror.Errorf("Not allowed to edit secret")
+	}
 
-		if service.Kind != entity.ServiceKindExternal {
-			return false, gqlerror.Errorf("Can only revoke secrets for external services")
-		}
+	if service.Kind != entity.ServiceKindExternal {
+		return false, gqlerror.Errorf("Can only revoke secrets for external services")
+	}
+
+	secret.Revoke(ctx)
+	return true, nil
+}
+
+func (r *mutationResolver) RevokeUserSecret(ctx context.Context, secretID uuid.UUID) (bool, error) {
+	authSecret := middleware.GetSecret(ctx)
+	if authSecret.IsAnonymous() {
+		return false, gqlerror.Errorf("Not allowed to edit secret")
+	}
+
+	secret := entity.FindUserSecret(ctx, secretID)
+	if secret == nil {
+		return false, gqlerror.Errorf("Secret not found")
+	}
+
+	if authSecret.GetOwnerID() != secret.UserID {
+		return false, gqlerror.Errorf("Not allowed to edit secret")
 	}
 
 	secret.Revoke(ctx)

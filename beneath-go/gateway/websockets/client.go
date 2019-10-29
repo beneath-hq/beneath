@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/secrettoken"
+
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	uuid "github.com/satori/go.uuid"
@@ -34,7 +36,7 @@ type Client struct {
 	WS *websocket.Conn
 
 	// Secret used by client to authenticate
-	Secret *entity.Secret
+	Secret entity.Secret
 
 	// Buffered channel of outbound messages to users
 	Outbound chan WebsocketMessage
@@ -92,6 +94,7 @@ func NewClient(broker *Broker, ws *websocket.Conn) *Client {
 		Outbound:      make(chan WebsocketMessage, 16),
 		Subscriptions: make(map[SubscriptionFilter]SubscriptionID),
 		startTime:     time.Now(),
+		Secret:        &entity.AnonymousSecret{},
 	}
 
 	// start background workers
@@ -206,10 +209,17 @@ func (c *Client) GetSubscriptionID(filter SubscriptionFilter) SubscriptionID {
 // Init should be called upon receipt of connectionInitMsgType
 func (c *Client) Init(payload map[string]interface{}) {
 	// get token
-	token, ok := payload["secret"].(string)
+	tokenStr, ok := payload["secret"].(string)
 	if ok {
+		// parse token
+		token, err := secrettoken.FromString(tokenStr)
+		if err != nil {
+			c.SendConnectionError("malformed secret")
+			return
+		}
+
 		// authenticate
-		c.Secret = entity.AuthenticateSecretString(c.Broker.ctx, token)
+		c.Secret = entity.AuthenticateWithToken(c.Broker.ctx, token)
 		if c.Secret == nil {
 			c.SendConnectionError("couldn't authenticate secret")
 			return
@@ -339,18 +349,16 @@ func (c *Client) beginWriting() {
 func (c *Client) log(msg string, keysAndValues ...interface{}) {
 	l := log.S
 
-	if c.Secret != nil {
-		if c.Secret.UserID != nil {
-			l = l.With(
-				"secret", c.Secret.SecretID.String(),
-				"user", c.Secret.UserID.String(),
-			)
-		} else if c.Secret.ServiceID != nil {
-			l = l.With(
-				"secret", c.Secret.SecretID.String(),
-				"service", c.Secret.ServiceID.String(),
-			)
-		}
+	if c.Secret.IsUser() {
+		l = l.With(
+			"secret", c.Secret.GetSecretID().String(),
+			"user", c.Secret.GetOwnerID().String(),
+		)
+	} else if c.Secret.IsService() {
+		l = l.With(
+			"secret", c.Secret.GetSecretID().String(),
+			"service", c.Secret.GetOwnerID().String(),
+		)
 	}
 
 	l.Infow(msg, keysAndValues...)

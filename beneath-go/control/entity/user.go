@@ -33,7 +33,7 @@ type User struct {
 	MainOrganization   *Organization
 	Projects           []*Project      `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
 	Organizations      []*Organization `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
-	Secrets            []*Secret
+	Secrets            []*UserSecret
 	ReadQuota          int64
 	WriteQuota         int64
 }

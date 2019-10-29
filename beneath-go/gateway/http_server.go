@@ -104,11 +104,9 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to read stream
-	if !stream.Public {
-		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
-		if !perms.Read {
-			return httputil.NewError(403, "secret doesn't grant right to read this stream")
-		}
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return httputil.NewError(403, "secret doesn't grant right to read this stream")
 	}
 
 	// create json response
@@ -185,16 +183,14 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// check allowed to read stream
-	if !stream.Public {
-		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
-		if !perms.Read {
-			return httputil.NewError(403, "secret doesn't grant right to read this stream")
-		}
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return httputil.NewError(403, "secret doesn't grant right to read this stream")
 	}
 
 	// check quota
-	if secret != nil {
-		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
+	if !secret.IsAnonymous() {
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.GetOwnerID())
 		ok := secret.CheckReadQuota(usage)
 		if !ok {
 			return httputil.NewError(429, "you have exhausted your monthly quota")
@@ -341,8 +337,8 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// track read metrics
 	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
-	if secret != nil {
-		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
+	if !secret.IsAnonymous() {
+		Metrics.TrackRead(secret.GetOwnerID(), int64(len(result)), int64(bytesRead))
 	}
 
 	return nil
@@ -359,11 +355,9 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	}
 
 	// check allowed to read stream
-	if !stream.Public {
-		perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
-		if !perms.Read {
-			return httputil.NewError(403, "secret doesn't grant right to read this stream")
-		}
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return httputil.NewError(403, "secret doesn't grant right to read this stream")
 	}
 
 	// check isn't batch
@@ -372,8 +366,8 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	}
 
 	// check quota
-	if secret != nil {
-		usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
+	if !secret.IsAnonymous() {
+		usage := Metrics.GetCurrentUsage(r.Context(), secret.GetOwnerID())
 		ok := secret.CheckReadQuota(usage)
 		if !ok {
 			return httputil.NewError(429, "you have exhausted your monthly quota")
@@ -464,8 +458,8 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 
 	// track read metrics
 	Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
-	if secret != nil {
-		Metrics.TrackRead(secret.BillingID(), int64(len(result)), int64(bytesRead))
+	if !secret.IsAnonymous() {
+		Metrics.TrackRead(secret.GetOwnerID(), int64(len(result)), int64(bytesRead))
 	}
 
 	return nil
@@ -488,13 +482,13 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to write stream
-	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.External)
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Write {
 		return httputil.NewError(403, "secret doesn't grant right to write this stream")
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(r.Context(), secret.BillingID())
+	usage := Metrics.GetCurrentUsage(r.Context(), secret.GetOwnerID())
 	ok := secret.CheckWriteQuota(usage)
 	if !ok {
 		return httputil.NewError(429, "you have exhausted your monthly quota")
@@ -593,8 +587,8 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// track write metrics
 	Metrics.TrackWrite(instanceID, int64(len(records)), int64(bytesWritten))
-	if secret != nil {
-		Metrics.TrackWrite(secret.BillingID(), int64(len(records)), int64(bytesWritten))
+	if !secret.IsAnonymous() {
+		Metrics.TrackWrite(secret.GetOwnerID(), int64(len(records)), int64(bytesWritten))
 	}
 
 	// Done

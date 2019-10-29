@@ -82,13 +82,13 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// create session secret
-	secret, err := entity.CreateUserSecret(r.Context(), user.UserID, "Browser session")
+	secret, err := entity.CreateUserSecret(r.Context(), user.UserID, "Browser session", false, false)
 	if err != nil {
 		return err
 	}
 
 	// redirect to client, setting token
-	url := fmt.Sprintf("%s/auth/callback/login?token=%s", gothConfig.ClientHost, url.QueryEscape(secret.SecretString))
+	url := fmt.Sprintf("%s/auth/callback/login?token=%s", gothConfig.ClientHost, url.QueryEscape(secret.Token.String()))
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 
 	// done
@@ -103,8 +103,8 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) error {
 			secret.Revoke(r.Context())
 			log.S.Infow(
 				"control user logout",
-				"user_id", secret.UserID,
-				"hashed_secret", secret.HashedSecret,
+				"user_id", secret.GetOwnerID(),
+				"secret_id", secret.GetSecretID(),
 			)
 		}
 	}

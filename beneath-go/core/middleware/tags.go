@@ -17,7 +17,7 @@ import (
 // to logging middleware at the top of the chain).
 type Tags struct {
 	AnonymousID uuid.UUID
-	Secret      *entity.Secret
+	Secret      entity.Secret
 	Payload     interface{}
 }
 

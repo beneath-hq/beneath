@@ -5,7 +5,7 @@ import { IconButton, List, ListItem, ListItemSecondaryAction, ListItemText } fro
 import DeleteIcon from "@material-ui/icons/Delete";
 import Moment from "react-moment";
 
-import { QUERY_USER_SECRETS, REVOKE_SECRET } from "../../apollo/queries/secret";
+import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../apollo/queries/secret";
 import { RevokeSecret, RevokeSecretVariables } from "../../apollo/types/RevokeSecret";
 import { SecretsForUser, SecretsForUserVariables } from "../../apollo/types/SecretsForUser";
 import Loading from "../Loading";
@@ -29,8 +29,8 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
 
   return (
     <List dense={true}>
-      {data.secretsForUser.map(({ createdOn, description, secretID, prefix }) => (
-        <ListItem key={secretID} disableGutters>
+      {data.secretsForUser.map(({ createdOn, description, userSecretID, prefix }) => (
+        <ListItem key={userSecretID} disableGutters>
           <ListItemText
             primary={
               <React.Fragment>
@@ -45,14 +45,16 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
           />
           <ListItemSecondaryAction>
             <Mutation<RevokeSecret, RevokeSecretVariables>
-              mutation={REVOKE_SECRET}
+              mutation={REVOKE_USER_SECRET}
               update={(cache, { data }) => {
                 if (data && data.revokeSecret) {
                   const queryData = cache.readQuery({
                     query: QUERY_USER_SECRETS,
                     variables: { userID },
                   }) as any;
-                  const filtered = queryData.secretsForUser.filter((secret: any) => secret.secretID !== secretID);
+                  const filtered = queryData.secretsForUser.filter(
+                    (secret: any) => secret.userSecretID !== userSecretID
+                  );
                   cache.writeQuery({
                     query: QUERY_USER_SECRETS,
                     variables: { userID },
@@ -66,7 +68,7 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
                   edge="end"
                   aria-label="Delete"
                   onClick={() => {
-                    revokeSecret({ variables: { secretID } });
+                    revokeSecret({ variables: { secretID: userSecretID } });
                   }}
                 >
                   {loading ? <Loading size={20} /> : <DeleteIcon />}

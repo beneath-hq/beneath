@@ -94,15 +94,15 @@ func LoggerStreamServerInterceptor() grpc.StreamServerInterceptor {
 
 func loggerWithTags(l *zap.Logger, tags *Tags) *zap.Logger {
 	if tags.Secret != nil {
-		if tags.Secret.UserID != nil {
+		if tags.Secret.IsUser() {
 			l = l.With(
-				zap.String("secret", tags.Secret.SecretID.String()),
-				zap.String("user", tags.Secret.UserID.String()),
+				zap.String("secret", tags.Secret.GetSecretID().String()),
+				zap.String("user", tags.Secret.GetOwnerID().String()),
 			)
-		} else if tags.Secret.ServiceID != nil {
+		} else if tags.Secret.IsService() {
 			l = l.With(
-				zap.String("secret", tags.Secret.SecretID.String()),
-				zap.String("service", tags.Secret.ServiceID.String()),
+				zap.String("secret", tags.Secret.GetSecretID().String()),
+				zap.String("service", tags.Secret.GetOwnerID().String()),
 			)
 		}
 	}

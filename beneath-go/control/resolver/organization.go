@@ -42,7 +42,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) 
 		return nil, gqlerror.Errorf("Not allowed to create organization")
 	}
 
-	org, err := entity.CreateOrganizationWithUser(ctx, name, *secret.UserID)
+	org, err := entity.CreateOrganizationWithUser(ctx, name, secret.GetOwnerID())
 	if err != nil {
 		return nil, err
 	}

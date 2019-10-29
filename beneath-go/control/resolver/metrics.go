@@ -22,12 +22,10 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
 	}
 
-	if !stream.Project.Public {
-		secret := middleware.GetSecret(ctx)
-		perms := secret.StreamPermissions(ctx, streamID, stream.ProjectID, stream.External)
-		if !perms.Read {
-			return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
-		}
+	secret := middleware.GetSecret(ctx)
+	perms := secret.StreamPermissions(ctx, streamID, stream.ProjectID, stream.Project.Public, stream.External)
+	if !perms.Read {
+		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
 	}
 
 	// lookup stream ID for batch, instance ID for streaming
@@ -63,7 +61,7 @@ func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, pe
 	}
 
 	secret := middleware.GetSecret(ctx)
-	if !secret.IsUserID(userID) {
+	if secret.GetOwnerID() != userID {
 		perms := entity.OrganizationPermissions{}
 		if user.MainOrganizationID != nil {
 			perms = secret.OrganizationPermissions(ctx, *user.MainOrganizationID)

@@ -58,8 +58,8 @@ const dataIdFromObject = (object) => {
       return object.userID;
     case "Me":
       return `me:${object.userID}`;
-    case "Secret":
-      return `${object.secretID}`;
+    case "UserSecret":
+      return `${object.userSecretID}`;
     case "NewSecret":
       return `${object.secretString}`;
     case "Project":
@@ -84,7 +84,11 @@ const dataIdFromObject = (object) => {
 const makeErrorHook = ({ token, res }) => {
   return ({ graphQLErrors, networkError }) => {
     // redirect to /auth/logout if error is `unauthenticated` (probably means the user logged out in another window)
-    if (networkError && networkError.result && networkError.result.error === "unauthenticated") {
+    if (
+      networkError &&
+      networkError.result &&
+      networkError.result.error.match(/authentication error.*/)
+    ) {
       if (token) {
         if (process.browser) {
           document.location.href = "/auth/logout";

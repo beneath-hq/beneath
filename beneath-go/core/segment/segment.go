@@ -32,15 +32,9 @@ func TrackHTTP(r *http.Request, name string, payload interface{}) {
 
 	// SecretID, UserID, and ServiceID can be null
 	userID := ""
-	if tags.Secret != nil {
-		props.Set("secret", tags.Secret.SecretID.String())
-		if tags.Secret.UserID != nil {
-			userID = tags.Secret.UserID.String()
-		} else if tags.Secret.ServiceID != nil {
-			userID = tags.Secret.ServiceID.String()
-		} else {
-			panic(fmt.Errorf("expected UserID or ServiceID to be set"))
-		}
+	if tags.Secret != nil && !tags.Secret.IsAnonymous() {
+		props.Set("secret", tags.Secret.GetSecretID().String())
+		userID = tags.Secret.GetOwnerID().String()
 	}
 
 	// anonymous id

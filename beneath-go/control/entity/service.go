@@ -21,7 +21,7 @@ type Service struct {
 	WriteQuota     int64
 	CreatedOn      time.Time `sql:",notnull,default:now()"`
 	UpdatedOn      time.Time `sql:",notnull,default:now()"`
-	Secrets        []*Secret
+	Secrets        []*ServiceSecret
 }
 
 // ServiceKind represents a external, model, etc. services

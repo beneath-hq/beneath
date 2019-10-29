@@ -46,9 +46,14 @@ type Metrics struct {
 	WriteRecords int       `json:"writeRecords"`
 }
 
-type NewSecret struct {
-	Secret       *entity.Secret `json:"secret"`
-	SecretString string         `json:"secretString"`
+type NewServiceSecret struct {
+	Secret *entity.ServiceSecret `json:"secret"`
+	Token  string                `json:"token"`
+}
+
+type NewUserSecret struct {
+	Secret *entity.UserSecret `json:"secret"`
+	Token  string             `json:"token"`
 }
 
 type UpdateModelInput struct {

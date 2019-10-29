@@ -15,8 +15,10 @@ autobind: []
 models:
   UUID:
     model: github.com/beneath-core/beneath-go/control/gql.UUID
-  Secret:
-    model: github.com/beneath-core/beneath-go/control/entity.Secret
+  UserSecret: 
+    model: github.com/beneath-core/beneath-go/control/entity.UserSecret
+  ServiceSecret: 
+    model: github.com/beneath-core/beneath-go/control/entity.ServiceSecret
   Project:
     model: github.com/beneath-core/beneath-go/control/entity.Project
   Model:

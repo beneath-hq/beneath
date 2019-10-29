@@ -45,7 +45,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
 	}
 
-	user := entity.FindUser(ctx, *secret.UserID)
+	user := entity.FindUser(ctx, secret.GetOwnerID())
 	return userToMe(ctx, user), nil
 }
 
@@ -55,7 +55,7 @@ func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name 
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
 	}
 
-	user := entity.FindUser(ctx, *secret.UserID)
+	user := entity.FindUser(ctx, secret.GetOwnerID())
 	err := user.UpdateDescription(ctx, username, name, bio, photoURL)
 	if err != nil {
 		return nil, err

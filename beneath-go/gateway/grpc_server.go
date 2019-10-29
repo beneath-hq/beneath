@@ -124,7 +124,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	}
 
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
@@ -172,13 +172,13 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 	}
 
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External, stream.Public)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
+	usage := Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
 	ok := secret.CheckReadQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
@@ -248,7 +248,7 @@ func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest
 
 	// track read metrics
 	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
-	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(secret.GetOwnerID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
 	return response, nil
@@ -281,7 +281,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
@@ -292,7 +292,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
+	usage := Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
 	ok := secret.CheckReadQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
@@ -330,7 +330,7 @@ func (s *gRPCServer) ReadLatestRecords(ctx context.Context, req *pb.ReadLatestRe
 
 	// track read metrics
 	Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
-	Metrics.TrackRead(secret.BillingID(), int64(len(response.Records)), int64(bytesRead))
+	Metrics.TrackRead(secret.GetOwnerID(), int64(len(response.Records)), int64(bytesRead))
 
 	// done
 	return response, nil
@@ -362,7 +362,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Write {
 		return nil, grpc.Errorf(codes.PermissionDenied, "secret doesn't grant right to write to this stream")
 	}
@@ -373,7 +373,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// check quota
-	usage := Metrics.GetCurrentUsage(ctx, secret.BillingID())
+	usage := Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
 	ok := secret.CheckWriteQuota(usage)
 	if !ok {
 		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
@@ -423,7 +423,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 
 	// track write metrics
 	Metrics.TrackWrite(instanceID, int64(len(req.Records)), int64(bytesWritten))
-	Metrics.TrackWrite(secret.BillingID(), int64(len(req.Records)), int64(bytesWritten))
+	Metrics.TrackWrite(secret.GetOwnerID(), int64(len(req.Records)), int64(bytesWritten))
 
 	return &pb.WriteRecordsResponse{}, nil
 }
