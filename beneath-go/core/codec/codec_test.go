@@ -69,6 +69,7 @@ func TestAvroComplex(t *testing.T) {
 		type TestA {
 			one: Boolean!
 			two: Float64!
+			three: Timestamp
 		}
 	`)
 
@@ -83,8 +84,8 @@ func TestAvroComplex(t *testing.T) {
 		"five": "-77224998599806363752588771300231266558642741460645341489178111450841839741627",
 		"six": 1560949036000,
 		"seven": [
-			{ "one": true, "two": 3.14159265358 },
-			{ "one": false, "two": 2.718281828 }
+			{ "one": true, "two": 3.14159265358, "three": null },
+			{ "one": false, "two": 2.718281828, "three": 1572445315000 }
 		]
 	}`
 

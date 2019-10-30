@@ -1,6 +1,6 @@
-import { Typography, Theme, makeStyles } from "@material-ui/core";
-import Link, { LinkProps } from "next/link";
+import { makeStyles, Theme, Typography } from "@material-ui/core";
 import clsx from "clsx";
+import Link, { LinkProps } from "next/link";
 
 type LinkTypographyProps = LinkProps & {
   bold?: boolean;

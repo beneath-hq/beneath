@@ -154,6 +154,9 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 			}
 			// type as dict case
 			if typeName, ok := childSchema["type"].(string); ok {
+				if logicalTypeName, ok := childSchema["logicalType"].(string); ok {
+					typeName += "." + logicalTypeName
+				}
 				return map[string]interface{}{typeName: childVal}, nil
 			}
 		}

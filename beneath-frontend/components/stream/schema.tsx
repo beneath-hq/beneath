@@ -47,6 +47,7 @@ class Column {
   public name: string;
   public displayName: string;
   public type: avro.Type | TimeagoType;
+  public actualType: avro.Type | TimeagoType;
   public key: boolean;
   public doc: string | undefined;
 
@@ -56,6 +57,13 @@ class Column {
     this.type = type;
     this.key = key;
     this.doc = doc;
+
+    // unwrap union types
+    this.actualType = type;
+    if (avro.Type.isType(this.type, "union:unwrapped")) {
+      const union = this.type as avro.types.UnwrappedUnionType;
+      this.actualType = union.types[union.types.length - 1]; // in Beneath, first type is always null
+    }
   }
 
   public isNumeric(): boolean {
@@ -72,15 +80,15 @@ class Column {
 
   private formatValue(val: any) {
     if (val !== undefined && val !== null) {
-      if (this.type === "timeago") {
+      if (this.actualType === "timeago") {
         return <Moment fromNow ago date={new Date(val)} />;
       }
 
-      if (avro.Type.isType(this.type, "logical:timestamp-millis")) {
+      if (avro.Type.isType(this.actualType, "logical:timestamp-millis")) {
         return new Date(val).toISOString().slice(0, 19);
       }
 
-      if (avro.Type.isType(this.type, "int", "long")) {
+      if (avro.Type.isType(this.actualType, "int", "long")) {
         try {
           return Number(val).toLocaleString("en-US");
         } catch (e) {
@@ -88,17 +96,21 @@ class Column {
         }
       }
 
-      if (avro.Type.isType(this.type, "float", "double")) {
+      if (avro.Type.isType(this.actualType, "float", "double")) {
         return numbro(val).format("0,0.000");
       }
 
-      if (avro.Type.isType(this.type, "logical:decimal")) {
+      if (avro.Type.isType(this.actualType, "logical:decimal")) {
         try {
           // @ts-ignore
           return BigInt(val).toLocaleString("en-US");
         } catch (e) {
           return BigInt(val).toLocaleString();
         }
+      }
+
+      if (avro.Type.isType(this.actualType, "record")) {
+        return JSON.stringify(val);
       }
 
       return val.toString();
