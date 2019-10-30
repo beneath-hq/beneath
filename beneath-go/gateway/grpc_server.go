@@ -361,6 +361,11 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
+	// check not already a committed batch stream
+	if stream.Batch && stream.Committed {
+		return nil, status.Error(codes.FailedPrecondition, "batch has been committed and closed for further writes")
+	}
+
 	// check permissions
 	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Write {

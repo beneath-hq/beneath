@@ -481,6 +481,11 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		return httputil.NewError(404, "stream not found")
 	}
 
+	// check not already a committed batch stream
+	if stream.Batch && stream.Committed {
+		return httputil.NewError(400, "batch has been committed and closed for further writes")
+	}
+
 	// check allowed to write stream
 	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Write {
