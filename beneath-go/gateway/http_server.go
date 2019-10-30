@@ -48,6 +48,7 @@ func httpHandler() http.Handler {
 		AllowedOrigins:   []string{"*"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
+		MaxAge:           7200,
 		Debug:            false,
 	}).Handler)
 
@@ -86,9 +87,6 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
-	// get auth
-	secret := middleware.GetSecret(r.Context())
-
 	// get instance ID
 	projectName := toBackendName(chi.URLParam(r, "projectName"))
 	streamName := toBackendName(chi.URLParam(r, "streamName"))
@@ -97,6 +95,12 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 		return httputil.NewError(404, "instance for stream not found")
 	}
 
+	// set log payload
+	middleware.SetTagsPayload(r.Context(), streamDetailsLog{
+		Stream:  streamName,
+		Project: projectName,
+	})
+
 	// get stream details
 	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
 	if stream == nil {
@@ -104,6 +108,7 @@ func getStreamDetails(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check allowed to read stream
+	secret := middleware.GetSecret(r.Context())
 	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
 		return httputil.NewError(403, "secret doesn't grant right to read this stream")
@@ -182,6 +187,12 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		return httputil.NewError(404, "stream not found")
 	}
 
+	// set log payload
+	payload := readRecordsLog{
+		InstanceID: instanceID.String(),
+	}
+	middleware.SetTagsPayload(r.Context(), payload)
+
 	// check allowed to read stream
 	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
@@ -217,6 +228,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 				return httputil.NewError(400, "couldn't parse where url parameter as json")
 			}
 			body["where"] = whereParsed
+			payload.Where = where
 		}
 
 		// read page
@@ -227,6 +239,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 				return httputil.NewError(400, "couldn't parse page url parameter as json")
 			}
 			body["after"] = afterParsed
+			payload.After = after
 		}
 	} else if err != nil {
 		return httputil.NewError(400, "couldn't parse body -- is it valid JSON?")
@@ -244,6 +257,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}
+	payload.Limit = int32(limit)
 
 	// get key range where clause (if no where, it will be nil)
 	var whereQuery queryparse.Query
@@ -276,6 +290,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			return httputil.NewError(400, fmt.Sprintf("couldn't parse after query: %s", err.Error()))
 		}
 	}
+
+	// update payload after setting new details
+	middleware.SetTagsPayload(r.Context(), payload)
 
 	// set key range
 	keyRange, err := stream.Codec.MakeKeyRange(whereQuery, afterQuery)
@@ -354,6 +371,12 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 		return httputil.NewError(404, "stream not found")
 	}
 
+	// set log payload
+	payload := readLatestLog{
+		InstanceID: instanceID.String(),
+	}
+	middleware.SetTagsPayload(r.Context(), payload)
+
 	// check allowed to read stream
 	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
@@ -406,12 +429,19 @@ func getLatestFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID 
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}
+	payload.Limit = int32(limit)
 
 	// get before
 	before, err := timeutil.Parse(body["before"], true)
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}
+	if !before.IsZero() {
+		payload.Before = timeutil.UnixMilli(before)
+	}
+
+	// update payload after setting new details
+	middleware.SetTagsPayload(r.Context(), payload)
 
 	// prepare write (we'll be writing as we get data, not in one batch)
 	w.Header().Set("Content-Type", "application/json")
@@ -474,6 +504,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return httputil.NewError(404, "instance not found -- malformed ID")
 	}
+
+	// set log payload
+	payload := writeRecordsLog{
+		InstanceID: instanceID.String(),
+	}
+	middleware.SetTagsPayload(r.Context(), payload)
 
 	// get stream
 	stream := entity.FindCachedStreamByCurrentInstanceID(r.Context(), instanceID)
@@ -580,6 +616,11 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 		// increment bytes written
 		bytesWritten += len(avroData)
 	}
+
+	// update log payload
+	payload.RecordsCount = len(records)
+	payload.BytesWritten = bytesWritten
+	middleware.SetTagsPayload(r.Context(), payload)
 
 	// queue write request (publishes to Pubsub)
 	err = db.Engine.Streams.QueueWriteRequest(r.Context(), &pb.WriteRecordsRequest{
