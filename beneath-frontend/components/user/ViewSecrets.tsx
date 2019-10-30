@@ -6,7 +6,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import Moment from "react-moment";
 
 import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../apollo/queries/secret";
-import { RevokeSecret, RevokeSecretVariables } from "../../apollo/types/RevokeSecret";
+import { RevokeUserSecret, RevokeUserSecretVariables } from "../../apollo/types/RevokeUserSecret";
 import { SecretsForUser, SecretsForUserVariables } from "../../apollo/types/SecretsForUser";
 import Loading from "../Loading";
 
@@ -44,10 +44,10 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
             }
           />
           <ListItemSecondaryAction>
-            <Mutation<RevokeSecret, RevokeSecretVariables>
+            <Mutation<RevokeUserSecret, RevokeUserSecretVariables>
               mutation={REVOKE_USER_SECRET}
               update={(cache, { data }) => {
-                if (data && data.revokeSecret) {
+                if (data && data.revokeUserSecret) {
                   const queryData = cache.readQuery({
                     query: QUERY_USER_SECRETS,
                     variables: { userID },

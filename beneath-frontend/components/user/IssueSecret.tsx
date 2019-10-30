@@ -34,9 +34,11 @@ interface IssueSecretProps {
 
 const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [readOnlySecret, setReadOnlySecret] = React.useState(true);
   const [newSecretString, setNewSecretString] = React.useState("");
 
-  const openDialog = () => {
+  const openDialog = (readonly: boolean) => {
+    setReadOnlySecret(readonly);
     setDialogOpen(true);
   };
 
@@ -49,19 +51,41 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   return (
     <div>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={12}>
+        <Grid item xs={12} md={6}>
+          <Button
+            color="primary"
+            variant="outlined"
+            fullWidth
+            className={classes.issueSecretButton}
+            onClick={() => openDialog(true)}
+          >
+            <Typography variant="button" display="block">
+              Create new read-only secret
+            </Typography>
+            <Typography variant="caption" display="block">
+              Grants read access to all streams you have access to.
+            </Typography>
+            <Typography variant="caption" display="block">
+              <strong>Use to</strong> quickly get started with integrating data from Beneath
+            </Typography>
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={6}>
           <Button
             color="secondary"
             variant="outlined"
             fullWidth
             className={classes.issueSecretButton}
-            onClick={() => openDialog()}
+            onClick={() => openDialog(false)}
           >
             <Typography variant="button" display="block">
-              Issue secret
+              Create new command-line secret
             </Typography>
             <Typography variant="caption" display="block">
-              Grants full access to read data and create/update/delete new models and streams
+              Grants full access to modify resources
+            </Typography>
+            <Typography variant="caption" display="block">
+              <strong>Use to</strong> connect from the Beneath command-line app
             </Typography>
           </Button>
         </Grid>
@@ -103,15 +127,17 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
         {(issueSecret, { loading, error }) => (
           <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
             <form onSubmit={(e) => e.preventDefault()}>
-              <DialogTitle id="form-dialog-title">Issue secret</DialogTitle>
+              <DialogTitle id="form-dialog-title">
+                Issue {readOnlySecret ? "read-only" : "command-line"} secret
+              </DialogTitle>
               <DialogContent>
-                <DialogContentText>Enter a description for the secret</DialogContentText>
                 <TextField
                   autoFocus
+                  fullWidth
                   margin="dense"
                   id="name"
-                  label="Secret Description"
-                  fullWidth
+                  label="Enter a description of the secret"
+                  defaultValue={`My ${readOnlySecret ? "read-only" : "command-line"} secret`}
                   inputRef={(node) => (input = node)}
                 />
               </DialogContent>
@@ -132,8 +158,8 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
                     issueSecret({
                       variables: {
                         description: input.value,
-                        publicOnly: false,
-                        readOnly: false,
+                        publicOnly: readOnlySecret,
+                        readOnly: readOnlySecret,
                       },
                     });
                   }}

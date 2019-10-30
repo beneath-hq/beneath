@@ -60,7 +60,7 @@ const dataIdFromObject = (object) => {
       return `me:${object.userID}`;
     case "UserSecret":
       return `${object.userSecretID}`;
-    case "NewSecret":
+    case "NewUserSecret":
       return `${object.secretString}`;
     case "Project":
       return `${object.projectID}`;

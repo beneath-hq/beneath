@@ -30,7 +30,7 @@ const StreamAPI: FC<QueryStream> = ({ stream }) => {
         We provide a Python library that makes it easy to get data into e.g. a Jupyter notebook. Just copy and paste
         this snippet:
       </Typography>
-      <CodeBlock language={"python"}>{`from beneath.client import Client
+      <CodeBlock language={"python"}>{`from beneath import Client
 client = Client()
 stream = client.stream(project_name="${toURLName(stream.project.name)}", stream_name="${toURLName(stream.name)}")
 df = stream.read()`}</CodeBlock>

@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/secrettoken"
-	uuid "github.com/satori/go.uuid"
-
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/go-redis/cache/v7"
+	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
+	"github.com/beneath-core/beneath-go/core/secrettoken"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -131,7 +130,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func()
 			Relation("User", func(q *orm.Query) (*orm.Query, error) {
 				return q.Column("user.read_quota", "user.write_quota"), nil
 			}).
-			Column("user_secret_id", "user_secret.user_id").
+			Column("user_secret_id", "read_only", "public_only", "user_secret.user_id").
 			Where("hashed_token = ?", hashedToken).
 			Select()
 		if err != nil && err != pg.ErrNoRows {
