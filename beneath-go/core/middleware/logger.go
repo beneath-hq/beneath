@@ -32,6 +32,11 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
+		status := ww.Status()
+		if status == 0 {
+			status = 200
+		}
+
 		l.Info(
 			"http request",
 			zap.String("method", r.Method),
@@ -40,7 +45,7 @@ func Logger(next http.Handler) http.Handler {
 			zap.String("path", r.RequestURI),
 			zap.String("ip", r.RemoteAddr),
 			zap.Duration("time", time.Since(t1)),
-			zap.Int("status", ww.Status()),
+			zap.Int("status", status),
 			zap.Int("size", ww.BytesWritten()),
 		)
 	})

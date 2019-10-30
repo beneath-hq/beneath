@@ -71,7 +71,8 @@ type readLatestLog struct {
 
 type writeRecordsLog struct {
 	InstanceID   string `json:"instance_id,omitempty"`
-	RecordsCount int    `json:"records_count,omitempty"`
+	RecordsCount int    `json:"records,omitempty"`
+	BytesWritten int    `json:"bytes,omitempty"`
 }
 
 type clientPingLog struct {

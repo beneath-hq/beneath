@@ -350,10 +350,11 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// set log payload
-	middleware.SetTagsPayload(ctx, writeRecordsLog{
+	payload := writeRecordsLog{
 		InstanceID:   instanceID.String(),
 		RecordsCount: len(req.Records),
-	})
+	}
+	middleware.SetTagsPayload(ctx, payload)
 
 	// get stream info
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
@@ -419,6 +420,10 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		// increment bytes written
 		bytesWritten += len(record.AvroData)
 	}
+
+	// update log payload
+	payload.BytesWritten = bytesWritten
+	middleware.SetTagsPayload(ctx, payload)
 
 	// write request to engine
 	err = db.Engine.Streams.QueueWriteRequest(ctx, req)
