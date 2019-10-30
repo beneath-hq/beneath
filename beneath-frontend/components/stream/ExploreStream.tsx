@@ -10,6 +10,7 @@ import { QUERY_RECORDS } from "../../apollo/queries/local/records";
 import { QueryStream } from "../../apollo/types/QueryStream";
 import { Records, RecordsVariables } from "../../apollo/types/Records";
 import BNTextField from "../BNTextField";
+import LinkTypography from "../LinkTypography";
 import Loading from "../Loading";
 import RecordsTable from "../RecordsTable";
 import VSpace from "../VSpace";
@@ -65,7 +66,13 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
                   value={values.where}
                   margin="none"
                   onChange={handleChange("where")}
-                  helperText="Query the stream on indexed fields"
+                  helperText={<>
+                      You can query the stream on indexed fields, check out the{" "}
+                      <LinkTypography href="https://about.beneath.network/docs/using-the-explore-tab/">
+                        docs
+                      </LinkTypography>{" "}
+                      for more info.
+                  </>}
                   errorText={errorMsg ? `Error: ${errorMsg}` : undefined}
                   fullWidth
                 />
