@@ -1,28 +1,52 @@
-import Link from "next/link";
 import React, { FC } from "react";
 
-import { makeStyles, Theme } from "@material-ui/core";
-import Container from "@material-ui/core/Container";
-import MUILink from "@material-ui/core/Link";
-import Typography from "@material-ui/core/Typography";
+import { Container, Link as MUILink, makeStyles, Paper, Theme, Typography } from "@material-ui/core";
 
 import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
 import { GATEWAY_URL } from "../../lib/connection";
 import { toURLName } from "../../lib/names";
 
+import useMe from "../../hocs/useMe";
 import CodeBlock from "../CodeBlock";
+import LinkTypography from "../LinkTypography";
 import VSpace from "../VSpace";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  link: {
-    cursor: "pointer",
+  flashPaper: {
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(4),
   },
 }));
 
 const StreamAPI: FC<QueryStream> = ({ stream }) => {
+  const me = useMe();
   const classes = useStyles();
   return (
     <Container maxWidth={"md"}>
+      <Paper className={classes.flashPaper}>
+        <Typography variant="h3" gutterBottom>
+          Note
+        </Typography>
+        <Typography variant="body1">
+          {me && (
+            <>
+              To create a secret for connecting to Beneath, just head over to your{" "}
+              <LinkTypography
+                href={`/user?name=${me.user.username}&tab=secrets`}
+                as={`/users/${me.user.username}/secrets`}
+              >
+                profile page
+              </LinkTypography>
+            </>
+          )}
+          {!me && (
+            <>
+              You'll first have to <LinkTypography href="/auth">create a user</LinkTypography> to get a secret for
+              connecting to Beneath (don't worry, it's free and we won't share your data with anyone)
+            </>
+          )}
+        </Typography>
+      </Paper>
       <Typography variant="h3" gutterBottom>
         Python
       </Typography>
@@ -35,10 +59,10 @@ client = Client()
 stream = client.stream(project_name="${toURLName(stream.project.name)}", stream_name="${toURLName(stream.name)}")
 df = stream.read()`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page. You
-        must first install our Python library with <code>pip install beneath</code>.
+        To run this code, you must first install our Python library with <code>pip install beneath</code> and
+        authenticate by running <code>beneath auth SECRET</code> on the command-line.
       </Typography>
-      <VSpace units={4} />
+      <VSpace units={8} />
 
       <Typography variant="h3" gutterBottom>
         JavaScript
@@ -59,9 +83,9 @@ df = stream.read()`}</CodeBlock>
   console.log(data)
 })`}</CodeBlock>
       <Typography variant="body2" paragraph>
-        Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
+        Replace SECRET with a read-only secret (see note at the top of this page for instructions).
       </Typography>
-      <VSpace units={4} />
+      <VSpace units={8} />
 
       <Typography variant="h3" gutterBottom>
         BigQuery
@@ -69,18 +93,17 @@ df = stream.read()`}</CodeBlock>
       <Typography variant="body2" paragraph>
         You can query this stream however you want using its public BigQuery dataset. Here's an example of how to query
         it from the BigQuery{" "}
-        <MUILink href="https://console.cloud.google.com/bigquery" className={classes.link}>
+        <LinkTypography href="https://console.cloud.google.com/bigquery">
           console
-        </MUILink>
+        </LinkTypography>
         .
       </Typography>
       <CodeBlock language={"sql"}>{`select * from \`${bigQueryName(stream)}\``}</CodeBlock>
       <Typography variant="body2" paragraph>
         Data is made available in BigQuery nearly in real time.
       </Typography>
-      <VSpace units={4} />
+      <VSpace units={8} />
 
-      <VSpace units={4} />
       <Typography variant="h3" gutterBottom>
         REST API
       </Typography>
@@ -89,9 +112,9 @@ df = stream.read()`}</CodeBlock>
         from the command line:
       </Typography>
       <CodeBlock language={"bash"}>
-        {`curl -H "Authorization: TOKEN" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/streams/${
-          toURLName(stream.name)
-        }`}
+        {`curl -H "Authorization: SECRET" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/streams/${toURLName(
+          stream.name
+        )}`}
       </CodeBlock>
       <Typography variant="body2" paragraph>
         Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.

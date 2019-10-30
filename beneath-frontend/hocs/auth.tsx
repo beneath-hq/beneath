@@ -19,6 +19,16 @@ export const TokenConsumer: FC<ITokenConsumerProps> = (props) => {
   return props.children(null);
 };
 
+export const useToken = () => {
+  const { loading, error, data } = useQuery<Token>(GET_TOKEN);
+  if (data) {
+    const { token } = data;
+    return token;
+  }
+
+  return null;
+};
+
 interface IAuthRequiredProps {
   children: JSX.Element;
 }
