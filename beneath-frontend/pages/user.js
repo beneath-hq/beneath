@@ -1,5 +1,5 @@
 import React from "react";
-import { withRouter } from "next/router";
+import { useRouter } from "next/router";
 import { Query } from "react-apollo";
 import { makeStyles } from "@material-ui/core/styles";
 
@@ -14,15 +14,21 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
+import ErrorPage from "../pages/_error";
 
 import withMe from "../hocs/withMe";
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
 
 const useStyles = makeStyles((theme) => ({}));
 
-const UserPage = ({ router, me }) => {
+const UserPage = ({ me }) => {
+  const router = useRouter();
+  const username = router.query.name;
+  if (typeof username !== "string") {
+    return <ErrorPage statusCode={404} />;
+  }
+
   const classes = useStyles();
-  let username = router.query.name;
   return (
     <Page title="User" subheader>
       <div>
@@ -67,4 +73,4 @@ const UserPage = ({ router, me }) => {
   );
 };
 
-export default withMe(withRouter(UserPage));
+export default withMe(UserPage);

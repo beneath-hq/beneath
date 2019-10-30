@@ -1,4 +1,4 @@
-import { SingletonRouter, withRouter } from "next/router";
+import { useRouter } from "next/router";
 import React, { FC } from "react";
 import { Query } from "react-apollo";
 
@@ -16,12 +16,14 @@ import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
 import { toBackendName, toURLName } from "../lib/names";
+import ErrorPage from "../pages/_error";
 
-interface IProps {
-  router: SingletonRouter;
-}
+const StreamPage: FC = () => {
+  const router = useRouter();
+  if (typeof router.query.name !== "string" || typeof router.query.project_name !== "string") {
+    return <ErrorPage statusCode={404} />;
+  }
 
-const StreamPage: FC<IProps> = ({ router }) => {
   const variables: QueryStreamVariables = {
     name: toBackendName(router.query.name as string),
     projectName: toBackendName(router.query.project_name as string),
@@ -75,4 +77,4 @@ const StreamPage: FC<IProps> = ({ router }) => {
   );
 };
 
-export default withRouter(StreamPage);
+export default StreamPage;
