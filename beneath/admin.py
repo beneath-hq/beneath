@@ -515,7 +515,7 @@ class AdminClient(BaseClient):
       query="""
         mutation IssueServiceSecret($serviceID: UUID!, $description: String!) {
           issueServiceSecret(serviceID: $serviceID, description: $description) {
-            secretString
+            token
           }
         }
       """
