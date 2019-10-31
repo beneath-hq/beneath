@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/httputil"
-	"github.com/beneath-core/beneath-go/db"
 	"github.com/go-redis/redis_rate/v8"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+
+	"github.com/beneath-core/beneath-go/core/httputil"
+	"github.com/beneath-core/beneath-go/db"
 )
 
 var (
@@ -39,6 +41,10 @@ func IPRateLimit() func(http.Handler) http.Handler {
 			if secret == nil {
 				// check rate limit
 				ip, _, err := net.SplitHostPort(r.RemoteAddr)
+				if err != nil {
+					ip = r.RemoteAddr
+				}
+
 				res, err := limiter.Allow(ip)
 				if err != nil {
 					panic(err)
@@ -61,10 +67,7 @@ func IPRateLimitUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		secret := GetSecret(ctx)
 		if secret == nil {
 			// check rate limit
-			p, _ := peer.FromContext(ctx)
-			addr := p.Addr.String()
-			ip, _, err := net.SplitHostPort(addr)
-
+			ip := gRPCRealIP(ctx)
 			res, err := limiter.Allow(ip)
 			if err != nil {
 				panic(err)
@@ -85,9 +88,7 @@ func IPRateLimitStreamServerInterceptor() grpc.StreamServerInterceptor {
 		secret := GetSecret(ss.Context())
 		if secret == nil {
 			// check rate limit
-			p, _ := peer.FromContext(ss.Context())
-			addr := p.Addr.String()
-			ip, _, err := net.SplitHostPort(addr)
+			ip := gRPCRealIP(ss.Context())
 
 			res, err := limiter.Allow(ip)
 			if err != nil {
@@ -100,4 +101,20 @@ func IPRateLimitStreamServerInterceptor() grpc.StreamServerInterceptor {
 		}
 		return handler(srv, ss)
 	}
+}
+
+func gRPCRealIP(ctx context.Context) string {
+	md := metautils.ExtractIncoming(ctx)
+	addr := md.Get("x-forwarded-for")
+	if addr == "" {
+		p, _ := peer.FromContext(ctx)
+		addr = p.Addr.String()
+	}
+
+	ip, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		ip = addr
+	}
+
+	return ip
 }
