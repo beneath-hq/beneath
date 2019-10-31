@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"google.golang.org/grpc/peer"
-
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
@@ -40,7 +40,6 @@ func Logger(next http.Handler) http.Handler {
 			"http request",
 			zap.String("method", r.Method),
 			zap.String("proto", r.Proto),
-			zap.Reflect("reqheader", r.Header),
 			zap.String("host", r.Host),
 			zap.String("path", r.RequestURI),
 			zap.String("ip", r.RemoteAddr),
@@ -66,6 +65,7 @@ func LoggerUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			"grpc unary request",
 			zap.String("method", info.FullMethod),
 			zap.String("ip", p.Addr.String()),
+			zap.Reflect("reqheader", metautils.ExtractIncoming(ctx)),
 			zap.Uint32("code", uint32(status.Code(err))),
 			zap.Duration("time", time.Since(t1)),
 		)
