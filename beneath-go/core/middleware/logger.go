@@ -36,11 +36,11 @@ func Logger(next http.Handler) http.Handler {
 		if status == 0 {
 			status = 200
 		}
-
 		l.Info(
 			"http request",
 			zap.String("method", r.Method),
 			zap.String("proto", r.Proto),
+			zap.Reflect("reqheader", r.Header),
 			zap.String("host", r.Host),
 			zap.String("path", r.RequestURI),
 			zap.String("ip", r.RemoteAddr),
