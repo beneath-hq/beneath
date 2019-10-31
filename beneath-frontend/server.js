@@ -79,15 +79,15 @@ app.prepare().then(() => {
   });
 
   // Redirect "/" based on whether user logged in
-  server.get("/", (req, res) => {
-    res.redirect("/explore");
-    // let loggedIn = !!req.cookies["token"];
-    // if (loggedIn) {
-    //   res.redirect("/explore");
-    // } else {
-    //   res.redirect("/about");
-    // }
-  });
+  // server.get("/", (req, res) => {
+  //   res.redirect("/explore");
+  //   // let loggedIn = !!req.cookies["token"];
+  //   // if (loggedIn) {
+  //   //   res.redirect("/explore");
+  //   // } else {
+  //   //   res.redirect("/about");
+  //   // }
+  // });
 
   // Routes
   const addRoute = (route, page) => {
