@@ -29,8 +29,8 @@ func (r *queryResolver) Stream(ctx context.Context, name string, projectName str
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, stream.ProjectID, stream.Project.Public)
-	if !perms.View {
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public, stream.External)
+	if !perms.Read {
 		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
 	}
 
@@ -124,9 +124,9 @@ func (r *mutationResolver) CreateExternalStreamBatch(ctx context.Context, stream
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, stream.ProjectID, false)
-	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create content in project %s", stream.Project.Name)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public, stream.External)
+	if !perms.Write {
+		return nil, gqlerror.Errorf("Not allowed to write to stream %s/%s", stream.Name, stream.Project.Name)
 	}
 
 	si, err := stream.CreateStreamInstance(ctx)
@@ -152,9 +152,9 @@ func (r *mutationResolver) CommitExternalStreamBatch(ctx context.Context, instan
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, instance.Stream.ProjectID, false)
-	if !perms.Create {
-		return false, gqlerror.Errorf("Not allowed to create content in project %s", instance.Stream.Project.Name)
+	perms := secret.StreamPermissions(ctx, instance.Stream.StreamID, instance.Stream.ProjectID, false, instance.Stream.External)
+	if !perms.Write {
+		return false, gqlerror.Errorf("Not allowed to write to instance %s", instanceID.String())
 	}
 
 	err := instance.Stream.CommitStreamInstance(ctx, instance)
@@ -180,9 +180,9 @@ func (r *mutationResolver) ClearPendingExternalStreamBatches(ctx context.Context
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, stream.ProjectID, false)
-	if !perms.Create {
-		return false, gqlerror.Errorf("Not allowed to create content in project %s", stream.Project.Name)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public, stream.External)
+	if !perms.Write {
+		return false, gqlerror.Errorf("Not allowed to write stream %s/%s", stream.Name, stream.Project.Name)
 	}
 
 	err := stream.ClearPendingBatches(ctx)
