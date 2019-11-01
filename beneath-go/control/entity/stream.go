@@ -385,8 +385,19 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 		return err
 	}
 
+	// set committed_on
+	instance.CommittedOn = time.Now()
+	_, err = tx.Model(instance).Column("committed_on").WherePK().Update()
+	if err != nil {
+		return err
+	}
+
 	// clear instance cache in redis
 	getInstanceCache().clear(tx.Context(), s.Name, s.Project.Name)
+	getStreamCache().clear(tx.Context(), instance.StreamInstanceID)
+	if prevInstanceID != nil {
+		getStreamCache().clear(tx.Context(), *prevInstanceID)
+	}
 
 	// increment count
 	s.InstancesCommittedCount++

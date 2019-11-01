@@ -23,6 +23,7 @@ type CachedStream struct {
 	External    bool
 	Batch       bool
 	Manual      bool
+	Committed   bool
 	ProjectID   uuid.UUID
 	ProjectName string
 	StreamName  string
@@ -35,6 +36,7 @@ type internalCachedStream struct {
 	External            bool
 	Batch               bool
 	Manual              bool
+	Committed           bool
 	ProjectID           uuid.UUID
 	ProjectName         string
 	StreamName          string
@@ -50,6 +52,7 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 		External:    c.External,
 		Batch:       c.Batch,
 		Manual:      c.Manual,
+		Committed:   c.Committed,
 		ProjectID:   c.ProjectID,
 		ProjectName: c.ProjectName,
 		StreamName:  c.StreamName,
@@ -160,7 +163,7 @@ func (c streamCache) cacheLRUSize() int {
 }
 
 func (c streamCache) cacheLRUTime() time.Duration {
-	return time.Hour
+	return time.Minute
 }
 
 func (c streamCache) redisKey(instanceID uuid.UUID) string {
@@ -187,6 +190,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 					s.external,
 					s.batch,
 					s.manual,
+					si.committed_on is not null as committed,
 					s.project_id,
 					p.name as project_name,
 					s.name as stream_name,
@@ -217,6 +221,7 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.External = source.External
 	target.Batch = source.Batch
 	target.Manual = source.Manual
+	target.Committed = source.Committed
 	target.ProjectID = source.ProjectID
 	target.ProjectName = source.ProjectName
 	target.StreamName = source.StreamName

@@ -34,6 +34,7 @@ func init() {
 	}
 
 	zapConfig.DisableCaller = true
+	zapConfig.OutputPaths = []string{"stdout"}
 
 	L, _ = zapConfig.Build()
 	S = L.Sugar()

@@ -5,12 +5,11 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
-	"google.golang.org/grpc/codes"
-
-	"google.golang.org/grpc"
 )
 
 // Recoverer is a middleware that catches any downstream panic calls, and logs them without

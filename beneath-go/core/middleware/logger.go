@@ -2,16 +2,14 @@ package middleware
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"time"
 
-	"google.golang.org/grpc/peer"
-
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-
-	chimiddleware "github.com/go-chi/chi/middleware"
 
 	"github.com/beneath-core/beneath-go/core/log"
 )
@@ -32,15 +30,25 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
+		status := ww.Status()
+		if status == 0 {
+			status = 200
+		}
+
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			ip = r.RemoteAddr
+		}
+
 		l.Info(
 			"http request",
 			zap.String("method", r.Method),
 			zap.String("proto", r.Proto),
 			zap.String("host", r.Host),
 			zap.String("path", r.RequestURI),
-			zap.String("ip", r.RemoteAddr),
+			zap.String("ip", ip),
 			zap.Duration("time", time.Since(t1)),
-			zap.Int("status", ww.Status()),
+			zap.Int("status", status),
 			zap.Int("size", ww.BytesWritten()),
 		)
 	})
@@ -55,12 +63,10 @@ func LoggerUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		tags := GetTags(ctx)
 		l := loggerWithTags(log.L, tags)
 
-		p, _ := peer.FromContext(ctx)
-
 		l.Info(
 			"grpc unary request",
 			zap.String("method", info.FullMethod),
-			zap.String("ip", p.Addr.String()),
+			zap.String("ip", gRPCRealIP(ctx)),
 			zap.Uint32("code", uint32(status.Code(err))),
 			zap.Duration("time", time.Since(t1)),
 		)
@@ -78,12 +84,10 @@ func LoggerStreamServerInterceptor() grpc.StreamServerInterceptor {
 		tags := GetTags(ss.Context())
 		l := loggerWithTags(log.L, tags)
 
-		p, _ := peer.FromContext(ss.Context())
-
 		l.Info(
 			"grpc stream request",
 			zap.String("method", info.FullMethod),
-			zap.String("ip", p.Addr.String()),
+			zap.String("ip", gRPCRealIP(ss.Context())),
 			zap.Uint32("code", uint32(status.Code(err))),
 			zap.Duration("time", time.Since(t1)),
 		)

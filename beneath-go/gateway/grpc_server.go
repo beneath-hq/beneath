@@ -350,15 +350,21 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// set log payload
-	middleware.SetTagsPayload(ctx, writeRecordsLog{
+	payload := writeRecordsLog{
 		InstanceID:   instanceID.String(),
 		RecordsCount: len(req.Records),
-	})
+	}
+	middleware.SetTagsPayload(ctx, payload)
 
 	// get stream info
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
 		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// check not already a committed batch stream
+	if stream.Batch && stream.Committed {
+		return nil, status.Error(codes.FailedPrecondition, "batch has been committed and closed for further writes")
 	}
 
 	// check permissions
@@ -414,6 +420,10 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		// increment bytes written
 		bytesWritten += len(record.AvroData)
 	}
+
+	// update log payload
+	payload.BytesWritten = bytesWritten
+	middleware.SetTagsPayload(ctx, payload)
 
 	// write request to engine
 	err = db.Engine.Streams.QueueWriteRequest(ctx, req)

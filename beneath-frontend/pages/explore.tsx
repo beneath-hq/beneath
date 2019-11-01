@@ -1,31 +1,30 @@
 import clsx from "clsx";
+import { NextPage } from "next";
 import Link from "next/link";
 import React from "react";
-import { Query } from "react-apollo";
+import { useQuery } from "react-apollo";
 
 import {
   Button,
   Container,
   Grid,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemSecondaryAction,
-  ListItemText,
   makeStyles,
   Paper,
+  Theme,
   Typography,
 } from "@material-ui/core";
 
 import { EXPLORE_PROJECTS } from "../apollo/queries/project";
+import { ExploreProjects } from "../apollo/types/ExploreProjects";
 import Avatar from "../components/Avatar";
 import Loading from "../components/Loading";
+import NextMuiLinkList from "../components/NextMuiLinkList";
 import Page from "../components/Page";
-import NextMuiLink from "../components/NextMuiLink";
-import withMe from "../hocs/withMe";
+import useMe from "../hocs/useMe";
 import { toURLName } from "../lib/names";
+import ErrorPage from "./_error";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
   title: {
     fontSize: theme.typography.pxToRem(52),
     marginBottom: theme.spacing(5),
@@ -61,9 +60,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Explore = ({ me }) => {
-  const loggedIn = !!me;
+const Explore: NextPage = () => {
   const classes = useStyles();
+  const me = useMe();
+  const loggedIn = !!me;
+
+  const {loading, error, data} = useQuery<ExploreProjects>(EXPLORE_PROJECTS);
+  if (loading) {
+    return <Loading justify="center" />;
+  }
+
+  if (error || !data) {
+    return <ErrorPage apolloError={error} />;
+  }
+
   return (
     <Page title="Explore" contentMarginTop="hero">
       <Container maxWidth="lg">
@@ -122,7 +132,7 @@ const Explore = ({ me }) => {
                 variant="outlined"
                 className={clsx(classes.button, classes.primaryButton)}
                 href={`/auth`}
-                component={NextMuiLink}
+                component={NextMuiLinkList}
               >
                 Create Account
               </Button>
@@ -137,44 +147,31 @@ const Explore = ({ me }) => {
             ... well, currently the only projects
           </Typography>
         </Typography>
-        <Query query={EXPLORE_PROJECTS}>
-          {({ loading, error, data }) => {
-            if (loading) {
-              return <Loading justify="center" />;
-            }
-            if (error) {
-              return <p>Error: {JSON.stringify(error)}</p>;
-            }
-
-            return (
-              <Grid container spacing={3} justify="center">
-                {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL }) => (
-                  <Grid key={projectID} item lg={4} md={6} xs={12}>
-                    <Link href={`/project?name=${toURLName(name)}`} as={`/projects/${toURLName(name)}`}>
-                      <Paper className={classes.paper}>
-                        <Grid container wrap="nowrap" spacing={0}>
-                          <Grid item className={classes.avatar}>
-                            <Avatar size="list" label={displayName || name} src={photoURL} />
-                          </Grid>
-                          <Grid item>
-                            <Typography variant="h2">{displayName || toURLName(name)}</Typography>
-                            <Typography color="textSecondary" variant="body2" gutterBottom>
-                              /projects/{toURLName(name)}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        <Typography variant="body1">{description}</Typography>
-                      </Paper>
-                    </Link>
+        <Grid container spacing={3} justify="center">
+          {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL }) => (
+            <Grid key={projectID} item lg={4} md={6} xs={12}>
+              <Link href={`/project?name=${toURLName(name)}`} as={`/projects/${toURLName(name)}`}>
+                <Paper className={classes.paper}>
+                  <Grid container wrap="nowrap" spacing={0}>
+                    <Grid item className={classes.avatar}>
+                      <Avatar size="list" label={displayName || name} src={photoURL || undefined} />
+                    </Grid>
+                    <Grid item>
+                      <Typography variant="h2">{displayName || toURLName(name)}</Typography>
+                      <Typography color="textSecondary" variant="body2" gutterBottom>
+                        /projects/{toURLName(name)}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                ))}
-              </Grid>
-            );
-          }}
-        </Query>
+                  <Typography variant="body1">{description}</Typography>
+                </Paper>
+              </Link>
+            </Grid>
+          ))}
+        </Grid>
       </Container>
     </Page>
   );
 };
 
-export default withMe(Explore);
+export default Explore;
