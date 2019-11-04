@@ -4,7 +4,7 @@ import { GATEWAY_URL_WS } from "../../lib/connection";
 import RecordsTable from "../RecordsTable";
 import { Schema } from './schema';
 import { QueryStream } from '../../apollo/types/QueryStream';
-import { useToken } from '../../hocs/auth';
+import { useToken } from '../../hooks/useToken';
 import VSpace from "../VSpace";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";

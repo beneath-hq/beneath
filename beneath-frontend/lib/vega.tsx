@@ -56,7 +56,7 @@ export const vegaConfig: Config = {
     anchor: "start",
     color: theme.palette.text.primary,
     fontSize: 20,
-    fontWeight: theme.typography.h3.fontWeight,
+    fontWeight: "bold",
   },
   view: {
     stroke: "transparent",

@@ -1,5 +1,5 @@
+import { useQuery } from "@apollo/react-hooks";
 import { FC } from "react";
-import { useQuery } from "react-apollo";
 
 import { GET_STREAM_METRICS } from "../../apollo/queries/metrics";
 import { GetStreamMetrics, GetStreamMetricsVariables } from "../../apollo/types/GetStreamMetrics";

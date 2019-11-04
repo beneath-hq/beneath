@@ -7,7 +7,7 @@ import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import NextMuiLinkList from "../NextMuiLinkList";
 
-interface Props {
+interface ViewStreamsProps {
   project: ProjectByName_projectByName;
 }
 
@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ViewStreams: FC<Props> = ({ project }) => {
+const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
   const classes = useStyles();
   return (
     <>

@@ -14,7 +14,7 @@ import ViewStreams from "../components/project/ViewStreams";
 import { QUERY_PROJECT } from "../apollo/queries/project";
 import { ProjectByName, ProjectByNameVariables } from "../apollo/types/ProjectByName";
 import { withApollo } from "../apollo/withApollo";
-import useMe from "../hocs/useMe";
+import useMe from "../hooks/useMe";
 import { toBackendName, toURLName } from "../lib/names";
 import ErrorPage from "../pages/_error";
 

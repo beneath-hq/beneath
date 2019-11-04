@@ -21,7 +21,7 @@ import Avatar from "../components/Avatar";
 import Loading from "../components/Loading";
 import NextMuiLinkList from "../components/NextMuiLinkList";
 import Page from "../components/Page";
-import useMe from "../hocs/useMe";
+import useMe from "../hooks/useMe";
 import { toURLName } from "../lib/names";
 import ErrorPage from "./_error";
 

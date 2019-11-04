@@ -5,7 +5,7 @@ import React from "react";
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
 import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByUsername";
 import { withApollo } from "../apollo/withApollo";
-import useMe from "../hocs/useMe";
+import useMe from "../hooks/useMe";
 
 import Loading from "../components/Loading";
 import Page from "../components/Page";

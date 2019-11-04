@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import useMe from "../hocs/useMe";
+import useMe from "../hooks/useMe";
 import UsageIndicator from "./metrics/user/UsageIndicator";
 import NextMuiLink from "./NextMuiLink";
 

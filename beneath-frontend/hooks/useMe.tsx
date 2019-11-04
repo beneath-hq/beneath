@@ -1,10 +1,8 @@
-import React from "react";
-import { useQuery } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 
 import { QUERY_ME } from "../apollo/queries/user";
-import { useToken } from "./auth";
-
 import { Me } from "../apollo/types/Me";
+import { useToken } from "./useToken";
 
 export const useMe = () => {
   const token = useToken();
@@ -18,7 +16,7 @@ export const useMe = () => {
   }
 
   if (error) {
-    console.error("withMe error: ", error);
+    console.error("useMe error: ", error);
   }
 
   return null;
