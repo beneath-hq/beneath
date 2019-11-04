@@ -8,6 +8,7 @@ import {
 } from "@material-ui/core";
 import { NextPage } from "next";
 
+import { withApollo } from "../apollo/withApollo";
 import { GithubIcon, GoogleIcon } from "../components/Icons";
 import Page from "../components/Page";
 import VSpace from "../components/VSpace";
@@ -80,4 +81,4 @@ const AuthPage: NextPage = () => {
   );
 };
 
-export default AuthPage;
+export default withApollo(AuthPage);

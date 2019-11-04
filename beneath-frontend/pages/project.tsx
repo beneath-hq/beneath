@@ -14,9 +14,9 @@ import ViewStreams from "../components/project/ViewStreams";
 import { QUERY_PROJECT } from "../apollo/queries/project";
 import { ProjectByName, ProjectByNameVariables } from "../apollo/types/ProjectByName";
 import { withApollo } from "../apollo/withApollo";
+import ErrorPage from "../components/ErrorPage";
 import useMe from "../hooks/useMe";
 import { toBackendName, toURLName } from "../lib/names";
-import ErrorPage from "../pages/_error";
 
 const ProjectPage = () => {
   const router = useRouter();

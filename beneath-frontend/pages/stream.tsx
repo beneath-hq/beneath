@@ -7,6 +7,7 @@ import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
 import { withApollo } from "../apollo/withApollo";
 import { toBackendName, toURLName } from "../lib/names";
 
+import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
@@ -17,7 +18,6 @@ import StreamLatest from "../components/stream/StreamLatest";
 import StreamMetrics from "../components/stream/StreamMetrics";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
-import ErrorPage from "../pages/_error";
 
 const StreamPage = () => {
   const router = useRouter();

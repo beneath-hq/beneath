@@ -18,12 +18,12 @@ import { EXPLORE_PROJECTS } from "../apollo/queries/project";
 import { ExploreProjects } from "../apollo/types/ExploreProjects";
 import { withApollo } from "../apollo/withApollo";
 import Avatar from "../components/Avatar";
+import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import NextMuiLinkList from "../components/NextMuiLinkList";
 import Page from "../components/Page";
 import useMe from "../hooks/useMe";
 import { toURLName } from "../lib/names";
-import ErrorPage from "./_error";
 
 const useStyles = makeStyles((theme: Theme) => ({
   title: {

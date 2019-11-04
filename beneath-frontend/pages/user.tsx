@@ -7,6 +7,7 @@ import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByU
 import { withApollo } from "../apollo/withApollo";
 import useMe from "../hooks/useMe";
 
+import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
@@ -17,7 +18,6 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
-import ErrorPage from "./_error";
 
 const UserPage = () => {
   const me = useMe();
