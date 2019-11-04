@@ -1,8 +1,8 @@
+import { useQuery } from "@apollo/react-hooks";
 import clsx from "clsx";
 import { NextPage } from "next";
 import Link from "next/link";
 import React from "react";
-import { useQuery } from "react-apollo";
 
 import {
   Button,
@@ -16,6 +16,7 @@ import {
 
 import { EXPLORE_PROJECTS } from "../apollo/queries/project";
 import { ExploreProjects } from "../apollo/types/ExploreProjects";
+import { withApollo } from "../apollo/withApollo";
 import Avatar from "../components/Avatar";
 import Loading from "../components/Loading";
 import NextMuiLinkList from "../components/NextMuiLinkList";
@@ -174,4 +175,4 @@ const Explore: NextPage = () => {
   );
 };
 
-export default Explore;
+export default withApollo(Explore);

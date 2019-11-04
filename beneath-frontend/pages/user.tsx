@@ -1,9 +1,10 @@
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React from "react";
-import { useQuery } from "react-apollo";
 
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
 import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByUsername";
+import { withApollo } from "../apollo/withApollo";
 import useMe from "../hocs/useMe";
 
 import Loading from "../components/Loading";
@@ -33,7 +34,11 @@ const UserPage = () => {
   });
 
   if (loading) {
-    return <Loading justify="center" />;
+    return (
+      <Page title="Project" subheader>
+        <Loading justify="center" />
+      </Page>
+    );
   }
 
   if (error || !data) {
@@ -71,4 +76,4 @@ const UserPage = () => {
   );
 };
 
-export default UserPage;
+export default withApollo(UserPage);

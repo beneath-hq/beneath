@@ -1,57 +1,65 @@
-import Head from "next/head";
 import React from "react";
-import { getDataFromTree } from "react-apollo";
+import Head from "next/head";
+import { ApolloProvider } from "@apollo/react-hooks";
 
 import { getApolloClient } from "./client";
 
-export const withApolloClient = (App) => {
-  return class Apollo extends React.Component {
-    static displayName = "withApollo(App)";
+export function withApollo(PageComponent, { ssr = true } = {}) {
+  const WithApollo = ({ apolloClient, initialState, ...pageProps }) => {
+    const client = apolloClient || getApolloClient({ initialState });
+    return (
+      <ApolloProvider client={client}>
+        <PageComponent {...pageProps} />
+      </ApolloProvider>
+    );
+  };
 
-    constructor(props) {
-      super(props);
-      this.apolloClient = getApolloClient({
-        anonymousID: props.anonymousID,
-        token: props.token,
-        initialState: props.apolloState,
-      });
+  // Set the correct displayName in development
+  if (process.env.NODE_ENV !== "production") {
+    const displayName = PageComponent.displayName || PageComponent.name || "Component";
+    WithApollo.displayName = `withApollo(${displayName})`;
+    if (displayName === "App") {
+      console.warn("This withApollo HOC only works with PageComponents.");
+    }
+  }
+
+  if (!ssr && !PageComponent.getInitialProps) {
+    return WithApollo;
+  }
+
+  WithApollo.getInitialProps = async (ctx) => {
+    const { AppTree, req, res } = ctx;
+
+    // Initialize ApolloClient, add it to the ctx object so
+    // we can use it in `PageComponent.getInitialProp`.
+    const apolloClient = getApolloClient({ req, res });
+    ctx.apolloClient = apolloClient;
+
+    // Run wrapped getInitialProps methods
+    let pageProps = {};
+    if (PageComponent.getInitialProps) {
+      pageProps = await PageComponent.getInitialProps(ctx);
     }
 
-    static async getInitialProps(ctx) {
-      const {
-        Component,
-        router,
-        ctx: { req, res },
-      } = ctx;
-
-      // read token from cookie
-      let token = readTokenFromCookie(req);
-
-      // read anonymous id from cookie
-      let anonymousID = readAnonymousIDFromCookie(req);
-
-      // Get app props to pass on
-      let appProps = {};
-      if (App.getInitialProps) {
-        appProps = await App.getInitialProps({ ...ctx });
+    // Only on the server:
+    if (typeof window === "undefined") {
+      // When redirecting, the response is finished.
+      // No point in continuing to render
+      if (ctx.res && ctx.res.finished) {
+        return pageProps;
       }
 
-      // Get apollo client
-      const apollo = getApolloClient({ anonymousID, token, res });
-
-      // Run all GraphQL queries in the component tree
-      // and extract the resulting data
-      if (!process.browser) {
+      // Only if ssr is enabled
+      if (ssr) {
         try {
           // Run all GraphQL queries
+          const { getDataFromTree } = await import("@apollo/react-ssr");
           await getDataFromTree(
-            <App
-              {...appProps}
-              Component={Component}
-              router={router}
-              apolloClient={apollo}
-              token={token}
-              anonymousID={anonymousID}
+            <AppTree
+              pageProps={{
+                ...pageProps,
+                apolloClient,
+              }}
             />
           );
         } catch (error) {
@@ -65,62 +73,16 @@ export const withApolloClient = (App) => {
         // head side effect therefore need to be cleared manually
         Head.rewind();
       }
-
-      // Extract query data from the Apollo store
-      const apolloState = apollo.cache.extract();
-
-      return {
-        ...appProps,
-        apolloState,
-        token,
-        anonymousID,
-      };
     }
 
-    render() {
-      return <App {...this.props} apolloClient={this.apolloClient} />;
-    }
+    // Extract query data from the Apollo store
+    const initialState = apolloClient.cache.extract();
+
+    return {
+      ...pageProps,
+      initialState,
+    };
   };
-};
 
-const readTokenFromCookie = (maybeReq) => {
-  let token = null;
-  let cookie = null;
-  if (maybeReq) {
-    cookie = maybeReq.headers.cookie;
-  } else if (document) {
-    cookie = document.cookie;
-  }
-  if (cookie) {
-    cookie = cookie.split(";").find((c) => c.trim().startsWith("token="));
-    if (cookie) {
-      token = cookie.replace(/^\s*token=/, "");
-      token = decodeURIComponent(token);
-      if (token.length === 0) {
-        token = null;
-      }
-    }
-  }
-  return token;
-};
-
-const readAnonymousIDFromCookie = (maybeReq) => {
-  let aid = null;
-  let cookie = null;
-  if (maybeReq) {
-    cookie = maybeReq.headers.cookie;
-  } else if (document) {
-    cookie = document.cookie;
-  }
-  if (cookie) {
-    cookie = cookie.split(";").find((c) => c.trim().startsWith("aid="));
-    if (cookie) {
-      aid = cookie.replace(/^\s*aid=/, "");
-      aid = decodeURIComponent(aid);
-      if (aid.length === 0) {
-        aid = null;
-      }
-    }
-  }
-  return aid;
-};
+  return WithApollo;
+}
