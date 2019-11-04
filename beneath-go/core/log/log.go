@@ -1,9 +1,13 @@
 package log
 
 import (
+	"os"
+	"time"
+
 	"github.com/beneath-core/beneath-go/core"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -26,16 +30,32 @@ var (
 func init() {
 	core.LoadConfig("", &config)
 
-	var zapConfig zap.Config
-	if config.Env == "production" {
-		zapConfig = zap.NewProductionConfig()
-	} else {
-		zapConfig = zap.NewDevelopmentConfig()
-	}
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
 
-	zapConfig.DisableCaller = true
-	zapConfig.OutputPaths = []string{"stdout"}
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
 
-	L, _ = zapConfig.Build()
+	consoleDebugging := zapcore.Lock(os.Stdout)
+	consoleErrors := zapcore.Lock(os.Stderr)
+
+	consoleEncoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
+		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+	)
+
+	L = zap.New(
+		core,
+		zap.AddStacktrace(zap.ErrorLevel),
+		zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+			return zapcore.NewSampler(core, time.Second, int(100), int(100))
+		}),
+	)
+	defer L.Sync()
+
 	S = L.Sugar()
 }
