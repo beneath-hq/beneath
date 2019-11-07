@@ -14,13 +14,17 @@ import (
 
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
-	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
-	CreatedOn      time.Time `sql:",default:now()"`
-	UpdatedOn      time.Time `sql:",default:now()"`
-	DeletedOn      time.Time
-	Services       []*Service
-	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
+	OrganizationID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name             string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
+	Personal         bool      `sql:",notnull"`
+	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
+	BillingPlan      *BillingPlan
+	StripeCustomerID string
+	CreatedOn        time.Time `sql:",default:now()"`
+	UpdatedOn        time.Time `sql:",default:now()"`
+	DeletedOn        time.Time
+	Services         []*Service
+	Users            []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
 }
 
 var (
