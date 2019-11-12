@@ -41,6 +41,7 @@ type configSpecification struct {
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 
 	SegmentSecret    string `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
+	StripeSecret     string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
 	SessionSecret    string `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
 	GithubAuthID     string `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
 	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
@@ -67,6 +68,9 @@ func init() {
 
 	// init segment
 	segment.InitClient(Config.SegmentSecret)
+
+	// init stripe
+	// stripe.InitClient(Config.StripeSecret)
 
 	// configure auth
 	auth.InitGoth(&auth.GothConfig{
