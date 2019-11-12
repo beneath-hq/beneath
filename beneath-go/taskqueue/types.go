@@ -22,7 +22,7 @@ var (
 	taskRegistry map[string]reflect.Type
 )
 
-func registerTask(task Task) {
+func RegisterTask(task Task) {
 	if taskRegistry == nil {
 		taskRegistry = make(map[string]reflect.Type)
 	}

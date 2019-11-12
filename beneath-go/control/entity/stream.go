@@ -14,7 +14,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/taskqueue"
-	"github.com/beneath-core/beneath-go/taskqueue/task"
 )
 
 // Stream represents a collection of data
@@ -464,7 +463,7 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error
 	}
 
 	// deregister
-	err = taskqueue.Submit(tx.Context(), &task.CleanupInstance{
+	err = taskqueue.Submit(tx.Context(), &CleanupInstanceTask{
 		InstanceID:  si.StreamInstanceID,
 		StreamID:    s.StreamID,
 		StreamName:  s.Name,

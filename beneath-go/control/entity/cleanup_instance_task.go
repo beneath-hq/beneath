@@ -1,15 +1,16 @@
-package task
+package entity
 
 import (
 	"context"
 
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/taskqueue"
 
 	uuid "github.com/satori/go.uuid"
 )
 
-// CleanupInstance is a task that removes all data and tables related to an instance
-type CleanupInstance struct {
+// CleanupInstanceTask is a task that removes all data and tables related to an instance
+type CleanupInstanceTask struct {
 	InstanceID  uuid.UUID
 	StreamID    uuid.UUID
 	StreamName  string
@@ -17,8 +18,13 @@ type CleanupInstance struct {
 	ProjectName string
 }
 
+// register task
+func init() {
+	taskqueue.RegisterTask(&CleanupInstanceTask{})
+}
+
 // Run triggers the task
-func (t *CleanupInstance) Run(ctx context.Context) error {
+func (t *CleanupInstanceTask) Run(ctx context.Context) error {
 	// delete in bigquery
 	err := db.Engine.Warehouse.DeregisterStreamInstance(
 		ctx,
