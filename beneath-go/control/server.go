@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/vektah/gqlparser/ast"
 
@@ -114,6 +115,11 @@ func ListenAndServeHTTP(port int) error {
 	// Add health check
 	router.Get("/", healthCheck)
 	router.Get("/healthz", healthCheck)
+
+	// Add error testing
+	router.Get("/error", func(w http.ResponseWriter, r *http.Request) {
+		panic(fmt.Errorf("Testing error at %v", time.Now()))
+	})
 
 	// Add playground
 	router.Handle("/playground", handler.Playground("Beneath", "/graphql"))

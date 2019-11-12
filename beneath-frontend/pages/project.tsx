@@ -1,6 +1,6 @@
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React from "react";
-import { useQuery } from "react-apollo";
 
 import Loading from "../components/Loading";
 import Page from "../components/Page";
@@ -13,9 +13,10 @@ import ViewStreams from "../components/project/ViewStreams";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
 import { ProjectByName, ProjectByNameVariables } from "../apollo/types/ProjectByName";
-import useMe from "../hocs/useMe";
+import { withApollo } from "../apollo/withApollo";
+import ErrorPage from "../components/ErrorPage";
+import useMe from "../hooks/useMe";
 import { toBackendName, toURLName } from "../lib/names";
-import ErrorPage from "../pages/_error";
 
 const ProjectPage = () => {
   const router = useRouter();
@@ -30,7 +31,11 @@ const ProjectPage = () => {
   });
 
   if (loading) {
-    return <Loading justify="center" />;
+    return (
+      <Page title="Project" subheader>
+        <Loading justify="center" />
+      </Page>
+    );
   }
 
   if (error || !data) {
@@ -62,4 +67,4 @@ const ProjectPage = () => {
   );
 };
 
-export default ProjectPage;
+export default withApollo(ProjectPage);

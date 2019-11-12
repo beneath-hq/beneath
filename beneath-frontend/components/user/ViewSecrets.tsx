@@ -1,9 +1,9 @@
+import { useMutation, useQuery } from "@apollo/react-hooks";
 import React, { FC } from "react";
-import { Mutation, Query, useQuery } from "react-apollo";
+import Moment from "react-moment";
 
 import { IconButton, List, ListItem, ListItemSecondaryAction, ListItemText } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
-import Moment from "react-moment";
 
 import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../apollo/queries/secret";
 import { RevokeUserSecret, RevokeUserSecretVariables } from "../../apollo/types/RevokeUserSecret";
@@ -18,6 +18,10 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
   const { loading, error, data } = useQuery<SecretsForUser, SecretsForUserVariables>(QUERY_USER_SECRETS, {
     variables: { userID },
   });
+
+  const [revokeSecret, { loading: mutLoading }] = useMutation<RevokeUserSecret, RevokeUserSecretVariables>(
+    REVOKE_USER_SECRET
+  );
 
   if (loading) {
     return <Loading justify="center" />;
@@ -44,37 +48,34 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
             }
           />
           <ListItemSecondaryAction>
-            <Mutation<RevokeUserSecret, RevokeUserSecretVariables>
-              mutation={REVOKE_USER_SECRET}
-              update={(cache, { data }) => {
-                if (data && data.revokeUserSecret) {
-                  const queryData = cache.readQuery({
-                    query: QUERY_USER_SECRETS,
-                    variables: { userID },
-                  }) as any;
-                  const filtered = queryData.secretsForUser.filter(
-                    (secret: any) => secret.userSecretID !== userSecretID
-                  );
-                  cache.writeQuery({
-                    query: QUERY_USER_SECRETS,
-                    variables: { userID },
-                    data: { secretsForUser: filtered },
-                  });
-                }
+            <IconButton
+              edge="end"
+              aria-label="Delete"
+              disabled={mutLoading}
+              onClick={() => {
+                revokeSecret({
+                  variables: { secretID: userSecretID },
+                  update: (cache, { data }) => {
+                    if (data && data.revokeUserSecret) {
+                      const queryData = cache.readQuery({
+                        query: QUERY_USER_SECRETS,
+                        variables: { userID },
+                      }) as any;
+                      const filtered = queryData.secretsForUser.filter(
+                        (secret: any) => secret.userSecretID !== userSecretID
+                      );
+                      cache.writeQuery({
+                        query: QUERY_USER_SECRETS,
+                        variables: { userID },
+                        data: { secretsForUser: filtered },
+                      });
+                    }
+                  },
+                });
               }}
             >
-              {(revokeSecret, { loading }) => (
-                <IconButton
-                  edge="end"
-                  aria-label="Delete"
-                  onClick={() => {
-                    revokeSecret({ variables: { secretID: userSecretID } });
-                  }}
-                >
-                  {loading ? <Loading size={20} /> : <DeleteIcon />}
-                </IconButton>
-              )}
-            </Mutation>
+              <DeleteIcon />
+            </IconButton>
           </ListItemSecondaryAction>
         </ListItem>
       ))}

@@ -6,7 +6,7 @@ import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream"
 import { GATEWAY_URL } from "../../lib/connection";
 import { toURLName } from "../../lib/names";
 
-import useMe from "../../hocs/useMe";
+import useMe from "../../hooks/useMe";
 import CodeBlock from "../CodeBlock";
 import LinkTypography from "../LinkTypography";
 import VSpace from "../VSpace";

@@ -2,7 +2,6 @@ import clsx from "clsx";
 import Link from "next/link";
 import { NextRouter, withRouter } from "next/router";
 import React, { FC } from "react";
-import { Query } from "react-apollo";
 
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Divider from "@material-ui/core/Divider";

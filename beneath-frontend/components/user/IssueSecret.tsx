@@ -1,5 +1,5 @@
+import { useMutation } from "@apollo/react-hooks";
 import React, { FC } from "react";
-import { Mutation } from "react-apollo";
 
 import {
   Button,
@@ -36,6 +36,13 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [readOnlySecret, setReadOnlySecret] = React.useState(true);
   const [newSecretString, setNewSecretString] = React.useState("");
+
+  const [issueSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(ISSUE_USER_SECRET, {
+    onCompleted: (data) => {
+      setNewSecretString(data.issueUserSecret.token);
+      closeDialog();
+    },
+  });
 
   const openDialog = (readonly: boolean) => {
     setReadOnlySecret(readonly);
@@ -107,70 +114,63 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
           </Grid>
         )}
       </Grid>
-      <Mutation<IssueUserSecret, IssueUserSecretVariables>
-        mutation={ISSUE_USER_SECRET}
-        onCompleted={(data) => {
-          setNewSecretString(data.issueUserSecret.token);
-          closeDialog();
-        }}
-        update={(cache, { data }) => {
-          if (data) {
-            const queryData = cache.readQuery({ query: QUERY_USER_SECRETS, variables: { userID } }) as any;
-            cache.writeQuery({
-              query: QUERY_USER_SECRETS,
-              variables: { userID },
-              data: { secretsForUser: queryData.secretsForUser.concat([data.issueUserSecret.secret]) },
-            });
-          }
-        }}
-      >
-        {(issueSecret, { loading, error }) => (
-          <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <DialogTitle id="form-dialog-title">
-                Issue {readOnlySecret ? "read-only" : "command-line"} secret
-              </DialogTitle>
-              <DialogContent>
-                <TextField
-                  autoFocus
-                  fullWidth
-                  margin="dense"
-                  id="name"
-                  label="Enter a description of the secret"
-                  defaultValue={`My ${readOnlySecret ? "read-only" : "command-line"} secret`}
-                  inputRef={(node) => (input = node)}
-                />
-              </DialogContent>
-              {error && (
-                <DialogContent>
-                  <DialogContentText>An error occurred: {JSON.stringify(error)}</DialogContentText>
-                </DialogContent>
-              )}
-              <DialogActions>
-                <Button color="primary" onClick={closeDialog}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  color="primary"
-                  disabled={loading}
-                  onClick={() => {
-                    issueSecret({
-                      variables: {
-                        description: input.value,
-                        publicOnly: readOnlySecret,
-                        readOnly: readOnlySecret,
-                      },
-                    });
-                  }}
-                >
-                  Issue secret
-                </Button>
-              </DialogActions>
-            </form>
-          </Dialog>
-        )}
-      </Mutation>
+      <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <DialogTitle id="form-dialog-title">
+            Issue {readOnlySecret ? "read-only" : "command-line"} secret
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              margin="dense"
+              id="name"
+              label="Enter a description of the secret"
+              defaultValue={`My ${readOnlySecret ? "read-only" : "command-line"} secret`}
+              inputRef={(node) => (input = node)}
+            />
+          </DialogContent>
+          {error && (
+            <DialogContent>
+              <DialogContentText>An error occurred: {JSON.stringify(error)}</DialogContentText>
+            </DialogContent>
+          )}
+          <DialogActions>
+            <Button color="primary" onClick={closeDialog}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              color="primary"
+              disabled={loading}
+              onClick={() => {
+                issueSecret({
+                  variables: {
+                    description: input.value,
+                    publicOnly: readOnlySecret,
+                    readOnly: readOnlySecret,
+                  },
+                  update: (cache, { data }) => {
+                    if (data) {
+                      const queryData = cache.readQuery({
+                        query: QUERY_USER_SECRETS,
+                        variables: { userID },
+                      }) as any;
+                      cache.writeQuery({
+                        query: QUERY_USER_SECRETS,
+                        variables: { userID },
+                        data: { secretsForUser: queryData.secretsForUser.concat([data.issueUserSecret.secret]) },
+                      });
+                    }
+                  },
+                });
+              }}
+            >
+              Issue secret
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </div>
   );
 };

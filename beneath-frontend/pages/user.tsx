@@ -1,11 +1,13 @@
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React from "react";
-import { useQuery } from "react-apollo";
 
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
 import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByUsername";
-import useMe from "../hocs/useMe";
+import { withApollo } from "../apollo/withApollo";
+import useMe from "../hooks/useMe";
 
+import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
@@ -16,7 +18,6 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
-import ErrorPage from "./_error";
 
 const UserPage = () => {
   const me = useMe();
@@ -33,7 +34,11 @@ const UserPage = () => {
   });
 
   if (loading) {
-    return <Loading justify="center" />;
+    return (
+      <Page title="Project" subheader>
+        <Loading justify="center" />
+      </Page>
+    );
   }
 
   if (error || !data) {
@@ -71,4 +76,4 @@ const UserPage = () => {
   );
 };
 
-export default UserPage;
+export default withApollo(UserPage);

@@ -1,8 +1,7 @@
 package migrations
 
 import (
-	"log"
-
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/go-pg/migrations/v7"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
@@ -39,20 +38,20 @@ func MustRunUp(db *pg.DB) {
 	if err != nil {
 		// ignore error if migration table already exists
 		if err.Error() != "ERROR #42P07 relation \"gopg_migrations\" already exists" {
-			log.Fatalf("migrations: %s", err.Error())
+			log.S.Fatalf("migrations: %s", err.Error())
 		}
 	}
 
 	// run migrations
 	oldVersion, newVersion, err := migrations.Run(db, "up")
 	if err != nil {
-		log.Fatalf("migrations: %s", err.Error())
+		log.S.Fatalf("migrations: %s", err.Error())
 	}
 
 	// log version status
 	if newVersion != oldVersion {
-		log.Printf("migrated from version %d to %d", oldVersion, newVersion)
+		log.S.Infof("migrated from version %d to %d", oldVersion, newVersion)
 	} else {
-		log.Printf("running at migration version %d", oldVersion)
+		log.S.Infof("running at migration version %d", oldVersion)
 	}
 }

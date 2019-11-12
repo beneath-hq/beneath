@@ -109,12 +109,10 @@ export default createMuiTheme({
     },
   },
   typography: {
-    useNextVariants: true,
     fontFamily: `-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif`,
     // fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
     h1: {
       fontWeight: 600,
-      fontSize: "6rem",
       fontSize: "1.75rem",
     },
     h2: {

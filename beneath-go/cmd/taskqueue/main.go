@@ -5,6 +5,9 @@ import (
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/taskqueue"
+
+	// import modules that register tasks in taskqueue
+	_ "github.com/beneath-core/beneath-go/control/entity"
 )
 
 type configSpecification struct {

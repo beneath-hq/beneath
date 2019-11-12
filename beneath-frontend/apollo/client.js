@@ -1,5 +1,6 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, defaultDataIdFromObject } from "apollo-boost";
 import { ErrorLink } from "apollo-link-error";
+import fetch from "isomorphic-unfetch";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
 import { resolvers, typeDefs } from "./schema";
@@ -7,48 +8,52 @@ import { GET_AID, GET_TOKEN } from "./queries/local/token";
 
 let apolloClient = null;
 
-export const getApolloClient = (options) => {
+export const getApolloClient = ({ req, res, initialState }) => {
   // Creates new client for every server-side request (to avoid bad data sharing)
-  if (!process.browser) {
-    return createApolloClient(options);
+  if (typeof window === "undefined") {
+    return createApolloClient({ req, res, initialState });
   }
 
   // Reuse client on the client-side
   if (!apolloClient) {
-    apolloClient = createApolloClient(options);
+    apolloClient = createApolloClient({ req, res, initialState });
   }
 
   return apolloClient;
 };
 
-const createApolloClient = ({ initialState, anonymousID, token, res }) => {
+const createApolloClient = ({ req, res, initialState }) => {
+  const cache = new InMemoryCache({ dataIdFromObject }).restore(initialState || {});
+
   const linkOptions = {
-    uri: `${API_URL}/graphql`,
     credentials: "include",
+    fetch,
+    headers: {},
+    uri: `${API_URL}/graphql`,
   };
 
-  linkOptions.headers = {};
+  // read token from cookie
+  const token = readTokenFromCookie(req);
   if (token) {
     linkOptions.headers.Authorization = `Bearer ${token}`;
+    cache.writeQuery({ query: GET_TOKEN, data: { token } });
   }
+
+  // read anonymous id from cookie
+  const anonymousID = readAnonymousIDFromCookie(req);
   if (anonymousID) {
     linkOptions.headers["X-Beneath-Aid"] = anonymousID;
+    cache.writeQuery({ query: GET_AID, data: { aid: anonymousID } });
   }
 
-  const cache = new InMemoryCache({ dataIdFromObject }).restore(initialState || {});
-  cache.writeQuery({ query: GET_AID, data: { aid: anonymousID } });
-  cache.writeQuery({ query: GET_TOKEN, data: { token } });
-
-  const apolloOptions = {
-    connectToDevTools: process.browser && !IS_PRODUCTION,
-    ssrMode: !process.browser,
+  return new ApolloClient({
+    connectToDevTools: typeof window === "undefined" && !IS_PRODUCTION,
+    ssrMode: typeof window === "undefined",
     link: ApolloLink.from([new ErrorLink(makeErrorHook({ token, res })), new HttpLink(linkOptions)]),
     cache,
     typeDefs,
     resolvers,
-  };
-
-  return new ApolloClient(apolloOptions);
+  });
 };
 
 // returns ID for objects for caching/automatic state update
@@ -105,4 +110,46 @@ const makeErrorHook = ({ token, res }) => {
       }
     }
   };
+};
+
+const readTokenFromCookie = (maybeReq) => {
+  let token = null;
+  let cookie = null;
+  if (maybeReq) {
+    cookie = maybeReq.headers.cookie;
+  } else if (typeof document !== "undefined") {
+    cookie = document.cookie;
+  }
+  if (cookie) {
+    cookie = cookie.split(";").find((c) => c.trim().startsWith("token="));
+    if (cookie) {
+      token = cookie.replace(/^\s*token=/, "");
+      token = decodeURIComponent(token);
+      if (token.length === 0) {
+        token = null;
+      }
+    }
+  }
+  return token;
+};
+
+const readAnonymousIDFromCookie = (maybeReq) => {
+  let aid = null;
+  let cookie = null;
+  if (maybeReq) {
+    cookie = maybeReq.headers.cookie;
+  } else if (typeof document !== "undefined") {
+    cookie = document.cookie;
+  }
+  if (cookie) {
+    cookie = cookie.split(";").find((c) => c.trim().startsWith("aid="));
+    if (cookie) {
+      aid = cookie.replace(/^\s*aid=/, "");
+      aid = decodeURIComponent(aid);
+      if (aid.length === 0) {
+        aid = null;
+      }
+    }
+  }
+  return aid;
 };

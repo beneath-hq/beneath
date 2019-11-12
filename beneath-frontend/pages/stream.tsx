@@ -1,11 +1,13 @@
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
-import { useQuery } from "react-apollo";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { QueryStream, QueryStreamVariables } from "../apollo/types/QueryStream";
+import { withApollo } from "../apollo/withApollo";
 import { toBackendName, toURLName } from "../lib/names";
 
+import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
@@ -16,7 +18,6 @@ import StreamLatest from "../components/stream/StreamLatest";
 import StreamMetrics from "../components/stream/StreamMetrics";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
-import ErrorPage from "../pages/_error";
 
 const StreamPage = () => {
   const router = useRouter();
@@ -32,7 +33,11 @@ const StreamPage = () => {
   });
 
   if (loading) {
-    return <Loading justify="center" />;
+    return (
+      <Page title="Project" subheader>
+        <Loading justify="center" />
+      </Page>
+    );
   }
 
   if (error || !data) {
@@ -73,4 +78,4 @@ const StreamPage = () => {
   );
 };
 
-export default StreamPage;
+export default withApollo(StreamPage);

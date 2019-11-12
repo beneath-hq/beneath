@@ -1,8 +1,7 @@
-import { NextRouter, withRouter } from "next/router";
+import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import { Me } from "../apollo/types/Me";
-import withMe from "../hocs/withMe";
+import useMe from "../hooks/useMe";
 import UsageIndicator from "./metrics/user/UsageIndicator";
 import NextMuiLink from "./NextMuiLink";
 
@@ -50,17 +49,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-interface HeaderProps extends Me {
-  router: NextRouter;
+interface HeaderProps {
   toggleMobileDrawer?: () => void;
 }
 
-const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
+const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
   // prepare profile menu
   const [menuAnchorEl, setMenuAnchorEl] = React.useState(null);
   const isMenuOpen = !!menuAnchorEl;
   const openMenu = (event: any) => setMenuAnchorEl(event.currentTarget);
   const closeMenu = () => setMenuAnchorEl(null);
+
+  const me = useMe();
+  const router = useRouter();
 
   // compute selected tab
   const selectedTab = tabs.find((tab) => !!router.pathname.match(tab.selectRegex));
@@ -160,4 +161,4 @@ const Header: FC<HeaderProps> = ({ me, router, toggleMobileDrawer }) => {
   );
 };
 
-export default withMe(withRouter(Header));
+export default Header;

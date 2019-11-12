@@ -2,7 +2,6 @@ import { GraphQLScalarType } from "graphql";
 import gql from "graphql-tag";
 import { Kind } from "graphql/language";
 import { merge } from "lodash";
-
 import recordsSchema from "./local-schemas/records";
 
 const schemas = [
