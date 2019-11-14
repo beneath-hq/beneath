@@ -17,9 +17,10 @@ type Organization struct {
 	OrganizationID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name             string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
 	Personal         bool      `sql:",notnull"`
+	StripeCustomerID string
 	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan      *BillingPlan
-	StripeCustomerID string
+	PaymentMethod    PaymentMethod
 	CreatedOn        time.Time `sql:",default:now()"`
 	UpdatedOn        time.Time `sql:",default:now()"`
 	DeletedOn        time.Time
@@ -52,7 +53,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users").Select()
+	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users", "BillingPlan").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -64,12 +65,22 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := db.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Services", "Users").
+		Column("organization.*", "Services", "Users", "BillingPlan").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
 	return organization
+}
+
+// FindAllOrganizations returns all organizations
+func FindAllOrganizations(ctx context.Context) []Organization {
+	var organizations []Organization
+	err := db.DB.ModelContext(ctx, &organizations).Column("organization.*").Select()
+	if err != nil {
+		panic(err)
+	}
+	return organizations
 }
 
 // CreateOrganizationWithUser creates an organization
@@ -124,6 +135,47 @@ func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool,
 	})
 }
 
+// ChangeUserPermissions changes a user's permissions within the organization
+func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+	// TODO: convert permissions.Update (below) to this function
+	return nil
+}
+
+// Update changes a user's permissions within the organization
+// func (p *PermissionsUsersOrganizations) Update(ctx context.Context, view *bool, admin *bool) (*PermissionsUsersOrganizations, error) {
+// 	// Q: this won't fuck up the object "p" that I have, right?
+// 	getUserOrganizationPermissionsCache().Clear(ctx, p.UserID, p.OrganizationID)
+
+// 	if view != nil {
+// 		p.View = *view
+// 	}
+// 	if admin != nil {
+// 		p.Admin = *admin
+// 	}
+// 	_, err := db.DB.ModelContext(ctx, p).Column("view", "admin").WherePK().Update()
+// 	return p, err
+// }
+
+// ChangeUserQuotas allows an admin to configure a member's quotas
+func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, readQuota int64, writeQuota int64) error {
+	// TODO: convert user.UpdateQuotas (below) to this function
+	return nil
+}
+
+// UpdateQuotas updates user's quotas
+// Q: do I have to invalidate the getSecretCache?
+// func (u *User) UpdateQuotas(ctx context.Context, readQuota *int, writeQuota *int) (*User, error) {
+// 	if readQuota != nil {
+// 		u.ReadQuota = int64(*readQuota)
+// 	}
+// 	if writeQuota != nil {
+// 		u.WriteQuota = int64(*writeQuota)
+// 	}
+// 	u.UpdatedOn = time.Now()
+// 	_, err := db.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+// 	return u, err
+// }
+
 // RemoveUser removes a member from the organization
 func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	// TODO: only if not last user (there's a check in resolver, but it should be part of db tx)
@@ -136,4 +188,20 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 	})
+}
+
+// UpdateBillingPlanID updates an organization's billing plan ID
+func (o *Organization) UpdateBillingPlanID(ctx context.Context, billingPlanID uuid.UUID) (*Organization, error) {
+	o.BillingPlanID = billingPlanID
+	o.UpdatedOn = time.Now()
+	_, err := db.DB.ModelContext(ctx, o).Column("billing_plan_id", "updated_on").WherePK().Update()
+	return o, err
+}
+
+// UpdateStripeCustomerID updates an organization's Stripe Customer ID
+func (o *Organization) UpdateStripeCustomerID(ctx context.Context, stripeCustomerID string) error {
+	o.StripeCustomerID = stripeCustomerID
+	o.UpdatedOn = time.Now()
+	_, err := db.DB.ModelContext(ctx, o).Column("stripe_customer_id", "updated_on").WherePK().Update()
+	return err
 }
