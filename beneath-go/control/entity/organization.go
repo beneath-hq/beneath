@@ -205,3 +205,11 @@ func (o *Organization) UpdateStripeCustomerID(ctx context.Context, stripeCustome
 	_, err := db.DB.ModelContext(ctx, o).Column("stripe_customer_id", "updated_on").WherePK().Update()
 	return err
 }
+
+// UpdatePaymentMethod updates an organization's payment method type
+func (o *Organization) UpdatePaymentMethod(ctx context.Context, paymentMethod PaymentMethod) error {
+	o.PaymentMethod = paymentMethod
+	o.UpdatedOn = time.Now()
+	_, err := db.DB.ModelContext(ctx, o).Column("payment_method", "updated_on").WherePK().Update()
+	return err
+}

@@ -39,3 +39,7 @@ models:
     model: github.com/beneath-core/beneath-go/control/entity.PermissionsUsersOrganizations
   PermissionsServicesStreams:
     model: github.com/beneath-core/beneath-go/control/entity.PermissionsServicesStreams
+  BillingPlan:
+    model: github.com/beneath-core/beneath-go/control/entity.BillingPlan
+  BilledResource:
+    model: github.com/beneath-core/beneath-go/control/entity.BilledResource

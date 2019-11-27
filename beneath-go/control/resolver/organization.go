@@ -6,6 +6,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/stripe"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -34,6 +35,31 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 	}
 
 	return organization, nil
+}
+
+func (r *queryResolver) GetUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) (*entity.PermissionsUsersOrganizations, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
+	}
+
+	user := entity.FindUser(ctx, userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", userID.String())
+	}
+
+	permissions := entity.FindPermissionsUsersOrganizations(ctx, userID, organizationID)
+	if permissions == nil {
+		return nil, gqlerror.Errorf("Permissions not found for user %s in organization %s", userID.String(), organizationID.String())
+	}
+
+	return permissions, nil
 }
 
 func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
@@ -97,4 +123,106 @@ func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userI
 	}
 
 	return true, nil
+}
+
+func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	}
+
+	user := entity.FindUser(ctx, userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", userID.String())
+	}
+
+	permissions := entity.FindPermissionsUsersOrganizations(ctx, userID, organizationID)
+	if permissions == nil {
+		return nil, gqlerror.Errorf("Permissions for not found for organization %s and user %s", organizationID.String(), userID.String())
+	}
+
+	// TODO: change this to organization.UpdateUserPermissions
+	// permissions, err := permissions.Update(ctx, view, admin)
+	// if err != nil {
+	// 	return nil, gqlerror.Errorf("Failed to update permissions")
+	// }
+
+	return permissions, nil
+}
+
+func (r *mutationResolver) UpdateUserOrganizationQuotas(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	}
+
+	user := entity.FindUser(ctx, userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", userID.String())
+	}
+
+	// TODO: change this to organization.UpdateUserQuotas
+	// user, err := user.UpdateQuotas(ctx, readQuota, writeQuota)
+	// if err != nil {
+	// 	return nil, gqlerror.Errorf("Failed to update the user's quotas")
+	// }
+
+	return user, nil
+}
+
+func (r *mutationResolver) UpdateBillingPlan(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID) (*entity.Organization, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	}
+
+	billingPlan := entity.FindBillingPlan(ctx, billingPlanID)
+	if billingPlan == nil {
+		return nil, gqlerror.Errorf("Billing plan %s not found", billingPlanID.String())
+	}
+
+	organization, err := organization.UpdateBillingPlanID(ctx, billingPlanID)
+	if err != nil {
+		return nil, gqlerror.Errorf("Failed to update the organization's billing plan")
+	}
+
+	return organization, nil
+}
+
+func (r *mutationResolver) CreateStripeSetupIntent(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID) (string, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return "", gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return "", gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	}
+
+	setupIntent := stripe.CreateSetupIntent(organizationID, billingPlanID)
+	if setupIntent == nil {
+		return "", gqlerror.Errorf("Unable to create setup intent")
+	}
+
+	return setupIntent.ClientSecret, nil
 }

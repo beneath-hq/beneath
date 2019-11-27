@@ -1,0 +1,16 @@
+extend type Query {
+  billingPlan(billingPlanID: UUID!): BillingPlan!
+}
+
+type BillingPlan {
+  billingPlanID: UUID!
+	description: String
+	currency: String!
+	seatPriceCents: Int!
+	seatReadQuota: Int!
+	seatWriteQuota: Int!
+	readOveragePriceCents: Int! 
+	writeOveragePriceCents: Int!
+	baseReadQuota: Int!
+	baseWriteQuota: Int!
+}

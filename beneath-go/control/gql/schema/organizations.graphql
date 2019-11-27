@@ -1,18 +1,32 @@
 extend type Query {
   organizationByName(name: String!): Organization
+  getUserOrganizationPermissions(userID: UUID!, organizationID: UUID!): PermissionsUsersOrganizations
 }
 
 extend type Mutation {
   createOrganization(name: String!): Organization!
   addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
+  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations
+  updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
+  updateBillingPlan(organizationID: UUID!, billingPlanID: UUID!): Organization!
+  createStripeSetupIntent(organizationID: UUID!, billingPlanID: UUID!): String!
 }
 
 type Organization {
   organizationID: ID!
   name: String!
+  personal: Boolean!
   createdOn: Time!
   updatedOn: Time!
-  services: [Service!]
-  users: [User!]
+  services: [Service!]!
+  users: [User!]!
+	billingPlan: BillingPlan
+}
+
+type PermissionsUsersOrganizations {
+	user: User!
+	organization: Organization!
+	view: Boolean! 
+	admin: Boolean!
 }

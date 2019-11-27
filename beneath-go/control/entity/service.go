@@ -135,7 +135,12 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	_, err := db.DB.ModelContext(ctx, s).WherePK().Delete()
+	isMidPeriod := true
+	err := commitUsageToBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, isMidPeriod)
+	if err != nil {
+		return err
+	}
+	_, err = db.DB.ModelContext(ctx, s).WherePK().Delete()
 	return err
 }
 

@@ -51,7 +51,7 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 
 	invoice := stripe.CreateInvoice(organization.StripeCustomerID, string(organization.PaymentMethod))
 
-	stripe.SendInvoice(invoice.ID)
+	stripe.IssueInvoice(invoice.ID, string(organization.PaymentMethod))
 
 	return nil
 }

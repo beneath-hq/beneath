@@ -1,0 +1,19 @@
+extend type Query {
+  billedResources(organizationID: UUID!, billingTime: Time!): [BilledResource!]!
+}
+
+type BilledResource {
+  billedResourceID: UUID!
+  organizationID: UUID!
+	billingTime: Time!
+	entityID: UUID!
+	entityKind: String!
+	startTime: Time!
+	endTime: Time!
+	product: String!
+	quantity: Int!
+	totalPriceCents: Int!
+	currency: String!
+	insertedOn: Time!
+  updatedOn: Time!
+}

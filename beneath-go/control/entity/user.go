@@ -237,6 +237,11 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 
 // Delete removes the user from the database
 func (u *User) Delete(ctx context.Context) error {
+	isMidPeriod := true
+	err := commitUsageToBill(ctx, *u.MainOrganizationID, UserEntityKind, u.UserID, isMidPeriod)
+	if err != nil {
+		return err
+	}
 	return db.DB.WithContext(ctx).Delete(u)
 }
 
