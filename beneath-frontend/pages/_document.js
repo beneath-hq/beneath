@@ -52,6 +52,9 @@ export default class MyDocument extends Document {
           />
 
           {/* <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono:300,300i,600" rel="stylesheet" /> */}
+
+          {/* Stripe tag */}
+          <script src="https://js.stripe.com/v3/"></script>
         </Head>
         <body>
           <Main />

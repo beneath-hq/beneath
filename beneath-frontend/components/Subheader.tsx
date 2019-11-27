@@ -55,6 +55,11 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
       <ExploreCrumb key={0} />,
       <UserCrumb key={1} isCurrent username={router.query.name as string} />,
     ];
+  } else if (router.route === "/organization") {
+    crumbs = [
+      <ExploreCrumb key={0} />,
+      <OrganizationCrumb key={1} isCurrent name={router.query.name as string} />,
+    ];
   }
 
   const classes = useStyles();
@@ -134,6 +139,22 @@ const UserCrumb: FC<UserCrumbProps> = ({ username, isCurrent }) => {
       href={`/user?name=${username}`}
       as={`/users/${username}`}
       label={username}
+    />
+  );
+};
+
+interface OrganizationCrumbProps {
+  name: string;
+  isCurrent?: boolean;
+}
+
+const OrganizationCrumb: FC<OrganizationCrumbProps> = ({ name, isCurrent }) => {
+  return (
+    <Crumb
+      isCurrent={isCurrent}
+      href={`/organization?name=${name}`}
+      as={`/organizations/${name}`}
+      label={name}
     />
   );
 };

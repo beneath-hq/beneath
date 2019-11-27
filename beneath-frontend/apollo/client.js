@@ -73,6 +73,10 @@ const dataIdFromObject = (object) => {
       return `${object.streamID}`;
     case "Record":
       return `${object.recordID}`;
+    case "Service":
+      return `${object.serviceID}`;
+    case "Organization":
+      return `${object.organizationID}`;
     case "RecordsResponse":
       return defaultDataIdFromObject(object);
     case "CreateRecordsResponse":

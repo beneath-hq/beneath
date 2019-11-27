@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "prop-types": "^15.7.2",
+    "react-vega": "^7.1.0"
+  }
+}
