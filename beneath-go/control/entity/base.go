@@ -57,13 +57,13 @@ const (
 	EuroCurrency Currency = "EUR"
 )
 
-// PaymentMethod represents
-type PaymentMethod string
+// PaymentMethodType represents
+type PaymentMethodType string
 
 const (
 	// CardPaymentMethod means the organization's credit/debit card will be charged automatically
-	CardPaymentMethod PaymentMethod = "card"
+	CardPaymentMethod PaymentMethodType = "card"
 
 	// WirePaymentMethod means the organization will pay via wire
-	WirePaymentMethod PaymentMethod = "wire"
+	WirePaymentMethod PaymentMethodType = "wire"
 )

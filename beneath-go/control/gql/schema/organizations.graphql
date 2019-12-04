@@ -1,6 +1,7 @@
 extend type Query {
   organizationByName(name: String!): Organization
   getUserOrganizationPermissions(userID: UUID!, organizationID: UUID!): PermissionsUsersOrganizations
+  getCurrentPaymentMethod(organizationID: UUID!): PaymentMethod
 }
 
 extend type Mutation {
@@ -29,4 +30,15 @@ type PermissionsUsersOrganizations {
 	organization: Organization!
 	view: Boolean! 
 	admin: Boolean!
+}
+
+type PaymentMethod {
+	organizationID: ID!
+  type: String!
+	card: Card
+}
+
+type Card {
+  brand: String!
+  last4: String!
 }

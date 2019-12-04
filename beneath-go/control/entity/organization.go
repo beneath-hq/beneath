@@ -28,7 +28,26 @@ type Organization struct {
 	StripeCustomerID string
 	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan      *BillingPlan
-	PaymentMethod    PaymentMethod
+	PaymentMethod    PaymentMethodType
+	// CreatedOn        time.Time `sql:",default:now()"`
+	// UpdatedOn        time.Time `sql:",default:now()"`
+	// DeletedOn        time.Time
+	// Services         []*Service
+	// Users            []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
+}
+
+// PaymentMethod represents an organization's payment method
+type PaymentMethod struct {
+	OrganizationID uuid.UUID
+	Type           PaymentMethodType
+	Card           *Card
+	// Wire *Wire
+}
+
+// Card represents an credit/debit card used for billing
+type Card struct {
+	Brand string
+	Last4 string
 }
 
 var (
@@ -212,8 +231,8 @@ func (o *Organization) UpdateStripeCustomerID(ctx context.Context, stripeCustome
 }
 
 // UpdatePaymentMethod updates an organization's payment method type
-func (o *Organization) UpdatePaymentMethod(ctx context.Context, paymentMethod PaymentMethod) error {
-	o.PaymentMethod = paymentMethod
+func (o *Organization) UpdatePaymentMethod(ctx context.Context, paymentMethodType PaymentMethodType) error {
+	o.PaymentMethod = paymentMethodType
 	o.UpdatedOn = time.Now()
 	_, err := db.DB.ModelContext(ctx, o).Column("payment_method", "updated_on").WherePK().Update()
 	return err
