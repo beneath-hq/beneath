@@ -232,6 +232,8 @@ func segmentMiddleware(next http.Handler) http.Handler {
 }
 
 // TODO: move this code to its own server
+// TODO(review): Yes; Expose the webhook from Stripe, then register it in the control servere;
+//               and not under "/webhook", but rather "/billing/stripe/webhook"
 func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	ctx := context.Background()
 	const MaxBodyBytes = int64(65536)
@@ -268,13 +270,14 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 
 		paymentMethod := stripe.RetrievePaymentMethod(setupIntent.PaymentMethod.ID)
 
-		customer, err := stripe.CreateCustomer(organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod.ID)
+		customer, err := stripe.CreateCustomer(organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod)
 		if err != nil {
+			log.S.Errorf("Stripe error: %s", err.Error())
 			return err
 		}
 
 		organization.UpdateStripeCustomerID(ctx, customer.ID)
-		organization.UpdatePaymentMethod(ctx, entity.PaymentMethodCard)
+		organization.UpdatePaymentMethod(ctx, entity.CardPaymentMethod)
 		organization.UpdateBillingPlanID(ctx, uuid.FromStringOrNil(setupIntent.Metadata["BillingPlanID"]))
 		// TODO: update organization user permissions? maybe put this in the organization.UpdateBillingPlanID() function
 	case "setup_intent.setup_failed":

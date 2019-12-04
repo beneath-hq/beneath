@@ -26,28 +26,16 @@ func Floor(ts time.Time, p Period) time.Time {
 	}
 }
 
-// BeginningOfThisPeriod gets the beginning of this period
-func BeginningOfThisPeriod(p Period) time.Time {
-	return Floor(time.Now(), p)
-}
-
-// BeginningOfNextPeriod gets the beginning of the next period
-func BeginningOfNextPeriod(p Period) time.Time {
-	ts := time.Now().UTC()
+// Last returns the floor of the last multiple of the given period of ts
+func Last(ts time.Time, p Period) time.Time {
+	ts = ts.UTC()
 	switch p {
-	case PeriodMonth:
-		return time.Date(ts.Year(), ts.Month()+1, 1, 0, 0, 0, 0, time.UTC)
-	case PeriodYear:
-		return time.Date(ts.Year()+1, 1, 1, 0, 0, 0, 0, time.UTC)
-	default:
-		panic(fmt.Errorf("unknown period '%d'", p))
-	}
-}
-
-// BeginningOfLastPeriod gets the beginning of the last period
-func BeginningOfLastPeriod(p Period) time.Time {
-	ts := time.Now().UTC()
-	switch p {
+	case PeriodMinute:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute()-1, 0, 0, time.UTC)
+	case PeriodHour:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour()-1, 0, 0, 0, time.UTC)
+	case PeriodDay:
+		return time.Date(ts.Year(), ts.Month(), ts.Day()-1, 0, 0, 0, 0, time.UTC)
 	case PeriodMonth:
 		return time.Date(ts.Year(), ts.Month()-1, 1, 0, 0, 0, 0, time.UTC)
 	case PeriodYear:
@@ -57,14 +45,20 @@ func BeginningOfLastPeriod(p Period) time.Time {
 	}
 }
 
-// EndOfLastPeriod gets the end of the last period
-func EndOfLastPeriod(p Period) time.Time {
-	ts := time.Now().UTC()
+// Next rounds ts up to the next multiple of the given period
+func Next(ts time.Time, p Period) time.Time {
+	ts = ts.UTC()
 	switch p {
+	case PeriodMinute:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), ts.Minute()+1, 0, 0, time.UTC)
+	case PeriodHour:
+		return time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour()+1, 0, 0, 0, time.UTC)
+	case PeriodDay:
+		return time.Date(ts.Year(), ts.Month(), ts.Day()+1, 0, 0, 0, 0, time.UTC)
 	case PeriodMonth:
-		return time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, -1, time.UTC)
+		return time.Date(ts.Year(), ts.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 	case PeriodYear:
-		return time.Date(ts.Year(), 1, 1, 0, 0, 0, -1, time.UTC)
+		return time.Date(ts.Year()+1, 1, 1, 0, 0, 0, 0, time.UTC)
 	default:
 		panic(fmt.Errorf("unknown period '%d'", p))
 	}

@@ -11,9 +11,12 @@ import (
 	"github.com/stripe/stripe-go/setupintent"
 )
 
+// TODO(review): Error handling in this file. Either return the error (to signal user error) or panic (to signal system error). Don't continue when there's an error (logging an error is not enough).
+// TODO(review): paymentMethodType should not be a string, it should be a type with constants -- like entity.PaymentMethod
+
 // Q: stripe.Key needs to be set. Should I set it before each action? Or assume it's set globally (per InitClient), didn't expire, and we're good.
 const (
-	daysUntilInvoiceDue = 30
+	daysUntilInvoiceDue = 10
 )
 
 // InitClient sets our Stripe API key
@@ -22,41 +25,43 @@ func InitClient(stripeKey string) {
 }
 
 // CreateCustomer registers the customer with Stripe
-// TODO when we collect more customer data like billing address: func CreateCustomer(customerData CustomerData paymentMethod string) *stripe.Customer {
-func CreateCustomer(organizationName string, emailAddress string, paymentMethodID string) (*stripe.Customer, error) {
-	params := &stripe.CustomerParams{
-		Name:          stripe.String(organizationName),
-		Email:         stripe.String(emailAddress),
-		PaymentMethod: stripe.String(paymentMethodID),
-	}
-	customer, err := customer.New(params)
+func CreateCustomer(orgName string, email string, pm *stripe.PaymentMethod) (*stripe.Customer, error) {
+	customer, err := customer.New(&stripe.CustomerParams{
+		Name:          stripe.String(orgName),
+		Email:         stripe.String(email),
+		PaymentMethod: stripe.String(pm.ID),
+	})
 	if err != nil {
-		log.S.Errorf("Stripe error: %s", err.Error())
-		return customer, err
+		return nil, err
 	}
 
 	return customer, nil
 }
 
 // CreateSetupIntent gets ready for a customer to add credit card information
-func CreateSetupIntent(organizationID uuid.UUID, billingPlanID uuid.UUID) *stripe.SetupIntent {
+func CreateSetupIntent(organizationID uuid.UUID, billingPlanID uuid.UUID) (*stripe.SetupIntent, error) {
 	params := &stripe.SetupIntentParams{
-		PaymentMethodTypes: []*string{stripe.String("card")},
+		PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.PaymentMethodTypeCard)}),
 		Usage:              stripe.String(string(stripe.SetupIntentUsageOffSession)),
 	}
 	params.AddMetadata("OrganizationID", organizationID.String())
 	params.AddMetadata("BillingPlanID", billingPlanID.String())
+
 	setupIntent, err := setupintent.New(params)
 	if err != nil {
-		log.S.Errorf("Stripe error: %s", err.Error())
+		log.S.Errorw("Stripe error: %s", err.Error())
+		return nil, err
 	}
 
-	return setupIntent
+	return setupIntent, nil
 }
 
 // RetrievePaymentMethod returns a payment method, with which we access billing_details
 func RetrievePaymentMethod(paymentMethodID string) *stripe.PaymentMethod {
-	paymentMethod, _ := paymentmethod.Get(paymentMethodID, nil)
+	paymentMethod, err := paymentmethod.Get(paymentMethodID, nil)
+	if err != nil {
+		// TODO(review): handle
+	}
 
 	return paymentMethod
 }
@@ -84,7 +89,7 @@ func NewInvoiceItem(customerID string, amount int64, currency string, descriptio
 func CreateInvoice(customerID string, paymentMethodType string) *stripe.Invoice {
 	params := &stripe.InvoiceParams{}
 	if paymentMethodType == "card" {
-		paymentMethodID := GetCustomerRecentPaymentMethodID(customerID, paymentMethodType)
+		paymentMethodID := GetCustomerRecentPaymentMethodID(customerID, paymentMethodType) // TODO(review): use stripe.PaymentMethodTypeCard
 		params = &stripe.InvoiceParams{
 			Customer:             stripe.String(customerID),
 			CollectionMethod:     stripe.String(string(stripe.InvoiceCollectionMethodChargeAutomatically)),

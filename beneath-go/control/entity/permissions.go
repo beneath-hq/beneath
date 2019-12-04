@@ -48,13 +48,15 @@ func init() {
 	orm.RegisterTable((*PermissionsServicesStreams)(nil))
 }
 
+// TODO(review): Remove this -- we have CachedUserOrganizationPermissions. Also, I think it would be possible to not need this in the first place.
+
 // FindPermissionsUsersOrganizations finds permissions by userID and organizationID
 func FindPermissionsUsersOrganizations(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) *PermissionsUsersOrganizations {
 	permissions := &PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, permissions).WherePK().Column("permissions.*").Select()
+	err := db.DB.ModelContext(ctx, permissions).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/stripe"
 	uuid "github.com/satori/go.uuid"
@@ -241,9 +242,10 @@ func (r *mutationResolver) CreateStripeSetupIntent(ctx context.Context, organiza
 		return "", gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
-	setupIntent := stripe.CreateSetupIntent(organizationID, billingPlanID)
-	if setupIntent == nil {
-		return "", gqlerror.Errorf("Unable to create setup intent")
+	setupIntent, err := stripe.CreateSetupIntent(organizationID, billingPlanID)
+	if err != nil {
+		log.S.Errorf("Stripe error: %s", err.Error())
+		return "", gqlerror.Errorf("Stripe error: %s", err.Error())
 	}
 
 	return setupIntent.ClientSecret, nil

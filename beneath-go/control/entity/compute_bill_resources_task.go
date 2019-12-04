@@ -231,17 +231,40 @@ func calculateBillTimes(ts time.Time, p timeutil.Period, isMidPeriod bool) (time
 	var endTime time.Time
 
 	if isMidPeriod {
-		billingTime = timeutil.BeginningOfNextPeriod(p)
-		startTime = timeutil.BeginningOfThisPeriod(p)
+		billingTime = BeginningOfNextPeriod(p)
+		startTime = BeginningOfThisPeriod(p)
 		endTime = now
 	} else {
-		billingTime = timeutil.BeginningOfThisPeriod(p)
-		startTime = timeutil.BeginningOfLastPeriod(p)
-		endTime = timeutil.EndOfLastPeriod(p)
+		billingTime = BeginningOfThisPeriod(p)
+		startTime = BeginningOfLastPeriod(p)
+		endTime = EndOfLastPeriod(p)
 		// FOR TESTING (since I don't have usage data from last month):
 		startTime = startTime.AddDate(0, 1, 0)
 		endTime = endTime.AddDate(0, 1, 0)
 		billingTime = billingTime.AddDate(0, 1, 0)
 	}
 	return billingTime, startTime, endTime
+}
+
+// BeginningOfThisPeriod gets the beginning of this period
+func BeginningOfThisPeriod(p timeutil.Period) time.Time {
+	return timeutil.Floor(time.Now(), p)
+}
+
+// BeginningOfNextPeriod gets the beginning of the next period
+func BeginningOfNextPeriod(p timeutil.Period) time.Time {
+	ts := time.Now().UTC()
+	return timeutil.Next(ts, p)
+}
+
+// BeginningOfLastPeriod gets the beginning of the last period
+func BeginningOfLastPeriod(p timeutil.Period) time.Time {
+	ts := time.Now().UTC()
+	return timeutil.Last(ts, p)
+}
+
+// EndOfLastPeriod gets the end of the last period
+func EndOfLastPeriod(p timeutil.Period) time.Time {
+	ts := time.Now().UTC()
+	return timeutil.Floor(ts, p)
 }

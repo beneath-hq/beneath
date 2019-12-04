@@ -12,24 +12,27 @@ import (
 // BilledResource represents a resource that an organization used during the past billing period
 type BilledResource struct {
 	BilledResourceID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	OrganizationID   uuid.UUID `sql:",type:uuid, notnull"`
-	BillingTime      time.Time
-	EntityID         uuid.UUID `sql:",type:uuid, notnull"`
-	EntityKind       Kind
-	StartTime        time.Time
-	EndTime          time.Time
-	Product          Product
-	Quantity         int64
-	TotalPriceCents  int32
-	Currency         Currency
-	InsertedOn       time.Time `sql:",default:now()"`
-	UpdatedOn        time.Time `sql:",default:now()"`
+	OrganizationID   uuid.UUID `sql:",type:uuid,notnull"`
+	BillingTime      time.Time `sql:",notnull"`
+	EntityID         uuid.UUID `sql:",type:uuid,notnull"`
+	EntityKind       Kind      `sql:",notnull"`
+	StartTime        time.Time `sql:",notnull"`
+	EndTime          time.Time `sql:",notnull"`
+	Product          Product   `sql:",notnull"`
+	Quantity         int64     `sql:",notnull"`
+	TotalPriceCents  int32     `sql:",notnull"`
+	Currency         Currency  `sql:",notnull"`
+	CreatedOn        time.Time `sql:",notnull,default:now()"`
+	UpdatedOn        time.Time `sql:",notnull,default:now()"`
 }
 
 // FindBilledResources returns the matching billed resources or nil
 func FindBilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) []*BilledResource {
 	var billedResources []*BilledResource
-	err := db.DB.ModelContext(ctx, &billedResources).Where("organization_id = ?", organizationID).Where("billing_time = ?", billingTime).Select()
+	err := db.DB.ModelContext(ctx, &billedResources).
+		Where("organization_id = ?", organizationID).
+		Where("billing_time = ?", billingTime).
+		Select()
 	if err != nil {
 		panic(err)
 	}
@@ -43,6 +46,8 @@ func CreateOrUpdateBilledResources(ctx context.Context, billedResources []*Bille
 		return err
 	}
 	defer tx.Rollback() // defer rollback on error
+
+	// TODO(review): Much easier and faster to do a bulk upsert, see https://github.com/go-pg/pg/issues/609
 
 	for _, line := range billedResources {
 		// query for existance
