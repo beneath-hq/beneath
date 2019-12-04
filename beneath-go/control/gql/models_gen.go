@@ -9,6 +9,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+type Card struct {
+	Brand string `json:"brand"`
+	Last4 string `json:"last4"`
+}
+
 type CreateModelInput struct {
 	ProjectID           uuid.UUID   `json:"projectID"`
 	Name                string      `json:"name"`

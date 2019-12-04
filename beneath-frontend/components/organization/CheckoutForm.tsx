@@ -1,11 +1,13 @@
 import React, { FC } from 'react';
-import { useMutation } from "@apollo/react-hooks";
+import { useMutation, useQuery } from "@apollo/react-hooks";
 import { injectStripe, ReactStripeElements } from 'react-stripe-elements';
 import { CardElement } from 'react-stripe-elements';
-import { CREATE_STRIPE_SETUP_INTENT } from "../../apollo/queries/organization";
+import { CREATE_STRIPE_SETUP_INTENT, QUERY_CURRENT_PAYMENT_METHOD } from "../../apollo/queries/organization";
 import { CreateStripeSetupIntent, CreateStripeSetupIntentVariables } from "../../apollo/types/CreateStripeSetupIntent";
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
+import { GetCurrentPaymentMethod, GetCurrentPaymentMethodVariables } from "../../apollo/types/GetCurrentPaymentMethod";
 import { makeStyles, TextField, Typography } from "@material-ui/core";
+import Loading from "../Loading";
 
 interface CheckoutParams {
   organization: OrganizationByName_organizationByName
@@ -60,7 +62,13 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     }
   })
 
-  const [createStripeSetupIntent, { loading, error }] = useMutation<CreateStripeSetupIntent, CreateStripeSetupIntentVariables>(CREATE_STRIPE_SETUP_INTENT, {
+  const { loading, error, data } = useQuery<GetCurrentPaymentMethod, GetCurrentPaymentMethodVariables>(QUERY_CURRENT_PAYMENT_METHOD, {
+    variables: {
+      organizationID: organization.organizationID,
+    },
+  });
+
+  const [createStripeSetupIntent, { loading: mutLoading, error: mutError }] = useMutation<CreateStripeSetupIntent, CreateStripeSetupIntentVariables>(CREATE_STRIPE_SETUP_INTENT, {
     onCompleted: (data) => {
       if (!stripe) {
         return;
@@ -83,10 +91,6 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
       return
     }
   });
-
-  if (!stripe) {
-    return <p>Loading or Error</p>;
-  }
 
   const handleSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
@@ -120,75 +124,93 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     return
   };
 
+  if (loading || mutLoading) {
+    return <Loading justify="center" />;
+  }
+
+  if (error || mutError) {
+    return <p>Error: {JSON.stringify(error)}</p>;
+  }
+
+  if (!data || !data.getCurrentPaymentMethod || !data.getCurrentPaymentMethod.card) {
+    return <p>Error: {JSON.stringify(error)}</p>;
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
-      {/* <TextField
-        id="firstname"
-        label="Firstname"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="lastname"
-        label="Lastname"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="address_line1"
-        label="Address_line1"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="address_line2"
-        label="Address_line2"
-        margin="normal"
-        fullWidth
-      />
-      <TextField
-        id="address_city"
-        label="Address_city"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="address_state"
-        label="Address_state"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="address_zip"
-        label="Address_zip"
-        margin="normal"
-        fullWidth
-        required
-      />
-      <TextField
-        id="address_country"
-        label="Address_country"
-        margin="normal"
-        fullWidth
-        required
-      /> */}
-      <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
-      <button>Submit</button>
-      {errorMsg !== "" && (
-        <Typography variant="body1" color="error">
-          { errorMsg }
-        </Typography>
-      )}
-      {status.length > 0 && (
-        <Typography variant="body1" color="error">
-          { status }
-        </Typography>
-      )}
-    </form>
+    <div>
+      <Typography variant="body1">Current billing details</Typography>
+      <Typography variant="body1">You are paying by: {data.getCurrentPaymentMethod.type}</Typography>
+      <Typography variant="body1">Brand: {data.getCurrentPaymentMethod.card.brand}</Typography>
+      <Typography variant="body1">Last4: {data.getCurrentPaymentMethod.card.last4}</Typography>
+      <form onSubmit={handleSubmit}>
+        {/* <TextField
+          id="firstname"
+          label="Firstname"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="lastname"
+          label="Lastname"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="address_line1"
+          label="Address_line1"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="address_line2"
+          label="Address_line2"
+          margin="normal"
+          fullWidth
+        />
+        <TextField
+          id="address_city"
+          label="Address_city"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="address_state"
+          label="Address_state"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="address_zip"
+          label="Address_zip"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="address_country"
+          label="Address_country"
+          margin="normal"
+          fullWidth
+          required
+        /> */}
+        <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
+        <button>Submit</button>
+        {errorMsg !== "" && (
+          <Typography variant="body1" color="error">
+            { errorMsg }
+          </Typography>
+        )}
+        {status.length > 0 && (
+          <Typography variant="body1" color="error">
+            { status }
+          </Typography>
+        )}
+      </form>
+    </div>
   );
 };
