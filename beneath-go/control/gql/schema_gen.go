@@ -61,11 +61,11 @@ type ComplexityRoot struct {
 	BilledResource struct {
 		BilledResourceID func(childComplexity int) int
 		BillingTime      func(childComplexity int) int
+		CreatedOn        func(childComplexity int) int
 		Currency         func(childComplexity int) int
 		EndTime          func(childComplexity int) int
 		EntityID         func(childComplexity int) int
 		EntityKind       func(childComplexity int) int
-		InsertedOn       func(childComplexity int) int
 		OrganizationID   func(childComplexity int) int
 		Product          func(childComplexity int) int
 		Quantity         func(childComplexity int) int
@@ -440,6 +440,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BilledResource.BillingTime(childComplexity), true
 
+	case "BilledResource.createdOn":
+		if e.complexity.BilledResource.CreatedOn == nil {
+			break
+		}
+
+		return e.complexity.BilledResource.CreatedOn(childComplexity), true
+
 	case "BilledResource.currency":
 		if e.complexity.BilledResource.Currency == nil {
 			break
@@ -467,13 +474,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BilledResource.EntityKind(childComplexity), true
-
-	case "BilledResource.insertedOn":
-		if e.complexity.BilledResource.InsertedOn == nil {
-			break
-		}
-
-		return e.complexity.BilledResource.InsertedOn(childComplexity), true
 
 	case "BilledResource.organizationID":
 		if e.complexity.BilledResource.OrganizationID == nil {
@@ -2129,7 +2129,7 @@ type BilledResource {
 	quantity: Int!
 	totalPriceCents: Int!
 	currency: String!
-	insertedOn: Time!
+	createdOn: Time!
   updatedOn: Time!
 }
 `},
@@ -4088,7 +4088,7 @@ func (ec *executionContext) _BilledResource_currency(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BilledResource_insertedOn(ctx context.Context, field graphql.CollectedField, obj *entity.BilledResource) (ret graphql.Marshaler) {
+func (ec *executionContext) _BilledResource_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.BilledResource) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4107,7 +4107,7 @@ func (ec *executionContext) _BilledResource_insertedOn(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.InsertedOn, nil
+		return obj.CreatedOn, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12412,8 +12412,8 @@ func (ec *executionContext) _BilledResource(ctx context.Context, sel ast.Selecti
 				}
 				return res
 			})
-		case "insertedOn":
-			out.Values[i] = ec._BilledResource_insertedOn(ctx, field, obj)
+		case "createdOn":
+			out.Values[i] = ec._BilledResource_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

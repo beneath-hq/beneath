@@ -14,18 +14,21 @@ import (
 
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
-	OrganizationID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name             string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
-	Personal         bool      `sql:",notnull"`
+	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
+	Personal       bool      `sql:",notnull"`
+	CreatedOn      time.Time `sql:",default:now()"`
+	UpdatedOn      time.Time `sql:",default:now()"`
+	DeletedOn      time.Time
+	Services       []*Service
+	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
+
+	// Extract to table BillingInfo with OrganizationID as the primary key
+	// Including UpdateBillingPlanID, UpdateStripeCustomerID, UpdatePaymentMethod
 	StripeCustomerID string
 	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan      *BillingPlan
 	PaymentMethod    PaymentMethod
-	CreatedOn        time.Time `sql:",default:now()"`
-	UpdatedOn        time.Time `sql:",default:now()"`
-	DeletedOn        time.Time
-	Services         []*Service
-	Users            []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
 }
 
 var (
@@ -144,6 +147,8 @@ func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UU
 // Update changes a user's permissions within the organization
 // func (p *PermissionsUsersOrganizations) Update(ctx context.Context, view *bool, admin *bool) (*PermissionsUsersOrganizations, error) {
 // 	// Q: this won't fuck up the object "p" that I have, right?
+//  // A: No, it just invalidates it from the cache so other processes won't be served it
+//  // A2: But, we should actually move it to after the DB update for consistency
 // 	getUserOrganizationPermissionsCache().Clear(ctx, p.UserID, p.OrganizationID)
 
 // 	if view != nil {
