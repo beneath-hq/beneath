@@ -23,7 +23,7 @@ func GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.QuotaUsage {
 	key := metricsKey(timeutil.PeriodMonth, entityID, time.Now())
 
 	// load from bigtable
-	usage, err := db.Engine.Tables.ReadSingleUsage(ctx, key)
+	usage, err := db.Engine.ReadSingleUsage(ctx, key)
 	if err != nil {
 		panic(fmt.Errorf("error reading metrics: %s", err.Error()))
 	}
@@ -60,7 +60,7 @@ func GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, period timeutil
 	// read usage table and collect usage metrics
 	var times []time.Time
 	var usages []pb.QuotaUsage
-	err := db.Engine.Tables.ReadUsage(ctx, fromKey, toKey, func(key []byte, usage pb.QuotaUsage) error {
+	err := db.Engine.ReadUsage(ctx, fromKey, toKey, func(key []byte, usage pb.QuotaUsage) error {
 		_, _, t := decodeMetricsKey(key)
 		times = append(times, t)
 		usages = append(usages, usage)
