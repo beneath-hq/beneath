@@ -26,7 +26,7 @@ require (
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/pprof v0.0.0-20190515194954-54271f7e092f // indirect
+	github.com/google/pprof v0.0.0-20190515194954-54271f7e092f
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/sessions v1.1.1
@@ -50,7 +50,7 @@ require (
 	github.com/stripe/stripe-go v66.1.1+incompatible
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c
 	go.opencensus.io v0.22.0 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
