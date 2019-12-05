@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/metrics"
-	"github.com/beneath-core/beneath-go/taskqueue"
 	uuid "github.com/satori/go.uuid"
 )
 

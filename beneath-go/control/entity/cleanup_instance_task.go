@@ -3,8 +3,8 @@ package entity
 import (
 	"context"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/taskqueue"
 
 	uuid "github.com/satori/go.uuid"
 )

@@ -28,8 +28,8 @@ func InitRedis(redisURL string) {
 }
 
 // InitEngine sets up the engine connection
-func InitEngine(streamsDriver string, tablesDriver string, warehouseDriver string) {
-	Engine = engine.NewEngine(streamsDriver, tablesDriver, warehouseDriver)
+func InitEngine(mqDriver, logDriver, lookupDriver, warehouseDriver string) {
+	Engine = engine.NewEngine(mqDriver, logDriver, lookupDriver, warehouseDriver)
 }
 
 // Healthy returns true if connections are live

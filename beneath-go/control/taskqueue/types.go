@@ -22,6 +22,7 @@ var (
 	taskRegistry map[string]reflect.Type
 )
 
+// RegisterTask registers a task struct for processing
 func RegisterTask(task Task) {
 	if taskRegistry == nil {
 		taskRegistry = make(map[string]reflect.Type)
@@ -35,7 +36,8 @@ func RegisterTask(task Task) {
 	taskRegistry[t.Elem().Name()] = t.Elem()
 }
 
-func encodeTask(task Task) (*pb.QueuedTask, error) {
+// EncodeTask converts a task to a protobuf (the task struct must have been registered with RegisterTask)
+func EncodeTask(task Task) (*pb.QueuedTask, error) {
 	t := reflect.TypeOf(task)
 	if t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
 		panic(fmt.Errorf("task is not a pointer to a struct"))
@@ -54,7 +56,8 @@ func encodeTask(task Task) (*pb.QueuedTask, error) {
 	}, nil
 }
 
-func decodeTask(qt *pb.QueuedTask) (Task, error) {
+// DecodeTask converts a pb.QueuedTask to a task registered with RegisterTask
+func DecodeTask(qt *pb.QueuedTask) (Task, error) {
 	t, ok := taskRegistry[qt.Name]
 	if !ok {
 		return nil, fmt.Errorf("cannot find task with name '%s'", qt.Name)

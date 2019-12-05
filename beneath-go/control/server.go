@@ -45,8 +45,9 @@ type configSpecification struct {
 	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
 	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 
-	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
-	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	MQDriver        string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
+	LogDriver       string `envconfig:"ENGINE_LOG_DRIVER" required:"true"`
+	LookupDriver    string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 
 	SegmentSecret    string `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
@@ -70,7 +71,7 @@ func init() {
 	// connect postgres, redis and engine
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
-	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
+	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
 
 	// run migrations
 	migrations.MustRunUp(db.DB)

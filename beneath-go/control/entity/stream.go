@@ -11,9 +11,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/taskqueue"
 )
 
 // Stream represents a collection of data

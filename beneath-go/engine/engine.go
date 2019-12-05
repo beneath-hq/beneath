@@ -1,12 +1,14 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/beneath-core/beneath-go/engine/driver"
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
 	"github.com/beneath-core/beneath-go/engine/driver/pubsub"
+	pb "github.com/beneath-core/beneath-go/proto"
 )
 
 // Engine interfaces with the data layer
@@ -79,4 +81,14 @@ func (e *Engine) CheckRecordSize(keyBytesLen int, avroBytesLen int) error {
 func (e *Engine) CheckBatchLength(length int) error {
 	// TODO
 	return nil
+}
+
+// QueueTask queues a task for processing
+func (e *Engine) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
+	panic("todo")
+}
+
+// ReadTasks reads queued tasks
+func (e *Engine) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error {
+	panic("todo")
 }

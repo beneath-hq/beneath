@@ -1,18 +1,19 @@
 package main
 
 import (
+	"github.com/beneath-core/beneath-go/control/taskqueue/worker"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/taskqueue"
 
 	// import modules that register tasks in taskqueue
 	_ "github.com/beneath-core/beneath-go/control/entity"
 )
 
 type configSpecification struct {
-	StreamsDriver    string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
-	TablesDriver     string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
+	MQDriver         string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
+	LogDriver        string `envconfig:"ENGINE_LOG_DRIVER" required:"true"`
+	LookupDriver     string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
 	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
@@ -26,7 +27,7 @@ func main() {
 
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	db.InitRedis(config.RedisURL)
-	db.InitEngine(config.StreamsDriver, config.TablesDriver, config.WarehouseDriver)
+	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
 
-	log.S.Fatal(taskqueue.Work())
+	log.S.Fatal(worker.Work())
 }

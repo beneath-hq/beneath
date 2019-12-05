@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/stripe"
-	"github.com/beneath-core/beneath-go/taskqueue"
 	uuid "github.com/satori/go.uuid"
 )
 

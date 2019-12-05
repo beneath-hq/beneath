@@ -3,8 +3,8 @@ package entity
 import (
 	"time"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core/log"
-	"github.com/beneath-core/beneath-go/taskqueue"
 
 	"context"
 )
