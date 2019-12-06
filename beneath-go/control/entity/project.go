@@ -90,6 +90,21 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 	return project
 }
 
+// GetProjectID implements engine/driver.Project
+func (p *Project) GetProjectID() uuid.UUID {
+	return p.ProjectID
+}
+
+// GetProjectName implements engine/driver.Project
+func (p *Project) GetProjectName() string {
+	return p.Name
+}
+
+// GetPublic implements engine/driver.Project
+func (p *Project) GetPublic() bool {
+	return p.Public
+}
+
 // CreateWithUser creates a project and makes user a member
 func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
 	// validate
@@ -118,7 +133,7 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 			return err
 		}
 
-		err = db.Engine.Warehouse.RegisterProject(ctx, p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
+		err = db.Engine.RegisterProject(ctx, p)
 		if err != nil {
 			return err
 		}
@@ -182,7 +197,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 		}
 
 		// update in warehouse
-		err = db.Engine.Warehouse.UpdateProject(ctx, p.ProjectID, p.Public, p.Name, p.DisplayName, p.Description)
+		err = db.Engine.RegisterProject(ctx, p)
 		if err != nil {
 			return err
 		}
@@ -199,7 +214,7 @@ func (p *Project) Delete(ctx context.Context) error {
 			return err
 		}
 
-		err = db.Engine.Warehouse.DeregisterProject(ctx, p.ProjectID, p.Name)
+		err = db.Engine.RemoveProject(ctx, p)
 		if err != nil {
 			return err
 		}

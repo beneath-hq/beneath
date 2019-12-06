@@ -5,17 +5,11 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/db"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 // CleanupInstanceTask is a task that removes all data and tables related to an instance
 type CleanupInstanceTask struct {
-	InstanceID  uuid.UUID
-	StreamID    uuid.UUID
-	StreamName  string
-	ProjectID   uuid.UUID
-	ProjectName string
+	CachedStream *CachedStream
 }
 
 // register task
@@ -25,19 +19,7 @@ func init() {
 
 // Run triggers the task
 func (t *CleanupInstanceTask) Run(ctx context.Context) error {
-	// delete in bigquery
-	err := db.Engine.Warehouse.DeregisterStreamInstance(
-		ctx,
-		t.ProjectName,
-		t.StreamName,
-		t.InstanceID,
-	)
-	if err != nil {
-		return err
-	}
-
-	// delete in bigtable records
-	err = db.Engine.Tables.ClearRecords(ctx, t.InstanceID)
+	err := db.Engine.RemoveInstance(ctx, t.CachedStream, t.CachedStream, t.CachedStream)
 	if err != nil {
 		return err
 	}

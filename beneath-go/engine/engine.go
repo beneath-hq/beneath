@@ -1,14 +1,12 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/beneath-core/beneath-go/engine/driver"
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
 	"github.com/beneath-core/beneath-go/engine/driver/pubsub"
-	pb "github.com/beneath-core/beneath-go/proto"
 )
 
 // Engine interfaces with the data layer
@@ -81,29 +79,4 @@ func (e *Engine) CheckRecordSize(keyBytesLen int, avroBytesLen int) error {
 func (e *Engine) CheckBatchLength(length int) error {
 	// TODO
 	return nil
-}
-
-// QueueTask queues a task for processing
-func (e *Engine) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
-	panic("todo")
-}
-
-// ReadTasks reads queued tasks
-func (e *Engine) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error {
-	panic("todo")
-}
-
-// CommitUsage writes a batch of usage metrics
-func (e *Engine) CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error {
-	panic("todo")
-}
-
-// ReadSingleUsage reads usage metrics for one key
-func (e *Engine) ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsage, error) {
-	panic("todo")
-}
-
-// ReadUsage reads usage metrics for multiple periods and calls fn one by one
-func (e *Engine) ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error {
-	panic("todo")
 }

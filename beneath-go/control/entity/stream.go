@@ -100,6 +100,42 @@ func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UU
 	return getStreamCache().get(ctx, instanceID)
 }
 
+// GetStreamID implements engine/driver.Stream
+func (s *Stream) GetStreamID() uuid.UUID {
+	return s.StreamID
+}
+
+// GetStreamName implements engine/driver.Stream
+func (s *Stream) GetStreamName() string {
+	return s.Name
+}
+
+// GetRetention implements engine/driver.Stream
+func (s *Stream) GetRetention() time.Duration {
+	// TODO
+	return 0
+}
+
+// GetAvroSchema implements engine/driver.Stream
+func (s *Stream) GetAvroSchema() string {
+	return s.AvroSchema
+}
+
+// GetKeyFields implements engine/driver.Stream
+func (s *Stream) GetKeyFields() []string {
+	return s.KeyFields
+}
+
+// EncodeAvro implements engine/driver.Stream
+func (s *Stream) EncodeAvro(structured map[string]interface{}) ([]byte, error) {
+	panic(fmt.Errorf("Use EfficientStream for encoding Avro"))
+}
+
+// DecodeAvro implements engine/driver.Stream
+func (s *Stream) DecodeAvro(avro []byte) (map[string]interface{}, error) {
+	panic(fmt.Errorf("Use EfficientStream for decoding Avro"))
+}
+
 // Compile compiles s.Schema and sets relevant fields
 func (s *Stream) Compile(ctx context.Context, update bool) error {
 	// compile schema
@@ -220,14 +256,8 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 
 	// update in bigquery
 	if s.CurrentStreamInstanceID != nil {
-		err = db.Engine.Warehouse.UpdateStreamInstance(
-			tx.Context(),
-			s.Project.Name,
-			s.Name,
-			s.Description,
-			s.BigQuerySchema,
-			*s.CurrentStreamInstanceID,
-		)
+		cs := FindCachedStreamByCurrentInstanceID(tx.Context(), *s.CurrentStreamInstanceID)
+		err = db.Engine.RegisterInstance(tx.Context(), cs, cs, cs)
 		if err != nil {
 			return err
 		}
@@ -343,16 +373,7 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 	}
 
 	// register instance
-	err = db.Engine.Warehouse.RegisterStreamInstance(
-		tx.Context(),
-		s.Project.Name,
-		s.StreamID,
-		s.Name,
-		s.Description,
-		s.BigQuerySchema,
-		s.KeyFields,
-		si.StreamInstanceID,
-	)
+	err = db.Engine.RegisterInstance(tx.Context(), s.Project, s, si)
 	if err != nil {
 		return nil, err
 	}
@@ -406,14 +427,7 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 	}
 
 	// call on warehouse
-	err = db.Engine.Warehouse.PromoteStreamInstance(
-		tx.Context(),
-		s.Project.Name,
-		s.StreamID,
-		s.Name,
-		s.Description,
-		instance.StreamInstanceID,
-	)
+	err = db.Engine.PromoteInstance(tx.Context(), s.Project, s, instance)
 	if err != nil {
 		return err
 	}
@@ -464,11 +478,7 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error
 
 	// deregister
 	err = taskqueue.Submit(tx.Context(), &CleanupInstanceTask{
-		InstanceID:  si.StreamInstanceID,
-		StreamID:    s.StreamID,
-		StreamName:  s.Name,
-		ProjectID:   s.ProjectID,
-		ProjectName: s.Project.Name,
+		CachedStream: NewCachedStream(s, si.StreamInstanceID),
 	})
 	if err != nil {
 		return err

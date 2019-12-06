@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/xtgo/uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath
@@ -80,22 +80,19 @@ type WarehouseService interface {
 // Project encapsulates metadata about a Beneath project
 type Project interface {
 	GetProjectID() uuid.UUID
-	GetName() string
-	GetDisplayName() string
-	GetDescription() string
+	GetProjectName() string
 	GetPublic() bool
 }
 
 // Stream encapsulates metadata about a Beneath stream
 type Stream interface {
 	GetStreamID() uuid.UUID
-	GetName() string
-	GetDescription() string
+	GetStreamName() string
 	GetRetention() time.Duration
 	GetAvroSchema() string
 	GetKeyFields() []string
-	EncodeAvro(structured []map[string]interface{}) ([]byte, error)
-	DecodeAvro(avro []byte) ([]map[string]interface{}, error)
+	EncodeAvro(structured map[string]interface{}) ([]byte, error)
+	DecodeAvro(avro []byte) (map[string]interface{}, error)
 }
 
 // StreamInstance encapsulates metadata about a Beneath stream instance

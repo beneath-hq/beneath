@@ -14,10 +14,12 @@ import (
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
+	"github.com/vmihailenco/msgpack"
 )
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
+	InstanceID  uuid.UUID
 	StreamID    uuid.UUID
 	Public      bool
 	External    bool
@@ -42,6 +44,37 @@ type internalCachedStream struct {
 	StreamName          string
 	KeyFields           []string
 	CanonicalAvroSchema string
+}
+
+// NewCachedStream creates a CachedStream from a regular Stream object
+func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
+	if s.Project == nil {
+		panic("Stream project must be loaded")
+	}
+
+	committed := false
+	if s.CurrentStreamInstanceID != nil {
+		committed = *s.CurrentStreamInstanceID == instanceID
+	}
+
+	cod, err := codec.New(s.CanonicalAvroSchema, s.KeyFields)
+	if err != nil {
+		panic(err)
+	}
+
+	return &CachedStream{
+		InstanceID:  instanceID,
+		StreamID:    s.StreamID,
+		Public:      s.Project.Public,
+		External:    s.External,
+		Batch:       s.Batch,
+		Manual:      s.Manual,
+		Committed:   committed,
+		ProjectID:   s.Project.ProjectID,
+		ProjectName: s.Project.Name,
+		StreamName:  s.Name,
+		Codec:       cod,
+	}
 }
 
 // MarshalBinary serializes for storage in cache
@@ -83,6 +116,86 @@ func (c *CachedStream) UnmarshalBinary(data []byte) error {
 	}
 
 	return unwrapInternalCachedStream(&wrapped, c)
+}
+
+// Add support for msgpack
+var _ msgpack.CustomEncoder = (*CachedStream)(nil)
+var _ msgpack.CustomDecoder = (*CachedStream)(nil)
+
+// EncodeMsgpack adds support for encoding CachedStream with msgpack
+func (c *CachedStream) EncodeMsgpack(enc *msgpack.Encoder) error {
+	bin, err := c.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	return enc.EncodeBytes(bin)
+}
+
+// DecodeMsgpack adds support for decoding CachedStream with msgpack
+func (c *CachedStream) DecodeMsgpack(dec *msgpack.Decoder) error {
+	bin, err := dec.DecodeBytes()
+	if err != nil {
+		return err
+	}
+	return c.UnmarshalBinary(bin)
+}
+
+// CachedStream implements both engine/driver.Project and engine/driver.Stream
+
+// GetProjectID implements engine/driver.Project
+func (c *CachedStream) GetProjectID() uuid.UUID {
+	return c.ProjectID
+}
+
+// GetProjectName implements engine/driver.Project
+func (c *CachedStream) GetProjectName() string {
+	return c.ProjectName
+}
+
+// GetPublic implements engine/driver.Project
+func (c *CachedStream) GetPublic() bool {
+	return c.Public
+}
+
+// GetStreamInstanceID implements engine/driver.StreamInstance
+func (c *CachedStream) GetStreamInstanceID() uuid.UUID {
+	return c.InstanceID
+}
+
+// GetStreamID implements engine/driver.Stream
+func (c *CachedStream) GetStreamID() uuid.UUID {
+	return c.StreamID
+}
+
+// GetStreamName implements engine/driver.Stream
+func (c *CachedStream) GetStreamName() string {
+	return c.StreamName
+}
+
+// GetRetention implements engine/driver.Stream
+func (c *CachedStream) GetRetention() time.Duration {
+	// TODO
+	return 0
+}
+
+// GetAvroSchema implements engine/driver.Stream
+func (c *CachedStream) GetAvroSchema() string {
+	return c.Codec.GetAvroSchemaString()
+}
+
+// GetKeyFields implements engine/driver.Stream
+func (c *CachedStream) GetKeyFields() []string {
+	return c.Codec.GetKeyFields()
+}
+
+// EncodeAvro implements engine/driver.Stream
+func (c *CachedStream) EncodeAvro(structured map[string]interface{}) ([]byte, error) {
+	return c.Codec.MarshalAvro(structured)
+}
+
+// DecodeAvro implements engine/driver.Stream
+func (c *CachedStream) DecodeAvro(avro []byte) (map[string]interface{}, error) {
+	return c.Codec.UnmarshalAvro(avro)
 }
 
 // streamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
@@ -137,6 +250,10 @@ func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStrea
 
 	if cachedStream.ProjectID == uuid.Nil {
 		cachedStream = nil
+	}
+
+	if cachedStream != nil {
+		cachedStream.InstanceID = instanceID
 	}
 
 	// set in lru

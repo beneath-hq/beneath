@@ -22,6 +22,11 @@ type StreamInstance struct {
 	CommittedOn      time.Time
 }
 
+// GetStreamInstanceID implements engine/beneath/driver.StreamInstance
+func (si *StreamInstance) GetStreamInstanceID() uuid.UUID {
+	return si.StreamInstanceID
+}
+
 // FindStreamInstance finds an instance and related stream details
 func FindStreamInstance(ctx context.Context, instanceID uuid.UUID) *StreamInstance {
 	si := &StreamInstance{
