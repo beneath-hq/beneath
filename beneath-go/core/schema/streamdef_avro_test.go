@@ -12,7 +12,7 @@ import (
 func TestAvro1(t *testing.T) {
 	c := NewCompiler(`
 		" Docs, docs, docs, docs! "
-		type Test @stream(key: ["a", "b"]) {
+		type Test @stream @key(fields: ["a", "b"]) {
 			a: String!
 			b: Timestamp!
 			c: Bytes20
