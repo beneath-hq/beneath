@@ -32,6 +32,24 @@ type CachedStream struct {
 	Codec       *codec.Codec
 }
 
+// EfficientStreamIndex represents indexes in EfficientStream
+type EfficientStreamIndex struct {
+	StreamIndexID uuid.UUID
+	Fields        []string
+	Primary       bool
+	Normalize     bool
+}
+
+// GetIndexID implements codec.Index
+func (e EfficientStreamIndex) GetIndexID() uuid.UUID {
+	return e.StreamIndexID
+}
+
+// GetFields implements codec.Index
+func (e EfficientStreamIndex) GetFields() []string {
+	return e.Fields
+}
+
 type internalCachedStream struct {
 	StreamID            uuid.UUID
 	Public              bool
@@ -42,8 +60,8 @@ type internalCachedStream struct {
 	ProjectID           uuid.UUID
 	ProjectName         string
 	StreamName          string
-	KeyFields           []string
 	CanonicalAvroSchema string
+	Indexes             []EfficientStreamIndex
 }
 
 // NewCachedStream creates a CachedStream from a regular Stream object
@@ -57,24 +75,40 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 		committed = *s.CurrentStreamInstanceID == instanceID
 	}
 
-	cod, err := codec.New(s.CanonicalAvroSchema, s.KeyFields)
+	indexes := make([]EfficientStreamIndex, len(s.StreamIndexes))
+	for idx, index := range s.StreamIndexes {
+		indexes[idx] = EfficientStreamIndex{
+			StreamIndexID: index.StreamIndexID,
+			Fields:        index.Fields,
+			Primary:       index.Primary,
+			Normalize:     index.Normalize,
+		}
+	}
+
+	internal := &internalCachedStream{
+		StreamID:            s.StreamID,
+		Public:              s.Project.Public,
+		External:            s.External,
+		Batch:               s.Batch,
+		Manual:              s.Manual,
+		Committed:           committed,
+		ProjectID:           s.Project.ProjectID,
+		ProjectName:         s.Project.Name,
+		StreamName:          s.Name,
+		CanonicalAvroSchema: s.CanonicalAvroSchema,
+		Indexes:             indexes,
+	}
+
+	result := &CachedStream{
+		InstanceID: instanceID,
+	}
+
+	err := unwrapInternalCachedStream(internal, result)
 	if err != nil {
 		panic(err)
 	}
 
-	return &CachedStream{
-		InstanceID:  instanceID,
-		StreamID:    s.StreamID,
-		Public:      s.Project.Public,
-		External:    s.External,
-		Batch:       s.Batch,
-		Manual:      s.Manual,
-		Committed:   committed,
-		ProjectID:   s.Project.ProjectID,
-		ProjectName: s.Project.Name,
-		StreamName:  s.Name,
-		Codec:       cod,
-	}
+	return result
 }
 
 // MarshalBinary serializes for storage in cache
@@ -93,8 +127,11 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 
 	// necessary because we allow empty CachedStream objects
 	if c.Codec != nil {
-		wrapped.KeyFields = c.Codec.GetKeyFields()
 		wrapped.CanonicalAvroSchema = c.Codec.GetAvroSchemaString()
+		wrapped.Indexes = []EfficientStreamIndex{c.Codec.GetPrimaryIndex().(EfficientStreamIndex)}
+		for _, index := range c.Codec.GetSecondaryIndexes() {
+			wrapped.Indexes = append(wrapped.Indexes, index.(EfficientStreamIndex))
+		}
 	}
 
 	var buf bytes.Buffer
@@ -185,7 +222,7 @@ func (c *CachedStream) GetAvroSchema() string {
 
 // GetKeyFields implements engine/driver.Stream
 func (c *CachedStream) GetKeyFields() []string {
-	return c.Codec.GetKeyFields()
+	return c.Codec.GetPrimaryIndex().GetFields()
 }
 
 // EncodeAvro implements engine/driver.Stream
@@ -311,8 +348,8 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 					s.project_id,
 					p.name as project_name,
 					s.name as stream_name,
-					s.key_fields,
-					s.canonical_avro_schema
+					s.canonical_avro_schema,
+					s.key_stream_index_id
 				from stream_instances si
 				join streams s on si.stream_id = s.stream_id
 				join projects p on s.project_id = p.project_id
@@ -320,6 +357,20 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 			`, instanceID)
 
 		result := &CachedStream{}
+		if err == pg.ErrNoRows {
+			return result, nil
+		} else if err != nil {
+			return nil, err
+		}
+
+		_, err = db.DB.QueryContext(ctx, &internalResult.Indexes, `
+			select
+				stream_index_id,
+				fields,
+				normalize
+			from stream_indexes
+			where stream_id = ?
+		`, internalResult.StreamID)
 		if err == pg.ErrNoRows {
 			return result, nil
 		} else if err != nil {
@@ -345,8 +396,18 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 
 	// nil checks necessary because we allow empty CachedStream objects
 
-	if source.CanonicalAvroSchema != "" && len(source.KeyFields) != 0 {
-		target.Codec, err = codec.New(source.CanonicalAvroSchema, source.KeyFields)
+	if source.CanonicalAvroSchema != "" {
+		var primaryIndex codec.Index
+		var secondaryIndexes []codec.Index
+		for _, index := range source.Indexes {
+			if index.Primary {
+				primaryIndex = index
+			} else {
+				secondaryIndexes = append(secondaryIndexes, index)
+			}
+		}
+
+		target.Codec, err = codec.New(source.CanonicalAvroSchema, primaryIndex, secondaryIndexes)
 		if err != nil {
 			return err
 		}

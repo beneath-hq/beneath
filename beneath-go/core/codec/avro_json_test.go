@@ -13,7 +13,7 @@ import (
 
 func TestAvroJson1(t *testing.T) {
 	avroSchema := schema.MustCompileToAvro(`
-		type Test @stream(name: "test", key: ["one", "two"]) {
+		type Test @stream(name: "test") @key(fields: ["one", "two"]) {
 			one: String!
 			two: Timestamp!
 			three: TestA!

@@ -27,6 +27,8 @@ models:
     model: github.com/beneath-core/beneath-go/control/entity.Stream
   StreamInstance:
     model: github.com/beneath-core/beneath-go/control/entity.StreamInstance
+  StreamIndex:
+    model: github.com/beneath-core/beneath-go/control/entity.StreamIndex
   User:
     model: github.com/beneath-core/beneath-go/control/entity.User
   Organization:

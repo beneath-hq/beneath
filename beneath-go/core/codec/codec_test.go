@@ -11,19 +11,35 @@ import (
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/schema"
 	"github.com/go-test/deep"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
+// Index represents a set of fields to generate keys for
+type testIndex struct {
+	indexID uuid.UUID
+	fields  []string
+}
+
+func (i testIndex) GetIndexID() uuid.UUID {
+	return i.indexID
+}
+
+func (i testIndex) GetFields() []string {
+	return i.fields
+}
+
 func TestAvroSimple(t *testing.T) {
+	index := testIndex{fields: []string{"one"}}
 	avroSchema := schema.MustCompileToAvroString(`
-		type Test @stream(name: "test", key: "one") {
+		type Test @stream(name: "test") @key(fields: "one") {
 			one: String!
 			two: String!
 			three: Int64!
 		}
 	`)
 
-	codec, err := New(avroSchema, []string{"one"})
+	codec, err := New(avroSchema, index, nil)
 	assert.Nil(t, err)
 
 	valueJSON := []byte(`{
@@ -56,8 +72,9 @@ func TestAvroSimple(t *testing.T) {
 }
 
 func TestAvroComplex(t *testing.T) {
+	index := testIndex{fields: []string{"one"}}
 	avroSchema := schema.MustCompileToAvroString(`
-		type Test @stream(name: "test", key: "one") {
+		type Test @stream(name: "test") @key(fields: "one") {
 			one: String!
 			two: Bytes20!
 			three: Int64!
@@ -73,7 +90,7 @@ func TestAvroComplex(t *testing.T) {
 		}
 	`)
 
-	codec, err := New(avroSchema, []string{"one"})
+	codec, err := New(avroSchema, index, nil)
 	assert.Nil(t, err)
 
 	valueJSON := `{
@@ -113,9 +130,9 @@ func TestAvroComplex(t *testing.T) {
 }
 
 func TestKeySimple(t *testing.T) {
-	keyFields := []string{"k1", "k2", "k3", "k4"}
+	index := testIndex{fields: []string{"k1", "k2", "k3", "k4"}}
 	schemaString := schema.MustCompileToAvroString(`
-		type Test @stream(name: "test", key: ["k1", "k2", "k3", "k4"]) {
+		type Test @stream(name: "test") @key(fields: ["k1", "k2", "k3", "k4"]) {
 			k1: Bytes20!
 			k2: Int64!
 			k3: String!
@@ -123,10 +140,10 @@ func TestKeySimple(t *testing.T) {
 		}
 	`)
 
-	codec, err := New(schemaString, keyFields)
+	codec, err := New(schemaString, index, nil)
 	assert.Nil(t, err)
 
-	v1, err := codec.MarshalKey(map[string]interface{}{
+	v1, err := codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -135,7 +152,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v1)
 
-	v2, err := codec.MarshalKey(map[string]interface{}{
+	v2, err := codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -144,7 +161,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v2)
 
-	v3, err := codec.MarshalKey(map[string]interface{}{
+	v3, err := codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abcd",
@@ -153,7 +170,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v3)
 
-	v4, err := codec.MarshalKey(map[string]interface{}{
+	v4, err := codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 90000000000000,
 		"k3": "abc",
@@ -162,7 +179,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v4)
 
-	v5, err := codec.MarshalKey(map[string]interface{}{
+	v5, err := codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0xFF00000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -171,13 +188,13 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v5)
 
-	_, err = codec.MarshalKey(map[string]interface{}{
+	_, err = codec.MarshalPrimaryKey(map[string]interface{}{
 		"k1": hexToBytes("0xFF00000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k4": time.Date(1995, time.February, 1, 0, 0, 0, 0, time.UTC),
 	})
 	assert.NotNil(t, err)
-	assert.Equal(t, "Value for key field 'k3' is nil", err.Error())
+	assert.Equal(t, "Value for index field 'k3' is nil", err.Error())
 
 	assert.Equal(t, 60, len(v1))
 	assert.Equal(t, 60, len(v2))

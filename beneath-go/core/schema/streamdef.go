@@ -12,6 +12,6 @@ type StreamDef struct {
 
 // Index represents an index on one or more columns
 type Index struct {
-	Fields      []string
-	Denormalize bool
+	Fields    []string
+	Normalize bool
 }

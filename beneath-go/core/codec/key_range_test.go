@@ -15,7 +15,8 @@ func TestKeyRange1(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": "abc" }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "string"}]}`, []string{"a"})
+	index := testIndex{fields: []string{"a"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	r, err := NewKeyRange(c, q)
@@ -29,7 +30,8 @@ func TestKeyRange2(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100 } }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, []string{"a"})
+	index := testIndex{fields: []string{"a"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	r, err := NewKeyRange(c, q)
@@ -45,7 +47,8 @@ func TestKeyRange3(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, []string{"a"})
+	index := testIndex{fields: []string{"a"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	r, err := NewKeyRange(c, q)
@@ -62,7 +65,8 @@ func TestKeyRange4(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": 100, "b": { "_prefix": "ab" } }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
+	index := testIndex{fields: []string{"a", "b"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	r, err := NewKeyRange(c, q)
@@ -80,7 +84,8 @@ func TestKeyRange5(t *testing.T) {
 	q, err := queryparse.JSONStringToQuery(`{ "a": { "_prefix": 100 } }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
+	index := testIndex{fields: []string{"a", "b"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	_, err = NewKeyRange(c, q)
@@ -92,7 +97,8 @@ func TestKeyRange6(t *testing.T) {
 	where, err := queryparse.JSONStringToQuery(`{ "a": { "_eq": 100 } }`)
 	assert.Nil(t, err)
 
-	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, []string{"a", "b"})
+	index := testIndex{fields: []string{"a", "b"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
 	kr, err := NewKeyRange(c, where)

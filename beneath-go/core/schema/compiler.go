@@ -453,7 +453,7 @@ func (c *Compiler) parseIndexAnnotation(declaration *Declaration, annotation *An
 				return index, fmt.Errorf("key arg 'normalize' at %v must be a boolean", arg.Pos.String())
 			}
 			// parse as "true" or "false"
-			index.Denormalize = arg.Value.Symbol != "true"
+			index.Normalize = arg.Value.Symbol == "true"
 		case "fields":
 			err := fmt.Errorf("arg 'fields' at %v is not a string or array of strings", arg.Pos.String())
 			if arg.Value.String != "" {

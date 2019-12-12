@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/linkedin/goavro/v2"
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 	"github.com/beneath-core/beneath-go/core/queryparse"
-	"github.com/linkedin/goavro/v2"
 )
 
 // Codec marshals keys (potentially multiple values) into lexicographically sortable binary
@@ -22,15 +24,26 @@ type Codec struct {
 	avroCodec        *goavro.Codec
 	avroSchema       map[string]interface{}
 	avroSchemaString string
-	keyFields        []string
-	keyAvroTypes     []interface{}
+	avroFieldTypes   map[string]interface{}
+	primaryIndex     Index
+	secondaryIndexes []Index
+}
+
+// Index represents a set of fields to generate keys for
+type Index interface {
+	// GetIndexID should return a globally unique identifier for the index
+	GetIndexID() uuid.UUID
+
+	// GetFields should return the list of fields for encoding keys in the index
+	GetFields() []string
 }
 
 // New creates a new Codec for encoding records between JSON and Avro and keys
-func New(avroSchema string, keyFields []string) (*Codec, error) {
+func New(avroSchema string, primaryIndex Index, secondaryIndexes []Index) (*Codec, error) {
 	codec := &Codec{}
 	codec.avroSchemaString = avroSchema
-	codec.keyFields = keyFields
+	codec.primaryIndex = primaryIndex
+	codec.secondaryIndexes = secondaryIndexes
 
 	// parse avro schema
 	err := json.Unmarshal([]byte(avroSchema), &codec.avroSchema)
@@ -44,26 +57,26 @@ func New(avroSchema string, keyFields []string) (*Codec, error) {
 		return nil, fmt.Errorf("cannot create avro codec: %v", err.Error())
 	}
 
-	// make map of field types (for computing keyAvroTypes)
+	// make map of field types (for efficient lookup when encoding keys)
 	avroFields := codec.avroSchema["fields"].([]interface{})
 	avroFieldTypes := make(map[string]interface{}, len(avroFields))
 	for _, avroFieldT := range avroFields {
 		avroField := avroFieldT.(map[string]interface{})
 		avroFieldTypes[avroField["name"].(string)] = avroField["type"]
 	}
-
-	// make list of types matching key fields
-	codec.keyAvroTypes = make([]interface{}, len(keyFields))
-	for idx, field := range keyFields {
-		codec.keyAvroTypes[idx] = avroFieldTypes[field]
-	}
+	codec.avroFieldTypes = avroFieldTypes
 
 	return codec, nil
 }
 
-// GetKeyFields returns the key fields that the codec encodes
-func (c *Codec) GetKeyFields() []string {
-	return c.keyFields
+// GetPrimaryIndex returns the primary index passed on creation
+func (c *Codec) GetPrimaryIndex() Index {
+	return c.primaryIndex
+}
+
+// GetSecondaryIndexes returns the secondary indexes passed on creation
+func (c *Codec) GetSecondaryIndexes() []Index {
+	return c.secondaryIndexes
 }
 
 // GetAvroSchema returns the avro schema as a map
@@ -74,26 +87,6 @@ func (c *Codec) GetAvroSchema() map[string]interface{} {
 // GetAvroSchemaString returns the avro schema as a string
 func (c *Codec) GetAvroSchemaString() string {
 	return c.avroSchemaString
-}
-
-// MarshalKey returns the binary representation of the record key
-// Input must have been parsed into Avro native form
-func (c *Codec) MarshalKey(data map[string]interface{}) ([]byte, error) {
-	// prepare tuple
-	t := make(tuple.Tuple, len(c.keyFields))
-
-	// add value for every keyField, preserving their order
-	for idx, field := range c.keyFields {
-		val := data[field]
-		if val == nil {
-			return nil, fmt.Errorf("Value for key field '%s' is nil", field)
-		}
-
-		t[idx] = val
-	}
-
-	// encode
-	return t.Pack(), nil
 }
 
 // MarshalAvro returns the binary representation of the record
@@ -157,6 +150,30 @@ func (c *Codec) ConvertFromAvroNative(avroNative map[string]interface{}, convert
 	}
 
 	return res, nil
+}
+
+// MarshalPrimaryKey returns the binary representation of the record key.
+// Input must have been parsed into Avro native form
+func (c *Codec) MarshalPrimaryKey(data map[string]interface{}) ([]byte, error) {
+	return c.marshalKey(data, c.primaryIndex)
+}
+
+func (c *Codec) marshalKey(data map[string]interface{}, index Index) ([]byte, error) {
+	// prepare tuple
+	t := make(tuple.Tuple, len(index.GetFields()))
+
+	// add value for every keyField, preserving their order
+	for idx, field := range index.GetFields() {
+		val := data[field]
+		if val == nil {
+			return nil, fmt.Errorf("Value for index field '%s' is nil", field)
+		}
+
+		t[idx] = val
+	}
+
+	// encode
+	return t.Pack(), nil
 }
 
 // MakeKeyRange creates a KeyRange for the key encoded by the codec based on a query and a page offset (after)

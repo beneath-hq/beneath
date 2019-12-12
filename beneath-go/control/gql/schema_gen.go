@@ -48,6 +48,7 @@ type ResolverRoot interface {
 	Service() ServiceResolver
 	ServiceSecret() ServiceSecretResolver
 	Stream() StreamResolver
+	StreamIndex() StreamIndexResolver
 	StreamInstance() StreamInstanceResolver
 	Subscription() SubscriptionResolver
 	User() UserResolver
@@ -266,14 +267,22 @@ type ComplexityRoot struct {
 		External                func(childComplexity int) int
 		InstancesCommittedCount func(childComplexity int) int
 		InstancesCreatedCount   func(childComplexity int) int
-		KeyFields               func(childComplexity int) int
 		Manual                  func(childComplexity int) int
 		Name                    func(childComplexity int) int
 		Project                 func(childComplexity int) int
+		RetentionSeconds        func(childComplexity int) int
 		Schema                  func(childComplexity int) int
 		SourceModel             func(childComplexity int) int
 		StreamID                func(childComplexity int) int
+		StreamIndexes           func(childComplexity int) int
 		UpdatedOn               func(childComplexity int) int
+	}
+
+	StreamIndex struct {
+		Fields    func(childComplexity int) int
+		IndexID   func(childComplexity int) int
+		Normalize func(childComplexity int) int
+		Primary   func(childComplexity int) int
 	}
 
 	StreamInstance struct {
@@ -397,6 +406,9 @@ type ServiceSecretResolver interface {
 }
 type StreamResolver interface {
 	StreamID(ctx context.Context, obj *entity.Stream) (string, error)
+}
+type StreamIndexResolver interface {
+	IndexID(ctx context.Context, obj *entity.StreamIndex) (string, error)
 }
 type StreamInstanceResolver interface {
 	InstanceID(ctx context.Context, obj *entity.StreamInstance) (string, error)
@@ -1810,13 +1822,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.InstancesCreatedCount(childComplexity), true
 
-	case "Stream.keyFields":
-		if e.complexity.Stream.KeyFields == nil {
-			break
-		}
-
-		return e.complexity.Stream.KeyFields(childComplexity), true
-
 	case "Stream.manual":
 		if e.complexity.Stream.Manual == nil {
 			break
@@ -1837,6 +1842,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Stream.Project(childComplexity), true
+
+	case "Stream.retentionSeconds":
+		if e.complexity.Stream.RetentionSeconds == nil {
+			break
+		}
+
+		return e.complexity.Stream.RetentionSeconds(childComplexity), true
 
 	case "Stream.schema":
 		if e.complexity.Stream.Schema == nil {
@@ -1859,12 +1871,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.StreamID(childComplexity), true
 
+	case "Stream.streamIndexes":
+		if e.complexity.Stream.StreamIndexes == nil {
+			break
+		}
+
+		return e.complexity.Stream.StreamIndexes(childComplexity), true
+
 	case "Stream.updatedOn":
 		if e.complexity.Stream.UpdatedOn == nil {
 			break
 		}
 
 		return e.complexity.Stream.UpdatedOn(childComplexity), true
+
+	case "StreamIndex.fields":
+		if e.complexity.StreamIndex.Fields == nil {
+			break
+		}
+
+		return e.complexity.StreamIndex.Fields(childComplexity), true
+
+	case "StreamIndex.indexID":
+		if e.complexity.StreamIndex.IndexID == nil {
+			break
+		}
+
+		return e.complexity.StreamIndex.IndexID(childComplexity), true
+
+	case "StreamIndex.normalize":
+		if e.complexity.StreamIndex.Normalize == nil {
+			break
+		}
+
+		return e.complexity.StreamIndex.Normalize(childComplexity), true
+
+	case "StreamIndex.primary":
+		if e.complexity.StreamIndex.Primary == nil {
+			break
+		}
+
+		return e.complexity.StreamIndex.Primary(childComplexity), true
 
 	case "StreamInstance.committedOn":
 		if e.complexity.StreamInstance.CommittedOn == nil {
@@ -2381,20 +2428,25 @@ type Stream {
   streamID: ID!
   name: String!
   description: String
+  createdOn: Time!
+  updatedOn: Time!
+  project: Project!
+  sourceModel: Model
+
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
-  keyFields: [String!]!
+
+  streamIndexes: [StreamIndex!]!
+
   external: Boolean!
   batch: Boolean!
   manual: Boolean!
-  project: Project!
-  currentStreamInstanceID: UUID
+  retentionSeconds: Int!
+  
   instancesCreatedCount: Int!
   instancesCommittedCount: Int!
-  sourceModel: Model
-  createdOn: Time!
-  updatedOn: Time!
+  currentStreamInstanceID: UUID
 }
 
 type StreamInstance {
@@ -2402,6 +2454,13 @@ type StreamInstance {
   stream: Stream!
   createdOn: Time!
   committedOn: Time!
+}
+
+type StreamIndex {
+  indexID: ID!
+  fields: [String!]!
+  primary: Boolean!
+  normalize: Boolean!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/users.graphql", Input: `extend type Query {
@@ -9806,6 +9865,151 @@ func (ec *executionContext) _Stream_description(ctx context.Context, field graph
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Project, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SourceModel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Model)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_schema(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -9917,7 +10121,7 @@ func (ec *executionContext) _Stream_canonicalAvroSchema(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_keyFields(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_streamIndexes(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -9936,7 +10140,7 @@ func (ec *executionContext) _Stream_keyFields(ctx context.Context, field graphql
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.KeyFields, nil
+		return obj.StreamIndexes, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9948,10 +10152,10 @@ func (ec *executionContext) _Stream_keyFields(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]*entity.StreamIndex)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
+	return ec.marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamIndex(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -10065,7 +10269,7 @@ func (ec *executionContext) _Stream_manual(ctx context.Context, field graphql.Co
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_retentionSeconds(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -10084,7 +10288,7 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Project, nil
+		return obj.RetentionSeconds, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10096,44 +10300,10 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*entity.Project)
+	res := resTmp.(int32)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CurrentStreamInstanceID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*uuid.UUID)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_instancesCreatedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -10210,7 +10380,7 @@ func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context,
 	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -10229,7 +10399,7 @@ func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graph
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SourceModel, nil
+		return obj.CurrentStreamInstanceID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10238,13 +10408,13 @@ func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entity.Model)
+	res := resTmp.(*uuid.UUID)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _StreamIndex_indexID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamIndex) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -10254,16 +10424,16 @@ func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql
 		ec.Tracer.EndFieldExecution(ctx)
 	}()
 	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
+		Object:   "StreamIndex",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedOn, nil
+		return ec.resolvers.StreamIndex().IndexID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10275,13 +10445,13 @@ func (ec *executionContext) _Stream_createdOn(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _StreamIndex_fields(ctx context.Context, field graphql.CollectedField, obj *entity.StreamIndex) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -10291,7 +10461,7 @@ func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql
 		ec.Tracer.EndFieldExecution(ctx)
 	}()
 	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
+		Object:   "StreamIndex",
 		Field:    field,
 		Args:     nil,
 		IsMethod: false,
@@ -10300,7 +10470,7 @@ func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedOn, nil
+		return obj.Fields, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10312,10 +10482,84 @@ func (ec *executionContext) _Stream_updatedOn(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.([]string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StreamIndex_primary(ctx context.Context, field graphql.CollectedField, obj *entity.StreamIndex) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "StreamIndex",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Primary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StreamIndex_normalize(ctx context.Context, field graphql.CollectedField, obj *entity.StreamIndex) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "StreamIndex",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Normalize, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _StreamInstance_instanceID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
@@ -13668,6 +13912,23 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "description":
 			out.Values[i] = ec._Stream_description(ctx, field, obj)
+		case "createdOn":
+			out.Values[i] = ec._Stream_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "updatedOn":
+			out.Values[i] = ec._Stream_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "project":
+			out.Values[i] = ec._Stream_project(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "sourceModel":
+			out.Values[i] = ec._Stream_sourceModel(ctx, field, obj)
 		case "schema":
 			out.Values[i] = ec._Stream_schema(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13683,8 +13944,8 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "keyFields":
-			out.Values[i] = ec._Stream_keyFields(ctx, field, obj)
+		case "streamIndexes":
+			out.Values[i] = ec._Stream_streamIndexes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -13703,13 +13964,11 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "project":
-			out.Values[i] = ec._Stream_project(ctx, field, obj)
+		case "retentionSeconds":
+			out.Values[i] = ec._Stream_retentionSeconds(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "currentStreamInstanceID":
-			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
 		case "instancesCreatedCount":
 			out.Values[i] = ec._Stream_instancesCreatedCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13720,15 +13979,56 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "sourceModel":
-			out.Values[i] = ec._Stream_sourceModel(ctx, field, obj)
-		case "createdOn":
-			out.Values[i] = ec._Stream_createdOn(ctx, field, obj)
+		case "currentStreamInstanceID":
+			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var streamIndexImplementors = []string{"StreamIndex"}
+
+func (ec *executionContext) _StreamIndex(ctx context.Context, sel ast.SelectionSet, obj *entity.StreamIndex) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, streamIndexImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StreamIndex")
+		case "indexID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StreamIndex_indexID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "fields":
+			out.Values[i] = ec._StreamIndex_fields(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "updatedOn":
-			out.Values[i] = ec._Stream_updatedOn(ctx, field, obj)
+		case "primary":
+			out.Values[i] = ec._StreamIndex_primary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "normalize":
+			out.Values[i] = ec._StreamIndex_normalize(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -14700,6 +15000,57 @@ func (ec *executionContext) marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbe
 		return graphql.Null
 	}
 	return ec._Stream(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStreamIndex2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v entity.StreamIndex) graphql.Marshaler {
+	return ec._StreamIndex(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamIndex) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStreamIndex2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamIndex(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNStreamIndex2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v *entity.StreamIndex) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._StreamIndex(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStreamInstance2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v entity.StreamInstance) graphql.Marshaler {

@@ -18,30 +18,40 @@ import (
 
 // Stream represents a collection of data
 type Stream struct {
-	StreamID                uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name                    string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, user_id) index
-	Description             string    `validate:"omitempty,lte=255"`
-	Schema                  string    `sql:",notnull",validate:"required"`
-	AvroSchema              string    `sql:",type:json,notnull",validate:"required"`
-	CanonicalAvroSchema     string    `sql:",type:json,notnull",validate:"required"`
-	BigQuerySchema          string    `sql:"bigquery_schema,type:json,notnull",validate:"required"`
-	KeyFields               []string  `sql:",notnull",validate:"required,gte=1"`
-	External                bool      `sql:",notnull"`
-	Batch                   bool      `sql:",notnull"`
-	Manual                  bool      `sql:",notnull"`
-	InstancesCreatedCount   int32     `sql:",notnull,default:0"`
-	InstancesCommittedCount int32     `sql:",notnull,default:0"`
-	ProjectID               uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
-	Project                 *Project
-	SourceModelID           *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
-	SourceModel             *Model
-	DerivedModels           []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
+	// Descriptive fields
+	StreamID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name          string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, user_id) index
+	Description   string    `validate:"omitempty,lte=255"`
+	CreatedOn     time.Time `sql:",default:now()"`
+	UpdatedOn     time.Time `sql:",default:now()"`
+	DeletedOn     time.Time `sql:",default:now()"`
+	ProjectID     uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
+	Project       *Project
+	SourceModelID *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
+	SourceModel   *Model
+	DerivedModels []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
+
+	// Schema-related fields
+	Schema              string `sql:",notnull",validate:"required"`
+	AvroSchema          string `sql:",type:json,notnull",validate:"required"`
+	CanonicalAvroSchema string `sql:",type:json,notnull",validate:"required"`
+	BigQuerySchema      string `sql:"bigquery_schema,type:json,notnull",validate:"required"`
+
+	// Indexes
+	StreamIndexes []*StreamIndex
+
+	// Behaviour-related fields
+	External         bool  `sql:",notnull"`
+	Batch            bool  `sql:",notnull"`
+	Manual           bool  `sql:",notnull"`
+	RetentionSeconds int32 `sql:",notnull,default:0"`
+
+	// Instances-related fields
+	InstancesCreatedCount   int32 `sql:",notnull,default:0"`
+	InstancesCommittedCount int32 `sql:",notnull,default:0"`
 	StreamInstances         []*StreamInstance
 	CurrentStreamInstanceID *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
 	CurrentStreamInstance   *StreamInstance
-	CreatedOn               time.Time `sql:",default:now()"`
-	UpdatedOn               time.Time `sql:",default:now()"`
-	DeletedOn               time.Time
 }
 
 var (
@@ -69,7 +79,10 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	stream := &Stream{
 		StreamID: streamID,
 	}
-	err := db.DB.ModelContext(ctx, stream).WherePK().Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel").Select()
+	err := db.DB.ModelContext(ctx, stream).
+		WherePK().
+		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
+		Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -80,7 +93,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 func FindStreamByNameAndProject(ctx context.Context, name string, projectName string) *Stream {
 	stream := &Stream{}
 	err := db.DB.ModelContext(ctx, stream).
-		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel").
+		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
 		Where("lower(stream.name) = lower(?)", name).
 		Where("lower(project.name) = lower(?)", projectName).
 		Select()
@@ -123,7 +136,7 @@ func (s *Stream) GetAvroSchema() string {
 
 // GetKeyFields implements engine/driver.Stream
 func (s *Stream) GetKeyFields() []string {
-	return s.KeyFields
+	panic(fmt.Errorf("Use EfficientStream for encoding keys"))
 }
 
 // EncodeAvro implements engine/driver.Stream
@@ -176,14 +189,19 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 		if s.Name != streamDef.Name {
 			return fmt.Errorf("Cannot change stream name in an update")
 		}
-		if !reflect.DeepEqual(s.KeyFields, streamDef.KeyFields) {
-			return fmt.Errorf("Cannot change stream keys in an update")
+
+		if !s.indexesEqual(streamDef) {
+			return fmt.Errorf("Cannot change stream key or indexes in an update")
 		}
+	}
+
+	// set indexes
+	if !update {
+		s.assignIndexes(streamDef)
 	}
 
 	// set missing stream fields
 	s.Name = streamDef.Name
-	s.KeyFields = streamDef.KeyFields
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
 	s.BigQuerySchema = bqSchema
@@ -203,12 +221,72 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 	return nil
 }
 
+// Sets StreamIndexes to new StreamIndex objects based on def.
+// Doesn't execute any DB actions, so doesn't set any IDs.
+func (s *Stream) assignIndexes(def *schema.StreamDef) {
+	primary := &StreamIndex{
+		Fields:    def.KeyIndex.Fields,
+		Primary:   true,
+		Normalize: def.KeyIndex.Normalize,
+	}
+
+	s.StreamIndexes = []*StreamIndex{primary}
+
+	for _, index := range def.SecondaryIndexes {
+		s.StreamIndexes = append(s.StreamIndexes, &StreamIndex{
+			Fields:    index.Fields,
+			Primary:   false,
+			Normalize: index.Normalize,
+		})
+	}
+}
+
+// Returns true if the indexes defined in def match
+func (s *Stream) indexesEqual(def *schema.StreamDef) bool {
+	if len(s.StreamIndexes) != len(def.SecondaryIndexes)+1 {
+		return false
+	}
+
+	equal := true
+	for _, index := range s.StreamIndexes {
+		if index.Primary {
+			equal = equal && index.Normalize == def.KeyIndex.Normalize
+			equal = equal && reflect.DeepEqual(index.Fields, def.KeyIndex.Fields)
+		} else {
+			found := false
+			for _, secondary := range def.SecondaryIndexes {
+				if index.Normalize == secondary.Normalize {
+					if reflect.DeepEqual(index.Fields, secondary.Fields) {
+						found = true
+						break
+					}
+				}
+			}
+			equal = equal && found
+		}
+		if !equal {
+			break
+		}
+	}
+
+	return equal
+}
+
 // CreateWithTx creates the stream and an associated instance (if streaming) using tx
 func (s *Stream) CreateWithTx(tx *pg.Tx) error {
 	// insert stream
 	_, err := tx.Model(s).Insert()
 	if err != nil {
 		return err
+	}
+
+	// create indexes
+	for _, index := range s.StreamIndexes {
+		index.StreamID = s.StreamID
+		_, err := tx.Model(index).Insert()
+		if err != nil {
+			return err
+		}
 	}
 
 	// create and set stream instance if not batch
@@ -266,6 +344,34 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 	return nil
 }
 
+// Delete deletes a stream and all its related instances
+func (s *Stream) Delete(ctx context.Context) error {
+	// get instances
+	var instances []*StreamInstance
+	err := db.DB.ModelContext(ctx, &instances).
+		Where("stream_id = ?", s.StreamID).
+		Select()
+	if err != nil {
+		return err
+	}
+
+	// delete instances
+	for _, inst := range instances {
+		err := s.DeleteStreamInstance(ctx, inst)
+		if err != nil {
+			return err
+		}
+	}
+
+	// delete stream
+	err = db.DB.WithContext(ctx).Delete(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CompileAndCreate compiles the schema, derives name and avro schemas and inserts
 // the stream into the database
 func (s *Stream) CompileAndCreate(ctx context.Context) error {
@@ -301,34 +407,6 @@ func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.UpdateWithTx(tx)
 	})
-}
-
-// Delete deletes a stream and all its related instances
-func (s *Stream) Delete(ctx context.Context) error {
-	// get instances
-	var instances []*StreamInstance
-	err := db.DB.ModelContext(ctx, &instances).
-		Where("stream_id = ?", s.StreamID).
-		Select()
-	if err != nil {
-		return err
-	}
-
-	// delete instances
-	for _, inst := range instances {
-		err := s.DeleteStreamInstance(ctx, inst)
-		if err != nil {
-			return err
-		}
-	}
-
-	// delete stream
-	err = db.DB.WithContext(ctx).Delete(s)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // CreateStreamInstance creates a new instance

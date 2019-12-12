@@ -24,20 +24,25 @@ type Stream {
   streamID: ID!
   name: String!
   description: String
+  createdOn: Time!
+  updatedOn: Time!
+  project: Project!
+  sourceModel: Model
+
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
-  keyFields: [String!]!
+
+  streamIndexes: [StreamIndex!]!
+
   external: Boolean!
   batch: Boolean!
   manual: Boolean!
-  project: Project!
-  currentStreamInstanceID: UUID
+  retentionSeconds: Int!
+  
   instancesCreatedCount: Int!
   instancesCommittedCount: Int!
-  sourceModel: Model
-  createdOn: Time!
-  updatedOn: Time!
+  currentStreamInstanceID: UUID
 }
 
 type StreamInstance {
@@ -45,4 +50,11 @@ type StreamInstance {
   stream: Stream!
   createdOn: Time!
   committedOn: Time!
+}
+
+type StreamIndex {
+  indexID: ID!
+  fields: [String!]!
+  primary: Boolean!
+  normalize: Boolean!
 }
