@@ -11,13 +11,9 @@ message Record {
   int64 timestamp = 2;
 }
 
-message WriteRecordsRequest {
-  bytes instance_id = 1;
-  repeated Record records = 2;
-}
-
 message WriteRecordsReport {
   bytes instance_id = 1;
   int64 bytes_written = 2;
-  repeated bytes keys = 3;
+  int64 offset_start = 3;
+  int32 offset_end = 4;
 }

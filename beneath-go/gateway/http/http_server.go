@@ -17,7 +17,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/gateway/websockets"
+	"github.com/beneath-core/beneath-go/gateway/http/websockets"
 	pb "github.com/beneath-core/beneath-go/proto"
 
 	"github.com/go-chi/chi"
@@ -26,13 +26,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// ListenAndServeHTTP serves a HTTP API
-func ListenAndServeHTTP(port int) error {
-	log.S.Infow("gateway http started", "port", port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), httpHandler())
-}
-
-func httpHandler() http.Handler {
+// Handler serves the gateway HTTP API
+func Handler() http.Handler {
 	handler := chi.NewRouter()
 
 	handler.Use(chimiddleware.RealIP)

@@ -105,7 +105,7 @@ func NewBroker(engine *engine.Engine, metricsBroker *metrics.Broker) *Broker {
 
 	// initialize reading data from engine (puts data on Dispatch, which is read in runForever)
 	go func() {
-		err := engine.Streams.ReadWriteReports(broker.handleWriteReport)
+		err := engine.ReadWriteReports(broker.handleWriteReport)
 		if err != nil {
 			panic(err)
 		}

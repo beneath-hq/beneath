@@ -9,49 +9,42 @@ package proto;
 import "engine.proto";
 
 service Gateway {
-  rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
-  rpc ReadLatestRecords(ReadLatestRecordsRequest) returns (ReadRecordsResponse) {}
   rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
-  rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+  rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
+
+  rpc LookupRecords(LookupRecordsRequest) returns (LookupRecordsResponse) {}
+
   rpc SendClientPing(ClientPing) returns (ClientPong) {}
+  rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+}
+
+message WriteRecordsRequest {
+  bytes instance_id = 1;
+  repeated Record records = 2;
+}
+
+message WriteRecordsResponse {
 }
 
 message ReadRecordsRequest {
   bytes instance_id = 1;
-  int32 limit = 2;
-  string where = 3;
-  string after = 4;
+  int64 offset = 2;
+  int32 limit = 3;
 }
 
 message ReadRecordsResponse {
   repeated Record records = 1;
 }
 
-message ReadLatestRecordsRequest {
+message LookupRecordsRequest {
   bytes instance_id = 1;
   int32 limit = 2;
-  int64 before = 3;
+  string where = 3;
+  string after = 4;
 }
 
-message WriteRecordsResponse {
-}
-
-message StreamDetailsRequest {
-  string project_name = 1;
-  string stream_name  = 2;
-}
-
-message StreamDetailsResponse {
-  bytes current_instance_id = 1;
-  bytes project_id = 2;
-  string project_name = 3;
-  string stream_name = 4;
-  repeated string key_fields = 5;
-  string avro_schema = 6;
-  bool public = 7;
-  bool external = 8;
-  bool batch = 9;
-  bool manual = 10;
+message LookupRecordsResponse {
+  repeated Record records = 1;
 }
 
 message ClientPing {
@@ -63,4 +56,32 @@ message ClientPong {
   bool authenticated = 1;
   string status = 2;
   string recommended_version = 3;
+}
+
+message StreamDetailsRequest {
+  string project_name = 1;
+  string stream_name  = 2;
+}
+
+message StreamDetailsResponse {
+  bytes project_id = 1;
+  string project_name = 2;
+  bytes stream_id = 3;
+  string stream_name = 4;
+  bytes current_instance_id = 5;
+  bool public = 6;
+  bool external = 7;
+  bool batch = 8;
+  bool manual = 9;
+  bool committed = 10;
+  int32 retention_seconds = 11;
+  string avro_schema = 12;
+  repeated StreamIndexDetails indexes = 13;
+}
+
+message StreamIndexDetails {
+  bytes index_id = 1;
+  repeated string key_fields = 2;
+  bool primary = 3;
+  bool normalize = 4;
 }
