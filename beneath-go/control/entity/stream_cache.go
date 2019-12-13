@@ -19,17 +19,18 @@ import (
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
-	InstanceID  uuid.UUID
-	StreamID    uuid.UUID
-	Public      bool
-	External    bool
-	Batch       bool
-	Manual      bool
-	Committed   bool
-	ProjectID   uuid.UUID
-	ProjectName string
-	StreamName  string
-	Codec       *codec.Codec
+	InstanceID       uuid.UUID
+	StreamID         uuid.UUID
+	Public           bool
+	External         bool
+	Batch            bool
+	Manual           bool
+	Committed        bool
+	RetentionSeconds int32
+	ProjectID        uuid.UUID
+	ProjectName      string
+	StreamName       string
+	Codec            *codec.Codec
 }
 
 // EfficientStreamIndex represents indexes in EfficientStream
@@ -57,6 +58,7 @@ type internalCachedStream struct {
 	Batch               bool
 	Manual              bool
 	Committed           bool
+	RetentionSeconds    int32
 	ProjectID           uuid.UUID
 	ProjectName         string
 	StreamName          string
@@ -92,6 +94,7 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 		Batch:               s.Batch,
 		Manual:              s.Manual,
 		Committed:           committed,
+		RetentionSeconds:    s.RetentionSeconds,
 		ProjectID:           s.Project.ProjectID,
 		ProjectName:         s.Project.Name,
 		StreamName:          s.Name,
@@ -114,15 +117,16 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 // MarshalBinary serializes for storage in cache
 func (c CachedStream) MarshalBinary() ([]byte, error) {
 	wrapped := internalCachedStream{
-		StreamID:    c.StreamID,
-		Public:      c.Public,
-		External:    c.External,
-		Batch:       c.Batch,
-		Manual:      c.Manual,
-		Committed:   c.Committed,
-		ProjectID:   c.ProjectID,
-		ProjectName: c.ProjectName,
-		StreamName:  c.StreamName,
+		StreamID:         c.StreamID,
+		Public:           c.Public,
+		External:         c.External,
+		Batch:            c.Batch,
+		Manual:           c.Manual,
+		Committed:        c.Committed,
+		RetentionSeconds: c.RetentionSeconds,
+		ProjectID:        c.ProjectID,
+		ProjectName:      c.ProjectName,
+		StreamName:       c.StreamName,
 	}
 
 	// necessary because we allow empty CachedStream objects
@@ -215,24 +219,9 @@ func (c *CachedStream) GetRetention() time.Duration {
 	return 0
 }
 
-// GetAvroSchema implements engine/driver.Stream
-func (c *CachedStream) GetAvroSchema() string {
-	return c.Codec.GetAvroSchemaString()
-}
-
-// GetKeyFields implements engine/driver.Stream
-func (c *CachedStream) GetKeyFields() []string {
-	return c.Codec.GetPrimaryIndex().GetFields()
-}
-
-// EncodeAvro implements engine/driver.Stream
-func (c *CachedStream) EncodeAvro(structured map[string]interface{}) ([]byte, error) {
-	return c.Codec.MarshalAvro(structured)
-}
-
-// DecodeAvro implements engine/driver.Stream
-func (c *CachedStream) DecodeAvro(avro []byte) (map[string]interface{}, error) {
-	return c.Codec.UnmarshalAvro(avro)
+// GetCodec implements engine/driver.Stream
+func (c *CachedStream) GetCodec() *codec.Codec {
+	return c.Codec
 }
 
 // streamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
@@ -345,6 +334,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 					s.batch,
 					s.manual,
 					si.committed_on is not null as committed,
+					s.retention_seconds,
 					s.project_id,
 					p.name as project_name,
 					s.name as stream_name,
@@ -390,6 +380,7 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.Batch = source.Batch
 	target.Manual = source.Manual
 	target.Committed = source.Committed
+	target.RetentionSeconds = source.RetentionSeconds
 	target.ProjectID = source.ProjectID
 	target.ProjectName = source.ProjectName
 	target.StreamName = source.StreamName

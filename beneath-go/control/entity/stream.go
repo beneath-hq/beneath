@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/codec"
+
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
@@ -125,28 +127,12 @@ func (s *Stream) GetStreamName() string {
 
 // GetRetention implements engine/driver.Stream
 func (s *Stream) GetRetention() time.Duration {
-	// TODO
-	return 0
+	return time.Duration(s.RetentionSeconds) * time.Second
 }
 
-// GetAvroSchema implements engine/driver.Stream
-func (s *Stream) GetAvroSchema() string {
-	return s.AvroSchema
-}
-
-// GetKeyFields implements engine/driver.Stream
-func (s *Stream) GetKeyFields() []string {
-	panic(fmt.Errorf("Use EfficientStream for encoding keys"))
-}
-
-// EncodeAvro implements engine/driver.Stream
-func (s *Stream) EncodeAvro(structured map[string]interface{}) ([]byte, error) {
-	panic(fmt.Errorf("Use EfficientStream for encoding Avro"))
-}
-
-// DecodeAvro implements engine/driver.Stream
-func (s *Stream) DecodeAvro(avro []byte) (map[string]interface{}, error) {
-	panic(fmt.Errorf("Use EfficientStream for decoding Avro"))
+// GetCodec implements engine/driver.Stream
+func (s *Stream) GetCodec() *codec.Codec {
+	panic(fmt.Errorf("Use EfficientStream if you need the codec"))
 }
 
 // Compile compiles s.Schema and sets relevant fields
