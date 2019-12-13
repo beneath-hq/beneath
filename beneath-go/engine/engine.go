@@ -70,8 +70,10 @@ func (e *Engine) Healthy() bool {
 }
 
 // CheckRecordSize validates that the record fits within the constraints of the underlying infrastructure
-func (e *Engine) CheckRecordSize(keyBytesLen int, avroBytesLen int) error {
+func (e *Engine) CheckRecordSize(s driver.Stream, structured map[string]interface{}, avroBytesLen int) error {
 	// TODO
+	// all index keys
+	// record length
 	return nil
 }
 

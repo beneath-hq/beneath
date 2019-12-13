@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/codec"
+
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -89,10 +91,7 @@ type Stream interface {
 	GetStreamID() uuid.UUID
 	GetStreamName() string
 	GetRetention() time.Duration
-	GetAvroSchema() string
-	GetKeyFields() []string
-	EncodeAvro(structured map[string]interface{}) ([]byte, error)
-	DecodeAvro(avro []byte) (map[string]interface{}, error)
+	GetCodec() *codec.Codec
 }
 
 // StreamInstance encapsulates metadata about a Beneath stream instance
@@ -103,7 +102,7 @@ type StreamInstance interface {
 // RecordsReader allows iterating over a list of records in various formats
 type RecordsReader interface {
 	Count() int
-	GetKey(idx int) []byte // maybe remove if add cdec to Stream?
+	GetKey(idx int) []byte
 	GetTimestamp(idx int) time.Time
 	GetAvro(idx int) []byte
 	GetStructured(idx int) []map[string]interface{}
