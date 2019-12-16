@@ -23,8 +23,9 @@ class BillingTab extends React.Component<BillingTabProps, BillingTabState> {
   }
 
   componentDidMount() {
-    // Create Stripe instance in componentDidMount (componentDidMount only fires in browser/DOM environment)
-    this.setState({ stripe: window.Stripe('pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr') });
+    // Create Stripe instance in componentDidMount (componentDidMount only fires in browser/DOM environment) 
+    // note that updating the state like this will cause the CheckoutForm to fire/initially render twice
+    this.setState({ stripe: window.Stripe('pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr') })
   }
 
   render() {
