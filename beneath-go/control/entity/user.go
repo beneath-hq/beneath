@@ -18,24 +18,23 @@ import (
 
 // User represents a Beneath user
 type User struct {
-	UserID             uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Username           string    `sql:",notnull",validate:"gte=3,lte=50"`
-	Email              string    `sql:",notnull",validate:"required,email"`
-	Name               string    `sql:",notnull",validate:"required,gte=1,lte=50"`
-	Bio                string    `validate:"omitempty,lte=255"`
-	PhotoURL           string    `validate:"omitempty,url,lte=400"`
-	GoogleID           string    `sql:",unique",validate:"omitempty,lte=255"`
-	GithubID           string    `sql:",unique",validate:"omitempty,lte=255"`
-	CreatedOn          time.Time `sql:",default:now()"`
-	UpdatedOn          time.Time `sql:",default:now()"`
-	DeletedOn          time.Time
-	MainOrganizationID *uuid.UUID `sql:",type:uuid"`
-	MainOrganization   *Organization
-	Projects           []*Project      `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
-	Organizations      []*Organization `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
-	Secrets            []*UserSecret
-	ReadQuota          int64
-	WriteQuota         int64
+	UserID         uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Username       string    `sql:",notnull",validate:"gte=3,lte=50"`
+	Email          string    `sql:",notnull",validate:"required,email"`
+	Name           string    `sql:",notnull",validate:"required,gte=1,lte=50"`
+	Bio            string    `validate:"omitempty,lte=255"`
+	PhotoURL       string    `validate:"omitempty,url,lte=400"`
+	GoogleID       string    `sql:",unique",validate:"omitempty,lte=255"`
+	GithubID       string    `sql:",unique",validate:"omitempty,lte=255"`
+	CreatedOn      time.Time `sql:",default:now()"`
+	UpdatedOn      time.Time `sql:",default:now()"`
+	DeletedOn      time.Time
+	OrganizationID *uuid.UUID `sql:",type:uuid"`
+	Organization   *Organization
+	Projects       []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
+	Secrets        []*UserSecret
+	ReadQuota      int64
+	WriteQuota     int64
 }
 
 var (
@@ -44,11 +43,11 @@ var (
 )
 
 const (
-	// DefaultUserReadQuota is the default read quota for user keys
-	DefaultUserReadQuota = 100000000
+	// DefaultUserReadQuota is the Free plan's read quota for user keys
+	DefaultUserReadQuota = 100000000 // unit: bytes
 
-	// DefaultUserWriteQuota is the default write quota for user keys
-	DefaultUserWriteQuota = 100000000
+	// DefaultUserWriteQuota is the Free plan's write quota for user keys
+	DefaultUserWriteQuota = 100000000 // unit: bytes
 
 	usernameMinLength = 3
 	usernameMaxLength = 50
@@ -174,6 +173,9 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	if !create {
 		user.UpdatedOn = time.Now()
 		err = tx.Update(user)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// try out all username seeds
 		for _, username := range usernameSeeds {
@@ -201,10 +203,48 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 				return nil, err
 			}
 		}
-	}
 
-	if err != nil {
-		return nil, err
+		// create a "personal" organization for the user
+		org := &Organization{
+			Name:     user.Username,
+			Personal: true,
+		}
+
+		_, err := tx.Model(org).Insert()
+		if err != nil {
+			return nil, err
+		}
+
+		// update user.OrganizationID
+		user.OrganizationID = &org.OrganizationID
+		err = tx.Update(user)
+		if err != nil {
+			return nil, err
+		}
+
+		// add user to user-organization permissions table
+		err = tx.Insert(&PermissionsUsersOrganizations{
+			UserID:         user.UserID,
+			OrganizationID: org.OrganizationID,
+			View:           true,
+			Admin:          true,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// create billing info and setup with anarchism payments driver
+		bi := &BillingInfo{}
+		bi.OrganizationID = org.OrganizationID
+		bi.BillingPlanID = uuid.FromStringOrNil(FreeBillingPlanID)
+		bi.PaymentsDriver = AnarchismDriver
+		driverPayload := make(map[string]interface{})
+		bi.DriverPayload = driverPayload
+
+		_, err = tx.Model(bi).Insert()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = tx.Commit()
@@ -217,7 +257,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	// Segment.Client.Enqueue(analytics.Identify{
 	// UserId: user.UserID,
 	// Traits: analytics.NewTraits().
-	//   Set("organization", user.MainOrganizationID),
+	//   Set("organization", user.OrganizationID),
 	// })
 
 	if create {
@@ -238,7 +278,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 // Delete removes the user from the database
 func (u *User) Delete(ctx context.Context) error {
 	isMidPeriod := true
-	err := commitUsageToBill(ctx, *u.MainOrganizationID, UserEntityKind, u.UserID, isMidPeriod)
+	err := commitUsageToBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, isMidPeriod)
 	if err != nil {
 		return err
 	}

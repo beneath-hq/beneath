@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/control/billing"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
@@ -21,7 +21,7 @@ func main() {
 	core.LoadConfig("beneath", &config)
 	db.InitEngine(config.StreamsDriver, config.TablesDriver, config.WarehouseDriver)
 
-	err := taskqueue.Submit(context.Background(), &entity.RunBillingTask{})
+	err := taskqueue.Submit(context.Background(), &billing.RunBillingTask{})
 	if err != nil {
 		log.S.Errorw("Error creating task", err)
 	}

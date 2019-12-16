@@ -9,9 +9,10 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type Card struct {
-	Brand string `json:"brand"`
-	Last4 string `json:"last4"`
+type BillingInfo struct {
+	OrganizationID uuid.UUID `json:"organizationID"`
+	BillingPlanID  uuid.UUID `json:"billingPlanID"`
+	PaymentsDriver string    `json:"paymentsDriver"`
 }
 
 type CreateModelInput struct {
@@ -27,16 +28,15 @@ type CreateModelInput struct {
 }
 
 type Me struct {
-	UserID           string                 `json:"userID"`
-	User             *entity.User           `json:"user"`
-	Email            string                 `json:"email"`
-	Organizations    []*entity.Organization `json:"organizations"`
-	MainOrganization *entity.Organization   `json:"mainOrganization"`
-	ReadUsage        int                    `json:"readUsage"`
-	ReadQuota        int                    `json:"readQuota"`
-	WriteUsage       int                    `json:"writeUsage"`
-	WriteQuota       int                    `json:"writeQuota"`
-	UpdatedOn        time.Time              `json:"updatedOn"`
+	UserID       string               `json:"userID"`
+	User         *entity.User         `json:"user"`
+	Email        string               `json:"email"`
+	Organization *entity.Organization `json:"organization"`
+	ReadUsage    int                  `json:"readUsage"`
+	ReadQuota    int                  `json:"readQuota"`
+	WriteUsage   int                  `json:"writeUsage"`
+	WriteQuota   int                  `json:"writeQuota"`
+	UpdatedOn    time.Time            `json:"updatedOn"`
 }
 
 type Metrics struct {

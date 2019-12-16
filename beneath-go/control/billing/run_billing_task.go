@@ -1,8 +1,9 @@
-package entity
+package billing
 
 import (
 	"time"
 
+	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/taskqueue"
 
@@ -20,7 +21,7 @@ func init() {
 
 // Run triggers the task
 func (t *RunBillingTask) Run(ctx context.Context) error {
-	organizations := FindAllOrganizations(ctx)
+	organizations := entity.FindAllOrganizations(ctx)
 	timestamp := time.Now()
 
 	for _, o := range organizations {

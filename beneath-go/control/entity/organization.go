@@ -21,33 +21,7 @@ type Organization struct {
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
 	Services       []*Service
-	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
-
-	// Extract to table BillingInfo with OrganizationID as the primary key
-	// Including UpdateBillingPlanID, UpdateStripeCustomerID, UpdatePaymentMethod
-	StripeCustomerID string
-	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
-	BillingPlan      *BillingPlan
-	PaymentMethod    PaymentMethodType
-	// CreatedOn        time.Time `sql:",default:now()"`
-	// UpdatedOn        time.Time `sql:",default:now()"`
-	// DeletedOn        time.Time
-	// Services         []*Service
-	// Users            []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
-}
-
-// PaymentMethod represents an organization's payment method
-type PaymentMethod struct {
-	OrganizationID uuid.UUID
-	Type           PaymentMethodType
-	Card           *Card
-	// Wire *Wire
-}
-
-// Card represents an credit/debit card used for billing
-type Card struct {
-	Brand string
-	Last4 string
+	Users          []*User
 }
 
 var (
@@ -75,7 +49,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users", "BillingPlan").Select()
+	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -87,7 +61,7 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := db.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Services", "Users", "BillingPlan").
+		Column("organization.*", "Services", "Users").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -106,10 +80,11 @@ func FindAllOrganizations(ctx context.Context) []Organization {
 }
 
 // CreateOrganizationWithUser creates an organization
-func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID) (*Organization, error) {
+func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID, personal bool) (*Organization, error) {
 	// create
 	org := &Organization{
-		Name: name,
+		Name:     name,
+		Personal: personal,
 	}
 
 	// validate
@@ -212,28 +187,4 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 	})
-}
-
-// UpdateBillingPlanID updates an organization's billing plan ID
-func (o *Organization) UpdateBillingPlanID(ctx context.Context, billingPlanID uuid.UUID) (*Organization, error) {
-	o.BillingPlanID = billingPlanID
-	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("billing_plan_id", "updated_on").WherePK().Update()
-	return o, err
-}
-
-// UpdateStripeCustomerID updates an organization's Stripe Customer ID
-func (o *Organization) UpdateStripeCustomerID(ctx context.Context, stripeCustomerID string) error {
-	o.StripeCustomerID = stripeCustomerID
-	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("stripe_customer_id", "updated_on").WherePK().Update()
-	return err
-}
-
-// UpdatePaymentMethod updates an organization's payment method type
-func (o *Organization) UpdatePaymentMethod(ctx context.Context, paymentMethodType PaymentMethodType) error {
-	o.PaymentMethod = paymentMethodType
-	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("payment_method", "updated_on").WherePK().Update()
-	return err
 }

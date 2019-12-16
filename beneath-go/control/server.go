@@ -2,9 +2,7 @@ package control
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -13,25 +11,22 @@ import (
 	"github.com/vektah/gqlparser/ast"
 
 	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/payments"
 
 	"github.com/beneath-core/beneath-go/control/auth"
-	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/control/resolver"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/segment"
-	"github.com/beneath-core/beneath-go/core/stripe"
 	"github.com/beneath-core/beneath-go/db"
-	stripe_go "github.com/stripe/stripe-go"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
@@ -44,6 +39,8 @@ type configSpecification struct {
 	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
 	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
 	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
+
+	PaymentsDrivers []string `envconfig:"PAYMENTS_DRIVERS" required:"true"`
 
 	StreamsDriver   string `envconfig:"ENGINE_STREAMS_DRIVER" required:"true"`
 	TablesDriver    string `envconfig:"ENGINE_TABLES_DRIVER" required:"true"`
@@ -78,8 +75,8 @@ func init() {
 	// init segment
 	segment.InitClient(Config.SegmentSecret)
 
-	// init stripe
-	stripe.InitClient(Config.StripeSecret)
+	// init payment drivers
+	payments.InitDrivers(Config.PaymentsDrivers)
 
 	// configure auth
 	auth.InitGoth(&auth.GothConfig{
@@ -142,8 +139,17 @@ func ListenAndServeHTTP(port int) error {
 		}),
 	))
 
-	// Add stripe webhook
-	router.Handle("/webhook", httputil.AppHandler(handleStripeWebhook))
+	// Add payments handlers
+	for _, driverName := range Config.PaymentsDrivers {
+		driver, err := payments.GetDriver(driverName)
+		if err != nil {
+			panic("could not set up payment drivers")
+		}
+		for subpath, handler := range driver.GetHTTPHandlers() {
+			path := fmt.Sprintf("/billing/%s/%s", driverName, subpath)
+			router.Handle(path, httputil.AppHandler(handler))
+		}
+	}
 
 	// Serve
 	log.S.Infow("control http started", "port", port)
@@ -229,65 +235,4 @@ func segmentMiddleware(next http.Handler) http.Handler {
 			segment.TrackHTTP(r, name, l)
 		}
 	})
-}
-
-// TODO: move this code to its own server
-// TODO(review): Yes; Expose the webhook from Stripe, then register it in the control servere;
-//               and not under "/webhook", but rather "/billing/stripe/webhook"
-func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
-	ctx := context.Background()
-	const MaxBodyBytes = int64(65536)
-	req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
-	payload, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		log.S.Errorf("Error reading request body: %v\\n", err)
-		return err
-	}
-
-	event := stripe_go.Event{}
-
-	if err := json.Unmarshal(payload, &event); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.S.Errorf("Failed to parse webhook body json: %v\\n", err.Error())
-		return err
-	}
-
-	switch event.Type {
-	case "setup_intent.succeeded":
-		var setupIntent stripe_go.SetupIntent
-		err := json.Unmarshal(event.Data.Raw, &setupIntent)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			log.S.Errorf("Error parsing webhook JSON: %v\\n", err)
-			return err
-		}
-
-		organization := entity.FindOrganization(ctx, uuid.FromStringOrNil(setupIntent.Metadata["OrganizationID"]))
-		if organization == nil {
-			panic("organization not found")
-		}
-
-		paymentMethod := stripe.RetrievePaymentMethod(setupIntent.PaymentMethod.ID)
-
-		customer, err := stripe.CreateCustomer(organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod)
-		if err != nil {
-			log.S.Errorf("Stripe error: %s", err.Error())
-			return err
-		}
-
-		organization.UpdateStripeCustomerID(ctx, customer.ID)
-		organization.UpdatePaymentMethod(ctx, entity.CardPaymentMethod)
-		organization.UpdateBillingPlanID(ctx, uuid.FromStringOrNil(setupIntent.Metadata["BillingPlanID"]))
-		// TODO: update organization user permissions? maybe put this in the organization.UpdateBillingPlanID() function
-	case "setup_intent.setup_failed":
-		// stripe.HandleSetupIntentFailed(setupIntent)
-	default:
-		w.WriteHeader(http.StatusBadRequest)
-		log.S.Errorf("Unexpected event type: %s", event.Type)
-		return err
-	}
-
-	w.WriteHeader(http.StatusOK)
-	return nil
 }
