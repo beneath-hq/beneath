@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/go-redis/redis_rate/v8"
@@ -38,7 +39,7 @@ func IPRateLimit() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return httputil.AppHandler(func(w http.ResponseWriter, r *http.Request) error {
 			secret := GetSecret(r.Context())
-			if secret == nil {
+			if secret == nil || reflect.ValueOf(secret).IsNil() {
 				// check rate limit
 				ip, _, err := net.SplitHostPort(r.RemoteAddr)
 				if err != nil {

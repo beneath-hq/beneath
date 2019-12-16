@@ -60,6 +60,7 @@ func GetTags(ctx context.Context) *Tags {
 	if !ok {
 		panic(fmt.Errorf("couldn't get tags from context"))
 	}
+	// Q: Elsewhere in the code, I had to specially handle "tags.Secret == nil" using "reflect.ValueOf(secret).IsNil()". Should we handle it here instead?
 	return tags
 }
 
