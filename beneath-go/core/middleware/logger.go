@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"reflect"
 	"time"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
@@ -97,7 +98,7 @@ func LoggerStreamServerInterceptor() grpc.StreamServerInterceptor {
 }
 
 func loggerWithTags(l *zap.Logger, tags *Tags) *zap.Logger {
-	if tags.Secret != nil {
+	if tags.Secret != nil && !reflect.ValueOf(tags.Secret).IsNil() {
 		if tags.Secret.IsUser() {
 			l = l.With(
 				zap.String("secret", tags.Secret.GetSecretID().String()),
