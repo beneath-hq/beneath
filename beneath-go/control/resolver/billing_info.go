@@ -22,7 +22,7 @@ func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUI
 
 	billingInfoGQL := &gql.BillingInfo{
 		OrganizationID: billingInfo.OrganizationID,
-		BillingPlanID:  billingInfo.BillingPlanID,
+		BillingPlan:    billingInfo.BillingPlan,
 		PaymentsDriver: string(billingInfo.PaymentsDriver),
 	}
 

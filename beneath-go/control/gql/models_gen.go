@@ -10,9 +10,9 @@ import (
 )
 
 type BillingInfo struct {
-	OrganizationID uuid.UUID `json:"organizationID"`
-	BillingPlanID  uuid.UUID `json:"billingPlanID"`
-	PaymentsDriver string    `json:"paymentsDriver"`
+	OrganizationID uuid.UUID           `json:"organizationID"`
+	BillingPlan    *entity.BillingPlan `json:"billingPlan"`
+	PaymentsDriver string              `json:"paymentsDriver"`
 }
 
 type CreateModelInput struct {

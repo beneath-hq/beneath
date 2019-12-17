@@ -20,6 +20,10 @@ func (r *billingPlanResolver) Currency(ctx context.Context, obj *entity.BillingP
 	return string(obj.Currency), nil
 }
 
+func (r *billingPlanResolver) Period(ctx context.Context, obj *entity.BillingPlan) (string, error) {
+	return string(obj.Period), nil
+}
+
 func (r *queryResolver) BillingPlan(ctx context.Context, billingPlanID uuid.UUID) (*entity.BillingPlan, error) {
 	// Q: should we check admin privileges before returning billing plan?
 	// secret := middleware.GetSecret(ctx)

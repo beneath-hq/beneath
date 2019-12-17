@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 	}
 
 	BillingInfo struct {
-		BillingPlanID  func(childComplexity int) int
+		BillingPlan    func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
 		PaymentsDriver func(childComplexity int) int
 	}
@@ -86,6 +86,7 @@ type ComplexityRoot struct {
 		BillingPlanID          func(childComplexity int) int
 		Currency               func(childComplexity int) int
 		Description            func(childComplexity int) int
+		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
 		SeatPriceCents         func(childComplexity int) int
 		SeatReadQuota          func(childComplexity int) int
@@ -312,6 +313,7 @@ type BilledResourceResolver interface {
 }
 type BillingPlanResolver interface {
 	Currency(ctx context.Context, obj *entity.BillingPlan) (string, error)
+	Period(ctx context.Context, obj *entity.BillingPlan) (string, error)
 }
 type ModelResolver interface {
 	ModelID(ctx context.Context, obj *entity.Model) (string, error)
@@ -508,12 +510,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BilledResource.UpdatedOn(childComplexity), true
 
-	case "BillingInfo.billingPlanID":
-		if e.complexity.BillingInfo.BillingPlanID == nil {
+	case "BillingInfo.billingPlan":
+		if e.complexity.BillingInfo.BillingPlan == nil {
 			break
 		}
 
-		return e.complexity.BillingInfo.BillingPlanID(childComplexity), true
+		return e.complexity.BillingInfo.BillingPlan(childComplexity), true
 
 	case "BillingInfo.organizationID":
 		if e.complexity.BillingInfo.OrganizationID == nil {
@@ -563,6 +565,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.Description(childComplexity), true
+
+	case "BillingPlan.period":
+		if e.complexity.BillingPlan.Period == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.Period(childComplexity), true
 
 	case "BillingPlan.readOveragePriceCents":
 		if e.complexity.BillingPlan.ReadOveragePriceCents == nil {
@@ -2071,14 +2080,14 @@ type BilledResource {
   billingInfo(organizationID: UUID!): BillingInfo!
 }
 
-# this might be re-used if we update billing info (billing plan, payment driver) from front-end
+# this might be re-used?
 # extend type Mutation {
 #   updateBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
 # }
 
 type BillingInfo {
   organizationID: UUID!
-  billingPlanID: UUID!
+  billingPlan: BillingPlan!
 	paymentsDriver: String!
 }
 `},
@@ -2090,6 +2099,7 @@ type BillingPlan {
   billingPlanID: UUID!
 	description: String
 	currency: String!
+	period: String!
 	seatPriceCents: Int!
 	seatReadQuota: Int!
 	seatWriteQuota: Int!
@@ -2175,8 +2185,8 @@ extend type Mutation {
   createOrganization(name: String!): Organization!
   addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
-  # updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations
   updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
+  # updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations
 }
 
 type Organization {
@@ -4053,7 +4063,7 @@ func (ec *executionContext) _BillingInfo_organizationID(ctx context.Context, fie
 	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingInfo_billingPlanID(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4072,7 +4082,7 @@ func (ec *executionContext) _BillingInfo_billingPlanID(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BillingPlanID, nil
+		return obj.BillingPlan, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4084,10 +4094,10 @@ func (ec *executionContext) _BillingInfo_billingPlanID(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(uuid.UUID)
+	res := resTmp.(*entity.BillingPlan)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNBillingPlan2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingInfo_paymentsDriver(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
@@ -4218,6 +4228,43 @@ func (ec *executionContext) _BillingPlan_currency(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BillingPlan().Currency(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_period(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BillingPlan().Period(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12075,8 +12122,8 @@ func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "billingPlanID":
-			out.Values[i] = ec._BillingInfo_billingPlanID(ctx, field, obj)
+		case "billingPlan":
+			out.Values[i] = ec._BillingInfo_billingPlan(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12123,6 +12170,20 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._BillingPlan_currency(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "period":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BillingPlan_period(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

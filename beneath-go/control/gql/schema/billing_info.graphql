@@ -9,6 +9,6 @@ extend type Query {
 
 type BillingInfo {
   organizationID: UUID!
-  billingPlanID: UUID!
+  billingPlan: BillingPlan!
 	paymentsDriver: String!
 }
