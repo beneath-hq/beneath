@@ -14,9 +14,9 @@ import { QUERY_BILLING_INFO } from '../../apollo/queries/bililnginfo';
 // OUTLINE
 // check whether customer is paying or not paying -- check via billing info
 
-// if not paying: cards for Pro plan (buy now), for Enterprise plan (contact us)
+// if not paying: cards for Pro plan (buy now), for Enterprise plan (request demo)
 // Buy now (switch state to isBuyingNow): insert card details, refetch billing info
-// Contact us (switch state to isContactingUs): fill out a form and we'll get back to you; switch state to isWaitingForBeneath
+// Request Demo (switch state to isRequestingDemo): fill out a form and we'll get back to you; switch state to isWaitingForBeneath
 
 // if paying:
 // current plan details
@@ -81,7 +81,7 @@ interface Props {
 
 interface CheckoutStateTypes {
   isBuyingNow: boolean,
-  isContactingUs: boolean,
+  isRequestingDemo: boolean,
   customerData: PaymentMethodData | null,
   isLoading: boolean,
   error: string | null,
@@ -96,7 +96,7 @@ interface CheckoutStateTypes {
 const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   const [values, setValues] = React.useState<CheckoutStateTypes>({
     isBuyingNow: false,
-    isContactingUs: false,
+    isRequestingDemo: false,
     customerData: null,
     isLoading: false,
     error: null,
@@ -128,7 +128,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   }
 
   // Handle submission of Card details and Customer Data
-  const handleSubmit = (ev: any) => {
+  const handleCardDetailsFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
     ev.preventDefault();
 
@@ -160,58 +160,58 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
 
   const CardDetailsForm = (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleCardDetailsFormSubmit}>
         {/* <TextField
             id="firstname"
-            label="Firstname"
+            label="First name"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="lastname"
-            label="Lastname"
+            label="Last name"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="address_line1"
-            label="Address_line1"
+            label="Address line 1"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="address_line2"
-            label="Address_line2"
+            label="Address line 2"
             margin="normal"
             fullWidth
           />
           <TextField
             id="address_city"
-            label="Address_city"
+            label="City"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="address_state"
-            label="Address_state"
+            label="State"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="address_zip"
-            label="Address_zip"
+            label="Zip code"
             margin="normal"
             fullWidth
             required
           />
           <TextField
             id="address_country"
-            label="Address_country"
+            label="Country"
             margin="normal"
             fullWidth
             required
@@ -225,7 +225,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
         )}
         {values.status !== null && (
           <Typography variant="body1" color="error">
-            {status}
+            {values.status}
           </Typography>
         )}
       </form>
@@ -237,7 +237,60 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
         Back
           </Button>
     </div>
-  );
+  )
+
+  // Handle submission of Card details and Customer Data
+  const handleRequestDemoFormSubmit = (ev: any) => {
+    // We don't want to let default form submission happen here, which would refresh the page.
+    ev.preventDefault();
+
+    // TODO: send email to Beneath
+
+    return
+  }
+
+  const RequestDemoForm = (
+    <div>
+      <form onSubmit={handleRequestDemoFormSubmit}>
+        <TextField
+          id="workemail"
+          label="Your work email"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="phonenumber"
+          label="Your phone number"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="fullname"
+          label="Your name"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <TextField
+          id="companyname"
+          label="Company name"
+          margin="normal"
+          fullWidth
+          required
+        />
+        <button>Submit</button>
+      </form>
+      <Button
+        variant="contained"
+        onClick={() => {
+          setValues({ ...values, ...{ isRequestingDemo: false } })
+        }}>
+        Back
+      </Button>
+    </div>
+  )
 
   // When card form is submitted (and Customer Data changes), initiate setupIntent
   const headers = { authorization: `Bearer ${token}` };
@@ -304,7 +357,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
       // customer is browsing the different payment plans
       return (
         <div>
-          <p>You are on the free plan. Consider the following plans: Pro plan (buy now), Enterprise plan (contact us)</p>
+          <p>You are on the free plan. Consider the following plans: Pro plan (buy now), Enterprise plan (request demo)</p>
           <Button
             variant="contained"
             color="secondary"
@@ -317,9 +370,9 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             variant="contained"
             color="secondary"
             onClick={() => {
-              setValues({ ...values, ...{ isContactingUs: true } })
+              setValues({ ...values, ...{ isRequestingDemo: true } })
             }}>
-            Contact Us
+            Request Demo
           </Button>
         </div>)
     } else {
@@ -346,6 +399,10 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
         return <p>Error: {JSON.stringify(values.error)}</p>;
       }
 
+      if (values.isRequestingDemo === true) {
+        return RequestDemoForm
+      }
+
       if (values.isBuyingNow === false) {
         // current card details
         return (
@@ -361,10 +418,21 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
                 setValues({ ...values, ...{ isBuyingNow: true } })
               }}>
               Change card on file
+            </Button>
+            <Typography variant="body1">Interested in upgrading to an Enterprise plan?</Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setValues({ ...values, ...{ isRequestingDemo: true } })
+              }}>
+              Request Demo
           </Button>
           </div>
         );
-      } else {
+      }
+      
+      if (values.isBuyingNow === true) {
         // update card
         return CardDetailsForm
       }
