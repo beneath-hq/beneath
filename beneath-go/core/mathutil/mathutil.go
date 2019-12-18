@@ -1,5 +1,7 @@
 package mathutil
 
+import "fmt"
+
 // MinInt implements min for ints
 func MinInt(a, b int) int {
 	if a > b {
@@ -14,4 +16,20 @@ func MaxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// MinInts returns the lowest input value
+func MinInts(xs ...int) int {
+	if len(xs) == 0 {
+		panic(fmt.Errorf("cannot compute min on empty list"))
+	}
+
+	y := xs[0]
+	for i := 1; i < len(xs); i++ {
+		if xs[i] < y {
+			y = xs[i]
+		}
+	}
+
+	return y
 }
