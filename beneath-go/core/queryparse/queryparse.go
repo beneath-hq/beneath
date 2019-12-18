@@ -78,7 +78,11 @@ func (o ConditionOp) String() string {
 
 // JSONStringToQuery is a wrapper for JSONToQuery
 func JSONStringToQuery(json string) (Query, error) {
-	return JSONReaderToQuery(strings.NewReader(json))
+	if json != "" {
+		return JSONReaderToQuery(strings.NewReader(json))
+	}
+	var query Query
+	return query, nil
 }
 
 // JSONReaderToQuery is a wrapper for JSONToQuery
