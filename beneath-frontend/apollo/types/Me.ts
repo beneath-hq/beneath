@@ -18,7 +18,7 @@ export interface Me_me_user_projects {
 export interface Me_me_user {
   __typename: "User";
   userID: string;
-  username: string | null;
+  username: string;
   name: string;
   bio: string | null;
   photoURL: string | null;

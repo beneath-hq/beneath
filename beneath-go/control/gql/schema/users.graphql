@@ -10,7 +10,7 @@ extend type Mutation {
 
 type User {
   userID: ID!
-  username: String
+  username: String!
   name: String!
   bio: String
   photoURL: String

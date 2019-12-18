@@ -9,7 +9,7 @@
 export interface UpdateMe_updateMe_user {
   __typename: "User";
   userID: string;
-  username: string | null;
+  username: string;
   name: string;
   bio: string | null;
   photoURL: string | null;

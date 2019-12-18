@@ -18,7 +18,7 @@ export interface User_user_projects {
 export interface User_user {
   __typename: "User";
   userID: string;
-  username: string | null;
+  username: string;
   name: string;
   bio: string | null;
   photoURL: string | null;
