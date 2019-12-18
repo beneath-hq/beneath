@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-go/core/codec"
+	"github.com/beneath-core/beneath-go/core/queryparse"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -56,58 +57,88 @@ type Service interface {
 type Log interface {
 	Service
 
-	// ReadRecords should return up to limit records starting at offset
-	ReadRecords(ctx context.Context, p Project, s Stream, i StreamInstance, offset int, limit int) (RecordsIterator, error)
+	// ParseLogQuery should return a cursor for the given log query
+	ParseLogQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query) ([]byte, error)
 
-	// AppendRecords should insert the records in r at the next free offset
-	AppendRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) (offset int, err error)
+	// ReadLog should return a RecordsIterator returning records from the log starting at the given cursor
+	ReadLog(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
+
+	// WriteToLog should insert the records in r into the instance's log
+	WriteToLog(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
 }
 
 // LookupService encapsulates functionality to efficiently lookup indexed records in an instance
 type LookupService interface {
 	Service
 
-	// WriteRecords should insert the records in r for lookup in the given instance
-	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
+	// ParseLookupQuery should return a cursor for the given lookup query
+	ParseLookupQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query) ([]byte, error)
+
+	// ReadLookup should return a RecordsIterator looking up records starting at the given cursor
+	ReadLookup(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
+
+	// WriteRecords should insert the records in r for lookup in the instance
+	WriteToLookup(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance
 type WarehouseService interface {
 	Service
 
-	// WriteRecords should insert the records in r for querying on the given instance
-	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
+	// WriteToWarehouse should insert the records in r for querying on the given instance
+	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
 }
 
 // Project encapsulates metadata about a Beneath project
 type Project interface {
+	// GetProjectID should return the project ID
 	GetProjectID() uuid.UUID
+
+	// GetProjectName should return the project's identifying name (not its display name)
 	GetProjectName() string
+
+	// GetPublic should return true if the project is publicly accessible
 	GetPublic() bool
 }
 
 // Stream encapsulates metadata about a Beneath stream
 type Stream interface {
+	// GetStreamID should return the stream ID
 	GetStreamID() uuid.UUID
+
+	// GetStreamName should return the stream's identifying name
 	GetStreamName() string
+
+	// GetRetention should return the amount of time data should be retained, or 0 for infinite retention
 	GetRetention() time.Duration
+
+	// GetCodec should return a codec for serializing and deserializing stream data and keys
 	GetCodec() *codec.Codec
 }
 
 // StreamInstance encapsulates metadata about a Beneath stream instance
 type StreamInstance interface {
+	// GetStreamInstanceID should return the instance's ID
 	GetStreamInstanceID() uuid.UUID
 }
 
 // RecordsIterator allows iterating over a list of records in various formats
 type RecordsIterator interface {
+	// Next should return the next record in the iterator or nil if it's emptied
 	Next() Record
-	Len() (int, error)
+
+	// Len should return the number of rows in the iterator if possible, else -1
+	Len() int
 }
 
 // Record todo
 type Record interface {
+	// GetTimestamp should return the timestamp associated with the record
 	GetTimestamp() time.Time
+
+	// GetAvro should return the Avro representation of the record
 	GetAvro() []byte
-	GetStructured() []map[string]interface{}
+
+	// GetStructured should return the structured representation of the record
+	GetStructured() map[string]interface{}
 }

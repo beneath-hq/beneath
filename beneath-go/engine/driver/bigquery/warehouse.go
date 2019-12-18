@@ -6,7 +6,7 @@ import (
 	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
-// WriteRecords implements beneath.WarehouseService
-func (b BigQuery) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
+// WriteToWarehouse implements beneath.WarehouseService
+func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
 	panic("todo")
 }

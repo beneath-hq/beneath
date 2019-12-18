@@ -9,10 +9,10 @@ import (
 
 // QueryLookup returns a cursor for efficiently paging through records satisfying the where query
 func (e *Engine) QueryLookup(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, where queryparse.Query) ([]byte, error) {
-	panic("todo")
+	return e.Lookup.ParseLookupQuery(ctx, p, s, i, where)
 }
 
-// ReadLookup returns ...
+// ReadLookup lookups rows starting at the given cursor
 func (e *Engine) ReadLookup(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, cursor []byte, limit int) (driver.RecordsIterator, error) {
-	panic("todo")
+	return e.Lookup.ReadLookup(ctx, p, s, i, cursor, limit)
 }
