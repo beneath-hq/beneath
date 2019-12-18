@@ -38,7 +38,7 @@ func (r KeyRange) CheckUnique() bool {
 // WithAfter will narrow the range to only keys after the given key
 func (r KeyRange) WithAfter(c *Codec, q queryparse.Query) (KeyRange, error) {
 	// check correct query length
-	if len(q) != len(c.primaryIndex.GetFields()) {
+	if len(q) != len(c.PrimaryIndex.GetFields()) {
 		return r, fmt.Errorf("after query must include exactly all keys fields and not more")
 	}
 
@@ -46,7 +46,7 @@ func (r KeyRange) WithAfter(c *Codec, q queryparse.Query) (KeyRange, error) {
 	key := make(tuple.Tuple, len(q))
 
 	// iterate through key fields
-	for idx, field := range c.primaryIndex.GetFields() {
+	for idx, field := range c.PrimaryIndex.GetFields() {
 		// get condition for field
 		cond := q[field]
 		if cond == nil {
@@ -89,11 +89,11 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 	key := make(tuple.Tuple, len(q))
 
 	// iterate through key fields
-	for idx, field := range c.primaryIndex.GetFields() {
+	for idx, field := range c.PrimaryIndex.GetFields() {
 		// get condition for field
 		cond := q[field]
 		if cond == nil {
-			if len(c.primaryIndex.GetFields()) == 1 {
+			if len(c.PrimaryIndex.GetFields()) == 1 {
 				return KeyRange{}, fmt.Errorf("expected lookup on and only on key field '%s'", field)
 			}
 			return KeyRange{}, fmt.Errorf("expected field '%s' in query (composite keys are indexed starting with the leftmost field)", field)
@@ -115,7 +115,7 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 		// so handle it separately
 		if cond.Op == queryparse.ConditionOpEq {
 			// next step depends on how far we've come
-			if idx+1 == len(c.primaryIndex.GetFields()) {
+			if idx+1 == len(c.PrimaryIndex.GetFields()) {
 				// we've added _eq constraints for every key field, so we're done and it's a unique key
 				return KeyRange{
 					Base:   key.Pack(),

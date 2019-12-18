@@ -29,6 +29,10 @@ func (i testIndex) GetFields() []string {
 	return i.fields
 }
 
+func (i testIndex) GetNormalize() bool {
+	return false
+}
+
 func TestAvroSimple(t *testing.T) {
 	index := testIndex{fields: []string{"one"}}
 	avroSchema := schema.MustCompileToAvroString(`
@@ -143,7 +147,7 @@ func TestKeySimple(t *testing.T) {
 	codec, err := New(schemaString, index, nil)
 	assert.Nil(t, err)
 
-	v1, err := codec.MarshalPrimaryKey(map[string]interface{}{
+	v1, err := codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -152,7 +156,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v1)
 
-	v2, err := codec.MarshalPrimaryKey(map[string]interface{}{
+	v2, err := codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -161,7 +165,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v2)
 
-	v3, err := codec.MarshalPrimaryKey(map[string]interface{}{
+	v3, err := codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abcd",
@@ -170,7 +174,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v3)
 
-	v4, err := codec.MarshalPrimaryKey(map[string]interface{}{
+	v4, err := codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
 		"k2": 90000000000000,
 		"k3": "abc",
@@ -179,7 +183,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v4)
 
-	v5, err := codec.MarshalPrimaryKey(map[string]interface{}{
+	v5, err := codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0xFF00000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k3": "abc",
@@ -188,7 +192,7 @@ func TestKeySimple(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, v5)
 
-	_, err = codec.MarshalPrimaryKey(map[string]interface{}{
+	_, err = codec.MarshalKey(codec.PrimaryIndex, map[string]interface{}{
 		"k1": hexToBytes("0xFF00000000000000000000000000000000000000"),
 		"k2": 10000000000000,
 		"k4": time.Date(1995, time.February, 1, 0, 0, 0, 0, time.UTC),
