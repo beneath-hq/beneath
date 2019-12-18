@@ -7,6 +7,6 @@ import (
 )
 
 // WriteRecords implements beneath.LookupService
-func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsReader) error {
+func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
 	panic("todo")
 }

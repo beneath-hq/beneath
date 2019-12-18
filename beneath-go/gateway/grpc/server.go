@@ -13,6 +13,11 @@ import (
 )
 
 const (
+	defaultReadLimit = 50
+	maxReadLimit     = 1000
+)
+
+const (
 	maxRecvMsgSize = 1024 * 1024 * 10
 	maxSendMsgSize = 1024 * 1024 * 50
 )
@@ -40,4 +45,36 @@ func Server() *grpc.Server {
 	)
 	pb.RegisterGatewayServer(server, &gRPCServer{})
 	return server
+}
+
+type writeRecordsTags struct {
+	InstanceID   string `json:"instance_id,omitempty"`
+	RecordsCount int    `json:"records,omitempty"`
+	BytesWritten int    `json:"bytes,omitempty"`
+}
+
+type queryLogTags struct {
+	InstanceID string `json:"instance_id,omitempty"`
+	Where      string `json:"offset,omitempty"`
+	Cursor     []byte `json:"cursor,omitempty"`
+	Limit      int32  `json:"limit,omitempty"`
+	BytesRead  int    `json:"bytes,omitempty"`
+}
+
+type queryLookupTags struct {
+	InstanceID string `json:"instance_id,omitempty"`
+	Where      string `json:"offset,omitempty"`
+	Cursor     []byte `json:"cursor,omitempty"`
+	Limit      int32  `json:"limit,omitempty"`
+	BytesRead  int    `json:"bytes,omitempty"`
+}
+
+type clientPingTags struct {
+	ClientID      string `json:"client_id,omitempty"`
+	ClientVersion string `json:"client_version,omitempty"`
+}
+
+type streamDetailsTags struct {
+	Stream  string `json:"stream"`
+	Project string `json:"project"`
 }

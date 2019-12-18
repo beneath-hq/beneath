@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -16,11 +15,6 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway"
 	pb "github.com/beneath-core/beneath-go/proto"
-)
-
-const (
-	defaultReadLimit = 50
-	maxReadLimit     = 1000
 )
 
 func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
@@ -37,7 +31,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// set log payload
-	payload := writeRecordsLog{
+	payload := writeRecordsTags{
 		InstanceID:   instanceID.String(),
 		RecordsCount: len(req.Records),
 	}
@@ -75,7 +69,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	// check the batch length is valid
 	err := db.Engine.CheckBatchLength(len(req.Records))
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding batch: %v", err.Error()))
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// check each record is valid
@@ -89,21 +83,17 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 		// check it decodes
 		structured, err := stream.Codec.UnmarshalAvro(record.AvroData)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("record at index %d doesn't decode: %v", idx, err.Error()))
+			return nil, grpc.Errorf(codes.InvalidArgument, "error for record at index %d: %v", idx, err.Error())
 		}
 
 		err = db.Engine.CheckRecordSize(stream, structured, len(record.AvroData))
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
+			return nil, grpc.Errorf(codes.InvalidArgument, "error for record at index %d: %v", idx, err.Error())
 		}
 
 		// increment bytes written
 		bytesWritten += len(record.AvroData)
 	}
-
-	// update log payload
-	payload.BytesWritten = bytesWritten
-	middleware.SetTagsPayload(ctx, payload)
 
 	// write request to engine
 	err = db.Engine.QueueWriteRequest(ctx, req)
@@ -115,70 +105,10 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	gateway.Metrics.TrackWrite(instanceID, int64(len(req.Records)), int64(bytesWritten))
 	gateway.Metrics.TrackWrite(secret.GetOwnerID(), int64(len(req.Records)), int64(bytesWritten))
 
-	return &pb.WriteRecordsResponse{}, nil
-}
-
-func (s *gRPCServer) ReadRecords(ctx context.Context, req *pb.ReadRecordsRequest) (*pb.ReadRecordsResponse, error) {
-	// get auth
-	secret := middleware.GetSecret(ctx)
-	if secret == nil {
-		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
-	}
-
-	// read instanceID
-	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	if instanceID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
-	}
-
-	// set log payload
-	payload := readRecordsLog{
-		InstanceID: instanceID.String(),
-		Offset:     req.Offset,
-		Limit:      req.Limit,
-	}
+	// update log payload
+	payload.BytesWritten = bytesWritten
 	middleware.SetTagsPayload(ctx, payload)
 
-	// get stream info
-	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
-	if stream == nil {
-		return nil, status.Error(codes.NotFound, "stream not found")
-	}
-
-	// if batch, check committed
-	if stream.Batch && !stream.Committed {
-		return nil, status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
-	}
-
-	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
-	if !perms.Read {
-		return nil, grpc.Errorf(codes.PermissionDenied, "secret doesn't grant right to read from this stream")
-	}
-
-	// check limit
-	if req.Limit == 0 {
-		req.Limit = defaultReadLimit
-	} else if req.Limit > maxReadLimit {
-		return nil, status.Error(codes.InvalidArgument, "records cannot be empty")
-	}
-
-	// check quota
-	usage := gateway.Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
-	ok := secret.CheckReadQuota(usage)
-	if !ok {
-		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
-	}
-
-	// make response
-	response := &pb.ReadRecordsResponse{}
-	bytesRead := 0
-
-	// TODO
-
-	// track read metrics
-	gateway.Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
-	gateway.Metrics.TrackRead(secret.GetOwnerID(), int64(len(response.Records)), int64(bytesRead))
-
+	response := &pb.WriteRecordsResponse{}
 	return response, nil
 }

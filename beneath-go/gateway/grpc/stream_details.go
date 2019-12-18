@@ -19,7 +19,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	req.ProjectName = toBackendName(req.ProjectName)
 
 	// set log payload
-	middleware.SetTagsPayload(ctx, streamDetailsLog{
+	middleware.SetTagsPayload(ctx, streamDetailsTags{
 		Stream:  req.StreamName,
 		Project: req.ProjectName,
 	})

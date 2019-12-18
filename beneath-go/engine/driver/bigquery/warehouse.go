@@ -7,6 +7,6 @@ import (
 )
 
 // WriteRecords implements beneath.WarehouseService
-func (b BigQuery) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsReader) error {
+func (b BigQuery) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
 	panic("todo")
 }

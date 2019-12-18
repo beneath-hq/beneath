@@ -57,10 +57,10 @@ type Log interface {
 	Service
 
 	// ReadRecords should return up to limit records starting at offset
-	ReadRecords(ctx context.Context, p Project, s Stream, i StreamInstance, offset int, limit int) (RecordsReader, error)
+	ReadRecords(ctx context.Context, p Project, s Stream, i StreamInstance, offset int, limit int) (RecordsIterator, error)
 
 	// AppendRecords should insert the records in r at the next free offset
-	AppendRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsReader) (offset int, err error)
+	AppendRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) (offset int, err error)
 }
 
 // LookupService encapsulates functionality to efficiently lookup indexed records in an instance
@@ -68,7 +68,7 @@ type LookupService interface {
 	Service
 
 	// WriteRecords should insert the records in r for lookup in the given instance
-	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsReader) error
+	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance
@@ -76,7 +76,7 @@ type WarehouseService interface {
 	Service
 
 	// WriteRecords should insert the records in r for querying on the given instance
-	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsReader) error
+	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
 }
 
 // Project encapsulates metadata about a Beneath project
@@ -99,11 +99,15 @@ type StreamInstance interface {
 	GetStreamInstanceID() uuid.UUID
 }
 
-// RecordsReader allows iterating over a list of records in various formats
-type RecordsReader interface {
-	Count() int
-	GetKey(idx int) []byte
-	GetTimestamp(idx int) time.Time
-	GetAvro(idx int) []byte
-	GetStructured(idx int) []map[string]interface{}
+// RecordsIterator allows iterating over a list of records in various formats
+type RecordsIterator interface {
+	Next() Record
+	Len() (int, error)
+}
+
+// Record todo
+type Record interface {
+	GetTimestamp() time.Time
+	GetAvro() []byte
+	GetStructured() []map[string]interface{}
 }

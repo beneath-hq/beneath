@@ -13,7 +13,7 @@ import (
 
 func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*pb.ClientPong, error) {
 	// set log payload
-	middleware.SetTagsPayload(ctx, clientPingLog{
+	middleware.SetTagsPayload(ctx, clientPingTags{
 		ClientID:      req.ClientId,
 		ClientVersion: req.ClientVersion,
 	})
