@@ -51,6 +51,11 @@ func (e EfficientStreamIndex) GetFields() []string {
 	return e.Fields
 }
 
+// GetNormalize implements codec.Index
+func (e EfficientStreamIndex) GetNormalize() bool {
+	return e.Normalize
+}
+
 type internalCachedStream struct {
 	StreamID            uuid.UUID
 	Public              bool
@@ -131,9 +136,9 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 
 	// necessary because we allow empty CachedStream objects
 	if c.Codec != nil {
-		wrapped.CanonicalAvroSchema = c.Codec.GetAvroSchemaString()
-		wrapped.Indexes = []EfficientStreamIndex{c.Codec.GetPrimaryIndex().(EfficientStreamIndex)}
-		for _, index := range c.Codec.GetSecondaryIndexes() {
+		wrapped.CanonicalAvroSchema = c.Codec.AvroSchemaString
+		wrapped.Indexes = []EfficientStreamIndex{c.Codec.PrimaryIndex.(EfficientStreamIndex)}
+		for _, index := range c.Codec.SecondaryIndexes {
 			wrapped.Indexes = append(wrapped.Indexes, index.(EfficientStreamIndex))
 		}
 	}
