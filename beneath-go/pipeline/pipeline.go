@@ -6,113 +6,146 @@ import (
 	"time"
 
 	uuid "github.com/satori/go.uuid"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/engine/driver"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
-// Run runs the pipeline: subscribes from pubsub and sends data to BigTable and BigQuery
+// Run subscribes to new write requests and stores data in derived systems.
+// It runs forever unless an error occcurs.
 func Run() error {
-	// log that we're running
-	log.S.Info("pipeline started")
-
-	// begin processing write requests -- will run infinitely
-	err := db.Engine.Streams.ReadWriteRequests(processWriteRequest)
-
-	// processing incoming write requests crashed for some reason
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db.Engine.ReadWriteRequests(processWriteRequest)
 }
 
 // processWriteRequest is called (approximately once) for each new write request
-// TODO: add metrics tracking -- group by instanceID and hour: 1) writes and 2) bytes
 func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
 	// metrics to track
-	startTime := time.Now()
-	var bytesWritten int64
+	start := time.Now()
+	var bytesTotal int
+	var minTimestamp int64
 
-	// lookup stream for write request
+	// lookup stream
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
-		return fmt.Errorf("cached stream is null for instanceid %s", instanceID.String())
+		return fmt.Errorf("cached stream is null for instance id %s", instanceID.String())
 	}
 
-	// keep track of keys to publish
-	n := len(req.Records)
-	keys := make([][]byte, n)
-	avros := make([][]byte, n)
-	records := make([]map[string]interface{}, n)
-	timestamps := make([]time.Time, n)
+	// make records array
+	records := make([]driver.Record, len(req.Records))
+	for idx, proto := range req.Records {
+		r := newRecord(stream, proto)
+		bytesTotal += len(r.GetAvro())
+		records[idx] = r
 
-	// loop through each record in the Write Request
-	for i, record := range req.Records {
-		// set avro data
-		avros[i] = record.AvroData
-
-		// decode the avro data
-		obj, err := stream.Codec.UnmarshalAvro(record.AvroData)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data: %v", err.Error())
+		if minTimestamp == 0 || proto.Timestamp < minTimestamp {
+			minTimestamp = proto.Timestamp
 		}
-		records[i], err = stream.Codec.ConvertFromAvroNative(obj, false)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data: %v", err.Error())
-		}
-
-		// get the encoded key
-		keys[i], err = stream.Codec.MarshalKey(records[i])
-		if err != nil {
-			return fmt.Errorf("unable to encode key")
-		}
-
-		// save timestamp
-		timestamps[i] = timeutil.FromUnixMilli(record.Timestamp)
-
-		// increment metrics
-		bytesWritten += int64(len(record.AvroData))
 	}
 
-	// writing encoded data to Table
-	err := db.Engine.Tables.WriteRecords(ctx, instanceID, keys, avros, timestamps, !stream.Batch)
+	// NOTE: Crashing after writing to the log (but before returning) will cause the write to be retried,
+	// hence ensuring eventual consistency. But the records will appear multiple times in the log. That
+	// is acceptable within our at-least-once semantics, but we want to avoid it as much as possible.
+
+	// overriding ctx to the background context in an attempt to push through with all the writes
+	// (a cancel is most likely due to receiving a SIGINT/SIGTERM, so we'll have a little leeway before being force killed)
+	ctx = context.Background()
+
+	// write to log
+	cursors, err := db.Engine.Log.WriteToLog(ctx, stream, stream, stream, records)
 	if err != nil {
 		return err
 	}
 
-	// writing decoded data to Warehouse
-	err = db.Engine.Warehouse.WriteRecords(ctx, stream.ProjectName, stream.StreamName, instanceID, keys, avros, records, timestamps)
+	// apply cursors to records
+	for idx, cursor := range cursors {
+		r := records[idx].(record)
+		r.LogCursor = cursor
+	}
+
+	// write to lookup and project
+	group, ctx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		return db.Engine.Lookup.WriteToLookup(ctx, stream, stream, stream, records)
+	})
+
+	group.Go(func() error {
+		return db.Engine.Warehouse.WriteToWarehouse(ctx, stream, stream, stream, records)
+	})
+
+	err = group.Wait()
 	if err != nil {
 		return err
 	}
 
-	// publish metrics packet; the keys in the packet will be used to stream data via the gateway's websocket
-	err = db.Engine.Streams.QueueWriteReport(ctx, &pb.WriteRecordsReport{
-		InstanceId:   instanceID.Bytes(),
-		Keys:         keys,
-		BytesWritten: bytesWritten,
+	// publish write report (used for streaming updates)
+	err = db.Engine.QueueWriteReport(ctx, &pb.WriteRecordsReport{
+		InstanceId:        instanceID.Bytes(),
+		EarliestTimestamp: minTimestamp,
+		BytesTotal:        int32(bytesTotal),
 	})
 	if err != nil {
 		return err
 	}
 
 	// finalise metrics
-	elapsed := time.Since(startTime)
+	elapsed := time.Since(start)
 	log.S.Infow(
 		"pipeline write",
 		"project", stream.ProjectName,
 		"stream", stream.StreamName,
 		"instance", instanceID.String(),
 		"records", len(req.Records),
-		"bytes", bytesWritten,
+		"bytes", bytesTotal,
 		"elapsed", elapsed,
 	)
 
 	// done
 	return nil
+}
+
+// record implements driver.Record
+type record struct {
+	Proto      *pb.Record
+	Structured map[string]interface{}
+	LogCursor  []byte
+}
+
+func newRecord(stream driver.Stream, proto *pb.Record) record {
+	structured, err := stream.GetCodec().UnmarshalAvro(proto.AvroData)
+	if err != nil {
+		panic(err)
+	}
+
+	structured, err = stream.GetCodec().ConvertFromAvroNative(structured, false)
+	if err != nil {
+		panic(err)
+	}
+
+	return record{
+		Proto:      proto,
+		Structured: structured,
+	}
+}
+
+func (r record) GetTimestamp() time.Time {
+	return timeutil.FromUnixMilli(r.Proto.Timestamp)
+}
+
+func (r record) GetAvro() []byte {
+	return r.Proto.AvroData
+}
+
+func (r record) GetStructured() map[string]interface{} {
+	return r.Structured
+}
+
+func (r record) GetLogCursor() []byte {
+	return r.LogCursor
 }

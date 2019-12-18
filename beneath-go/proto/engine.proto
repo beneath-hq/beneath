@@ -13,7 +13,6 @@ message Record {
 
 message WriteRecordsReport {
   bytes instance_id = 1;
-  int64 bytes_written = 2;
-  int64 offset_start = 3;
-  int32 offset_end = 4;
+  int64 earliest_timestamp = 2;
+  int32 bytes_total = 3;
 }

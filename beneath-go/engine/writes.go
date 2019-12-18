@@ -2,6 +2,9 @@ package engine
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
 
 	pb "github.com/beneath-core/beneath-go/proto"
 )
@@ -15,6 +18,20 @@ func (e *Engine) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequ
 
 // ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
 func (e *Engine) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequest) error) error {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
+	// handles SIGINT and SIGTERM gracefully
+	go func() {
+		defer cancel()
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-c:
+		case <-ctx.Done():
+		}
+	}()
+
 	panic("todo")
 }
 

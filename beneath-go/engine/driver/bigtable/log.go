@@ -18,6 +18,6 @@ func (b BigTable) ReadLog(ctx context.Context, p driver.Project, s driver.Stream
 }
 
 // WriteToLog implements beneath.Log
-func (b BigTable) WriteToLog(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
+func (b BigTable) WriteToLog(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, rs []driver.Record) ([][]byte, error) {
 	panic("todo")
 }

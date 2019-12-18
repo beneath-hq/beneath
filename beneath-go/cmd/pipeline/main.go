@@ -25,5 +25,6 @@ func main() {
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
 
+	log.S.Info("pipeline started")
 	log.S.Fatal(pipeline.Run())
 }

@@ -63,8 +63,8 @@ type Log interface {
 	// ReadLog should return a RecordsIterator returning records from the log starting at the given cursor
 	ReadLog(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
 
-	// WriteToLog should insert the records in r into the instance's log
-	WriteToLog(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
+	// WriteToLog should insert the records in r into the instance's log and return an array of corresponding cursors
+	WriteToLog(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) ([][]byte, error)
 }
 
 // LookupService encapsulates functionality to efficiently lookup indexed records in an instance
@@ -78,7 +78,7 @@ type LookupService interface {
 	ReadLookup(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
 
 	// WriteRecords should insert the records in r for lookup in the instance
-	WriteToLookup(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
+	WriteToLookup(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance
@@ -86,7 +86,7 @@ type WarehouseService interface {
 	Service
 
 	// WriteToWarehouse should insert the records in r for querying on the given instance
-	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, r RecordsIterator) error
+	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
 }
 
 // Project encapsulates metadata about a Beneath project
@@ -127,8 +127,9 @@ type RecordsIterator interface {
 	// Next should return the next record in the iterator or nil if it's emptied
 	Next() Record
 
-	// Len should return the number of rows in the iterator if possible, else -1
-	Len() int
+	// NextPageCursor should return a cursor for reading more rows if this iterator
+	// doesn't return all rows in the result. A nil result should indicate no more rows.
+	NextPageCursor() []byte
 }
 
 // Record todo
@@ -141,4 +142,7 @@ type Record interface {
 
 	// GetStructured should return the structured representation of the record
 	GetStructured() map[string]interface{}
+
+	// GetLogCursor should return a cursor for accessing the individual record in the log
+	GetLogCursor() []byte
 }

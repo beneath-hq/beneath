@@ -18,6 +18,6 @@ func (b BigTable) ReadLookup(ctx context.Context, p driver.Project, s driver.Str
 }
 
 // WriteToLookup implements driver.LookupService
-func (b BigTable) WriteToLookup(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, r driver.RecordsIterator) error {
+func (b BigTable) WriteToLookup(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, rs []driver.Record) error {
 	panic("todo")
 }
