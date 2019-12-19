@@ -51,10 +51,15 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 	}
 
 	// update the organization's users' quotas
+	// this gets us access to bi.Users
+	err = tx.ModelContext(ctx, bi).WherePK().Column("billing_info.*", "BillingPlan", "Services", "Users").Select()
+	if !AssertFoundOne(err) {
+		return nil, err
+	}
+
 	for _, u := range bi.Users {
-		u.ReadQuota = bi.BillingPlan.BaseReadQuota
-		u.WriteQuota = bi.BillingPlan.BaseWriteQuota
-		// Q: do I need to reset any cache?
+		u.ReadQuota = bi.BillingPlan.SeatReadQuota
+		u.WriteQuota = bi.BillingPlan.SeatWriteQuota
 		_, err := tx.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
 		if err != nil {
 			return nil, err
