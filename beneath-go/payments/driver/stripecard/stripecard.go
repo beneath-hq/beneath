@@ -116,6 +116,7 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	switch event.Type {
+
 	case "setup_intent.succeeded":
 		var setupIntent stripe.SetupIntent
 		err := json.Unmarshal(event.Data.Raw, &setupIntent)
@@ -145,7 +146,7 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			paymentMethod := stripeutil.AttachPaymentMethod(customerID, paymentMethod.ID)
 			customer = stripeutil.UpdateCardCustomer(customerID, paymentMethod.BillingDetails.Email, paymentMethod.ID)
 		} else {
-			customer = stripeutil.CreateCardCustomer(organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod)
+			customer = stripeutil.CreateCardCustomer(organization.OrganizationID, organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod)
 		}
 
 		driverPayload := make(map[string]interface{})
@@ -157,17 +158,8 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			log.S.Errorf("Error updating Billing Info: %v\\n", err)
 			return err
 		}
-	// case "setup_intent.created":
-	// 	// do nothing
-	// case "payment_method.attached":
-	// 	// do nothing
-	// case "customer.created":
-	// 	// do nothing
-	// case "customer.updated":
-	// 	// do nothing
-	// case "setup_intent.setup_failed":
-	// TODO: handle this case in the front-end and leave this webhook event alone
-	case "invoice.payment_failed": // use this for stripe card failures
+
+	case "invoice.payment_failed":
 		var invoice stripe.Invoice
 		err := json.Unmarshal(event.Data.Raw, &invoice)
 		if err != nil {
@@ -176,12 +168,28 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			return err
 		}
 
+		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
-			// TODO: shut off the card customer's service
+			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
+			freeBillingPlanID := uuid.FromStringOrNil(entity.FreeBillingPlanID)
+
+			driverPayload := make(map[string]interface{})
+			driverPayload["customer_id"] = invoice.Customer.ID
+
+			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, freeBillingPlanID, entity.StripeCardDriver, driverPayload)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.S.Errorf("Error updating Billing Info: %v\\n", err)
+				return err
+			}
 		}
+
 	// case "invoice.payment_succeeded":
-	//	// Q: do we want this for anything?
-	case "invoice.updated": // use this for stripe wire failures
+	// Q: do we want this^ for anything?
+
+	// using this as a hack for stripe wire failures for one-off invoices
+	// TODO: waiting on stripe to fix their bug; this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
+	case "invoice.updated":
 		var invoice stripe.Invoice
 		err := json.Unmarshal(event.Data.Raw, &invoice)
 		if err != nil {
@@ -190,10 +198,22 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			return err
 		}
 
-		// shut off a wire customer's service when it is late on payment
+		// when invoice goes "past_due", shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodSendInvoice) && (invoice.Status == "past_due") && (invoice.Paid == false) {
-			// TODO: shut off the wire customer's service; waiting on Stripe to fix their bug (this currently isn't implemented for our setup)
+			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
+			freeBillingPlanID := uuid.FromStringOrNil(entity.FreeBillingPlanID)
+
+			driverPayload := make(map[string]interface{})
+			driverPayload["customer_id"] = invoice.Customer.ID
+
+			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, freeBillingPlanID, entity.StripeCardDriver, driverPayload)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.S.Errorf("Error updating Billing Info: %v\\n", err)
+				return err
+			}
 		}
+
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		log.S.Errorf("Unexpected event type: %s", event.Type)

@@ -84,7 +84,7 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 		stripeutil.UpdateWireCustomer(driverPayload["customer_id"].(string), emailAddress)
 	} else {
 		// customer needs to be registered with stripe
-		customer = stripeutil.CreateWireCustomer(organization.Name, emailAddress)
+		customer = stripeutil.CreateWireCustomer(organization.OrganizationID, organization.Name, emailAddress)
 		driverPayload["customer_id"] = customer.ID
 	}
 

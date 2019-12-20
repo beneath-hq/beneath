@@ -2,6 +2,7 @@ package stripeutil
 
 import (
 	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/core/log"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
@@ -70,15 +71,18 @@ func RetrievePaymentMethod(paymentMethodID string) *stripe.PaymentMethod {
 }
 
 // CreateCardCustomer registers a card-paying customer with Stripe
-func CreateCardCustomer(orgName string, email string, pm *stripe.PaymentMethod) *stripe.Customer {
-	customer, err := customer.New(&stripe.CustomerParams{
+func CreateCardCustomer(organizationID uuid.UUID, orgName string, email string, pm *stripe.PaymentMethod) *stripe.Customer {
+	params := &stripe.CustomerParams{
 		Name:          stripe.String(orgName),
 		Email:         stripe.String(email),
 		PaymentMethod: stripe.String(pm.ID),
 		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
 			DefaultPaymentMethod: stripe.String(pm.ID),
 		},
-	})
+	}
+	params.AddMetadata("OrganizationID", organizationID.String())
+
+	customer, err := customer.New(params)
 	if err != nil {
 		panic("stripe error when creating a customer")
 	}
@@ -87,11 +91,14 @@ func CreateCardCustomer(orgName string, email string, pm *stripe.PaymentMethod) 
 }
 
 // CreateWireCustomer registers a wire-paying customer with Stripe
-func CreateWireCustomer(orgName string, email string) *stripe.Customer {
-	customer, err := customer.New(&stripe.CustomerParams{
+func CreateWireCustomer(organizationID uuid.UUID, orgName string, email string) *stripe.Customer {
+	params := &stripe.CustomerParams{
 		Name:  stripe.String(orgName),
 		Email: stripe.String(email),
-	})
+	}
+	params.AddMetadata("OrganizationID", organizationID.String())
+
+	customer, err := customer.New(params)
 	if err != nil {
 		panic("stripe error when creating a customer")
 	}
@@ -193,7 +200,24 @@ func ListCustomerInvoices(customerID string) []*stripe.Invoice {
 func PayInvoice(invoiceID string) {
 	_, err := invoice.Pay(invoiceID, nil)
 	if err != nil {
-		panic("stripe error when paying invoice")
+		// don't panic under these circumstances, just log
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			switch stripeErr.Code {
+			case stripe.ErrorCodeCardDeclined:
+				log.S.Infof("card declined when attempting to pay invoice for stripe customer %s", stripeErr.PaymentIntent.Customer.ID)
+			case stripe.ErrorCodeExpiredCard:
+				log.S.Infof("card declined when attempting to pay invoice for stripe customer %s", stripeErr.PaymentIntent.Customer.ID)
+			case "invoice_payment_intent_requires_action":
+				// not sure how common this will be
+				// this will happen when a customer needs to manually authorize each payment
+				// TODO: need to send email to customer, bring them to checkout page, and get manual authorization
+				panic("stripe error when paying invoice")
+			default:
+				panic("stripe error when paying invoice")
+			}
+		} else {
+			panic("stripe error when paying invoice")
+		}
 	}
 }
 
