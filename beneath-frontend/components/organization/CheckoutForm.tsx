@@ -86,8 +86,6 @@ interface CheckoutStateTypes {
   isLoading: boolean,
   error: string | null,
   stripeError: stripe.Error | undefined,
-  isReady: boolean,
-  stopInfinite: boolean,
   paymentDetails: CardPaymentDetails | null, // WirePaymentDetails | AnarchismPaymentDetails (?) | null, // TODO: this will depend on the driver
   isIntentLoading: boolean,
   status: stripe.setupIntents.SetupIntentStatus | null,
@@ -101,8 +99,6 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     isLoading: false,
     error: null,
     stripeError: undefined,
-    isReady: false,
-    stopInfinite: true,
     paymentDetails: null,
     isIntentLoading: false,
     status: null,
@@ -118,14 +114,6 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
       organizationID: organization.organizationID,
     },
   });
-
-  if (loading) {
-    return <Loading justify="center" />;
-  }
-
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
 
   // Handle submission of Card details and Customer Data
   const handleCardDetailsFormSubmit = (ev: any) => {
@@ -218,74 +206,29 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
           /> */}
         <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
         <button>Submit</button>
-        {values.stripeError !== undefined && (
-          <Typography variant="body1" color="error">
-            {JSON.stringify(values.stripeError)}
-          </Typography>
-        )}
-        {values.status !== null && (
-          <Typography variant="body1" color="error">
-            {values.status}
-          </Typography>
-        )}
       </form>
+      {values.stripeError !== undefined && (
+        <Typography variant="body1" color="error">
+          {JSON.stringify(values.stripeError.message)}
+        </Typography>
+      )}
+      {/* note: setup intent returns a "success" BEFORE we complete attaching the card to the customer in Stripe.
+                so if we simulatenously trigger a refresh of the page, we'll see the old card info.
+                so we need to wait a second before fetching the updated card info from stripe.   */}
+      {values.status !== null && values.status === "succeeded" && (
+        <Typography variant="body1">
+          {values.status} -- need to refresh the page to see your card details on file 
+        </Typography>
+      )}
+      {values.status !== null && values.status !== "succeeded" && (
+        <Typography variant="body1" color="error">
+          {values.status}
+        </Typography>
+      )}
       <Button
         variant="contained"
         onClick={() => {
           setValues({ ...values, ...{ isBuyingNow: false } })
-        }}>
-        Back
-          </Button>
-    </div>
-  )
-
-  // Handle submission of Card details and Customer Data
-  const handleRequestDemoFormSubmit = (ev: any) => {
-    // We don't want to let default form submission happen here, which would refresh the page.
-    ev.preventDefault();
-
-    // TODO: send email to Beneath
-
-    return
-  }
-
-  const RequestDemoForm = (
-    <div>
-      <form onSubmit={handleRequestDemoFormSubmit}>
-        <TextField
-          id="workemail"
-          label="Your work email"
-          margin="normal"
-          fullWidth
-          required
-        />
-        <TextField
-          id="phonenumber"
-          label="Your phone number"
-          margin="normal"
-          fullWidth
-          required
-        />
-        <TextField
-          id="fullname"
-          label="Your name"
-          margin="normal"
-          fullWidth
-          required
-        />
-        <TextField
-          id="companyname"
-          label="Company name"
-          margin="normal"
-          fullWidth
-          required
-        />
-        <button>Submit</button>
-      </form>
-      <Button
-        variant="contained"
-        onClick={() => {
-          setValues({ ...values, ...{ isRequestingDemo: false } })
         }}>
         Back
       </Button>
@@ -299,57 +242,82 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   url += `&billingPlanID=${PRO_BILLING_PLAN_ID}`;
 
   useEffect(() => {
-    (async () => {
+    let isMounted = true
+
+    const fetchData = (async () => {
       if (!stripe || !values.customerData) {
-        return;
+        return
       }
+
       setValues({ ...values, ...{ isIntentLoading: true } })
 
       const res = await fetch(url, { headers });
-      if (!res.ok) {
-        setValues({ ...values, ...{ error: res.statusText } })
-      }
-      const intent: any = await res.json();
-
-      // handleCardSetup automatically pulls credit card info from the Card element
-      // TODO from Stripe Docs: Note that stripe.handleCardSetup may take several seconds to complete. During that time, you should disable your form from being resubmitted and show a waiting indicator like a spinner. If you receive an error result, you should be sure to show that error to the customer, re-enable the form, and hide the waiting indicator.
-      // ^ *** make sure not to "block" access to the Card Element by solely returning a loading spinner
-      // TODO from Stripe Docs: Additionally, stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
-      const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, values.customerData)
-      if (result.error) {
-        setValues({ ...values, ...{ stripeError: result.error, isIntentLoading: false } })
-      }
-      if (result.setupIntent) {
-        console.log(result.setupIntent) // TODO: if success, trigger refetch of billing info (to display current card on file), or just return a confirmation
-        setValues({ ...values, ...{ stripeError: result.error, isIntentLoading: false, status: result.setupIntent.status } })
-      }
-    })();
-  }, [values.customerData])
-
-  // TODO: try to do the call only once, by checking the Stripe props (which is what changes from the first mount to the second); see BillingTab.tsx
-  // console.log(typeof stripe)
-  // console.log(Object.prototype.toString.call(stripe))
-  if ((true) && values.stopInfinite) { // typeof stripe === something
-    console.log("GOT HERE")
-    setValues({ ...values, ...{ isReady: true, stopInfinite: false } })
-  }
-
-  // for paying customers, get current payment details 
-  useEffect(() => {
-    (async () => {
-      if (values.isReady && data.billingInfo.paymentsDriver === "stripecard") {
-        console.log("FETCHING PAYMENT DETAILS")
-        setValues({ ...values, ...{ isLoading: true } })
-        let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`;
-        const res = await fetch(payment_details_url, { headers });
+      
+      if (isMounted) {
         if (!res.ok) {
           setValues({ ...values, ...{ error: res.statusText } })
         }
-        const details: CardPaymentDetails = await res.json();
-        setValues({ ...values, ...{ paymentDetails: details, isLoading: false } })
+        const intent: any = await res.json();
+  
+        // handleCardSetup automatically pulls credit card info from the Card element
+        // TODO from Stripe Docs: Note that stripe.handleCardSetup may take several seconds to complete. During that time, you should disable your form from being resubmitted and show a waiting indicator like a spinner. If you receive an error result, you should be sure to show that error to the customer, re-enable the form, and hide the waiting indicator.
+        // ^ *** make sure not to "block" access to the Card Element by solely returning a loading spinner
+        // TODO from Stripe Docs: Additionally, stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
+        const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, values.customerData)
+        if (result.error) {
+          setValues({ ...values, ...{ stripeError: result.error, isIntentLoading: false } })
+        }
+        if (result.setupIntent) {
+          console.log(result.setupIntent) // TODO: if success, trigger refetch of billing info (to display current card on file), or just return a confirmation
+          setValues({ ...values, ...{ stripeError: result.error, isIntentLoading: false, status: result.setupIntent.status } })
+        }
       }
-    })()
-  }, [values.isReady])
+    })
+
+    fetchData()
+
+    // avoid memory leak when component unmounts
+    return () => {
+      isMounted = false
+    }
+  }, [values.customerData])
+
+  // for paying customers, get current payment details 
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchData = async () => {
+      if (data && data.billingInfo.paymentsDriver === "stripecard") {
+        console.log("FETCHING PAYMENT DETAILS")
+        let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`;
+        const res = await fetch(payment_details_url, { headers });
+
+        if (isMounted) {
+          if (!res.ok) {
+            setValues({ ...values, ...{ error: res.statusText } })
+          }
+
+          const details: CardPaymentDetails = await res.json();
+          setValues({ ...values, ...{ paymentDetails: details } })
+        }
+      }
+    }
+    
+    fetchData()
+
+    // avoid memory leak when component unmounts
+    return () => {
+      isMounted = false
+    }
+  }, [])
+  
+  if (loading) {
+    return <Loading justify="center" />;
+  }
+
+  if (error || !data) {
+    return <p>Error: {JSON.stringify(error)}</p>;
+  }
 
   // not yet a paying customer
   if (data.billingInfo.billingPlan.description === FREE_BILLING_PLAN_DESCRIPTION) {
@@ -400,7 +368,19 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
       }
 
       if (values.isRequestingDemo === true) {
-        return RequestDemoForm
+        // RequestDemoForm
+        return (
+          <div>
+            <p>TODO: send user to the about.beneath.com/contact/demo page</p>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setValues({ ...values, ...{ isRequestingDemo: false } })
+              }}>
+              Back
+            </Button>
+          </div>
+        )
       }
 
       if (values.isBuyingNow === false) {
@@ -427,7 +407,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
                 setValues({ ...values, ...{ isRequestingDemo: true } })
               }}>
               Request Demo
-          </Button>
+            </Button>
+            <Typography variant="body1">contact us if you would like to discuss your billing plan</Typography>
           </div>
         );
       }
