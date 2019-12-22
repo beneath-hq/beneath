@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"math"
 	"regexp"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -80,6 +82,8 @@ func FindAllOrganizations(ctx context.Context) []Organization {
 }
 
 // CreateOrganizationWithUser creates an organization
+// now, this is only used to create non-personal organizations, where you expect to add team members
+// TODO: because we are only allowing one organization per user, we might want to change this to "SetOrganizationToNonPersonal"
 func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID, personal bool) (*Organization, error) {
 	// create
 	org := &Organization{
@@ -123,13 +127,27 @@ func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UU
 }
 
 // AddUser makes user a member of organization
+// TODO: I think this whole sequence should happen in one transaction
+// but I don't like intertwining billing with the entity package!
 func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
-	return db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
+	err := db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 		View:           view,
 		Admin:          admin,
 	})
+	if err != nil {
+		return err
+	}
+
+	// add prorated seat to next month's bill
+	billingPlan := FindBillingPlan(ctx, o.OrganizationID)
+	if billingPlan == nil {
+		panic("could not find the organization's billing plan")
+	}
+	isMidPeriod := true
+	commitSeatToBill(ctx, o.OrganizationID, userID, isMidPeriod)
+	return nil
 }
 
 // ChangeUserPermissions changes a user's permissions within the organization
@@ -187,4 +205,40 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 	})
+}
+
+func commitSeatToBill(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, isMidPeriod bool) error {
+	billingInfo := FindBillingInfo(ctx, organizationID)
+	if billingInfo == nil {
+		panic("organization not found")
+	}
+
+	now := time.Now()
+	p := billingInfo.BillingPlan.Period
+
+	billingAndEndTime := BeginningOfNextPeriod(p)
+	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
+	proratedPrice := math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) / proratedFraction)
+
+	var billedResources []*BilledResource
+	billedResources = append(billedResources, &BilledResource{
+		OrganizationID:  organizationID,
+		BillingTime:     billingAndEndTime,
+		EntityID:        userID,
+		EntityKind:      UserEntityKind,
+		StartTime:       time.Now(),
+		EndTime:         billingAndEndTime,
+		Product:         SeatProduct,
+		Quantity:        1,
+		TotalPriceCents: int32(proratedPrice),
+		Currency:        billingInfo.BillingPlan.Currency,
+	})
+
+	err := CreateOrUpdateBilledResources(ctx, billedResources)
+	if err != nil {
+		panic("unable to write billed resources to table")
+	}
+
+	// done
+	return nil
 }
