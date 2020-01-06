@@ -127,8 +127,7 @@ func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UU
 }
 
 // AddUser makes user a member of organization
-// TODO: I think this whole sequence should happen in one transaction
-// but I don't like intertwining billing with the entity package!
+// TODO: I think this whole sequence should happen in one transaction, but first need to figure out code design / module structure for entity/billing/payments packages
 func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
 	err := db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
 		UserID:         userID,
@@ -141,12 +140,17 @@ func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool,
 	}
 
 	// add prorated seat to next month's bill
-	billingPlan := FindBillingPlan(ctx, o.OrganizationID)
-	if billingPlan == nil {
-		panic("could not find the organization's billing plan")
+	bi := FindBillingInfo(ctx, o.OrganizationID)
+	if bi != nil {
+		panic("could not find billing info")
 	}
-	isMidPeriod := true
-	commitSeatToBill(ctx, o.OrganizationID, userID, isMidPeriod)
+
+	err = commitProratedSeatsToBill(ctx, bi, []uuid.UUID{userID})
+	if err != nil {
+		panic("unable to commit prorated seat to bill")
+	}
+
+	// done
 	return nil
 }
 
@@ -207,32 +211,51 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	})
 }
 
-func commitSeatToBill(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, isMidPeriod bool) error {
-	billingInfo := FindBillingInfo(ctx, organizationID)
-	if billingInfo == nil {
-		panic("organization not found")
+func commitProratedSeatsToBill(ctx context.Context, billingInfo *BillingInfo, userIDs []uuid.UUID) error {
+	if billingInfo.BillingPlan == nil {
+		panic("could not find the organization's billing plan")
 	}
 
 	now := time.Now()
 	p := billingInfo.BillingPlan.Period
 
-	billingAndEndTime := BeginningOfNextPeriod(p)
-	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
-	proratedPrice := math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) / proratedFraction)
+	billTimes := &billTimes{
+		BillingTime: BeginningOfNextPeriod(p),
+		StartTime:   now,
+		EndTime:     BeginningOfNextPeriod(p),
+	}
 
+	quantity := int64(1)
+
+	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
+	proratedPrice := int32(math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) * proratedFraction))
+
+	err := commitToBill(ctx, billingInfo.OrganizationID, billTimes, userIDs, UserEntityKind, SeatProduct, quantity, proratedPrice, billingInfo.BillingPlan.Currency)
+	if err != nil {
+		panic("unable to commit prorated seats to bill")
+	}
+
+	// done
+	return nil
+}
+
+// note: this saves duplicate code for committing Seat product variations to bill, but it doesn't help us with committing usage nor overage products to bill
+func commitToBill(ctx context.Context, organizationID uuid.UUID, billTimes *billTimes, entityIDs []uuid.UUID, entityKind Kind, product Product, quantity int64, totalPriceCents int32, currency Currency) error {
 	var billedResources []*BilledResource
-	billedResources = append(billedResources, &BilledResource{
-		OrganizationID:  organizationID,
-		BillingTime:     billingAndEndTime,
-		EntityID:        userID,
-		EntityKind:      UserEntityKind,
-		StartTime:       time.Now(),
-		EndTime:         billingAndEndTime,
-		Product:         SeatProduct,
-		Quantity:        1,
-		TotalPriceCents: int32(proratedPrice),
-		Currency:        billingInfo.BillingPlan.Currency,
-	})
+	for _, entityID := range entityIDs {
+		billedResources = append(billedResources, &BilledResource{
+			OrganizationID:  organizationID,
+			BillingTime:     billTimes.BillingTime,
+			EntityID:        entityID,
+			EntityKind:      entityKind,
+			StartTime:       billTimes.StartTime,
+			EndTime:         billTimes.EndTime,
+			Product:         product,
+			Quantity:        quantity,
+			TotalPriceCents: totalPriceCents,
+			Currency:        currency,
+		})
+	}
 
 	err := CreateOrUpdateBilledResources(ctx, billedResources)
 	if err != nil {

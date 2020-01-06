@@ -2,8 +2,10 @@ package entity
 
 import (
 	"context"
+	"math"
 	"time"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	uuid "github.com/satori/go.uuid"
 )
@@ -24,6 +26,11 @@ type BillingInfo struct {
 
 // UpdateBillingInfo creates or updates an organization's billing info
 func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*BillingInfo, error) {
+	prevBillingInfo := FindBillingInfo(ctx, organizationID)
+	if prevBillingInfo == nil {
+		panic("could not get existing billing info")
+	}
+
 	bi := &BillingInfo{}
 
 	tx, err := db.DB.Begin()
@@ -71,6 +78,29 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 		return nil, err
 	}
 
+	// TODO: make this part of the entire transaction; Q: any easy way to encompass function calls in the transaction?
+	// if switching billing plans
+	if billingPlanID != prevBillingInfo.BillingPlanID {
+		var userIDs []uuid.UUID
+		for _, user := range bi.Users {
+			userIDs = append(userIDs, user.UserID)
+		}
+
+		// give organization pro-rated credit for seats at old billing plan price
+		if prevBillingInfo.BillingPlanID.String() != FreeBillingPlanID {
+			err := commitProratedSeatCreditsToBill(ctx, prevBillingInfo, userIDs)
+			if err != nil {
+				panic("could not commit prorated seat credits to bill")
+			}
+		}
+
+		// charge organization the pro-rated amount for seats at new billing plan price
+		err = commitProratedSeatsToBill(ctx, bi, userIDs)
+		if err != nil {
+			panic("could not commit prorated seats to bill")
+		}
+	}
+
 	return bi, nil
 }
 
@@ -112,3 +142,31 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 // 	_, err := db.DB.ModelContext(ctx, bi).Column("payments_driver", "updated_on").WherePK().Update()
 // 	return err
 // }
+
+func commitProratedSeatCreditsToBill(ctx context.Context, billingInfo *BillingInfo, userIDs []uuid.UUID) error {
+	if billingInfo.BillingPlan == nil {
+		panic("could not find the organization's billing plan")
+	}
+
+	now := time.Now()
+	p := billingInfo.BillingPlan.Period
+
+	billTimes := &billTimes{
+		BillingTime: BeginningOfNextPeriod(p),
+		StartTime:   now,
+		EndTime:     BeginningOfNextPeriod(p),
+	}
+
+	quantity := int64(1)
+
+	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
+	proratedPrice := int32(math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) * proratedFraction))
+
+	err := commitToBill(ctx, billingInfo.OrganizationID, billTimes, userIDs, UserEntityKind, SeatProduct, quantity, proratedPrice, billingInfo.BillingPlan.Currency)
+	if err != nil {
+		panic("could not commit prorated seat credits to bill")
+	}
+
+	// done
+	return nil
+}

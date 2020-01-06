@@ -42,11 +42,11 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 		panic("organization's billing info not found")
 	}
 
-	isMidPeriod := false
-	billTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, isMidPeriod)
+	seatBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, true)
+	usageBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, false)
 
 	// add "seat" line items
-	err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Users, billTimes)
+	err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Users, seatBillTimes)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	for _, user := range billingInfo.Users {
 		userIDs = append(userIDs, user.UserID)
 	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.UserEntityKind, userIDs, billTimes)
+	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.UserEntityKind, userIDs, usageBillTimes)
 	if err != nil {
 		return err
 	}
@@ -66,20 +66,26 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	for _, service := range billingInfo.Services {
 		serviceIDs = append(serviceIDs, service.ServiceID)
 	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ServiceEntityKind, serviceIDs, billTimes)
+	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ServiceEntityKind, serviceIDs, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add "read overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, billTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, usageBillTimes)
+	if err != nil {
+		return err
+	}
 
 	// if applicable, add "write overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, billTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, usageBillTimes)
+	if err != nil {
+		return err
+	}
 
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
 		OrganizationID: t.OrganizationID,
-		BillingTime:    billTimes.BillingTime,
+		BillingTime:    seatBillTimes.BillingTime,
 	})
 	if err != nil {
 		log.S.Errorw("Error creating task", err)
@@ -205,10 +211,8 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 		panic("overage only applies to read and write products")
 	}
 
-	var newBilledResources []*entity.BilledResource
-
 	if overageBytes > 0 {
-		newBilledResources = append(newBilledResources, &entity.BilledResource{
+		newBilledResource := []*entity.BilledResource{&entity.BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        organizationID,
@@ -219,11 +223,9 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 			Quantity:        overageGB,
 			TotalPriceCents: price,
 			Currency:        billingPlan.Currency,
-		})
-	}
+		}}
 
-	if len(newBilledResources) > 0 {
-		err := entity.CreateOrUpdateBilledResources(ctx, newBilledResources)
+		err := entity.CreateOrUpdateBilledResources(ctx, newBilledResource)
 		if err != nil {
 			panic("unable to write billed resources to table")
 		}
@@ -233,31 +235,39 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 	return nil
 }
 
-func calculateBillTimes(ts time.Time, p timeutil.Period, isMidPeriod bool) *billTimes {
-	now := time.Now()
+// on the first of each month, we charge for: the upcoming month's seats; the previous month's overage
+func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *billTimes {
+	billingTime := BeginningOfThisPeriod(p)
+	startTime := BeginningOfLastPeriod(p)
+	endTime := EndOfLastPeriod(p)
 
-	var billingTime time.Time
-	var startTime time.Time
-	var endTime time.Time
-
-	if isMidPeriod {
-		billingTime = BeginningOfNextPeriod(p)
-		startTime = BeginningOfThisPeriod(p)
-		endTime = now
-	} else {
-		billingTime = BeginningOfThisPeriod(p)
-		startTime = BeginningOfLastPeriod(p)
-		endTime = EndOfLastPeriod(p)
-		// FOR TESTING (since I don't have usage data from last month):
-		startTime = startTime.AddDate(0, 1, 0)
-		endTime = endTime.AddDate(0, 1, 0)
-		billingTime = billingTime.AddDate(0, 1, 0)
+	if isSeatProduct {
+		if p == timeutil.PeriodMonth {
+			startTime = startTime.AddDate(0, 1, 0)
+			endTime = endTime.AddDate(0, 1, 0)
+		} else if p == timeutil.PeriodYear {
+			startTime = startTime.AddDate(1, 0, 0)
+			endTime = endTime.AddDate(1, 0, 0)
+		} else {
+			panic("billing period is not supported")
+		}
 	}
+	// FOR TESTING (since I don't have usage data from last month):
+	startTime = startTime.AddDate(0, 1, 0)
+	endTime = endTime.AddDate(0, 1, 0)
+	billingTime = billingTime.AddDate(0, 1, 0)
+
 	return &billTimes{
 		BillingTime: billingTime,
 		StartTime:   startTime,
 		EndTime:     endTime,
 	}
+}
+
+// BeginningOfLastPeriod gets the beginning of the last period
+func BeginningOfLastPeriod(p timeutil.Period) time.Time {
+	ts := time.Now().UTC()
+	return timeutil.Last(ts, p)
 }
 
 // BeginningOfThisPeriod gets the beginning of this period
@@ -269,12 +279,6 @@ func BeginningOfThisPeriod(p timeutil.Period) time.Time {
 func BeginningOfNextPeriod(p timeutil.Period) time.Time {
 	ts := time.Now().UTC()
 	return timeutil.Next(ts, p)
-}
-
-// BeginningOfLastPeriod gets the beginning of the last period
-func BeginningOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Last(ts, p)
 }
 
 // EndOfLastPeriod gets the end of the last period

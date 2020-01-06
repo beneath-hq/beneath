@@ -137,8 +137,7 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	isMidPeriod := true
-	err := commitUsageToBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, isMidPeriod)
+	err := commitUsageOfDeletedEntityToBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID)
 	if err != nil {
 		return err
 	}
@@ -187,13 +186,17 @@ func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, rea
 	return pss, nil
 }
 
-func commitUsageToBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID, isMidPeriod bool) error {
+func commitUsageOfDeletedEntityToBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID) error {
 	billingInfo := FindBillingInfo(ctx, organizationID)
 	if billingInfo == nil {
 		panic("organization not found")
 	}
 
-	billTimes := calculateBillTimes(time.Now(), billingInfo.BillingPlan.Period, isMidPeriod)
+	billTimes := &billTimes{
+		BillingTime: BeginningOfNextPeriod(billingInfo.BillingPlan.Period),
+		StartTime:   BeginningOfThisPeriod(billingInfo.BillingPlan.Period),
+		EndTime:     time.Now(),
+	}
 
 	var billedResources []*BilledResource
 
@@ -249,33 +252,6 @@ type billTimes struct {
 	BillingTime time.Time
 	StartTime   time.Time
 	EndTime     time.Time
-}
-
-func calculateBillTimes(ts time.Time, p timeutil.Period, isMidPeriod bool) *billTimes {
-	now := time.Now()
-
-	var billingTime time.Time
-	var startTime time.Time
-	var endTime time.Time
-
-	if isMidPeriod {
-		billingTime = BeginningOfNextPeriod(p)
-		startTime = BeginningOfThisPeriod(p)
-		endTime = now
-	} else {
-		billingTime = BeginningOfThisPeriod(p)
-		startTime = BeginningOfLastPeriod(p)
-		endTime = EndOfLastPeriod(p)
-		// FOR TESTING (since I don't have usage data from last month):
-		startTime = startTime.AddDate(0, 1, 0)
-		endTime = endTime.AddDate(0, 1, 0)
-		billingTime = billingTime.AddDate(0, 1, 0)
-	}
-	return &billTimes{
-		BillingTime: billingTime,
-		StartTime:   startTime,
-		EndTime:     endTime,
-	}
 }
 
 // BeginningOfThisPeriod gets the beginning of this period
