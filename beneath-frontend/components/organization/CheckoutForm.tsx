@@ -7,7 +7,6 @@ import { makeStyles, TextField, Typography, Button } from "@material-ui/core";
 import Loading from "../Loading";
 import connection from "../../lib/connection";
 import { useToken } from '../../hooks/useToken';
-import organization from '../../pages/organization';
 import { BillingInfo, BillingInfoVariables } from '../../apollo/types/BillingInfo';
 import { QUERY_BILLING_INFO } from '../../apollo/queries/bililnginfo';
 
@@ -51,6 +50,19 @@ interface CardPaymentDetails {
     card: {
       Brand: string,
       Last4: string,
+    },
+    billing_details: {
+      Name: string,
+      Email: string,
+      Phone: string,
+      Address: {
+        Line1: string,
+        Line2: string,
+        City: string,
+        State: string,
+        PostalCode: string,
+        Country: string,
+      }
     }
   },
   error: string | undefined
@@ -82,7 +94,17 @@ interface Props {
 interface CheckoutStateTypes {
   isBuyingNow: boolean,
   isRequestingDemo: boolean,
-  customerData: PaymentMethodData | null,
+  city: string,
+  country: string,
+  line1: string,
+  line2: string,
+  postal_code: string,
+  state: string,
+  email: string,
+  firstname: string,
+  lastname: string,
+  phone: string,
+  customerDataFormSubmit: number,
   isLoading: boolean,
   error: string | null,
   stripeError: stripe.Error | undefined,
@@ -95,7 +117,17 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   const [values, setValues] = React.useState<CheckoutStateTypes>({
     isBuyingNow: false,
     isRequestingDemo: false,
-    customerData: null,
+    city: "",
+    country: "",
+    line1: "",
+    line2: "",
+    postal_code: "",
+    state: "",
+    email: "",
+    firstname: "",
+    lastname: "",
+    phone: "",
+    customerDataFormSubmit: 0,
     isLoading: false,
     error: null,
     stripeError: undefined,
@@ -115,46 +147,30 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     },
   });
 
+
+  const handleChange = (name: string) => (event: any) => {
+    setValues({ ...values, [name]: event.target.value });
+  };
+
   // Handle submission of Card details and Customer Data
   const handleCardDetailsFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
     ev.preventDefault();
-
-    // TODO: get customerData from Form below; validate the customerData before setting state; handle errors
-    setValues({
-      ...values, ...{
-        customerData: {
-          payment_method_data: {
-            billing_details: {
-              address: {
-                city: "Boston",
-                country: "US",
-                line1: "74 Stone Rd",
-                line2: "none",
-                postal_code: "02478",
-                state: "MA"
-              },
-              email: "ericpgreen2@gmail.com",
-              name: "Eric Green",
-              phone: "6177101732",
-            }
-          }
-        }
-      }
-    })
-
+    setValues({ ...values, ...{ customerDataFormSubmit: values.customerDataFormSubmit + 1}})
     return
   }
 
   const CardDetailsForm = (
     <div>
       <form onSubmit={handleCardDetailsFormSubmit}>
-        {/* <TextField
+        <TextField
             id="firstname"
             label="First name"
             margin="normal"
             fullWidth
             required
+            value={values.firstname}
+            onChange={handleChange("firstname")}
           />
           <TextField
             id="lastname"
@@ -162,6 +178,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             margin="normal"
             fullWidth
             required
+            value={values.lastname}
+            onChange={handleChange("lastname")}
           />
           <TextField
             id="address_line1"
@@ -169,12 +187,16 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             margin="normal"
             fullWidth
             required
+            value={values.line1}
+            onChange={handleChange("line1")}
           />
           <TextField
             id="address_line2"
             label="Address line 2"
             margin="normal"
             fullWidth
+            value={values.line2}
+            onChange={handleChange("line2")}
           />
           <TextField
             id="address_city"
@@ -182,6 +204,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             margin="normal"
             fullWidth
             required
+            value={values.city}
+            onChange={handleChange("city")}
           />
           <TextField
             id="address_state"
@@ -189,6 +213,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             margin="normal"
             fullWidth
             required
+            value={values.state}
+            onChange={handleChange("state")}
           />
           <TextField
             id="address_zip"
@@ -196,14 +222,37 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             margin="normal"
             fullWidth
             required
+            value={values.postal_code}
+            onChange={handleChange("postal_code")}
           />
           <TextField
             id="address_country"
             label="Country"
             margin="normal"
+            helperText={!validateCountry(values.country) ? "Must be the two letter country code" : undefined}
             fullWidth
             required
-          /> */}
+            value={values.country}
+            onChange={handleChange("country")}
+          />
+          <TextField
+            id="email"
+            label="Email address"
+            margin="normal"
+            fullWidth
+            required
+            value={values.email}
+            onChange={handleChange("email")}
+          />
+          <TextField
+            id="phone"
+            label="Phone number"
+            margin="normal"
+            fullWidth
+            required
+            value={values.phone}
+            onChange={handleChange("phone")}
+          />
         <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
         <button>Submit</button>
       </form>
@@ -244,13 +293,12 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   useEffect(() => {
     let isMounted = true
 
-    const fetchData = (async () => {
-      if (!stripe || !values.customerData) {
+    const fetchData = (async () => {      
+      if (!stripe) {
         return
       }
 
       setValues({ ...values, ...{ isIntentLoading: true } })
-
       const res = await fetch(url, { headers });
       
       if (isMounted) {
@@ -258,12 +306,30 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
           setValues({ ...values, ...{ error: res.statusText } })
         }
         const intent: any = await res.json();
+
+        const customerData: PaymentMethodData = {
+          payment_method_data: {
+            billing_details: {
+              address: {
+                city: values.city,
+                country: values.country,
+                line1: values.line1,
+                line2: values.line2,
+                postal_code: values.postal_code,
+                state: values.state,
+              },
+              email: values.email,
+              name: values.firstname + " " + values.lastname,
+              phone: values.phone,
+            }
+          }
+        }
   
         // handleCardSetup automatically pulls credit card info from the Card element
         // TODO from Stripe Docs: Note that stripe.handleCardSetup may take several seconds to complete. During that time, you should disable your form from being resubmitted and show a waiting indicator like a spinner. If you receive an error result, you should be sure to show that error to the customer, re-enable the form, and hide the waiting indicator.
         // ^ *** make sure not to "block" access to the Card Element by solely returning a loading spinner
         // TODO from Stripe Docs: Additionally, stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
-        const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, values.customerData)
+        const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, customerData)
         if (result.error) {
           setValues({ ...values, ...{ stripeError: result.error, isIntentLoading: false } })
         }
@@ -280,7 +346,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     return () => {
       isMounted = false
     }
-  }, [values.customerData])
+  }, [values.customerDataFormSubmit])
 
   // for paying customers, get current payment details 
   useEffect(() => {
@@ -297,8 +363,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             setValues({ ...values, ...{ error: res.statusText } })
           }
 
-          const details: CardPaymentDetails = await res.json();
-          setValues({ ...values, ...{ paymentDetails: details } })
+          const paymentDetails: CardPaymentDetails = await res.json();
+          setValues({ ...values, ...{ paymentDetails: paymentDetails } })
         }
       }
     }
@@ -392,6 +458,15 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
             <Typography variant="body1">Current billing details</Typography>
             <Typography variant="body1">Brand: {values.paymentDetails.data.card.Brand}</Typography>
             <Typography variant="body1">Last4: {values.paymentDetails.data.card.Last4}</Typography>
+            <Typography variant="body1">Name: {values.paymentDetails.data.billing_details.Name}</Typography>
+            <Typography variant="body1">Phone: {values.paymentDetails.data.billing_details.Phone}</Typography>
+            <Typography variant="body1">Email: {values.paymentDetails.data.billing_details.Email}</Typography>
+            <Typography variant="body1">Line1: {values.paymentDetails.data.billing_details.Address.Line1}</Typography>
+            <Typography variant="body1">Line2: {values.paymentDetails.data.billing_details.Address.Line2}</Typography>
+            <Typography variant="body1">City: {values.paymentDetails.data.billing_details.Address.City}</Typography>
+            <Typography variant="body1">State: {values.paymentDetails.data.billing_details.Address.State}</Typography>
+            <Typography variant="body1">PostalCode: {values.paymentDetails.data.billing_details.Address.PostalCode}</Typography>
+            <Typography variant="body1">Country: {values.paymentDetails.data.billing_details.Address.Country}</Typography>
             <Button
               color="secondary"
               onClick={() => {
@@ -445,4 +520,8 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   }
 
   return <p> Unexplained behavior </p>
+};
+
+const validateCountry = (val: string) => {
+  return val && val.length == 2;
 };

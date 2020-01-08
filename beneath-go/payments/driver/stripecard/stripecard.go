@@ -27,6 +27,22 @@ type card struct {
 	Last4 string
 }
 
+type address struct {
+	Line1      string
+	Line2      string
+	City       string
+	State      string
+	PostalCode string
+	Country    string
+}
+
+type billingDetails struct {
+	Name    string
+	Email   string
+	Phone   string
+	Address *address
+}
+
 const (
 	maxCardRetries = 4
 )
@@ -254,8 +270,20 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 				Brand: string(pm.Card.Brand),
 				Last4: pm.Card.Last4,
 			},
-		},
-	})
+			"billing_details": &billingDetails{
+				Name: pm.BillingDetails.Name,
+				Address: &address{
+					Line1:      pm.BillingDetails.Address.Line1,
+					Line2:      pm.BillingDetails.Address.Line2,
+					City:       pm.BillingDetails.Address.City,
+					State:      pm.BillingDetails.Address.State,
+					PostalCode: pm.BillingDetails.Address.PostalCode,
+					Country:    pm.BillingDetails.Address.Country,
+				},
+				Email: pm.BillingDetails.Email,
+				Phone: pm.BillingDetails.Phone,
+			},
+		}})
 
 	if err != nil {
 		return httputil.NewError(500, err.Error())
