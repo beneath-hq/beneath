@@ -21,6 +21,19 @@ import { QUERY_BILLING_INFO } from '../../apollo/queries/bililnginfo';
 // current plan details
 // current payment method
 
+// Q: code refactor --
+// overall, I fetch billing info, check whether or not customer is currently paying, check the payment driver
+// if not yet paid, then display form to submit credit card info
+// if already paid, display current billing info (which depends on payment driver)
+
+// element1 = current card billing info
+// element2 = current wire billing info
+// element3 = form to submit credit card
+// element4 = billing plan options (click here to buy a professional plan, click here to request demo)
+
+const FREE_BILLING_PLAN_DESCRIPTION = "FREE";
+const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+
 const useStyles = makeStyles((theme) => ({
   noDataCaption: {
     color: theme.palette.text.secondary,
@@ -104,7 +117,7 @@ interface CheckoutStateTypes {
   firstname: string,
   lastname: string,
   phone: string,
-  customerDataFormSubmit: number,
+  cardDetailsFormSubmit: number,
   isLoading: boolean,
   error: string | null,
   stripeError: stripe.Error | undefined,
@@ -127,7 +140,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     firstname: "",
     lastname: "",
     phone: "",
-    customerDataFormSubmit: 0,
+    cardDetailsFormSubmit: 0,
     isLoading: false,
     error: null,
     stripeError: undefined,
@@ -137,26 +150,23 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
   })
   const classes = useStyles();
   const token = useToken();
-  const FREE_BILLING_PLAN_DESCRIPTION = "FREE";
-  const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-
-  // fetch organization -> billing info -> billing plan and payment driver
+  
+  // fetch organization's billing info for the billing plan and payment driver
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     variables: {
       organizationID: organization.organizationID,
     },
   });
 
-
+  // Handle submission of Card Details Form
   const handleChange = (name: string) => (event: any) => {
     setValues({ ...values, [name]: event.target.value });
   };
 
-  // Handle submission of Card details and Customer Data
   const handleCardDetailsFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
     ev.preventDefault();
-    setValues({ ...values, ...{ customerDataFormSubmit: values.customerDataFormSubmit + 1}})
+    setValues({ ...values, ...{ cardDetailsFormSubmit: values.cardDetailsFormSubmit + 1}})
     return
   }
 
@@ -284,7 +294,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     </div>
   )
 
-  // When card form is submitted (and Customer Data changes), initiate setupIntent
+  // When card form is submitted, initiate setupIntent
   const headers = { authorization: `Bearer ${token}` };
   let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`;
   url += `?organizationID=${organization.organizationID}`;
@@ -346,7 +356,7 @@ const CheckoutForm: FC<Props> = ({ stripe, organization }) => {
     return () => {
       isMounted = false
     }
-  }, [values.customerDataFormSubmit])
+  }, [values.cardDetailsFormSubmit])
 
   // for paying customers, get current payment details 
   useEffect(() => {
