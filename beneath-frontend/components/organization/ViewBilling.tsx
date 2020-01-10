@@ -5,7 +5,7 @@ import {
 } from 'react-stripe-elements';
 
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
-import CheckoutForm from "./CheckoutForm";
+import ViewBillingRouter from "./ViewBillingRouter";
 
 interface ViewBillingProps {
   organization: OrganizationByName_organizationByName;
@@ -24,7 +24,7 @@ class ViewBilling extends React.Component<ViewBillingProps, ViewBillingState> {
 
   componentDidMount() {
     // Create Stripe instance in componentDidMount (componentDidMount only fires in browser/DOM environment) 
-    // note that updating the state like this will cause the CheckoutForm to fire/initially render twice
+    // note that updating the state like this will cause the ViewBillingRouter to fire/initially render twice
     this.setState({ stripe: window.Stripe('pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr') })
   }
 
@@ -32,7 +32,7 @@ class ViewBilling extends React.Component<ViewBillingProps, ViewBillingState> {
     return (
       <StripeProvider stripe={this.state.stripe}>
         <Elements>
-          <CheckoutForm organization={this.state.organization}/>
+          <ViewBillingRouter organization={this.state.organization}/>
         </Elements>
       </StripeProvider>
     );
