@@ -7,17 +7,17 @@ import {
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
 import CheckoutForm from "./CheckoutForm";
 
-interface BillingTabProps {
+interface ViewBillingProps {
   organization: OrganizationByName_organizationByName;
 }
 
-interface BillingTabState {
+interface ViewBillingState {
   stripe: stripe.Stripe | null;
   organization: OrganizationByName_organizationByName;
 }
 
-class BillingTab extends React.Component<BillingTabProps, BillingTabState> {
-  constructor(props: BillingTabProps) {
+class ViewBilling extends React.Component<ViewBillingProps, ViewBillingState> {
+  constructor(props: ViewBillingProps) {
     super(props);
     this.state = { stripe: null, organization: props.organization};
   }
@@ -39,4 +39,4 @@ class BillingTab extends React.Component<BillingTabProps, BillingTabState> {
   }
 }
 
-export default BillingTab;
+export default ViewBilling;

@@ -16,7 +16,7 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 import ViewUsers from "../components/organization/ViewUsers";
 import ViewServices from "../components/organization/ViewServices";
-import BillingTab from "../components/organization/BillingTab";
+import ViewBilling from "../components/organization/ViewBilling";
 
 
 const OrganizationPage = () => {
@@ -51,7 +51,7 @@ const OrganizationPage = () => {
 
   const tabs = [{ value: "users", label: "Users", render: () => <ViewUsers organization={organization} /> },
     { value: "services", label: "Services", render: () => <ViewServices organization={organization} /> },
-    { value: "billing", label: "Billing", render: () => <BillingTab organization={organization} /> }];
+    { value: "billing", label: "Billing", render: () => <ViewBilling organization={organization} /> }];
 
   return (
     <Page title="Organization" subheader>
