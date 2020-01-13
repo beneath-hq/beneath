@@ -28,6 +28,8 @@ message QueryRequest {
   string filter      = 2;
   bool   compact     = 3;
   int32  partitions  = 4;
+  // dry
+  // sample
 }
 
 message QueryResponse {
