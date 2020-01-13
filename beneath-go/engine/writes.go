@@ -12,12 +12,12 @@ import (
 // QueueWriteRequest queues a write request -- concretely, it results in
 // the write request being written to Pubsub, then from there read by
 // the data processing pipeline and written to BigTable and BigQuery
-func (e *Engine) QueueWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
+func (e *Engine) QueueWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	panic("todo")
 }
 
 // ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
-func (e *Engine) ReadWriteRequests(fn func(context.Context, *pb.WriteRecordsRequest) error) error {
+func (e *Engine) ReadWriteRequests(fn func(context.Context, *pb.WriteRequest) error) error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 

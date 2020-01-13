@@ -19,6 +19,7 @@ service Gateway {
   rpc Peek(PeekRequest) returns (PeekResponse) {}
   rpc Repartition(RepartitionRequest) returns (RepartitionResponse) {}
   rpc Write(WriteRequest) returns (WriteResponse) {}
+
   rpc Ping(PingRequest) returns (PingResponse) {}
   rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
 }
@@ -38,8 +39,9 @@ message QueryResponse {
 }
 
 message ReadRequest {
-  bytes cursor = 1;
-  int32 limit  = 2;
+  bytes instance_id = 1;
+  bytes cursor = 2;
+  int32 limit  = 3;
 }
 
 message ReadResponse {
@@ -48,7 +50,8 @@ message ReadResponse {
 }
 
 message SubscribeRequest {
-  bytes cursor = 1;
+  bytes instance_id = 1;
+  bytes cursor = 2;
 }
 
 message SubscribeResponse {
@@ -68,9 +71,10 @@ message PeekResponse {
 }
 
 message RepartitionRequest {
-  int32 partitions = 1;
-  repeated bytes replay_cursors = 2;
-  repeated bytes change_cursors = 3;
+  bytes instance_id = 1;
+  int32 partitions = 2;
+  repeated bytes replay_cursors = 3;
+  repeated bytes change_cursors = 4;
 }
 
 message RepartitionResponse {

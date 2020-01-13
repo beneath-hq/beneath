@@ -17,7 +17,7 @@ import (
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
-func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsRequest) (*pb.WriteRecordsResponse, error) {
+func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
 	if secret == nil {
@@ -31,7 +31,7 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	}
 
 	// set log payload
-	payload := writeRecordsTags{
+	payload := writeTags{
 		InstanceID:   instanceID.String(),
 		RecordsCount: len(req.Records),
 	}
@@ -109,6 +109,6 @@ func (s *gRPCServer) WriteRecords(ctx context.Context, req *pb.WriteRecordsReque
 	payload.BytesWritten = bytesWritten
 	middleware.SetTagsPayload(ctx, payload)
 
-	response := &pb.WriteRecordsResponse{}
+	response := &pb.WriteResponse{}
 	return response, nil
 }

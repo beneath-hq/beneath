@@ -11,9 +11,9 @@ import (
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
-func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*pb.ClientPong, error) {
+func (s *gRPCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	// set log payload
-	middleware.SetTagsPayload(ctx, clientPingTags{
+	middleware.SetTagsPayload(ctx, pingTags{
 		ClientID:      req.ClientId,
 		ClientVersion: req.ClientVersion,
 	})
@@ -38,9 +38,9 @@ func (s *gRPCServer) SendClientPing(ctx context.Context, req *pb.ClientPing) (*p
 	}
 
 	secret := middleware.GetSecret(ctx)
-	return &pb.ClientPong{
+	return &pb.PingResponse{
 		Authenticated:      !secret.IsAnonymous(),
-		Status:             status,
+		VersionStatus:      status,
 		RecommendedVersion: spec.RecommendedVersion.String(),
 	}, nil
 }

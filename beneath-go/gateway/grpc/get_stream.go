@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetailsRequest) (*pb.StreamDetailsResponse, error) {
+func (s *gRPCServer) GetStream(ctx context.Context, req *pb.GetStreamRequest) (*pb.GetStreamResponse, error) {
 	// to backend names
 	req.StreamName = toBackendName(req.StreamName)
 	req.ProjectName = toBackendName(req.ProjectName)
@@ -53,7 +53,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 	// TODO
 
 	// return
-	return &pb.StreamDetailsResponse{
+	return &pb.GetStreamResponse{
 		ProjectId:         stream.ProjectID.Bytes(),
 		ProjectName:       stream.ProjectName,
 		StreamId:          stream.StreamID.Bytes(),
@@ -65,7 +65,7 @@ func (s *gRPCServer) GetStreamDetails(ctx context.Context, req *pb.StreamDetails
 		Manual:            stream.Manual,
 		Committed:         stream.Committed,
 		RetentionSeconds:  stream.RetentionSeconds,
-		AvroSchema:        stream.Codec.GetAvroSchemaString(),
+		AvroSchema:        stream.Codec.AvroSchemaString,
 		Indexes:           indexes,
 	}, nil
 }
