@@ -1,20 +1,25 @@
-import React, { FC, useEffect } from 'react';
-import { CardElement } from 'react-stripe-elements';
-import Loading from "../Loading";
-import { TextField, Typography, Button } from "@material-ui/core";
-import { Autocomplete } from "@material-ui/lab";
-import { makeStyles } from "@material-ui/core/styles";
-import Grid from '@material-ui/core/Grid';
-import { useToken } from '../../hooks/useToken';
-import { ReactStripeElements } from 'react-stripe-elements';
-import connection from "../../lib/connection";
+import React, { FC, useEffect } from 'react'
+import { CardElement } from 'react-stripe-elements'
+import Loading from "../Loading"
+import { TextField, Typography, Button } from "@material-ui/core"
+import { Autocomplete } from "@material-ui/lab"
+import { makeStyles } from "@material-ui/core/styles"
+import Grid from '@material-ui/core/Grid'
+import { useToken } from '../../hooks/useToken'
+import { ReactStripeElements } from 'react-stripe-elements'
+import connection from "../../lib/connection"
 import _ from 'lodash'
-import { useQuery } from "@apollo/react-hooks";
-import { QUERY_ME } from "../../apollo/queries/user";
-import { Me } from "../../apollo/types/Me";
+import { useQuery } from "@apollo/react-hooks"
+import { QUERY_ME } from "../../apollo/queries/user"
+import { Me } from "../../apollo/types/Me"
+import Dialog from '@material-ui/core/Dialog'
+import DialogActions from '@material-ui/core/DialogActions'
+import DialogContent from '@material-ui/core/DialogContent'
+import DialogContentText from '@material-ui/core/DialogContentText'
+import DialogTitle from '@material-ui/core/DialogTitle'
 
 
-const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
 const useStyles = makeStyles((theme) => ({
   noDataCaption: {
@@ -42,7 +47,7 @@ const useStyles = makeStyles((theme) => ({
     },
     color: "white"
   },
-}));
+}))
 
 interface CardPaymentDetails {
   data: {
@@ -101,14 +106,15 @@ interface CheckoutStateTypes {
   paymentDetails: CardPaymentDetails | null,
   stripeDialog: boolean,
   loading: boolean,
+  intentLoading: boolean,
   status: stripe.setupIntents.SetupIntentStatus | null,
 }
 
 interface Props {
-  stripe: ReactStripeElements.StripeProps | undefined;
-  organization_id: any;
-  billing_period: any;
-  description: any;
+  stripe: ReactStripeElements.StripeProps | undefined
+  organization_id: any
+  billing_period: any
+  description: any
 }
 
 const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, description }) => {
@@ -127,40 +133,52 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     paymentDetails: null,
     stripeDialog: false,
     loading: false,
+    intentLoading: false,
     status: null
   })
-  const token = useToken();
-  const classes = useStyles();
+  const token = useToken()
+  const classes = useStyles()
 
   // get me for email address
-  const { loading, error, data } = useQuery<Me>(QUERY_ME);
+  const { loading, error, data } = useQuery<Me>(QUERY_ME)
 
   if (loading) {
-    return <Loading justify="center" />;
+    return <Loading justify="center" />
   }
 
   if (error || !data || !data.me) {
-    return <p>Error: {JSON.stringify(error)}</p>;
+    return <p>Error: {JSON.stringify(error)}</p>
   }
 
-  const { me } = data;
+  const { me } = data
 
   // Handle submission of Card Details Form
   const handleChange = (name: string) => (event: any) => {
-    setValues({ ...values, [name]: event.target.value });
-  };
+    setValues({ ...values, [name]: event.target.value })
+  }
 
   const onCountryChange = (object: any, value: any) => {
     if (value) {
-      setValues({ ...values, country: value.code });
+      setValues({ ...values, country: value.code })
     }
-  };
+  }
 
   const handleCardDetailsFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
-    ev.preventDefault();
-    setValues({ ...values, ...{ cardDetailsFormSubmit: values.cardDetailsFormSubmit + 1 } })
+    ev.preventDefault()
+    setValues({ ...values, ...{ cardDetailsFormSubmit: values.cardDetailsFormSubmit + 1, stripeError: undefined, stripeDialog: true, intentLoading: true } })
     return
+  }
+
+  const handleDialogClose = () => {
+    if (values.stripeError) {
+      setValues({ ...values, ...{ stripeDialog: false } })
+    }
+    if (values.status !== null && values.status === "succeeded") {
+      // possibly wait a few seconds
+      // reload the page to get new customer billing info from Stripe
+      window.location.reload(true)
+    }
   }
 
   const CardBillingDetailsForm = (
@@ -330,35 +348,47 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
           </Grid>
         </Grid>
       </form>
-         {values.stripeError !== undefined && (
-          <Typography variant="body1" color="error">
-          {JSON.stringify(values.stripeError.message).substring(1, JSON.stringify(values.stripeError.message).length-1)}
-          </Typography>
-        )}
-        {/* note: setup intent returns a "success" BEFORE we complete attaching the card to the customer in Stripe.
-                  so if we simulatenously trigger a refresh of the page, we'll see the old card info.
-                  so we need to wait a second before fetching the updated card info from stripe.   */}
-        {values.status !== null && values.status === "succeeded" && (
-          <Typography variant="body1">
-            {values.status} -- need to refresh the page to see your card details on file
-          </Typography>
-        )}
-        {values.status !== null && values.status !== "succeeded" && (
-          <Typography variant="body1" color="error">
-            {values.status}
-          </Typography>
-        )}
-        
+      <Dialog
+        open={values.stripeDialog}
+        onClose={handleDialogClose}
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogContent>
+          {values.intentLoading && (<Loading />)}
+          {values.stripeError && (<Typography variant="body1" color="error">
+            {JSON.stringify(values.stripeError.message).substring(1, JSON.stringify(values.stripeError.message).length - 1)}
+          </Typography>)}
+          {values.status !== null && values.status === "succeeded" && (
+            <React.Fragment>
+              <Typography variant="h5" gutterBottom>
+                Thank you for your order.
+              </Typography>
+              <Typography variant="subtitle1">
+                We will send your bill to your email on file at the beginning of each billing cycle.
+              </Typography>
+            </React.Fragment>)}
+          {values.status !== null && values.status !== "succeeded" && (
+            <Typography variant="body1" color="error">
+              {values.status}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {!values.intentLoading && (
+          <Button onClick={handleDialogClose} color="primary" autoFocus>
+            Ok
+          </Button>)}
+          
+        </DialogActions>
+      </Dialog>
     </React.Fragment>
-        
-
   )
 
   // When card form is submitted, initiate setupIntent
-  const headers = { authorization: `Bearer ${token}` };
-  let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`;
-  url += `?organizationID=${organization_id}`;
-  url += `&billingPlanID=${PRO_BILLING_PLAN_ID}`;
+  const headers = { authorization: `Bearer ${token}` }
+  let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
+  url += `?organizationID=${organization_id}`
+  url += `&billingPlanID=${PRO_BILLING_PLAN_ID}`
 
   useEffect(() => {
     let isMounted = true
@@ -367,14 +397,14 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
       if (!stripe) {
         return
       }
-
-      const res = await fetch(url, { headers });
+      
+      const res = await fetch(url, { headers })
 
       if (isMounted) {
         if (!res.ok) {
           setValues({ ...values, ...{ error: res.statusText } })
         }
-        const intent: any = await res.json();
+        const intent: any = await res.json()
 
         const customerData: PaymentMethodData = {
           payment_method_data: {
@@ -394,16 +424,14 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
         }
 
         // handleCardSetup automatically pulls credit card info from the Card element
-        // TODO from Stripe Docs: Note that stripe.handleCardSetup may take several seconds to complete. During that time, you should disable your form from being resubmitted and show a waiting indicator like a spinner. If you receive an error result, you should be sure to show that error to the customer, re-enable the form, and hide the waiting indicator.
-        // ^ *** make sure not to "block" access to the Card Element by solely returning a loading spinner
-        // TODO from Stripe Docs: Additionally, stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
+        // TODO from Stripe Docs: stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
         const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, customerData)
         if (result.error) {
-          setValues({ ...values, ...{ stripeError: result.error, loading: false } })
+          setValues({ ...values, ...{ stripeError: result.error, intentLoading: false } })
         }
         if (result.setupIntent) {
-          console.log(result.setupIntent) // TODO: if success, trigger refetch of billing info (to display current card on file), or just return a confirmation
-          setValues({ ...values, ...{ stripeError: result.error, status: result.setupIntent.status } })
+          console.log(result.setupIntent)
+          setValues({ ...values, ...{ stripeError: result.error, status: result.setupIntent.status, intentLoading: false } })
         }
       }
     })
@@ -421,17 +449,16 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     let isMounted = true
     
     const fetchData = async () => {
-      console.log("FETCHING PAYMENT DETAILS")
       setValues({ ...values, ...{ loading: true } })
-      let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`;
-      const res = await fetch(payment_details_url, { headers });
+      let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`
+      const res = await fetch(payment_details_url, { headers })
 
       if (isMounted) {
         if (!res.ok) {
           setValues({ ...values, ...{ error: res.statusText } })
         }
 
-        const paymentDetails: CardPaymentDetails = await res.json();
+        const paymentDetails: CardPaymentDetails = await res.json()
         setValues({ ...values, ...{ paymentDetails: paymentDetails, loading: false } })
       }
     }
@@ -449,7 +476,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   }
 
   if (values.paymentDetails == null) {
-    return <p>Error: no payment details.. why?</p>;
+    return <p>Error: no payment details.. why?</p>
   }
 
   const address = [values.paymentDetails.data.billing_details.Address.Line1,
@@ -457,18 +484,18 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     values.paymentDetails.data.billing_details.Address.City,
     values.paymentDetails.data.billing_details.Address.State,
     values.paymentDetails.data.billing_details.Address.PostalCode,
-    values.paymentDetails.data.billing_details.Address.Country].filter(Boolean); // omit Line2 if it's empty
+    values.paymentDetails.data.billing_details.Address.Country].filter(Boolean) // omit Line2 if it's empty
   const payments = [
     { name: 'Card type', detail: _.startCase(_.toLower(values.paymentDetails.data.card.Brand))},
     { name: 'Card number', detail: 'xxxx-xxxx-xxxx-' + values.paymentDetails.data.card.Last4 },
     { name: 'Expiration', detail: values.paymentDetails.data.card.ExpMonth.toString() + '/' + values.paymentDetails.data.card.ExpYear.toString().substring(2,4) },
     { name: 'Card holder', detail: values.paymentDetails.data.billing_details.Name },
     { name: 'Billing address', detail: address.join(', ')}
-  ];
+  ]
   const planDetails = [
     { name: 'Plan name', detail: description },
-    { name: 'Bill frequency', detail: billing_period},
-  ];
+    { name: 'Billing cycle', detail: billing_period},
+  ]
 
   // current card details
   const CardBillingDetails = (
@@ -548,8 +575,8 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
 }
 
 // const validateCountry = (val: string) => {
-//   return val && val.length == 2;
-// };
+//   return val && val.length == 2
+// }
 
 const countries = [
   { code: 'AD', label: 'Andorra'},
@@ -800,6 +827,6 @@ const countries = [
   { code: 'ZA', label: 'South Africa'},
   { code: 'ZM', label: 'Zambia'},
   { code: 'ZW', label: 'Zimbabwe'},
-];
+]
 
 export default PaymentsByCard
