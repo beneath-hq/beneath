@@ -20,7 +20,6 @@ type configSpecification struct {
 	GRPCPort         int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
 	SegmentSecret    string `envconfig:"GATEWAY_SEGMENT_SECRET" required:"true"`
 	MQDriver         string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
-	LogDriver        string `envconfig:"ENGINE_LOG_DRIVER" required:"true"`
 	LookupDriver     string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
@@ -37,7 +36,7 @@ func main() {
 	// Init connections
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	db.InitRedis(config.RedisURL)
-	db.InitEngine(config.MQDriver, config.LogDriver, config.LookupDriver, config.WarehouseDriver)
+	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	// Init segment
 	segment.InitClient(config.SegmentSecret)

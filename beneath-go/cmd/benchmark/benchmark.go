@@ -16,7 +16,6 @@ import (
 
 type configSpecification struct {
 	MQDriver         string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
-	LogDriver        string `envconfig:"ENGINE_LOG_DRIVER" required:"true"`
 	LookupDriver     string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
@@ -34,7 +33,7 @@ func init() {
 	core.LoadConfig("beneath", &Config)
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
-	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
+	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
 }
 
 func main() {

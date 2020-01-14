@@ -61,12 +61,6 @@ func createGlobal() {
 	}
 }
 
-// GetLog returns a BigTable implementation of beneath.Log
-func GetLog() driver.Log {
-	once.Do(createGlobal)
-	return global
-}
-
 // GetLookupService returns a BigTable implementation of beneath.LookupService
 func GetLookupService() driver.LookupService {
 	once.Do(createGlobal)

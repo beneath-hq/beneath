@@ -22,8 +22,8 @@ func Run() error {
 	return db.Engine.ReadWriteRequests(processWriteRequest)
 }
 
-// processWriteRequest is called (approximately once) for each new write request
-func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error {
+// ProcessWriteRequest persists a write request
+func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	// metrics to track
 	start := time.Now()
 	var bytesTotal int
@@ -55,31 +55,18 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error
 	// overriding ctx to the background context in an attempt to push through with all the writes
 	// (a cancel is most likely due to receiving a SIGINT/SIGTERM, so we'll have a little leeway before being force killed)
 	ctx = context.Background()
-
-	// write to log
-	cursors, err := db.Engine.Log.WriteToLog(ctx, stream, stream, stream, records)
-	if err != nil {
-		return err
-	}
-
-	// apply cursors to records
-	for idx, cursor := range cursors {
-		r := records[idx].(record)
-		r.LogCursor = cursor
-	}
-
-	// write to lookup and project
 	group, ctx := errgroup.WithContext(ctx)
 
+	// write to lookup and warehouse
 	group.Go(func() error {
-		return db.Engine.Lookup.WriteToLookup(ctx, stream, stream, stream, records)
+		return db.Engine.Lookup.WriteRecords(ctx, stream, stream, stream, records)
 	})
 
 	group.Go(func() error {
 		return db.Engine.Warehouse.WriteToWarehouse(ctx, stream, stream, stream, records)
 	})
 
-	err = group.Wait()
+	err := group.Wait()
 	if err != nil {
 		return err
 	}
@@ -114,7 +101,6 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRecordsRequest) error
 type record struct {
 	Proto      *pb.Record
 	Structured map[string]interface{}
-	LogCursor  []byte
 }
 
 func newRecord(stream driver.Stream, proto *pb.Record) record {
@@ -144,8 +130,4 @@ func (r record) GetAvro() []byte {
 
 func (r record) GetStructured() map[string]interface{} {
 	return r.Structured
-}
-
-func (r record) GetLogCursor() []byte {
-	return r.LogCursor
 }

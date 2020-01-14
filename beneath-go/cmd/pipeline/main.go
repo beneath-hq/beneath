@@ -23,7 +23,7 @@ func main() {
 
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
-	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
+	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
 
 	log.S.Info("pipeline started")
 	log.S.Fatal(pipeline.Run())

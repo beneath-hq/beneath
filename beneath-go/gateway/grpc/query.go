@@ -74,7 +74,7 @@ func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	}
 
 	// run query
-	replayCursors, changeCursors, err := db.Engine.Query(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
+	replayCursors, changeCursors, err := db.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse 'where': %s", err.Error())
 	}
@@ -139,7 +139,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	}
 
 	// get result iterator
-	it, err := db.Engine.ReadCursor(ctx, stream, stream, stream, req.Cursor, int(req.Limit))
+	it, err := db.Engine.Lookup.ReadCursor(ctx, stream, stream, stream, req.Cursor, int(req.Limit))
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
@@ -164,7 +164,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	}
 
 	// set next cursor
-	response.NextCursor = it.NextPageCursor()
+	response.NextCursor = it.NextCursor()
 
 	// track read metrics
 	gateway.Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))

@@ -53,32 +53,19 @@ type Service interface {
 	RemoveInstance(ctx context.Context, p Project, s Stream, i StreamInstance) error
 }
 
-// Log encapsulates functionality necessary to replay instance data in Beneath
-type Log interface {
-	Service
-
-	// ParseLogQuery should return a cursor for the given log query
-	ParseLogQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query) ([]byte, error)
-
-	// ReadLog should return a RecordsIterator returning records from the log starting at the given cursor
-	ReadLog(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
-
-	// WriteToLog should insert the records in r into the instance's log and return an array of corresponding cursors
-	WriteToLog(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) ([][]byte, error)
-}
-
-// LookupService encapsulates functionality to efficiently lookup indexed records in an instance
+// LookupService encapsulates functionality necessary to lookup, replay and subscribe to data.
+// It's implementation is likely a mixture of a log and an indexed operational data store.
 type LookupService interface {
 	Service
 
-	// ParseLookupQuery should return a cursor for the given lookup query
-	ParseLookupQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query) ([]byte, error)
+	// ParseQuery returns (replayCursors, changeCursors, err)
+	ParseQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error)
 
-	// ReadLookup should return a RecordsIterator looking up records starting at the given cursor
-	ReadLookup(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
+	// ReadCursor returns (records, nextCursor, err)
+	ReadCursor(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
 
-	// WriteRecords should insert the records in r for lookup in the instance
-	WriteToLookup(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
+	// WriteRecord persists the records
+	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance
@@ -127,9 +114,9 @@ type RecordsIterator interface {
 	// Next should return the next record in the iterator or nil if it's emptied
 	Next() Record
 
-	// NextPageCursor should return a cursor for reading more rows if this iterator
+	// NextCursor should return a cursor for reading more rows if this iterator
 	// doesn't return all rows in the result. A nil result should indicate no more rows.
-	NextPageCursor() []byte
+	NextCursor() []byte
 }
 
 // Record todo
@@ -142,7 +129,4 @@ type Record interface {
 
 	// GetStructured should return the structured representation of the record
 	GetStructured() map[string]interface{}
-
-	// GetLogCursor should return a cursor for accessing the individual record in the log
-	GetLogCursor() []byte
 }

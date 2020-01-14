@@ -8,13 +8,13 @@ import (
 	"github.com/beneath-core/beneath-go/engine/driver"
 	"github.com/beneath-core/beneath-go/engine/driver/bigquery"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable"
+	"github.com/beneath-core/beneath-go/engine/driver/postgres"
 	"github.com/beneath-core/beneath-go/engine/driver/pubsub"
 )
 
 // Engine interfaces with the data layer
 type Engine struct {
 	MQ        driver.MessageQueue
-	Log       driver.Log
 	Lookup    driver.LookupService
 	Warehouse driver.WarehouseService
 
@@ -24,16 +24,15 @@ type Engine struct {
 }
 
 // NewEngine creates a new Engine instance
-func NewEngine(mqDriver, logDriver, lookupDriver, warehouseDriver string) *Engine {
+func NewEngine(mqDriver, lookupDriver, warehouseDriver string) *Engine {
 	e := &Engine{}
 	e.MQ = makeMQ(mqDriver)
-	e.Log = makeLog(logDriver)
 	e.Lookup = makeLookup(lookupDriver)
 	e.Warehouse = makeWarehouse(warehouseDriver)
 
-	e.maxBatchLength = mathutil.MinInts(e.Log.MaxRecordsInBatch(), e.Lookup.MaxRecordsInBatch(), e.Warehouse.MaxRecordsInBatch())
-	e.maxRecordSize = mathutil.MinInts(e.Log.MaxRecordSize(), e.Lookup.MaxRecordSize(), e.Warehouse.MaxRecordSize())
-	e.maxKeySize = mathutil.MinInts(e.Log.MaxKeySize(), e.Lookup.MaxKeySize(), e.Warehouse.MaxKeySize())
+	e.maxBatchLength = mathutil.MinInts(e.Lookup.MaxRecordsInBatch(), e.Warehouse.MaxRecordsInBatch())
+	e.maxRecordSize = mathutil.MinInts(e.Lookup.MaxRecordSize(), e.Warehouse.MaxRecordSize())
+	e.maxKeySize = mathutil.MinInts(e.Lookup.MaxKeySize(), e.Warehouse.MaxKeySize())
 
 	return e
 }
@@ -47,19 +46,12 @@ func makeMQ(driver string) driver.MessageQueue {
 	}
 }
 
-func makeLog(driver string) driver.Log {
-	switch driver {
-	case "bigtable":
-		return bigtable.GetLog()
-	default:
-		panic(fmt.Errorf("invalid log driver '%s'", driver))
-	}
-}
-
 func makeLookup(driver string) driver.LookupService {
 	switch driver {
 	case "bigtable":
 		return bigtable.GetLookupService()
+	case "postgres":
+		return postgres.GetLookupService()
 	default:
 		panic(fmt.Errorf("invalid lookup driver '%s'", driver))
 	}
@@ -69,6 +61,8 @@ func makeWarehouse(driver string) driver.WarehouseService {
 	switch driver {
 	case "bigquery":
 		return bigquery.GetWarehouseService()
+	case "postgres":
+		return postgres.GetWarehouseService()
 	default:
 		panic(fmt.Errorf("invalid warehouse driver '%s'", driver))
 	}

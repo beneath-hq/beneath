@@ -12,7 +12,6 @@ import (
 
 type configSpecification struct {
 	MQDriver        string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
-	LogDriver       string `envconfig:"ENGINE_LOG_DRIVER" required:"true"`
 	LookupDriver    string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 }
@@ -20,7 +19,7 @@ type configSpecification struct {
 func main() {
 	var config configSpecification
 	core.LoadConfig("beneath", &config)
-	db.InitEngine(Config.MQDriver, Config.LogDriver, Config.LookupDriver, Config.WarehouseDriver)
+	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	err := taskqueue.Submit(context.Background(), &entity.RunBillingTask{})
 	if err != nil {
