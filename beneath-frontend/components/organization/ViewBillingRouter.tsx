@@ -11,7 +11,7 @@ import { BillingInfo, BillingInfoVariables } from '../../apollo/types/BillingInf
 import { QUERY_BILLING_INFO } from '../../apollo/queries/bililnginfo';
 
 const FREE_BILLING_PLAN_DESCRIPTION = "FREE"
-const MONTHLY_BILLING_PLAN_STRING = "monthly"
+const MONTHLY_BILLING_PLAN_STRING = "Monthly"
 const STRIPECARD_DRIVER = "stripecard"
 const STRIPEWIRE_DRIVER = "stripewire"
 const ANARCHISM_DRIVER = "anarchism"

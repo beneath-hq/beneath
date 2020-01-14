@@ -3,8 +3,8 @@ import { Button } from "@material-ui/core";
 import PaymentsByCard from "./PaymentsByCard"
 import { ReactStripeElements } from 'react-stripe-elements';
 
-const PRO_BILLING_PLAN_DESCRIPTION = "PRO"
-const MONTHLY_BILLING_PLAN_STRING = "monthly"
+const PRO_BILLING_PLAN_DESCRIPTION = "Professional"
+const MONTHLY_BILLING_PLAN_STRING = "Monthly"
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
