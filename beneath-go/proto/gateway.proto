@@ -8,10 +8,6 @@ package proto;
 
 import "engine.proto";
 
-message CursorSet {
-  repeated bytes cursors = 1;
-}
-
 service Gateway {
   rpc Query(QueryRequest) returns (QueryResponse) {}
   rpc Read(ReadRequest) returns (ReadResponse) {}
