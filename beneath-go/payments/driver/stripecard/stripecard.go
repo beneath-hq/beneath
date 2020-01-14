@@ -23,8 +23,10 @@ type StripeCard struct {
 }
 
 type card struct {
-	Brand string
-	Last4 string
+	Brand    string
+	Last4    string
+	ExpMonth int
+	ExpYear  int
 }
 
 type address struct {
@@ -39,7 +41,6 @@ type address struct {
 type billingDetails struct {
 	Name    string
 	Email   string
-	Phone   string
 	Address *address
 }
 
@@ -267,8 +268,10 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 		"data": {
 			"organization_id": organizationID,
 			"card": &card{
-				Brand: string(pm.Card.Brand),
-				Last4: pm.Card.Last4,
+				Brand:    string(pm.Card.Brand),
+				Last4:    pm.Card.Last4,
+				ExpMonth: int(pm.Card.ExpMonth),
+				ExpYear:  int(pm.Card.ExpYear),
 			},
 			"billing_details": &billingDetails{
 				Name: pm.BillingDetails.Name,
@@ -281,7 +284,6 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 					Country:    pm.BillingDetails.Address.Country,
 				},
 				Email: pm.BillingDetails.Email,
-				Phone: pm.BillingDetails.Phone,
 			},
 		}})
 
