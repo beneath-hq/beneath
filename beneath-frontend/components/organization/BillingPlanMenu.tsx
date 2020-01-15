@@ -108,7 +108,7 @@ const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
                   </Grid>
                   <Grid item>
                     <Typography variant="body2">
-                      Per-seat license
+                      Custom quotas by seat
                     </Typography>
                   </Grid>
                   <Grid item>
