@@ -3,7 +3,9 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
+import { QUERY_ORGANIZATION } from "../apollo/queries/organization";
 import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByUsername";
+import { OrganizationByName, OrganizationByNameVariables, OrganizationByName_organizationByName } from "../apollo/types/OrganizationByName";
 import { withApollo } from "../apollo/withApollo";
 import useMe from "../hooks/useMe";
 
@@ -18,6 +20,8 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
+import ViewServices from "../components/organization/ViewServices";
+import ViewBilling from "../components/organization/ViewBilling";
 
 const UserPage = () => {
   const me = useMe();
@@ -33,9 +37,31 @@ const UserPage = () => {
     variables: { username },
   });
 
+  var organization: OrganizationByName_organizationByName | null = null
+  if (me && me.organization.personal) {
+    const { loading, error, data } = useQuery<OrganizationByName, OrganizationByNameVariables>(QUERY_ORGANIZATION, {
+      fetchPolicy: "cache-and-network",
+      variables: { name: me.organization.name },
+    });
+
+    if (loading) {
+      return (
+        <Page subheader>
+          <Loading justify="center" />
+        </Page>
+      );
+    }
+
+    if (error || !data) {
+      return <ErrorPage apolloError={error} />;
+    }
+
+    organization = data.organizationByName;
+  }
+
   if (loading) {
     return (
-      <Page title="Project" subheader>
+      <Page subheader>
         <Loading justify="center" />
       </Page>
     );
@@ -65,6 +91,16 @@ const UserPage = () => {
         </>
       ),
     });
+
+    if (me.organization.personal) {
+      if (!organization) {
+        return <ErrorPage statusCode={404} />;
+      }
+      const org: OrganizationByName_organizationByName = organization
+    
+      tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={org} />}),
+      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling organization={org} /> })
+    }
   }
 
   return (

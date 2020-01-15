@@ -26,6 +26,13 @@ export interface Me_me_user {
   projects: Me_me_user_projects[];
 }
 
+export interface Me_me_organization {
+  __typename: "Organization";
+  organizationID: string;
+  name: string;
+  personal: boolean;
+}
+
 export interface Me_me {
   __typename: "Me";
   userID: string;
@@ -36,6 +43,7 @@ export interface Me_me {
   writeQuota: number;
   updatedOn: ControlTime;
   user: Me_me_user;
+  organization: Me_me_organization;
 }
 
 export interface Me {
