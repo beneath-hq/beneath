@@ -72,13 +72,14 @@ func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 	usage := metrics.GetCurrentUsage(ctx, u.UserID)
 
 	return &gql.Me{
-		UserID:     u.UserID.String(),
-		User:       u,
-		Email:      u.Email,
-		ReadUsage:  int(usage.ReadBytes),
-		ReadQuota:  int(u.ReadQuota),
-		WriteUsage: int(usage.WriteBytes),
-		WriteQuota: int(u.WriteQuota),
-		UpdatedOn:  u.UpdatedOn,
+		UserID:       u.UserID.String(),
+		User:         u,
+		Email:        u.Email,
+		ReadUsage:    int(usage.ReadBytes),
+		ReadQuota:    int(u.ReadQuota),
+		WriteUsage:   int(usage.WriteBytes),
+		WriteQuota:   int(u.WriteQuota),
+		UpdatedOn:    u.UpdatedOn,
+		Organization: u.Organization,
 	}
 }

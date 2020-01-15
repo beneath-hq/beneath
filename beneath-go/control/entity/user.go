@@ -74,7 +74,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := db.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects").Select()
+	err := db.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
