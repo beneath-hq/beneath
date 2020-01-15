@@ -1,10 +1,29 @@
 import React, { FC } from 'react';
-import { Button } from "@material-ui/core";
+import { Button, Typography, Grid } from "@material-ui/core";
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import Box from '@material-ui/core/Box';
 import PaymentsByCard from "./PaymentsByCard"
 import { ReactStripeElements } from 'react-stripe-elements';
+import { makeStyles } from "@material-ui/core/styles"
 
 const PRO_BILLING_PLAN_DESCRIPTION = "Professional"
 const MONTHLY_BILLING_PLAN_STRING = "Monthly"
+
+const useStyles = makeStyles((theme) => ({
+  card: {
+    minWidth: 325,
+  },
+  planName: {
+    marginBottom: theme.spacing(2),
+  },
+  button: {
+    marginTop: theme.spacing(.5),
+    marginLeft: theme.spacing(.5),
+    marginBottom: theme.spacing(.5)
+  },
+}))
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
@@ -12,26 +31,109 @@ interface Props {
 }
 
 const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
+  const classes = useStyles();
+  const [buyNow, setBuyNow] = React.useState(false)
+  const [contactUs, setContactUs] = React.useState(false)
+
+  if (buyNow) {
+    return <PaymentsByCard stripe={stripe} organization_id={organization_id} billing_period={MONTHLY_BILLING_PLAN_STRING} description={PRO_BILLING_PLAN_DESCRIPTION} />
+  }
+
+  if (contactUs) {
+    // TODO: go to about.beneath.com/contact/demo
+  }
+
   return (
-    <div>
-      <p>You are on the free plan. Consider the following plans: Pro plan (buy now), Enterprise plan (request demo)</p>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={() => {
-          return <PaymentsByCard stripe={stripe} organization_id={organization_id} billing_period={MONTHLY_BILLING_PLAN_STRING} description={PRO_BILLING_PLAN_DESCRIPTION}/>
-        }}>
-        Buy Now
-      </Button>
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={() => {
-          // TODO: fetch about.beneath.com/contact/demo
-        }}>
-        Request Demo
-      </Button>
-    </div>
+    <React.Fragment>
+      <Grid container direction="column" spacing={3}>
+        <Grid item>
+          <Typography align="center">Consider upgrading to one of our premium plans.</Typography>
+        </Grid>
+        <Grid item>
+          <Typography align="center">Find detailed descriptions at about.beneath.network/pricing.</Typography>
+        </Grid>
+        <Grid container item spacing={3} alignItems="center" justify="center">
+          <Grid item>
+            <Card className={classes.card}>
+              <CardContent>
+                <Typography variant="h5" gutterBottom className={classes.planName}>
+                  Professional plan
+                </Typography>
+                <Grid container direction="column" spacing={1}>
+                  <Grid item>
+                    <Typography variant="body2">
+                      <Box fontWeight="fontWeightBold" component="span">
+                        $50 per month base
+                      </Box>
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Base includes 25 GB reads and 5 GB writes
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Private projects
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => {
+                    setBuyNow(true)
+                  }}>
+                  Buy Now
+              </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+          <Grid item>
+            <Card className={classes.card}>
+              <CardContent>
+                <Typography variant="h5" gutterBottom className={classes.planName}>
+                  Enterprise plan
+                </Typography>
+                <Grid container direction="column" spacing={1}>
+                  <Grid item>
+                    <Typography variant="body2">
+                      <Box fontWeight="fontWeightBold" component="span">
+                        Custom pricing
+                      </Box>
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Per-seat license
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Role-based multi-party access controls
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => {
+                    setContactUs(true)
+                  }}>
+                  Contact Us
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        </Grid>
+      </Grid>
+    </React.Fragment>
   )
 }
 

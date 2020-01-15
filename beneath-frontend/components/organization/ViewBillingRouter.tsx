@@ -10,7 +10,7 @@ import PaymentsByAnarchism from "./PaymentsByAnarchism"
 import { BillingInfo, BillingInfoVariables } from '../../apollo/types/BillingInfo';
 import { QUERY_BILLING_INFO } from '../../apollo/queries/bililnginfo';
 
-const FREE_BILLING_PLAN_DESCRIPTION = "FREE"
+const FREE_BILLING_PLAN_DESCRIPTION = "Free"
 const MONTHLY_BILLING_PLAN_STRING = "Monthly"
 const STRIPECARD_DRIVER = "stripecard"
 const STRIPEWIRE_DRIVER = "stripewire"
