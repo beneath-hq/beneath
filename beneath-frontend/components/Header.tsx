@@ -149,7 +149,6 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                   as: `/users/${me.user.username}/secrets`,
                   href: `/user?name=${me.user.username}&tab=secrets`,
                 })}
-                {/* TODO: only if organization is non-personal */}
                 {!me.organization.personal && makeMenuItem("Organization", {
                   onClick: closeMenu,
                   as: `/organizations/${me.organization.name}`,

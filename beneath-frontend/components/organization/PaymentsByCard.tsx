@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
   },
   title: {
     marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(2),
   },
   buttons: {
     marginTop: theme.spacing(3),
@@ -181,150 +181,150 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   const CardBillingDetailsForm = (
     <React.Fragment>
       <form onSubmit={handleCardDetailsFormSubmit}>
-      <Typography variant="h6" gutterBottom>
-        Billing information
-      </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <TextField
+        <Typography variant="h6" gutterBottom>
+          Billing information
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <TextField
+              required
+              id="cardholder"
+              name="cardholder"
+              label="Name on card"
+              fullWidth
+              autoComplete="billing name"
+              inputProps={{
+                className: classes.input
+              }}
+              value={values.cardholder}
+              onChange={handleChange("cardholder")}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              id="address1"
+              name="address1"
+              label="Address line 1"
+              fullWidth
+              autoComplete="billing address-line1"
+              inputProps={{
+                className: classes.input
+              }}
+              value={values.line1}
+              onChange={handleChange("line1")}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="address2"
+              name="address2"
+              label="Address line 2"
+              fullWidth
+              autoComplete="billing address-line2"
+              inputProps={{
+                className: classes.input
+              }}
+              value={values.line2}
+              onChange={handleChange("line2")}            
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              id="city"
+              name="city"
+              label="City"
+              fullWidth
+              autoComplete="billing address-level2"
+              inputProps={{
+                className: classes.input
+              }}
+              value={values.city}
+              onChange={handleChange("city")}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
             required
-            id="cardholder"
-            name="cardholder"
-            label="Name on card"
+            id="state" 
+            name="state" 
+            label="State/Province/Region" 
             fullWidth
-            autoComplete="billing name"
+            autoComplete="billing address-level1"
             inputProps={{
-              className: classes.input
-            }}
-            value={values.cardholder}
-            onChange={handleChange("cardholder")}
-          />
+                className: classes.input
+              }}
+            value={values.state}
+            onChange={handleChange("state")}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              id="zip"
+              name="zip"
+              label="Zip / Postal code"
+              fullWidth
+              autoComplete="billing postal-code"
+              inputProps={{
+                className: classes.input
+              }}
+              value={values.postal_code}
+              onChange={handleChange("postal_code")} 
+            />
+          </Grid>
+          {/* <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              id="country"
+              name="country"
+              label="Country"
+              fullWidth
+              autoComplete="billing country"
+              inputProps={{
+                className: classes.input
+              }}
+              helperText={!validateCountry(values.country) ? "Must be the two letter country code" : undefined}
+              value={values.country}
+              onChange={handleChange("country")}
+            />
+          </Grid> */}
+          <Grid item xs={12} sm={6}>
+            <Autocomplete
+              id="country"
+              style={{ width: 350 }} // fullWidth // doesn't exist on AutocompleteProps
+              options={countries}
+              classes={{
+                option: classes.option,
+              }}
+              autoHighlight
+              getOptionLabel={option => option.label}
+              renderOption={option => (
+                <React.Fragment>
+                  {option.label}
+                </React.Fragment>
+              )}
+              onChange={onCountryChange}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label="Choose a country"
+                  variant="outlined"
+                  fullWidth
+                  inputProps={{
+                    ...params.inputProps,
+                    autoComplete: 'new-password', // disable autocomplete and autofill
+                  }}
+                  // autoComplete="billing country"
+                />
+              )}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            id="address1"
-            name="address1"
-            label="Address line 1"
-            fullWidth
-            autoComplete="billing address-line1"
-            inputProps={{
-              className: classes.input
-            }}
-            value={values.line1}
-            onChange={handleChange("line1")}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="address2"
-            name="address2"
-            label="Address line 2"
-            fullWidth
-            autoComplete="billing address-line2"
-            inputProps={{
-              className: classes.input
-            }}
-            value={values.line2}
-            onChange={handleChange("line2")}            
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            id="city"
-            name="city"
-            label="City"
-            fullWidth
-            autoComplete="billing address-level2"
-            inputProps={{
-              className: classes.input
-            }}
-            value={values.city}
-            onChange={handleChange("city")}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-          required
-          id="state" 
-          name="state" 
-          label="State/Province/Region" 
-          fullWidth
-          autoComplete="billing address-level1"
-          inputProps={{
-              className: classes.input
-            }}
-          value={values.state}
-          onChange={handleChange("state")}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            id="zip"
-            name="zip"
-            label="Zip / Postal code"
-            fullWidth
-            autoComplete="billing postal-code"
-            inputProps={{
-              className: classes.input
-            }}
-            value={values.postal_code}
-            onChange={handleChange("postal_code")} 
-          />
-        </Grid>
-        {/* <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            id="country"
-            name="country"
-            label="Country"
-            fullWidth
-            autoComplete="billing country"
-            inputProps={{
-              className: classes.input
-            }}
-            helperText={!validateCountry(values.country) ? "Must be the two letter country code" : undefined}
-            value={values.country}
-            onChange={handleChange("country")}
-          />
-        </Grid> */}
-        <Grid item xs={12} sm={6}>
-          <Autocomplete
-            id="country"
-            style={{ width: 350 }} // fullWidth // doesn't exist on AutocompleteProps
-            options={countries}
-            classes={{
-              option: classes.option,
-            }}
-            autoHighlight
-            getOptionLabel={option => option.label}
-            renderOption={option => (
-              <React.Fragment>
-                {option.label}
-              </React.Fragment>
-            )}
-            onChange={onCountryChange}
-            renderInput={params => (
-              <TextField
-                {...params}
-                label="Choose a country"
-                variant="outlined"
-                fullWidth
-                inputProps={{
-                  ...params.inputProps,
-                  autoComplete: 'new-password', // disable autocomplete and autofill
-                }}
-                // autoComplete="billing country"
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
         <Typography variant="h6" gutterBottom className={classes.title}>
-          Payment method
-      </Typography>
+            Payment method
+        </Typography>
         <Grid container>
           <Grid item xs={12} md={6}>
             <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
@@ -352,9 +352,10 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
       >
         <DialogContent>
           {values.intentLoading && (<Loading />)}
-          {values.stripeError && (<Typography variant="body1" color="error">
-            {values.stripeError}
-          </Typography>)}
+          {values.stripeError && (
+            <Typography variant="body1" color="error">
+              {values.stripeError}
+            </Typography>)}
           {values.status !== null && values.status === "succeeded" && (
             <React.Fragment>
               <Typography variant="h5" gutterBottom>
@@ -375,7 +376,6 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
           <Button onClick={handleDialogClose} color="primary" autoFocus>
             Ok
           </Button>)}
-          
         </DialogActions>
       </Dialog>
     </React.Fragment>
@@ -475,8 +475,9 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     return <Loading justify="center" />
   }
 
+  // TODO: this is getting hit "before flicker"
   if (values.paymentDetails == null) {
-    return <p>Error: no payment details.. why?</p>
+    return <p></p>
   }
 
   const address = [values.paymentDetails.data.billing_details.Address.Line1,
@@ -502,7 +503,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     <React.Fragment>
       <Grid container spacing={2}>
         <Grid item container direction="column" xs={12} sm={6}>
-          <Typography variant="h6" gutterBottom className={classes.title}>
+          <Typography variant="h6" className={classes.title}>
             Billing plan
             </Typography>
           <Grid container>
@@ -517,7 +518,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
               </React.Fragment>
             ))}
           </Grid>
-          <Grid item>
+          {/* <Grid item>
             <Button
               color="primary"
               onClick={() => {
@@ -525,12 +526,25 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
               }}>
               Contact Us To Upgrade to An Enterprise Plan
             </Button>
-          </Grid>
+          </Grid> */}
         </Grid>
         <Grid item container direction="column" xs={12} sm={6}>
-          <Typography variant="h6" gutterBottom className={classes.title}>
-            Payment details
-            </Typography>
+          <Grid container alignItems="center" justify="space-between">
+            <Grid item>
+              <Typography variant="h6" className={classes.title}>
+                Payment details
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Button
+                color="primary"
+                onClick={() => {
+                  setValues({ ...values, ...{ isSubmittingInfo: true } })
+                }}>
+                Edit
+              </Button>
+            </Grid>
+          </Grid>
           <Grid container>
             {payments.map(payments => (
               <React.Fragment key={payments.name}>
@@ -542,15 +556,6 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
                 </Grid>
               </React.Fragment>
             ))}
-          </Grid>
-          <Grid item>
-            <Button
-              color="primary"
-              onClick={() => {
-                setValues({ ...values, ...{ isSubmittingInfo: true } })
-              }}>
-              Change card on file
-          </Button>
           </Grid>
         </Grid>
       </Grid>
