@@ -15,9 +15,6 @@ import { Me } from "../../apollo/types/Me"
 import Dialog from '@material-ui/core/Dialog'
 import DialogActions from '@material-ui/core/DialogActions'
 import DialogContent from '@material-ui/core/DialogContent'
-import DialogContentText from '@material-ui/core/DialogContentText'
-import DialogTitle from '@material-ui/core/DialogTitle'
-
 
 const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
@@ -520,6 +517,15 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
               </React.Fragment>
             ))}
           </Grid>
+          <Grid item>
+            <Button
+              color="primary"
+              onClick={() => {
+                // TODO: fetch about.beneath.com/contact/demo
+              }}>
+              Contact Us To Upgrade to An Enterprise Plan
+            </Button>
+          </Grid>
         </Grid>
         <Grid item container direction="column" xs={12} sm={6}>
           <Typography variant="h6" gutterBottom className={classes.title}>
@@ -537,34 +543,16 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
               </React.Fragment>
             ))}
           </Grid>
-        </Grid>
-      </Grid>
-      <Grid container>
-        <Grid container item xs={12} sm={6} spacing={2}>
           <Grid item>
-          <Typography variant="body1" >Interested in upgrading to an Enterprise plan?</Typography>
-          </Grid>
-          <Grid item>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              // TODO: fetch about.beneath.com/contact/demo
-            }}>
-            Contact Us
+            <Button
+              color="primary"
+              onClick={() => {
+                setValues({ ...values, ...{ isSubmittingInfo: true } })
+              }}>
+              Change card on file
           </Button>
           </Grid>
         </Grid>
-        <Grid item xs={12} sm={6}>
-      <Button
-          color="secondary"
-          onClick={() => {
-            setValues({ ...values, ...{ isSubmittingInfo: true } })
-          }}>
-          Change card on file
-        </Button>
-        </Grid>
-        
       </Grid>
     </React.Fragment>
   )
