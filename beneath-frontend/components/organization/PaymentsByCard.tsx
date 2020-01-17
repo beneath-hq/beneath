@@ -6,12 +6,10 @@ import { Autocomplete } from "@material-ui/lab"
 import { makeStyles } from "@material-ui/core/styles"
 import Grid from '@material-ui/core/Grid'
 import { useToken } from '../../hooks/useToken'
+import useMe from "../../hooks/useMe";
 import { ReactStripeElements } from 'react-stripe-elements'
 import connection from "../../lib/connection"
 import _ from 'lodash'
-import { useQuery } from "@apollo/react-hooks"
-import { QUERY_ME } from "../../apollo/queries/user"
-import { Me } from "../../apollo/types/Me"
 import Dialog from '@material-ui/core/Dialog'
 import DialogActions from '@material-ui/core/DialogActions'
 import DialogContent from '@material-ui/core/DialogContent'
@@ -137,17 +135,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   const classes = useStyles()
 
   // get me for email address
-  const { loading, error, data } = useQuery<Me>(QUERY_ME)
-
-  if (loading) {
-    return <Loading justify="center" />
-  }
-
-  if (error || !data || !data.me) {
-    return <p>Error: {JSON.stringify(error)}</p>
-  }
-
-  const { me } = data
+  const me = useMe();
 
   // Handle submission of Card Details Form
   const handleChange = (name: string) => (event: any) => {
@@ -401,7 +389,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
       
       const res = await fetch(url, { headers })
 
-      if (isMounted) {
+      if (isMounted && me) {
         if (!res.ok) {
           setValues({ ...values, ...{ error: res.statusText } })
         }
