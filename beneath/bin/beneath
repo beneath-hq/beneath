@@ -39,6 +39,11 @@ def create_argument_parser():
   _organization_info.set_defaults(func=organization_info)
   _organization_info.add_argument('name', type=str)
 
+  _organization_chng_name = _organization.add_parser('update-name')
+  _organization_chng_name.set_defaults(func=organization_update_name)
+  _organization_chng_name.add_argument('organization', type=str)
+  _organization_chng_name.add_argument('--new-name', type=str)
+
   _organization_add_user = _organization.add_parser('add-user')
   _organization_add_user.set_defaults(func=organization_add_user)
   _organization_add_user.add_argument('username', type=str)
@@ -50,6 +55,24 @@ def create_argument_parser():
   _organization_rm_user.set_defaults(func=organization_rm_user)
   _organization_rm_user.add_argument('username', type=str)
   _organization_rm_user.add_argument('-o', '--organization', type=str, required=True)
+
+  _organization_view_perms = _organization.add_parser('view-permissions')
+  _organization_view_perms.set_defaults(func=organization_view_permissions)
+  _organization_view_perms.add_argument('name', type=str)
+
+  _organization_chng_perm = _organization.add_parser('update-permissions')
+  _organization_chng_perm.set_defaults(func=organization_update_user_permissions)
+  _organization_chng_perm.add_argument('organization', type=str)
+  _organization_chng_perm.add_argument('username', type=str)
+  _organization_chng_perm.add_argument('--view', type=str2bool, nargs='?', const=True, default=None)
+  _organization_chng_perm.add_argument('--admin', type=str2bool, nargs='?', const=True, default=None)
+
+  _organization_chng_quot = _organization.add_parser('update-quotas')
+  _organization_chng_quot.set_defaults(func=organization_update_user_quotas)
+  _organization_chng_quot.add_argument('organization', type=str)
+  _organization_chng_quot.add_argument('username', type=str)
+  _organization_chng_quot.add_argument('--read-quota-mb', type=int)
+  _organization_chng_quot.add_argument('--write-quota-mb', type=int)
 
   _organization_join = _organization.add_parser('join')
   _organization_join.set_defaults(func=organization_join)
@@ -278,6 +301,14 @@ def organization_info(args):
   result = admin.get_organization_by_name(name=args.name)
   pretty_print_graphql_result(result)
 
+def organization_update_name(args):
+  admin = get_admin_client()
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_organization_name(
+    organization_id=organization['organizationID'],
+    name=args.new_name,
+  )
+  pretty_print_graphql_result(result)
 
 def organization_add_user(args):
   admin = get_admin_client()
@@ -298,6 +329,39 @@ def organization_rm_user(args):
   result = admin.rm_user_from_organization(
     user_id=user['userID'],
     organization_id=organization['organizationID'],
+  )
+  pretty_print_graphql_result(result)
+
+
+def organization_view_permissions(args):
+  admin = get_admin_client()
+  organization = admin.get_organization_by_name(args.name)
+  result = admin.users_organizations_permissions(organization_id=organization['organizationID'])
+  pretty_print_graphql_result(result)
+
+
+def organization_update_user_permissions(args):
+  admin = get_admin_client()
+  user = admin.get_user_by_username(args.username)
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_user_organization_permissions(
+    user_id=user['userID'],
+    organization_id=organization['organizationID'],
+    view=args.view,
+    admin=args.admin,
+  )
+  pretty_print_graphql_result(result)
+
+
+def organization_update_user_quotas(args):
+  admin = get_admin_client()
+  user = admin.get_user_by_username(args.username)
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_user_organization_quotas(
+    user_id=user['userID'],
+    organization_id=organization['organizationID'],
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )
   pretty_print_graphql_result(result)
 
