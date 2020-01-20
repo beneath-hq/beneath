@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"context"
+
+	"github.com/beneath-core/beneath-go/db"
 	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 )
@@ -43,4 +46,22 @@ func init() {
 	orm.RegisterTable((*PermissionsUsersProjects)(nil))
 	orm.RegisterTable((*PermissionsUsersOrganizations)(nil))
 	orm.RegisterTable((*PermissionsServicesStreams)(nil))
+}
+
+// FindPermissionsUsersOrganizations finds a organization by ID
+func FindPermissionsUsersOrganizations(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) *PermissionsUsersOrganizations {
+	permissions := &PermissionsUsersOrganizations{
+		UserID:         userID,
+		OrganizationID: organizationID,
+	}
+	err := db.DB.ModelContext(ctx, permissions).
+		WherePK().
+		Column("permissions_users_organizations.*", "User", "Organization").
+		Select()
+
+	if !AssertFoundOne(err) {
+		return nil
+	}
+
+	return permissions
 }
