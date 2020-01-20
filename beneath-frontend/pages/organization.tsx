@@ -49,9 +49,10 @@ const OrganizationPage = () => {
     return <ErrorPage statusCode={404} />;
   }
 
-  const tabs = [{ value: "users", label: "Users", render: () => <ViewUsers organization={organization} /> },
-    { value: "services", label: "Services", render: () => <ViewServices organization={organization} /> },
-    { value: "billing", label: "Billing", render: () => <ViewBilling organization={organization} /> }];
+  // const tabs = [{ value: "users", label: "Users", render: () => <ViewUsers organization={organization} /> },
+  //   { value: "services", label: "Services", render: () => <ViewServices organization={organization} /> },
+  //   { value: "billing", label: "Billing", render: () => <ViewBilling organization={organization} /> }];
+  const tabs = [{ value: "billing", label: "Billing", render: () => <ViewBilling organization={organization} /> }];
 
   return (
     <Page title="Organization" subheader>
