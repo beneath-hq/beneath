@@ -39,10 +39,6 @@ def create_argument_parser():
   _organization_info.set_defaults(func=organization_info)
   _organization_info.add_argument('name', type=str)
 
-  _organization_create = _organization.add_parser('create')
-  _organization_create.set_defaults(func=organization_create)
-  _organization_create.add_argument('name', type=str)
-
   _organization_add_user = _organization.add_parser('add-user')
   _organization_add_user.set_defaults(func=organization_add_user)
   _organization_add_user.add_argument('username', type=str)
@@ -54,6 +50,10 @@ def create_argument_parser():
   _organization_rm_user.set_defaults(func=organization_rm_user)
   _organization_rm_user.add_argument('username', type=str)
   _organization_rm_user.add_argument('-o', '--organization', type=str, required=True)
+
+  _organization_join = _organization.add_parser('join')
+  _organization_join.set_defaults(func=organization_join)
+  _organization_join.add_argument('name', type=str)
 
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
@@ -279,12 +279,6 @@ def organization_info(args):
   pretty_print_graphql_result(result)
 
 
-def organization_create(args):
-  admin = get_admin_client()
-  result = admin.create_organization(name=args.name)
-  pretty_print_graphql_result(result)
-
-
 def organization_add_user(args):
   admin = get_admin_client()
   organization = admin.get_organization_by_name(args.organization)
@@ -305,6 +299,12 @@ def organization_rm_user(args):
     user_id=user['userID'],
     organization_id=organization['organizationID'],
   )
+  pretty_print_graphql_result(result)
+
+
+def organization_join(args):
+  admin = get_admin_client()
+  result = admin.join_organization(name=args.name)
   pretty_print_graphql_result(result)
 
 

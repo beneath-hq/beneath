@@ -161,6 +161,29 @@ class AdminClient(BaseClient):
     return result['organizationByName']
 
 
+  def join_organization(self, name):
+    result = self._query_control(
+      variables={
+        'organizationName': format_entity_name(name),
+      },
+      query="""
+        mutation JoinOrganization($organizationName: String!) {
+          joinOrganization(organizationName: $organizationName) {
+            user {
+              username
+            }
+            organization {
+              name
+            }
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['joinOrganization']
+
+
   def get_model_details(self, project_name, model_name):
     result = self._query_control(
       variables={
@@ -223,25 +246,6 @@ class AdminClient(BaseClient):
       """
     )
     return result['getUserMetrics']
-
-
-  def create_organization(self, name):
-    result = self._query_control(
-      variables={
-        'name': format_entity_name(name),
-      },
-      query="""
-        mutation CreateOrganization($name: String!) {
-          createOrganization(name: $name) {
-            organizationID
-            name
-            createdOn
-            updatedOn
-          }
-        }
-      """
-    )
-    return result['createOrganization']
 
 
   def add_user_to_organization(self, username, organization_id, view, admin):
