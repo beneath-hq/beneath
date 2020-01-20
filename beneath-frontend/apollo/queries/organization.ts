@@ -12,6 +12,8 @@ export const QUERY_ORGANIZATION = gql`
         name
         username
         photoURL
+        readQuota
+        writeQuota
       }
       services {
         serviceID
@@ -21,3 +23,26 @@ export const QUERY_ORGANIZATION = gql`
     }
   }
 `;
+
+export const QUERY_USERS_ORGANIZATION_PERMISSIONS = gql`
+  query UsersOrganizationPermissions($organizationID: UUID!){
+    usersOrganizationPermissions(organizationID: $organizationID) {
+    	user {
+        userID
+      }
+    	organization {
+        organizationID
+      }
+    	view
+    	admin
+    }
+  }
+`;
+
+export const ADD_USER_TO_ORGANIZATION = gql`
+  mutation AddUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
+    addUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
+      userID
+    }
+  }
+`

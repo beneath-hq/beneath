@@ -12,6 +12,8 @@ export interface OrganizationByName_organizationByName_users {
   name: string;
   username: string;
   photoURL: string | null;
+  readQuota: number;
+  writeQuota: number;
 }
 
 export interface OrganizationByName_organizationByName_services {
