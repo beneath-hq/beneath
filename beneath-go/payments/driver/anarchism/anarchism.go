@@ -64,6 +64,15 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	if billingPlan.Personal {
+		err = organization.UpdatePersonalStatus(req.Context(), true)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.S.Errorf("Error updating organization: %v\\n", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

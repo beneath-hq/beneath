@@ -38,6 +38,7 @@ func init() {
 		_, err = db.Exec(`
 			ALTER TABLE organizations
 			ADD personal bool NOT NULL default FALSE;
+			ADD active bool NOT NULL default TRUE;
 		`)
 		if err != nil {
 			return err
@@ -76,6 +77,7 @@ func init() {
 		// Organization.Personal, Organization.BillingPlanID, Organization.StripeCustomerID, Organization.PaymentMethod
 		_, err = db.Exec(`
 			ALTER TABLE organizations DROP personal;
+			ALTER TABLE organizations DROP active;
 		`)
 		if err != nil {
 			return err

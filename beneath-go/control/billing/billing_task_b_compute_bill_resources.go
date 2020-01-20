@@ -83,6 +83,14 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 		return err
 	}
 
+	// set organization to inactive if there are no more users
+	if len(organization.Users) == 0 {
+		err = organization.UpdateActiveStatus(ctx, false)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
 		OrganizationID: t.OrganizationID,
 		BillingTime:    seatBillTimes.BillingTime,

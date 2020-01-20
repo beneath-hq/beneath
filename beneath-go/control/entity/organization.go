@@ -2,15 +2,12 @@ package entity
 
 import (
 	"context"
-	"math"
 	"regexp"
 	"time"
 
-	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -19,6 +16,7 @@ type Organization struct {
 	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
 	Personal       bool      `sql:",notnull"`
+	Active         bool      `sql:",notnull"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
@@ -71,83 +69,70 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	return organization
 }
 
-// FindAllOrganizations returns all organizations
-func FindAllOrganizations(ctx context.Context) []Organization {
-	var organizations []Organization
-	err := db.DB.ModelContext(ctx, &organizations).Column("organization.*").Select()
+// FindActiveOrganizations returns all active organizations
+func FindActiveOrganizations(ctx context.Context) []*Organization {
+	var organizations []*Organization
+	err := db.DB.ModelContext(ctx, &organizations).
+		Where("active = true").
+		Column("organization.*").
+		Select()
 	if err != nil {
 		panic(err)
 	}
 	return organizations
 }
 
-// CreateOrganizationWithUser creates an organization
-// now, this is only used to create non-personal organizations, where you expect to add team members
-// TODO: because we are only allowing one organization per user, we might want to change this to "SetOrganizationToNonPersonal"
-func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID, personal bool) (*Organization, error) {
-	// create
+// UpdatePersonalStatus updates an organization's "personal" status
+// this is called when a user changes plans to/from an Enterprise plan
+func (o *Organization) UpdatePersonalStatus(ctx context.Context, personal bool) error {
 	org := &Organization{
-		Name:     name,
-		Personal: personal,
-	}
-
-	// validate
-	err := GetValidator().Struct(org)
-	if err != nil {
-		return nil, err
-	}
-
-	// create organization
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert org
-		_, err := tx.Model(org).Insert()
-		if err != nil {
-			return err
-		}
-
-		// add user
-		err = tx.Insert(&PermissionsUsersOrganizations{
-			UserID:         userID,
-			OrganizationID: org.OrganizationID,
-			View:           true,
-			Admin:          true,
-		})
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return org, nil
-}
-
-// AddUser makes user a member of organization
-// TODO: I think this whole sequence should happen in one transaction, but first need to figure out code design / module structure for entity/billing/payments packages
-func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
-	err := db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
-		UserID:         userID,
 		OrganizationID: o.OrganizationID,
-		View:           view,
-		Admin:          admin,
-	})
+		Personal:       personal,
+	}
+
+	_, err := db.DB.ModelContext(ctx, org).
+		Column("personal").
+		WherePK().
+		Update()
 	if err != nil {
 		return err
 	}
 
-	// add prorated seat to next month's bill
-	bi := FindBillingInfo(ctx, o.OrganizationID)
-	if bi != nil {
-		panic("could not find billing info")
+	return nil
+}
+
+// UpdateActiveStatus updates an organization's "active" status
+func (o *Organization) UpdateActiveStatus(ctx context.Context, active bool) error {
+	org := &Organization{
+		OrganizationID: o.OrganizationID,
+		Active:         active,
 	}
 
-	err = commitProratedSeatsToBill(ctx, bi, []uuid.UUID{userID})
+	_, err := db.DB.ModelContext(ctx, org).
+		Column("active").
+		WherePK().
+		Update()
 	if err != nil {
-		panic("unable to commit prorated seat to bill")
+		return err
+	}
+
+	return nil
+}
+
+// AddUser makes user a member of organization
+// note: in practice, this function really means "invite user"; as the user won't officially be a part of the organization until they "join organization" (i.e. accept the invitation)
+// TODO: clear secret cache!
+func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+	perms := &PermissionsUsersOrganizations{
+		UserID:         userID,
+		OrganizationID: o.OrganizationID,
+		View:           view,
+		Admin:          admin,
+	}
+
+	_, err := db.DB.ModelContext(ctx, perms).OnConflict("(user_id, organization_id) DO UPDATE").Insert()
+	if err != nil {
+		return err
 	}
 
 	// done
@@ -211,57 +196,13 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	})
 }
 
-func commitProratedSeatsToBill(ctx context.Context, billingInfo *BillingInfo, userIDs []uuid.UUID) error {
-	if billingInfo.BillingPlan == nil {
-		panic("could not find the organization's billing plan")
-	}
-
-	now := time.Now()
-	p := billingInfo.BillingPlan.Period
-
-	billTimes := &billTimes{
-		BillingTime: BeginningOfNextPeriod(p),
-		StartTime:   now,
-		EndTime:     BeginningOfNextPeriod(p),
-	}
-
-	quantity := int64(1)
-
-	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
-	proratedPrice := int32(math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) * proratedFraction))
-
-	err := commitToBill(ctx, billingInfo.OrganizationID, billTimes, userIDs, UserEntityKind, SeatProduct, quantity, proratedPrice, billingInfo.BillingPlan.Currency)
+// FindOrganizationPermissions retrieves all users' permissions for a given organization
+func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) []*PermissionsUsersOrganizations {
+	var permissions []*PermissionsUsersOrganizations
+	err := db.DB.ModelContext(ctx, &permissions).Where("permissions_users_organizations.organization_id = ?", organizationID).Column("permissions_users_organizations.*", "User", "Organization").Select()
 	if err != nil {
-		panic("unable to commit prorated seats to bill")
+		panic(err)
 	}
 
-	// done
-	return nil
-}
-
-// note: this saves duplicate code for committing Seat product variations to bill, but it doesn't help us with committing usage nor overage products to bill
-func commitToBill(ctx context.Context, organizationID uuid.UUID, billTimes *billTimes, entityIDs []uuid.UUID, entityKind Kind, product Product, quantity int64, totalPriceCents int32, currency Currency) error {
-	var billedResources []*BilledResource
-	for _, entityID := range entityIDs {
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        entityID,
-			EntityKind:      entityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         product,
-			Quantity:        quantity,
-			TotalPriceCents: totalPriceCents,
-			Currency:        currency,
-		})
-	}
-
-	err := CreateOrUpdateBilledResources(ctx, billedResources)
-	if err != nil {
-		panic("unable to write billed resources to table")
-	}
-
-	// done
-	return nil
+	return permissions
 }

@@ -21,7 +21,7 @@ func init() {
 
 // Run triggers the task
 func (t *RunBillingTask) Run(ctx context.Context) error {
-	organizations := entity.FindAllOrganizations(ctx)
+	organizations := entity.FindActiveOrganizations(ctx)
 	timestamp := time.Now()
 
 	for _, o := range organizations {

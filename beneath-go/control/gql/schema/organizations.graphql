@@ -1,13 +1,13 @@
 extend type Query {
   organizationByName(name: String!): Organization
+  usersOrganizationPermissions(organizationID: UUID!): [PermissionsUsersOrganizations!]!
 }
 
 extend type Mutation {
-  createOrganization(name: String!): Organization!
   addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
   updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
-  # updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations
+  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
 
 type Organization {
@@ -20,9 +20,9 @@ type Organization {
   users: [User!]!
 }
 
-# type PermissionsUsersOrganizations {
-# 	user: User!
-# 	organization: Organization!
-# 	view: Boolean! 
-# 	admin: Boolean!
-# }
+type PermissionsUsersOrganizations {
+	user: User!
+  organization: Organization!
+	view: Boolean! 
+	admin: Boolean!
+}

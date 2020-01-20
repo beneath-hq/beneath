@@ -275,9 +275,58 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	return user, nil
 }
 
+// JoinOrganization changes the user's Organization
+func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (*User, error) {
+	// TODO: this whole function should happen in one transaction
+	bi := FindBillingInfo(ctx, organizationID)
+	if bi == nil {
+		panic("could not find billing info for the new organization")
+	}
+
+	// commit current usage to the old organization's bill
+	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// commit usage credit to the new organization's bill for the user's current month's usage
+	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, true)
+	if err != nil {
+		return nil, err
+	}
+
+	u.OrganizationID = &organizationID
+	u.ReadQuota = bi.BillingPlan.SeatReadQuota
+	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
+	u.UpdatedOn = time.Now()
+
+	_, err = db.DB.WithContext(ctx).Model(u).
+		Column("organization_id", "read_quota", "write_quota", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return nil, err
+	}
+
+	// add prorated seat to the new organization's next month's bill
+	err = commitProratedSeatsToBill(ctx, bi, []uuid.UUID{u.UserID}, false)
+	if err != nil {
+		panic("unable to commit prorated seat to bill")
+	}
+
+	// after updating the organization_id, the new Organization table is not immediately available on the user object
+	// so we need to refetch the user in order to get the new Organization details
+	user := FindUser(ctx, u.UserID)
+	if user == nil {
+		panic("unable to get updated user")
+	}
+
+	return user, nil
+}
+
 // Delete removes the user from the database
 func (u *User) Delete(ctx context.Context) error {
-	err := commitUsageOfDeletedEntityToBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID)
+	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, false)
 	if err != nil {
 		return err
 	}

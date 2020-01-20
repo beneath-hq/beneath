@@ -5,9 +5,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/metrics"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -137,7 +135,7 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	err := commitUsageOfDeletedEntityToBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID)
+	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, false)
 	if err != nil {
 		return err
 	}
@@ -184,95 +182,4 @@ func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, rea
 	}
 
 	return pss, nil
-}
-
-func commitUsageOfDeletedEntityToBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID) error {
-	billingInfo := FindBillingInfo(ctx, organizationID)
-	if billingInfo == nil {
-		panic("organization not found")
-	}
-
-	billTimes := &billTimes{
-		BillingTime: BeginningOfNextPeriod(billingInfo.BillingPlan.Period),
-		StartTime:   BeginningOfThisPeriod(billingInfo.BillingPlan.Period),
-		EndTime:     time.Now(),
-	}
-
-	var billedResources []*BilledResource
-
-	_, monthlyMetrics, err := metrics.GetHistoricalUsage(ctx, entityID, billingInfo.BillingPlan.Period, billTimes.StartTime, billTimes.BillingTime) // when adding annual plans, remember this function only accepts hourly or monthly periods
-	if err != nil {
-		return err
-	}
-
-	if len(monthlyMetrics) == 1 {
-		// add reads
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        entityID,
-			EntityKind:      entityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         ReadProduct,
-			Quantity:        monthlyMetrics[0].ReadBytes,
-			TotalPriceCents: 0,
-			Currency:        billingInfo.BillingPlan.Currency,
-		})
-
-		// add writes
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        entityID,
-			EntityKind:      entityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         WriteProduct,
-			Quantity:        monthlyMetrics[0].WriteBytes,
-			TotalPriceCents: 0,
-			Currency:        billingInfo.BillingPlan.Currency,
-		})
-	} else if len(monthlyMetrics) > 1 {
-		panic("expected a maximum of one item in monthlyMetrics")
-	}
-
-	if len(billedResources) > 0 {
-		err = CreateOrUpdateBilledResources(ctx, billedResources)
-		if err != nil {
-			panic("unable to write billed resources to table")
-		}
-	}
-
-	// done
-	return nil
-}
-
-type billTimes struct {
-	BillingTime time.Time
-	StartTime   time.Time
-	EndTime     time.Time
-}
-
-// BeginningOfThisPeriod gets the beginning of this period
-func BeginningOfThisPeriod(p timeutil.Period) time.Time {
-	return timeutil.Floor(time.Now(), p)
-}
-
-// BeginningOfNextPeriod gets the beginning of the next period
-func BeginningOfNextPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Next(ts, p)
-}
-
-// BeginningOfLastPeriod gets the beginning of the last period
-func BeginningOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Last(ts, p)
-}
-
-// EndOfLastPeriod gets the end of the last period
-func EndOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Floor(ts, p)
 }

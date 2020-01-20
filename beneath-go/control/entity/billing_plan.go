@@ -24,6 +24,7 @@ type BillingPlan struct {
 	BaseWriteQuota         int64           `sql:",notnull"`
 	ReadOveragePriceCents  int32           `sql:",notnull"`
 	WriteOveragePriceCents int32           `sql:",notnull"`
+	Personal               bool            `sql:",notnull"`
 }
 
 // FindBillingPlan finds a billing plan by ID

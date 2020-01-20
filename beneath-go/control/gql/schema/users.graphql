@@ -6,6 +6,7 @@ extend type Query {
 
 extend type Mutation {
   updateMe(username: String, name: String, bio: String, photoURL: String): Me!
+  joinOrganization(organizationName: String!): Me!
 }
 
 type User {
@@ -16,6 +17,8 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
+  readQuota: Int!
+  writeQuota: Int!
 }
 
 type Me {

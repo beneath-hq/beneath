@@ -36,21 +36,6 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 	return organization, nil
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, gqlerror.Errorf("Not allowed to create organization")
-	}
-
-	personal := false
-	org, err := entity.CreateOrganizationWithUser(ctx, name, secret.GetOwnerID(), personal)
-	if err != nil {
-		return nil, err
-	}
-
-	return org, nil
-}
-
 func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
@@ -58,7 +43,7 @@ func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username s
 	}
 
 	if organization.Personal == true {
-		return nil, gqlerror.Errorf("Not allowed to add users to personal organizations; need an enterprise plan")
+		return nil, gqlerror.Errorf("Upgrade to an Enterprise plan to add users to your organization")
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -72,10 +57,18 @@ func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username s
 		return nil, gqlerror.Errorf("No user found with that username")
 	}
 
+	for _, u := range organization.Users {
+		if u.UserID == user.UserID {
+			return nil, gqlerror.Errorf("User is already a member of the organization")
+		}
+	}
+
 	err := organization.AddUser(ctx, user.UserID, view, admin)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
+
+	// TODO: trigger an email to the added user, so they can "accept invite to join organization" (which will switch the User.OrganizationID)
 
 	return user, nil
 }
@@ -104,36 +97,57 @@ func (r *mutationResolver) RemoveUserFromOrganization(ctx context.Context, userI
 	return true, nil
 }
 
-// func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error) {
-// 	organization := entity.FindOrganization(ctx, organizationID)
-// 	if organization == nil {
-// 		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-// 	}
+func (r *queryResolver) UsersOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) ([]*entity.PermissionsUsersOrganizations, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
 
-// 	secret := middleware.GetSecret(ctx)
-// 	perms := secret.OrganizationPermissions(ctx, organizationID)
-// 	if !perms.Admin {
-// 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
-// 	}
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("Not allowed to view organization %s", organizationID.String())
+	}
 
-// 	user := entity.FindUser(ctx, userID)
-// 	if user == nil {
-// 		return nil, gqlerror.Errorf("User %s not found", userID.String())
-// 	}
+	permissions := entity.FindOrganizationPermissions(ctx, organizationID)
+	if permissions == nil {
+		return nil, gqlerror.Errorf("Permissions for not found for organization %s", organizationID.String())
+	}
 
-// 	permissions := entity.FindPermissionsUsersOrganizations(ctx, userID, organizationID)
-// 	if permissions == nil {
-// 		return nil, gqlerror.Errorf("Permissions for not found for organization %s and user %s", organizationID.String(), userID.String())
-// 	}
+	return permissions, nil
+}
 
-// 	// TODO: change this to organization.UpdateUserPermissions
-// 	// permissions, err := permissions.Update(ctx, view, admin)
-// 	// if err != nil {
-// 	// 	return nil, gqlerror.Errorf("Failed to update permissions")
-// 	// }
+func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error) {
+	panic("not implemented yet")
+	// organization := entity.FindOrganization(ctx, organizationID)
+	// if organization == nil {
+	// 	return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	// }
 
-// 	return permissions, nil
-// }
+	// secret := middleware.GetSecret(ctx)
+	// perms := secret.OrganizationPermissions(ctx, organizationID)
+	// if !perms.Admin {
+	// 	return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	// }
+
+	// user := entity.FindUser(ctx, userID)
+	// if user == nil {
+	// 	return nil, gqlerror.Errorf("User %s not found", userID.String())
+	// }
+
+	// permissions := entity.FindPermissionsUsersOrganizations(ctx, userID, organizationID)
+	// if permissions == nil {
+	// 	return nil, gqlerror.Errorf("Permissions for not found for organization %s and user %s", organizationID.String(), userID.String())
+	// }
+
+	// // TODO: change this to organization.UpdateUserPermissions
+	// // permissions, err := permissions.Update(ctx, view, admin)
+	// // if err != nil {
+	// // 	return nil, gqlerror.Errorf("Failed to update permissions")
+	// // }
+
+	// return permissions, nil
+}
 
 func (r *mutationResolver) UpdateUserOrganizationQuotas(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
 	organization := entity.FindOrganization(ctx, organizationID)

@@ -143,7 +143,6 @@ type ComplexityRoot struct {
 		CreateExternalStreamBatch         func(childComplexity int, streamID uuid.UUID) int
 		CreateModel                       func(childComplexity int, input CreateModelInput) int
 		CreateModelBatch                  func(childComplexity int, modelID uuid.UUID) int
-		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) int
 		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota int, writeQuota int) int
 		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
@@ -153,6 +152,7 @@ type ComplexityRoot struct {
 		Empty                             func(childComplexity int) int
 		IssueServiceSecret                func(childComplexity int, serviceID uuid.UUID, description string) int
 		IssueUserSecret                   func(childComplexity int, description string, readOnly bool, publicOnly bool) int
+		JoinOrganization                  func(childComplexity int, organizationName string) int
 		RemoveUserFromOrganization        func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID) int
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
@@ -163,6 +163,7 @@ type ComplexityRoot struct {
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) int
 		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) int
 		UpdateServicePermissions          func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
+		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) int
 		UpdateUserOrganizationQuotas      func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 	}
 
@@ -191,6 +192,13 @@ type ComplexityRoot struct {
 		ServiceID func(childComplexity int) int
 		StreamID  func(childComplexity int) int
 		Write     func(childComplexity int) int
+	}
+
+	PermissionsUsersOrganizations struct {
+		Admin        func(childComplexity int) int
+		Organization func(childComplexity int) int
+		User         func(childComplexity int) int
+		View         func(childComplexity int) int
 	}
 
 	Project struct {
@@ -231,6 +239,7 @@ type ComplexityRoot struct {
 		Stream                       func(childComplexity int, name string, projectName string) int
 		User                         func(childComplexity int, userID uuid.UUID) int
 		UserByUsername               func(childComplexity int, username string) int
+		UsersOrganizationPermissions func(childComplexity int, organizationID uuid.UUID) int
 	}
 
 	Service struct {
@@ -283,13 +292,15 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Bio       func(childComplexity int) int
-		CreatedOn func(childComplexity int) int
-		Name      func(childComplexity int) int
-		PhotoURL  func(childComplexity int) int
-		Projects  func(childComplexity int) int
-		UserID    func(childComplexity int) int
-		Username  func(childComplexity int) int
+		Bio        func(childComplexity int) int
+		CreatedOn  func(childComplexity int) int
+		Name       func(childComplexity int) int
+		PhotoURL   func(childComplexity int) int
+		Projects   func(childComplexity int) int
+		ReadQuota  func(childComplexity int) int
+		UserID     func(childComplexity int) int
+		Username   func(childComplexity int) int
+		WriteQuota func(childComplexity int) int
 	}
 
 	UserSecret struct {
@@ -328,10 +339,10 @@ type MutationResolver interface {
 	CreateModelBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error)
 	CommitModelBatch(ctx context.Context, modelID uuid.UUID, instanceIDs []uuid.UUID) (bool, error)
 	ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error)
-	CreateOrganization(ctx context.Context, name string) (*entity.Organization, error)
 	AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error)
 	RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) (bool, error)
 	UpdateUserOrganizationQuotas(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
+	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
 	CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error)
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*entity.Project, error)
 	DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error)
@@ -352,6 +363,7 @@ type MutationResolver interface {
 	CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error)
 	UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*Me, error)
+	JoinOrganization(ctx context.Context, organizationName string) (*Me, error)
 }
 type OrganizationResolver interface {
 	OrganizationID(ctx context.Context, obj *entity.Organization) (string, error)
@@ -370,6 +382,7 @@ type QueryResolver interface {
 	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	Model(ctx context.Context, name string, projectName string) (*entity.Model, error)
 	OrganizationByName(ctx context.Context, name string) (*entity.Organization, error)
+	UsersOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) ([]*entity.PermissionsUsersOrganizations, error)
 	ExploreProjects(ctx context.Context) ([]*entity.Project, error)
 	ProjectByName(ctx context.Context, name string) (*entity.Project, error)
 	ProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error)
@@ -931,18 +944,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateModelBatch(childComplexity, args["modelID"].(uuid.UUID)), true
 
-	case "Mutation.createOrganization":
-		if e.complexity.Mutation.CreateOrganization == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createOrganization_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateOrganization(childComplexity, args["name"].(string)), true
-
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
 			break
@@ -1045,6 +1046,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.IssueUserSecret(childComplexity, args["description"].(string), args["readOnly"].(bool), args["publicOnly"].(bool)), true
+
+	case "Mutation.joinOrganization":
+		if e.complexity.Mutation.JoinOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_joinOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.JoinOrganization(childComplexity, args["organizationName"].(string)), true
 
 	case "Mutation.removeUserFromOrganization":
 		if e.complexity.Mutation.RemoveUserFromOrganization == nil {
@@ -1166,6 +1179,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateServicePermissions(childComplexity, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(*bool), args["write"].(*bool)), true
 
+	case "Mutation.updateUserOrganizationPermissions":
+		if e.complexity.Mutation.UpdateUserOrganizationPermissions == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUserOrganizationPermissions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUserOrganizationPermissions(childComplexity, args["userID"].(uuid.UUID), args["organizationID"].(uuid.UUID), args["view"].(*bool), args["admin"].(*bool)), true
+
 	case "Mutation.updateUserOrganizationQuotas":
 		if e.complexity.Mutation.UpdateUserOrganizationQuotas == nil {
 			break
@@ -1282,6 +1307,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PermissionsServicesStreams.Write(childComplexity), true
+
+	case "PermissionsUsersOrganizations.admin":
+		if e.complexity.PermissionsUsersOrganizations.Admin == nil {
+			break
+		}
+
+		return e.complexity.PermissionsUsersOrganizations.Admin(childComplexity), true
+
+	case "PermissionsUsersOrganizations.organization":
+		if e.complexity.PermissionsUsersOrganizations.Organization == nil {
+			break
+		}
+
+		return e.complexity.PermissionsUsersOrganizations.Organization(childComplexity), true
+
+	case "PermissionsUsersOrganizations.user":
+		if e.complexity.PermissionsUsersOrganizations.User == nil {
+			break
+		}
+
+		return e.complexity.PermissionsUsersOrganizations.User(childComplexity), true
+
+	case "PermissionsUsersOrganizations.view":
+		if e.complexity.PermissionsUsersOrganizations.View == nil {
+			break
+		}
+
+		return e.complexity.PermissionsUsersOrganizations.View(childComplexity), true
 
 	case "Project.createdOn":
 		if e.complexity.Project.CreatedOn == nil {
@@ -1606,6 +1659,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.UserByUsername(childComplexity, args["username"].(string)), true
 
+	case "Query.usersOrganizationPermissions":
+		if e.complexity.Query.UsersOrganizationPermissions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_usersOrganizationPermissions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UsersOrganizationPermissions(childComplexity, args["organizationID"].(uuid.UUID)), true
+
 	case "Service.kind":
 		if e.complexity.Service.Kind == nil {
 			break
@@ -1879,6 +1944,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Projects(childComplexity), true
 
+	case "User.readQuota":
+		if e.complexity.User.ReadQuota == nil {
+			break
+		}
+
+		return e.complexity.User.ReadQuota(childComplexity), true
+
 	case "User.userID":
 		if e.complexity.User.UserID == nil {
 			break
@@ -1892,6 +1964,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Username(childComplexity), true
+
+	case "User.writeQuota":
+		if e.complexity.User.WriteQuota == nil {
+			break
+		}
+
+		return e.complexity.User.WriteQuota(childComplexity), true
 
 	case "UserSecret.createdOn":
 		if e.complexity.UserSecret.CreatedOn == nil {
@@ -2179,14 +2258,14 @@ input UpdateModelInput {
 `},
 	&ast.Source{Name: "control/gql/schema/organizations.graphql", Input: `extend type Query {
   organizationByName(name: String!): Organization
+  usersOrganizationPermissions(organizationID: UUID!): [PermissionsUsersOrganizations!]!
 }
 
 extend type Mutation {
-  createOrganization(name: String!): Organization!
   addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
   updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
-  # updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations
+  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
 
 type Organization {
@@ -2199,12 +2278,12 @@ type Organization {
   users: [User!]!
 }
 
-# type PermissionsUsersOrganizations {
-# 	user: User!
-# 	organization: Organization!
-# 	view: Boolean! 
-# 	admin: Boolean!
-# }
+type PermissionsUsersOrganizations {
+	user: User!
+  organization: Organization!
+	view: Boolean! 
+	admin: Boolean!
+}
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
   exploreProjects: [Project!]!
@@ -2367,6 +2446,7 @@ type StreamInstance {
 
 extend type Mutation {
   updateMe(username: String, name: String, bio: String, photoURL: String): Me!
+  joinOrganization(organizationName: String!): Me!
 }
 
 type User {
@@ -2377,6 +2457,8 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
+  readQuota: Int!
+  writeQuota: Int!
 }
 
 type Me {
@@ -2625,20 +2707,6 @@ func (ec *executionContext) field_Mutation_createModel_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2836,6 +2904,20 @@ func (ec *executionContext) field_Mutation_issueUserSecret_args(ctx context.Cont
 		}
 	}
 	args["publicOnly"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_joinOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["organizationName"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationName"] = arg0
 	return args, nil
 }
 
@@ -3112,6 +3194,44 @@ func (ec *executionContext) field_Mutation_updateService_args(ctx context.Contex
 		}
 	}
 	args["writeQuota"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserOrganizationPermissions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg1
+	var arg2 *bool
+	if tmp, ok := rawArgs["view"]; ok {
+		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["view"] = arg2
+	var arg3 *bool
+	if tmp, ok := rawArgs["admin"]; ok {
+		arg3, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["admin"] = arg3
 	return args, nil
 }
 
@@ -3506,6 +3626,20 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["userID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_usersOrganizationPermissions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
 	return args, nil
 }
 
@@ -5906,50 +6040,6 @@ func (ec *executionContext) _Mutation_clearPendingModelBatches(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createOrganization_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrganization(rctx, args["name"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_addUserToOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -6077,6 +6167,50 @@ func (ec *executionContext) _Mutation_updateUserOrganizationQuotas(ctx context.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateUserOrganizationPermissions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUserOrganizationPermissions_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateUserOrganizationPermissions(rctx, args["userID"].(uuid.UUID), args["organizationID"].(uuid.UUID), args["view"].(*bool), args["admin"].(*bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.PermissionsUsersOrganizations)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6956,6 +7090,50 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	return ec.marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_joinOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_joinOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().JoinOrganization(rctx, args["organizationName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Me)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _NewServiceSecret_secret(ctx context.Context, field graphql.CollectedField, obj *NewServiceSecret) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7494,6 +7672,154 @@ func (ec *executionContext) _PermissionsServicesStreams_write(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Write, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PermissionsUsersOrganizations_user(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PermissionsUsersOrganizations",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PermissionsUsersOrganizations_organization(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PermissionsUsersOrganizations",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Organization, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PermissionsUsersOrganizations_view(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PermissionsUsersOrganizations",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.View, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PermissionsUsersOrganizations_admin(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PermissionsUsersOrganizations",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Admin, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8401,6 +8727,50 @@ func (ec *executionContext) _Query_organizationByName(ctx context.Context, field
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_usersOrganizationPermissions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_usersOrganizationPermissions_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().UsersOrganizationPermissions(rctx, args["organizationID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.PermissionsUsersOrganizations)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPermissionsUsersOrganizations2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_exploreProjects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10418,6 +10788,80 @@ func (ec *executionContext) _User_projects(ctx context.Context, field graphql.Co
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserSecret_userSecretID(ctx context.Context, field graphql.CollectedField, obj *entity.UserSecret) (ret graphql.Marshaler) {
@@ -12508,11 +12952,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createOrganization":
-			out.Values[i] = ec._Mutation_createOrganization(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "addUserToOrganization":
 			out.Values[i] = ec._Mutation_addUserToOrganization(ctx, field)
 		case "removeUserFromOrganization":
@@ -12522,6 +12961,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateUserOrganizationQuotas":
 			out.Values[i] = ec._Mutation_updateUserOrganizationQuotas(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUserOrganizationPermissions":
+			out.Values[i] = ec._Mutation_updateUserOrganizationPermissions(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12619,6 +13063,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateMe":
 			out.Values[i] = ec._Mutation_updateMe(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "joinOrganization":
+			out.Values[i] = ec._Mutation_joinOrganization(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12791,6 +13240,48 @@ func (ec *executionContext) _PermissionsServicesStreams(ctx context.Context, sel
 			}
 		case "write":
 			out.Values[i] = ec._PermissionsServicesStreams_write(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var permissionsUsersOrganizationsImplementors = []string{"PermissionsUsersOrganizations"}
+
+func (ec *executionContext) _PermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, obj *entity.PermissionsUsersOrganizations) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, permissionsUsersOrganizationsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PermissionsUsersOrganizations")
+		case "user":
+			out.Values[i] = ec._PermissionsUsersOrganizations_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "organization":
+			out.Values[i] = ec._PermissionsUsersOrganizations_organization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "view":
+			out.Values[i] = ec._PermissionsUsersOrganizations_view(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "admin":
+			out.Values[i] = ec._PermissionsUsersOrganizations_admin(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -13039,6 +13530,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizationByName(ctx, field)
+				return res
+			})
+		case "usersOrganizationPermissions":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_usersOrganizationPermissions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "exploreProjects":
@@ -13535,6 +14040,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "projects":
 			out.Values[i] = ec._User_projects(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "readQuota":
+			out.Values[i] = ec._User_readQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "writeQuota":
+			out.Values[i] = ec._User_writeQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -14188,6 +14703,57 @@ func (ec *executionContext) marshalNPermissionsServicesStreams2ᚖgithubᚗcom�
 		return graphql.Null
 	}
 	return ec._PermissionsServicesStreams(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v entity.PermissionsUsersOrganizations) graphql.Marshaler {
+	return ec._PermissionsUsersOrganizations(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v []*entity.PermissionsUsersOrganizations) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v *entity.PermissionsUsersOrganizations) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PermissionsUsersOrganizations(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProject2githubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
