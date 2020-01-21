@@ -149,10 +149,13 @@ func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 }
 
 // UpdateDetails updates projects user-facing details
-func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *string, description *string, photoURL *string) error {
+func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public *bool, site *string, description *string, photoURL *string) error {
 	// set fields
 	if displayName != nil {
 		p.DisplayName = *displayName
+	}
+	if public != nil {
+		p.Public = *public
 	}
 	if site != nil {
 		p.Site = *site
@@ -174,7 +177,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		p.UpdatedOn = time.Now()
 		_, err = db.DB.WithContext(ctx).Model(p).
-			Column("display_name", "site", "description", "photo_url").
+			Column("display_name", "public", "site", "description", "photo_url").
 			WherePK().
 			Update()
 		if err != nil {
