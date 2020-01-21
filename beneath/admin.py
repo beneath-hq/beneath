@@ -111,6 +111,7 @@ class AdminClient(BaseClient):
             projectID
             name
             displayName
+            public
             site
             description
             photoURL
@@ -277,6 +278,7 @@ class AdminClient(BaseClient):
             createdOn
             projects {
               name
+              public
             }
             readQuota
             writeQuota
@@ -393,23 +395,25 @@ class AdminClient(BaseClient):
     return result['joinOrganization']
 
 
-  def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
+  def create_project(self, name, display_name, organization_id, public, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
         'name': format_entity_name(name),
         'displayName': display_name,
         'organizationID': organization_id,
+        'public': public,
         'description': description,
         'site': site_url,
         'photoURL': photo_url,
       },
       query="""
-        mutation CreateProject($name: String!, $displayName: String, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
-          createProject(name: $name, displayName: $displayName, organizationID: $organizationID, site: $site, description: $description, photoURL: $photoURL) {
+        mutation CreateProject($name: String!, $displayName: String, $organizationID: UUID!, $public: Boolean! $site: String, $description: String, $photoURL: String) {
+          createProject(name: $name, displayName: $displayName, organizationID: $organizationID, public: $public, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             name
             displayName
             organizationID
+            public
             site
             description
             photoURL
@@ -428,20 +432,22 @@ class AdminClient(BaseClient):
     return result['createProject']
 
 
-  def update_project(self, project_id, display_name, description=None, site_url=None, photo_url=None):
+  def update_project(self, project_id, display_name, public, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
         'projectID': project_id,
         'displayName': display_name,
+        'public': public,
         'description': description,
         'site': site_url,
         'photoURL': photo_url,
       },
       query="""
-        mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
-          updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+        mutation UpdateProject($projectID: UUID!, $displayName: String, $public: Boolean, $site: String, $description: String, $photoURL: String) {
+          updateProject(projectID: $projectID, displayName: $displayName, public: $public, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             displayName
+            public
             site
             description
             photoURL
