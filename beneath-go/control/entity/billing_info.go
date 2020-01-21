@@ -100,6 +100,13 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 		if err != nil {
 			panic("could not commit prorated seats to bill")
 		}
+
+		// TODO
+		// if downgrading from private projects, lock down organization's outstanding private projects
+		// if !bi.BillingPlan.PrivateProjects && prevBillingInfo.BillingPlan.PrivateProjects {
+		// 	// option1: lock projects so that they can't be viewed
+		// 	// option2: clear existing project permissions, and ensure they can't be added back
+		// }
 	}
 
 	return bi, nil
