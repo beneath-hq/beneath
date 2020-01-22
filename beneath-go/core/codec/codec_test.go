@@ -25,6 +25,10 @@ func (i testIndex) GetIndexID() uuid.UUID {
 	return i.indexID
 }
 
+func (i testIndex) GetShortID() int {
+	return 0
+}
+
 func (i testIndex) GetFields() []string {
 	return i.fields
 }

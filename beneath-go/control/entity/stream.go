@@ -211,6 +211,7 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 // Doesn't execute any DB actions, so doesn't set any IDs.
 func (s *Stream) assignIndexes(def *schema.StreamDef) {
 	primary := &StreamIndex{
+		ShortID:   0,
 		Fields:    def.KeyIndex.Fields,
 		Primary:   true,
 		Normalize: def.KeyIndex.Normalize,
@@ -218,8 +219,9 @@ func (s *Stream) assignIndexes(def *schema.StreamDef) {
 
 	s.StreamIndexes = []*StreamIndex{primary}
 
-	for _, index := range def.SecondaryIndexes {
+	for idx, index := range def.SecondaryIndexes {
 		s.StreamIndexes = append(s.StreamIndexes, &StreamIndex{
+			ShortID:   idx + 1,
 			Fields:    index.Fields,
 			Primary:   false,
 			Normalize: index.Normalize,

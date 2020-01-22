@@ -36,6 +36,7 @@ type CachedStream struct {
 // EfficientStreamIndex represents indexes in EfficientStream
 type EfficientStreamIndex struct {
 	StreamIndexID uuid.UUID
+	ShortID       int
 	Fields        []string
 	Primary       bool
 	Normalize     bool
@@ -44,6 +45,11 @@ type EfficientStreamIndex struct {
 // GetIndexID implements codec.Index
 func (e EfficientStreamIndex) GetIndexID() uuid.UUID {
 	return e.StreamIndexID
+}
+
+// GetShortID implements codec.Index
+func (e EfficientStreamIndex) GetShortID() int {
+	return e.ShortID
 }
 
 // GetFields implements codec.Index
@@ -86,6 +92,7 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 	for idx, index := range s.StreamIndexes {
 		indexes[idx] = EfficientStreamIndex{
 			StreamIndexID: index.StreamIndexID,
+			ShortID:       index.ShortID,
 			Fields:        index.Fields,
 			Primary:       index.Primary,
 			Normalize:     index.Normalize,

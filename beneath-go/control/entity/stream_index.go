@@ -10,6 +10,7 @@ type StreamIndex struct {
 	StreamIndexID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	StreamID      uuid.UUID `sql:"on_delete:CASCADE,notnull,type:uuid"`
 	Stream        *Stream
+	ShortID       int      `sql:",notnull",validate:"required"`
 	Fields        []string `sql:",notnull",validate:"required,gte=1"`
 	Primary       bool     `sql:",notnull"`
 	Normalize     bool     `sql:",notnull"`
