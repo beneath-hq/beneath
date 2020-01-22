@@ -270,8 +270,8 @@ class AdminClient(BaseClient):
         'admin': admin,
       },
       query="""
-        mutation AddUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
-          addUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
+        mutation InviteUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
+          inviteUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
             userID
             username
             name
@@ -286,7 +286,7 @@ class AdminClient(BaseClient):
         }
       """
     )
-    return result['addUserToOrganization']
+    return result['inviteUserToOrganization']
 
 
   def rm_user_from_organization(self, user_id, organization_id):
