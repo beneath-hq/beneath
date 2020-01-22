@@ -245,9 +245,9 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 
 // on the first of each month, we charge for: the upcoming month's seats; the previous month's overage
 func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *billTimes {
-	billingTime := BeginningOfThisPeriod(p)
-	startTime := BeginningOfLastPeriod(p)
-	endTime := EndOfLastPeriod(p)
+	billingTime := timeutil.BeginningOfThisPeriod(p)
+	startTime := timeutil.BeginningOfLastPeriod(p)
+	endTime := timeutil.EndOfLastPeriod(p)
 
 	if isSeatProduct {
 		if p == timeutil.PeriodMonth {
@@ -270,27 +270,4 @@ func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *bi
 		StartTime:   startTime,
 		EndTime:     endTime,
 	}
-}
-
-// BeginningOfLastPeriod gets the beginning of the last period
-func BeginningOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Last(ts, p)
-}
-
-// BeginningOfThisPeriod gets the beginning of this period
-func BeginningOfThisPeriod(p timeutil.Period) time.Time {
-	return timeutil.Floor(time.Now(), p)
-}
-
-// BeginningOfNextPeriod gets the beginning of the next period
-func BeginningOfNextPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Next(ts, p)
-}
-
-// EndOfLastPeriod gets the end of the last period
-func EndOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Floor(ts, p)
 }

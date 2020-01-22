@@ -40,15 +40,14 @@ func FindBilledResources(ctx context.Context, organizationID uuid.UUID, billingT
 
 // CreateOrUpdateBilledResources writes the billed resources to Postgres
 func CreateOrUpdateBilledResources(ctx context.Context, billedResources []*BilledResource) error {
-	for _, br := range billedResources {
-		// Q: this overwrites the "created_on" field, so we don't know if the billedResource was newly created or updated
-		// Q: we could do this in bulk if we can do ModelContext(ctx, br1, br2, br3...)
-		_, err := db.DB.ModelContext(ctx, br).
-			OnConflict("(billing_time, organization_id, entity_id, product) DO UPDATE").
-			Insert()
-		if err != nil {
-			return err
-		}
+	// specifically, do not overwrite the "created_on" field, so we can spot idempotency
+	_, err := db.DB.ModelContext(ctx, &billedResources).
+		OnConflict(`(billing_time, organization_id, entity_id, product) DO UPDATE
+			SET (start_time, end_time, quantity, total_price_cents, currency, updated_on) = 
+			(EXCLUDED.start_time, EXCLUDED.end_time, EXCLUDED.quantity, EXCLUDED.total_price_cents, EXCLUDED.currency, EXCLUDED.updated_on)`).
+		Insert()
+	if err != nil {
+		return err
 	}
 
 	return nil

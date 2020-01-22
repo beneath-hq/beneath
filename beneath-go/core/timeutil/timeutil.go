@@ -64,6 +64,29 @@ func Next(ts time.Time, p Period) time.Time {
 	}
 }
 
+// BeginningOfLastPeriod gets the beginning of the last period
+func BeginningOfLastPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Last(ts, p)
+}
+
+// BeginningOfThisPeriod gets the beginning of this period
+func BeginningOfThisPeriod(p Period) time.Time {
+	return Floor(time.Now(), p)
+}
+
+// BeginningOfNextPeriod gets the beginning of the next period
+func BeginningOfNextPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Next(ts, p)
+}
+
+// EndOfLastPeriod gets the end of the last period
+func EndOfLastPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Floor(ts, p)
+}
+
 // DaysLeftInPeriod is used for prorated billing
 func DaysLeftInPeriod(ts time.Time, p Period) int {
 	ts = ts.UTC()

@@ -1,7 +1,3 @@
-extend type Query {
-  billingPlan(billingPlanID: UUID!): BillingPlan!
-}
-
 type BillingPlan {
   billingPlanID: UUID!
 	description: String

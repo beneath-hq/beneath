@@ -40,8 +40,8 @@ export const QUERY_USERS_ORGANIZATION_PERMISSIONS = gql`
 `;
 
 export const ADD_USER_TO_ORGANIZATION = gql`
-  mutation AddUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
-    addUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
+  mutation InviteUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
+    inviteUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
       userID
     }
   }

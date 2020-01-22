@@ -36,7 +36,7 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 	return organization, nil
 }
 
-func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error) {
+func (r *mutationResolver) InviteUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
@@ -63,12 +63,12 @@ func (r *mutationResolver) AddUserToOrganization(ctx context.Context, username s
 		}
 	}
 
-	err := organization.AddUser(ctx, user.UserID, view, admin)
+	err := organization.InviteUser(ctx, user.UserID, view, admin)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	// TODO: trigger an email to the added user, so they can "accept invite to join organization" (which will switch the User.OrganizationID)
+	// TODO: trigger an email to the invited user, so they can "accept invite to join organization" (which will switch the User.OrganizationID)
 
 	return user, nil
 }
@@ -111,7 +111,7 @@ func (r *queryResolver) UsersOrganizationPermissions(ctx context.Context, organi
 
 	permissions := entity.FindOrganizationPermissions(ctx, organizationID)
 	if permissions == nil {
-		return nil, gqlerror.Errorf("Permissions for not found for organization %s", organizationID.String())
+		return nil, gqlerror.Errorf("Permissions not found for organization %s", organizationID.String())
 	}
 
 	return permissions, nil

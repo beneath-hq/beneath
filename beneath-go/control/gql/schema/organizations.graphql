@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
+  inviteUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
   updateOrganizationName(organizationID: UUID!, name: String!): Organization!
   updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!

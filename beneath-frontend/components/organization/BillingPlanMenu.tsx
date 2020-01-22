@@ -77,6 +77,11 @@ const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
                       Private projects
                     </Typography>
                   </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Role-based access controls
+                    </Typography>
+                  </Grid>
                 </Grid>
               </CardContent>
               <CardActions>
@@ -113,7 +118,12 @@ const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
                   </Grid>
                   <Grid item>
                     <Typography variant="body2">
-                      Role-based multi-party access controls
+                      Pay by wire
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="body2">
+                      Premium support
                     </Typography>
                   </Grid>
                 </Grid>

@@ -277,7 +277,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 
 // JoinOrganization changes the user's Organization
 func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (*User, error) {
-	// TODO: this whole function should happen in one transaction
 	bi := FindBillingInfo(ctx, organizationID)
 	if bi == nil {
 		panic("could not find billing info for the new organization")
@@ -285,12 +284,6 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 
 	// commit current usage to the old organization's bill
 	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, false)
-	if err != nil {
-		return nil, err
-	}
-
-	// commit usage credit to the new organization's bill for the user's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -308,8 +301,14 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 		return nil, err
 	}
 
+	// commit usage credit to the new organization's bill for the user's current month's usage
+	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// add prorated seat to the new organization's next month's bill
-	err = commitProratedSeatsToBill(ctx, bi, []uuid.UUID{u.UserID}, false)
+	err = commitProratedSeatsToBill(ctx, organizationID, bi.BillingPlan, []uuid.UUID{u.UserID}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}

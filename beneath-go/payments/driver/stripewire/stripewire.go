@@ -10,6 +10,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/payments/driver/stripeutil"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
@@ -95,15 +96,6 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	if billingPlan.Personal {
-		err = organization.UpdatePersonalStatus(req.Context(), true)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.S.Errorf("Error updating organization: %v\\n", err)
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -120,7 +112,8 @@ func (w *StripeWire) IssueInvoiceForResources(billingInfo *entity.BillingInfo, b
 
 	for _, item := range billedResources {
 		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
-		if item.TotalPriceCents > 0 {
+		// only itemize the products for this month's bill
+		if (item.TotalPriceCents != 0) && (item.BillingTime == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
 			stripeutil.NewInvoiceItem(billingInfo.DriverPayload["customer_id"].(string), int64(item.TotalPriceCents), string(billingInfo.BillingPlan.Currency), stripeutil.PrettyDescription(item.Product))
 		}
 	}

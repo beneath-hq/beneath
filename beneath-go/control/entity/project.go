@@ -140,7 +140,9 @@ func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, view bool, crea
 
 // RemoveUser removes a member from the project
 func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
-	// TODO remove from cache
+	// clear cache
+	getUserProjectPermissionsCache().Clear(ctx, userID, p.ProjectID)
+
 	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
 	return db.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
 		UserID:    userID,

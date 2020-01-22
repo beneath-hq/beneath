@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/beneath-core/beneath-go/core/timeutil"
+
 	"github.com/beneath-core/beneath-go/payments/driver/stripeutil"
 
 	"github.com/beneath-core/beneath-go/control/entity"
@@ -153,11 +155,15 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			panic("billing plan not found")
 		}
 
+		billingInfo := entity.FindBillingInfo(req.Context(), organization.OrganizationID) // existing billing info (to check for existing stripe customer_id below)
+		if billingInfo == nil {
+			panic("billing info not found")
+		}
+
 		paymentMethod := stripeutil.RetrievePaymentMethod(setupIntent.PaymentMethod.ID)
 
 		// Our requests to Stripe differ whether or not the customer is already registered in Stripe
 		var customer *stripe.Customer
-		billingInfo := entity.FindBillingInfo(req.Context(), organization.OrganizationID)
 		if billingInfo.DriverPayload["customer_id"] != nil {
 			customerID := billingInfo.DriverPayload["customer_id"].(string)
 			paymentMethod := stripeutil.AttachPaymentMethod(customerID, paymentMethod.ID)
@@ -175,22 +181,6 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 			log.S.Errorf("Error updating Billing Info: %v\\n", err)
 			return err
 		}
-
-		if billingPlan.Personal {
-			err = organization.UpdatePersonalStatus(req.Context(), true)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.S.Errorf("Error updating organization: %v\\n", err)
-				return err
-			}
-		}
-
-		// TODO: if updating from a different paid billing plan, trigger old bill (calculating overages)
-
-		// TODO: trigger an email to the user:
-		// -- if billingPlan.Personal, need to prompt the user to
-		// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
-		// -- 2) add teammates (which will call "AddUser"; then the user will have to accept the invite, which will call "JoinOrganization")
 
 	case "invoice.payment_failed":
 		var invoice stripe.Invoice
@@ -218,7 +208,7 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 		}
 
 	// case "invoice.payment_succeeded":
-	// Q: do we want this^ for anything?
+	// TODO: if wire payment, trigger an email to customer "thank you for your payment" (if Stripe doesn't do this automatically -- might be able to set up in the dashboard)
 
 	// using this as a hack for stripe wire failures for one-off invoices
 	// TODO: waiting on stripe to fix their bug; this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
@@ -322,12 +312,12 @@ func (c *StripeCard) IssueInvoiceForResources(billingInfo *entity.BillingInfo, b
 
 	for _, item := range billedResources {
 		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
-		if item.TotalPriceCents != 0 {
+		// only itemize the products for this month's bill
+		if (item.TotalPriceCents != 0) && (item.BillingTime == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
 			stripeutil.NewInvoiceItem(billingInfo.DriverPayload["customer_id"].(string), int64(item.TotalPriceCents), string(billingInfo.BillingPlan.Currency), stripeutil.PrettyDescription(item.Product))
 		}
 	}
 
-	log.S.Info(billingInfo.OrganizationID)
 	inv := stripeutil.CreateInvoice(billingInfo.DriverPayload["customer_id"].(string), billingInfo.PaymentsDriver)
 
 	stripeutil.PayInvoice(inv.ID)

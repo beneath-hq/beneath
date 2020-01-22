@@ -2,11 +2,6 @@ extend type Query {
   billingInfo(organizationID: UUID!): BillingInfo!
 }
 
-# this might be re-used?
-# extend type Mutation {
-#   updateBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
-# }
-
 type BillingInfo {
   organizationID: UUID!
   billingPlan: BillingPlan!

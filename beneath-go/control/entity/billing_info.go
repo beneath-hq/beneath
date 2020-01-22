@@ -22,96 +22,6 @@ type BillingInfo struct {
 	Users          []*User
 }
 
-// UpdateBillingInfo creates or updates an organization's billing info
-func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*BillingInfo, error) {
-	prevBillingInfo := FindBillingInfo(ctx, organizationID)
-	if prevBillingInfo == nil {
-		panic("could not get existing billing info")
-	}
-
-	bi := &BillingInfo{}
-
-	tx, err := db.DB.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback() // defer rollback on error
-
-	// set fields
-	bi.OrganizationID = organizationID
-	bi.BillingPlanID = billingPlanID
-	bi.PaymentsDriver = paymentsDriver
-	bi.DriverPayload = driverPayload
-
-	// validate
-	err = GetValidator().Struct(bi)
-	if err != nil {
-		return nil, err
-	}
-
-	// insert
-	_, err = tx.ModelContext(ctx, bi).OnConflict("(organization_id) DO UPDATE").Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	// update the organization's users' quotas
-	// this gets us access to bi.Users
-	err = tx.ModelContext(ctx, bi).WherePK().Column("billing_info.*", "BillingPlan", "Services", "Users").Select()
-	if !AssertFoundOne(err) {
-		return nil, err
-	}
-
-	for _, u := range bi.Users {
-		u.ReadQuota = bi.BillingPlan.SeatReadQuota
-		u.WriteQuota = bi.BillingPlan.SeatWriteQuota
-		_, err := tx.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: make this part of the entire transaction; Q: any easy way to encompass function calls in the transaction?
-	// if switching billing plans, we reconcile the next month's bill:
-	// - we provide prorated credit for seats on the old billing plan for the remaining days of the current month
-	// - we charge a prorated amount for the seats on the new billing plan for the remaining days of the current month
-	// - the entire month's overages will be charged at the rates of the new billing plan
-	if billingPlanID != prevBillingInfo.BillingPlanID {
-		var userIDs []uuid.UUID
-		for _, user := range bi.Users {
-			userIDs = append(userIDs, user.UserID)
-		}
-
-		// give organization pro-rated credit for seats at old billing plan price
-		if prevBillingInfo.BillingPlanID.String() != FreeBillingPlanID {
-			err := commitProratedSeatsToBill(ctx, prevBillingInfo, userIDs, true)
-			if err != nil {
-				panic("could not commit prorated seat credits to bill")
-			}
-		}
-
-		// charge organization the pro-rated amount for seats at new billing plan price
-		err = commitProratedSeatsToBill(ctx, bi, userIDs, false)
-		if err != nil {
-			panic("could not commit prorated seats to bill")
-		}
-
-		// TODO
-		// if downgrading from private projects, lock down organization's outstanding private projects
-		// if !bi.BillingPlan.PrivateProjects && prevBillingInfo.BillingPlan.PrivateProjects {
-		// 	// option1: lock projects so that they can't be viewed
-		// 	// option2: clear existing project permissions, and ensure they can't be added back
-		// }
-	}
-
-	return bi, nil
-}
-
 // FindBillingInfo finds an organization's billing info by organizationID
 func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo {
 	billingInfo := &BillingInfo{
@@ -124,29 +34,98 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	return billingInfo
 }
 
-// UpdateBillingPlanID updates an organization's billing plan ID
-// func (bi *BillingInfo) UpdateBillingPlanID(ctx context.Context, billingPlanID uuid.UUID) (*BillingInfo, error) {
-// 	bi.BillingPlanID = billingPlanID
-// 	bi.UpdatedOn = time.Now()
-// 	_, err := db.DB.ModelContext(ctx, bi).Column("billing_plan_id", "updated_on").WherePK().Update()
-// 	return bi, err
-// }
+// UpdateBillingInfo creates or updates an organization's billing info
+func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*BillingInfo, error) {
+	prevBillingInfo := FindBillingInfo(ctx, organizationID)
+	if prevBillingInfo == nil {
+		panic("could not get existing billing info")
+	}
+	prevBillingPlan := prevBillingInfo.BillingPlan
+	users := prevBillingInfo.Users
 
-// UpdateStripeCustomerID updates an organization's Stripe Customer ID
-// func (bi *BillingInfo) UpdateStripeCustomerID(ctx context.Context, stripeCustomerID string) error {
-// 	// bi.StripeCustomerID = stripeCustomerID
-// 	// bi.UpdatedOn = time.Now()
-// 	// _, err := db.DB.ModelContext(ctx, bi).Column("stripe_customer_id", "updated_on").WherePK().Update()
-// 	bi.DriverPayload["customer_id"] = stripeCustomerID
-// 	bi.UpdatedOn = time.Now()
-// 	_, err := db.DB.ModelContext(ctx, bi).Column("driver_payload", "updated_on").WherePK().Update()
-// 	return err
-// }
+	newBillingPlan := FindBillingPlan(ctx, billingPlanID)
+	if newBillingPlan == nil {
+		panic("could not get new billing plan")
+	}
 
-// // UpdatePaymentsDriver updates an organization's payment method type
-// func (bi *BillingInfo) UpdatePaymentsDriver(ctx context.Context, paymentsDriver PaymentsDriver) error {
-// 	bi.PaymentsDriver = paymentsDriver
-// 	bi.UpdatedOn = time.Now()
-// 	_, err := db.DB.ModelContext(ctx, bi).Column("payments_driver", "updated_on").WherePK().Update()
-// 	return err
-// }
+	// if switching billing plans:
+	// - reconcile next month's bill
+	// - update all parameters related to the new billing plan's features
+	if billingPlanID != prevBillingPlan.BillingPlanID {
+		var userIDs []uuid.UUID
+		for _, user := range users {
+			userIDs = append(userIDs, user.UserID)
+		}
+
+		// give organization pro-rated credit for seats at old billing plan price
+		err := commitProratedSeatsToBill(ctx, organizationID, prevBillingPlan, userIDs, true)
+		if err != nil {
+			panic("could not commit prorated seat credits to bill")
+		}
+
+		// charge organization the pro-rated amount for seats at new billing plan price
+		err = commitProratedSeatsToBill(ctx, organizationID, newBillingPlan, userIDs, false)
+		if err != nil {
+			panic("could not commit prorated seats to bill")
+		}
+
+		// update the organization's users' quotas
+		for _, u := range users {
+			u.ReadQuota = newBillingPlan.SeatReadQuota
+			u.WriteQuota = newBillingPlan.SeatWriteQuota
+		}
+
+		_, err = db.DB.ModelContext(ctx, &users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+		if err != nil {
+			return nil, err
+		}
+
+		// update organization's personal status
+		organization := FindOrganization(ctx, organizationID)
+		if organization == nil {
+			panic("could not get organization")
+		}
+
+		if newBillingPlan.Personal {
+			err = organization.UpdatePersonalStatus(ctx, true)
+			if err != nil {
+				panic("Error updating organization")
+			}
+		}
+
+		// TODO: if upgrading to a non-personal plan, trigger an email to the user:
+		// -- if prevBillingPlan.Personal && !newBillingPlan.Personal, need to prompt the user to
+		// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
+		// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
+		// Q: should this code go inside the organization.UpdatePersonal function?
+
+		// TODO: if downgrading from private projects, lock down organization's outstanding private projects
+		// if !newBillingPlan.PrivateProjects && prevBillingPlan.PrivateProjects {
+		// 	// option1: lock projects so that they can't be viewed (e.g. create a new column Project.Locked)
+		// 	// option2: clear existing project permissions, and ensure they can't be added back
+		// }
+	}
+
+	bi := &BillingInfo{
+		OrganizationID: organizationID,
+		BillingPlanID:  billingPlanID,
+		PaymentsDriver: paymentsDriver,
+		DriverPayload:  driverPayload,
+	}
+
+	// validate
+	err := GetValidator().Struct(bi)
+	if err != nil {
+		return nil, err
+	}
+
+	// insert
+	_, err = db.DB.ModelContext(ctx, bi).OnConflict("(organization_id) DO UPDATE").Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	// Q: do I need to fetch bi so that the joined tables are attached?
+
+	return bi, nil
+}

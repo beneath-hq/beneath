@@ -133,7 +133,6 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddUserToOrganization             func(childComplexity int, username string, organizationID uuid.UUID, view bool, admin bool) int
 		AddUserToProject                  func(childComplexity int, username string, projectID uuid.UUID, view bool, create bool, admin bool) int
 		ClearPendingExternalStreamBatches func(childComplexity int, streamID uuid.UUID) int
 		ClearPendingModelBatches          func(childComplexity int, modelID uuid.UUID) int
@@ -150,6 +149,7 @@ type ComplexityRoot struct {
 		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
 		Empty                             func(childComplexity int) int
+		InviteUserToOrganization          func(childComplexity int, username string, organizationID uuid.UUID, view bool, admin bool) int
 		IssueServiceSecret                func(childComplexity int, serviceID uuid.UUID, description string) int
 		IssueUserSecret                   func(childComplexity int, description string, readOnly bool, publicOnly bool) int
 		JoinOrganization                  func(childComplexity int, organizationName string) int
@@ -221,7 +221,6 @@ type ComplexityRoot struct {
 	Query struct {
 		BilledResources              func(childComplexity int, organizationID uuid.UUID, billingTime time.Time) int
 		BillingInfo                  func(childComplexity int, organizationID uuid.UUID) int
-		BillingPlan                  func(childComplexity int, billingPlanID uuid.UUID) int
 		Empty                        func(childComplexity int) int
 		ExploreProjects              func(childComplexity int) int
 		GetServiceMetrics            func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
@@ -340,7 +339,7 @@ type MutationResolver interface {
 	CreateModelBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error)
 	CommitModelBatch(ctx context.Context, modelID uuid.UUID, instanceIDs []uuid.UUID) (bool, error)
 	ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error)
-	AddUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error)
+	InviteUserToOrganization(ctx context.Context, username string, organizationID uuid.UUID, view bool, admin bool) (*entity.User, error)
 	RemoveUserFromOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) (bool, error)
 	UpdateOrganizationName(ctx context.Context, organizationID uuid.UUID, name string) (*entity.Organization, error)
 	UpdateUserOrganizationQuotas(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
@@ -378,7 +377,6 @@ type QueryResolver interface {
 	Ping(ctx context.Context) (string, error)
 	BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error)
 	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*BillingInfo, error)
-	BillingPlan(ctx context.Context, billingPlanID uuid.UUID) (*entity.BillingPlan, error)
 	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
@@ -826,18 +824,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Model.UpdatedOn(childComplexity), true
 
-	case "Mutation.addUserToOrganization":
-		if e.complexity.Mutation.AddUserToOrganization == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_addUserToOrganization_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AddUserToOrganization(childComplexity, args["username"].(string), args["organizationID"].(uuid.UUID), args["view"].(bool), args["admin"].(bool)), true
-
 	case "Mutation.addUserToProject":
 		if e.complexity.Mutation.AddUserToProject == nil {
 			break
@@ -1024,6 +1010,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Empty(childComplexity), true
+
+	case "Mutation.inviteUserToOrganization":
+		if e.complexity.Mutation.InviteUserToOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_inviteUserToOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InviteUserToOrganization(childComplexity, args["username"].(string), args["organizationID"].(uuid.UUID), args["view"].(bool), args["admin"].(bool)), true
 
 	case "Mutation.issueServiceSecret":
 		if e.complexity.Mutation.IssueServiceSecret == nil {
@@ -1464,18 +1462,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.BillingInfo(childComplexity, args["organizationID"].(uuid.UUID)), true
-
-	case "Query.billingPlan":
-		if e.complexity.Query.BillingPlan == nil {
-			break
-		}
-
-		args, err := ec.field_Query_billingPlan_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.BillingPlan(childComplexity, args["billingPlanID"].(uuid.UUID)), true
 
 	case "Query.empty":
 		if e.complexity.Query.Empty == nil {
@@ -2173,22 +2159,13 @@ type BilledResource {
   billingInfo(organizationID: UUID!): BillingInfo!
 }
 
-# this might be re-used?
-# extend type Mutation {
-#   updateBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
-# }
-
 type BillingInfo {
   organizationID: UUID!
   billingPlan: BillingPlan!
 	paymentsDriver: String!
 }
 `},
-	&ast.Source{Name: "control/gql/schema/billing_plans.graphql", Input: `extend type Query {
-  billingPlan(billingPlanID: UUID!): BillingPlan!
-}
-
-type BillingPlan {
+	&ast.Source{Name: "control/gql/schema/billing_plans.graphql", Input: `type BillingPlan {
   billingPlanID: UUID!
 	description: String
 	currency: String!
@@ -2276,7 +2253,7 @@ input UpdateModelInput {
 }
 
 extend type Mutation {
-  addUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
+  inviteUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
   removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
   updateOrganizationName(organizationID: UUID!, name: String!): Organization!
   updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
@@ -2493,44 +2470,6 @@ type Me {
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) field_Mutation_addUserToOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["username"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["username"] = arg0
-	var arg1 uuid.UUID
-	if tmp, ok := rawArgs["organizationID"]; ok {
-		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["organizationID"] = arg1
-	var arg2 bool
-	if tmp, ok := rawArgs["view"]; ok {
-		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["view"] = arg2
-	var arg3 bool
-	if tmp, ok := rawArgs["admin"]; ok {
-		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["admin"] = arg3
-	return args, nil
-}
 
 func (ec *executionContext) field_Mutation_addUserToProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2875,6 +2814,44 @@ func (ec *executionContext) field_Mutation_deleteService_args(ctx context.Contex
 		}
 	}
 	args["serviceID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_inviteUserToOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg1
+	var arg2 bool
+	if tmp, ok := rawArgs["view"]; ok {
+		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["view"] = arg2
+	var arg3 bool
+	if tmp, ok := rawArgs["admin"]; ok {
+		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["admin"] = arg3
 	return args, nil
 }
 
@@ -3373,20 +3350,6 @@ func (ec *executionContext) field_Query_billingInfo_args(ctx context.Context, ra
 		}
 	}
 	args["organizationID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_billingPlan_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["billingPlanID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["billingPlanID"] = arg0
 	return args, nil
 }
 
@@ -6093,7 +6056,7 @@ func (ec *executionContext) _Mutation_clearPendingModelBatches(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_addUserToOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_inviteUserToOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -6110,7 +6073,7 @@ func (ec *executionContext) _Mutation_addUserToOrganization(ctx context.Context,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_addUserToOrganization_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_inviteUserToOrganization_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -6119,7 +6082,7 @@ func (ec *executionContext) _Mutation_addUserToOrganization(ctx context.Context,
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddUserToOrganization(rctx, args["username"].(string), args["organizationID"].(uuid.UUID), args["view"].(bool), args["admin"].(bool))
+		return ec.resolvers.Mutation().InviteUserToOrganization(rctx, args["username"].(string), args["organizationID"].(uuid.UUID), args["view"].(bool), args["admin"].(bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8563,50 +8526,6 @@ func (ec *executionContext) _Query_billingInfo(ctx context.Context, field graphq
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBillingInfo2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋgqlᚐBillingInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_billingPlan(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_billingPlan_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().BillingPlan(rctx, args["billingPlanID"].(uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.BillingPlan)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingPlan2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -13049,8 +12968,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "addUserToOrganization":
-			out.Values[i] = ec._Mutation_addUserToOrganization(ctx, field)
+		case "inviteUserToOrganization":
+			out.Values[i] = ec._Mutation_inviteUserToOrganization(ctx, field)
 		case "removeUserFromOrganization":
 			out.Values[i] = ec._Mutation_removeUserFromOrganization(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -13548,20 +13467,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_billingInfo(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "billingPlan":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_billingPlan(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

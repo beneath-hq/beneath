@@ -20,6 +20,9 @@ func init() {
 }
 
 // Run triggers the task
+// it is expected that the task is run at the beginning of each month
+// organizations will be assessed usage and corresponding overage fees for the previous month
+// organizations will be charged seats for the upcoming month
 func (t *RunBillingTask) Run(ctx context.Context) error {
 	organizations := entity.FindActiveOrganizations(ctx)
 	timestamp := time.Now()

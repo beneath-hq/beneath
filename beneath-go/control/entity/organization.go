@@ -119,10 +119,12 @@ func (o *Organization) UpdateActiveStatus(ctx context.Context, active bool) erro
 	return nil
 }
 
-// AddUser makes user a member of organization
-// note: in practice, this function really means "invite user"; as the user won't officially be a part of the organization until they "join organization" (i.e. accept the invitation)
-// TODO: clear secret cache!
-func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+// InviteUser gives a user permission to join the organization
+// the user must then "JoinOrganization" to officially change their membership
+func (o *Organization) InviteUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+	// clear cache
+	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
+
 	perms := &PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,

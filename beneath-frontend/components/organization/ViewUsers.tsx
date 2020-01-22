@@ -3,7 +3,7 @@ import useMe from "../../hooks/useMe";
 import { useQuery, useMutation } from "@apollo/react-hooks"
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
 import { UsersOrganizationPermissions, UsersOrganizationPermissionsVariables } from "../../apollo/types/UsersOrganizationPermissions"
-import { AddUserToOrganization, AddUserToOrganizationVariables } from "../../apollo/types/AddUserToOrganization";
+import { InviteUserToOrganization, InviteUserToOrganizationVariables } from "../../apollo/types/InviteUserToOrganization";
 import { QUERY_USERS_ORGANIZATION_PERMISSIONS, ADD_USER_TO_ORGANIZATION } from "../../apollo/queries/organization"
 
 import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography, TextField, Button, Grid } from "@material-ui/core";
@@ -37,9 +37,9 @@ const ViewUsers: FC<Props> = ({ organization }) => {
     variables: {
       organizationID: organization.organizationID,
     },});
-  const [addUser] = useMutation<AddUserToOrganization, AddUserToOrganizationVariables>(ADD_USER_TO_ORGANIZATION, {
-    onCompleted: ({ addUserToOrganization }) => {
-      if (addUserToOrganization) {
+  const [inviteUser] = useMutation<InviteUserToOrganization, InviteUserToOrganizationVariables>(ADD_USER_TO_ORGANIZATION, {
+    onCompleted: ({ inviteUserToOrganization }) => {
+      if (inviteUserToOrganization) {
         setError("")
         setIsInviteSent(true)
       }
@@ -70,10 +70,10 @@ const ViewUsers: FC<Props> = ({ organization }) => {
     setUsername(event.target.value)
   }
   
-  const handleAddUserFormSubmit = (ev: any) => {
+  const handleInviteUserFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
     ev.preventDefault()
-    addUser({
+    inviteUser({
       variables: {
         username: username,
         organizationID: organization.organizationID,
@@ -107,7 +107,7 @@ const ViewUsers: FC<Props> = ({ organization }) => {
         </Grid>
         {admin && (
         <Grid item>
-          <form onSubmit={handleAddUserFormSubmit}>
+          <form onSubmit={handleInviteUserFormSubmit}>
             <Grid container alignItems="center" spacing={2}>
               <Grid item>
                 <TextField

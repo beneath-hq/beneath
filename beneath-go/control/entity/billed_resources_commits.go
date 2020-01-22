@@ -16,22 +16,22 @@ type billTimes struct {
 	EndTime     time.Time
 }
 
-func commitProratedSeatsToBill(ctx context.Context, billingInfo *BillingInfo, userIDs []uuid.UUID, credit bool) error {
-	if billingInfo.BillingPlan == nil {
+func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, userIDs []uuid.UUID, credit bool) error {
+	if billingPlan == nil {
 		panic("could not find the organization's billing plan")
 	}
 
 	now := time.Now()
-	p := billingInfo.BillingPlan.Period
+	p := billingPlan.Period
 
 	billTimes := &billTimes{
-		BillingTime: BeginningOfNextPeriod(p),
+		BillingTime: timeutil.BeginningOfNextPeriod(p),
 		StartTime:   now,
-		EndTime:     BeginningOfNextPeriod(p),
+		EndTime:     timeutil.BeginningOfNextPeriod(p),
 	}
 
 	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
-	proratedPrice := int32(math.Round(float64(billingInfo.BillingPlan.SeatPriceCents) * proratedFraction))
+	proratedPrice := int32(math.Round(float64(billingPlan.SeatPriceCents) * proratedFraction))
 
 	if credit {
 		proratedPrice = -1 * proratedPrice
@@ -40,7 +40,7 @@ func commitProratedSeatsToBill(ctx context.Context, billingInfo *BillingInfo, us
 	var billedResources []*BilledResource
 	for _, userID := range userIDs {
 		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  billingInfo.OrganizationID,
+			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        userID,
 			EntityKind:      UserEntityKind,
@@ -49,7 +49,7 @@ func commitProratedSeatsToBill(ctx context.Context, billingInfo *BillingInfo, us
 			Product:         SeatProduct,
 			Quantity:        1,
 			TotalPriceCents: proratedPrice,
-			Currency:        billingInfo.BillingPlan.Currency,
+			Currency:        billingPlan.Currency,
 		})
 	}
 
@@ -69,8 +69,8 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 	}
 
 	billTimes := &billTimes{
-		BillingTime: BeginningOfNextPeriod(billingInfo.BillingPlan.Period),
-		StartTime:   BeginningOfThisPeriod(billingInfo.BillingPlan.Period),
+		BillingTime: timeutil.BeginningOfNextPeriod(billingInfo.BillingPlan.Period),
+		StartTime:   timeutil.BeginningOfThisPeriod(billingInfo.BillingPlan.Period),
 		EndTime:     time.Now(),
 	}
 
@@ -132,27 +132,4 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 
 	// done
 	return nil
-}
-
-// BeginningOfThisPeriod gets the beginning of this period
-func BeginningOfThisPeriod(p timeutil.Period) time.Time {
-	return timeutil.Floor(time.Now(), p)
-}
-
-// BeginningOfNextPeriod gets the beginning of the next period
-func BeginningOfNextPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Next(ts, p)
-}
-
-// BeginningOfLastPeriod gets the beginning of the last period
-func BeginningOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Last(ts, p)
-}
-
-// EndOfLastPeriod gets the end of the last period
-func EndOfLastPeriod(p timeutil.Period) time.Time {
-	ts := time.Now().UTC()
-	return timeutil.Floor(ts, p)
 }
