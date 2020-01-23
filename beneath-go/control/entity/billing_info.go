@@ -53,18 +53,20 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 	// - update all parameters related to the new billing plan's features
 	if billingPlanID != prevBillingPlan.BillingPlanID {
 		var userIDs []uuid.UUID
+		var usernames []string
 		for _, user := range users {
 			userIDs = append(userIDs, user.UserID)
+			usernames = append(usernames, user.Username)
 		}
 
 		// give organization pro-rated credit for seats at old billing plan price
-		err := commitProratedSeatsToBill(ctx, organizationID, prevBillingPlan, userIDs, true)
+		err := commitProratedSeatsToBill(ctx, organizationID, prevBillingPlan, userIDs, usernames, true)
 		if err != nil {
 			panic("could not commit prorated seat credits to bill")
 		}
 
 		// charge organization the pro-rated amount for seats at new billing plan price
-		err = commitProratedSeatsToBill(ctx, organizationID, newBillingPlan, userIDs, false)
+		err = commitProratedSeatsToBill(ctx, organizationID, newBillingPlan, userIDs, usernames, false)
 		if err != nil {
 			panic("could not commit prorated seats to bill")
 		}

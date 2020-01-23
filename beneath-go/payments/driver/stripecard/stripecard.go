@@ -310,12 +310,30 @@ func (c *StripeCard) IssueInvoiceForResources(billingInfo *entity.BillingInfo, b
 		panic("stripe customer id is not set")
 	}
 
+	var seatCount int64
+	var seatPrice int64
+	var seatStartTime int64
+	var seatEndTime int64
+
 	for _, item := range billedResources {
 		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
 		// only itemize the products for this month's bill
-		if (item.TotalPriceCents != 0) && (item.BillingTime == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
-			stripeutil.NewInvoiceItem(billingInfo.DriverPayload["customer_id"].(string), int64(item.TotalPriceCents), string(billingInfo.BillingPlan.Currency), stripeutil.PrettyDescription(item.Product))
+		if (item.TotalPriceCents != 0) && (item.BillingTime.UTC() == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
+			// count seats, itemize everything else
+			if item.Product == entity.SeatProduct {
+				seatCount++
+				seatPrice = int64(item.TotalPriceCents)
+				seatStartTime = item.StartTime.Unix()
+				seatEndTime = item.EndTime.Unix()
+			} else {
+				stripeutil.NewInvoiceItemOther(billingInfo.DriverPayload["customer_id"].(string), int64(item.TotalPriceCents), string(billingInfo.BillingPlan.Currency), item.StartTime.Unix(), item.EndTime.Unix(), stripeutil.PrettyDescription(item.Product))
+			}
 		}
+	}
+
+	// batch seats
+	if seatCount > 0 {
+		stripeutil.NewInvoiceItemSeats(billingInfo.DriverPayload["customer_id"].(string), seatCount, seatPrice, string(billingInfo.BillingPlan.Currency), seatStartTime, seatEndTime, stripeutil.PrettyDescription(entity.SeatProduct))
 	}
 
 	inv := stripeutil.CreateInvoice(billingInfo.DriverPayload["customer_id"].(string), billingInfo.PaymentsDriver)

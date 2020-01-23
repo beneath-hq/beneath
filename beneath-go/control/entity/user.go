@@ -283,7 +283,7 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 	}
 
 	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, false)
+	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return nil, err
 	}
@@ -302,13 +302,13 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 	}
 
 	// commit usage credit to the new organization's bill for the user's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, true)
+	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, u.Username, true)
 	if err != nil {
 		return nil, err
 	}
 
 	// add prorated seat to the new organization's next month's bill
-	err = commitProratedSeatsToBill(ctx, organizationID, bi.BillingPlan, []uuid.UUID{u.UserID}, false)
+	err = commitProratedSeatsToBill(ctx, organizationID, bi.BillingPlan, []uuid.UUID{u.UserID}, []string{u.Username}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}
@@ -325,7 +325,7 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 
 // Delete removes the user from the database
 func (u *User) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, false)
+	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return err
 	}

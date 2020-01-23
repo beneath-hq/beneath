@@ -16,7 +16,7 @@ type billTimes struct {
 	EndTime     time.Time
 }
 
-func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, userIDs []uuid.UUID, credit bool) error {
+func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, userIDs []uuid.UUID, usernames []string, credit bool) error {
 	if billingPlan == nil {
 		panic("could not find the organization's billing plan")
 	}
@@ -38,11 +38,12 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	}
 
 	var billedResources []*BilledResource
-	for _, userID := range userIDs {
+	for i, userID := range userIDs {
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        userID,
+			EntityName:      usernames[i],
 			EntityKind:      UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -62,7 +63,7 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	return nil
 }
 
-func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID, credit bool) error {
+func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID, entityName string, credit bool) error {
 	billingInfo := FindBillingInfo(ctx, organizationID)
 	if billingInfo == nil {
 		panic("organization not found")
@@ -97,6 +98,7 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        entityID,
+			EntityName:      entityName,
 			EntityKind:      entityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -111,6 +113,7 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        entityID,
+			EntityName:      entityName,
 			EntityKind:      entityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,

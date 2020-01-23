@@ -133,16 +133,41 @@ func UpdateWireCustomer(customerID string, email string) *stripe.Customer {
 	return customer
 }
 
-// NewInvoiceItem adds an invoice line item
-// TODO: do we want to add any metadata to these line items?
-// other descriptors to add: period, quantity, tax rates
-func NewInvoiceItem(customerID string, amount int64, currency string, description string) *stripe.InvoiceItem {
+// NewInvoiceItemSeats adds an invoice line item for seats
+func NewInvoiceItemSeats(customerID string, quantity int64, unitAmount int64, currency string, start int64, end int64, description string) *stripe.InvoiceItem {
+	params := &stripe.InvoiceItemParams{
+		Customer:    stripe.String(customerID),
+		Quantity:    stripe.Int64(quantity),
+		UnitAmount:  stripe.Int64(unitAmount),
+		Currency:    stripe.String(string(currency)),
+		Description: stripe.String(description),
+		Period: &stripe.InvoiceItemPeriodParams{
+			Start: stripe.Int64(start),
+			End:   stripe.Int64(end),
+		},
+	}
+
+	invoiceItem, err := invoiceitem.New(params)
+	if err != nil {
+		panic("stripe error when adding invoice item")
+	}
+
+	return invoiceItem
+}
+
+// NewInvoiceItemOther adds an invoice line item for non-seat products
+func NewInvoiceItemOther(customerID string, amount int64, currency string, start int64, end int64, description string) *stripe.InvoiceItem {
 	params := &stripe.InvoiceItemParams{
 		Customer:    stripe.String(customerID),
 		Amount:      stripe.Int64(amount),
 		Currency:    stripe.String(string(currency)),
 		Description: stripe.String(description),
+		Period: &stripe.InvoiceItemPeriodParams{
+			Start: stripe.Int64(start),
+			End:   stripe.Int64(end),
+		},
 	}
+
 	invoiceItem, err := invoiceitem.New(params)
 	if err != nil {
 		panic("stripe error when adding invoice item")
@@ -232,14 +257,13 @@ func SendInvoice(invoiceID string) {
 
 // PrettyDescription makes the Stripe invoice more informative
 func PrettyDescription(product entity.Product) string {
-	// TODO: upgrade descriptions
 	switch product {
 	case entity.SeatProduct:
-		return string(product)
+		return "Seats"
 	case entity.ReadOverageProduct:
-		return string(product)
+		return "Organization read overage (GB)"
 	case entity.WriteOverageProduct:
-		return string(product)
+		return "Organization write overage (GB)"
 	default:
 		panic("unknown product")
 	}

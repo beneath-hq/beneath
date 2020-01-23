@@ -135,7 +135,7 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, false)
+	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
 	if err != nil {
 		return err
 	}

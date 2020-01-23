@@ -53,32 +53,36 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 
 	// add "usage" line items for users
 	var userIDs []uuid.UUID
+	var usernames []string
 	for _, user := range billingInfo.Users {
 		userIDs = append(userIDs, user.UserID)
+		usernames = append(usernames, user.Username)
 	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.UserEntityKind, userIDs, usageBillTimes)
+	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.UserEntityKind, userIDs, usernames, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// add "usage" line items for services
 	var serviceIDs []uuid.UUID
+	var servicenames []string
 	for _, service := range billingInfo.Services {
 		serviceIDs = append(serviceIDs, service.ServiceID)
+		servicenames = append(servicenames, service.Name)
 	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ServiceEntityKind, serviceIDs, usageBillTimes)
+	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ServiceEntityKind, serviceIDs, servicenames, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add "read overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, usageBillTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, organization.Name, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add "write overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, usageBillTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, organization.Name, usageBillTimes)
 	if err != nil {
 		return err
 	}
@@ -109,6 +113,7 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        user.UserID,
+			EntityName:      user.Username,
 			EntityKind:      entity.UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -128,10 +133,10 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 	return nil
 }
 
-func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *entity.BillingPlan, entityKind entity.Kind, entityIDs []uuid.UUID, billTimes *billTimes) error {
+func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *entity.BillingPlan, entityKind entity.Kind, entityIDs []uuid.UUID, entityNames []string, billTimes *billTimes) error {
 	var billedResources []*entity.BilledResource
 
-	for _, entityID := range entityIDs {
+	for i, entityID := range entityIDs {
 		_, monthlyMetrics, err := metrics.GetHistoricalUsage(ctx, entityID, billingPlan.Period, billTimes.StartTime, billTimes.BillingTime) // when adding annual plans, remember this function only accepts hourly or monthly periods
 		if err != nil {
 			return err
@@ -143,6 +148,7 @@ func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPl
 				OrganizationID:  organizationID,
 				BillingTime:     billTimes.BillingTime,
 				EntityID:        entityID,
+				EntityName:      entityNames[i],
 				EntityKind:      entityKind,
 				StartTime:       billTimes.StartTime,
 				EndTime:         billTimes.EndTime,
@@ -157,6 +163,7 @@ func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPl
 				OrganizationID:  organizationID,
 				BillingTime:     billTimes.BillingTime,
 				EntityID:        entityID,
+				EntityName:      entityNames[i],
 				EntityKind:      entityKind,
 				StartTime:       billTimes.StartTime,
 				EndTime:         billTimes.EndTime,
@@ -181,7 +188,7 @@ func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPl
 	return nil
 }
 
-func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *entity.BillingPlan, product entity.Product, billTimes *billTimes) error {
+func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *entity.BillingPlan, product entity.Product, organizationName string, billTimes *billTimes) error {
 	// fetch the organization's billed resources for the period
 	var billedResources []*entity.BilledResource
 	err := db.DB.ModelContext(ctx, &billedResources).
@@ -224,6 +231,7 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        organizationID,
+			EntityName:      organizationName,
 			EntityKind:      entity.OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -259,11 +267,12 @@ func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *bi
 		} else {
 			panic("billing period is not supported")
 		}
+	} else {
+		// FOR TESTING (since I don't have usage data from last month):
+		// startTime = startTime.AddDate(0, 1, 0)
+		// endTime = endTime.AddDate(0, 1, 0)
+		// billingTime = billingTime.AddDate(0, 1, 0)
 	}
-	// FOR TESTING (since I don't have usage data from last month):
-	startTime = startTime.AddDate(0, 1, 0)
-	endTime = endTime.AddDate(0, 1, 0)
-	billingTime = billingTime.AddDate(0, 1, 0)
 
 	return &billTimes{
 		BillingTime: billingTime,

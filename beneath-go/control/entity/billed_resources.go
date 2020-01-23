@@ -14,6 +14,7 @@ type BilledResource struct {
 	OrganizationID   uuid.UUID `sql:",type:uuid,notnull"`
 	BillingTime      time.Time `sql:",notnull"`
 	EntityID         uuid.UUID `sql:",type:uuid,notnull"`
+	EntityName       string    `sql:",notnull"`
 	EntityKind       Kind      `sql:",notnull"`
 	StartTime        time.Time `sql:",notnull"`
 	EndTime          time.Time `sql:",notnull"`
