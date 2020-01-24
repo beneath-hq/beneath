@@ -189,6 +189,13 @@ func (s Sequencer) CommitBatch(ctx context.Context, batch Batch) error {
 	return nil
 }
 
+// ClearState deletes all state related to a sequence
+func (s Sequencer) ClearState(ctx context.Context, key string) error {
+	mut := bigtable.NewMutation()
+	mut.DeleteRow()
+	return s.Table.Apply(ctx, key, mut)
+}
+
 // GetState returns the current state of the sequence
 func (s Sequencer) GetState(ctx context.Context, key string) (State, error) {
 	return s.compactKey(ctx, key, true)
@@ -204,6 +211,11 @@ func (s Sequencer) compactKey(ctx context.Context, key string, dry bool) (State,
 	row, err := s.Table.ReadRow(ctx, key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 	if err != nil {
 		return state, err
+	}
+
+	// if row doesn't exist, return empty state
+	if len(row) == 0 {
+		return state, nil
 	}
 
 	// set next
