@@ -8,11 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/jsonutil"
-	"github.com/beneath-core/beneath-go/core/schema"
+	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
+
+	"github.com/beneath-core/beneath-go/core/queryparse"
+
 	"github.com/go-test/deep"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/schema"
 )
 
 // Index represents a set of fields to generate keys for
@@ -214,6 +219,52 @@ func TestKeySimple(t *testing.T) {
 	assert.Equal(t, -1, bytes.Compare(v2, v3))
 	assert.Equal(t, -1, bytes.Compare(v3, v4))
 	assert.Equal(t, -1, bytes.Compare(v4, v5))
+}
+
+func TestQueryParse(t *testing.T) {
+	index1 := testIndex{fields: []string{"one"}}
+	index2 := testIndex{fields: []string{"two"}}
+	index3 := testIndex{fields: []string{"three", "two"}}
+	avroSchema := schema.MustCompileToAvroString(`
+		type Test @stream(name: "test") @key(fields: "one") @index(fields: "two") @index(fields: ["three", "two"]) {
+			one: String!
+			two: Bytes!
+			three: Int64!
+			four: Int64!
+		}
+	`)
+
+	codec, err := New(avroSchema, index1, []Index{index2, index3})
+	assert.Nil(t, err)
+
+	q1, err := queryparse.JSONStringToQuery("")
+	assert.Nil(t, err)
+	idx1, kr1, err := codec.ParseQuery(q1)
+	assert.Nil(t, err)
+	assert.Equal(t, index1, idx1)
+	assert.True(t, bytes.Equal([]byte{}, kr1.Base))
+
+	q2, err := queryparse.JSONStringToQuery(`{"two":{"_prefix": "0xAAAA"}}`)
+	assert.Nil(t, err)
+	idx2, kr2, err := codec.ParseQuery(q2)
+	assert.Nil(t, err)
+	assert.Equal(t, index2, idx2)
+	assert.True(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xAA, 0xBB}}.Pack()))
+	assert.False(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xBB}}.Pack()))
+
+	q3, err := queryparse.JSONStringToQuery(`{"three": 1000, "two": {"_prefix": "0xAAAA"}}`)
+	assert.Nil(t, err)
+	idx3, kr3, err := codec.ParseQuery(q3)
+	assert.Nil(t, err)
+	assert.Equal(t, index3, idx3)
+	assert.True(t, kr3.Contains(tuple.Tuple{1000, []byte{0xAA, 0xAA, 0xBB}}.Pack()))
+	assert.False(t, kr3.Contains(tuple.Tuple{1000, []byte{0xAA, 0xBB}}.Pack()))
+
+	q4, err := queryparse.JSONStringToQuery(`{"four": 1000}`)
+	assert.Nil(t, err)
+	_, _, err = codec.ParseQuery(q4)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrIndexMiss, err)
 }
 
 func hexToBytes(num string) []byte {

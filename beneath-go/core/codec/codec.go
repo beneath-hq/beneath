@@ -159,19 +159,23 @@ func (c *Codec) MarshalKey(index Index, data map[string]interface{}) ([]byte, er
 	return t.Pack(), nil
 }
 
-// MakeKeyRange creates a KeyRange for the key encoded by the codec based on a query and a page offset (after)
-func (c *Codec) MakeKeyRange(where queryparse.Query, after queryparse.Query) (KeyRange, error) {
-	kr, err := NewKeyRange(c, where)
-	if err != nil {
-		return kr, err
+// ParseQuery produces a KeyRange matching one of the codec indexes
+func (c *Codec) ParseQuery(q queryparse.Query) (Index, KeyRange, error) {
+	kr, err := NewKeyRange(c, c.PrimaryIndex, q)
+	if err == nil {
+		return c.PrimaryIndex, kr, nil
+	} else if err != ErrIndexMiss {
+		return nil, kr, err
 	}
 
-	if after != nil {
-		kr, err = kr.WithAfter(c, after)
-		if err != nil {
-			return kr, err
+	for _, index := range c.SecondaryIndexes {
+		kr, err := NewKeyRange(c, index, q)
+		if err == nil {
+			return index, kr, nil
+		} else if err != ErrIndexMiss {
+			return nil, kr, err
 		}
 	}
 
-	return kr, nil
+	return nil, kr, ErrIndexMiss
 }

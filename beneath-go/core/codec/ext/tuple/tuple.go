@@ -87,7 +87,7 @@ func Successor(key []byte) []byte {
 
 // PrefixSuccessor returns the first key that would sort outside the range prefixed by key
 // Note (1): Purely mechanical -- doesn't logically work when the last type in the key is bytes/string
-// because these finish with a 00 byte (see BytesTypePrefixSuccessor)
+// because these finish with a 00 byte (see TruncateBytesTypeForPrefixSuccessor)
 // Note (2): Adapted from: https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/range.go
 func PrefixSuccessor(key []byte) []byte {
 	if len(key) == 0 {
@@ -104,14 +104,14 @@ func PrefixSuccessor(key []byte) []byte {
 	return nil
 }
 
-// BytesTypePrefixSuccessor assumes the key was packed with a string or bytes type
-// as the last element and returns the first key that logically sorts outside that
-// range. See PrefixSuccessor for details.
-func BytesTypePrefixSuccessor(key []byte) []byte {
+// TruncateBytesTypeForPrefixSuccessor assumes the key was packed with a string or bytes type
+// as the last element. It strips the trailing 0x00 added to string and byte types, enabling correct
+// use of PrefixSuccessor.
+func TruncateBytesTypeForPrefixSuccessor(key []byte) []byte {
 	if key[len(key)-1] == 0x00 {
 		key = key[:len(key)-1]
 	}
-	return PrefixSuccessor(key)
+	return key
 }
 
 // Versionstamp is struct for a FoundationDB verionstamp. Versionstamps are

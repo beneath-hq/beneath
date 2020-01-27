@@ -2,10 +2,16 @@ package codec
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/beneath-core/beneath-go/core/codec/ext/tuple"
 	"github.com/beneath-core/beneath-go/core/queryparse"
+)
+
+var (
+	// ErrIndexMiss is returned by NewKeyRange when a query doesn't match the index fields
+	ErrIndexMiss = errors.New("you can only query indexed fields (composite keys are indexed starting with the leftmost field)")
 )
 
 // KeyRange represents a range of keys
@@ -13,6 +19,7 @@ type KeyRange struct {
 	Base     []byte
 	RangeEnd []byte
 	Unique   bool
+	Prefix   bool
 }
 
 // IsNil returns true if the key range is uninitialized
@@ -35,51 +42,8 @@ func (r KeyRange) CheckUnique() bool {
 	return r.Unique
 }
 
-// WithAfter will narrow the range to only keys after the given key
-func (r KeyRange) WithAfter(c *Codec, q queryparse.Query) (KeyRange, error) {
-	// check correct query length
-	if len(q) != len(c.PrimaryIndex.GetFields()) {
-		return r, fmt.Errorf("after query must include exactly all keys fields and not more")
-	}
-
-	// prepare key
-	key := make(tuple.Tuple, len(q))
-
-	// iterate through key fields
-	for idx, field := range c.PrimaryIndex.GetFields() {
-		// get condition for field
-		cond := q[field]
-		if cond == nil {
-			return r, fmt.Errorf("expected key field '%s' in after query", field)
-		}
-
-		// check is eq
-		if cond.Op != queryparse.ConditionOpEq {
-			return r, fmt.Errorf("after query cannot use '%s' constraint", cond.Op.String())
-		}
-
-		// parse arg value
-		avroType := c.avroFieldTypes[field]
-		arg, err := parseJSONValue(avroType, cond.Arg1)
-		if err != nil {
-			return r, err
-		}
-
-		// set val in key we're building
-		key[idx] = arg
-	}
-
-	// pack
-	newBase := tuple.Successor(key.Pack())
-	if bytes.Compare(newBase, r.Base) > 0 {
-		r.Base = newBase
-	}
-
-	return r, nil
-}
-
 // NewKeyRange builds a new key range based on a where query and a key codec
-func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
+func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err error) {
 	// handle empty
 	if q == nil || len(q) == 0 {
 		return KeyRange{}, nil
@@ -89,14 +53,14 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 	key := make(tuple.Tuple, len(q))
 
 	// iterate through key fields
-	for idx, field := range c.PrimaryIndex.GetFields() {
+	for idx, field := range index.GetFields() {
 		// get condition for field
 		cond := q[field]
 		if cond == nil {
-			if len(c.PrimaryIndex.GetFields()) == 1 {
-				return KeyRange{}, fmt.Errorf("expected lookup on and only on key field '%s'", field)
+			if len(index.GetFields()) == 1 {
+				return KeyRange{}, ErrIndexMiss
 			}
-			return KeyRange{}, fmt.Errorf("expected field '%s' in query (composite keys are indexed starting with the leftmost field)", field)
+			return KeyRange{}, ErrIndexMiss
 		}
 
 		// get avro type
@@ -115,7 +79,7 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 		// so handle it separately
 		if cond.Op == queryparse.ConditionOpEq {
 			// next step depends on how far we've come
-			if idx+1 == len(c.PrimaryIndex.GetFields()) {
+			if idx+1 == len(index.GetFields()) {
 				// we've added _eq constraints for every key field, so we're done and it's a unique key
 				return KeyRange{
 					Base:   key.Pack(),
@@ -127,6 +91,7 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 				return KeyRange{
 					Base:     packed,
 					RangeEnd: tuple.PrefixSuccessor(packed),
+					Prefix:   true,
 				}, nil
 			} else {
 				// continue for loop (skipping code below)
@@ -139,7 +104,7 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 
 		// every other condition is terminal, so check there's no more conditions
 		if idx+1 != len(q) {
-			return KeyRange{}, fmt.Errorf("cannot use '%s' on field '%s' because you have constraints on fields that appear later in the key", cond.Op.String(), field)
+			return KeyRange{}, ErrIndexMiss
 		}
 
 		// pack key (and a copy with the last element removed)
@@ -153,9 +118,11 @@ func NewKeyRange(c *Codec, q queryparse.Query) (r KeyRange, err error) {
 			if !canPrefixLookup(avroType) {
 				return KeyRange{}, fmt.Errorf("cannot use '_prefix' on field '%s' because it only works on string and byte types", field)
 			}
+			base := tuple.TruncateBytesTypeForPrefixSuccessor(packed)
 			return KeyRange{
-				Base:     packed,
-				RangeEnd: tuple.BytesTypePrefixSuccessor(packed),
+				Base:     base,
+				RangeEnd: tuple.PrefixSuccessor(base),
+				Prefix:   true,
 			}, nil
 		case queryparse.ConditionOpGt:
 			return KeyRange{
