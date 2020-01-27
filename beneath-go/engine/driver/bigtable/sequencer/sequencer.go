@@ -204,6 +204,8 @@ func (s Sequencer) GetState(ctx context.Context, key string) (State, error) {
 // compactKey reads and compacts the sequence for key.
 // If dry == true, the compacted state is reported, but not persisted.
 func (s Sequencer) compactKey(ctx context.Context, key string, dry bool) (State, error) {
+	// TODO: Prevent duplicate work on very high-throughput with a lock by key (and skip if locked)?
+
 	// prep res
 	state := State{}
 
