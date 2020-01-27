@@ -1,0 +1,56 @@
+package bigtable
+
+import (
+	"bytes"
+	"encoding/binary"
+	"time"
+
+	"github.com/beneath-core/beneath-go/core/timeutil"
+	"github.com/beneath-core/beneath-go/engine/driver"
+)
+
+// returns true if data in stream expires; returns false if data should be persisted forever
+func streamExpires(s driver.Stream) bool {
+	return s.GetRetention() != time.Duration(0)
+}
+
+// unsafely casts []byte to a string (saving memory)
+// do not mutate input after calling
+func byteSliceToString(bs []byte) string {
+	// TODO: optimize using unsafe
+	return string(bs)
+}
+
+// unsafely casts string to []byte (saving memory)
+// do not mutate output
+func stringToByteSlice(s string) []byte {
+	// TODO: optimize using unsafe
+	return []byte(s)
+}
+
+// encodes an int for storage in bigtable
+func intToBytes(x int64) []byte {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.BigEndian, x)
+	if err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
+}
+
+// decodes an int encoded with intToBytes
+func bytesToInt(b []byte) int64 {
+	return int64(binary.BigEndian.Uint64(b))
+}
+
+// encodes a time for storage in bigtable
+func timeToBytesMs(t time.Time) []byte {
+	ms := timeutil.UnixMilli(t)
+	return intToBytes(ms)
+}
+
+// decodes a time encoded with timeToBytesMs
+func bytesToTimeMs(b []byte) time.Time {
+	ms := bytesToInt(b)
+	return timeutil.FromUnixMilli(ms)
+}
