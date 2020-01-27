@@ -54,3 +54,20 @@ func bytesToTimeMs(b []byte) time.Time {
 	ms := bytesToInt(b)
 	return timeutil.FromUnixMilli(ms)
 }
+
+// splitCommonPrefix returns the common prefix of a and b, as well as the respective remainders
+func splitCommonPrefix(a []byte, b []byte) (prefix []byte, aa []byte, bb []byte) {
+	n := len(a)
+	if len(b) < n {
+		n = len(b)
+	}
+
+	var i int
+	for i = 0; i < n; i++ {
+		if a[i] != b[i] {
+			break
+		}
+	}
+
+	return a[:i], a[i:], b[i:]
+}
