@@ -24,7 +24,7 @@ func init() {
 // organizations will be assessed usage and corresponding overage fees for the previous month
 // organizations will be charged seats for the upcoming month
 func (t *RunBillingTask) Run(ctx context.Context) error {
-	organizations := entity.FindActiveOrganizations(ctx)
+	organizations := entity.FindAllOrganizations(ctx)
 	timestamp := time.Now()
 
 	for _, o := range organizations {

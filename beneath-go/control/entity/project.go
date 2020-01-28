@@ -23,6 +23,7 @@ type Project struct {
 	Description    string    `validate:"omitempty,lte=255"`
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`
 	Public         bool      `sql:",notnull,default:true"`
+	Locked         bool      `sql:",notnull,default:false"`
 	OrganizationID uuid.UUID `sql:",notnull,type:uuid"`
 	Organization   *Organization
 	CreatedOn      time.Time `sql:",default:now()"`
@@ -88,6 +89,16 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 		return nil
 	}
 	return project
+}
+
+// FindOrganizationProjects returns all projects owned by an organization
+func FindOrganizationProjects(ctx context.Context, organizationID uuid.UUID) []*Project {
+	var projects []*Project
+	err := db.DB.ModelContext(ctx, &projects).Where("project.organization_id = ?", organizationID).Select()
+	if err != nil {
+		panic(err)
+	}
+	return projects
 }
 
 // CreateWithUser creates a project and makes user a member
@@ -179,7 +190,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		p.UpdatedOn = time.Now()
 		_, err = db.DB.WithContext(ctx).Model(p).
-			Column("display_name", "public", "site", "description", "photo_url").
+			Column("display_name", "public", "site", "description", "photo_url", "updated_on").
 			WherePK().
 			Update()
 		if err != nil {
@@ -194,6 +205,22 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 
 		return nil
 	})
+}
+
+// SetLock sets a project's "locked" status
+func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
+	p.Locked = isLocked
+	p.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, p).
+		Column("locked", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete safely deletes the project (fails if the project still has content)

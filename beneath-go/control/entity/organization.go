@@ -8,6 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -16,7 +17,6 @@ type Organization struct {
 	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
 	Personal       bool      `sql:",notnull"`
-	Active         bool      `sql:",notnull"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
@@ -69,11 +69,10 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	return organization
 }
 
-// FindActiveOrganizations returns all active organizations
-func FindActiveOrganizations(ctx context.Context) []*Organization {
+// FindAllOrganizations returns all active organizations
+func FindAllOrganizations(ctx context.Context) []*Organization {
 	var organizations []*Organization
 	err := db.DB.ModelContext(ctx, &organizations).
-		Where("active = true").
 		Column("organization.*").
 		Select()
 	if err != nil {
@@ -88,33 +87,21 @@ func (o *Organization) UpdatePersonalStatus(ctx context.Context, personal bool) 
 	org := &Organization{
 		OrganizationID: o.OrganizationID,
 		Personal:       personal,
+		UpdatedOn:      time.Now(),
 	}
 
 	_, err := db.DB.ModelContext(ctx, org).
-		Column("personal").
+		Column("personal", "updated_on").
 		WherePK().
 		Update()
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// UpdateActiveStatus updates an organization's "active" status
-func (o *Organization) UpdateActiveStatus(ctx context.Context, active bool) error {
-	org := &Organization{
-		OrganizationID: o.OrganizationID,
-		Active:         active,
-	}
-
-	_, err := db.DB.ModelContext(ctx, org).
-		Column("active").
-		WherePK().
-		Update()
-	if err != nil {
-		return err
-	}
+	// TODO: if upgrading to a non-personal plan, trigger an email to the user:
+	// -- if prevBillingPlan.Personal && !newBillingPlan.Personal, need to prompt the user to
+	// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
+	// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
 
 	return nil
 }
@@ -220,6 +207,24 @@ func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, r
 	}
 
 	return user, err
+}
+
+// Delete deletes the organization
+// this function will fail if there are still users remaining in the organization
+func (o *Organization) Delete(ctx context.Context) error {
+	// TODO: handle outstanding Services. currently, all the organization's services will be deleted.
+	// create a Service.ChangeOrganizationID(ctx, orgID) function that allows the user (with the correct before&after organization view permissions) to change a Service's OrganizationID
+	// before a user calls "JoinOrganization", need to prompt the user to migrate all services the new organization
+	for _, service := range o.Services {
+		log.S.Infof("the deletion of organization %s is leading to the deletion of service %s", o.Name, service.Name)
+	}
+
+	err := db.DB.WithContext(ctx).Delete(o)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FindOrganizationPermissions retrieves all users' permissions for a given organization

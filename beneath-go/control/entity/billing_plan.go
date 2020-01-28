@@ -18,12 +18,12 @@ type BillingPlan struct {
 	Currency               Currency        `sql:",notnull"`
 	Period                 timeutil.Period `sql:",notnull"`
 	SeatPriceCents         int32           `sql:",notnull"`
-	SeatReadQuota          int64           `sql:",notnull"`
-	SeatWriteQuota         int64           `sql:",notnull"`
-	BaseReadQuota          int64           `sql:",notnull"`
-	BaseWriteQuota         int64           `sql:",notnull"`
-	ReadOveragePriceCents  int32           `sql:",notnull"`
-	WriteOveragePriceCents int32           `sql:",notnull"`
+	SeatReadQuota          int64           `sql:",notnull"` // bytes
+	SeatWriteQuota         int64           `sql:",notnull"` // bytes
+	BaseReadQuota          int64           `sql:",notnull"` // bytes
+	BaseWriteQuota         int64           `sql:",notnull"` // bytes
+	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
+	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
 	Personal               bool            `sql:",notnull"` // probably want to rename to "MultipleUsers" and flip the sign
 	PrivateProjects        bool            `sql:",notnull"`
 }

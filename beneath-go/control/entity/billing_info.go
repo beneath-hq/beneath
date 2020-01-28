@@ -10,7 +10,9 @@ import (
 
 // BillingInfo encapsulates an organization's billing information
 type BillingInfo struct {
-	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	BillingInfoID  uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	OrganizationID uuid.UUID `sql:"on_delete:CASCADE,notnull,type:uuid"`
+	Organization   *Organization
 	BillingPlanID  uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan    *BillingPlan
 	PaymentsDriver PaymentsDriver // StripeCustomerID is currently the only thing that goes in the payload
@@ -18,8 +20,6 @@ type BillingInfo struct {
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
-	Services       []*Service
-	Users          []*User
 }
 
 // FindBillingInfo finds an organization's billing info by organizationID
@@ -27,21 +27,26 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	billingInfo := &BillingInfo{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, billingInfo).WherePK().Column("billing_info.*", "BillingPlan", "Services", "Users").Select()
+	err := db.DB.ModelContext(ctx, billingInfo).
+		Where("billing_info.organization_id = ?", organizationID).
+		Column("billing_info.*").
+		Relation("Organization.Users").
+		Relation("BillingPlan").
+		Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
 	return billingInfo
 }
 
-// UpdateBillingInfo creates or updates an organization's billing info
+// UpdateBillingInfo updates an organization's billing info
 func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*BillingInfo, error) {
-	prevBillingInfo := FindBillingInfo(ctx, organizationID)
-	if prevBillingInfo == nil {
+	bi := FindBillingInfo(ctx, organizationID)
+	if bi == nil {
 		panic("could not get existing billing info")
 	}
-	prevBillingPlan := prevBillingInfo.BillingPlan
-	users := prevBillingInfo.Users
+	prevBillingPlan := bi.BillingPlan
+	users := bi.Organization.Users
 
 	newBillingPlan := FindBillingPlan(ctx, billingPlanID)
 	if newBillingPlan == nil {
@@ -88,46 +93,35 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 			panic("could not get organization")
 		}
 
-		if newBillingPlan.Personal {
-			err = organization.UpdatePersonalStatus(ctx, true)
-			if err != nil {
-				panic("Error updating organization")
-			}
+		err = organization.UpdatePersonalStatus(ctx, newBillingPlan.Personal)
+		if err != nil {
+			return nil, err
 		}
 
-		// TODO: if upgrading to a non-personal plan, trigger an email to the user:
-		// -- if prevBillingPlan.Personal && !newBillingPlan.Personal, need to prompt the user to
-		// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
-		// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
-		// Q: should this code go inside the organization.UpdatePersonal function?
-
-		// TODO: if downgrading from private projects, lock down organization's outstanding private projects
-		// if !newBillingPlan.PrivateProjects && prevBillingPlan.PrivateProjects {
-		// 	// option1: lock projects so that they can't be viewed (e.g. create a new column Project.Locked)
-		// 	// option2: clear existing project permissions, and ensure they can't be added back
-		// }
+		// if downgrading from private projects, lock down organization's outstanding private projects
+		if !newBillingPlan.PrivateProjects && prevBillingPlan.PrivateProjects {
+			projects := FindOrganizationProjects(ctx, organizationID)
+			for _, p := range projects {
+				if !p.Public {
+					err = p.SetLock(ctx, true)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
 	}
 
-	bi := &BillingInfo{
-		OrganizationID: organizationID,
-		BillingPlanID:  billingPlanID,
-		PaymentsDriver: paymentsDriver,
-		DriverPayload:  driverPayload,
-	}
+	bi.OrganizationID = organizationID
+	bi.BillingPlanID = billingPlanID
+	bi.PaymentsDriver = paymentsDriver
+	bi.DriverPayload = driverPayload
 
-	// validate
-	err := GetValidator().Struct(bi)
+	// upsert
+	_, err := db.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
 	if err != nil {
 		return nil, err
 	}
-
-	// insert
-	_, err = db.DB.ModelContext(ctx, bi).OnConflict("(organization_id) DO UPDATE").Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	// Q: do I need to fetch bi so that the joined tables are attached?
 
 	return bi, nil
 }

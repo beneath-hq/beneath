@@ -50,13 +50,14 @@ const (
 	maxCardRetries = 4
 )
 
-type configStripe struct {
-	StripeSecret string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
+type configSpecification struct {
+	StripeSecret      string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
+	FreeBillingPlanID string `envconfig:"PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
 }
 
 // New initializes a StripeCard object
 func New() StripeCard {
-	var config configStripe
+	var config configSpecification
 	core.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
 
@@ -75,28 +76,32 @@ func (c *StripeCard) GetHTTPHandlers() map[string]httputil.AppHandler {
 func handleGenerateSetupIntent(w http.ResponseWriter, req *http.Request) error {
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
-		return httputil.NewError(400, "couldn't get organizationID from the request")
+		return httputil.NewError(400, "Unable to get organizationID from the request")
 	}
 
 	organization := entity.FindOrganization(req.Context(), organizationID)
 	if organization == nil {
-		return httputil.NewError(400, "organization not found")
+		return httputil.NewError(400, "Organization not found")
 	}
 
 	billingPlanID, err := uuid.FromString(req.URL.Query().Get("billingPlanID"))
 	if err != nil {
-		return httputil.NewError(400, "couldn't get billingPlanID from the request")
+		return httputil.NewError(400, "Unable to get billingPlanID from the request")
 	}
 
 	billingPlan := entity.FindBillingPlan(req.Context(), billingPlanID)
 	if billingPlan == nil {
-		return httputil.NewError(400, "billing plan not found")
+		return httputil.NewError(400, "Billing plan not found")
+	}
+
+	if !billingPlan.Personal { // checks for enterprise plans
+		return httputil.NewError(403, "Signing up for Enterprise billing plans requires contacting Beneath")
 	}
 
 	secret := middleware.GetSecret(req.Context())
 	perms := secret.OrganizationPermissions(req.Context(), organizationID)
 	if !perms.Admin {
-		return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
+		return httputil.NewError(403, fmt.Sprintf("You are not allowed to perform admin functions in organization %s", organizationID.String()))
 	}
 
 	setupIntent := stripeutil.GenerateSetupIntent(organizationID, billingPlanID)
@@ -177,9 +182,8 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 
 		_, err = entity.UpdateBillingInfo(req.Context(), organization.OrganizationID, billingPlan.BillingPlanID, entity.StripeCardDriver, driverPayload)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.S.Errorf("Error updating Billing Info: %v\\n", err)
-			return err
+			log.S.Errorf("Error updating billing info: %v\\n", err)
+			return httputil.NewError(500, "error updating billing info: %v\\n", err)
 		}
 
 	case "invoice.payment_failed":
@@ -193,8 +197,11 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
+			var config configSpecification
+			core.LoadConfig("beneath", &config)
+
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			freeBillingPlanID := uuid.FromStringOrNil(entity.FreeBillingPlanID)
+			freeBillingPlanID := uuid.FromStringOrNil(config.FreeBillingPlanID)
 
 			driverPayload := make(map[string]interface{})
 			driverPayload["customer_id"] = invoice.Customer.ID
@@ -206,9 +213,6 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 				return err
 			}
 		}
-
-	// case "invoice.payment_succeeded":
-	// TODO: if wire payment, trigger an email to customer "thank you for your payment" (if Stripe doesn't do this automatically -- might be able to set up in the dashboard)
 
 	// using this as a hack for stripe wire failures for one-off invoices
 	// TODO: waiting on stripe to fix their bug; this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
@@ -254,7 +258,7 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 	if user == nil {
 		return httputil.NewError(400, "user not found")
 	}
-	organizationID := *user.OrganizationID
+	organizationID := user.OrganizationID
 
 	perms := secret.OrganizationPermissions(req.Context(), organizationID)
 	if !perms.Admin {

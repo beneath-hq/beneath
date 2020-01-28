@@ -12,6 +12,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
@@ -29,7 +30,7 @@ type User struct {
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
-	OrganizationID *uuid.UUID `sql:",type:uuid"`
+	OrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
 	Projects       []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
 	Secrets        []*UserSecret
@@ -43,15 +44,13 @@ var (
 )
 
 const (
-	// DefaultUserReadQuota is the Free plan's read quota for user keys
-	DefaultUserReadQuota = 100000000 // unit: bytes
-
-	// DefaultUserWriteQuota is the Free plan's write quota for user keys
-	DefaultUserWriteQuota = 100000000 // unit: bytes
-
 	usernameMinLength = 3
 	usernameMaxLength = 50
 )
+
+type configSpecification struct {
+	FreeBillingPlanID string `envconfig:"PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
+}
 
 // configure constants and validator
 func init() {
@@ -131,6 +130,14 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		}
 	}
 
+	var config configSpecification
+	core.LoadConfig("beneath", &config)
+
+	freeBillingPlan := FindBillingPlan(ctx, uuid.FromStringOrNil(config.FreeBillingPlanID))
+	if freeBillingPlan == nil {
+		panic("unable to find Free billing plan")
+	}
+
 	// set user fields
 	if githubID != "" {
 		user.GithubID = githubID
@@ -148,10 +155,10 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		user.PhotoURL = photoURL
 	}
 	if user.ReadQuota == 0 {
-		user.ReadQuota = DefaultUserReadQuota
+		user.ReadQuota = freeBillingPlan.SeatReadQuota
 	}
 	if user.WriteQuota == 0 {
-		user.WriteQuota = DefaultUserWriteQuota
+		user.WriteQuota = freeBillingPlan.SeatWriteQuota
 	}
 
 	// set username
@@ -216,7 +223,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		}
 
 		// update user.OrganizationID
-		user.OrganizationID = &org.OrganizationID
+		user.OrganizationID = org.OrganizationID
 		err = tx.Update(user)
 		if err != nil {
 			return nil, err
@@ -279,16 +286,18 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (*User, error) {
 	bi := FindBillingInfo(ctx, organizationID)
 	if bi == nil {
-		panic("could not find billing info for the new organization")
+		panic("could not find billing info for the organization-to-join")
 	}
 
 	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
+	err := commitCurrentUsageToNextBill(ctx, u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return nil, err
 	}
 
-	u.OrganizationID = &organizationID
+	prevOrganizationID := u.OrganizationID
+
+	u.OrganizationID = organizationID
 	u.ReadQuota = bi.BillingPlan.SeatReadQuota
 	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
 	u.UpdatedOn = time.Now()
@@ -301,10 +310,37 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 		return nil, err
 	}
 
+	// after updating the organization_id, the new Organization table is not immediately available on the user object
+	// so we need to refetch the user in order to get the new Organization details
+	user := FindUser(ctx, u.UserID)
+	if user == nil {
+		panic("unable to get updated user")
+	}
+
+	// if there are no more users remaining in the previous organization, trigger bill and delete organization
+	prevOrg := FindOrganization(ctx, prevOrganizationID)
+	if prevOrg == nil {
+		panic("could not find previous organization")
+	}
+
+	// if len(prevOrg.Users) == 0 {
+	// trigger bill
+	// err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{
+	// 	OrganizationID: prevOrg.OrganizationID,
+	// 	Timestamp:      time.Now(), // TODO: might want to (or have to) "pretend" that we're at the beginning of the next period
+	// })
+	// if err != nil {
+	// 	log.S.Errorw("Error creating task", err)
+	// }
+
+	// // delete org
+	// prevOrg.Delete(ctx)
+	// }
+
 	// commit usage credit to the new organization's bill for the user's current month's usage
 	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, u.Username, true)
 	if err != nil {
-		return nil, err
+		panic("unable to commit usage credit to bill")
 	}
 
 	// add prorated seat to the new organization's next month's bill
@@ -313,23 +349,24 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 		panic("unable to commit prorated seat to bill")
 	}
 
-	// after updating the organization_id, the new Organization table is not immediately available on the user object
-	// so we need to refetch the user in order to get the new Organization details
-	user := FindUser(ctx, u.UserID)
-	if user == nil {
-		panic("unable to get updated user")
-	}
-
 	return user, nil
 }
 
 // Delete removes the user from the database
 func (u *User) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, *u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
+	err := commitCurrentUsageToNextBill(ctx, u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return err
 	}
-	return db.DB.WithContext(ctx).Delete(u)
+
+	err = db.DB.WithContext(ctx).Delete(u)
+	if err != nil {
+		return err
+	}
+
+	// TODO: if user was last one in organization, trigger bill, then delete organization
+
+	return nil
 }
 
 // UpdateDescription updates user's name and/or bio

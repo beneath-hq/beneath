@@ -32,11 +32,6 @@ func init() {
 
 // Run triggers the task
 func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
-	organization := entity.FindOrganization(ctx, t.OrganizationID)
-	if organization == nil {
-		panic("organization not found")
-	}
-
 	billingInfo := entity.FindBillingInfo(ctx, t.OrganizationID)
 	if billingInfo == nil {
 		panic("organization's billing info not found")
@@ -46,7 +41,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	usageBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, false)
 
 	// add "seat" line items
-	err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Users, seatBillTimes)
+	err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Organization.Users, seatBillTimes)
 	if err != nil {
 		return err
 	}
@@ -54,7 +49,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	// add "usage" line items for users
 	var userIDs []uuid.UUID
 	var usernames []string
-	for _, user := range billingInfo.Users {
+	for _, user := range billingInfo.Organization.Users {
 		userIDs = append(userIDs, user.UserID)
 		usernames = append(usernames, user.Username)
 	}
@@ -66,7 +61,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	// add "usage" line items for services
 	var serviceIDs []uuid.UUID
 	var servicenames []string
-	for _, service := range billingInfo.Services {
+	for _, service := range billingInfo.Organization.Services {
 		serviceIDs = append(serviceIDs, service.ServiceID)
 		servicenames = append(servicenames, service.Name)
 	}
@@ -76,23 +71,15 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	}
 
 	// if applicable, add "read overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, organization.Name, usageBillTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.ReadProduct, billingInfo.Organization.Name, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add "write overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, organization.Name, usageBillTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, entity.WriteProduct, billingInfo.Organization.Name, usageBillTimes)
 	if err != nil {
 		return err
-	}
-
-	// set organization to inactive if there are no more users
-	if len(organization.Users) == 0 {
-		err = organization.UpdateActiveStatus(ctx, false)
-		if err != nil {
-			return err
-		}
 	}
 
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{

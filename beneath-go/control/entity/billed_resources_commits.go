@@ -82,17 +82,18 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 		return err
 	}
 
-	readQuantity := int64(0)
-	writeQuantity := int64(0)
-	if credit {
-		readQuantity = -1 * monthlyMetrics[0].ReadBytes
-		writeQuantity = -1 * monthlyMetrics[0].WriteBytes
-	} else {
-		readQuantity = monthlyMetrics[0].ReadBytes
-		writeQuantity = monthlyMetrics[0].WriteBytes
-	}
-
 	if len(monthlyMetrics) == 1 {
+		readQuantity := int64(0)
+		writeQuantity := int64(0)
+
+		if credit {
+			readQuantity = -1 * monthlyMetrics[0].ReadBytes
+			writeQuantity = -1 * monthlyMetrics[0].WriteBytes
+		} else {
+			readQuantity = monthlyMetrics[0].ReadBytes
+			writeQuantity = monthlyMetrics[0].WriteBytes
+		}
+
 		// add reads
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  organizationID,

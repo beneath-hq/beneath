@@ -38,7 +38,6 @@ func init() {
 		_, err = db.Exec(`
 			ALTER TABLE organizations
 			ADD personal bool NOT NULL default FALSE;
-			ADD active bool NOT NULL default TRUE;
 		`)
 		if err != nil {
 			return err
@@ -48,6 +47,14 @@ func init() {
 		_, err = db.Exec(`
 			ALTER TABLE users
 			RENAME COLUMN main_organization_id TO organization_id;
+		`)
+		if err != nil {
+			return err
+		}
+
+		// Project.Locked
+		_, err = db.Exec(`
+			ALTER TABLE projects ADD locked bool NOT NULL default FALSE;
 		`)
 		if err != nil {
 			return err
@@ -77,7 +84,6 @@ func init() {
 		// Organization.Personal, Organization.BillingPlanID, Organization.StripeCustomerID, Organization.PaymentMethod
 		_, err = db.Exec(`
 			ALTER TABLE organizations DROP personal;
-			ALTER TABLE organizations DROP active;
 		`)
 		if err != nil {
 			return err
@@ -87,6 +93,14 @@ func init() {
 		_, err = db.Exec(`
 			ALTER TABLE users
 			RENAME COLUMN organization_id TO main_organization_id;
+		`)
+		if err != nil {
+			return err
+		}
+
+		// Project.Locked
+		_, err = db.Exec(`
+			ALTER TABLE projects DROP locked
 		`)
 		if err != nil {
 			return err

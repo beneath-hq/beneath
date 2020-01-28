@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -13,6 +14,10 @@ import (
 
 // Anarchism implements beneath.PaymentsDriver
 type Anarchism struct{}
+
+type configSpecification struct {
+	PaymentsAdminSecret string `envconfig:"PAYMENTS_ADMIN_SECRET" required:"true"`
+}
 
 // New initializes a Anarchism object
 func New() Anarchism {
@@ -28,8 +33,11 @@ func (a *Anarchism) GetHTTPHandlers() map[string]httputil.AppHandler {
 
 // update a customer's billing info
 // this does NOT get called when a customer initially signs up, since we place them on the Anarchy plan in the ...control/entity/user/CreateOrUpdateUser fxn
-// we will call this manually when users downgrade to the Free plan
+// this gets called when users downgrade to the Free plan
 func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
+	var config configSpecification
+	core.LoadConfig("beneath", &config)
+
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
 		return httputil.NewError(400, "couldn't get organizationID from the request")
@@ -50,33 +58,32 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 		return httputil.NewError(400, "billing plan not found")
 	}
 
-	secret := middleware.GetSecret(req.Context())
-	perms := secret.OrganizationPermissions(req.Context(), organizationID)
-	if !perms.Admin {
-		return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
-	}
-
 	billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
 	if billingInfo == nil {
-		return httputil.NewError(400, "billingInfo not found")
+		return httputil.NewError(400, "billing info not found")
+	}
+
+	secret := middleware.GetSecret(req.Context())
+
+	// enterprise plans require a Beneath Payments Admin to cancel the plan
+	// non-enterprise plans require organization admin permissions to cancel the plan
+	if !billingInfo.BillingPlan.Personal { // checks for enterprise plans
+		if secret.GetSecretID().String() != config.PaymentsAdminSecret {
+			return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to cancel"))
+		}
+	} else {
+		perms := secret.OrganizationPermissions(req.Context(), organizationID)
+		if !perms.Admin {
+			return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
+		}
 	}
 
 	driverPayload := billingInfo.DriverPayload // this ensures we retain the customer's Stripe customerID in the event a customer goes from paying->free->paying
 
 	_, err = entity.UpdateBillingInfo(req.Context(), organization.OrganizationID, billingPlan.BillingPlanID, entity.AnarchismDriver, driverPayload)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.S.Errorf("Error updating Billing Info: %v\\n", err)
-		return err
-	}
-
-	if billingPlan.Personal {
-		err = organization.UpdatePersonalStatus(req.Context(), true)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.S.Errorf("Error updating organization: %v\\n", err)
-			return err
-		}
+		log.S.Errorf("Error updating billing info: %v\\n", err)
+		return httputil.NewError(500, "error updating billing info: %v\\n", err)
 	}
 
 	return nil

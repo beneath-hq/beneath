@@ -19,13 +19,14 @@ import (
 // StripeWire implements beneath.PaymentsDriver
 type StripeWire struct{}
 
-type configStripe struct {
-	StripeSecret string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
+type configSpecification struct {
+	StripeSecret        string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
+	PaymentsAdminSecret string `envconfig:"PAYMENTS_ADMIN_SECRET" required:"true"`
 }
 
 // New initializes a StripeWire object
 func New() StripeWire {
-	var config configStripe
+	var config configSpecification
 	core.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
 
@@ -43,6 +44,9 @@ func (w *StripeWire) GetHTTPHandlers() map[string]httputil.AppHandler {
 
 // create/update a customer's billing info and Stripe registration
 func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
+	var config configSpecification
+	core.LoadConfig("beneath", &config)
+
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
 		return httputil.NewError(400, "couldn't get organizationID from the request")
@@ -68,11 +72,10 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 		return httputil.NewError(400, "couldn't get emailAddress from the request")
 	}
 
-	// Q: who should be calling the function? customer from front-end? us from an admin panel?
+	// Beneath will call the function from an admin panel (after a customer discussion)
 	secret := middleware.GetSecret(req.Context())
-	perms := secret.OrganizationPermissions(req.Context(), organizationID)
-	if !perms.Admin {
-		return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
+	if secret.GetSecretID().String() != config.PaymentsAdminSecret {
+		return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to activate"))
 	}
 
 	// Our requests to Stripe differ whether or not the customer is already registered in Stripe
@@ -91,9 +94,8 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 
 	_, err = entity.UpdateBillingInfo(req.Context(), organization.OrganizationID, billingPlan.BillingPlanID, entity.StripeWireDriver, driverPayload)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.S.Errorf("Error updating Billing Info: %v\\n", err)
-		return err
+		log.S.Errorf("Error updating billing info: %v\\n", err)
+		return httputil.NewError(500, "error updating billing info: %v\\n", err)
 	}
 
 	return nil

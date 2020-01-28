@@ -29,7 +29,7 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 	}
 
 	billedResources := entity.FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
-	if billedResources == nil {
+	if billedResources == nil && len(billingInfo.Organization.Users) > 0 {
 		panic("didn't find any billed resources")
 	}
 
