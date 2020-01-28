@@ -20,6 +20,8 @@ func TestKeyRange1(t *testing.T) {
 	r, err := NewKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
+	assert.False(t, r.IsPrefix())
+	assert.True(t, r.IsSingle())
 	assert.True(t, r.Contains(tuple.Tuple{"abc"}.Pack()))
 	assert.False(t, r.Contains(tuple.Tuple{"abcd"}.Pack()))
 }
@@ -35,6 +37,7 @@ func TestKeyRange2(t *testing.T) {
 	r, err := NewKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
+	assert.False(t, r.IsPrefix())
 	assert.False(t, r.Contains(tuple.Tuple{0}.Pack()))
 	assert.False(t, r.Contains(tuple.Tuple{100}.Pack()))
 	assert.True(t, r.Contains(tuple.Tuple{101}.Pack()))
@@ -52,6 +55,7 @@ func TestKeyRange3(t *testing.T) {
 	r, err := NewKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
+	assert.False(t, r.IsPrefix())
 	assert.False(t, r.Contains(tuple.Tuple{100}.Pack()))
 	assert.True(t, r.Contains(tuple.Tuple{150}.Pack()))
 	assert.True(t, r.Contains(tuple.Tuple{200}.Pack()))
@@ -70,6 +74,7 @@ func TestKeyRange4(t *testing.T) {
 	r, err := NewKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
+	assert.True(t, r.IsPrefix())
 	assert.False(t, r.Contains(tuple.Tuple{100, "aab"}.Pack()))
 	assert.True(t, r.Contains(tuple.Tuple{100, "ab"}.Pack()))
 	assert.True(t, r.Contains(tuple.Tuple{100, "abz"}.Pack()))

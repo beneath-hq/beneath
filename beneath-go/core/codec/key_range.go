@@ -18,28 +18,53 @@ var (
 type KeyRange struct {
 	Base     []byte
 	RangeEnd []byte
-	Unique   bool
-	Prefix   bool
+	Single   bool
 }
 
 // IsNil returns true if the key range is uninitialized
 func (r KeyRange) IsNil() bool {
-	return r.Base == nil && r.RangeEnd == nil && !r.Unique
+	return r.Base == nil && r.RangeEnd == nil && !r.Single
+}
+
+// IsSingle is true iff key range identifies one exact key
+func (r KeyRange) IsSingle() bool {
+	return r.Single
+}
+
+// IsPrefix is true iff key range identifies a prefix of keys
+func (r KeyRange) IsPrefix() bool {
+	if r.Single {
+		return false
+	}
+	if len(r.RangeEnd) > len(r.Base) {
+		return false
+	}
+	// approach: moving backwards, if Base is 0xFF, then RangeEnd should be empty, else RangeEnd should be Base[idx]+1
+	for i := len(r.Base) - 1; i >= 0; i-- {
+		if r.Base[i] == 0xFF {
+			if len(r.RangeEnd)-1 >= i {
+				return false
+			}
+			continue
+		}
+		if len(r.RangeEnd)-1 == i {
+			if r.Base[i]+1 == r.RangeEnd[i] {
+				return true
+			}
+		}
+		return false
+	}
+	return false
 }
 
 // Contains is true if the KeyRange contains a key
 func (r KeyRange) Contains(key []byte) bool {
-	if r.Unique {
+	if r.Single {
 		return bytes.Equal(r.Base, key)
 	} else if r.RangeEnd == nil {
 		return bytes.Compare(key, r.Base) >= 0
 	}
 	return bytes.Compare(key, r.Base) >= 0 && bytes.Compare(key, r.RangeEnd) < 0
-}
-
-// CheckUnique is true iff key range identifies one exact key
-func (r KeyRange) CheckUnique() bool {
-	return r.Unique
 }
 
 // NewKeyRange builds a new key range based on a where query and a key codec
@@ -83,7 +108,7 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 				// we've added _eq constraints for every key field, so we're done and it's a unique key
 				return KeyRange{
 					Base:   key.Pack(),
-					Unique: true,
+					Single: true,
 				}, nil
 			} else if idx+1 == len(q) {
 				// we've added _eq constraints for some subset of leftmost key fields, so we're done and it's a prefix key
@@ -91,7 +116,6 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 				return KeyRange{
 					Base:     packed,
 					RangeEnd: tuple.PrefixSuccessor(packed),
-					Prefix:   true,
 				}, nil
 			} else {
 				// continue for loop (skipping code below)
@@ -122,7 +146,6 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 			return KeyRange{
 				Base:     base,
 				RangeEnd: tuple.PrefixSuccessor(base),
-				Prefix:   true,
 			}, nil
 		case queryparse.ConditionOpGt:
 			return KeyRange{

@@ -14,6 +14,11 @@ type ConditionOp int
 // Query represents a parsed query
 type Query map[string]*Condition
 
+// IsEmpty returns true if the query filters no keys
+func (q Query) IsEmpty() bool {
+	return len(q) == 0
+}
+
 // Condition represents a condition on a single field in a query
 type Condition struct {
 	Op   ConditionOp
