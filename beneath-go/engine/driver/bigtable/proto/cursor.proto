@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package proto;
+
+message CursorSet {
+	repeated Cursor cursors = 1;
+}
+
+message Cursor {
+	enum Type {
+    LOG = 0;
+		INDEX = 1;
+  }	
+	Type type = 1;
+	int64 log_start = 10;
+	int64 log_end = 11;
+	int32 index_id = 20;
+	bytes index_key = 21;
+	bytes index_start = 22;
+	bytes index_end = 23;
+}

@@ -16,24 +16,3 @@ message WriteRecordsReport {
   int64 earliest_timestamp = 2;
   int32 bytes_total = 3;
 }
-
-message CursorSet {
-	repeated Cursor cursors = 1;
-}
-
-message Cursor {
-	oneof cursor {
-		OffsetCursor offset = 1;
-		BytesCursor bytes = 2;
-	};
-}
-
-message OffsetCursor {
-	int64 start = 1;
-	int64 end = 2;
-}
-
-message BytesCursor {
-	bytes start = 1;
-	bytes end = 2;
-}

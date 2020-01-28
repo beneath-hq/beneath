@@ -12,8 +12,8 @@ import (
 	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/engine/driver"
+	pb "github.com/beneath-core/beneath-go/engine/driver/bigtable/proto"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable/sequencer"
-	pb "github.com/beneath-core/beneath-go/proto"
 )
 
 const (
