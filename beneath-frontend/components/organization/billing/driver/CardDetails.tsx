@@ -6,7 +6,6 @@ import _ from 'lodash'
 import { useToken } from '../../../../hooks/useToken'
 import connection from "../../../../lib/connection"
 import Loading from "../../../Loading"
-import CurrentBillingPlan from '../CurrentBillingPlan'
 import CardFormStripe from './CardFormStripe'
 
 const useStyles = makeStyles((theme) => ({
@@ -14,6 +13,9 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
+  loading: {
+    marginTop: theme.spacing(5)
+  }
 }))
 
 interface CardPaymentDetails {
@@ -42,18 +44,16 @@ interface CardPaymentDetails {
 }
 
 interface Props {
-  description: string | null
-  billing_period: string
   billing_plan_id: string
 }
 
-const CardDetails: FC<Props> = ({ description, billing_period, billing_plan_id }) => {
+const CardDetails: FC<Props> = ({ billing_plan_id }) => {
   const [paymentDetails, setPaymentDetails] = React.useState<CardPaymentDetails | null>(null)
   const [error, setError] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [editCard, setEditCard] = React.useState(false)
   const token = useToken()
-  const classes = useStyles()  
+  const classes = useStyles()
 
   // get current payment details 
   useEffect(() => {
@@ -87,16 +87,31 @@ const CardDetails: FC<Props> = ({ description, billing_period, billing_plan_id }
   }, [])
 
   if (loading) {
-    return <Loading justify="center" />
+    return (
+      <React.Fragment>
+        <Grid item container direction="column" xs={12} sm={6}>
+          <Grid item container alignItems="center" justify="space-between">
+            <Grid item>
+              <Typography variant="h6" className={classes.title}>
+                Payment details
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid item container className={classes.loading}>
+            <Loading justify="center" />
+          </Grid>
+        </Grid>
+      </React.Fragment>
+    )
   }
 
   if (error) {
     return <p>{error}</p>
   }
 
-  // TODO: this is getting hit "before flicker"
+  // TODO: analyze why this is getting hit / whether it leads to a flicker
   if (paymentDetails == null) {
-    console.log("got here")
+    console.log("paymentDetails is null")
     return <p></p>
   }
 
@@ -122,37 +137,34 @@ const CardDetails: FC<Props> = ({ description, billing_period, billing_plan_id }
   // current card details
   const CardBillingDetails = (
     <React.Fragment>
-      <Grid container spacing={2}>
-        <CurrentBillingPlan description={description} billing_period={billing_period} />
-        <Grid item container direction="column" xs={12} sm={6}>
-          <Grid container alignItems="center" justify="space-between">
-            <Grid item>
-              <Typography variant="h6" className={classes.title}>
-                Payment details
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Button
-                color="primary"
-                onClick={() => {
-                  setEditCard(true)
-                }}>
-                Edit
-              </Button>
-            </Grid>
+      <Grid item container direction="column" xs={12} sm={6}>
+        <Grid container alignItems="center" justify="space-between">
+          <Grid item>
+            <Typography variant="h6" className={classes.title}>
+              Payment details
+            </Typography>
           </Grid>
-          <Grid container>
-            {payments.map(payments => (
-              <React.Fragment key={payments.name}>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{payments.name}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{payments.detail}</Typography>
-                </Grid>
-              </React.Fragment>
-            ))}
+          <Grid item>
+            <Button
+              color="primary"
+              onClick={() => {
+                setEditCard(true)
+              }}>
+              Edit
+            </Button>
           </Grid>
+        </Grid>
+        <Grid container>
+          {payments.map(payments => (
+            <React.Fragment key={payments.name}>
+              <Grid item xs={6}>
+                <Typography gutterBottom>{payments.name}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography gutterBottom>{payments.detail}</Typography>
+              </Grid>
+            </React.Fragment>
+          ))}
         </Grid>
       </Grid>
     </React.Fragment>

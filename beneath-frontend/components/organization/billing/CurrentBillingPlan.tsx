@@ -1,6 +1,5 @@
 import React, { FC, useEffect } from 'react'
-import { Button, Typography } from "@material-ui/core"
-import Grid from '@material-ui/core/Grid'
+import { Button, Typography, Grid, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core/styles"
 import { useToken } from '../../../hooks/useToken'
 import connection from "../../../lib/connection"
@@ -12,6 +11,9 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
+  buttons: {
+    marginTop: theme.spacing(3),
+  },
 }))
 
 interface Props {
@@ -20,7 +22,9 @@ interface Props {
 }
 
 const CurrentBillingPlan: FC<Props> = ({ description, billing_period }) => {
-  const [cancelPlan, setCancelPlan] = React.useState(false)
+  const [openDialogue, setOpenDialogue] = React.useState(false)
+  const [cancel, setCancel] = React.useState(false)
+  const [error, setError] = React.useState("")
   const classes = useStyles()
   const token = useToken()
 
@@ -35,31 +39,34 @@ const CurrentBillingPlan: FC<Props> = ({ description, billing_period }) => {
   ]
 
   useEffect(() => {
-    const cancelProPlan = (async () => {
-      if (cancelPlan) {
+    const cancelPlan = (async () => {
+      if (cancel) {
         const headers = { authorization: `Bearer ${token}` }
         let url = `${connection.API_URL}/billing/anarchism/initialize_customer`
         url += `?organizationID=${me.organization.organizationID}`
         url += `&billingPlanID=${billing.FREE_BILLING_PLAN_ID}`
         
         const res = await fetch(url, { headers })
-        const json: any = await res.json()
-        console.log(json)
-        // if error, display error
-        // if (!res.ok) {
-        //   setValues({ ...values, ...{ error: json.error } })
-        //   return
-        // }
+        // check error
+        if (!res.ok) {
+          const json: any = await res.json()
+          setError(json.error)
+        }
 
-        // if success, say we're sorry to see you go, and provide link to refresh billing tab
+        // on success, reload the page
+        if (res.ok) {
+          window.location.reload(true)
+        }
       }
     })
     
-    cancelProPlan()
+    cancelPlan()
 
-  }, [cancelPlan])
+  }, [cancel])
 
-
+  if (error) {
+    return <p>{error}</p>
+  }
 
   return (
     <React.Fragment>
@@ -89,17 +96,38 @@ const CurrentBillingPlan: FC<Props> = ({ description, billing_period }) => {
             </Button>
           </Grid> */}
         {description == billing.PRO_BILLING_PLAN_DESCRIPTION && (
-        <Grid item>
-          <Button
-            variant="outlined"
-            color="secondary"
-            size="small"
-            onClick={() => {
-              // TODO: put this in a dialogue: are you sure?
-              setCancelPlan(true)
-            }}>
-            Cancel plan
-          </Button>
+        <Grid item container className={classes.buttons}>
+          <Grid item>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              onClick={() => {
+                setOpenDialogue(true)
+              }}>
+              Cancel plan
+            </Button>
+            <Dialog open={openDialogue}>
+              <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    Upon canceling your plan, your usage will be assessed and you will be charged for any applicable overage fees for the current billing period. 
+                  </DialogContentText>
+                </DialogContent>
+              <DialogActions>
+                <Button color="primary" autoFocus onClick={() => {
+                  setOpenDialogue(false)
+                }}>
+                  No, go back
+                </Button>
+                <Button color="primary" autoFocus onClick={() => {
+                  setCancel(true)
+                }}>
+                  Yes, I'm sure
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Grid>
         </Grid>)}
       </Grid>
     </React.Fragment>

@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
+import { Grid } from "@material-ui/core"
 import { useQuery } from "@apollo/react-hooks";
-import Loading from "../../Loading";
 import BillingPlanMenu from "./BillingPlanMenu"
+import CurrentBillingPlan from './CurrentBillingPlan'
 import CardDetails from "./driver/CardDetails"
 import WireDetails from "./driver/WireDetails"
 import AnarchismDetails from "./driver/AnarchismDetails"
@@ -22,10 +23,6 @@ const ViewBilling: FC = () => {
       organizationID: me.organization.organizationID,
     },
   });
-  
-  if (loading) {
-    return <Loading justify="center" />;
-  }
 
   if (error || !data) {
     return <p>Error: {JSON.stringify(error)}</p>;
@@ -43,20 +40,24 @@ const ViewBilling: FC = () => {
       return <p>Error: your organization has an unknown billing plan period</p>;
     }
 
-    // route to correct payment driver
+    // get payment details for correct driver
+    var paymentDetails
     if (data.billingInfo.paymentsDriver === billing.STRIPECARD_DRIVER) {
-      return <CardDetails billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} billing_plan_id={data.billingInfo.billingPlan.billingPlanID}/>
+      paymentDetails = <CardDetails billing_plan_id={data.billingInfo.billingPlan.billingPlanID} />
+    } else if (data.billingInfo.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
+      paymentDetails = <WireDetails />
+    } else if (data.billingInfo.paymentsDriver === billing.ANARCHISM_DRIVER) {
+      paymentDetails = <AnarchismDetails />
+    } else {
+      paymentDetails = <p> Error: payments driver is not supported. </p>
     }
 
-    if (data.billingInfo.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
-      return <WireDetails billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
-    }
-
-    if (data.billingInfo.paymentsDriver === billing.ANARCHISM_DRIVER) {
-      return <AnarchismDetails billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
-    }
-
-    return <p> Error: payments driver is not supported. </p>
+    return (
+      <Grid container spacing={2}>
+        <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+        {paymentDetails}
+      </Grid>
+    )
   }
 };
 

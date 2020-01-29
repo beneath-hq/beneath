@@ -23,10 +23,10 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const BillingPlanMenu: FC = () => {
-  const classes = useStyles();
   const [buyNow, setBuyNow] = React.useState(false)
   const [billingPlanToBuy, setBillingPlanToBuy] = React.useState("")
   const [contactUs, setContactUs] = React.useState(false)
+  const classes = useStyles()
 
   if (buyNow) {
     return <CardFormStripe billing_plan_id={billingPlanToBuy}/>

@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import CurrentBillingPlan from '../CurrentBillingPlan'
 import { makeStyles } from "@material-ui/core/styles"
 import Grid from '@material-ui/core/Grid'
 import { Typography } from "@material-ui/core"
@@ -11,24 +10,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-interface Props {
-  description: string | null
-  billing_period: string
-}
-
-const WireDetails: FC<Props> = ({ description, billing_period }) => {
+const WireDetails: FC = () => {
   const classes = useStyles()
 
   return (
     <React.Fragment>
-      <Grid container spacing={2}>
-        <CurrentBillingPlan description={description} billing_period={billing_period} />
-        <Grid item container direction="column" xs={12} sm={6}>
-          <Typography variant="h6" className={classes.title}>
-            Payment details
-          </Typography>
-          <Typography gutterBottom>You're paying by wire</Typography>
-        </Grid>
+      <Grid item container direction="column" xs={12} sm={6}>
+        <Typography variant="h6" className={classes.title}>
+          Payment details
+        </Typography>
+        <Typography gutterBottom>You're paying by wire. Please make your payment within 15 days of receiving your invoice.</Typography>
       </Grid>
     </React.Fragment>
   )
