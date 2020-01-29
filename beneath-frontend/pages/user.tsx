@@ -21,7 +21,7 @@ import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
 import ViewServices from "../components/organization/ViewServices";
-import ViewBilling from "../components/organization/ViewBilling";
+import ViewBilling from "../components/organization/billing/ViewBilling";
 
 const UserPage = () => {
   const me = useMe();

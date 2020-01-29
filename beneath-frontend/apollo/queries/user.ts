@@ -66,6 +66,7 @@ export const QUERY_ME = gql`
         }
       }
       organization {
+        organizationID
         name
         personal
       }      

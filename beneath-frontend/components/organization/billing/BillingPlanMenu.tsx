@@ -4,12 +4,9 @@ import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Box from '@material-ui/core/Box';
-import PaymentsByCard from "./PaymentsByCard"
-import { ReactStripeElements } from 'react-stripe-elements';
 import { makeStyles } from "@material-ui/core/styles"
-
-const PRO_BILLING_PLAN_DESCRIPTION = "Professional"
-const MONTHLY_BILLING_PLAN_STRING = "Monthly"
+import billing from "../../../lib/billing"
+import CardFormStripe from "./driver/CardFormStripe"
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -25,18 +22,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-interface Props {
-  stripe: ReactStripeElements.StripeProps | undefined
-  organization_id: any
-}
-
-const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
+const BillingPlanMenu: FC = () => {
   const classes = useStyles();
   const [buyNow, setBuyNow] = React.useState(false)
+  const [billingPlanToBuy, setBillingPlanToBuy] = React.useState("")
   const [contactUs, setContactUs] = React.useState(false)
 
   if (buyNow) {
-    return <PaymentsByCard stripe={stripe} organization_id={organization_id} billing_period={MONTHLY_BILLING_PLAN_STRING} description={PRO_BILLING_PLAN_DESCRIPTION} />
+    return <CardFormStripe billing_plan_id={billingPlanToBuy}/>
   }
 
   if (contactUs) {
@@ -90,6 +83,7 @@ const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
                   color="primary"
                   className={classes.button}
                   onClick={() => {
+                    setBillingPlanToBuy(billing.PRO_MONTHLY_BILLING_PLAN_ID)
                     setBuyNow(true)
                   }}>
                   Buy Now
@@ -118,7 +112,7 @@ const BillingPlanMenu: FC<Props> = ({stripe, organization_id}) => {
                   </Grid>
                   <Grid item>
                     <Typography variant="body2">
-                      Pay by wire
+                      Option to pay by wire
                     </Typography>
                   </Grid>
                   <Grid item>

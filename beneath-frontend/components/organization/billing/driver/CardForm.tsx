@@ -1,25 +1,34 @@
 import React, { FC, useEffect } from 'react'
-import { CardElement } from 'react-stripe-elements'
-import Loading from "../Loading"
-import { TextField, Typography, Button } from "@material-ui/core"
+import { injectStripe, CardElement, ReactStripeElements } from 'react-stripe-elements'
+import { TextField, Typography, Button, Dialog, DialogActions, DialogContent, Grid } from "@material-ui/core"
 import { Autocomplete } from "@material-ui/lab"
 import { makeStyles } from "@material-ui/core/styles"
-import Grid from '@material-ui/core/Grid'
-import { useToken } from '../../hooks/useToken'
-import useMe from "../../hooks/useMe";
-import { ReactStripeElements } from 'react-stripe-elements'
-import connection from "../../lib/connection"
 import _ from 'lodash'
-import Dialog from '@material-ui/core/Dialog'
-import DialogActions from '@material-ui/core/DialogActions'
-import DialogContent from '@material-ui/core/DialogContent'
 
-const PRO_BILLING_PLAN_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+import { useToken } from '../../../../hooks/useToken'
+import useMe from "../../../../hooks/useMe";
+import connection from "../../../../lib/connection"
+import Loading from "../../../Loading"
+
+interface BillingParams {
+  billing_plan_id: string
+}
+
+class CardFormWrapper extends React.Component<ReactStripeElements.InjectedStripeProps & BillingParams, BillingParams> {
+  constructor(props: ReactStripeElements.InjectedStripeProps & BillingParams) {
+    super(props);
+    this.state = { billing_plan_id: props.billing_plan_id };
+  }
+
+  render() {
+    return <CardForm stripe={this.props.stripe} billing_plan_id={this.state.billing_plan_id} />
+  }
+}
+
+export default injectStripe(CardFormWrapper);
+
 
 const useStyles = makeStyles((theme) => ({
-  noDataCaption: {
-    color: theme.palette.text.secondary,
-  },
   title: {
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
@@ -44,31 +53,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-interface CardPaymentDetails {
-  data: {
-    organization_id: string,
-    card: {
-      Brand: string,
-      Last4: string,
-      ExpMonth: number,
-      ExpYear: number,
-    },
-    billing_details: {
-      Name: string,
-      Email: string,
-      Address: {
-        Line1: string,
-        Line2: string,
-        City: string,
-        State: string,
-        PostalCode: string,
-        Country: string,
-      }
-    }
-  },
-  error: string | undefined
-}
-
 interface PaymentMethodData {
   payment_method_data: {
     billing_details: {
@@ -87,7 +71,6 @@ interface PaymentMethodData {
 }
 
 interface CheckoutStateTypes {
-  isSubmittingInfo: boolean,
   city: string,
   country: string,
   line1: string,
@@ -97,9 +80,9 @@ interface CheckoutStateTypes {
   email: string,
   cardholder: string,
   cardDetailsFormSubmit: number,
+  error: string | undefined,
   stripeError: string | undefined,
-  paymentDetails: CardPaymentDetails | null,
-  stripeDialog: boolean,
+  cardDialog: boolean,
   loading: boolean,
   intentLoading: boolean,
   status: stripe.setupIntents.SetupIntentStatus | null,
@@ -107,14 +90,11 @@ interface CheckoutStateTypes {
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
-  organization_id: any
-  billing_period: any
-  description: any
+  billing_plan_id: string
 }
 
-const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, description }) => {
+const CardForm: FC<Props> = ({ stripe, billing_plan_id }) => {
   const [values, setValues] = React.useState<CheckoutStateTypes>({
-    isSubmittingInfo: false,
     city: "",
     country: "",
     line1: "",
@@ -124,9 +104,9 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     email: "",
     cardholder: "",
     cardDetailsFormSubmit: 0,
+    cardDialog: false,
+    error: "",
     stripeError: "",
-    paymentDetails: null,
-    stripeDialog: false,
     loading: false,
     intentLoading: false,
     status: null
@@ -134,8 +114,11 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   const token = useToken()
   const classes = useStyles()
 
-  // get me for email address
-  const me = useMe();
+  // get me for email address and organizationID
+  const me = useMe(); // Q: is this in apollo local state?
+  if (!me) {
+    return <p>Need to log in to proceed to payment</p>
+  }
 
   // Handle submission of Card Details Form
   const handleChange = (name: string) => (event: any) => {
@@ -151,13 +134,13 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   const handleCardDetailsFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
     ev.preventDefault()
-    setValues({ ...values, ...{ cardDetailsFormSubmit: values.cardDetailsFormSubmit + 1, stripeError: "", stripeDialog: true, intentLoading: true } })
+    setValues({ ...values, ...{ cardDetailsFormSubmit: values.cardDetailsFormSubmit + 1, stripeError: "", cardDialog: true, intentLoading: true } })
     return
   }
 
   const handleDialogClose = () => {
-    if (values.stripeError) {
-      setValues({ ...values, ...{ stripeDialog: false } })
+    if (values.stripeError || values.error) {
+      setValues({ ...values, ...{ cardDialog: false } })
     }
     if (values.status !== null && values.status === "succeeded") {
       // possibly wait a few seconds
@@ -323,7 +306,8 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
             <Button
               variant="contained"
               onClick={() => {
-                setValues({ ...values, ...{ isSubmittingInfo: false } })
+                // refresh page, which should bring user back to either the BillingPlanMenu or the CardDetails
+                window.location.reload(true)
               }}>
               Back
             </Button>
@@ -334,12 +318,16 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
         </Grid>
       </form>
       <Dialog
-        open={values.stripeDialog}
+        open={values.cardDialog}
         onClose={handleDialogClose}
         aria-describedby="alert-dialog-description"
       >
         <DialogContent>
           {values.intentLoading && (<Loading />)}
+          {values.error && (
+            <Typography variant="body1" color="error">
+              {values.error}
+            </Typography>)}
           {values.stripeError && (
             <Typography variant="body1" color="error">
               {values.stripeError}
@@ -347,7 +335,7 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
           {values.status !== null && values.status === "succeeded" && (
             <React.Fragment>
               <Typography variant="h5" gutterBottom>
-                Thank you for your order.
+                Thank you for your order!
               </Typography>
               <Typography variant="subtitle1">
                 We will send your bill to your email on file at the beginning of each billing cycle.
@@ -370,11 +358,6 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
   )
 
   // When card form is submitted, initiate setupIntent
-  const headers = { authorization: `Bearer ${token}` }
-  let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
-  url += `?organizationID=${organization_id}`
-  url += `&billingPlanID=${PRO_BILLING_PLAN_ID}`
-
   useEffect(() => {
     let isMounted = true
 
@@ -386,15 +369,21 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
         setValues({ ...values, ...{ stripeError: "Missing country", intentLoading: false } })
         return
       }
-      
+
+      const headers = { authorization: `Bearer ${token}` }
+      let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
+      url += `?organizationID=${me.organization.organizationID}`
+      url += `&billingPlanID=${billing_plan_id}`
       const res = await fetch(url, { headers })
 
       if (isMounted && me) {
-        if (!res.ok) {
-          setValues({ ...values, ...{ error: res.statusText } })
-        }
         const intent: any = await res.json()
-
+        
+        if (!res.ok) {
+          setValues({ ...values, ...{ error: intent.error, intentLoading: false } })
+          return
+        }
+        
         const customerData: PaymentMethodData = {
           payment_method_data: {
             billing_details: {
@@ -430,132 +419,13 @@ const PaymentsByCard: FC<Props> = ({ stripe, organization_id, billing_period, de
     return () => {
       isMounted = false
     }
-  }, [values.cardDetailsFormSubmit])
-
-  // for paying customers, get current payment details 
-  useEffect(() => {
-    let isMounted = true
-    
-    const fetchData = async () => {
-      setValues({ ...values, ...{ loading: true } })
-      let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`
-      const res = await fetch(payment_details_url, { headers })
-
-      if (isMounted) {
-        if (!res.ok) {
-          setValues({ ...values, ...{ error: res.statusText } })
-        }
-
-        const paymentDetails: CardPaymentDetails = await res.json()
-        setValues({ ...values, ...{ paymentDetails: paymentDetails, loading: false } })
-      }
-    }
-
-    fetchData()
-
-    // avoid memory leak when component unmounts
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  }, [values.cardDetailsFormSubmit]) // Q: check to see if this useEffect is getting triggered on load
 
   if (values.loading) {
     return <Loading justify="center" />
   }
 
-  // TODO: this is getting hit "before flicker"
-  if (values.paymentDetails == null) {
-    return <p></p>
-  }
-
-  const address = [values.paymentDetails.data.billing_details.Address.Line1,
-    values.paymentDetails.data.billing_details.Address.Line2,
-    values.paymentDetails.data.billing_details.Address.City,
-    values.paymentDetails.data.billing_details.Address.State,
-    values.paymentDetails.data.billing_details.Address.PostalCode,
-    values.paymentDetails.data.billing_details.Address.Country].filter(Boolean) // omit Line2 if it's empty
-  const payments = [
-    { name: 'Card type', detail: _.startCase(_.toLower(values.paymentDetails.data.card.Brand))},
-    { name: 'Card number', detail: 'xxxx-xxxx-xxxx-' + values.paymentDetails.data.card.Last4 },
-    { name: 'Expiration', detail: values.paymentDetails.data.card.ExpMonth.toString() + '/' + values.paymentDetails.data.card.ExpYear.toString().substring(2,4) },
-    { name: 'Card holder', detail: values.paymentDetails.data.billing_details.Name },
-    { name: 'Billing address', detail: address.join(', ')}
-  ]
-  const planDetails = [
-    { name: 'Plan name', detail: description },
-    { name: 'Billing cycle', detail: billing_period},
-  ]
-
-  // current card details
-  const CardBillingDetails = (
-    <React.Fragment>
-      <Grid container spacing={2}>
-        <Grid item container direction="column" xs={12} sm={6}>
-          <Typography variant="h6" className={classes.title}>
-            Billing plan
-            </Typography>
-          <Grid container>
-            {planDetails.map(planDetails => (
-              <React.Fragment key={planDetails.name}>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{planDetails.name}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{planDetails.detail}</Typography>
-                </Grid>
-              </React.Fragment>
-            ))}
-          </Grid>
-          {/* <Grid item>
-            <Button
-              color="primary"
-              onClick={() => {
-                // TODO: fetch about.beneath.com/contact/demo
-              }}>
-              Contact Us To Upgrade to An Enterprise Plan
-            </Button>
-          </Grid> */}
-        </Grid>
-        <Grid item container direction="column" xs={12} sm={6}>
-          <Grid container alignItems="center" justify="space-between">
-            <Grid item>
-              <Typography variant="h6" className={classes.title}>
-                Payment details
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Button
-                color="primary"
-                onClick={() => {
-                  setValues({ ...values, ...{ isSubmittingInfo: true } })
-                }}>
-                Edit
-              </Button>
-            </Grid>
-          </Grid>
-          <Grid container>
-            {payments.map(payments => (
-              <React.Fragment key={payments.name}>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{payments.name}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{payments.detail}</Typography>
-                </Grid>
-              </React.Fragment>
-            ))}
-          </Grid>
-        </Grid>
-      </Grid>
-    </React.Fragment>
-  )
-
-  // either show input form or show current billing details
-  if (values.isSubmittingInfo === true) {
-    return CardBillingDetailsForm
-  } else {
-    return CardBillingDetails
-  }
+  return CardBillingDetailsForm
 }
 
 const countries = [
@@ -809,5 +679,3 @@ const countries = [
   { code: 'ZM', label: 'Zambia' },
   { code: 'ZW', label: 'Zimbabwe' }
 ]
-
-export default PaymentsByCard
