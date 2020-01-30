@@ -1,15 +1,16 @@
 import React, { FC } from 'react';
 import { Grid } from "@material-ui/core"
 import { useQuery } from "@apollo/react-hooks";
+
+import useMe from "../../../hooks/useMe";
+import billing from "../../../lib/billing"
+import { QUERY_BILLING_INFO } from '../../../apollo/queries/bililnginfo';
+import { BillingInfo, BillingInfoVariables } from '../../../apollo/types/BillingInfo';
 import BillingPlanMenu from "./BillingPlanMenu"
 import CurrentBillingPlan from './CurrentBillingPlan'
+import AnarchismDetails from "./driver/AnarchismDetails"
 import CardDetails from "./driver/CardDetails"
 import WireDetails from "./driver/WireDetails"
-import AnarchismDetails from "./driver/AnarchismDetails"
-import { BillingInfo, BillingInfoVariables } from '../../../apollo/types/BillingInfo';
-import { QUERY_BILLING_INFO } from '../../../apollo/queries/bililnginfo';
-import billing from "../../../lib/billing"
-import useMe from "../../../hooks/useMe";
 
 const ViewBilling: FC = () => {  
   const me = useMe(); // Q: is this in apollo local state?

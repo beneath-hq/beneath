@@ -1,12 +1,13 @@
 import React, { FC } from "react";
-import useMe from "../../hooks/useMe";
 import { useQuery, useMutation } from "@apollo/react-hooks"
+import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography, TextField, Button, Grid } from "@material-ui/core";
+
+import useMe from "../../hooks/useMe";
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
 import { UsersOrganizationPermissions, UsersOrganizationPermissionsVariables } from "../../apollo/types/UsersOrganizationPermissions"
 import { InviteUserToOrganization, InviteUserToOrganizationVariables } from "../../apollo/types/InviteUserToOrganization";
 import { QUERY_USERS_ORGANIZATION_PERMISSIONS, ADD_USER_TO_ORGANIZATION } from "../../apollo/queries/organization"
 
-import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography, TextField, Button, Grid } from "@material-ui/core";
 import NextMuiLinkList from "../NextMuiLinkList";
 import Avatar from "../Avatar";
 import Loading from "../Loading"
