@@ -7,6 +7,7 @@ import { useToken } from '../../../../hooks/useToken'
 import connection from "../../../../lib/connection"
 import Loading from "../../../Loading"
 import CardForm from './CardForm'
+import CurrentBillingPlan from '../CurrentBillingPlan'
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -45,9 +46,11 @@ interface CardPaymentDetails {
 
 interface Props {
   billing_plan_id: string
+  billingPeriod: string
+  description: string | null
 }
 
-const CardDetails: FC<Props> = ({ billing_plan_id }) => {
+const CardDetails: FC<Props> = ({ billing_plan_id, billingPeriod, description }) => {
   const [paymentDetails, setPaymentDetails] = React.useState<CardPaymentDetails | null>(null)
   const [error, setError] = React.useState("")
   const [loading, setLoading] = React.useState(false)
@@ -134,43 +137,43 @@ const CardDetails: FC<Props> = ({ billing_plan_id }) => {
     { name: 'Billing address', detail: address.join(', ')}
   ]
 
-  // current card details
-  const CardBillingDetails = (
+  return (
     <React.Fragment>
-      <Grid item container direction="column" xs={12} sm={6}>
-        <Grid container alignItems="center" justify="space-between">
-          <Grid item>
-            <Typography variant="h6" className={classes.title}>
-              Payment details
+      <Grid container spacing={2}>
+        <CurrentBillingPlan billing_period={billingPeriod} description={description} />
+        <Grid item container direction="column" xs={12} sm={6}>
+          <Grid container alignItems="center" justify="space-between">
+            <Grid item>
+              <Typography variant="h6" className={classes.title}>
+                Payment details
             </Typography>
-          </Grid>
-          <Grid item>
-            <Button
-              color="primary"
-              onClick={() => {
-                setEditCard(true)
-              }}>
-              Edit
+            </Grid>
+            <Grid item>
+              <Button
+                color="primary"
+                onClick={() => {
+                  setEditCard(true)
+                }}>
+                Edit
             </Button>
+            </Grid>
           </Grid>
-        </Grid>
-        <Grid container>
-          {payments.map(payments => (
-            <React.Fragment key={payments.name}>
-              <Grid item xs={6}>
-                <Typography gutterBottom>{payments.name}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography gutterBottom>{payments.detail}</Typography>
-              </Grid>
-            </React.Fragment>
-          ))}
+          <Grid container>
+            {payments.map(payments => (
+              <React.Fragment key={payments.name}>
+                <Grid item xs={6}>
+                  <Typography gutterBottom>{payments.name}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography gutterBottom>{payments.detail}</Typography>
+                </Grid>
+              </React.Fragment>
+            ))}
+          </Grid>
         </Grid>
       </Grid>
     </React.Fragment>
   )
-
-  return CardBillingDetails
 }
 
 export default CardDetails

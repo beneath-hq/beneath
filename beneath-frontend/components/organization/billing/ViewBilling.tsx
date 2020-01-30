@@ -41,23 +41,33 @@ const ViewBilling: FC = () => {
     }
 
     // get payment details for correct driver
-    var paymentDetails
     if (data.billingInfo.paymentsDriver === billing.STRIPECARD_DRIVER) {
-      paymentDetails = <CardDetails billing_plan_id={data.billingInfo.billingPlan.billingPlanID} />
+      return (
+        // CurrentBillingPlan is bundled inside CardDetails so that CurrentBillingPlan doesn't persist when editing someone edits their card details
+        <CardDetails billing_plan_id={data.billingInfo.billingPlan.billingPlanID} billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
+      )
     } else if (data.billingInfo.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
-      paymentDetails = <WireDetails />
+      return (
+        <Grid container spacing={2}>
+          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <WireDetails />
+        </Grid>
+      )
     } else if (data.billingInfo.paymentsDriver === billing.ANARCHISM_DRIVER) {
-      paymentDetails = <AnarchismDetails />
+      return (
+        <Grid container spacing={2}>
+          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <AnarchismDetails />
+        </Grid>
+      )
     } else {
-      paymentDetails = <p> Error: payments driver is not supported. </p>
+      return (
+        <Grid container spacing={2}>
+          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <p> Error: payments driver is not supported. </p>
+        </Grid>
+      )
     }
-
-    return (
-      <Grid container spacing={2}>
-        <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
-        {paymentDetails}
-      </Grid>
-    )
   }
 };
 
