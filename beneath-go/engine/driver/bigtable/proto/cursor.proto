@@ -15,7 +15,6 @@ message Cursor {
 	int64 log_start = 10;
 	int64 log_end = 11;
 	int32 index_id = 20;
-	bytes index_key = 21;
-	bytes index_start = 22;
-	bytes index_end = 23;
+	bytes index_start = 21;
+	bytes index_end = 22;
 }

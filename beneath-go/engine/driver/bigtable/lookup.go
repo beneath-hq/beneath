@@ -3,6 +3,7 @@ package bigtable
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,6 +19,16 @@ import (
 
 const (
 	maxPartitions = 32
+	maxCursors    = 32
+	maxLimit      = 1000
+)
+
+var (
+	// ErrCorruptCursor is returned from ReadCursor for cursors that have been altered
+	ErrCorruptCursor = errors.New("malformed or corrupted cursor")
+
+	// ErrInvalidLimit is returned from ReadCursor for limits outside allowed bounds
+	ErrInvalidLimit = errors.New("limit must be greater than 0 and lower than 1000")
 )
 
 // ParseQuery implements driver.LookupService
@@ -40,6 +51,7 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 		return nil, nil, err
 	}
 
+	// create cursors
 	if !compacted {
 		return b.createUncompactedCursors(state, partitions)
 	}
@@ -53,20 +65,61 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 	return b.createCompactedCursors(state, index, kr, partitions)
 }
 
+// creates replay and change cursors for an uncompacted (pure log) query
+func (b BigTable) createUncompactedCursors(state sequencer.State, partitions int) ([][]byte, [][]byte, error) {
+	// to get the modulo arithmetic to match, NextStable must be greater than the number of partitions
+	if state.NextStable < int64(partitions) {
+		partitions = 1
+	}
+
+	// create replay cursors
+	replays := make([][]byte, partitions)
+	for i := 0; i < partitions; i++ {
+		// compute log segment start and end
+		var start, end int64
+		start = int64(state.NextStable/int64(partitions)) * int64(i)
+		end = int64(state.NextStable/int64(partitions)) * int64(i+1)
+		if i+1 == partitions {
+			end = state.NextStable
+		}
+
+		// compile
+		cursor := &pb.Cursor{
+			Type:     pb.Cursor_LOG,
+			LogStart: start,
+			LogEnd:   end,
+		}
+		set, err := compileCursor(cursor)
+		if err != nil {
+			return nil, nil, err
+		}
+		replays[i] = set
+	}
+
+	// for now, just a single change cursor, starting at NextStable
+	cursor := &pb.Cursor{
+		Type:     pb.Cursor_LOG,
+		LogStart: state.NextStable,
+	}
+	set, err := compileCursor(cursor)
+	if err != nil {
+		return nil, nil, err
+	}
+	changes := [][]byte{set}
+
+	// done
+	return replays, changes, nil
+}
+
 // creates replay and change cursors for a compacted query
 func (b BigTable) createCompactedCursors(state sequencer.State, index codec.Index, kr codec.KeyRange, partitions int) ([][]byte, [][]byte, error) {
 	// create replay cursor
 	replay := &pb.Cursor{}
 	replay.Type = pb.Cursor_INDEX
-	replay.IndexId = int32(index.GetShortID())
 
-	// if unique, lookup on key, else range
-	if kr.IsSingle() {
-		replay.IndexKey = kr.Base
-	} else {
-		replay.IndexStart = kr.Base
-		replay.IndexEnd = kr.RangeEnd
-	}
+	replay.IndexId = int32(index.GetShortID())
+	replay.IndexStart = kr.Base
+	replay.IndexEnd = kr.RangeEnd
 
 	// create change cursor
 	changes := &pb.Cursor{}
@@ -75,7 +128,6 @@ func (b BigTable) createCompactedCursors(state sequencer.State, index codec.Inde
 
 	// copy filter info over
 	changes.IndexId = replay.IndexId
-	changes.IndexKey = replay.IndexKey
 	changes.IndexStart = replay.IndexStart
 	changes.IndexEnd = replay.IndexEnd
 
@@ -93,73 +145,158 @@ func (b BigTable) createCompactedCursors(state sequencer.State, index codec.Inde
 	return [][]byte{replay1}, [][]byte{changes1}, nil
 }
 
-func (b BigTable) createUncompactedCursors(state sequencer.State, partitions int) ([][]byte, [][]byte, error) {
-	// to get the modulo arithmetic to match, NextStable must be greater than the number of partitions
-	if state.NextStable < int64(partitions) {
-		partitions = 1
-	}
-
-	// create replay cursors
-	replays := make([][]byte, partitions)
-	for i := 0; i < partitions; i++ {
-		// configure
-		replay := &pb.Cursor{}
-		replay.Type = pb.Cursor_LOG
-		replay.LogStart = int64(state.NextStable/int64(partitions)) * int64(i)
-		if i+1 == partitions {
-			replay.LogEnd = state.NextStable
-		} else {
-			replay.LogEnd = int64(state.NextStable/int64(partitions)) * int64(i+1)
-		}
-
-		// compile
-		compiled, err := compileCursor(replay)
-		if err != nil {
-			return nil, nil, err
-		}
-		replays[i] = compiled
-	}
-
-	// for now, just a single change cursor, starting at NextStable
-	change := &pb.Cursor{}
-	change.Type = pb.Cursor_LOG
-	change.LogStart = state.NextStable
-	compiled, err := compileCursor(change)
-	if err != nil {
-		return nil, nil, err
-	}
-	changes := [][]byte{compiled}
-
-	// done
-	return replays, changes, nil
+func compileCursor(cursor *pb.Cursor) ([]byte, error) {
+	return compileCursorSet(&pb.CursorSet{
+		Cursors: []*pb.Cursor{cursor},
+	})
 }
 
-func compileCursor(cursor *pb.Cursor) ([]byte, error) {
-	compiled, err := proto.Marshal(cursor)
+func compileCursorSet(set *pb.CursorSet) ([]byte, error) {
+	compiled, err := proto.Marshal(set)
 	return compiled, err
 }
 
-func decompileCursor(bs []byte) (*pb.Cursor, error) {
-	cursor := &pb.Cursor{}
-	err := proto.Unmarshal(bs, cursor)
+func decompileCursorSet(bs []byte) (*pb.CursorSet, error) {
+	set := &pb.CursorSet{}
+	err := proto.Unmarshal(bs, set)
 	if err != nil {
 		return nil, err
 	}
-	return cursor, nil
+	return set, nil
 }
 
 // ReadCursor implements driver.LookupService
-func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, cursorRaw []byte, limit int) (driver.RecordsIterator, error) {
-	// parse cursor
-	_, err := decompileCursor(cursorRaw)
+func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, cursorSet []byte, limit int) (driver.RecordsIterator, error) {
+	// check limit
+	if limit == 0 || limit > maxLimit {
+		return nil, ErrInvalidLimit
+	}
+
+	// parse cursor set
+	set, err := decompileCursorSet(cursorSet)
 	if err != nil {
 		return nil, err
 	}
 
-	// create row set
-	// use lookupIndexedRecords or lookupLogRecords
+	// check lengths
+	if len(set.Cursors) == 0 {
+		return nil, ErrCorruptCursor
+	} else if len(set.Cursors) > maxCursors {
+		return nil, ErrCorruptCursor
+	}
 
-	panic("implement")
+	// check all same type
+	first := set.Cursors[0]
+	for _, cursor := range set.Cursors[1:] {
+		if cursor.Type != first.Type {
+			return nil, ErrCorruptCursor
+		}
+	}
+
+	// if index scan, check just one cursor
+	if first.Type == pb.Cursor_INDEX {
+		if len(set.Cursors) != 1 {
+			return nil, ErrCorruptCursor
+		}
+	}
+
+	// parse based on type
+	switch first.Type {
+	case pb.Cursor_LOG:
+		return b.readLogCursors(ctx, s, i, set, limit)
+	case pb.Cursor_INDEX:
+		return b.readIndexCursor(ctx, s, i, first, limit)
+	default:
+		return nil, ErrCorruptCursor
+	}
+}
+
+// recordsIterator implements driver.RecordsIterator
+type recordsIterator struct {
+	idx        int
+	records    []Record
+	nextCursor []byte
+}
+
+// Next implements driver.RecordsIterator
+func (i recordsIterator) Next() driver.Record {
+	if len(i.records) == i.idx {
+		return nil
+	}
+	r := i.records[i.idx]
+	i.idx++
+	return r
+}
+
+// NextCursor implements driver.RecordsIterator
+func (i recordsIterator) NextCursor() []byte {
+	return i.nextCursor
+}
+
+func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.StreamInstance, set *pb.CursorSet, limit int) (driver.RecordsIterator, error) {
+	// TODO
+
+	// for idx, cursor := range set.Cursors {
+	// 	practicalLimit := mathutil.MinInt64(int64(limit), cursor.LogEnd-cursor.LogStart)
+	// 	records, err := b.LoadLogRange(ctx, s, i, cursor.LogStart, cursor.LogEnd+1, int(practicalLimit))
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// }
+
+	// b.LoadLogRange(ctx, s, i, )
+
+	return nil, nil
+}
+
+func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver.StreamInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
+	// create key range from cursor
+	kr := codec.KeyRange{
+		Base:     cursor.IndexStart,
+		RangeEnd: cursor.IndexEnd,
+	}
+
+	// load from either primary or secondary index
+	var records []Record
+	var next codec.KeyRange
+	var err error
+	if cursor.IndexId == 0 {
+		// load from primary index
+		records, next, err = b.LoadPrimaryIndexRange(ctx, s, i, kr, limit)
+	} else {
+		// find secondary index
+		secondaryIndex := s.GetCodec().FindIndexByShortID(int(cursor.IndexId))
+		if secondaryIndex == nil {
+			return nil, ErrCorruptCursor
+		}
+
+		// load
+		records, next, err = b.LoadSecondaryIndexRange(ctx, s, i, secondaryIndex, kr, limit)
+	}
+
+	// check error
+	if err != nil {
+		return nil, err
+	}
+
+	// encode new cursor
+	var nextCursor []byte
+	if !next.IsNil() {
+		cursor.IndexStart = next.Base
+		cursor.IndexEnd = next.RangeEnd
+		compiled, err := compileCursor(cursor)
+		if err != nil {
+			return nil, err
+		}
+		nextCursor = compiled
+	}
+
+	// return iterator
+	return recordsIterator{
+		records:    records,
+		nextCursor: nextCursor,
+	}, nil
 }
 
 // WriteRecords implements driver.LookupService
@@ -175,11 +312,13 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	expires := streamExpires(s)
 	instanceID := i.GetStreamInstanceID()
 	processTime := time.Now()
+	normalizePrimary := codec.PrimaryIndex.GetNormalize()
+	primaryHash := makeIndexHash(instanceID, codec.PrimaryIndex.GetIndexID())
 
 	// get existing values (to delete secondary indexes)
-	var existingToReplace map[string]internalRecord
+	var existingToReplace map[string]Record
 	if len(codec.SecondaryIndexes) > 0 {
-		existing, err := b.lookupExistingRecords(ctx, s, i, records)
+		existing, err := b.LoadExistingRecords(ctx, s, i, records)
 		if err != nil {
 			return err
 		}
@@ -237,9 +376,8 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		}
 
 		// create primary key write
-		norm := codec.PrimaryIndex.GetNormalize()
-		writePrimaryMuts = append(writePrimaryMuts, makePrimaryIndexInsert(rowTime, norm, offset, record.GetAvro()))
-		writePrimaryKeys = append(writePrimaryKeys, makePrimaryIndexKey(instanceID, primaryKey))
+		writePrimaryMuts = append(writePrimaryMuts, makePrimaryIndexInsert(rowTime, normalizePrimary, offset, record.GetAvro()))
+		writePrimaryKeys = append(writePrimaryKeys, makeIndexKey(primaryHash, primaryKey))
 
 		// create secondary indexes
 		for _, secondaryIndex := range codec.SecondaryIndexes {
@@ -249,10 +387,13 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 				return err
 			}
 
+			// prep
+			normalizeSecondary := secondaryIndex.GetNormalize()
+			secondaryHash := makeIndexHash(instanceID, secondaryIndex.GetIndexID())
+
 			// add secondary index write
-			norm := secondaryIndex.GetNormalize()
-			writeSecondaryMuts = append(writeSecondaryMuts, makeSecondaryIndexInsert(rowTime, norm, offset, record.GetAvro()))
-			writeSecondaryKeys = append(writeSecondaryKeys, makeSecondaryIndexKey(instanceID, newSecondaryKey, primaryKey))
+			writeSecondaryMuts = append(writeSecondaryMuts, makeSecondaryIndexInsert(rowTime, normalizeSecondary, offset, record.GetAvro()))
+			writeSecondaryKeys = append(writeSecondaryKeys, makeIndexKey(secondaryHash, newSecondaryKey))
 
 			// if new secondary index key is different from the existing, delete the existing
 			if !existing.IsNil() {
@@ -264,8 +405,8 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 
 				// separately delete existing secondary index entry if the secondary index keys are different
 				if !bytes.Equal(newSecondaryKey, existingSecondaryKey) {
-					deleteSecondaryMuts = append(deleteSecondaryMuts, makeSecondaryIndexDelete(rowTime, norm))
-					deleteSecondaryKeys = append(deleteSecondaryKeys, makeSecondaryIndexKey(instanceID, existingSecondaryKey, primaryKey))
+					deleteSecondaryMuts = append(deleteSecondaryMuts, makeSecondaryIndexDelete(rowTime, normalizeSecondary))
+					deleteSecondaryKeys = append(deleteSecondaryKeys, makeIndexKey(secondaryHash, existingSecondaryKey))
 				}
 			}
 		}
@@ -315,182 +456,5 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		return err
 	}
 
-	return nil
-}
-
-func (b BigTable) lookupExistingRecords(ctx context.Context, s driver.Stream, i driver.StreamInstance, records []driver.Record) (map[string]internalRecord, error) {
-	// create internal records for lookup by primary key
-	codec := s.GetCodec()
-	var result map[string]internalRecord
-	for _, record := range records {
-		key, err := codec.MarshalKey(codec.PrimaryIndex, record.GetStructured())
-		if err != nil {
-			return nil, err
-		}
-		keyStr := byteSliceToString(key)
-		result[keyStr] = internalRecord{
-			PrimaryKey: key,
-		}
-	}
-
-	// execute load by primary keys
-	err := b.loadFromPrimaryKeys(ctx, s, i, result)
-	if err != nil {
-		return nil, err
-	}
-
-	// remove the ones not found
-	for key, val := range result {
-		// checking on Timestamp because we can rely on loadFromPrimaryKeys setting it
-		if val.Timestamp == 0 {
-			delete(result, key)
-		}
-	}
-
-	// done
-	return result, nil
-}
-
-func (b BigTable) loadFromOffsets(ctx context.Context, s driver.Stream, i driver.StreamInstance, records map[string]internalRecord) error {
-	// build rowset
-	idx := 0
-	rrl := make(bigtable.RowRangeList, len(records))
-	for _, record := range records {
-		rrl[idx] = bigtable.PrefixRange(makeLogKeyPrefix(i.GetStreamInstanceID(), record.Offset)) // can't rely on record.PrimaryKey being set
-		idx++
-	}
-
-	// read and update records
-	err := b.readLog(ctx, streamExpires(s), rrl, func(row bigtable.Row) bool {
-		// parse key
-		_, offset, primaryKey := parseLogKey(row.Key())
-		primaryKeyString := byteSliceToString(primaryKey)
-
-		// get record to update
-		record := records[primaryKeyString]
-		record.Offset = offset
-
-		// update record
-		for _, column := range row[logColumnFamilyName] {
-			if column.Column == logAvroColumnName {
-				record.AvroData = column.Value
-				record.Timestamp = column.Timestamp
-				break
-			}
-		}
-		records[primaryKeyString] = record
-
-		return true
-	})
-	if err != nil {
-		return err
-	}
-
-	// consolidate iteratively
-	return nil
-}
-
-func (b BigTable) loadFromPrimaryKeys(ctx context.Context, s driver.Stream, i driver.StreamInstance, records map[string]internalRecord) error {
-	// prep
-	normalized := s.GetCodec().PrimaryIndex.GetNormalize()
-
-	// build rowset
-	idx := 0
-	rl := make(bigtable.RowList, len(records))
-	for key := range records {
-		rl[idx] = makePrimaryIndexKey(i.GetStreamInstanceID(), []byte(key))
-		idx++
-	}
-
-	// read and consolidate
-	err := b.readIndexes(ctx, streamExpires(s), rl, func(row bigtable.Row) bool {
-		// parse key
-		_, primaryKey := parsePrimaryIndexKey(row.Key())
-		primaryKeyString := byteSliceToString(primaryKey)
-
-		// get record to update
-		record := records[primaryKeyString]
-
-		// update
-		var ts bigtable.Timestamp
-		if normalized {
-			// get offset
-			offsetCol := row[indexesColumnFamilyName][0]
-			if offsetCol.Column != indexesOffsetColumnName {
-				panic(fmt.Errorf("unexpected column in loadFromPrimaryKeys: %v", offsetCol))
-			}
-			ts = offsetCol.Timestamp
-			record.Offset = bytesToInt(offsetCol.Value)
-		} else {
-			// get avro
-			avroCol := row[indexesColumnFamilyName][0]
-			if avroCol.Column != indexesAvroColumnName {
-				panic(fmt.Errorf("unexpected column in loadFromPrimaryKeys: %v", avroCol))
-			}
-			ts = avroCol.Timestamp
-			record.AvroData = avroCol.Value
-		}
-
-		// check timestamp
-		if len(record.SecondaryKey) != 0 && record.Timestamp < ts {
-			// TODO
-			// secondary index miss
-		}
-
-		// set updated record
-		record.Timestamp = ts
-		records[primaryKeyString] = record
-		return true
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b BigTable) loadFromSecondaryKeys(ctx context.Context, s driver.Stream, i driver.StreamInstance, secondaryKeys [][]byte) (map[string]internalRecord, error) {
-	// build rowset
-	rrl := make(bigtable.RowRangeList, len(secondaryKeys))
-	for idx, secondaryKey := range secondaryKeys {
-		rrl[idx] = bigtable.PrefixRange(makeSecondaryIndexKeyPrefix(i.GetStreamInstanceID(), secondaryKey))
-	}
-
-	// read secondary keys into internalRecords (indexed by primary key)
-	var result map[string]internalRecord
-	err := b.readIndexes(ctx, streamExpires(s), rrl, func(row bigtable.Row) bool {
-		//
-
-		// parse key
-		_, secondaryKey, primaryKey := parseSecondaryIndexKey(row.Key())
-
-		// get column
-
-		offsetCol := row[indexesColumnFamilyName][0]
-		if offsetCol.Column != indexesOffsetColumnName {
-			panic(fmt.Errorf("unexpected column in loadFromSecondaryKeys: %v", offsetCol))
-		}
-
-		// store record
-		result[byteSliceToString(primaryKey)] = internalRecord{
-			Offset:       bytesToInt(offsetCol.Value),
-			PrimaryKey:   primaryKey,
-			SecondaryKey: secondaryKey,
-			Timestamp:    offsetCol.Timestamp,
-		}
-
-		return true
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func errorFromApplyBulkErrors(errs []error) error {
-	if len(errs) > 0 {
-		return fmt.Errorf("got %d errors in ApplyBulk; first: %v", len(errs), errs[0])
-	}
 	return nil
 }

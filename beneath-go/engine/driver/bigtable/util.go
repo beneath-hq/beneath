@@ -9,6 +9,10 @@ import (
 	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
+const (
+	int64ByteSize = 8
+)
+
 // returns true if data in stream expires; returns false if data should be persisted forever
 func streamExpires(s driver.Stream) bool {
 	return s.GetRetention() != time.Duration(0)
@@ -70,4 +74,9 @@ func splitCommonPrefix(a []byte, b []byte) (prefix []byte, aa []byte, bb []byte)
 	}
 
 	return a[:i], a[i:], b[i:]
+}
+
+func stripColumnFamily(ckey string, cf string) string {
+	// column keys returned by read are "cf:ckey", so we strip the "cf:"
+	return ckey[len(cf)+1:]
 }

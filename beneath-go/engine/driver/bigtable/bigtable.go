@@ -183,12 +183,12 @@ func (b BigTable) indexesTable(expires bool) *bigtable.Table {
 	return b.Indexes
 }
 
-func (b BigTable) readLog(ctx context.Context, expires bool, rs bigtable.RowSet, cb func(bigtable.Row) bool) error {
-	return b.logTable(expires).ReadRows(ctx, rs, cb, b.readFilter(expires))
+func (b BigTable) readLog(ctx context.Context, expires bool, rs bigtable.RowSet, limit int, cb func(bigtable.Row) bool) error {
+	return b.logTable(expires).ReadRows(ctx, rs, cb, b.readFilter(expires), bigtable.LimitRows(int64(limit)))
 }
 
-func (b BigTable) readIndexes(ctx context.Context, expires bool, rs bigtable.RowSet, cb func(bigtable.Row) bool) error {
-	return b.indexesTable(expires).ReadRows(ctx, rs, cb, b.readFilter(expires))
+func (b BigTable) readIndexes(ctx context.Context, expires bool, rs bigtable.RowSet, limit int, cb func(bigtable.Row) bool) error {
+	return b.indexesTable(expires).ReadRows(ctx, rs, cb, b.readFilter(expires), bigtable.LimitRows(int64(limit)))
 }
 
 func (b BigTable) readFilter(expires bool) bigtable.ReadOption {
