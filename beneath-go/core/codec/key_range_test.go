@@ -20,8 +20,7 @@ func TestKeyRange1(t *testing.T) {
 	r, err := NewKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
-	assert.False(t, r.IsPrefix())
-	assert.True(t, r.IsSingle())
+	assert.True(t, r.IsPrefix())
 	assert.True(t, r.Contains(tuple.Tuple{"abc"}.Pack()))
 	assert.False(t, r.Contains(tuple.Tuple{"abcd"}.Pack()))
 }
@@ -127,3 +126,23 @@ func TestKeyRange5(t *testing.T) {
 // 	base2 := kr.Base
 // 	assert.True(t, bytes.Compare(base1, base2) < 0)
 // }
+
+func TestKeyRange7(t *testing.T) {
+	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
+	assert.Nil(t, err)
+
+	index := testIndex{fields: []string{"a", "b"}}
+	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}, {"name": "b", "type": "long"}]}`, index, nil)
+	assert.Nil(t, err)
+
+	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	assert.Nil(t, err)
+
+	assert.False(t, r.IsPrefix())
+	assert.False(t, r.Contains(tuple.Tuple{100, 10}.Pack()))
+	assert.True(t, r.Contains(tuple.Tuple{150, 300}.Pack()))
+	assert.True(t, r.Contains(tuple.Tuple{200}.Pack()))
+	assert.True(t, r.Contains(tuple.Tuple{200, 300}.Pack()))
+	assert.False(t, r.Contains(tuple.Tuple{201}.Pack()))
+	assert.False(t, r.Contains(tuple.Tuple{90876543}.Pack()))
+}

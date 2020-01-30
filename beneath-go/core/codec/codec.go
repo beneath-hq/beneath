@@ -26,8 +26,9 @@ type Codec struct {
 	PrimaryIndex     Index
 	SecondaryIndexes []Index
 
-	avroCodec      *goavro.Codec
-	avroFieldTypes map[string]interface{}
+	avroCodec        *goavro.Codec
+	avroFieldTypes   map[string]interface{}
+	indexFieldsCache map[int][]string
 }
 
 // Index represents a set of fields to generate keys for
@@ -51,6 +52,7 @@ func New(avroSchema string, primaryIndex Index, secondaryIndexes []Index) (*Code
 	codec.AvroSchemaString = avroSchema
 	codec.PrimaryIndex = primaryIndex
 	codec.SecondaryIndexes = secondaryIndexes
+	codec.indexFieldsCache = make(map[int][]string)
 
 	// parse avro schema
 	err := json.Unmarshal([]byte(avroSchema), &codec.AvroSchema)
@@ -139,24 +141,79 @@ func (c *Codec) ConvertFromAvroNative(avroNative map[string]interface{}, convert
 	return res, nil
 }
 
-// MarshalKey produces a lexicographically sortable binary key for the index.
-// Index must be the PrimaryIndex or exist in SecondaryIndexes.
+// MarshalKey produces a lexicographically sortable, unique binary key for the index.
+// If the index is the PrimaryIndex, it's encoded outright.
+// If the index is a SecondaryIndex, the primary index key is appended to ensure uniqueness.
 func (c *Codec) MarshalKey(index Index, data map[string]interface{}) ([]byte, error) {
-	// prepare tuple
-	t := make(tuple.Tuple, len(index.GetFields()))
+	// prepare
+	fields := c.getIndexFields(index)
+	t := make(tuple.Tuple, len(fields))
 
-	// add value for every keyField, preserving their order
-	for idx, field := range index.GetFields() {
+	// add value for every field, preserving their order
+	for idx, field := range fields {
 		val := data[field]
 		if val == nil {
 			return nil, fmt.Errorf("Value for index field '%s' is nil", field)
 		}
-
 		t[idx] = val
 	}
 
 	// encode
 	return t.Pack(), nil
+}
+
+// UnmarshalKey decodes a key marshalled with MarshalKey.
+// If index is a secondary index, both secondary and primary fields are included in the result.
+func (c *Codec) UnmarshalKey(index Index, key []byte) (map[string]interface{}, error) {
+	fields := c.getIndexFields(index)
+
+	t, err := tuple.Unpack(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(t) != len(fields) {
+		return nil, fmt.Errorf("error in UnmarshalKey: values in key doesn't match number of fields expected for the index")
+	}
+
+	result := make(map[string]interface{}, len(t))
+	for i, val := range t {
+		result[fields[i]] = val
+	}
+
+	return result, nil
+}
+
+// secondary index keys are suffixed with the primary key fields, but excluding duplicate fields.
+// this function computes the de-duplicated list of fields for an index and memoizes the results
+func (c *Codec) getIndexFields(index Index) []string {
+	shortID := index.GetShortID()
+	primary := index.GetShortID() == 0
+
+	if primary {
+		return index.GetFields()
+	}
+
+	fields := c.indexFieldsCache[shortID]
+	if len(fields) == 0 {
+		fields = index.GetFields()
+		for _, primaryField := range c.PrimaryIndex.GetFields() {
+			add := true
+			for _, field := range fields {
+				if field == primaryField {
+					add = false
+					break
+				}
+			}
+			if add {
+				fields = append(fields, primaryField)
+			}
+		}
+
+		c.indexFieldsCache[shortID] = fields
+	}
+
+	return fields
 }
 
 // ParseQuery produces a KeyRange matching one of the codec indexes
@@ -178,4 +235,22 @@ func (c *Codec) ParseQuery(q queryparse.Query) (Index, KeyRange, error) {
 	}
 
 	return nil, kr, ErrIndexMiss
+}
+
+// FindIndexByShortID finds the index where GetShortID() matches shortID.
+// It returns nil if no index matches.
+func (c *Codec) FindIndexByShortID(shortID int) Index {
+	if shortID == 0 {
+		return c.PrimaryIndex
+	}
+
+	var secondary Index
+	for _, index := range c.SecondaryIndexes {
+		if index.GetShortID() == shortID {
+			secondary = index
+			break
+		}
+	}
+
+	return secondary
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -24,6 +25,7 @@ import (
 type testIndex struct {
 	indexID uuid.UUID
 	fields  []string
+	shortID int
 }
 
 func (i testIndex) GetIndexID() uuid.UUID {
@@ -31,7 +33,7 @@ func (i testIndex) GetIndexID() uuid.UUID {
 }
 
 func (i testIndex) GetShortID() int {
-	return 0
+	return i.shortID
 }
 
 func (i testIndex) GetFields() []string {
@@ -219,6 +221,52 @@ func TestKeySimple(t *testing.T) {
 	assert.Equal(t, -1, bytes.Compare(v2, v3))
 	assert.Equal(t, -1, bytes.Compare(v3, v4))
 	assert.Equal(t, -1, bytes.Compare(v4, v5))
+}
+
+func TestSecondaryKeys(t *testing.T) {
+	primary := testIndex{
+		fields:  []string{"k1", "k2"},
+		shortID: 0}
+	secondary := testIndex{
+		fields:  []string{"k2", "k3"},
+		shortID: 1}
+	schemaString := schema.MustCompileToAvroString(`
+		type Test @stream(name: "test") @key(fields: ["k1", "k2"]) {
+			k1: Bytes20!
+			k2: Int64!
+			k3: String!
+			k4: Timestamp!
+		}
+	`)
+
+	codec, err := New(schemaString, primary, []Index{secondary})
+	assert.Nil(t, err)
+
+	m1 := map[string]interface{}{
+		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
+		"k2": int64(10000000000000),
+	}
+	v1, err := codec.MarshalKey(codec.PrimaryIndex, m1)
+	assert.Nil(t, err)
+	assert.NotNil(t, v1)
+	s1, err := codec.UnmarshalKey(codec.PrimaryIndex, v1)
+	assert.Nil(t, err)
+	assert.NotNil(t, s1)
+	assert.True(t, reflect.DeepEqual(m1, s1))
+
+	m2 := map[string]interface{}{
+		"k1": hexToBytes("0x0000000000000000000000000000000000000000"),
+		"k2": int64(10000000000000),
+		"k3": "hello",
+	}
+	v2, err := codec.MarshalKey(codec.SecondaryIndexes[0], m2)
+	assert.Nil(t, err)
+	assert.NotNil(t, v2)
+	assert.True(t, bytes.Equal(v2, tuple.Tuple{m2["k2"], m2["k3"], m2["k1"]}.Pack()))
+	s2, err := codec.UnmarshalKey(codec.SecondaryIndexes[0], v2)
+	assert.Nil(t, err)
+	assert.NotNil(t, s2)
+	assert.True(t, reflect.DeepEqual(m2, s2))
 }
 
 func TestQueryParse(t *testing.T) {
