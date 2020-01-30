@@ -57,7 +57,7 @@ interface CheckoutStateTypes {
   country: string,
   line1: string,
   line2: string,
-  postal_code: string,
+  postalCode: string,
   state: string,
   email: string,
   cardholder: string,
@@ -72,16 +72,16 @@ interface CheckoutStateTypes {
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
-  billing_plan_id: string
+  billingPlanID: string
 }
 
-const CardFormWrappedFxn: FC<Props> = ({ stripe, billing_plan_id }) => {
+const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
   const [values, setValues] = React.useState<CheckoutStateTypes>({
     city: "",
     country: "",
     line1: "",
     line2: "",
-    postal_code: "",
+    postalCode: "",
     state: "",
     email: "",
     cardholder: "",
@@ -118,7 +118,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billing_plan_id }) => {
       const headers = { authorization: `Bearer ${token}` }
       let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
       url += `?organizationID=${me.organization.organizationID}`
-      url += `&billingPlanID=${billing_plan_id}`
+      url += `&billingPlanID=${billingPlanID}`
       const res = await fetch(url, { headers })
 
       if (isMounted && me) {
@@ -137,7 +137,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billing_plan_id }) => {
                 country: values.country,
                 line1: values.line1,
                 line2: values.line2,
-                postal_code: values.postal_code,
+                postal_code: values.postalCode,
                 state: values.state,
               },
               email: me.email, // Stripe receipts will be sent to the user's Beneath email address
@@ -291,8 +291,8 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billing_plan_id }) => {
               inputProps={{
                 className: classes.input
               }}
-              value={values.postal_code}
-              onChange={handleChange("postal_code")}
+              value={values.postalCode}
+              onChange={handleChange("postalCode")}
             />
           </Grid>
           {/* <Grid item xs={12} sm={6}>
@@ -667,17 +667,17 @@ const countries = [
 // * convert the CardFormWrappedFxn functional component to the CardFormWrappedCls class component, so that we can use the injectStripe HOC * //
 // HOCs are only for class components
 interface BillingParams {
-  billing_plan_id: string
+  billingPlanID: string
 }
 
 class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps & BillingParams, BillingParams> {
   constructor(props: ReactStripeElements.InjectedStripeProps & BillingParams) {
     super(props);
-    this.state = { billing_plan_id: props.billing_plan_id };
+    this.state = { billingPlanID: props.billingPlanID };
   }
 
   render() {
-    return <CardFormWrappedFxn stripe={this.props.stripe} billing_plan_id={this.state.billing_plan_id} />
+    return <CardFormWrappedFxn stripe={this.props.stripe} billingPlanID={this.state.billingPlanID} />
   }
 }
 
@@ -688,18 +688,18 @@ const CardFormInjectedStripe = injectStripe(CardFormWrappedCls)
 
 // * set our Stripe key and return the CardForm * //
 interface CardFormProps {
-  billing_plan_id: string;
+  billingPlanID: string;
 }
 
 interface CardFormState {
   stripe: stripe.Stripe | null;
-  billing_plan_id: string;
+  billingPlanID: string;
 }
 
 class CardForm extends React.Component<CardFormProps, CardFormState> {
   constructor(props: CardFormProps) {
     super(props);
-    this.state = { stripe: null, billing_plan_id: props.billing_plan_id };
+    this.state = { stripe: null, billingPlanID: props.billingPlanID };
   }
 
   componentDidMount() {
@@ -712,7 +712,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
     return (
       <StripeProvider stripe={this.state.stripe}>
         <Elements>
-          <CardFormInjectedStripe billing_plan_id={this.state.billing_plan_id} />
+          <CardFormInjectedStripe billingPlanID={this.state.billingPlanID} />
         </Elements>
       </StripeProvider>
     );

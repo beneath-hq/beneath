@@ -44,26 +44,26 @@ const ViewBilling: FC = () => {
     if (data.billingInfo.paymentsDriver === billing.STRIPECARD_DRIVER) {
       return (
         // CurrentBillingPlan is bundled inside CardDetails so that CurrentBillingPlan doesn't persist when editing someone edits their card details
-        <CardDetails billing_plan_id={data.billingInfo.billingPlan.billingPlanID} billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
+        <CardDetails billingPlanID={data.billingInfo.billingPlan.billingPlanID} billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
       )
     } else if (data.billingInfo.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
       return (
         <Grid container spacing={2}>
-          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <CurrentBillingPlan billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
           <WireDetails />
         </Grid>
       )
     } else if (data.billingInfo.paymentsDriver === billing.ANARCHISM_DRIVER) {
       return (
         <Grid container spacing={2}>
-          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <CurrentBillingPlan billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
           <AnarchismDetails />
         </Grid>
       )
     } else {
       return (
         <Grid container spacing={2}>
-          <CurrentBillingPlan billing_period={billingPeriod} description={data.billingInfo.billingPlan.description} />
+          <CurrentBillingPlan billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
           <p> Error: payments driver is not supported. </p>
         </Grid>
       )

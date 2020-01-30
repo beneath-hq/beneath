@@ -267,7 +267,11 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 
 	billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
 	if billingInfo == nil {
-		return httputil.NewError(400, fmt.Sprintf("billing info not found for organization %s", organizationID.String()))
+		return httputil.NewError(500, fmt.Sprintf("billing info not found for organization %s", organizationID.String()))
+	}
+
+	if billingInfo.PaymentsDriver != "stripecard" {
+		return httputil.NewError(400, fmt.Sprintf("the organization is not on the 'stripecard' payments driver"))
 	}
 
 	customer := stripeutil.RetrieveCustomer(billingInfo.DriverPayload["customer_id"].(string))
@@ -276,14 +280,14 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 	// create json response
 	json, err := jsonutil.Marshal(map[string]map[string]interface{}{
 		"data": {
-			"organization_id": organizationID,
+			"organizationID": organizationID,
 			"card": &card{
 				Brand:    string(pm.Card.Brand),
 				Last4:    pm.Card.Last4,
 				ExpMonth: int(pm.Card.ExpMonth),
 				ExpYear:  int(pm.Card.ExpYear),
 			},
-			"billing_details": &billingDetails{
+			"billingDetails": &billingDetails{
 				Name: pm.BillingDetails.Name,
 				Address: &address{
 					Line1:      pm.BillingDetails.Address.Line1,

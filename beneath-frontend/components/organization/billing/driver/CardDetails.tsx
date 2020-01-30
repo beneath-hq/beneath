@@ -21,14 +21,14 @@ const useStyles = makeStyles((theme) => ({
 
 interface CardPaymentDetails {
   data: {
-    organization_id: string,
+    organizationID: string,
     card: {
       Brand: string,
       Last4: string,
       ExpMonth: number,
       ExpYear: number,
     },
-    billing_details: {
+    billingDetails: {
       Name: string,
       Email: string,
       Address: {
@@ -45,16 +45,16 @@ interface CardPaymentDetails {
 }
 
 interface Props {
-  billing_plan_id: string
+  billingPlanID: string
   billingPeriod: string
   description: string | null
 }
 
-const CardDetails: FC<Props> = ({ billing_plan_id, billingPeriod, description }) => {
+const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) => {
   const [paymentDetails, setPaymentDetails] = React.useState<CardPaymentDetails | null>(null)
-  const [error, setError] = React.useState("")
-  const [loading, setLoading] = React.useState(false)
   const [editCard, setEditCard] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState("")
   const token = useToken()
   const classes = useStyles()
 
@@ -65,8 +65,8 @@ const CardDetails: FC<Props> = ({ billing_plan_id, billingPeriod, description })
     const fetchData = async () => {
       setLoading(true)
       const headers = { authorization: `Bearer ${token}` }
-      let payment_details_url = `${connection.API_URL}/billing/stripecard/get_payment_details`
-      const res = await fetch(payment_details_url, { headers })
+      let url = `${connection.API_URL}/billing/stripecard/get_payment_details`
+      const res = await fetch(url, { headers })
 
       if (isMounted) {
         if (!res.ok) {
@@ -119,28 +119,28 @@ const CardDetails: FC<Props> = ({ billing_plan_id, billingPeriod, description })
   }
 
   if (editCard) {
-    return <CardForm billing_plan_id={billing_plan_id} />
+    return <CardForm billingPlanID={billingPlanID} />
   }
 
-  const address = [paymentDetails.data.billing_details.Address.Line1,
-    paymentDetails.data.billing_details.Address.Line2,
-    paymentDetails.data.billing_details.Address.City,
-    paymentDetails.data.billing_details.Address.State,
-    paymentDetails.data.billing_details.Address.PostalCode,
-    paymentDetails.data.billing_details.Address.Country].filter(Boolean) // omit Line2 if it's empty
+  const address = [paymentDetails.data.billingDetails.Address.Line1,
+    paymentDetails.data.billingDetails.Address.Line2,
+    paymentDetails.data.billingDetails.Address.City,
+    paymentDetails.data.billingDetails.Address.State,
+    paymentDetails.data.billingDetails.Address.PostalCode,
+    paymentDetails.data.billingDetails.Address.Country].filter(Boolean) // omit Line2 if it's empty
 
   const payments = [
     { name: 'Card type', detail: _.startCase(_.toLower(paymentDetails.data.card.Brand))},
     { name: 'Card number', detail: 'xxxx-xxxx-xxxx-' + paymentDetails.data.card.Last4 },
     { name: 'Expiration', detail: paymentDetails.data.card.ExpMonth.toString() + '/' + paymentDetails.data.card.ExpYear.toString().substring(2,4) },
-    { name: 'Card holder', detail: paymentDetails.data.billing_details.Name },
+    { name: 'Card holder', detail: paymentDetails.data.billingDetails.Name },
     { name: 'Billing address', detail: address.join(', ')}
   ]
 
   return (
     <React.Fragment>
       <Grid container spacing={2}>
-        <CurrentBillingPlan billing_period={billingPeriod} description={description} />
+        <CurrentBillingPlan billingPeriod={billingPeriod} description={description} />
         <Grid item container direction="column" xs={12} sm={6}>
           <Grid container alignItems="center" justify="space-between">
             <Grid item>

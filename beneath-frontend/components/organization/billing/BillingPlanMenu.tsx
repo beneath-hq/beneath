@@ -29,7 +29,7 @@ const BillingPlanMenu: FC = () => {
   const classes = useStyles()
 
   if (buyNow) {
-    return <CardForm billing_plan_id={billingPlanToBuy}/>
+    return <CardForm billingPlanID={billingPlanToBuy}/>
   }
 
   if (contactUs) {

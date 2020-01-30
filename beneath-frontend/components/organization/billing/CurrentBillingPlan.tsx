@@ -18,10 +18,10 @@ const useStyles = makeStyles((theme) => ({
 
 interface Props {
   description: string | null
-  billing_period: string
+  billingPeriod: string
 }
 
-const CurrentBillingPlan: FC<Props> = ({ description, billing_period }) => {
+const CurrentBillingPlan: FC<Props> = ({ description, billingPeriod }) => {
   const [openDialogue, setOpenDialogue] = React.useState(false)
   const [cancel, setCancel] = React.useState(false)
   const [error, setError] = React.useState("")
@@ -35,7 +35,7 @@ const CurrentBillingPlan: FC<Props> = ({ description, billing_period }) => {
 
   const planDetails = [
     { name: 'Plan name', detail: description },
-    { name: 'Billing cycle', detail: billing_period },
+    { name: 'Billing cycle', detail: billingPeriod },
   ]
 
   useEffect(() => {
