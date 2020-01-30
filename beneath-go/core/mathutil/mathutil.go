@@ -10,8 +10,24 @@ func MinInt(a, b int) int {
 	return a
 }
 
+// MinInt64 implements min for int64s
+func MinInt64(a, b int64) int64 {
+	if a > b {
+		return b
+	}
+	return a
+}
+
 // MaxInt implements max for ints
 func MaxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// MaxInt64 implements max for int64s
+func MaxInt64(a, b int64) int64 {
 	if a > b {
 		return a
 	}
