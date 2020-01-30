@@ -99,7 +99,7 @@ const UserPage = () => {
       const org: OrganizationByName_organizationByName = organization
     
       tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={org} />}),
-      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling organization={org} /> })
+      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling /> })
     }
   }
 

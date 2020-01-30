@@ -6,7 +6,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Box from '@material-ui/core/Box';
 import { makeStyles } from "@material-ui/core/styles"
 import billing from "../../../lib/billing"
-import CardFormStripe from "./driver/CardFormStripe"
+import CardForm from "./driver/CardForm"
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -29,7 +29,7 @@ const BillingPlanMenu: FC = () => {
   const classes = useStyles()
 
   if (buyNow) {
-    return <CardFormStripe billing_plan_id={billingPlanToBuy}/>
+    return <CardForm billing_plan_id={billingPlanToBuy}/>
   }
 
   if (contactUs) {

@@ -6,7 +6,7 @@ import _ from 'lodash'
 import { useToken } from '../../../../hooks/useToken'
 import connection from "../../../../lib/connection"
 import Loading from "../../../Loading"
-import CardFormStripe from './CardFormStripe'
+import CardForm from './CardForm'
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -116,7 +116,7 @@ const CardDetails: FC<Props> = ({ billing_plan_id }) => {
   }
 
   if (editCard) {
-    return <CardFormStripe billing_plan_id={billing_plan_id} />
+    return <CardForm billing_plan_id={billing_plan_id} />
   }
 
   const address = [paymentDetails.data.billing_details.Address.Line1,
