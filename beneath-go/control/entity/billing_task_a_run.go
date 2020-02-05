@@ -1,13 +1,11 @@
-package billing
+package entity
 
 import (
+	"context"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/taskqueue"
-
-	"context"
 )
 
 // RunBillingTask triggers billing (computation, invoice creation, and stripe)
@@ -24,7 +22,7 @@ func init() {
 // organizations will be assessed usage and corresponding overage fees for the previous month
 // organizations will be charged seats for the upcoming month
 func (t *RunBillingTask) Run(ctx context.Context) error {
-	organizations := entity.FindAllOrganizations(ctx)
+	organizations := FindAllOrganizations(ctx)
 	timestamp := time.Now()
 
 	for _, o := range organizations {

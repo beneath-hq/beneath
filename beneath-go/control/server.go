@@ -64,19 +64,17 @@ func init() {
 	// load config
 	core.LoadConfig("beneath", &Config)
 
-	// connect postgres, redis and engine
+	// connect postgres, redis, engine, and payment drivers
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
+	db.SetPaymentDrivers(payments.InitDrivers(Config.PaymentsDrivers))
 
 	// run migrations
 	migrations.MustRunUp(db.DB)
 
 	// init segment
 	segment.InitClient(Config.SegmentSecret)
-
-	// init payment drivers
-	payments.InitDrivers(Config.PaymentsDrivers)
 
 	// configure auth
 	auth.InitGoth(&auth.GothConfig{
@@ -141,11 +139,11 @@ func ListenAndServeHTTP(port int) error {
 
 	// Add payments handlers
 	for _, driverName := range Config.PaymentsDrivers {
-		driver, err := payments.GetDriver(driverName)
-		if err != nil {
-			panic("could not set up payment drivers")
+		paymentDriver := db.PaymentDrivers[driverName]
+		if paymentDriver == nil {
+			panic("couldn't get payments driver")
 		}
-		for subpath, handler := range driver.GetHTTPHandlers() {
+		for subpath, handler := range paymentDriver.GetHTTPHandlers() {
 			path := fmt.Sprintf("/billing/%s/%s", driverName, subpath)
 			router.Handle(path, httputil.AppHandler(handler))
 		}

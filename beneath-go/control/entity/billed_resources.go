@@ -53,3 +53,28 @@ func CreateOrUpdateBilledResources(ctx context.Context, billedResources []*Bille
 
 	return nil
 }
+
+// GetTotalPriceCents implements payments/driver.BilledResource
+func (br *BilledResource) GetTotalPriceCents() int32 {
+	return br.TotalPriceCents
+}
+
+// GetStartTime implements payments/driver.BilledResource
+func (br *BilledResource) GetStartTime() time.Time {
+	return br.StartTime
+}
+
+// GetEndTime implements payments/driver.BilledResource
+func (br *BilledResource) GetEndTime() time.Time {
+	return br.EndTime
+}
+
+// GetBillingTime implements payments/driver.BilledResource
+func (br *BilledResource) GetBillingTime() time.Time {
+	return br.BillingTime
+}
+
+// GetProduct implements payments/driver.BilledResource
+func (br *BilledResource) GetProduct() string {
+	return string(br.Product)
+}

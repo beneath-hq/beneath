@@ -178,15 +178,15 @@ func NewInvoiceItemOther(customerID string, amount int64, currency string, start
 
 // CreateInvoice creates an invoice
 // there must exist invoice line items for the given customer before this function is called
-func CreateInvoice(customerID string, paymentsDriver entity.PaymentsDriver) *stripe.Invoice {
+func CreateInvoice(customerID string, paymentsDriver string) *stripe.Invoice {
 	params := &stripe.InvoiceParams{}
-	if paymentsDriver == entity.StripeCardDriver {
+	if paymentsDriver == string(entity.StripeCardDriver) {
 		params = &stripe.InvoiceParams{
 			Customer:         stripe.String(customerID),
 			CollectionMethod: stripe.String(string(stripe.InvoiceCollectionMethodChargeAutomatically)),
 			AutoAdvance:      stripe.Bool(true), // this tells Stripe to re-try failed payments using their "Smart Retries" feature; it will retry up to 4 times
 		}
-	} else if paymentsDriver == entity.StripeWireDriver {
+	} else if paymentsDriver == string(entity.StripeWireDriver) {
 		params = &stripe.InvoiceParams{
 			Customer:         stripe.String(customerID),
 			DaysUntilDue:     stripe.Int64(daysUntilInvoiceDue),
@@ -256,13 +256,13 @@ func SendInvoice(invoiceID string) {
 }
 
 // PrettyDescription makes the Stripe invoice more informative
-func PrettyDescription(product entity.Product) string {
+func PrettyDescription(product string) string {
 	switch product {
-	case entity.SeatProduct:
+	case string(entity.SeatProduct):
 		return "Seats"
-	case entity.ReadOverageProduct:
+	case string(entity.ReadOverageProduct):
 		return "Organization read overage (GB)"
-	case entity.WriteOverageProduct:
+	case string(entity.WriteOverageProduct):
 		return "Organization write overage (GB)"
 	default:
 		panic("unknown product")

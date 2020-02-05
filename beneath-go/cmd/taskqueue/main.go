@@ -8,7 +8,6 @@ import (
 	"github.com/beneath-core/beneath-go/taskqueue"
 
 	// import modules that register tasks in taskqueue
-	_ "github.com/beneath-core/beneath-go/control/billing"
 	_ "github.com/beneath-core/beneath-go/control/entity"
 )
 
@@ -30,8 +29,7 @@ func main() {
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	db.InitRedis(config.RedisURL)
 	db.InitEngine(config.StreamsDriver, config.TablesDriver, config.WarehouseDriver)
-
-	payments.InitDrivers(config.PaymentsDrivers)
+	db.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
 
 	log.S.Fatal(taskqueue.Work())
 }

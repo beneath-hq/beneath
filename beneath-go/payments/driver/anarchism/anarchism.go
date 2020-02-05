@@ -9,6 +9,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/payments/driver"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -74,7 +75,7 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	} else {
 		perms := secret.OrganizationPermissions(req.Context(), organizationID)
 		if !perms.Admin {
-			return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
+			return httputil.NewError(403, fmt.Sprintf("You are not allowed to perform admin functions in organization %s", organizationID.String()))
 		}
 	}
 
@@ -90,10 +91,10 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 }
 
 // IssueInvoiceForResources implements Payments interface
-func (a *Anarchism) IssueInvoiceForResources(billingInfo *entity.BillingInfo, billedResources []*entity.BilledResource) error {
+func (a *Anarchism) IssueInvoiceForResources(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) error {
 
 	// Amazing... no payment required!
-	log.S.Infof("anarchism! organization %s does not pay for its usage so no invoice was sent", billingInfo.OrganizationID)
+	log.S.Infof("anarchism! organization %s does not pay for its usage so no invoice was sent", billingInfo.GetOrganizationID())
 
 	return nil
 }

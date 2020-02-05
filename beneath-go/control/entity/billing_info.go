@@ -125,3 +125,23 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 
 	return bi, nil
 }
+
+// GetOrganizationID implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetOrganizationID() uuid.UUID {
+	return bi.OrganizationID
+}
+
+// GetBillingPlanCurrency implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetBillingPlanCurrency() string {
+	return string(bi.BillingPlan.Currency)
+}
+
+// GetDriverPayload implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetDriverPayload() map[string]interface{} {
+	return bi.DriverPayload
+}
+
+// GetPaymentsDriver implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetPaymentsDriver() string {
+	return string(bi.PaymentsDriver)
+}

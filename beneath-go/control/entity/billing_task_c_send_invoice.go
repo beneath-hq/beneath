@@ -1,11 +1,11 @@
-package billing
+package entity
 
 import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/payments"
+	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/payments/driver"
 	"github.com/beneath-core/beneath-go/taskqueue"
 	uuid "github.com/satori/go.uuid"
 )
@@ -23,22 +23,28 @@ func init() {
 
 // Run triggers the task
 func (t *SendInvoiceTask) Run(ctx context.Context) error {
-	billingInfo := entity.FindBillingInfo(ctx, t.OrganizationID)
+	billingInfo := FindBillingInfo(ctx, t.OrganizationID)
 	if billingInfo == nil {
 		panic("didn't find organization's billing info")
 	}
 
-	billedResources := entity.FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
+	billedResources := FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
 	if billedResources == nil && len(billingInfo.Organization.Users) > 0 {
 		panic("didn't find any billed resources")
 	}
 
-	driver, err := payments.GetDriver(string(billingInfo.PaymentsDriver))
-	if err != nil {
+	paymentDriver := db.PaymentDrivers[string(billingInfo.PaymentsDriver)]
+	if paymentDriver == nil {
 		panic("couldn't get payments driver")
 	}
 
-	err = driver.IssueInvoiceForResources(billingInfo, billedResources)
+	// convert []T to []interface{}
+	brs := make([]driver.BilledResource, len(billedResources))
+	for i := range billedResources {
+		brs[i] = billedResources[i]
+	}
+
+	err := paymentDriver.IssueInvoiceForResources(billingInfo, brs)
 	if err != nil {
 		panic("couldn't issue invoice")
 	}

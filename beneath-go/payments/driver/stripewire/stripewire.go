@@ -11,6 +11,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/timeutil"
+	"github.com/beneath-core/beneath-go/payments/driver"
 	"github.com/beneath-core/beneath-go/payments/driver/stripeutil"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
@@ -102,13 +103,15 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 }
 
 func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
-	// TODO: is there anything we want to return to the front-end? possibly bank account information where the wire should be sent
+	// TODO: is there anything we want to return to the front-end?
+	// - bank account information where the wire should be sent
+	// - state of recent payment (paid, X days remaining, Y days overdue)
 	return nil
 }
 
 // IssueInvoiceForResources implements Payments interface
-func (w *StripeWire) IssueInvoiceForResources(billingInfo *entity.BillingInfo, billedResources []*entity.BilledResource) error {
-	if billingInfo.DriverPayload["customer_id"] == nil {
+func (w *StripeWire) IssueInvoiceForResources(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) error {
+	if billingInfo.GetDriverPayload()["customer_id"] == nil {
 		panic("stripe customer id is not set")
 	}
 
@@ -120,25 +123,25 @@ func (w *StripeWire) IssueInvoiceForResources(billingInfo *entity.BillingInfo, b
 	for _, item := range billedResources {
 		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
 		// only itemize the products for this month's bill
-		if (item.TotalPriceCents != 0) && (item.BillingTime.UTC() == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
+		if (item.GetTotalPriceCents() != 0) && (item.GetBillingTime().UTC() == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
 			// count seats, itemize everything else
-			if item.Product == entity.SeatProduct {
+			if item.GetProduct() == string(entity.SeatProduct) {
 				seatCount++
-				seatPrice = int64(item.TotalPriceCents)
-				seatStartTime = item.StartTime.Unix()
-				seatEndTime = item.EndTime.Unix()
+				seatPrice = int64(item.GetTotalPriceCents())
+				seatStartTime = item.GetStartTime().Unix()
+				seatEndTime = item.GetEndTime().Unix()
 			} else {
-				stripeutil.NewInvoiceItemOther(billingInfo.DriverPayload["customer_id"].(string), int64(item.TotalPriceCents), string(billingInfo.BillingPlan.Currency), item.StartTime.Unix(), item.EndTime.Unix(), stripeutil.PrettyDescription(item.Product))
+				stripeutil.NewInvoiceItemOther(billingInfo.GetDriverPayload()["customer_id"].(string), int64(item.GetTotalPriceCents()), string(billingInfo.GetBillingPlanCurrency()), item.GetStartTime().Unix(), item.GetEndTime().Unix(), stripeutil.PrettyDescription(item.GetProduct()))
 			}
 		}
 	}
 
 	// batch seats
 	if seatCount > 0 {
-		stripeutil.NewInvoiceItemSeats(billingInfo.DriverPayload["customer_id"].(string), seatCount, seatPrice, string(billingInfo.BillingPlan.Currency), seatStartTime, seatEndTime, stripeutil.PrettyDescription(entity.SeatProduct))
+		stripeutil.NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, stripeutil.PrettyDescription(string(entity.SeatProduct)))
 	}
 
-	inv := stripeutil.CreateInvoice(billingInfo.DriverPayload["customer_id"].(string), billingInfo.PaymentsDriver)
+	inv := stripeutil.CreateInvoice(billingInfo.GetDriverPayload()["customer_id"].(string), billingInfo.GetPaymentsDriver())
 
 	stripeutil.SendInvoice(inv.ID)
 
