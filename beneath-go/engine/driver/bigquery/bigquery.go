@@ -4,11 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/beneath-core/beneath-go/engine/driver"
+	bq "cloud.google.com/go/bigquery"
 
 	"github.com/beneath-core/beneath-go/core"
-
-	bq "cloud.google.com/go/bigquery"
+	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -20,6 +19,20 @@ type configSpecification struct {
 type BigQuery struct {
 	Client *bq.Client
 }
+
+const (
+	// ProjectIDLabel is a bigquery label key for the project ID
+	ProjectIDLabel = "project_id"
+
+	// StreamIDLabel is a bigquery label key for a stream ID
+	StreamIDLabel = "stream_id"
+
+	// InstanceIDLabel is a bigquery label key for an instance ID
+	InstanceIDLabel = "instance_id"
+
+	// InternalDatasetName is the dataset that stores all raw records
+	InternalDatasetName = "__internal"
+)
 
 // Global
 var global BigQuery

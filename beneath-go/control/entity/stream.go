@@ -135,6 +135,11 @@ func (s *Stream) GetCodec() *codec.Codec {
 	panic(fmt.Errorf("Use EfficientStream if you need the codec"))
 }
 
+// GetBigQuerySchema implements engine/driver.Stream
+func (s *Stream) GetBigQuerySchema() string {
+	return s.BigQuerySchema
+}
+
 // Compile compiles s.Schema and sets relevant fields
 func (s *Stream) Compile(ctx context.Context, update bool) error {
 	// compile schema

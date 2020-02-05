@@ -101,6 +101,10 @@ type Stream interface {
 
 	// GetCodec should return a codec for serializing and deserializing stream data and keys
 	GetCodec() *codec.Codec
+
+	// GetBigQuerySchema should return the stream's schema in BigQuery JSON representation
+	// TODO: Remove by creating an avro schema -> bigquery schema transpiler
+	GetBigQuerySchema() string
 }
 
 // StreamInstance encapsulates metadata about a Beneath stream instance

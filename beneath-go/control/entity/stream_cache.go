@@ -31,6 +31,9 @@ type CachedStream struct {
 	ProjectName      string
 	StreamName       string
 	Codec            *codec.Codec
+
+	// temporary until GetBigQuerySchema hack is resolved
+	BigQuerySchema string
 }
 
 // EfficientStreamIndex represents indexes in EfficientStream
@@ -234,6 +237,14 @@ func (c *CachedStream) GetRetention() time.Duration {
 // GetCodec implements engine/driver.Stream
 func (c *CachedStream) GetCodec() *codec.Codec {
 	return c.Codec
+}
+
+// GetBigQuerySchema implements engine/driver.Stream
+func (c *CachedStream) GetBigQuerySchema() string {
+	if len(c.BigQuerySchema) > 0 {
+		return c.BigQuerySchema
+	}
+	panic("GetBigQuerySchema called on unhacked CachedStream")
 }
 
 // streamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
