@@ -97,7 +97,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
   const classes = useStyles()
 
   // get me for email address and organizationID
-  const me = useMe(); // Q: is this in apollo local state?
+  const me = useMe();
   if (!me) {
     return <p>Need to log in to proceed to payment</p>
   }

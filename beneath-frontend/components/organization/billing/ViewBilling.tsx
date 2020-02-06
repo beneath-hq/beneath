@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import { Grid } from "@material-ui/core"
 import { useQuery } from "@apollo/react-hooks";
 
-import useMe from "../../../hooks/useMe";
 import billing from "../../../lib/billing"
 import { QUERY_BILLING_INFO } from '../../../apollo/queries/bililnginfo';
 import { BillingInfo, BillingInfoVariables } from '../../../apollo/types/BillingInfo';
@@ -12,16 +11,15 @@ import AnarchismDetails from "./driver/AnarchismDetails"
 import CardDetails from "./driver/CardDetails"
 import WireDetails from "./driver/WireDetails"
 
-const ViewBilling: FC = () => {  
-  const me = useMe(); // Q: is this in apollo local state?
-  if (!me) {
-    return <p>Need to log in to see your current billing plan</p>
-  }
+interface Props {
+  organizationID: string
+}
 
+const ViewBilling: FC<Props> = ({ organizationID }) => {  
   // fetch organization's billing info for the billing plan and payment driver
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     variables: {
-      organizationID: me.organization.organizationID,
+      organizationID: organizationID,
     },
   });
 

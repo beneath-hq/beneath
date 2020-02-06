@@ -3,9 +3,7 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { QUERY_USER_BY_USERNAME } from "../apollo/queries/user";
-import { QUERY_ORGANIZATION } from "../apollo/queries/organization";
 import { UserByUsername, UserByUsernameVariables } from "../apollo/types/UserByUsername";
-import { OrganizationByName, OrganizationByNameVariables, OrganizationByName_organizationByName } from "../apollo/types/OrganizationByName";
 import { withApollo } from "../apollo/withApollo";
 import useMe from "../hooks/useMe";
 
@@ -36,28 +34,6 @@ const UserPage = () => {
     fetchPolicy: "cache-and-network",
     variables: { username },
   });
-
-  var organization: OrganizationByName_organizationByName | null = null
-  if (me && me.organization.personal) {
-    const { loading, error, data } = useQuery<OrganizationByName, OrganizationByNameVariables>(QUERY_ORGANIZATION, {
-      fetchPolicy: "cache-and-network",
-      variables: { name: me.organization.name },
-    });
-
-    if (loading) {
-      return (
-        <Page subheader>
-          <Loading justify="center" />
-        </Page>
-      );
-    }
-
-    if (error || !data) {
-      return <ErrorPage apolloError={error} />;
-    }
-
-    organization = data.organizationByName;
-  }
 
   if (loading) {
     return (
@@ -93,13 +69,9 @@ const UserPage = () => {
     });
 
     if (me.organization.personal) {
-      if (!organization) {
-        return <ErrorPage statusCode={404} />;
-      }
-      const org: OrganizationByName_organizationByName = organization
-    
-      tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={org} />}),
-      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling /> })
+      // const org: OrganizationByName_organizationByName = organization
+      // tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={org} />}),
+      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling organizationID={me.organization.organizationID}/> })
     }
   }
 

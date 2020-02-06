@@ -29,7 +29,7 @@ const CurrentBillingPlan: FC<Props> = ({ description, billingPeriod }) => {
   const classes = useStyles()
   const token = useToken()
 
-  const me = useMe(); // Q: is this in apollo local state?
+  const me = useMe();
   if (!me) {
     return <p>Need to log in to see your current billing plan</p>
   }
