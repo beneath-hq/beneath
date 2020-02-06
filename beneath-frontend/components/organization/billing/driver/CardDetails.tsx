@@ -5,7 +5,6 @@ import _ from 'lodash'
 
 import { useToken } from '../../../../hooks/useToken'
 import connection from "../../../../lib/connection"
-import Loading from "../../../Loading"
 import CardForm from './CardForm'
 import CurrentBillingPlan from '../CurrentBillingPlan'
 
@@ -53,7 +52,6 @@ interface Props {
 const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) => {
   const [paymentDetails, setPaymentDetails] = React.useState<CardPaymentDetails | null>(null)
   const [editCard, setEditCard] = React.useState(false)
-  const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const token = useToken()
   const classes = useStyles()
@@ -63,7 +61,6 @@ const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) =
     let isMounted = true
     
     const fetchData = async () => {
-      setLoading(true)
       const headers = { authorization: `Bearer ${token}` }
       let url = `${connection.API_URL}/billing/stripecard/get_payment_details`
       const res = await fetch(url, { headers })
@@ -71,13 +68,11 @@ const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) =
       if (isMounted) {
         if (!res.ok) {
           setError(res.statusText)
-          setLoading(false)
           return
         }
 
         const paymentDetails: CardPaymentDetails = await res.json()
         setPaymentDetails(paymentDetails)
-        setLoading(false)
       }
     }
 
@@ -89,30 +84,12 @@ const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) =
     }
   }, [])
 
-  if (loading) {
-    return (
-      <React.Fragment>
-        <Grid item container direction="column" xs={12} sm={6}>
-          <Grid item container alignItems="center" justify="space-between">
-            <Grid item>
-              <Typography variant="h6" className={classes.title}>
-                Payment details
-              </Typography>
-            </Grid>
-          </Grid>
-          <Grid item container className={classes.loading}>
-            <Loading justify="center" />
-          </Grid>
-        </Grid>
-      </React.Fragment>
-    )
-  }
-
   if (error) {
     return <p>{error}</p>
   }
 
-  // TODO: analyze why this is getting hit / whether it leads to a flicker
+  // Q: is this a problem that it gets hits twice upon page reload? doesn't seem to have a visual effect.
+  // I don't think this leads to flicker, because the other user profile tabs have a flicker too, even when Billing is not present
   if (paymentDetails == null) {
     console.log("paymentDetails is null")
     return <p></p>
