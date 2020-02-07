@@ -459,6 +459,32 @@ class AdminClient(BaseClient):
     return result['updateProject']
 
 
+  def update_project_organization(self, project_id, organization_id):
+    result = self._query_control(
+      variables={
+        'projectID': project_id,
+        'organizationID': organization_id,
+      },
+      query="""
+        mutation UpdateProjectOrganization($projectID: UUID!, $organizationID: UUID!) {
+          updateProjectOrganization(projectID: $projectID, organizationID: $organizationID) {
+            projectID
+            displayName
+            public
+            site
+            description
+            photoURL
+            updatedOn
+            organization {
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['updateProjectOrganization']
+
+
   def delete_project(self, project_id):
     result = self._query_control(
       variables={
@@ -581,6 +607,30 @@ class AdminClient(BaseClient):
       """
     )
     return result['updateService']
+
+
+  def update_service_organization(self, service_id, organization_id):
+    result = self._query_control(
+      variables={
+        'serviceID': service_id,
+        'organizationID': organization_id,
+      },
+      query="""
+        mutation UpdateServiceOrganization($serviceID: UUID!, $organizationID: UUID!) {
+          updateServiceOrganization(serviceID: $serviceID, organizationID: $organizationID) {
+            serviceID
+            name
+            kind
+            readQuota
+            writeQuota
+            organization {
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['updateServiceOrganization']
 
 
   def delete_service(self, service_id):

@@ -103,6 +103,11 @@ def create_argument_parser():
   _project_update.add_argument('--site-url', type=str)
   _project_update.add_argument('--photo-url', type=str)
 
+  _project_migrate = _project.add_parser('migrate')
+  _project_migrate.set_defaults(func=project_update_organization)
+  _project_migrate.add_argument('name', type=str)
+  _project_migrate.add_argument('--new-organization', type=str, required=True)
+
   _project_delete = _project.add_parser('delete')
   _project_delete.set_defaults(func=project_delete)
   _project_delete.add_argument('name', type=str)
@@ -141,6 +146,12 @@ def create_argument_parser():
   _service_update.add_argument('--new-name', type=str)
   _service_update.add_argument('--read-quota-mb', type=int)
   _service_update.add_argument('--write-quota-mb', type=int)
+  
+  _service_migrate = _service.add_parser('migrate')
+  _service_migrate.set_defaults(func=service_update_organization)
+  _service_migrate.add_argument('name', type=str)
+  _service_migrate.add_argument('-o', '--current-organization', type=str, required=True)
+  _service_migrate.add_argument('--new-organization', type=str, required=True)
 
   _service_delete = _service.add_parser('delete')
   _service_delete.set_defaults(func=service_delete)
@@ -421,6 +432,17 @@ def project_update(args):
   pretty_print_graphql_result(result)
 
 
+def project_update_organization(args):
+  admin = get_admin_client()
+  project = admin.get_project_by_name(args.name)
+  organization = admin.get_organization_by_name(args.new_organization)
+  result = admin.update_project_organization(
+    project_id=project['projectID'],
+    organization_id=organization['organizationID'],
+  )
+  pretty_print_graphql_result(result)
+
+
 def project_delete(args):
   admin = get_admin_client()
   project = admin.get_project_by_name(args.name)
@@ -488,6 +510,16 @@ def service_update(args):
   )
   pretty_print_graphql_result(result)
 
+def service_update_organization(args):
+  admin = get_admin_client()
+  name, org_name = parse_names(args.name, args.current_organization, "organization")
+  service = admin.get_service_by_name_and_organization(name, org_name)
+  organization = admin.get_organization_by_name(args.new_organization)
+  result = admin.update_service_organization(
+    service_id=service['serviceID'],
+    organization_id=organization['organizationID'],
+  )
+  pretty_print_graphql_result(result)
 
 def service_delete(args):
   admin = get_admin_client()
