@@ -95,15 +95,15 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 }
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
+	project := entity.FindProject(ctx, projectID)
+	if project == nil {
+		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
+	}
+
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, projectID, false)
 	if !perms.Admin {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
-	}
-
-	project := entity.FindProject(ctx, projectID)
-	if project == nil {
-		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
 
 	bi := entity.FindBillingInfo(ctx, project.OrganizationID)
@@ -116,6 +116,40 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 	}
 
 	err := project.UpdateDetails(ctx, displayName, public, site, description, photoURL)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return project, nil
+}
+
+func (r *mutationResolver) UpdateProjectOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error) {
+	project := entity.FindProject(ctx, projectID)
+	if project == nil {
+		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
+	}
+
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	if project.OrganizationID == organizationID {
+		return nil, gqlerror.Errorf("The %s project is already owned by the %s organization", project.Name, organization.Name)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	projectPerms := secret.ProjectPermissions(ctx, projectID, false)
+	if !projectPerms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
+	}
+
+	organizationPerms := secret.OrganizationPermissions(ctx, organizationID)
+	if !organizationPerms.View {
+		return nil, gqlerror.Errorf("You are not authorized for organization %s", organizationID.String())
+	}
+
+	project, err := project.UpdateOrganization(ctx, organizationID)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

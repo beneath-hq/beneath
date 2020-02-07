@@ -207,6 +207,25 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 	})
 }
 
+// UpdateOrganization changes a project's organization
+func (p *Project) UpdateOrganization(ctx context.Context, organizationID uuid.UUID) (*Project, error) {
+	p.OrganizationID = organizationID
+	p.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, p).Column("organization_id", "updated_on").WherePK().Update()
+
+	// re-find project so we can return the name of the new organization
+	err = db.DB.ModelContext(ctx, p).
+		WherePK().
+		Column("project.*", "Organization").
+		Select()
+	if !AssertFoundOne(err) {
+		return nil, err
+	}
+
+	return p, err
+}
+
 // SetLock sets a project's "locked" status
 func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
 	p.Locked = isLocked

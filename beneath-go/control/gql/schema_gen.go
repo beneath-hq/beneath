@@ -162,7 +162,9 @@ type ComplexityRoot struct {
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateOrganizationName            func(childComplexity int, organizationID uuid.UUID, name string) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) int
+		UpdateProjectOrganization         func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) int
+		UpdateServiceOrganization         func(childComplexity int, serviceID uuid.UUID, organizationID uuid.UUID) int
 		UpdateServicePermissions          func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) int
 		UpdateUserOrganizationQuotas      func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
@@ -203,19 +205,19 @@ type ComplexityRoot struct {
 	}
 
 	Project struct {
-		CreatedOn      func(childComplexity int) int
-		Description    func(childComplexity int) int
-		DisplayName    func(childComplexity int) int
-		Models         func(childComplexity int) int
-		Name           func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		PhotoURL       func(childComplexity int) int
-		ProjectID      func(childComplexity int) int
-		Public         func(childComplexity int) int
-		Site           func(childComplexity int) int
-		Streams        func(childComplexity int) int
-		UpdatedOn      func(childComplexity int) int
-		Users          func(childComplexity int) int
+		CreatedOn    func(childComplexity int) int
+		Description  func(childComplexity int) int
+		DisplayName  func(childComplexity int) int
+		Models       func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Organization func(childComplexity int) int
+		PhotoURL     func(childComplexity int) int
+		ProjectID    func(childComplexity int) int
+		Public       func(childComplexity int) int
+		Site         func(childComplexity int) int
+		Streams      func(childComplexity int) int
+		UpdatedOn    func(childComplexity int) int
+		Users        func(childComplexity int) int
 	}
 
 	Query struct {
@@ -346,6 +348,7 @@ type MutationResolver interface {
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
 	CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) (*entity.Project, error)
 	UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) (*entity.Project, error)
+	UpdateProjectOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error)
 	DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error)
 	AddUserToProject(ctx context.Context, username string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error)
 	RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error)
@@ -355,6 +358,7 @@ type MutationResolver interface {
 	RevokeUserSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
 	CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota int, writeQuota int) (*entity.Service, error)
 	UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) (*entity.Service, error)
+	UpdateServiceOrganization(ctx context.Context, serviceID uuid.UUID, organizationID uuid.UUID) (*entity.Service, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
 	UpdateServicePermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error)
@@ -1167,6 +1171,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateProject(childComplexity, args["projectID"].(uuid.UUID), args["displayName"].(*string), args["public"].(*bool), args["site"].(*string), args["description"].(*string), args["photoURL"].(*string)), true
 
+	case "Mutation.updateProjectOrganization":
+		if e.complexity.Mutation.UpdateProjectOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProjectOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProjectOrganization(childComplexity, args["projectID"].(uuid.UUID), args["organizationID"].(uuid.UUID)), true
+
 	case "Mutation.updateService":
 		if e.complexity.Mutation.UpdateService == nil {
 			break
@@ -1178,6 +1194,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateService(childComplexity, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+
+	case "Mutation.updateServiceOrganization":
+		if e.complexity.Mutation.UpdateServiceOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateServiceOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateServiceOrganization(childComplexity, args["serviceID"].(uuid.UUID), args["organizationID"].(uuid.UUID)), true
 
 	case "Mutation.updateServicePermissions":
 		if e.complexity.Mutation.UpdateServicePermissions == nil {
@@ -1383,12 +1411,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Name(childComplexity), true
 
-	case "Project.organizationID":
-		if e.complexity.Project.OrganizationID == nil {
+	case "Project.organization":
+		if e.complexity.Project.Organization == nil {
 			break
 		}
 
-		return e.complexity.Project.OrganizationID(childComplexity), true
+		return e.complexity.Project.Organization(childComplexity), true
 
 	case "Project.photoURL":
 		if e.complexity.Project.PhotoURL == nil {
@@ -2286,6 +2314,7 @@ type PermissionsUsersOrganizations {
 extend type Mutation {
   createProject(name: String!, displayName: String, organizationID: UUID!, public: Boolean!, site: String, description: String, photoURL: String): Project!
   updateProject(projectID: UUID!, displayName: String, public: Boolean, site: String, description: String, photoURL: String): Project!
+  updateProjectOrganization(projectID: UUID!, organizationID: UUID!): Project!
   deleteProject(projectID: UUID!): Boolean!
   addUserToProject(username: String!, projectID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): User
   removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
@@ -2299,7 +2328,7 @@ type Project {
   description: String
   photoURL: String
   public: Boolean!
-  organizationID: UUID!
+  organization: Organization!
   createdOn: Time!
   updatedOn: Time!
   streams: [Stream!]!
@@ -2361,6 +2390,7 @@ type NewUserSecret {
 extend type Mutation {
   createService(name: String!, organizationID: UUID!, readQuota: Int!, writeQuota: Int!): Service!
   updateService(serviceID: UUID!, name: String, readQuota: Int, writeQuota: Int): Service!
+  updateServiceOrganization(serviceID: UUID!, organizationID: UUID!): Service!
   deleteService(serviceID: UUID!): Boolean!
   updateServicePermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
 }
@@ -3097,6 +3127,28 @@ func (ec *executionContext) field_Mutation_updateOrganizationName_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateProjectOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["projectID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3148,6 +3200,28 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 		}
 	}
 	args["photoURL"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateServiceOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg1
 	return args, nil
 }
 
@@ -6361,6 +6435,50 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updateProjectOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateProjectOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateProjectOrganization(rctx, args["projectID"].(uuid.UUID), args["organizationID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_deleteProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -6737,6 +6855,50 @@ func (ec *executionContext) _Mutation_updateService(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdateService(rctx, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateServiceOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateServiceOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateServiceOrganization(rctx, args["serviceID"].(uuid.UUID), args["organizationID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8147,7 +8309,7 @@ func (ec *executionContext) _Project_public(ctx context.Context, field graphql.C
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Project_organizationID(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
+func (ec *executionContext) _Project_organization(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -8166,7 +8328,7 @@ func (ec *executionContext) _Project_organizationID(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OrganizationID, nil
+		return obj.Organization, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8178,10 +8340,10 @@ func (ec *executionContext) _Project_organizationID(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(uuid.UUID)
+	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋbeneathᚑgoᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
@@ -13000,6 +13162,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateProjectOrganization":
+			out.Values[i] = ec._Mutation_updateProjectOrganization(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "deleteProject":
 			out.Values[i] = ec._Mutation_deleteProject(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -13039,6 +13206,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateService":
 			out.Values[i] = ec._Mutation_updateService(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateServiceOrganization":
+			out.Values[i] = ec._Mutation_updateServiceOrganization(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -13363,8 +13535,8 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "organizationID":
-			out.Values[i] = ec._Project_organizationID(ctx, field, obj)
+		case "organization":
+			out.Values[i] = ec._Project_organization(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
