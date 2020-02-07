@@ -5,12 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/beneath-core/beneath-go/core/codec"
+	"github.com/beneath-core/beneath-go/core/mathutil"
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/engine/driver"
 	pb "github.com/beneath-core/beneath-go/engine/driver/bigtable/proto"
@@ -18,9 +20,10 @@ import (
 )
 
 const (
-	maxPartitions = 32
-	maxCursors    = 32
-	maxLimit      = 1000
+	maxPartitions   = 32
+	maxCursors      = 32
+	maxLimit        = 1000
+	maxLoadsPerRead = 5
 )
 
 var (
@@ -233,21 +236,172 @@ func (i recordsIterator) NextCursor() []byte {
 	return i.nextCursor
 }
 
+// batchesIterator implements driver.RecordsIterator
+type batchesIterator struct {
+	recordIdx  int
+	batches    [][]Record
+	nextCursor []byte
+}
+
+// Next implements driver.RecordsIterator
+func (i batchesIterator) Next() driver.Record {
+	if len(i.batches) == 0 {
+		return nil
+	}
+	batch := i.batches[0]
+	r := batch[i.recordIdx]
+	i.recordIdx++
+	if len(batch) == i.recordIdx {
+		i.batches = i.batches[1:]
+		i.recordIdx = 0
+	}
+	return r
+}
+
+// NextCursor implements driver.RecordsIterator
+func (i batchesIterator) NextCursor() []byte {
+	return i.nextCursor
+}
+
 func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.StreamInstance, set *pb.CursorSet, limit int) (driver.RecordsIterator, error) {
-	// TODO
+	// important log invariants:
+	// (1) for two records r1 and r2 where offset(r2) > offset(r1) we have that processTime(r2) >= processTime(r1)
+	// (2) for a cursor where LogEnd != 0, we know that offset=LogEnd is already written or is expired
 
-	// for idx, cursor := range set.Cursors {
-	// 	practicalLimit := mathutil.MinInt64(int64(limit), cursor.LogEnd-cursor.LogStart)
-	// 	records, err := b.LoadLogRange(ctx, s, i, cursor.LogStart, cursor.LogEnd+1, int(practicalLimit))
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+	// important loop invariants:
+	// - for up to n iterations, cursors[0] is the next cursor we should fetch
+	// - newly generated cursors are _appended_ to cursors
+	// - len(cursors) must stay <= maxCursors
 
-	// }
+	cursors := set.Cursors
+	var results [][]Record
 
-	// b.LoadLogRange(ctx, s, i, )
+	n := mathutil.MinInt(len(cursors), maxLoadsPerRead)
+	for counter := 0; counter < n; counter++ {
+		// get cursor
+		cursor := cursors[0]
+		cursors = cursors[1:]
 
-	return nil, nil
+		// check range is valid
+		if cursor.LogStart < 0 || cursor.LogEnd < 0 {
+			return nil, ErrCorruptCursor
+		}
+		if cursor.LogEnd != 0 && (cursor.LogStart >= cursor.LogEnd) {
+			return nil, ErrCorruptCursor
+		}
+
+		// compute limit and end, such that we get one row of the next segment if there's a segment missing in the log
+		lim := limit
+		end := cursor.LogEnd
+		if cursor.LogEnd != 0 {
+			lim = mathutil.MinInt(lim, int(cursor.LogEnd-cursor.LogStart))
+			end = cursor.LogEnd + 1
+		}
+
+		// read records
+		records, err := b.LoadLogRange(ctx, s, i, cursor.LogStart, end, lim)
+		if err != nil {
+			return nil, err
+		}
+
+		// if records is empty, we're either a) at the tip of an infinite cursor, or b) the log segment is timed out by invariant (2) (because LogEnd+1 wasn't returned)
+		if len(records) == 0 {
+			if cursor.LogEnd == 0 {
+				// we're at the tip of an infinite cursor, so add it back to cursors
+				cursors = append(cursors, cursor)
+			}
+			// else the cursor covers a timed out segment, so we skip it
+			continue
+		}
+
+		// check for gaps in records
+		nextOffset := cursor.LogStart // offset we expect of the next record in the iteration
+		for idx, record := range records {
+			// easy case: we found the row we expected
+			if record.Offset == nextOffset {
+				nextOffset++
+				continue
+			}
+
+			// we now know that record.Offset != nextOffset (so there's a gap)
+
+			// determine if gap is timed out (remember: record.Time is the event time, record.ProcessTime is the bigtable time of the batch -- see invariant (1))
+			gapTimedOut := time.Since(record.ProcessTime) >= (b.Sequencer.TTL + b.Sequencer.MaxDrift)
+
+			// skip the gap if it's timed out
+			if gapTimedOut {
+				nextOffset = record.Offset + 1
+				continue
+			}
+
+			// gap hasn't timed out
+
+			// we leave room for one cursor to be added at the end of the loop
+			if len(cursors)+1 == maxCursors {
+				records = records[:idx]
+				break
+			}
+
+			// add gap to cursors
+			cursors = append(cursors, &pb.Cursor{
+				Type:       pb.Cursor_LOG,
+				LogStart:   nextOffset,
+				LogEnd:     record.Offset,
+				IndexId:    cursor.IndexId,
+				IndexStart: cursor.IndexStart,
+				IndexEnd:   cursor.IndexEnd,
+			})
+
+			// update nextOffset to reflect the gap we just skipped
+			nextOffset = record.Offset + 1
+		}
+
+		// if this cursor spans more records than we fetched, add a cursor that spans the remains
+		if cursor.LogEnd == 0 || cursor.LogEnd > nextOffset {
+			cursors = append(cursors, &pb.Cursor{
+				Type:       pb.Cursor_LOG,
+				LogStart:   nextOffset,
+				LogEnd:     cursor.LogEnd,
+				IndexId:    cursor.IndexId,
+				IndexStart: cursor.IndexStart,
+				IndexEnd:   cursor.IndexEnd,
+			})
+		}
+
+		// records might end with offset (cursor.LogEnd + 1) if there were missing rows
+		// remove it if that's the case
+		if len(records) > 0 && cursor.LogEnd > 0 {
+			lastIdx := len(records) - 1
+			if records[lastIdx].Offset == cursor.LogEnd {
+				records = records[:lastIdx]
+			}
+		}
+
+		// add records to accumulator
+		if len(records) > 0 {
+			results = append(results, records)
+		}
+	}
+
+	// sort cursors
+	sort.Slice(cursors, func(i int, j int) bool {
+		return cursors[i].LogStart < cursors[j].LogStart
+	})
+
+	// compile cursors
+	var nextCursor []byte
+	if len(cursors) > 0 {
+		compiled, err := compileCursorSet(&pb.CursorSet{Cursors: cursors})
+		if err != nil {
+			return nil, err
+		}
+		nextCursor = compiled
+	}
+
+	return batchesIterator{
+		batches:    results,
+		nextCursor: nextCursor,
+	}, nil
 }
 
 func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver.StreamInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
@@ -311,7 +465,6 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	retention := s.GetRetention()
 	expires := streamExpires(s)
 	instanceID := i.GetStreamInstanceID()
-	processTime := time.Now()
 	normalizePrimary := codec.PrimaryIndex.GetNormalize()
 	primaryHash := makeIndexHash(instanceID, codec.PrimaryIndex.GetIndexID())
 
@@ -363,7 +516,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		}
 
 		// create log append mutation
-		writeLogMuts[idx] = makeLogInsert(rowTime, processTime, record.GetAvro())
+		writeLogMuts[idx] = makeLogInsert(rowTime, batch.BigtableTime, record.GetAvro())
 		writeLogKeys[idx] = makeLogKey(instanceID, offset, primaryKey)
 
 		// if earlier than existing record (with same primary key), no need to handle
