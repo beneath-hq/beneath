@@ -30,7 +30,7 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to view organization %s", name)
+		return nil, gqlerror.Errorf("You are not allowed to view organization %s", name)
 	}
 
 	return organization, nil
@@ -106,7 +106,7 @@ func (r *queryResolver) UsersOrganizationPermissions(ctx context.Context, organi
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to view organization %s", organizationID.String())
+		return nil, gqlerror.Errorf("You are not allowed to view organization %s", organizationID.String())
 	}
 
 	permissions := entity.FindOrganizationPermissions(ctx, organizationID)

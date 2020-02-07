@@ -31,7 +31,7 @@ type PermissionsUsersOrganizations struct {
 	Admin          bool `sql:",notnull"`
 }
 
-// PermissionsServicesStreams represnts the many-to-many relationship between users and projects
+// PermissionsServicesStreams represnts the many-to-many relationship between services and projects
 type PermissionsServicesStreams struct {
 	tableName struct{}  `sql:"permissions_services_streams"`
 	ServiceID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
