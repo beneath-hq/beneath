@@ -32,7 +32,7 @@ type BigTable struct {
 	LogExpiring     *bigtable.Table
 	Indexes         *bigtable.Table
 	IndexesExpiring *bigtable.Table
-	Metrics         *bigtable.Table
+	Usage           *bigtable.Table
 }
 
 const (
@@ -66,14 +66,14 @@ const (
 
 	sequencerTableName = "sequencer"
 
-	metricsTableName            = "metrics"
-	metricsColumnFamilyName     = "cf0"
-	metricsReadOpsColumnName    = "ro"
-	metricsReadRowsColumnName   = "rr"
-	metricsReadBytesColumnName  = "rb"
-	metricsWriteOpsColumnName   = "wo"
-	metricsWriteRowsColumnName  = "wr"
-	metricsWriteBytesColumnName = "wb"
+	usageTableName            = "usage"
+	usageColumnFamilyName     = "f"
+	usageReadOpsColumnName    = "ro"
+	usageReadRowsColumnName   = "rr"
+	usageReadBytesColumnName  = "rb"
+	usageWriteOpsColumnName   = "wo"
+	usageWriteRowsColumnName  = "wr"
+	usageWriteBytesColumnName = "wb"
 )
 
 // Global
@@ -118,7 +118,7 @@ func createGlobal() {
 	global.LogExpiring = global.openTable(logExpiringTableName, logColumnFamilyName, 1, true)
 	global.Indexes = global.openTable(indexesTableName, indexesColumnFamilyName, 1, false)
 	global.IndexesExpiring = global.openTable(indexesExpiringTableName, indexesColumnFamilyName, 1, true)
-	global.Metrics = global.openTable(metricsTableName, metricsColumnFamilyName, 1, false)
+	global.Usage = global.openTable(usageTableName, usageColumnFamilyName, 1, false)
 }
 
 // GetLookupService returns a BigTable implementation of beneath.LookupService

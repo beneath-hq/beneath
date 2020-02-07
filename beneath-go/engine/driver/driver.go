@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/queryparse"
-
-	uuid "github.com/satori/go.uuid"
+	pb "github.com/beneath-core/beneath-go/proto"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath
@@ -66,6 +67,17 @@ type LookupService interface {
 
 	// WriteRecord persists the records
 	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
+
+	// NOTE: Usage tracking is temporarily implemented here, but really should be implemented on top of the engine, not in it
+
+	// CommitUsage writes a batch of usage metrics
+	CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error
+
+	// ReadSingleUsage reads usage metrics for one key
+	ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsage, error)
+
+	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
+	ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance
