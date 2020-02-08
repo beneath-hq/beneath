@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-go/core/log"
-
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
@@ -330,7 +329,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// prepare result for encoding
 	var encode interface{}
-	if keyRange.CheckUnique() {
+	if keyRange.IsSingle() {
 		if len(result) > 0 {
 			encode = map[string]interface{}{"data": result[0]}
 		} else {
