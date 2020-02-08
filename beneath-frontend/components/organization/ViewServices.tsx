@@ -1,5 +1,4 @@
 import React, { FC } from "react";
-
 import { List, ListItem, ListItemText, makeStyles, Typography } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
@@ -23,13 +22,13 @@ const ViewServices: FC<Props> = ({ organization }) => {
         {organization.services.map(({ serviceID, name }) => (
           <ListItem
             component={NextMuiLinkList}
-            href={`/`}
+            href={`/organizations/${organization.name}/services`} // TODO: send to a service monitoring page
             button
             disableGutters
             key={serviceID}
-            as={`/`}
+            as={`/organizations/${organization.name}/services`} // TODO: send to a service monitoring page
           >
-            <ListItemText primary={ name } secondary={name} />
+            <ListItemText primary={ name } />
           </ListItem>
         ))}
       </List>

@@ -17,7 +17,16 @@ func init() {
 		}
 
 		// Organization
-		err = db.Model(&entity.Organization{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE organizations (
+				organization_id uuid DEFAULT uuid_generate_v4(),
+				name text NOT NULL,
+				created_on timestamp with time zone DEFAULT now(),
+				updated_on timestamp with time zone DEFAULT now(),
+				deleted_on timestamp with time zone,
+				PRIMARY KEY (organization_id)
+			);
+		`)
 		if err != nil {
 			return err
 		}

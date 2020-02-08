@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// PermissionsUsersProjects represnts the many-to-many relationship between users and projects
+// PermissionsUsersProjects represents the many-to-many relationship between users and projects
 type PermissionsUsersProjects struct {
 	tableName struct{}  `sql:"permissions_users_projects"`
 	UserID    uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
@@ -20,7 +20,7 @@ type PermissionsUsersProjects struct {
 	Admin     bool `sql:",notnull"`
 }
 
-// PermissionsUsersOrganizations represnts the many-to-many relationship between users and organizations
+// PermissionsUsersOrganizations represents the many-to-one relationship between users and organizations
 type PermissionsUsersOrganizations struct {
 	tableName      struct{}  `sql:"permissions_users_organizations"`
 	UserID         uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
@@ -31,7 +31,7 @@ type PermissionsUsersOrganizations struct {
 	Admin          bool `sql:",notnull"`
 }
 
-// PermissionsServicesStreams represnts the many-to-many relationship between users and projects
+// PermissionsServicesStreams represnts the many-to-many relationship between services and projects
 type PermissionsServicesStreams struct {
 	tableName struct{}  `sql:"permissions_services_streams"`
 	ServiceID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
@@ -48,17 +48,20 @@ func init() {
 	orm.RegisterTable((*PermissionsServicesStreams)(nil))
 }
 
-// TODO(review): Remove this -- we have CachedUserOrganizationPermissions. Also, I think it would be possible to not need this in the first place.
-
-// FindPermissionsUsersOrganizations finds permissions by userID and organizationID
+// FindPermissionsUsersOrganizations finds a organization by ID
 func FindPermissionsUsersOrganizations(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID) *PermissionsUsersOrganizations {
 	permissions := &PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, permissions).WherePK().Select()
+	err := db.DB.ModelContext(ctx, permissions).
+		WherePK().
+		Column("permissions_users_organizations.*", "User", "Organization").
+		Select()
+
 	if !AssertFoundOne(err) {
 		return nil
 	}
+
 	return permissions
 }

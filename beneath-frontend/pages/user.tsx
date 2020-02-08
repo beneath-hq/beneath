@@ -18,6 +18,8 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
+import ViewServices from "../components/organization/ViewServices";
+import ViewBilling from "../components/organization/billing/ViewBilling";
 
 const UserPage = () => {
   const me = useMe();
@@ -35,7 +37,7 @@ const UserPage = () => {
 
   if (loading) {
     return (
-      <Page title="Project" subheader>
+      <Page subheader>
         <Loading justify="center" />
       </Page>
     );
@@ -65,6 +67,12 @@ const UserPage = () => {
         </>
       ),
     });
+
+    if (me.organization.personal) {
+      // const org: OrganizationByName_organizationByName = organization
+      // tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={org} />}),
+      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling organizationID={me.organization.organizationID}/> })
+    }
   }
 
   return (

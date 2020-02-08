@@ -38,7 +38,7 @@ func IPRateLimit() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return httputil.AppHandler(func(w http.ResponseWriter, r *http.Request) error {
 			secret := GetSecret(r.Context())
-			if secret == nil {
+			if secret == nil { // if any issues, add this back:  " || reflect.ValueOf(secret).IsNil()"
 				// check rate limit
 				ip, _, err := net.SplitHostPort(r.RemoteAddr)
 				if err != nil {

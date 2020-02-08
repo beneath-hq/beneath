@@ -133,10 +133,28 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 	return s, err
 }
 
+// UpdateOrganization changes a service's organization
+func (s *Service) UpdateOrganization(ctx context.Context, organizationID uuid.UUID) (*Service, error) {
+	s.OrganizationID = organizationID
+	s.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
+
+	// re-find service so we can return the name of the new organization
+	err = db.DB.ModelContext(ctx, s).
+		WherePK().
+		Column("service.*", "Organization").
+		Select()
+	if !AssertFoundOne(err) {
+		return nil, err
+	}
+
+	return s, err
+}
+
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	isMidPeriod := true
-	err := commitUsageToBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, isMidPeriod)
+	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
 	if err != nil {
 		return err
 	}

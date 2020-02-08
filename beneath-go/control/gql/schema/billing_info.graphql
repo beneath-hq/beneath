@@ -1,0 +1,9 @@
+extend type Query {
+  billingInfo(organizationID: UUID!): BillingInfo!
+}
+
+type BillingInfo {
+  organizationID: UUID!
+  billingPlan: BillingPlan!
+	paymentsDriver: String!
+}

@@ -18,7 +18,7 @@ export interface UserByUsername_userByUsername_projects {
 export interface UserByUsername_userByUsername {
   __typename: "User";
   userID: string;
-  username: string | null;
+  username: string;
   name: string;
   bio: string | null;
   photoURL: string | null;

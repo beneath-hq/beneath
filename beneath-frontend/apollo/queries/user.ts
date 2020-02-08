@@ -65,6 +65,11 @@ export const QUERY_ME = gql`
           photoURL
         }
       }
+      organization {
+        organizationID
+        name
+        personal
+      }      
     }
   }
 `;

@@ -1,11 +1,8 @@
-extend type Query {
-  billingPlan(billingPlanID: UUID!): BillingPlan!
-}
-
 type BillingPlan {
   billingPlanID: UUID!
 	description: String
 	currency: String!
+	period: String!
 	seatPriceCents: Int!
 	seatReadQuota: Int!
 	seatWriteQuota: Int!

@@ -3,6 +3,7 @@ package segment
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 
 	uuid "github.com/satori/go.uuid"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
@@ -32,7 +33,7 @@ func TrackHTTP(r *http.Request, name string, payload interface{}) {
 
 	// SecretID, UserID, and ServiceID can be null
 	userID := ""
-	if tags.Secret != nil && !tags.Secret.IsAnonymous() {
+	if tags.Secret != nil && !reflect.ValueOf(tags.Secret).IsNil() && !tags.Secret.IsAnonymous() {
 		props.Set("secret", tags.Secret.GetSecretID().String())
 		userID = tags.Secret.GetOwnerID().String()
 	}

@@ -45,3 +45,5 @@ models:
     model: github.com/beneath-core/beneath-go/control/entity.BillingPlan
   BilledResource:
     model: github.com/beneath-core/beneath-go/control/entity.BilledResource
+  PaymentMethod:
+    model: github.com/beneath-core/beneath-go/control/entity.PaymentMethod

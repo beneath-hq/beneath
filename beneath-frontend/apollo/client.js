@@ -83,6 +83,10 @@ const dataIdFromObject = (object) => {
       return defaultDataIdFromObject(object);
     case "Metrics":
       return `metrics:${object.entityID}:${object.period}:${object.time}`;
+    case "BillingPlan":
+      return `${object.billingPlanID}`;
+    case "BillingInfo":
+      return `${object.organizationID}`;
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);

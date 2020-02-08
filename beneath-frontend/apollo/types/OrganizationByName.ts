@@ -10,8 +10,10 @@ export interface OrganizationByName_organizationByName_users {
   __typename: "User";
   userID: string;
   name: string;
-  username: string | null;
+  username: string;
   photoURL: string | null;
+  readQuota: number;
+  writeQuota: number;
 }
 
 export interface OrganizationByName_organizationByName_services {

@@ -10,7 +10,7 @@ export interface ProjectByName_projectByName_users {
   __typename: "User";
   userID: string;
   name: string;
-  username: string | null;
+  username: string;
   photoURL: string | null;
 }
 

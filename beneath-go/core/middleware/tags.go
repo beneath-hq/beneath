@@ -60,6 +60,7 @@ func GetTags(ctx context.Context) *Tags {
 	if !ok {
 		panic(fmt.Errorf("couldn't get tags from context"))
 	}
+
 	return tags
 }
 

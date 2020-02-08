@@ -34,7 +34,7 @@ func (r *queryResolver) Service(ctx context.Context, serviceID uuid.UUID) (*enti
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to view organization resources")
+		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
 	}
 
 	return service, nil
@@ -49,7 +49,7 @@ func (r *queryResolver) ServiceByNameAndOrganization(ctx context.Context, name s
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to view organization resources")
+		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
 	}
 
 	return service, nil
@@ -90,6 +90,35 @@ func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUI
 	service, err := service.UpdateDetails(ctx, name, readQuota, writeQuota)
 	if err != nil {
 		return nil, err
+	}
+
+	return service, nil
+}
+
+func (r *mutationResolver) UpdateServiceOrganization(ctx context.Context, serviceID uuid.UUID, organizationID uuid.UUID) (*entity.Service, error) {
+	service := entity.FindService(ctx, serviceID)
+	if service == nil {
+		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
+	}
+
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	if service.OrganizationID == organizationID {
+		return nil, gqlerror.Errorf("The %s service is already owned by the %s organization", service.Name, organization.Name)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("You are not authorized for organization %s", organizationID.String())
+	}
+
+	service, err := service.UpdateOrganization(ctx, organizationID)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
 	}
 
 	return service, nil

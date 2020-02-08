@@ -57,13 +57,32 @@ const (
 	EuroCurrency Currency = "EUR"
 )
 
-// PaymentMethod represents
-type PaymentMethod string
+// PaymentMethodType represents
+type PaymentMethodType string
 
 const (
 	// CardPaymentMethod means the organization's credit/debit card will be charged automatically
-	CardPaymentMethod PaymentMethod = "card"
+	CardPaymentMethod PaymentMethodType = "card"
 
 	// WirePaymentMethod means the organization will pay via wire
-	WirePaymentMethod PaymentMethod = "wire"
+	WirePaymentMethod PaymentMethodType = "wire"
+)
+
+// PaymentsDriver represents the different ways an organization can pay its bill
+type PaymentsDriver string
+
+const (
+	// StripeCardDriver means the organization's credit/debit card will be charged automatically
+	StripeCardDriver PaymentsDriver = "stripecard"
+
+	// StripeWireDriver means the organization will pay via wire
+	StripeWireDriver PaymentsDriver = "stripewire"
+
+	// AnarchismDriver means the organization doesn't pay!!!
+	AnarchismDriver PaymentsDriver = "anarchism"
+)
+
+const (
+	// FreeBillingPlanID is the UUID of the Free plan
+	FreeBillingPlanID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 )

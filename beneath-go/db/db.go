@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/beneath-core/beneath-go/engine"
+	"github.com/beneath-core/beneath-go/payments/driver"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/redis/v7"
 )
@@ -15,6 +16,9 @@ var (
 
 	// Engine is the data plane
 	Engine *engine.Engine
+
+	// PaymentDrivers handle payment methods
+	PaymentDrivers map[string]driver.PaymentsDriver
 )
 
 // InitPostgres sets up Postgres connection
@@ -30,6 +34,11 @@ func InitRedis(redisURL string) {
 // InitEngine sets up the engine connection
 func InitEngine(mqDriver, lookupDriver, warehouseDriver string) {
 	Engine = engine.NewEngine(mqDriver, lookupDriver, warehouseDriver)
+}
+
+// SetPaymentDrivers injects the payment drivers into the db.PaymentDrivers object
+func SetPaymentDrivers(paymentDrivers map[string]driver.PaymentsDriver) {
+	PaymentDrivers = paymentDrivers
 }
 
 // Healthy returns true if connections are live

@@ -64,6 +64,58 @@ func Next(ts time.Time, p Period) time.Time {
 	}
 }
 
+// BeginningOfLastPeriod gets the beginning of the last period
+func BeginningOfLastPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Last(ts, p)
+}
+
+// BeginningOfThisPeriod gets the beginning of this period
+func BeginningOfThisPeriod(p Period) time.Time {
+	return Floor(time.Now(), p)
+}
+
+// BeginningOfNextPeriod gets the beginning of the next period
+func BeginningOfNextPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Next(ts, p)
+}
+
+// EndOfLastPeriod gets the end of the last period
+func EndOfLastPeriod(p Period) time.Time {
+	ts := time.Now().UTC()
+	return Floor(ts, p)
+}
+
+// DaysLeftInPeriod is used for prorated billing
+func DaysLeftInPeriod(ts time.Time, p Period) int {
+	ts = ts.UTC()
+	switch p {
+	case PeriodMonth:
+		return TotalDaysInPeriod(ts, p) - ts.Day()
+	case PeriodYear:
+		nextYear := Next(ts, p)
+		return int(nextYear.Sub(ts).Hours() / 24)
+	default:
+		panic(fmt.Errorf("unsupported billing period '%d'", p))
+	}
+}
+
+// TotalDaysInPeriod is used for prorated billing
+func TotalDaysInPeriod(ts time.Time, p Period) int {
+	ts = ts.UTC()
+	switch p {
+	case PeriodMonth:
+		return time.Date(ts.Year(), ts.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	case PeriodYear:
+		startYear := time.Date(ts.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+		endYear := time.Date(ts.Year()+1, 1, 1, 0, 0, 0, 0, time.UTC)
+		return int(endYear.Sub(startYear).Hours() / 24)
+	default:
+		panic(fmt.Errorf("unsupported billing period '%d'", p))
+	}
+}
+
 // UnixMilli converts t to milliseconds since 1970
 func UnixMilli(t time.Time) int64 {
 	return t.UnixNano() / int64(time.Millisecond)

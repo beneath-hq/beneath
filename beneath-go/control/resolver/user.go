@@ -72,13 +72,44 @@ func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 	usage := metrics.GetCurrentUsage(ctx, u.UserID)
 
 	return &gql.Me{
-		UserID:     u.UserID.String(),
-		User:       u,
-		Email:      u.Email,
-		ReadUsage:  int(usage.ReadBytes),
-		ReadQuota:  int(u.ReadQuota),
-		WriteUsage: int(usage.WriteBytes),
-		WriteQuota: int(u.WriteQuota),
-		UpdatedOn:  u.UpdatedOn,
+		UserID:       u.UserID.String(),
+		User:         u,
+		Email:        u.Email,
+		ReadUsage:    int(usage.ReadBytes),
+		ReadQuota:    int(u.ReadQuota),
+		WriteUsage:   int(usage.WriteBytes),
+		WriteQuota:   int(u.WriteQuota),
+		UpdatedOn:    u.UpdatedOn,
+		Organization: u.Organization,
 	}
+}
+
+func (r *mutationResolver) JoinOrganization(ctx context.Context, organizationName string) (*gql.Me, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsUser() {
+		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key")
+	}
+
+	organization := entity.FindOrganizationByName(ctx, organizationName)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationName)
+	}
+
+	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("You don't have permission to join organization %s", organizationName)
+	}
+
+	user := entity.FindUser(ctx, secret.GetOwnerID())
+
+	if user.Organization.Name == organizationName {
+		return nil, gqlerror.Errorf("You are already a member of organization %s", organizationName)
+	}
+
+	user, err := user.JoinOrganization(ctx, organization.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return userToMe(ctx, user), nil
 }

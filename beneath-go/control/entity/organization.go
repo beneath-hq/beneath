@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -21,14 +21,7 @@ type Organization struct {
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
 	Services       []*Service
-	Users          []*User `pg:"many2many:permissions_users_organizations,fk:organization_id,joinFK:user_id"`
-
-	// Extract to table BillingInfo with OrganizationID as the primary key
-	// Including UpdateBillingPlanID, UpdateStripeCustomerID, UpdatePaymentMethod
-	StripeCustomerID string
-	BillingPlanID    uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
-	BillingPlan      *BillingPlan
-	PaymentMethod    PaymentMethod
+	Users          []*User
 }
 
 var (
@@ -56,7 +49,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users", "BillingPlan").Select()
+	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -68,7 +61,7 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := db.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Services", "Users", "BillingPlan").
+		Column("organization.*", "Services", "Users").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -76,110 +69,64 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	return organization
 }
 
-// FindAllOrganizations returns all organizations
-func FindAllOrganizations(ctx context.Context) []Organization {
-	var organizations []Organization
-	err := db.DB.ModelContext(ctx, &organizations).Column("organization.*").Select()
+// FindAllOrganizations returns all active organizations
+func FindAllOrganizations(ctx context.Context) []*Organization {
+	var organizations []*Organization
+	err := db.DB.ModelContext(ctx, &organizations).
+		Column("organization.*").
+		Select()
 	if err != nil {
 		panic(err)
 	}
 	return organizations
 }
 
-// CreateOrganizationWithUser creates an organization
-func CreateOrganizationWithUser(ctx context.Context, name string, userID uuid.UUID) (*Organization, error) {
-	// create
+// UpdatePersonalStatus updates an organization's "personal" status
+// this is called when a user changes plans to/from an Enterprise plan
+func (o *Organization) UpdatePersonalStatus(ctx context.Context, personal bool) error {
 	org := &Organization{
-		Name: name,
+		OrganizationID: o.OrganizationID,
+		Personal:       personal,
+		UpdatedOn:      time.Now(),
 	}
 
-	// validate
-	err := GetValidator().Struct(org)
+	_, err := db.DB.ModelContext(ctx, org).
+		Column("personal", "updated_on").
+		WherePK().
+		Update()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// create organization
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert org
-		_, err := tx.Model(org).Insert()
-		if err != nil {
-			return err
-		}
+	// TODO: if upgrading to a non-personal plan, trigger an email to the user:
+	// -- if prevBillingPlan.Personal && !newBillingPlan.Personal, need to prompt the user to
+	// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
+	// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
 
-		// add user
-		err = tx.Insert(&PermissionsUsersOrganizations{
-			UserID:         userID,
-			OrganizationID: org.OrganizationID,
-			View:           true,
-			Admin:          true,
-		})
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return org, nil
+	return nil
 }
 
-// AddUser makes user a member of organization
-func (o *Organization) AddUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
-	return db.DB.WithContext(ctx).Insert(&PermissionsUsersOrganizations{
+// InviteUser gives a user permission to join the organization
+// the user must then "JoinOrganization" to officially change their membership
+func (o *Organization) InviteUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
+	// clear cache
+	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
+
+	perms := &PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 		View:           view,
 		Admin:          admin,
-	})
-}
+	}
 
-// ChangeUserPermissions changes a user's permissions within the organization
-func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
-	// TODO: convert permissions.Update (below) to this function
+	_, err := db.DB.ModelContext(ctx, perms).OnConflict("(user_id, organization_id) DO UPDATE").Insert()
+	if err != nil {
+		return err
+	}
+
+	// done
 	return nil
 }
-
-// Update changes a user's permissions within the organization
-// func (p *PermissionsUsersOrganizations) Update(ctx context.Context, view *bool, admin *bool) (*PermissionsUsersOrganizations, error) {
-// 	// Q: this won't fuck up the object "p" that I have, right?
-//  // A: No, it just invalidates it from the cache so other processes won't be served it
-//  // A2: But, we should actually move it to after the DB update for consistency
-// 	getUserOrganizationPermissionsCache().Clear(ctx, p.UserID, p.OrganizationID)
-
-// 	if view != nil {
-// 		p.View = *view
-// 	}
-// 	if admin != nil {
-// 		p.Admin = *admin
-// 	}
-// 	_, err := db.DB.ModelContext(ctx, p).Column("view", "admin").WherePK().Update()
-// 	return p, err
-// }
-
-// ChangeUserQuotas allows an admin to configure a member's quotas
-func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, readQuota int64, writeQuota int64) error {
-	// TODO: convert user.UpdateQuotas (below) to this function
-	return nil
-}
-
-// UpdateQuotas updates user's quotas
-// Q: do I have to invalidate the getSecretCache?
-// func (u *User) UpdateQuotas(ctx context.Context, readQuota *int, writeQuota *int) (*User, error) {
-// 	if readQuota != nil {
-// 		u.ReadQuota = int64(*readQuota)
-// 	}
-// 	if writeQuota != nil {
-// 		u.WriteQuota = int64(*writeQuota)
-// 	}
-// 	u.UpdatedOn = time.Now()
-// 	_, err := db.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-// 	return u, err
-// }
 
 // RemoveUser removes a member from the organization
 func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
@@ -195,26 +142,98 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	})
 }
 
-// UpdateBillingPlanID updates an organization's billing plan ID
-func (o *Organization) UpdateBillingPlanID(ctx context.Context, billingPlanID uuid.UUID) (*Organization, error) {
-	o.BillingPlanID = billingPlanID
+// ChangeName changes an organization's name
+func (o *Organization) ChangeName(ctx context.Context, name string) (*Organization, error) {
+	o.Name = name
 	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("billing_plan_id", "updated_on").WherePK().Update()
-	return o, err
+
+	_, err := db.DB.ModelContext(ctx, o).
+		Column("name").
+		WherePK().
+		Update()
+	if err != nil {
+		return nil, err
+	}
+
+	return o, nil
 }
 
-// UpdateStripeCustomerID updates an organization's Stripe Customer ID
-func (o *Organization) UpdateStripeCustomerID(ctx context.Context, stripeCustomerID string) error {
-	o.StripeCustomerID = stripeCustomerID
-	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("stripe_customer_id", "updated_on").WherePK().Update()
-	return err
+// ChangeUserPermissions changes a user's permissions within the organization
+// Q: this won't fuck up the object "p" that I have, right?
+// A: No, it just invalidates it from the cache so other processes won't be served it
+// A2: But, we should actually move it to after the DB update for consistency
+// Q: should this really be on the Organization struct (vs the Permissions struct)? it leads to a double "FindPermissions" call, as the resolver calls it right before calling this function
+func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UUID, view *bool, admin *bool) (*PermissionsUsersOrganizations, error) {
+	permissions := FindPermissionsUsersOrganizations(ctx, userID, o.OrganizationID)
+
+	getUserOrganizationPermissionsCache().Clear(ctx, permissions.UserID, permissions.OrganizationID)
+
+	if view != nil {
+		permissions.View = *view
+	}
+	if admin != nil {
+		permissions.Admin = *admin
+	}
+
+	_, err := db.DB.ModelContext(ctx, permissions).
+		Column("view", "admin").
+		WherePK().
+		Update()
+
+	return permissions, err
 }
 
-// UpdatePaymentMethod updates an organization's payment method type
-func (o *Organization) UpdatePaymentMethod(ctx context.Context, paymentMethod PaymentMethod) error {
-	o.PaymentMethod = paymentMethod
-	o.UpdatedOn = time.Now()
-	_, err := db.DB.ModelContext(ctx, o).Column("payment_method", "updated_on").WherePK().Update()
-	return err
+// ChangeUserQuotas allows an admin to configure a member's quotas
+// Q: do I have to invalidate the getSecretCache?
+// Q: should this really be on the Organization struct (vs the User struct)? it leads to a double "FindUser" call, as the resolver calls it right before calling this function
+func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*User, error) {
+	user := FindUser(ctx, userID)
+
+	if readQuota != nil {
+		user.ReadQuota = int64(*readQuota)
+	}
+	if writeQuota != nil {
+		user.WriteQuota = int64(*writeQuota)
+	}
+
+	user.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, user).
+		Column("read_quota", "write_quota", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+// Delete deletes the organization
+// this function will fail if there are still users remaining in the organization
+func (o *Organization) Delete(ctx context.Context) error {
+	// TODO: handle outstanding Services. currently, all the organization's services will be deleted.
+	// create a Service.ChangeOrganizationID(ctx, orgID) function that allows the user (with the correct before&after organization view permissions) to change a Service's OrganizationID
+	// before a user calls "JoinOrganization", need to prompt the user to migrate all services the new organization
+	for _, service := range o.Services {
+		log.S.Infof("the deletion of organization %s is leading to the deletion of service %s", o.Name, service.Name)
+	}
+
+	err := db.DB.WithContext(ctx).Delete(o)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// FindOrganizationPermissions retrieves all users' permissions for a given organization
+func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) []*PermissionsUsersOrganizations {
+	var permissions []*PermissionsUsersOrganizations
+	err := db.DB.ModelContext(ctx, &permissions).Where("permissions_users_organizations.organization_id = ?", organizationID).Column("permissions_users_organizations.*", "User", "Organization").Select()
+	if err != nil {
+		panic(err)
+	}
+
+	return permissions
 }

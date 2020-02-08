@@ -56,7 +56,7 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 	return project, nil
 }
 
-func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, site *string, description *string, photoURL *string) (*entity.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsUser() {
 		return nil, gqlerror.Errorf("Only users can create projects")
@@ -67,6 +67,15 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
+	bi := entity.FindBillingInfo(ctx, organizationID)
+	if bi == nil {
+		return nil, gqlerror.Errorf("Could not find billing info for organization %s", organizationID.String())
+	}
+
+	if !public && !bi.BillingPlan.PrivateProjects {
+		return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
+	}
+
 	project := &entity.Project{
 		Name:           name,
 		DisplayName:    DereferenceString(displayName),
@@ -74,7 +83,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		Site:           DereferenceString(site),
 		Description:    DereferenceString(description),
 		PhotoURL:       DereferenceString(photoURL),
-		Public:         true,
+		Public:         public,
 	}
 
 	err := project.CreateWithUser(ctx, secret.GetOwnerID(), true, true, true)
@@ -85,19 +94,62 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 	return project, nil
 }
 
-func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, site *string, description *string, photoURL *string) (*entity.Project, error) {
+func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
+	project := entity.FindProject(ctx, projectID)
+	if project == nil {
+		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
+	}
+
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, projectID, false)
 	if !perms.Admin {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
 	}
 
+	bi := entity.FindBillingInfo(ctx, project.OrganizationID)
+	if bi == nil {
+		return nil, gqlerror.Errorf("Could not find billing info for organization %s", project.OrganizationID.String())
+	}
+
+	if public != nil && !*public && !bi.BillingPlan.PrivateProjects {
+		return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
+	}
+
+	err := project.UpdateDetails(ctx, displayName, public, site, description, photoURL)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return project, nil
+}
+
+func (r *mutationResolver) UpdateProjectOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error) {
 	project := entity.FindProject(ctx, projectID)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
 	}
 
-	err := project.UpdateDetails(ctx, displayName, site, description, photoURL)
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	if project.OrganizationID == organizationID {
+		return nil, gqlerror.Errorf("The %s project is already owned by the %s organization", project.Name, organization.Name)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	projectPerms := secret.ProjectPermissions(ctx, projectID, false)
+	if !projectPerms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
+	}
+
+	organizationPerms := secret.OrganizationPermissions(ctx, organizationID)
+	if !organizationPerms.View {
+		return nil, gqlerror.Errorf("You are not authorized for organization %s", organizationID.String())
+	}
+
+	project, err := project.UpdateOrganization(ctx, organizationID)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}

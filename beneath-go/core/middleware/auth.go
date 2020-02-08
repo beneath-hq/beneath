@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -42,7 +43,7 @@ func Auth(next http.Handler) http.Handler {
 			}
 
 			secret = entity.AuthenticateWithToken(r.Context(), token)
-			if secret == nil {
+			if secret == nil || reflect.ValueOf(secret).IsNil() {
 				return httputil.NewError(400, "authentication error: token not found")
 			}
 		}

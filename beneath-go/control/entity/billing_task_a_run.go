@@ -1,12 +1,11 @@
 package entity
 
 import (
+	"context"
 	"time"
 
 	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core/log"
-
-	"context"
 )
 
 // RunBillingTask triggers billing (computation, invoice creation, and stripe)
@@ -19,6 +18,9 @@ func init() {
 }
 
 // Run triggers the task
+// it is expected that the task is run at the beginning of each month
+// organizations will be assessed usage and corresponding overage fees for the previous month
+// organizations will be charged seats for the upcoming month
 func (t *RunBillingTask) Run(ctx context.Context) error {
 	organizations := FindAllOrganizations(ctx)
 	timestamp := time.Now()

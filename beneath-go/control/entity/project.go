@@ -23,6 +23,7 @@ type Project struct {
 	Description    string    `validate:"omitempty,lte=255"`
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`
 	Public         bool      `sql:",notnull,default:true"`
+	Locked         bool      `sql:",notnull,default:false"`
 	OrganizationID uuid.UUID `sql:",notnull,type:uuid"`
 	Organization   *Organization
 	CreatedOn      time.Time `sql:",default:now()"`
@@ -90,6 +91,17 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 	return project
 }
 
+// FindOrganizationProjects returns all projects owned by an organization
+// TODO: Rename to FindProjectsByOrganizationID
+func FindOrganizationProjects(ctx context.Context, organizationID uuid.UUID) []*Project {
+	var projects []*Project
+	err := db.DB.ModelContext(ctx, &projects).Where("project.organization_id = ?", organizationID).Select()
+	if err != nil {
+		panic(err)
+	}
+	return projects
+}
+
 // GetProjectID implements engine/driver.Project
 func (p *Project) GetProjectID() uuid.UUID {
 	return p.ProjectID
@@ -155,7 +167,9 @@ func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, view bool, crea
 
 // RemoveUser removes a member from the project
 func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
-	// TODO remove from cache
+	// clear cache
+	getUserProjectPermissionsCache().Clear(ctx, userID, p.ProjectID)
+
 	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
 	return db.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
 		UserID:    userID,
@@ -164,10 +178,13 @@ func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 }
 
 // UpdateDetails updates projects user-facing details
-func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *string, description *string, photoURL *string) error {
+func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public *bool, site *string, description *string, photoURL *string) error {
 	// set fields
 	if displayName != nil {
 		p.DisplayName = *displayName
+	}
+	if public != nil {
+		p.Public = *public
 	}
 	if site != nil {
 		p.Site = *site
@@ -189,7 +206,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		p.UpdatedOn = time.Now()
 		_, err = db.DB.WithContext(ctx).Model(p).
-			Column("display_name", "site", "description", "photo_url").
+			Column("display_name", "public", "site", "description", "photo_url", "updated_on").
 			WherePK().
 			Update()
 		if err != nil {
@@ -204,6 +221,41 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, site *
 
 		return nil
 	})
+}
+
+// UpdateOrganization changes a project's organization
+func (p *Project) UpdateOrganization(ctx context.Context, organizationID uuid.UUID) (*Project, error) {
+	p.OrganizationID = organizationID
+	p.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, p).Column("organization_id", "updated_on").WherePK().Update()
+
+	// re-find project so we can return the name of the new organization
+	err = db.DB.ModelContext(ctx, p).
+		WherePK().
+		Column("project.*", "Organization").
+		Select()
+	if !AssertFoundOne(err) {
+		return nil, err
+	}
+
+	return p, err
+}
+
+// SetLock sets a project's "locked" status
+func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
+	p.Locked = isLocked
+	p.UpdatedOn = time.Now()
+
+	_, err := db.DB.ModelContext(ctx, p).
+		Column("locked", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete safely deletes the project (fails if the project still has content)
