@@ -51,9 +51,9 @@ message SubscribeRequest {
 }
 
 message SubscribeResponse {
-  repeated Record records = 1;
-  bytes from_cursor = 2;
-  bytes next_cursor = 3;
+  // repeated Record records = 1;
+  // bytes from_cursor = 2;
+  // bytes next_cursor = 3;
 }
 
 message PeekRequest {

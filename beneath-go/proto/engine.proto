@@ -11,8 +11,8 @@ message Record {
   int64 timestamp = 2;
 }
 
-message WriteRecordsReport {
+message WriteReport {
   bytes instance_id = 1;
-  int64 earliest_timestamp = 2;
+  int32 records_count = 2;
   int32 bytes_total = 3;
 }
