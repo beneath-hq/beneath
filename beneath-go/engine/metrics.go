@@ -3,7 +3,7 @@ package engine
 import (
 	"context"
 
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 )
 
 // CommitUsage writes a batch of usage metrics

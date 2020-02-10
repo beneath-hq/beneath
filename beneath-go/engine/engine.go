@@ -34,6 +34,19 @@ func NewEngine(mqDriver, lookupDriver, warehouseDriver string) *Engine {
 	e.maxRecordSize = mathutil.MinInts(e.Lookup.MaxRecordSize(), e.Warehouse.MaxRecordSize())
 	e.maxKeySize = mathutil.MinInts(e.Lookup.MaxKeySize(), e.Warehouse.MaxKeySize())
 
+	err := e.MQ.RegisterTopic(tasksTopic)
+	if err != nil {
+		panic(err)
+	}
+	err = e.MQ.RegisterTopic(writeRequestsTopic)
+	if err != nil {
+		panic(err)
+	}
+	err = e.MQ.RegisterTopic(writeReportsTopic)
+	if err != nil {
+		panic(err)
+	}
+
 	return e
 }
 
