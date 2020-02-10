@@ -47,6 +47,7 @@ require (
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c // indirect
+	github.com/segmentio/ksuid v1.0.2
 	github.com/stretchr/testify v1.4.0
 	github.com/stripe/stripe-go v66.1.1+incompatible
 	github.com/vektah/gqlparser v1.1.2
