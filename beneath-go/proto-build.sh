@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
-protoc -I proto/ proto/*.proto --go_out=plugins=grpc:proto
-protoc -I engine/driver/bigtable/proto/ engine/driver/bigtable/proto/*.proto --go_out=plugins=grpc:engine/driver/bigtable/proto
+
+shopt -s expand_aliases
+alias compile="protoc --go_out=plugins=grpc,paths=source_relative:."
+
+compile proto/*.proto
+compile engine/proto/*.proto
+compile engine/driver/bigtable/proto/*.proto 
+

@@ -6,7 +6,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 )
 
 // CommitUsage implements engine.LookupService

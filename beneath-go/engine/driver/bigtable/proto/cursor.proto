@@ -1,6 +1,6 @@
 syntax = "proto3";
-
-package proto;
+option go_package = "proto";
+package bigtable;
 
 message CursorSet {
 	repeated Cursor cursors = 1;

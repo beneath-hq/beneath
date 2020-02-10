@@ -1,12 +1,11 @@
 syntax = "proto3";
+option go_package = "github.com/beneath-core/beneath-go/proto";
+package gateway;
 
-option java_multiple_files = true;
-option java_package = "network.beneath.proto";
-option java_outer_classname = "BeneathProto";
-
-package proto;
-
-import "engine.proto";
+message Record {
+  bytes avro_data = 1;
+  int64 timestamp = 2;
+}
 
 service Gateway {
   rpc Query(QueryRequest) returns (QueryResponse) {}
@@ -84,6 +83,7 @@ message WriteRequest {
 }
 
 message WriteResponse {
+  bytes write_id = 1;
 }
 
 message PingRequest {

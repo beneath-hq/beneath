@@ -7,16 +7,16 @@ import (
 	"sync"
 	"time"
 
+	chimiddleware "github.com/go-chi/chi/middleware"
+	"github.com/gorilla/websocket"
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 	"github.com/beneath-core/beneath-go/metrics"
-	pb "github.com/beneath-core/beneath-go/proto"
-
-	chimiddleware "github.com/go-chi/chi/middleware"
-	"github.com/gorilla/websocket"
-	uuid "github.com/satori/go.uuid"
 )
 
 // Request bundles the client's message with the clientID

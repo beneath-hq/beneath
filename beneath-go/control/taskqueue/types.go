@@ -10,7 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 )
 
 // Task is the abstract interface for a worker task

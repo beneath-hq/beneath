@@ -8,21 +8,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/go-chi/chi"
+	chimiddleware "github.com/go-chi/chi/middleware"
+	"github.com/rs/cors"
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
+	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/queryparse"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway/http/websockets"
 	pb "github.com/beneath-core/beneath-go/proto"
-
-	"github.com/go-chi/chi"
-	chimiddleware "github.com/go-chi/chi/middleware"
-	"github.com/rs/cors"
-	uuid "github.com/satori/go.uuid"
 )
 
 // Handler serves the gateway HTTP API

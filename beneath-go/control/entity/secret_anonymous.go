@@ -5,7 +5,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/core/log"
 
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 	uuid "github.com/satori/go.uuid"
 )
 

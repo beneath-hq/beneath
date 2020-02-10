@@ -8,7 +8,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/core/codec"
 	"github.com/beneath-core/beneath-go/core/queryparse"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath

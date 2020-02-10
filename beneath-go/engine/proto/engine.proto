@@ -1,0 +1,18 @@
+syntax = "proto3";
+option go_package = "github.com/beneath-core/beneath-go/engine/proto";
+package engine;
+
+import "proto/gateway.proto";
+
+message WriteRequest {
+  bytes write_id = 1;
+  bytes instance_id = 2;
+  repeated gateway.Record records = 3;
+}
+
+message WriteReport {
+  bytes write_id = 1;
+  bytes instance_id = 2;
+  int32 records_count = 3;
+  int32 bytes_total = 4;
+}

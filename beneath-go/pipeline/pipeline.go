@@ -13,7 +13,8 @@ import (
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/engine/driver"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/engine/proto"
+	pbgw "github.com/beneath-core/beneath-go/proto"
 )
 
 const (
@@ -99,10 +100,11 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	}
 
 	// publish write report (used for streaming updates)
-	err = db.Engine.QueueWriteReport(ctx, &pb.WriteRecordsReport{
-		InstanceId:        instanceID.Bytes(),
-		EarliestTimestamp: minTimestamp,
-		BytesTotal:        int32(bytesTotal),
+	err = db.Engine.QueueWriteReport(ctx, &pb.WriteReport{
+		WriteId:      req.WriteId,
+		InstanceId:   instanceID.Bytes(),
+		RecordsCount: int32(len(req.Records)),
+		BytesTotal:   int32(bytesTotal),
 	})
 	if err != nil {
 		return err
@@ -126,11 +128,11 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 
 // record implements driver.Record
 type record struct {
-	Proto      *pb.Record
+	Proto      *pbgw.Record
 	Structured map[string]interface{}
 }
 
-func newRecord(stream driver.Stream, proto *pb.Record) record {
+func newRecord(stream driver.Stream, proto *pbgw.Record) record {
 	structured, err := stream.GetCodec().UnmarshalAvro(proto.AvroData)
 	if err != nil {
 		panic(err)
