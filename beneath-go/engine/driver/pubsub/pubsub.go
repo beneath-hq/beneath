@@ -23,11 +23,9 @@ type configSpecification struct {
 
 // PubSub implements beneath.MessageQueue
 type PubSub struct {
-	config             *configSpecification
-	Client             *pubsub.Client
-	WriteRequestsTopic *pubsub.Topic
-	WriteReportsTopic  *pubsub.Topic
-	TaskQueueTopic     *pubsub.Topic
+	config *configSpecification
+	Client *pubsub.Client
+	Topics map[string]*pubsub.Topic
 }
 
 // Global
@@ -55,12 +53,8 @@ func createGlobal() {
 	global = PubSub{
 		config: &config,
 		Client: client,
+		Topics: make(map[string]*pubsub.Topic),
 	}
-
-	// set topics
-	// p.WriteRequestsTopic = p.makeTopic(config.WriteRequestsTopic)
-	// p.WriteReportsTopic = p.makeTopic(config.WriteReportsTopic)
-	// p.TaskQueueTopic = p.makeTopic(config.TaskQueueTopic)
 }
 
 // GetMessageQueue returns a Google PubSub implementation of beneath.MessageQueue

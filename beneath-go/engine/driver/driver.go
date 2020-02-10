@@ -20,11 +20,11 @@ type MessageQueue interface {
 	RegisterTopic(name string) error
 
 	// Publish should issue a new message to all the topic's subscribers
-	Publish(topic string, msg []byte) error
+	Publish(ctx context.Context, topic string, msg []byte) error
 
 	// Subscribe should create a subscription for new messages on the topic.
-	// If persistant, messages missed when offline should accumulate and be delivered on reconnect.
-	Subscribe(topic string, name string, persistant bool, fn func(ctx context.Context, msg []byte) error) error
+	// If persistent, messages missed when offline should accumulate and be delivered on reconnect.
+	Subscribe(ctx context.Context, topic string, name string, persistent bool, fn func(ctx context.Context, msg []byte) error) error
 }
 
 // Service encapsulates functionality expected of components that store instance data in Beneath
