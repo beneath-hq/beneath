@@ -12,7 +12,6 @@ import (
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
-	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/payments/driver"
 	"github.com/beneath-core/beneath-go/payments/driver/stripeutil"
 	uuid "github.com/satori/go.uuid"
@@ -313,38 +312,7 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 
 // IssueInvoiceForResources implements Payments interface
 func (c *StripeCard) IssueInvoiceForResources(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) error {
-	if billingInfo.GetDriverPayload()["customer_id"] == nil {
-		panic("stripe customer id is not set")
-	}
-
-	var seatCount int64
-	var seatPrice int64
-	var seatStartTime int64
-	var seatEndTime int64
-
-	for _, item := range billedResources {
-		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
-		// only itemize the products for this month's bill
-		if (item.GetTotalPriceCents() != 0) && (item.GetBillingTime().UTC() == timeutil.BeginningOfThisPeriod(timeutil.PeriodMonth)) {
-			// count seats, itemize everything else
-			if item.GetProduct() == string(entity.SeatProduct) {
-				seatCount++
-				seatPrice = int64(item.GetTotalPriceCents())
-				seatStartTime = item.GetStartTime().Unix()
-				seatEndTime = item.GetEndTime().Unix()
-			} else {
-				stripeutil.NewInvoiceItemOther(billingInfo.GetDriverPayload()["customer_id"].(string), int64(item.GetTotalPriceCents()), string(billingInfo.GetBillingPlanCurrency()), item.GetStartTime().Unix(), item.GetEndTime().Unix(), stripeutil.PrettyDescription(item.GetProduct()))
-			}
-		}
-	}
-
-	// batch seats
-	if seatCount > 0 {
-		stripeutil.NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, stripeutil.PrettyDescription(string(entity.SeatProduct)))
-	}
-
-	inv := stripeutil.CreateInvoice(billingInfo.GetDriverPayload()["customer_id"].(string), billingInfo.GetPaymentsDriver())
-
+	inv := stripeutil.CreateStripeInvoice(billingInfo, billedResources)
 	stripeutil.PayInvoice(inv.ID)
 
 	return nil

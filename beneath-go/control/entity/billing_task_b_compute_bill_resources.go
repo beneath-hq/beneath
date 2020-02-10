@@ -141,11 +141,11 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 
 	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
 	proratedPrice := int32(math.Round(float64(billingPlan.SeatPriceCents) * proratedFraction))
-	product := SeatProduct
+	product := SeatProratedProduct
 
 	if credit {
 		proratedPrice *= -1
-		product = SeatCreditProduct
+		product = SeatProratedCreditProduct
 	}
 
 	var billedResources []*BilledResource
@@ -397,11 +397,6 @@ func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *bi
 		} else {
 			panic("billing period is not supported")
 		}
-	} else {
-		// FOR TESTING (since I don't have usage data from last month):
-		// startTime = startTime.AddDate(0, 1, 0)
-		// endTime = endTime.AddDate(0, 1, 0)
-		// billingTime = billingTime.AddDate(0, 1, 0)
 	}
 
 	return &billTimes{

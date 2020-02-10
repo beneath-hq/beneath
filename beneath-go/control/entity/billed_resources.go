@@ -78,3 +78,8 @@ func (br *BilledResource) GetBillingTime() time.Time {
 func (br *BilledResource) GetProduct() string {
 	return string(br.Product)
 }
+
+// GetEntityName implements payments/driver.BilledResource
+func (br *BilledResource) GetEntityName() string {
+	return string(br.EntityName)
+}
