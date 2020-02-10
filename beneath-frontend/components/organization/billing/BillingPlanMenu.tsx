@@ -30,7 +30,7 @@ const BillingPlanMenu: FC = () => {
   }
 
   if (contactUs) {
-    // TODO: go to about.beneath.com/contact/demo
+    window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
   }
 
   return (
