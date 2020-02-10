@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	daysUntilInvoiceDue = 10
+	daysUntilInvoiceDue = 15
 )
 
 // InitStripe sets our Stripe API key

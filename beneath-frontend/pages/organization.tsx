@@ -29,7 +29,7 @@ const OrganizationPage = () => {
   const organizationName = toBackendName(router.query.name)
 
   if (me.organization.name !== organizationName) {
-    return <ErrorPage message={"You are not a member of this organization."} />
+    return <ErrorPage message={"You are not a member of an organization named '" + organizationName + "'."} />
   }
 
   // const tabs = [{ value: "users", label: "Users", render: () => <ViewUsers organization={organization} /> },
