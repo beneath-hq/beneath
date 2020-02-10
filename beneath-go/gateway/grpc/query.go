@@ -3,6 +3,11 @@ package grpc
 import (
 	"context"
 
+	uuid "github.com/satori/go.uuid"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/queryparse"
@@ -10,10 +15,6 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway"
 	pb "github.com/beneath-core/beneath-go/proto"
-	uuid "github.com/satori/go.uuid"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (s *gRPCServer) Peek(ctx context.Context, req *pb.PeekRequest) (*pb.PeekResponse, error) {

@@ -13,6 +13,8 @@ import (
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
+	"github.com/beneath-core/beneath-go/engine"
+	pb_engine "github.com/beneath-core/beneath-go/engine/proto"
 	"github.com/beneath-core/beneath-go/gateway"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
@@ -96,7 +98,12 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// write request to engine
-	err = db.Engine.QueueWriteRequest(ctx, req)
+	writeID := engine.GenerateWriteID()
+	err = db.Engine.QueueWriteRequest(ctx, &pb_engine.WriteRequest{
+		WriteId:    writeID,
+		InstanceId: req.InstanceId,
+		Records:    req.Records,
+	})
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -109,6 +116,8 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	payload.BytesWritten = bytesWritten
 	middleware.SetTagsPayload(ctx, payload)
 
-	response := &pb.WriteResponse{}
+	response := &pb.WriteResponse{
+		WriteId: writeID,
+	}
 	return response, nil
 }
