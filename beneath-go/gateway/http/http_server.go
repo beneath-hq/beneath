@@ -50,11 +50,6 @@ func Handler() http.Handler {
 	handler.Get("/", healthCheck)
 	handler.Get("/healthz", healthCheck)
 
-	// TODO: Add graphql
-	// GraphQL endpoints
-	// handler.Get("/graphql")
-	// handler.Get("/projects/{projectName}/graphql")
-
 	// create websocket broker and start accepting new connections on /ws
 	broker := websockets.NewBroker(db.Engine, Metrics)
 	handler.Method("GET", "/ws", httputil.AppHandler(broker.HTTPHandler))

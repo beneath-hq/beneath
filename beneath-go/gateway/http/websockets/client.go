@@ -6,13 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core/secrettoken"
+	"github.com/gorilla/websocket"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
-	uuid "github.com/satori/go.uuid"
-
-	"github.com/gorilla/websocket"
+	"github.com/beneath-core/beneath-go/core/secrettoken"
 )
 
 // SubscriptionID is an identifer passed by a user to distinguish between data when they

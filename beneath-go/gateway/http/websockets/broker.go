@@ -13,9 +13,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
-	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/engine"
-	pb "github.com/beneath-core/beneath-go/engine/proto"
 	"github.com/beneath-core/beneath-go/metrics"
 )
 
@@ -37,6 +35,12 @@ type Broker struct {
 	// context used by the broker
 	ctx context.Context
 
+	// Reference to the engine that supplies new data
+	engine *engine.Engine
+
+	// Metrics broker
+	metrics *metrics.Broker
+
 	// use to register a new client with the broker
 	register chan *Client
 
@@ -48,12 +52,6 @@ type Broker struct {
 
 	// use to distribute records to subscribed clients
 	dispatch chan Dispatch
-
-	// Reference to the engine that supplies new data
-	engine *engine.Engine
-
-	// Metrics broker
-	metrics *metrics.Broker
 
 	// used to manage websocket
 	upgrader *websocket.Upgrader
@@ -76,7 +74,7 @@ const (
 )
 
 // NewBroker initializes a new Broker
-func NewBroker(engine *engine.Engine, metricsBroker *metrics.Broker) *Broker {
+func NewBroker(engine *engine.Engine, metrics *metrics.Broker) *Broker {
 	// create upgrader
 	upgrader := &websocket.Upgrader{
 		EnableCompression: true,
@@ -88,12 +86,12 @@ func NewBroker(engine *engine.Engine, metricsBroker *metrics.Broker) *Broker {
 	// create broker
 	broker := &Broker{
 		ctx:             context.Background(),
+		engine:          engine,
+		metrics:         metrics,
 		register:        make(chan *Client),
 		unregister:      make(chan *Client),
 		requests:        make(chan Request),
 		dispatch:        make(chan Dispatch),
-		engine:          engine,
-		metrics:         metricsBroker,
 		upgrader:        upgrader,
 		keepAliveTicker: time.NewTicker(connectionKeepAliveInterval),
 		clients:         make(map[*Client]bool),
@@ -102,14 +100,6 @@ func NewBroker(engine *engine.Engine, metricsBroker *metrics.Broker) *Broker {
 
 	// initialize run loop
 	go broker.runForever()
-
-	// initialize reading data from engine (puts data on Dispatch, which is read in runForever)
-	go func() {
-		err := engine.ReadWriteReports(broker.handleWriteReport)
-		if err != nil {
-			panic(err)
-		}
-	}()
 
 	// done
 	return broker
@@ -175,85 +165,6 @@ func (b *Broker) sendKeepAlive() {
 		"clients", len(b.clients),
 		"elapsed", elapsed,
 	)
-}
-
-// Handles incoming write report from pubsub and puts them on the dispatch channel.
-// It checks if there are any subscribers for this report before dispatching it.
-// If there are subscribers, it gets the full records from bigtable first.
-func (b *Broker) handleWriteReport(ctx context.Context, rep *pb.WriteRecordsReport) error {
-	// metrics to track
-	startTime := time.Now()
-
-	// get instance and filter
-	instanceID := uuid.FromBytesOrNil(rep.InstanceId)
-	filter := SubscriptionFilter(instanceID)
-
-	// check if worth continuing
-	b.subscriptionsMu.RLock()
-	n := len(b.subscriptions[filter])
-	b.subscriptionsMu.RUnlock()
-	if n == 0 {
-		return nil
-	}
-
-	// get stream
-	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
-	if stream == nil {
-		panic(fmt.Errorf("cached stream is null for instance_id %s", instanceID.String()))
-	}
-
-	// read and decode records matchin rep.Keys from Tables
-	var bytesRead int64
-	records := make([]map[string]interface{}, len(rep.Keys))
-	err := b.engine.Tables.ReadRecords(ctx, instanceID, rep.Keys, func(idx uint, avroData []byte, timestamp time.Time) error {
-		// decode the avro data
-		obj, err := stream.Codec.UnmarshalAvro(avroData)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data")
-		}
-
-		// assert that the decoded data is a map
-		data, err := stream.Codec.ConvertFromAvroNative(obj, true)
-		if err != nil {
-			return fmt.Errorf("unable to decode avro data")
-		}
-
-		// assign timestamp into data
-		data["@meta"] = map[string]interface{}{
-			"timestamp": timeutil.UnixMilli(timestamp),
-		}
-
-		// assign key to value
-		records[idx] = data
-
-		// track bytes read
-		bytesRead += int64(len(avroData))
-
-		return nil
-	})
-
-	if err != nil {
-		panic(fmt.Errorf("error reading Tables for instance ID '%s': %v", instanceID.String(), err.Error()))
-	}
-
-	// push to dispatch channel
-	b.dispatch <- Dispatch{
-		Filter:  filter,
-		Records: records,
-		Bytes:   bytesRead,
-	}
-
-	// log metrics
-	elapsed := time.Since(startTime)
-	log.S.Infow(
-		"ws dispatch",
-		"rows", len(records),
-		"instance", instanceID.String(),
-		"clients", n,
-		"elapsed", elapsed,
-	)
-
-	return nil
 }
 
 // handle a new client

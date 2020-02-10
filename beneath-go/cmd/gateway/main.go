@@ -11,6 +11,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
+	gw "github.com/beneath-core/beneath-go/gateway"
 	gwgrpc "github.com/beneath-core/beneath-go/gateway/grpc"
 	gwhttp "github.com/beneath-core/beneath-go/gateway/http"
 )
@@ -37,6 +38,10 @@ func main() {
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	db.InitRedis(config.RedisURL)
 	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
+
+	// Init gateway globals
+	gw.InitMetrics()
+	gw.InitSubscriptions(db.Engine)
 
 	// Init segment
 	segment.InitClient(config.SegmentSecret)

@@ -21,10 +21,6 @@ func (s *gRPCServer) Peek(ctx context.Context, req *pb.PeekRequest) (*pb.PeekRes
 	panic("not implemented")
 }
 
-func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {
-	panic("not implemented")
-}
-
 func (s *gRPCServer) Repartition(ctx context.Context, req *pb.RepartitionRequest) (*pb.RepartitionResponse, error) {
 	panic("not implemented")
 }
