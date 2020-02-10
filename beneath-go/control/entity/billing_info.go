@@ -100,8 +100,7 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 
 		// if downgrading from private projects, lock down organization's outstanding private projects
 		if !newBillingPlan.PrivateProjects && prevBillingPlan.PrivateProjects {
-			projects := FindOrganizationProjects(ctx, organizationID)
-			for _, p := range projects {
+			for _, p := range organization.Projects {
 				if !p.Public {
 					err = p.SetLock(ctx, true)
 					if err != nil {

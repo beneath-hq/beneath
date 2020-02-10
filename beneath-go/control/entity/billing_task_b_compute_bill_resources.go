@@ -10,6 +10,7 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/metrics"
 	"github.com/beneath-core/beneath-go/taskqueue"
+	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -95,7 +96,8 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 
 func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, users []*User, billTimes *billTimes) error {
 	if len(users) == 0 {
-		panic("no users in this organization")
+		log.S.Info("no users in this organization -- this organization must be getting deleted")
+		return nil
 	}
 
 	var billedResources []*BilledResource
@@ -131,18 +133,19 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 
 	now := time.Now()
 	p := billingPlan.Period
-
 	billTimes := &billTimes{
-		BillingTime: timeutil.BeginningOfNextPeriod(p),
+		BillingTime: timeutil.Next(now, p),
 		StartTime:   now,
-		EndTime:     timeutil.BeginningOfNextPeriod(p),
+		EndTime:     timeutil.Next(now, p),
 	}
 
 	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
 	proratedPrice := int32(math.Round(float64(billingPlan.SeatPriceCents) * proratedFraction))
+	product := SeatProduct
 
 	if credit {
-		proratedPrice = -1 * proratedPrice
+		proratedPrice *= -1
+		product = SeatCreditProduct
 	}
 
 	var billedResources []*BilledResource
@@ -155,7 +158,7 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 			EntityKind:      UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
-			Product:         SeatProduct,
+			Product:         product,
 			Quantity:        1,
 			TotalPriceCents: proratedPrice,
 			Currency:        billingPlan.Currency,
@@ -232,10 +235,12 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 		panic("organization not found")
 	}
 
+	now := time.Now()
+	p := billingInfo.BillingPlan.Period
 	billTimes := &billTimes{
-		BillingTime: timeutil.BeginningOfNextPeriod(billingInfo.BillingPlan.Period),
-		StartTime:   timeutil.BeginningOfThisPeriod(billingInfo.BillingPlan.Period),
-		EndTime:     time.Now(),
+		BillingTime: timeutil.Next(now, p),
+		StartTime:   timeutil.Floor(now, p),
+		EndTime:     now,
 	}
 
 	var billedResources []*BilledResource
@@ -246,15 +251,16 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 	}
 
 	if len(monthlyMetrics) == 1 {
-		readQuantity := int64(0)
-		writeQuantity := int64(0)
+		readQuantity := monthlyMetrics[0].ReadBytes
+		writeQuantity := monthlyMetrics[0].WriteBytes
+		readProduct := ReadProduct
+		writeProduct := WriteProduct
 
 		if credit {
-			readQuantity = -1 * monthlyMetrics[0].ReadBytes
-			writeQuantity = -1 * monthlyMetrics[0].WriteBytes
-		} else {
-			readQuantity = monthlyMetrics[0].ReadBytes
-			writeQuantity = monthlyMetrics[0].WriteBytes
+			readQuantity *= -1
+			writeQuantity *= -1
+			readProduct = ReadCreditProduct
+			writeProduct = WriteCreditProduct
 		}
 
 		// add reads
@@ -266,7 +272,7 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 			EntityKind:      entityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
-			Product:         ReadProduct,
+			Product:         readProduct,
 			Quantity:        readQuantity,
 			TotalPriceCents: 0,
 			Currency:        billingInfo.BillingPlan.Currency,
@@ -281,20 +287,18 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 			EntityKind:      entityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
-			Product:         WriteProduct,
+			Product:         writeProduct,
 			Quantity:        writeQuantity,
 			TotalPriceCents: 0,
 			Currency:        billingInfo.BillingPlan.Currency,
 		})
-	} else if len(monthlyMetrics) > 1 {
-		panic("expected a maximum of one item in monthlyMetrics")
-	}
 
-	if len(billedResources) > 0 {
 		err = CreateOrUpdateBilledResources(ctx, billedResources)
 		if err != nil {
 			panic("unable to write billed resources to table")
 		}
+	} else if len(monthlyMetrics) > 1 {
+		panic("monthlyMetrics can't have more than one item")
 	}
 
 	// done
@@ -302,12 +306,25 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 }
 
 func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, product Product, organizationName string, billTimes *billTimes) error {
+	var creditProduct Product
+	if product == ReadProduct {
+		creditProduct = ReadCreditProduct
+	} else if product == WriteProduct {
+		creditProduct = WriteCreditProduct
+	} else {
+		panic("overage only applies to read and write products")
+	}
+
 	// fetch the organization's billed resources for the period
 	var billedResources []*BilledResource
 	err := db.DB.ModelContext(ctx, &billedResources).
 		Where("organization_id = ?", organizationID).
 		Where("billing_time = ?", billTimes.BillingTime).
-		Where("product = ?", product).
+		WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+			q = q.WhereOr("product = ?", product).
+				WhereOr("product = ?", creditProduct)
+			return q, nil
+		}).
 		Select()
 	if err != nil {
 		panic(err)
@@ -366,9 +383,9 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 
 // on the first of each month, we charge for: the upcoming month's seats; the previous month's overage
 func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *billTimes {
-	billingTime := timeutil.BeginningOfThisPeriod(p)
-	startTime := timeutil.BeginningOfLastPeriod(p)
-	endTime := timeutil.EndOfLastPeriod(p)
+	billingTime := timeutil.Floor(ts, p)
+	startTime := timeutil.Last(ts, p)
+	endTime := timeutil.Floor(ts, p)
 
 	if isSeatProduct {
 		if p == timeutil.PeriodMonth {

@@ -33,11 +33,20 @@ const (
 	// SeatProduct represents the seat product
 	SeatProduct Product = "seat"
 
+	// SeatCreditProduct represents credit for the seat product
+	SeatCreditProduct Product = "seat_credit"
+
 	// ReadProduct represents the read product
 	ReadProduct Product = "read"
 
 	// WriteProduct represents the write product
 	WriteProduct Product = "write"
+
+	// ReadCreditProduct represents usage credit for the read product
+	ReadCreditProduct Product = "read_credit"
+
+	// WriteCreditProduct represents usage credit for the write product
+	WriteCreditProduct Product = "write_credit"
 
 	// ReadOverageProduct represents the read_overage product
 	ReadOverageProduct Product = "read_overage"

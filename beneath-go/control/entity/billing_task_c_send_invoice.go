@@ -49,5 +49,15 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		panic("couldn't issue invoice")
 	}
 
+	// delete organization if no more users
+	organization := FindOrganization(ctx, t.OrganizationID)
+	if organization == nil {
+		panic("didn't find organization")
+	}
+
+	if len(organization.Users) == 0 {
+		organization.Delete(ctx)
+	}
+
 	return nil
 }

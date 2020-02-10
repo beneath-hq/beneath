@@ -24,7 +24,7 @@ type Project struct {
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`
 	Public         bool      `sql:",notnull,default:true"`
 	Locked         bool      `sql:",notnull,default:false"`
-	OrganizationID uuid.UUID `sql:",notnull,type:uuid"`
+	OrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
@@ -89,16 +89,6 @@ func FindProjectByName(ctx context.Context, name string) *Project {
 		return nil
 	}
 	return project
-}
-
-// FindOrganizationProjects returns all projects owned by an organization
-func FindOrganizationProjects(ctx context.Context, organizationID uuid.UUID) []*Project {
-	var projects []*Project
-	err := db.DB.ModelContext(ctx, &projects).Where("project.organization_id = ?", organizationID).Select()
-	if err != nil {
-		panic(err)
-	}
-	return projects
 }
 
 // CreateWithUser creates a project and makes user a member

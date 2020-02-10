@@ -8,7 +8,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -20,6 +19,7 @@ type Organization struct {
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	DeletedOn      time.Time
+	Projects       []*Project
 	Services       []*Service
 	Users          []*User
 }
@@ -49,7 +49,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Services", "Users").Select()
+	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Projects", "Services", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -61,7 +61,7 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := db.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Services", "Users").
+		Column("organization.*", "Projects", "Services", "Users").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -210,15 +210,8 @@ func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, r
 }
 
 // Delete deletes the organization
-// this function will fail if there are still users remaining in the organization
+// this will fail if there are any users, services, or projects that are still tied to the organization
 func (o *Organization) Delete(ctx context.Context) error {
-	// TODO: handle outstanding Services. currently, all the organization's services will be deleted.
-	// create a Service.ChangeOrganizationID(ctx, orgID) function that allows the user (with the correct before&after organization view permissions) to change a Service's OrganizationID
-	// before a user calls "JoinOrganization", need to prompt the user to migrate all services the new organization
-	for _, service := range o.Services {
-		log.S.Infof("the deletion of organization %s is leading to the deletion of service %s", o.Name, service.Name)
-	}
-
 	err := db.DB.WithContext(ctx).Delete(o)
 	if err != nil {
 		return err

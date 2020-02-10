@@ -90,23 +90,41 @@ func (r *mutationResolver) JoinOrganization(ctx context.Context, organizationNam
 		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key")
 	}
 
-	organization := entity.FindOrganizationByName(ctx, organizationName)
-	if organization == nil {
+	user := entity.FindUser(ctx, secret.GetOwnerID())
+	if user == nil {
+		return nil, gqlerror.Errorf("User not found")
+	}
+
+	newOrganization := entity.FindOrganizationByName(ctx, organizationName)
+	if newOrganization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationName)
 	}
 
-	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+	perms := secret.OrganizationPermissions(ctx, newOrganization.OrganizationID)
 	if !perms.View {
 		return nil, gqlerror.Errorf("You don't have permission to join organization %s", organizationName)
 	}
 
-	user := entity.FindUser(ctx, secret.GetOwnerID())
+	prevOrganization := entity.FindOrganization(ctx, user.OrganizationID)
+	if prevOrganization == nil {
+		return nil, gqlerror.Errorf("The user's existing organization was not found")
+	}
 
-	if user.Organization.Name == organizationName {
+	if prevOrganization.Name == organizationName {
 		return nil, gqlerror.Errorf("You are already a member of organization %s", organizationName)
 	}
 
-	user, err := user.JoinOrganization(ctx, organization.OrganizationID)
+	numProjects := len(prevOrganization.Projects)
+	if len(prevOrganization.Users) == 1 && numProjects > 0 {
+		return nil, gqlerror.Errorf("You cannot leave an organization with %d project(s) remaining. Please delete the projects or 'migrate' them to your new organization.", numProjects)
+	}
+
+	numServices := len(prevOrganization.Services)
+	if len(prevOrganization.Users) == 1 && numServices > 0 {
+		return nil, gqlerror.Errorf("You cannot leave an organization with %d service(s) remaining. Please delete the services or 'migrate' them to your new organization.", numServices)
+	}
+
+	user, err := user.JoinOrganization(ctx, newOrganization.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
