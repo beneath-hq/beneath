@@ -17,10 +17,6 @@ import (
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
-func (s *gRPCServer) Peek(ctx context.Context, req *pb.PeekRequest) (*pb.PeekResponse, error) {
-	panic("not implemented")
-}
-
 func (s *gRPCServer) Repartition(ctx context.Context, req *pb.RepartitionRequest) (*pb.RepartitionResponse, error) {
 	panic("not implemented")
 }
@@ -145,11 +141,8 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	response := &pb.ReadResponse{}
 	bytesRead := 0
 
-	for {
-		record := it.Next()
-		if record == nil {
-			break
-		}
+	for it.Next() {
+		record := it.Record()
 
 		recordProto := &pb.Record{
 			AvroData:  record.GetAvro(),
