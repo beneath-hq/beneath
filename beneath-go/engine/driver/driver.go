@@ -127,8 +127,11 @@ type StreamInstance interface {
 
 // RecordsIterator allows iterating over a list of records in various formats
 type RecordsIterator interface {
-	// Next should return the next record in the iterator or nil if it's emptied
-	Next() Record
+	// Next should advance the iterator and return true if succesful (i.e. there's another record)
+	Next() bool
+
+	// Record should return the current record. If Next hasn't been called yet or the latest call to Next returned false, the result is undefined.
+	Record() Record
 
 	// NextCursor should return a cursor for reading more rows if this iterator
 	// doesn't return all rows in the result. A nil result should indicate no more rows.

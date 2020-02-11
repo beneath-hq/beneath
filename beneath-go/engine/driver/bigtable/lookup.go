@@ -222,17 +222,21 @@ type recordsIterator struct {
 }
 
 // Next implements driver.RecordsIterator
-func (i recordsIterator) Next() driver.Record {
-	if len(i.records) == i.idx {
-		return nil
-	}
-	r := i.records[i.idx]
+func (i *recordsIterator) Next() bool {
 	i.idx++
-	return r
+	return len(i.records) >= i.idx
+}
+
+// Record implements driver.RecordsIterator
+func (i *recordsIterator) Record() driver.Record {
+	if i.idx == 0 || i.idx > len(i.records) {
+		panic("invalid call to Record")
+	}
+	return i.records[i.idx-1]
 }
 
 // NextCursor implements driver.RecordsIterator
-func (i recordsIterator) NextCursor() []byte {
+func (i *recordsIterator) NextCursor() []byte {
 	return i.nextCursor
 }
 
@@ -240,14 +244,16 @@ func (i recordsIterator) NextCursor() []byte {
 type batchesIterator struct {
 	recordIdx  int
 	batches    [][]Record
+	next       Record
 	nextCursor []byte
 }
 
 // Next implements driver.RecordsIterator
-func (i batchesIterator) Next() driver.Record {
+func (i *batchesIterator) Next() bool {
 	if len(i.batches) == 0 {
-		return nil
+		return false
 	}
+
 	batch := i.batches[0]
 	r := batch[i.recordIdx]
 	i.recordIdx++
@@ -255,11 +261,18 @@ func (i batchesIterator) Next() driver.Record {
 		i.batches = i.batches[1:]
 		i.recordIdx = 0
 	}
-	return r
+
+	i.next = r
+	return true
+}
+
+// Record implements driver.RecordsIterator
+func (i *batchesIterator) Record() driver.Record {
+	return i.next
 }
 
 // NextCursor implements driver.RecordsIterator
-func (i batchesIterator) NextCursor() []byte {
+func (i *batchesIterator) NextCursor() []byte {
 	return i.nextCursor
 }
 
@@ -398,7 +411,7 @@ func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.
 		nextCursor = compiled
 	}
 
-	return batchesIterator{
+	return &batchesIterator{
 		batches:    results,
 		nextCursor: nextCursor,
 	}, nil
@@ -447,7 +460,7 @@ func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver
 	}
 
 	// return iterator
-	return recordsIterator{
+	return &recordsIterator{
 		records:    records,
 		nextCursor: nextCursor,
 	}, nil
