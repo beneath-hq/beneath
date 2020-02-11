@@ -2,19 +2,40 @@ package grpc
 
 import (
 	uuid "github.com/satori/go.uuid"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/beneath-core/beneath-go/control/entity"
+	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/gateway"
 	"github.com/beneath-core/beneath-go/gateway/subscriptions"
 	pb "github.com/beneath-core/beneath-go/proto"
 )
 
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {
+	// get auth
+	secret := middleware.GetSecret(ss.Context())
+	if secret == nil {
+		return grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
+
 	// read instanceID
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	if instanceID == uuid.Nil {
 		return status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+	}
+
+	// get cached stream
+	stream := entity.FindCachedStreamByCurrentInstanceID(ss.Context(), instanceID)
+	if stream == nil {
+		return status.Error(codes.NotFound, "stream not found")
+	}
+
+	// check permissions
+	perms := secret.StreamPermissions(ss.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
 
 	// get subscription channel
