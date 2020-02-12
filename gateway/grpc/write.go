@@ -12,7 +12,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/engine"
 	pb_engine "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/gateway"
@@ -69,7 +69,7 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// check the batch length is valid
-	err := db.Engine.CheckBatchLength(len(req.Records))
+	err := hub.Engine.CheckBatchLength(len(req.Records))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -88,7 +88,7 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 			return nil, grpc.Errorf(codes.InvalidArgument, "error for record at index %d: %v", idx, err.Error())
 		}
 
-		err = db.Engine.CheckRecordSize(stream, structured, len(record.AvroData))
+		err = hub.Engine.CheckRecordSize(stream, structured, len(record.AvroData))
 		if err != nil {
 			return nil, grpc.Errorf(codes.InvalidArgument, "error for record at index %d: %v", idx, err.Error())
 		}
@@ -99,7 +99,7 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 
 	// write request to engine
 	writeID := engine.GenerateWriteID()
-	err = db.Engine.QueueWriteRequest(ctx, &pb_engine.WriteRequest{
+	err = hub.Engine.QueueWriteRequest(ctx, &pb_engine.WriteRequest{
 		WriteId:    writeID,
 		InstanceId: req.InstanceId,
 		Records:    req.Records,

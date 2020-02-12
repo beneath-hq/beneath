@@ -10,7 +10,7 @@ import (
 	"github.com/beneath-core/control/gql"
 	"github.com/beneath-core/control/migrations"
 	"github.com/beneath-core/control/resolver"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/internal/segment"
 	"github.com/beneath-core/payments"
@@ -63,13 +63,13 @@ func init() {
 	envutil.LoadConfig("beneath", &Config)
 
 	// connect postgres, redis, engine, and payment drivers
-	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
-	db.InitRedis(Config.RedisURL)
-	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
-	db.SetPaymentDrivers(payments.InitDrivers(Config.PaymentsDrivers))
+	hub.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
+	hub.InitRedis(Config.RedisURL)
+	hub.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
+	hub.SetPaymentDrivers(payments.InitDrivers(Config.PaymentsDrivers))
 
 	// run migrations
-	migrations.MustRunUp(db.DB)
+	migrations.MustRunUp(hub.DB)
 
 	// init segment
 	segment.InitClient(Config.SegmentSecret)
@@ -137,7 +137,7 @@ func ListenAndServeHTTP(port int) error {
 
 	// Add payments handlers
 	for _, driverName := range Config.PaymentsDrivers {
-		paymentDriver := db.PaymentDrivers[driverName]
+		paymentDriver := hub.PaymentDrivers[driverName]
 		if paymentDriver == nil {
 			panic("couldn't get payments driver")
 		}
@@ -153,7 +153,7 @@ func ListenAndServeHTTP(port int) error {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	if db.Healthy() {
+	if hub.Healthy() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {

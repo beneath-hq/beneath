@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/engine/driver"
 	pb "github.com/beneath-core/engine/proto"
 	pbgw "github.com/beneath-core/gateway/grpc/proto"
@@ -24,7 +24,7 @@ const (
 // Run subscribes to new write requests and stores data in derived systems.
 // It runs forever unless an error occcurs.
 func Run() error {
-	return db.Engine.ReadWriteRequests(processWriteRequest)
+	return hub.Engine.ReadWriteRequests(processWriteRequest)
 }
 
 // ProcessWriteRequest persists a write request
@@ -87,11 +87,11 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 
 	// write to lookup and warehouse
 	group.Go(func() error {
-		return db.Engine.Lookup.WriteRecords(ctx, stream, stream, stream, records)
+		return hub.Engine.Lookup.WriteRecords(ctx, stream, stream, stream, records)
 	})
 
 	group.Go(func() error {
-		return db.Engine.Warehouse.WriteToWarehouse(ctx, stream, stream, stream, records)
+		return hub.Engine.Warehouse.WriteToWarehouse(ctx, stream, stream, stream, records)
 	})
 
 	err := group.Wait()
@@ -100,7 +100,7 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	}
 
 	// publish write report (used for streaming updates)
-	err = db.Engine.QueueWriteReport(ctx, &pb.WriteReport{
+	err = hub.Engine.QueueWriteReport(ctx, &pb.WriteReport{
 		WriteId:      req.WriteId,
 		InstanceId:   instanceID.Bytes(),
 		RecordsCount: int32(len(req.Records)),

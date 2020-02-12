@@ -17,7 +17,7 @@ import (
 	"github.com/beneath-core/pkg/jsonutil"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/gateway"
 )
 
@@ -90,7 +90,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		}
 
 		// run query
-		replayCursors, changeCursors, err := db.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, filter, body.Compact, 1)
+		replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, filter, body.Compact, 1)
 		if err != nil {
 			return httputil.NewError(400, err.Error())
 		}
@@ -110,7 +110,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	middleware.SetTagsPayload(r.Context(), payload)
 
 	// read rows from engine
-	it, err := db.Engine.Lookup.ReadCursor(r.Context(), stream, stream, stream, body.Cursor, body.Limit)
+	it, err := hub.Engine.Lookup.ReadCursor(r.Context(), stream, stream, stream, body.Cursor, body.Limit)
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}

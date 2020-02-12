@@ -16,7 +16,7 @@ import (
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // User represents a Beneath user
@@ -75,7 +75,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := db.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Organization").Select()
+	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -85,7 +85,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 // FindUserByEmail returns user with email (if exists)
 func FindUserByEmail(ctx context.Context, email string) *User {
 	user := &User{}
-	err := db.DB.ModelContext(ctx, user).Where("lower(email) = lower(?)", email).Select()
+	err := hub.DB.ModelContext(ctx, user).Where("lower(email) = lower(?)", email).Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -95,7 +95,7 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 // FindUserByUsername returns user with username (if exists)
 func FindUserByUsername(ctx context.Context, username string) *User {
 	user := &User{}
-	err := db.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Relation("Projects").Select()
+	err := hub.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Relation("Projects").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -107,7 +107,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	user := &User{}
 	create := false
 
-	tx, err := db.DB.Begin()
+	tx, err := hub.DB.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
 	u.UpdatedOn = time.Now()
 
-	_, err = db.DB.WithContext(ctx).Model(u).
+	_, err = hub.DB.WithContext(ctx).Model(u).
 		Column("organization_id", "read_quota", "write_quota", "updated_on").
 		WherePK().
 		Update()
@@ -363,7 +363,7 @@ func (u *User) Delete(ctx context.Context) error {
 		return err
 	}
 
-	err = db.DB.WithContext(ctx).Delete(u)
+	err = hub.DB.WithContext(ctx).Delete(u)
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 	}
 
 	u.UpdatedOn = time.Now()
-	_, err = db.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url", "updated_on").WherePK().Update()
 	return err
 }
 

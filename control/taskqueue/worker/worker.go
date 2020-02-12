@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	pb "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
@@ -14,7 +14,7 @@ import (
 // Work runs a worker
 func Work() error {
 	log.S.Info("taskqueue worker started")
-	return db.Engine.ReadTasks(processTask)
+	return hub.Engine.ReadTasks(processTask)
 }
 
 // processWriteRequest is called (approximately once) for each task

@@ -7,7 +7,7 @@ import (
 	"github.com/beneath-core/control/taskqueue"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 type configSpecification struct {
@@ -19,7 +19,7 @@ type configSpecification struct {
 func main() {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
-	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
+	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	err := taskqueue.Submit(context.Background(), &entity.RunBillingTask{})
 	if err != nil {

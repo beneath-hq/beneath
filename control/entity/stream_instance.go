@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -32,7 +32,7 @@ func FindStreamInstance(ctx context.Context, instanceID uuid.UUID) *StreamInstan
 	si := &StreamInstance{
 		StreamInstanceID: instanceID,
 	}
-	err := db.DB.ModelContext(ctx, si).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, si).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}

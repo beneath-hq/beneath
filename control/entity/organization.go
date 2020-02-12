@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // Organization represents the entity that manages billing on behalf of its users
@@ -49,7 +49,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Projects", "Services", "Users").Select()
+	err := hub.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Projects", "Services", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -59,7 +59,7 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 // FindOrganizationByName finds a organization by name
 func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
-	err := db.DB.ModelContext(ctx, organization).
+	err := hub.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
 		Column("organization.*", "Projects", "Services", "Users").
 		Select()
@@ -72,7 +72,7 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 // FindAllOrganizations returns all active organizations
 func FindAllOrganizations(ctx context.Context) []*Organization {
 	var organizations []*Organization
-	err := db.DB.ModelContext(ctx, &organizations).
+	err := hub.DB.ModelContext(ctx, &organizations).
 		Column("organization.*").
 		Select()
 	if err != nil {
@@ -90,7 +90,7 @@ func (o *Organization) UpdatePersonalStatus(ctx context.Context, personal bool) 
 		UpdatedOn:      time.Now(),
 	}
 
-	_, err := db.DB.ModelContext(ctx, org).
+	_, err := hub.DB.ModelContext(ctx, org).
 		Column("personal", "updated_on").
 		WherePK().
 		Update()
@@ -119,7 +119,7 @@ func (o *Organization) InviteUser(ctx context.Context, userID uuid.UUID, view bo
 		Admin:          admin,
 	}
 
-	_, err := db.DB.ModelContext(ctx, perms).OnConflict("(user_id, organization_id) DO UPDATE").Insert()
+	_, err := hub.DB.ModelContext(ctx, perms).OnConflict("(user_id, organization_id) DO UPDATE").Insert()
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
 
 	// delete
-	return db.DB.WithContext(ctx).Delete(&PermissionsUsersOrganizations{
+	return hub.DB.WithContext(ctx).Delete(&PermissionsUsersOrganizations{
 		UserID:         userID,
 		OrganizationID: o.OrganizationID,
 	})
@@ -147,7 +147,7 @@ func (o *Organization) ChangeName(ctx context.Context, name string) (*Organizati
 	o.Name = name
 	o.UpdatedOn = time.Now()
 
-	_, err := db.DB.ModelContext(ctx, o).
+	_, err := hub.DB.ModelContext(ctx, o).
 		Column("name").
 		WherePK().
 		Update()
@@ -175,7 +175,7 @@ func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UU
 		permissions.Admin = *admin
 	}
 
-	_, err := db.DB.ModelContext(ctx, permissions).
+	_, err := hub.DB.ModelContext(ctx, permissions).
 		Column("view", "admin").
 		WherePK().
 		Update()
@@ -198,7 +198,7 @@ func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, r
 
 	user.UpdatedOn = time.Now()
 
-	_, err := db.DB.ModelContext(ctx, user).
+	_, err := hub.DB.ModelContext(ctx, user).
 		Column("read_quota", "write_quota", "updated_on").
 		WherePK().
 		Update()
@@ -212,7 +212,7 @@ func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, r
 // Delete deletes the organization
 // this will fail if there are any users, services, or projects that are still tied to the organization
 func (o *Organization) Delete(ctx context.Context) error {
-	err := db.DB.WithContext(ctx).Delete(o)
+	err := hub.DB.WithContext(ctx).Delete(o)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (o *Organization) Delete(ctx context.Context) error {
 // FindOrganizationPermissions retrieves all users' permissions for a given organization
 func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) []*PermissionsUsersOrganizations {
 	var permissions []*PermissionsUsersOrganizations
-	err := db.DB.ModelContext(ctx, &permissions).Where("permissions_users_organizations.organization_id = ?", organizationID).Column("permissions_users_organizations.*", "User", "Organization").Select()
+	err := hub.DB.ModelContext(ctx, &permissions).Where("permissions_users_organizations.organization_id = ?", organizationID).Column("permissions_users_organizations.*", "User", "Organization").Select()
 	if err != nil {
 		panic(err)
 	}

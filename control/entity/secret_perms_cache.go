@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // ProjectPermissions represents permissions that a secret has for a given project
@@ -117,7 +117,7 @@ func NewPermissionsCache(prototype interface{}, query string) *PermissionsCache 
 	pm.prototype = reflect.TypeOf(prototype)
 	pm.query = query
 	pm.codec = &cache.Codec{
-		Redis:     db.Redis,
+		Redis:     hub.Redis,
 		Marshal:   pm.marshal,
 		Unmarshal: pm.unmarshal,
 	}
@@ -170,7 +170,7 @@ func (c PermissionsCache) unmarshal(b []byte, v interface{}) (err error) {
 func (c PermissionsCache) getterFunc(ctx context.Context, ownerID uuid.UUID, resourceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		res := reflect.New(c.prototype)
-		_, err := db.DB.QueryContext(ctx, res.Interface(), c.query, ownerID, resourceID)
+		_, err := hub.DB.QueryContext(ctx, res.Interface(), c.query, ownerID, resourceID)
 		if err != nil && err != pg.ErrNoRows {
 			panic(err)
 		}

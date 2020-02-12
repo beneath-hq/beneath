@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/secrettoken"
 )
 
@@ -49,7 +49,7 @@ func getSecretCache() *SecretCache {
 	if secretCache == nil {
 		secretCache = &SecretCache{
 			codec: cache.Codec{
-				Redis:     db.Redis,
+				Redis:     hub.Redis,
 				Marshal:   msgpack.Marshal,
 				Unmarshal: msgpack.Unmarshal,
 			},
@@ -126,7 +126,7 @@ func (c *SecretCache) Delete(ctx context.Context, hashedToken string) {
 func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		secret := &UserSecret{}
-		err := db.DB.ModelContext(ctx, secret).
+		err := hub.DB.ModelContext(ctx, secret).
 			Relation("User", func(q *orm.Query) (*orm.Query, error) {
 				return q.Column("user.read_quota", "user.write_quota"), nil
 			}).
@@ -150,7 +150,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func()
 func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		secret := &ServiceSecret{}
-		err := db.DB.ModelContext(ctx, secret).
+		err := hub.DB.ModelContext(ctx, secret).
 			Relation("Service", func(q *orm.Query) (*orm.Query, error) {
 				return q.Column("service.read_quota", "service.write_quota"), nil
 			}).

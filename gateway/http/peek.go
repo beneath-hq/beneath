@@ -110,7 +110,7 @@ package http
 // 	bytesRead := 0
 
 // 	// read rows from engine
-// 	err = db.Engine.Tables.ReadLatestRecords(r.Context(), instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
+// 	err = hub.Engine.Tables.ReadLatestRecords(r.Context(), instanceID, limit, before, func(avroData []byte, timestamp time.Time) error {
 // 		// decode avro
 // 		data, err := stream.Codec.UnmarshalAvro(avroData)
 // 		if err != nil {

@@ -1,4 +1,4 @@
-package db
+package hub
 
 import (
 	"github.com/beneath-core/control/payments/driver"
@@ -36,7 +36,7 @@ func InitEngine(mqDriver, lookupDriver, warehouseDriver string) {
 	Engine = engine.NewEngine(mqDriver, lookupDriver, warehouseDriver)
 }
 
-// SetPaymentDrivers injects the payment drivers into the db.PaymentDrivers object
+// SetPaymentDrivers injects the payment drivers into the hub.PaymentDrivers object
 func SetPaymentDrivers(paymentDrivers map[string]driver.PaymentsDriver) {
 	PaymentDrivers = paymentDrivers
 }

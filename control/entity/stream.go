@@ -15,7 +15,7 @@ import (
 
 	"github.com/beneath-core/control/taskqueue"
 	"github.com/beneath-core/pkg/schema"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // Stream represents a collection of data
@@ -81,7 +81,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	stream := &Stream{
 		StreamID: streamID,
 	}
-	err := db.DB.ModelContext(ctx, stream).
+	err := hub.DB.ModelContext(ctx, stream).
 		WherePK().
 		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
 		Select()
@@ -94,7 +94,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 // FindStreamByNameAndProject finds a stream
 func FindStreamByNameAndProject(ctx context.Context, name string, projectName string) *Stream {
 	stream := &Stream{}
-	err := db.DB.ModelContext(ctx, stream).
+	err := hub.DB.ModelContext(ctx, stream).
 		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
 		Where("lower(stream.name) = lower(?)", name).
 		Where("lower(project.name) = lower(?)", projectName).
@@ -328,7 +328,7 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 	// update in bigquery
 	if s.CurrentStreamInstanceID != nil {
 		cs := FindCachedStreamByCurrentInstanceID(tx.Context(), *s.CurrentStreamInstanceID)
-		err = db.Engine.RegisterInstance(tx.Context(), cs, cs, cs)
+		err = hub.Engine.RegisterInstance(tx.Context(), cs, cs, cs)
 		if err != nil {
 			return err
 		}
@@ -341,7 +341,7 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 func (s *Stream) Delete(ctx context.Context) error {
 	// get instances
 	var instances []*StreamInstance
-	err := db.DB.ModelContext(ctx, &instances).
+	err := hub.DB.ModelContext(ctx, &instances).
 		Where("stream_id = ?", s.StreamID).
 		Select()
 	if err != nil {
@@ -357,7 +357,7 @@ func (s *Stream) Delete(ctx context.Context) error {
 	}
 
 	// delete stream
-	err = db.DB.WithContext(ctx).Delete(s)
+	err = hub.DB.WithContext(ctx).Delete(s)
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func (s *Stream) CompileAndCreate(ctx context.Context) error {
 	}
 
 	// create stream (and a new stream instance ID if not batch)
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.CreateWithTx(tx)
 	})
 	if err != nil {
@@ -397,14 +397,14 @@ func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual
 		s.Compile(ctx, true)
 	}
 
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.UpdateWithTx(tx)
 	})
 }
 
 // CreateStreamInstance creates a new instance
 func (s *Stream) CreateStreamInstance(ctx context.Context) (res *StreamInstance, err error) {
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		res, err = s.CreateStreamInstanceWithTx(tx)
 		return err
 	})
@@ -444,7 +444,7 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 	}
 
 	// register instance
-	err = db.Engine.RegisterInstance(tx.Context(), s.Project, s, si)
+	err = hub.Engine.RegisterInstance(tx.Context(), s.Project, s, si)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +454,7 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 
 // CommitStreamInstance promotes an instance to current_instance_id and deletes the old instance
 func (s *Stream) CommitStreamInstance(ctx context.Context, instance *StreamInstance) error {
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.CommitStreamInstanceWithTx(tx, instance)
 	})
 }
@@ -498,7 +498,7 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 	}
 
 	// call on warehouse
-	err = db.Engine.PromoteInstance(tx.Context(), s.Project, s, instance)
+	err = hub.Engine.PromoteInstance(tx.Context(), s.Project, s, instance)
 	if err != nil {
 		return err
 	}
@@ -519,7 +519,7 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 
 // DeleteStreamInstance deletes and deregisters a stream instance
 func (s *Stream) DeleteStreamInstance(ctx context.Context, si *StreamInstance) error {
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		return s.DeleteStreamInstanceWithTx(tx, si)
 	})
 }
@@ -562,7 +562,7 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error
 func (s *Stream) ClearPendingBatches(ctx context.Context) error {
 	// get instances
 	if len(s.StreamInstances) == 0 {
-		err := db.DB.ModelContext(ctx, (*StreamInstance)(nil)).
+		err := hub.DB.ModelContext(ctx, (*StreamInstance)(nil)).
 			Where("stream_id = ?", s.StreamID).
 			Select(&s.StreamInstances)
 		if err != nil {

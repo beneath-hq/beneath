@@ -3,12 +3,12 @@ package entity
 import (
 	"testing"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 func init() {
-	db.InitPostgres("localhost", "postgres", "")
-	db.InitRedis("redis://localhost/")
+	hub.InitPostgres("localhost", "postgres", "")
+	hub.InitRedis("redis://localhost/")
 }
 
 func TestUserCreate(t *testing.T) {
@@ -26,5 +26,5 @@ func TestUserCreate(t *testing.T) {
 	// assert.Nil(t, user20.Delete(ctx))
 
 	// // cleanup
-	// db.Redis.FlushAll()
+	// hub.Redis.FlushAll()
 }

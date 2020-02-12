@@ -11,7 +11,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // Project represents a Beneath project
@@ -61,7 +61,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 	project := &Project{
 		ProjectID: projectID,
 	}
-	err := db.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Users").Select()
+	err := hub.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Users").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -71,7 +71,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 // FindProjects returns a sample of projects
 func FindProjects(ctx context.Context) []*Project {
 	var projects []*Project
-	err := db.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Select()
+	err := hub.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Select()
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func FindProjects(ctx context.Context) []*Project {
 // FindProjectByName finds a project by name
 func FindProjectByName(ctx context.Context, name string) *Project {
 	project := &Project{}
-	err := db.DB.ModelContext(ctx, project).
+	err := hub.DB.ModelContext(ctx, project).
 		Where("lower(project.name) = lower(?)", name).
 		Column("project.*", "Streams", "Users").
 		Select()
@@ -115,7 +115,7 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 	}
 
 	// create project and PermissionsUsersProjects in one transaction
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert project
 		_, err := tx.Model(p).Insert()
 		if err != nil {
@@ -134,7 +134,7 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 			return err
 		}
 
-		err = db.Engine.RegisterProject(ctx, p)
+		err = hub.Engine.RegisterProject(ctx, p)
 		if err != nil {
 			return err
 		}
@@ -145,7 +145,7 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 
 // AddUser makes user a member of project
 func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
-	return db.DB.WithContext(ctx).Insert(&PermissionsUsersProjects{
+	return hub.DB.WithContext(ctx).Insert(&PermissionsUsersProjects{
 		UserID:    userID,
 		ProjectID: p.ProjectID,
 		View:      view,
@@ -160,7 +160,7 @@ func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	getUserProjectPermissionsCache().Clear(ctx, userID, p.ProjectID)
 
 	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
-	return db.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
+	return hub.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
 		UserID:    userID,
 		ProjectID: p.ProjectID,
 	})
@@ -192,9 +192,9 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 	}
 
 	// update in tx with call to bigquery
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		p.UpdatedOn = time.Now()
-		_, err = db.DB.WithContext(ctx).Model(p).
+		_, err = hub.DB.WithContext(ctx).Model(p).
 			Column("display_name", "public", "site", "description", "photo_url", "updated_on").
 			WherePK().
 			Update()
@@ -203,7 +203,7 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 		}
 
 		// update in warehouse
-		err = db.Engine.RegisterProject(ctx, p)
+		err = hub.Engine.RegisterProject(ctx, p)
 		if err != nil {
 			return err
 		}
@@ -217,10 +217,10 @@ func (p *Project) UpdateOrganization(ctx context.Context, organizationID uuid.UU
 	p.OrganizationID = organizationID
 	p.UpdatedOn = time.Now()
 
-	_, err := db.DB.ModelContext(ctx, p).Column("organization_id", "updated_on").WherePK().Update()
+	_, err := hub.DB.ModelContext(ctx, p).Column("organization_id", "updated_on").WherePK().Update()
 
 	// re-find project so we can return the name of the new organization
-	err = db.DB.ModelContext(ctx, p).
+	err = hub.DB.ModelContext(ctx, p).
 		WherePK().
 		Column("project.*", "Organization").
 		Select()
@@ -236,7 +236,7 @@ func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
 	p.Locked = isLocked
 	p.UpdatedOn = time.Now()
 
-	_, err := db.DB.ModelContext(ctx, p).
+	_, err := hub.DB.ModelContext(ctx, p).
 		Column("locked", "updated_on").
 		WherePK().
 		Update()
@@ -249,13 +249,13 @@ func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
 
 // Delete safely deletes the project (fails if the project still has content)
 func (p *Project) Delete(ctx context.Context) error {
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		err := db.DB.WithContext(ctx).Delete(p)
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		err := hub.DB.WithContext(ctx).Delete(p)
 		if err != nil {
 			return err
 		}
 
-		err = db.Engine.RemoveProject(ctx, p)
+		err = hub.Engine.RemoveProject(ctx, p)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ func (p *Project) Delete(ctx context.Context) error {
 func getProjectCache() *cache.Codec {
 	if projectCache == nil {
 		projectCache = &cache.Codec{
-			Redis:     db.Redis,
+			Redis:     hub.Redis,
 			Marshal:   msgpack.Marshal,
 			Unmarshal: msgpack.Unmarshal,
 		}

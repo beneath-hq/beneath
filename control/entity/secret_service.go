@@ -5,7 +5,7 @@ import (
 
 	"github.com/beneath-core/pkg/secrettoken"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 )
@@ -36,7 +36,7 @@ func CreateServiceSecret(ctx context.Context, serviceID uuid.UUID, description s
 	}
 
 	// insert
-	err = db.DB.WithContext(ctx).Insert(secret)
+	err = hub.DB.WithContext(ctx).Insert(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func FindServiceSecret(ctx context.Context, secretID uuid.UUID) *ServiceSecret {
 	secret := &ServiceSecret{
 		ServiceSecretID: secretID,
 	}
-	err := db.DB.ModelContext(ctx, secret).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, secret).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -60,7 +60,7 @@ func FindServiceSecret(ctx context.Context, secretID uuid.UUID) *ServiceSecret {
 // FindServiceSecrets finds all the service's secrets
 func FindServiceSecrets(ctx context.Context, serviceID uuid.UUID) []*ServiceSecret {
 	var secrets []*ServiceSecret
-	err := db.DB.ModelContext(ctx, &secrets).Where("service_id = ?", serviceID).Limit(1000).Select()
+	err := hub.DB.ModelContext(ctx, &secrets).Where("service_id = ?", serviceID).Limit(1000).Select()
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func (s *ServiceSecret) ManagesModelBatches(model *Model) bool {
 // Revoke implements the Secret interface
 func (s *ServiceSecret) Revoke(ctx context.Context) {
 	// delete from db
-	err := db.DB.WithContext(ctx).Delete(s)
+	err := hub.DB.WithContext(ctx).Delete(s)
 	if err != nil && err != pg.ErrNoRows {
 		panic(err)
 	}

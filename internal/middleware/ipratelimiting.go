@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/httputil"
 )
 
@@ -23,7 +23,7 @@ var (
 
 func initLimiter() *redis_rate.Limiter {
 	if limiter == nil {
-		limiter = redis_rate.NewLimiter(db.Redis, &redis_rate.Limit{
+		limiter = redis_rate.NewLimiter(hub.Redis, &redis_rate.Limit{
 			Burst:  20,
 			Rate:   20,
 			Period: time.Second * 15,

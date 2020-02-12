@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -33,7 +33,7 @@ func FindBillingPlan(ctx context.Context, billingPlanID uuid.UUID) *BillingPlan 
 	billingPlan := &BillingPlan{
 		BillingPlanID: billingPlanID,
 	}
-	err := db.DB.ModelContext(ctx, billingPlan).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, billingPlan).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}

@@ -32,8 +32,8 @@ package pipeline
 // func RunItBeam() { // call this function func init() or func main()? look at Go SDK tutorials for recommendation
 
 // 	// initialize things
-// 	// db.InitPostgres(Config.PostgresURL) // initialize the Config variable; use line of code in gateway.go
-// 	// db.InitRedis(Config.RedisURL) // these two lines of code should enable us to retrieve schemas
+// 	// hub.InitPostgres(Config.PostgresURL) // initialize the Config variable; use line of code in gateway.go
+// 	// hub.InitRedis(Config.RedisURL) // these two lines of code should enable us to retrieve schemas
 
 // 	// beam.Init() is an initialization hook that must called on startup. On
 // 	// distributed runners, it is used to intercept control.

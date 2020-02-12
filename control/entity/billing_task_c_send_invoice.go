@@ -6,7 +6,7 @@ import (
 
 	"github.com/beneath-core/control/payments/driver"
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -33,7 +33,7 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		panic("didn't find any billed resources")
 	}
 
-	paymentDriver := db.PaymentDrivers[string(billingInfo.PaymentsDriver)]
+	paymentDriver := hub.PaymentDrivers[string(billingInfo.PaymentsDriver)]
 	if paymentDriver == nil {
 		panic("couldn't get payments driver")
 	}

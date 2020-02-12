@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // Model represents a Beneath model
@@ -91,7 +91,7 @@ func FindModel(ctx context.Context, modelID uuid.UUID) *Model {
 	model := &Model{
 		ModelID: modelID,
 	}
-	err := db.DB.ModelContext(ctx, model).
+	err := hub.DB.ModelContext(ctx, model).
 		Column("model.*").
 		Relation("Project").
 		Relation("OutputStreams").
@@ -108,7 +108,7 @@ func FindModel(ctx context.Context, modelID uuid.UUID) *Model {
 // FindModelByNameAndProject finds a model
 func FindModelByNameAndProject(ctx context.Context, name string, projectName string) *Model {
 	model := &Model{}
-	err := db.DB.ModelContext(ctx, model).
+	err := hub.DB.ModelContext(ctx, model).
 		Column("model.*").
 		Relation("Project").
 		Relation("OutputStreams").
@@ -152,7 +152,7 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 	}
 
 	// begin database transaction
-	err = db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert model
 		_, err = tx.Model(m).Insert()
 		if err != nil {
@@ -310,7 +310,7 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 	}
 
 	// update
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// update model
 		m.UpdatedOn = time.Now()
 		_, err := tx.Model(m).WherePK().Update()
@@ -406,7 +406,7 @@ func (m *Model) Delete(ctx context.Context) error {
 		}
 	}
 
-	return db.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		err := tx.Delete(m)
 		if err != nil {
 			return err
@@ -439,7 +439,7 @@ func (m *Model) CreateBatch(ctx context.Context) ([]*StreamInstance, error) {
 func (m *Model) CommitBatch(ctx context.Context, instanceIDs []uuid.UUID) error {
 	// get instances
 	var instances []*StreamInstance
-	err := db.DB.ModelContext(ctx, &instances).
+	err := hub.DB.ModelContext(ctx, &instances).
 		Where("stream_instance_id in (?)", pg.In(instanceIDs)).
 		Relation("Stream", func(q *orm.Query) (*orm.Query, error) {
 			return q.Where("source_model_id = ?", m.ModelID), nil

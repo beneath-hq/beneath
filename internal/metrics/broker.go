@@ -12,7 +12,7 @@ import (
 
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	pb "github.com/beneath-core/engine/proto"
 )
 
@@ -111,14 +111,14 @@ func (b *Broker) commitToTable() error {
 
 			// commit metrics to monthly count
 			rowKey := metricsKey(timeutil.PeriodMonth, id, ts)
-			err := db.Engine.CommitUsage(ctx, rowKey, usage)
+			err := hub.Engine.CommitUsage(ctx, rowKey, usage)
 			if err != nil {
 				return err
 			}
 
 			// commit metrics to hourly count
 			rowKey = metricsKey(timeutil.PeriodHour, id, ts)
-			err = db.Engine.CommitUsage(ctx, rowKey, usage)
+			err = hub.Engine.CommitUsage(ctx, rowKey, usage)
 			if err != nil {
 				return err
 			}

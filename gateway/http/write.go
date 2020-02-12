@@ -13,7 +13,7 @@ import (
 	"github.com/beneath-core/pkg/jsonutil"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/engine"
 	pb_engine "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/gateway"
@@ -79,7 +79,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check the batch length is valid
-	err = db.Engine.CheckBatchLength(len(objects))
+	err = hub.Engine.CheckBatchLength(len(objects))
 	if err != nil {
 		return httputil.NewError(400, fmt.Sprintf("error encoding batch: %v", err.Error()))
 	}
@@ -120,7 +120,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
 
-		err = db.Engine.CheckRecordSize(stream, avroNative, len(avroData))
+		err = hub.Engine.CheckRecordSize(stream, avroNative, len(avroData))
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
@@ -142,7 +142,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// write request to engine
 	writeID := engine.GenerateWriteID()
-	err = db.Engine.QueueWriteRequest(r.Context(), &pb_engine.WriteRequest{
+	err = hub.Engine.QueueWriteRequest(r.Context(), &pb_engine.WriteRequest{
 		WriteId:    writeID,
 		InstanceId: instanceID.Bytes(),
 		Records:    records,

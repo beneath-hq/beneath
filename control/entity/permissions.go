@@ -3,7 +3,7 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 )
@@ -54,7 +54,7 @@ func FindPermissionsUsersOrganizations(ctx context.Context, userID uuid.UUID, or
 		UserID:         userID,
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, permissions).
+	err := hub.DB.ModelContext(ctx, permissions).
 		WherePK().
 		Column("permissions_users_organizations.*", "User", "Organization").
 		Select()

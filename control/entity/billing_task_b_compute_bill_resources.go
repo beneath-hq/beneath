@@ -9,7 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/internal/metrics"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
@@ -318,7 +318,7 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 
 	// fetch the organization's billed resources for the period
 	var billedResources []*BilledResource
-	err := db.DB.ModelContext(ctx, &billedResources).
+	err := hub.DB.ModelContext(ctx, &billedResources).
 		Where("organization_id = ?", organizationID).
 		Where("billing_time = ?", billTimes.BillingTime).
 		WhereGroup(func(q *orm.Query) (*orm.Query, error) {

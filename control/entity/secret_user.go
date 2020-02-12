@@ -3,7 +3,7 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/secrettoken"
 
 	"github.com/go-pg/pg/v9"
@@ -40,7 +40,7 @@ func CreateUserSecret(ctx context.Context, userID uuid.UUID, description string,
 	}
 
 	// insert
-	err = db.DB.WithContext(ctx).Insert(secret)
+	err = hub.DB.WithContext(ctx).Insert(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func FindUserSecret(ctx context.Context, secretID uuid.UUID) *UserSecret {
 	secret := &UserSecret{
 		UserSecretID: secretID,
 	}
-	err := db.DB.ModelContext(ctx, secret).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, secret).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -64,7 +64,7 @@ func FindUserSecret(ctx context.Context, secretID uuid.UUID) *UserSecret {
 // FindUserSecrets finds all the user's secrets
 func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*UserSecret {
 	var secrets []*UserSecret
-	err := db.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
+	err := hub.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
 	if err != nil {
 		panic(err)
 	}
@@ -140,7 +140,7 @@ func (s *UserSecret) ManagesModelBatches(model *Model) bool {
 // Revoke implements the Secret interface
 func (s *UserSecret) Revoke(ctx context.Context) {
 	// delete from db
-	err := db.DB.WithContext(ctx).Delete(s)
+	err := hub.DB.WithContext(ctx).Delete(s)
 	if err != nil && err != pg.ErrNoRows {
 		panic(err)
 	}

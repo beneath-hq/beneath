@@ -15,7 +15,7 @@ import (
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/ws"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 const (
@@ -70,7 +70,7 @@ func Handler() http.Handler {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	if db.Healthy() {
+	if hub.Healthy() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {

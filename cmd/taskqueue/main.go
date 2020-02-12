@@ -4,7 +4,7 @@ import (
 	"github.com/beneath-core/control/taskqueue/worker"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/payments"
 
 	// import modules that register tasks in taskqueue
@@ -26,10 +26,10 @@ func main() {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 
-	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
-	db.InitRedis(config.RedisURL)
-	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
-	db.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
+	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
+	hub.InitRedis(config.RedisURL)
+	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
+	hub.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
 
 	log.S.Fatal(worker.Work())
 }

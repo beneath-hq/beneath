@@ -10,7 +10,7 @@ import (
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/internal/segment"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	gw "github.com/beneath-core/gateway"
 	gwgrpc "github.com/beneath-core/gateway/grpc"
 	gwhttp "github.com/beneath-core/gateway/http"
@@ -35,13 +35,13 @@ func main() {
 	envutil.LoadConfig("beneath", &config)
 
 	// Init connections
-	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
-	db.InitRedis(config.RedisURL)
-	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
+	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
+	hub.InitRedis(config.RedisURL)
+	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	// Init gateway globals
 	gw.InitMetrics()
-	gw.InitSubscriptions(db.Engine)
+	gw.InitSubscriptions(hub.Engine)
 
 	// Init segment
 	segment.InitClient(config.SegmentSecret)

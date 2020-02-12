@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/beneath-core/pkg/secrettoken"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/stretchr/testify/assert"
 )
 
 func init() {
-	db.InitPostgres("localhost", "postgres", "")
-	db.InitRedis("redis://localhost/")
+	hub.InitPostgres("localhost", "postgres", "")
+	hub.InitRedis("redis://localhost/")
 }
 
 func TestSecretIntegration(t *testing.T) {
@@ -43,6 +43,6 @@ func TestSecretIntegration(t *testing.T) {
 
 	// cleanup
 	secretCache = nil
-	db.Redis.FlushAll()
+	hub.Redis.FlushAll()
 	assert.Nil(t, user.Delete(ctx))
 }

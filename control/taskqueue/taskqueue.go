@@ -3,7 +3,7 @@ package taskqueue
 import (
 	"context"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 )
 
 // Submit queues a task for proocessing
@@ -13,5 +13,5 @@ func Submit(ctx context.Context, t Task) error {
 		return err
 	}
 
-	return db.Engine.QueueTask(ctx, qt)
+	return hub.Engine.QueueTask(ctx, qt)
 }

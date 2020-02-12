@@ -1,4 +1,4 @@
-package db
+package hub
 
 import (
 	"github.com/go-redis/redis/v7"

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -60,7 +60,7 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 	service := &Service{
 		ServiceID: serviceID,
 	}
-	err := db.DB.ModelContext(ctx, service).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, service).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -71,7 +71,7 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 // FindServiceByNameAndOrganization returns the matching service or nil
 func FindServiceByNameAndOrganization(ctx context.Context, name, organizationName string) *Service {
 	service := &Service{}
-	err := db.DB.ModelContext(ctx, service).
+	err := hub.DB.ModelContext(ctx, service).
 		Column("service.*", "Organization").
 		Where("lower(service.name) = lower(?)", name).
 		Where("lower(organization.name) = lower(?)", organizationName).
@@ -100,7 +100,7 @@ func CreateService(ctx context.Context, name string, kind ServiceKind, organizat
 	}
 
 	// insert
-	err = db.DB.Insert(s)
+	err = hub.DB.Insert(s)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 	// update
 	s.UpdatedOn = time.Now()
-	_, err = db.DB.ModelContext(ctx, s).Column("name", "read_quota", "write_quota", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, s).Column("name", "read_quota", "write_quota", "updated_on").WherePK().Update()
 	return s, err
 }
 
@@ -144,7 +144,7 @@ func (s *Service) UpdateOrganization(ctx context.Context, organizationID uuid.UU
 		return nil, err
 	}
 
-	_, err = db.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
 
 	// commit usage credit to the new organization's bill for the service's current month's usage
 	err = commitCurrentUsageToNextBill(ctx, organizationID, ServiceEntityKind, s.ServiceID, s.Name, true)
@@ -153,7 +153,7 @@ func (s *Service) UpdateOrganization(ctx context.Context, organizationID uuid.UU
 	}
 
 	// re-find service so we can return the name of the new organization
-	err = db.DB.ModelContext(ctx, s).
+	err = hub.DB.ModelContext(ctx, s).
 		WherePK().
 		Column("service.*", "Organization").
 		Select()
@@ -170,7 +170,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = db.DB.ModelContext(ctx, s).WherePK().Delete()
+	_, err = hub.DB.ModelContext(ctx, s).WherePK().Delete()
 	return err
 }
 
@@ -191,13 +191,13 @@ func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, rea
 
 	// if neither read nor write, delete permission (if exists) -- else update
 	if !pss.Read && !pss.Write {
-		_, err := db.DB.ModelContext(ctx, pss).WherePK().Delete()
+		_, err := hub.DB.ModelContext(ctx, pss).WherePK().Delete()
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// build upsert
-		q := db.DB.ModelContext(ctx, pss).OnConflict("(service_id, stream_id) DO UPDATE")
+		q := hub.DB.ModelContext(ctx, pss).OnConflict("(service_id, stream_id) DO UPDATE")
 		if read != nil {
 			q = q.Set("read = EXCLUDED.read")
 		}

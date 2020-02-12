@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -27,7 +27,7 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	billingInfo := &BillingInfo{
 		OrganizationID: organizationID,
 	}
-	err := db.DB.ModelContext(ctx, billingInfo).
+	err := hub.DB.ModelContext(ctx, billingInfo).
 		Where("billing_info.organization_id = ?", organizationID).
 		Column("billing_info.*").
 		Relation("Organization.Users").
@@ -82,7 +82,7 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 			u.WriteQuota = newBillingPlan.SeatWriteQuota
 		}
 
-		_, err = db.DB.ModelContext(ctx, &users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+		_, err = hub.DB.ModelContext(ctx, &users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +117,7 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 	bi.DriverPayload = driverPayload
 
 	// upsert
-	_, err := db.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
+	_, err := hub.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
 	if err != nil {
 		return nil, err
 	}

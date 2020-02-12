@@ -9,7 +9,7 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -31,9 +31,9 @@ var (
 
 func init() {
 	envutil.LoadConfig("beneath", &Config)
-	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
-	db.InitRedis(Config.RedisURL)
-	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
+	hub.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
+	hub.InitRedis(Config.RedisURL)
+	hub.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
 }
 
 func main() {

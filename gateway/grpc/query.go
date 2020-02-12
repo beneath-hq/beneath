@@ -12,7 +12,7 @@ import (
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/gateway"
 	pb "github.com/beneath-core/gateway/grpc/proto"
 )
@@ -67,7 +67,7 @@ func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	}
 
 	// run query
-	replayCursors, changeCursors, err := db.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
+	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse 'where': %s", err.Error())
 	}
@@ -132,7 +132,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	}
 
 	// get result iterator
-	it, err := db.Engine.Lookup.ReadCursor(ctx, stream, stream, stream, req.Cursor, int(req.Limit))
+	it, err := hub.Engine.Lookup.ReadCursor(ctx, stream, stream, stream, req.Cursor, int(req.Limit))
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}

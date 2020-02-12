@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/codec"
 	"github.com/bluele/gcache"
 	"github.com/go-pg/pg/v9"
@@ -263,7 +263,7 @@ func getStreamCache() streamCache {
 	_streamCacheLock.Lock()
 	if _streamCache.codec == nil {
 		_streamCache.codec = &cache.Codec{
-			Redis:     db.Redis,
+			Redis:     hub.Redis,
 			Marshal:   _streamCache.marshal,
 			Unmarshal: _streamCache.unmarshal,
 		}
@@ -349,7 +349,7 @@ func (c streamCache) unmarshal(b []byte, v interface{}) (err error) {
 func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		internalResult := &internalCachedStream{}
-		_, err := db.DB.QueryContext(ctx, internalResult, `
+		_, err := hub.DB.QueryContext(ctx, internalResult, `
 				select
 					s.stream_id,
 					p.public,
@@ -376,7 +376,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 			return nil, err
 		}
 
-		_, err = db.DB.QueryContext(ctx, &internalResult.Indexes, `
+		_, err = hub.DB.QueryContext(ctx, &internalResult.Indexes, `
 			select
 				stream_index_id,
 				fields,
