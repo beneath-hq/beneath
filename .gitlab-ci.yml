@@ -26,8 +26,8 @@ build_frontend:
 .build_go:
   script: 
     - docker pull ${IMAGE}:builder || true
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder ./beneath-go
-    - docker build -f ./beneath-go/${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder ./beneath-go
+    - docker build -f ./${CMD_NAME}.Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
+    - docker build -f ./${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
     - docker push ${IMAGE}:builder

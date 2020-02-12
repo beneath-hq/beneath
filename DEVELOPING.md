@@ -9,7 +9,7 @@ Open source code (SDKs, libraries, examples) will have to be put in separate rep
 The project structure is currently:
 
 - web contains JavaScript/TypeScript code for the frontend
-- beneath-go contains all Go code, which spans the control plane, the data gateway and the core data pipelines
+- root contains all Go code, which spans the control plane, the data gateway and the core data pipelines
 
 Checkout the git repo with: `git clone https://gitlab.com/_beneath/beneath-core.git`
 
@@ -89,7 +89,7 @@ Here's a rough guide to the project structure:
 
 ### Helper scripts
 
-For now, we put helper scripts right in the `beneath-go` folder. Guide to helper scripts:
+We put helper scripts in the `/scripts` folder. Guide to helper scripts:
 
 - `gqlgen-control.sh`: (re)generates the control server's GraphQL resolvers (see its README for more)
 - `proto-build.sh`: (re)generates the protocol buffers classes

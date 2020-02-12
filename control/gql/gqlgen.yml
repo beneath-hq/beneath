@@ -1,0 +1,49 @@
+# Configures gqlgen – docs at https://gqlgen.com/config/
+schema:
+- "control/gql/schema/**/*.graphql"
+exec:
+  filename: control/gql/schema_gen.go
+  package: gql
+model:
+  filename: control/gql/models_gen.go
+  package: gql
+resolver:
+  filename: control/resolver/generated.go
+  package: resolver
+  type: Resolver
+autobind: []
+models:
+  UUID:
+    model: github.com/beneath-core/control/gql.UUID
+  UserSecret: 
+    model: github.com/beneath-core/control/entity.UserSecret
+  ServiceSecret: 
+    model: github.com/beneath-core/control/entity.ServiceSecret
+  Project:
+    model: github.com/beneath-core/control/entity.Project
+  Model:
+    model: github.com/beneath-core/control/entity.Model
+  Stream:
+    model: github.com/beneath-core/control/entity.Stream
+  StreamInstance:
+    model: github.com/beneath-core/control/entity.StreamInstance
+  StreamIndex:
+    model: github.com/beneath-core/control/entity.StreamIndex
+  User:
+    model: github.com/beneath-core/control/entity.User
+  Organization:
+    model: github.com/beneath-core/control/entity.Organization
+  Service:
+    model: github.com/beneath-core/control/entity.Service
+  PermissionsUsersProjects:
+    model: github.com/beneath-core/control/entity.PermissionsUsersProjects
+  PermissionsUsersOrganizations:
+    model: github.com/beneath-core/control/entity.PermissionsUsersOrganizations
+  PermissionsServicesStreams:
+    model: github.com/beneath-core/control/entity.PermissionsServicesStreams
+  BillingPlan:
+    model: github.com/beneath-core/control/entity.BillingPlan
+  BilledResource:
+    model: github.com/beneath-core/control/entity.BilledResource
+  PaymentMethod:
+    model: github.com/beneath-core/control/entity.PaymentMethod
