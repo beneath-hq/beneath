@@ -8,8 +8,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/middleware"
 )
 
 // Client enables us to send data to Segment

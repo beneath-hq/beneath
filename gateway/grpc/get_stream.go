@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 	pb "github.com/beneath-core/gateway/grpc/proto"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"

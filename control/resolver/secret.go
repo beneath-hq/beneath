@@ -8,7 +8,7 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 )
 
 // ServiceSecret returns the gql.ServiceSecretResolver

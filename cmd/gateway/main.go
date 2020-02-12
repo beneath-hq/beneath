@@ -9,7 +9,7 @@ import (
 
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/segment"
+	"github.com/beneath-core/internal/segment"
 	"github.com/beneath-core/db"
 	gw "github.com/beneath-core/gateway"
 	gwgrpc "github.com/beneath-core/gateway/grpc"

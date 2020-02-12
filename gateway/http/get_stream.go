@@ -9,7 +9,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/jsonutil"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 )
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {

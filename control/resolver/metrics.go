@@ -11,7 +11,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
 	"github.com/beneath-core/pkg/mathutil"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/metrics"
 )

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 	"github.com/beneath-core/engine"

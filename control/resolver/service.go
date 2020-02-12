@@ -5,7 +5,7 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )

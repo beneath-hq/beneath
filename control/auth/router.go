@@ -9,7 +9,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 
 	"github.com/go-chi/chi"
 	"github.com/markbates/goth/gothic"

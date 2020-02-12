@@ -11,7 +11,7 @@ import (
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/jsonutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/payments/driver"
 	"github.com/beneath-core/payments/driver/stripeutil"
 	uuid "github.com/satori/go.uuid"
