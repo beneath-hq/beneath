@@ -14,8 +14,8 @@ import (
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
+	"github.com/beneath-core/beneath-go/core/ws"
 	"github.com/beneath-core/beneath-go/db"
-	"github.com/beneath-core/beneath-go/gateway/ws"
 )
 
 const (

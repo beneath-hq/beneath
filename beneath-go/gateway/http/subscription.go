@@ -11,9 +11,9 @@ import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/secrettoken"
+	"github.com/beneath-core/beneath-go/core/ws"
 	"github.com/beneath-core/beneath-go/gateway"
 	"github.com/beneath-core/beneath-go/gateway/subscriptions"
-	"github.com/beneath-core/beneath-go/gateway/ws"
 )
 
 // wsServer implements ws.Server
