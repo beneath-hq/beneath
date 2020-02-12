@@ -3,7 +3,7 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/log"
 
 	pb "github.com/beneath-core/engine/proto"
 	uuid "github.com/satori/go.uuid"

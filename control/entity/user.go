@@ -13,9 +13,9 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/core/envutil"
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/envutil"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 )
 

@@ -9,8 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 	"github.com/beneath-core/metrics"
 )

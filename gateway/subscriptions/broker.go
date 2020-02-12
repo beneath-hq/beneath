@@ -7,7 +7,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/engine"
 	"github.com/beneath-core/engine/driver"
 	pb "github.com/beneath-core/engine/proto"

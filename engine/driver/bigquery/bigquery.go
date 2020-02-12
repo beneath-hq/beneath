@@ -6,7 +6,7 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 
-	"github.com/beneath-core/core/envutil"
+	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/engine/driver"
 )
 

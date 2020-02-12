@@ -5,7 +5,7 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 
-	"github.com/beneath-core/core/middleware"
+	"github.com/beneath-core/pkg/middleware"
 	pb "github.com/beneath-core/gateway/grpc/proto"
 
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/encoding.md#using-a-compressor

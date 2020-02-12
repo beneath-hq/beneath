@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/beneath-core/core/middleware"
+	"github.com/beneath-core/pkg/middleware"
 	pb "github.com/beneath-core/gateway/grpc/proto"
 )
 

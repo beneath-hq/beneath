@@ -3,8 +3,8 @@ package engine
 import (
 	"fmt"
 
-	"github.com/beneath-core/core/codec"
-	"github.com/beneath-core/core/mathutil"
+	"github.com/beneath-core/pkg/codec"
+	"github.com/beneath-core/pkg/mathutil"
 	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/engine/driver/bigquery"
 	"github.com/beneath-core/engine/driver/bigtable"

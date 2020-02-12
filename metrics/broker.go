@@ -10,8 +10,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 	pb "github.com/beneath-core/engine/proto"
 )

@@ -11,8 +11,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/beneath-core/core/secrettoken"
 	"github.com/beneath-core/db"
+	"github.com/beneath-core/pkg/secrettoken"
 )
 
 // SecretCache encapsulates a Redis cache of authenticated secrets

@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/envutil"
-	"github.com/beneath-core/core/httputil"
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/middleware"
+	"github.com/beneath-core/pkg/envutil"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/middleware"
 	"github.com/beneath-core/payments/driver"
 	uuid "github.com/satori/go.uuid"
 )

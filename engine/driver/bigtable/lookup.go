@@ -11,9 +11,9 @@ import (
 	"cloud.google.com/go/bigtable"
 	"github.com/golang/protobuf/proto"
 
-	"github.com/beneath-core/core/codec"
-	"github.com/beneath-core/core/mathutil"
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/codec"
+	"github.com/beneath-core/pkg/mathutil"
+	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/engine/driver"
 	pb "github.com/beneath-core/engine/driver/bigtable/proto"
 	"github.com/beneath-core/engine/driver/bigtable/sequencer"

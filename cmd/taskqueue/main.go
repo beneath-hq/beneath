@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/beneath-core/control/taskqueue/worker"
-	"github.com/beneath-core/core/envutil"
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/envutil"
+	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/db"
 	"github.com/beneath-core/payments"
 

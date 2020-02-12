@@ -3,7 +3,7 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/core/secrettoken"
+	"github.com/beneath-core/pkg/secrettoken"
 
 	"github.com/beneath-core/db"
 	"github.com/go-pg/pg/v9"

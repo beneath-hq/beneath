@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/segmentio/ksuid"
 
-	"github.com/beneath-core/core/ctxutil"
+	"github.com/beneath-core/pkg/ctxutil"
 	pb "github.com/beneath-core/engine/proto"
 )
 

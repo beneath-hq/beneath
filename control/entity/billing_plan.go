@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 	uuid "github.com/satori/go.uuid"
 )

@@ -3,8 +3,8 @@ package metrics
 import (
 	"time"
 
-	"github.com/beneath-core/core/codec/ext/tuple"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/codec/ext/tuple"
+	"github.com/beneath-core/pkg/timeutil"
 	uuid "github.com/satori/go.uuid"
 )
 

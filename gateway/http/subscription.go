@@ -9,9 +9,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/secrettoken"
-	"github.com/beneath-core/core/ws"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/secrettoken"
+	"github.com/beneath-core/pkg/ws"
 	"github.com/beneath-core/gateway"
 	"github.com/beneath-core/gateway/subscriptions"
 )

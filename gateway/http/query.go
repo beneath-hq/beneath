@@ -7,16 +7,16 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/queryparse"
 
 	"github.com/go-chi/chi"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/httputil"
-	"github.com/beneath-core/core/jsonutil"
-	"github.com/beneath-core/core/middleware"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/jsonutil"
+	"github.com/beneath-core/pkg/middleware"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/db"
 	"github.com/beneath-core/gateway"
 )

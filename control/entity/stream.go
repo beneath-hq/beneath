@@ -7,14 +7,14 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/beneath-core/core/codec"
+	"github.com/beneath-core/pkg/codec"
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/core/schema"
+	"github.com/beneath-core/pkg/schema"
 	"github.com/beneath-core/db"
 )
 

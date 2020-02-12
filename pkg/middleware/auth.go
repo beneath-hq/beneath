@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/httputil"
-	"github.com/beneath-core/core/secrettoken"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/secrettoken"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	uuid "github.com/satori/go.uuid"
 )

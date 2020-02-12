@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/engine/driver"
 )
 

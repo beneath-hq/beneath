@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/core/httputil"
+	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/db"
 )
 

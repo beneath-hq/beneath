@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/core/envutil"
+	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/engine/driver/bigtable/sequencer"
 )

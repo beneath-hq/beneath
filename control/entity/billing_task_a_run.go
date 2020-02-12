@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/log"
 )
 
 // RunBillingTask triggers billing (computation, invoice creation, and stripe)

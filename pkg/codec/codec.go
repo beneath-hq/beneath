@@ -7,14 +7,14 @@ import (
 	"github.com/linkedin/goavro/v2"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/core/codec/ext/tuple"
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/codec/ext/tuple"
+	"github.com/beneath-core/pkg/queryparse"
 )
 
 // Codec marshals keys (potentially multiple values) into lexicographically sortable binary
 // keys (currently used for data saved to BigTable). Preserving sort order in the binary
 // encoding enables range lookups. We're using FoundationDB's encoding format, called "tuple",
-// see more details in beneath-core/core/codec/ext/tuple
+// see more details in beneath-core/pkg/codec/ext/tuple
 
 // Codec marshals records with avro, but we can't use the LinkedIn library directly because
 // we're representing data as JSON in a different way

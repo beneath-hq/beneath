@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/core/codec/ext/tuple"
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/codec/ext/tuple"
+	"github.com/beneath-core/pkg/timeutil"
 
 	"github.com/beneath-core/db"
 	pb "github.com/beneath-core/engine/proto"

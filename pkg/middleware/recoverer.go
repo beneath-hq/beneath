@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/beneath-core/core/httputil"
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/log"
 )
 
 // Recoverer is a middleware that catches any downstream panic calls, and logs them without

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/core/log"
-	"github.com/beneath-core/core/timeutil"
 	"github.com/beneath-core/db"
 	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/pkg/log"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 // Work runs a worker

@@ -7,9 +7,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/httputil"
-	"github.com/beneath-core/core/jsonutil"
-	"github.com/beneath-core/core/middleware"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/jsonutil"
+	"github.com/beneath-core/pkg/middleware"
 )
 
 func getStreamDetails(w http.ResponseWriter, r *http.Request) error {

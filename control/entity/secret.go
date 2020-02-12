@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/core/secrettoken"
+	"github.com/beneath-core/pkg/secrettoken"
 
 	pb "github.com/beneath-core/engine/proto"
 	uuid "github.com/satori/go.uuid"

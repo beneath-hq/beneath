@@ -8,7 +8,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/engine/driver"
 )
 

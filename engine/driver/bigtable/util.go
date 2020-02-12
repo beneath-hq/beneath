@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/engine/driver"
 )
 

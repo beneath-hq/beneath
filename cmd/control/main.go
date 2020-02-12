@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/beneath-core/control"
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/log"
 )
 
 func main() {

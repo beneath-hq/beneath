@@ -9,8 +9,8 @@ import (
 
 	"cloud.google.com/go/bigtable"
 
-	"github.com/beneath-core/core/codec"
-	"github.com/beneath-core/core/codec/ext/tuple"
+	"github.com/beneath-core/pkg/codec"
+	"github.com/beneath-core/pkg/codec/ext/tuple"
 	"github.com/beneath-core/engine/driver"
 )
 

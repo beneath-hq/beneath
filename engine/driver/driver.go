@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/core/codec"
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/codec"
+	"github.com/beneath-core/pkg/queryparse"
 	pb "github.com/beneath-core/engine/proto"
 )
 

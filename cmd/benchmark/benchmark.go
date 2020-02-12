@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/envutil"
+	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/db"
 
 	"golang.org/x/sync/errgroup"

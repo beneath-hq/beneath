@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/beneath-core/core/codec/ext/tuple"
-	"github.com/beneath-core/core/queryparse"
+	"github.com/beneath-core/pkg/codec/ext/tuple"
+	"github.com/beneath-core/pkg/queryparse"
 )
 
 var (

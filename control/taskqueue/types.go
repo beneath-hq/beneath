@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/beneath-core/core/timeutil"
+	"github.com/beneath-core/pkg/timeutil"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 

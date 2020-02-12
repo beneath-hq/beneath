@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/beneath-core/core/log"
+	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/engine/driver"
 	"robpike.io/filter"
 )

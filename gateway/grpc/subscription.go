@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/core/middleware"
+	"github.com/beneath-core/pkg/middleware"
 	"github.com/beneath-core/gateway"
 	"github.com/beneath-core/gateway/subscriptions"
 	pb "github.com/beneath-core/gateway/grpc/proto"

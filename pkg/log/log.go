@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/beneath-core/core/envutil"
+	"github.com/beneath-core/pkg/envutil"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

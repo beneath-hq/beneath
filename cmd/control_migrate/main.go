@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/beneath-core/control/migrations"
-	"github.com/beneath-core/core/envutil"
+	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/db"
 )
 
