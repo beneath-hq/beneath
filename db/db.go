@@ -1,8 +1,8 @@
 package db
 
 import (
+	"github.com/beneath-core/control/payments/driver"
 	"github.com/beneath-core/engine"
-	"github.com/beneath-core/payments/driver"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/redis/v7"
 )

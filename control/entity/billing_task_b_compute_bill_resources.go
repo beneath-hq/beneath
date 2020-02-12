@@ -9,10 +9,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/taskqueue"
+	"github.com/beneath-core/db"
+	"github.com/beneath-core/internal/metrics"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/db"
-	"github.com/beneath-core/metrics"
 )
 
 // ComputeBillResourcesTask computes all items on an organization's bill

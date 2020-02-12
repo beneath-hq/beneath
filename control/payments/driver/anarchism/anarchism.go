@@ -9,7 +9,7 @@ import (
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/payments/driver"
+	"github.com/beneath-core/control/payments/driver"
 	uuid "github.com/satori/go.uuid"
 )
 

@@ -3,7 +3,7 @@ package gateway
 import (
 	"github.com/beneath-core/engine"
 	"github.com/beneath-core/gateway/subscriptions"
-	"github.com/beneath-core/metrics"
+	"github.com/beneath-core/internal/metrics"
 )
 
 var (

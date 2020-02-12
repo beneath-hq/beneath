@@ -13,7 +13,7 @@ import (
 	"github.com/beneath-core/pkg/mathutil"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/metrics"
+	"github.com/beneath-core/internal/metrics"
 )
 
 func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {

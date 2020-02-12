@@ -8,7 +8,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
 	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/metrics"
+	"github.com/beneath-core/internal/metrics"
 	uuid "github.com/satori/go.uuid"
 )
 

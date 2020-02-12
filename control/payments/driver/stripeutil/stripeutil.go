@@ -3,7 +3,7 @@ package stripeutil
 import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/payments/driver"
+	"github.com/beneath-core/control/payments/driver"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"

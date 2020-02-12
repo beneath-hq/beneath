@@ -10,8 +10,8 @@ import (
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/payments/driver"
-	"github.com/beneath-core/payments/driver/stripeutil"
+	"github.com/beneath-core/control/payments/driver"
+	"github.com/beneath-core/control/payments/driver/stripeutil"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 )

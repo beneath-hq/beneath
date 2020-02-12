@@ -1,10 +1,10 @@
 package payments
 
 import (
-	"github.com/beneath-core/payments/driver"
-	"github.com/beneath-core/payments/driver/anarchism"
-	"github.com/beneath-core/payments/driver/stripecard"
-	"github.com/beneath-core/payments/driver/stripewire"
+	"github.com/beneath-core/control/payments/driver"
+	"github.com/beneath-core/control/payments/driver/anarchism"
+	"github.com/beneath-core/control/payments/driver/stripecard"
+	"github.com/beneath-core/control/payments/driver/stripewire"
 )
 
 // InitDrivers initializes all of the payments drivers
