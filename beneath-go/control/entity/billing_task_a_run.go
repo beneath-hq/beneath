@@ -24,6 +24,7 @@ func init() {
 func (t *RunBillingTask) Run(ctx context.Context) error {
 	organizations := FindAllOrganizations(ctx)
 	timestamp := time.Now()
+	timestamp = timestamp.AddDate(0, 1, 0) // for testing, to simulate that we are in the next month
 
 	for _, o := range organizations {
 		err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{

@@ -33,11 +33,29 @@ const (
 	// SeatProduct represents the seat product
 	SeatProduct Product = "seat"
 
+	// SeatProratedProduct represents the seat product when it is added to a bill mid-period
+	// occurs when a user is added to an organization mid-month
+	// also occurs when a billing plan is upgraded/downgraded mid-month
+	SeatProratedProduct Product = "seat_prorated"
+
+	// SeatProratedCreditProduct represents credit for the seat_prorated product
+	// occurs when a billing plan is upgraded/downgraded mid-month
+	// used to offset the seat_prorated product with the price-per-seat of the prior billing plan
+	SeatProratedCreditProduct Product = "seat_prorated_credit"
+
 	// ReadProduct represents the read product
 	ReadProduct Product = "read"
 
 	// WriteProduct represents the write product
 	WriteProduct Product = "write"
+
+	// ReadCreditProduct represents usage credit for the read product
+	// occurs when a user is added to an organization mid-month
+	ReadCreditProduct Product = "read_credit"
+
+	// WriteCreditProduct represents usage credit for the write product
+	// occurs when a user is added to an organization mid-month
+	WriteCreditProduct Product = "write_credit"
 
 	// ReadOverageProduct represents the read_overage product
 	ReadOverageProduct Product = "read_overage"

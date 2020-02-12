@@ -12,8 +12,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/beneath-core/beneath-go/control/taskqueue"
 	"github.com/beneath-core/beneath-go/core"
 	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -283,6 +285,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 }
 
 // JoinOrganization changes the user's Organization
+// if user is the last user in their organization-to-leave, resolver checks that there are no more services or projects still tied to that organization
 func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (*User, error) {
 	bi := FindBillingInfo(ctx, organizationID)
 	if bi == nil {
@@ -296,7 +299,6 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 	}
 
 	prevOrganizationID := u.OrganizationID
-
 	u.OrganizationID = organizationID
 	u.ReadQuota = bi.BillingPlan.SeatReadQuota
 	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
@@ -310,32 +312,33 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 		return nil, err
 	}
 
-	// after updating the organization_id, the new Organization table is not immediately available on the user object
-	// so we need to refetch the user in order to get the new Organization details
-	user := FindUser(ctx, u.UserID)
-	if user == nil {
-		panic("unable to get updated user")
-	}
-
-	// if there are no more users remaining in the previous organization, trigger bill and delete organization
 	prevOrg := FindOrganization(ctx, prevOrganizationID)
 	if prevOrg == nil {
 		panic("could not find previous organization")
 	}
 
-	// if len(prevOrg.Users) == 0 {
-	// trigger bill
-	// err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{
-	// 	OrganizationID: prevOrg.OrganizationID,
-	// 	Timestamp:      time.Now(), // TODO: might want to (or have to) "pretend" that we're at the beginning of the next period
-	// })
-	// if err != nil {
-	// 	log.S.Errorw("Error creating task", err)
-	// }
+	// if the previous organization has no more members, trigger bill (which will also delete organization)
+	if len(prevOrg.Users) == 0 {
+		billingInfo := FindBillingInfo(ctx, prevOrg.OrganizationID)
+		if billingInfo == nil {
+			panic("could not find billing info for the user's previous organization")
+		}
 
-	// // delete org
-	// prevOrg.Delete(ctx)
-	// }
+		err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{
+			OrganizationID: prevOrg.OrganizationID,
+			Timestamp:      timeutil.Next(time.Now(), billingInfo.BillingPlan.Period), // simulate that we are at the beginning of the next billing cycle
+		})
+		if err != nil {
+			log.S.Errorw("Error creating task", err)
+		}
+	}
+
+	// after updating the organization_id, the new Organization object is not immediately available on the user object
+	// so we need to refetch the user in order to get the new Organization details
+	user := FindUser(ctx, u.UserID)
+	if user == nil {
+		panic("unable to get updated user")
+	}
 
 	// commit usage credit to the new organization's bill for the user's current month's usage
 	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, u.Username, true)
@@ -353,6 +356,7 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 }
 
 // Delete removes the user from the database
+// if user is the last one in an organization, in resolver, need to check if there are any services or projects that are still tied to the organization
 func (u *User) Delete(ctx context.Context) error {
 	err := commitCurrentUsageToNextBill(ctx, u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
@@ -364,7 +368,26 @@ func (u *User) Delete(ctx context.Context) error {
 		return err
 	}
 
-	// TODO: if user was last one in organization, trigger bill, then delete organization
+	org := FindOrganization(ctx, u.OrganizationID)
+	if org == nil {
+		panic("could not find previous organization")
+	}
+
+	// if the organization now has no more members, trigger bill (which will also delete organization)
+	if len(org.Users) == 0 {
+		billingInfo := FindBillingInfo(ctx, org.OrganizationID)
+		if billingInfo == nil {
+			panic("could not find billing info for the user's organization")
+		}
+
+		err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{
+			OrganizationID: org.OrganizationID,
+			Timestamp:      timeutil.Next(time.Now(), billingInfo.BillingPlan.Period), // simulate that we are at the beginning of the next billing cycle
+		})
+		if err != nil {
+			log.S.Errorw("Error creating task", err)
+		}
+	}
 
 	return nil
 }

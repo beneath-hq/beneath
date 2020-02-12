@@ -28,4 +28,5 @@ type BilledResource interface {
 	GetEndTime() time.Time
 	GetBillingTime() time.Time
 	GetProduct() string
+	GetEntityName() string
 }

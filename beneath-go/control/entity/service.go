@@ -15,7 +15,7 @@ type Service struct {
 	ServiceID      uuid.UUID   `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Name           string      `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
 	Kind           ServiceKind `sql:",notnull"`
-	OrganizationID uuid.UUID   `sql:"on_delete:cascade,notnull,type:uuid"`
+	OrganizationID uuid.UUID   `sql:"on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
 	ReadQuota      int64
 	WriteQuota     int64
@@ -138,7 +138,19 @@ func (s *Service) UpdateOrganization(ctx context.Context, organizationID uuid.UU
 	s.OrganizationID = organizationID
 	s.UpdatedOn = time.Now()
 
-	_, err := db.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
+	// commit current usage to the old organization's bill
+	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
+
+	// commit usage credit to the new organization's bill for the service's current month's usage
+	err = commitCurrentUsageToNextBill(ctx, organizationID, ServiceEntityKind, s.ServiceID, s.Name, true)
+	if err != nil {
+		panic("unable to commit usage credit to bill")
+	}
 
 	// re-find service so we can return the name of the new organization
 	err = db.DB.ModelContext(ctx, s).

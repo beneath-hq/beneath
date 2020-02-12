@@ -100,8 +100,7 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 
 		// if downgrading from private projects, lock down organization's outstanding private projects
 		if !newBillingPlan.PrivateProjects && prevBillingPlan.PrivateProjects {
-			projects := FindOrganizationProjects(ctx, organizationID)
-			for _, p := range projects {
+			for _, p := range organization.Projects {
 				if !p.Public {
 					err = p.SetLock(ctx, true)
 					if err != nil {
@@ -122,6 +121,19 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: if going from Free -> Pro plan, trigger bill
+	// need to be charged the one prorated seat, nothing more
+	// probably, skip right to the IssueInvoice() task
+	// probably, the prorated seat needs to have a billing time of LAST period, so that we can IssueInvoice() and pretend we're at the beginning of last period, where there won't be product conflicts
+	// problem: when adding users to an organization, prorated seats have billing time of NEXT period
+	// err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
+	// 	OrganizationID: organizationID,
+	// 	BillingTime:    timeutil.Floor(time.Now(), newBillingPlan.Period), // simulate that the bill was sent at the beginning of this period
+	// })
+	// if err != nil {
+	// 	log.S.Errorw("Error creating task", err)
+	// }
 
 	return bi, nil
 }

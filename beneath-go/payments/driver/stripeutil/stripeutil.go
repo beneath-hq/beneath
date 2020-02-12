@@ -3,6 +3,7 @@ package stripeutil
 import (
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/core/log"
+	"github.com/beneath-core/beneath-go/payments/driver"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	daysUntilInvoiceDue = 10
+	daysUntilInvoiceDue = 15
 )
 
 // InitStripe sets our Stripe API key
@@ -204,6 +205,41 @@ func CreateInvoice(customerID string, paymentsDriver string) *stripe.Invoice {
 	return invoice
 }
 
+// CreateStripeInvoice is a wrapper to create a Stripe invoice using the stripeutil functions
+func CreateStripeInvoice(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) *stripe.Invoice {
+	if billingInfo.GetDriverPayload()["customer_id"] == nil {
+		panic("stripe customer id is not set")
+	}
+
+	var seatCount int64
+	var seatPrice int64
+	var seatStartTime int64
+	var seatEndTime int64
+
+	for _, item := range billedResources {
+		// only itemize the products that cost money (i.e. don't itemize the included Reads and Writes)
+		if item.GetTotalPriceCents() != 0 {
+			if item.GetProduct() == string(entity.SeatProduct) { // count seats for the batch line item
+				seatCount++
+				seatPrice = int64(item.GetTotalPriceCents())
+				seatStartTime = item.GetStartTime().Unix()
+				seatEndTime = item.GetEndTime().Unix()
+			} else { // itemize everything else
+				NewInvoiceItemOther(billingInfo.GetDriverPayload()["customer_id"].(string), int64(item.GetTotalPriceCents()), string(billingInfo.GetBillingPlanCurrency()), item.GetStartTime().Unix(), item.GetEndTime().Unix(), PrettyDescription(item.GetProduct(), item.GetEntityName()))
+			}
+		}
+	}
+
+	// batch seats
+	if seatCount > 0 {
+		NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, PrettyDescription(string(entity.SeatProduct), ""))
+	}
+
+	inv := CreateInvoice(billingInfo.GetDriverPayload()["customer_id"].(string), billingInfo.GetPaymentsDriver())
+
+	return inv
+}
+
 // ListCustomerInvoices lists a customer's historical invoices
 func ListCustomerInvoices(customerID string) []*stripe.Invoice {
 	var invoices []*stripe.Invoice
@@ -256,10 +292,14 @@ func SendInvoice(invoiceID string) {
 }
 
 // PrettyDescription makes the Stripe invoice more informative
-func PrettyDescription(product string) string {
+func PrettyDescription(product string, entityName string) string {
 	switch product {
 	case string(entity.SeatProduct):
 		return "Seats"
+	case string(entity.SeatProratedProduct):
+		return "Seat (prorated for " + entityName + ")"
+	case string(entity.SeatProratedCreditProduct):
+		return "Seat credit (prorated for " + entityName + ")"
 	case string(entity.ReadOverageProduct):
 		return "Organization read overage (GB)"
 	case string(entity.WriteOverageProduct):
