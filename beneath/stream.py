@@ -85,7 +85,7 @@ class Stream:
         self.client.write_batch(instance_id, batch)
         batch = []
         batch_bytes = 0
-    
+
     for er in encoded_records:
       if len(batch) == config.WRITE_BATCH_SIZE:
         flush()
@@ -154,7 +154,7 @@ class Stream:
       if f not in where:
         raise ValueError(f"for fields that are to the left of the target field ('{target}') in the stream key, you must set the where arg")
 
-    # the function we use to divide 
+    # the function we use to divide
     middle = None
     if self._column_is_integral(target):
       middle = lambda x1, x2: x1 + int((x2 - x1) / 2)
@@ -166,7 +166,7 @@ class Stream:
     end = end_max
 
     # check there exists a maximum (and handle the easy case where there's only one row)
-    where[target] = { "_lt": end }
+    where[target] = {"_lt": end}
     rows = self.read(where=where, limit=2, to_dataframe=False)
     if len(rows) == 0:
       return None
@@ -179,23 +179,23 @@ class Stream:
     iterations = 0
     while iterations < 64:
       mid = middle(start, end)
-      if start == mid: 
+      if start == mid:
         # for non-complete keys, can be multiple rows with max, which would cause infinite loop
         # note: == is well-defined for datetime
         return start
 
-      where[target] = { "_gte": mid, "_lt": end }
+      where[target] = {"_gte": mid, "_lt": end}
       rows = self.read(where=where, limit=2, to_dataframe=False)
-      
+
       if len(rows) == 0: # too far
         end = mid
       elif len(rows) == 1: # found it
         return rows[0][target]
       else: # not far enough
         start = rows[-1][target]
-      
+
       iterations += 1
-    
+
     raise RuntimeError(f"stuck in infinite search at start={start} end={end}")
 
 

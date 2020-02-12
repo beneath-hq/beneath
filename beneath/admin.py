@@ -111,6 +111,7 @@ class AdminClient(BaseClient):
             projectID
             name
             displayName
+            public
             site
             description
             photoURL
@@ -152,7 +153,8 @@ class AdminClient(BaseClient):
               userID
               username
               name
-              createdOn
+              readQuota
+              writeQuota
             }
           }
         }
@@ -225,23 +227,38 @@ class AdminClient(BaseClient):
     return result['getUserMetrics']
 
 
-  def create_organization(self, name):
+  def update_organization_name(self, organization_id, name):
     result = self._query_control(
       variables={
+        'organizationID': organization_id,
         'name': format_entity_name(name),
       },
       query="""
-        mutation CreateOrganization($name: String!) {
-          createOrganization(name: $name) {
-            organizationID
+        mutation UpdateOrganizationName($organizationID: UUID!, $name: String!) {
+          updateOrganizationName(organizationID: $organizationID, name: $name) {
+           	organizationID
             name
             createdOn
             updatedOn
+            services {
+              serviceID
+              name
+              kind
+              readQuota
+              writeQuota
+            }
+            users {
+              userID
+              username
+              name
+              readQuota
+              writeQuota
+            }
           }
         }
       """
     )
-    return result['createOrganization']
+    return result['updateOrganizationName']
 
 
   def add_user_to_organization(self, username, organization_id, view, admin):
@@ -253,14 +270,15 @@ class AdminClient(BaseClient):
         'admin': admin,
       },
       query="""
-        mutation AddUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
-          addUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
+        mutation InviteUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
+          inviteUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
             userID
             username
             name
             createdOn
             projects {
               name
+              public
             }
             readQuota
             writeQuota
@@ -268,7 +286,7 @@ class AdminClient(BaseClient):
         }
       """
     )
-    return result['addUserToOrganization']
+    return result['inviteUserToOrganization']
 
 
   def rm_user_from_organization(self, user_id, organization_id):
@@ -286,23 +304,116 @@ class AdminClient(BaseClient):
     return result['removeUserFromOrganization']
 
 
-  def create_project(self, name, display_name, organization_id, description=None, site_url=None, photo_url=None):
+  def users_organizations_permissions(self, organization_id):
+    result = self._query_control(
+      variables={
+        'organizationID': organization_id,
+      },
+      query="""
+        query UsersOrganizationPermissions($organizationID: UUID!) {
+          usersOrganizationPermissions(organizationID: $organizationID) {
+            user {
+              username
+              name
+            }
+            view
+            admin
+          }
+        }
+      """
+    )
+    return result['usersOrganizationPermissions']
+
+
+  def update_user_organization_permissions(self, user_id, organization_id, view, admin):
+    result = self._query_control(
+      variables={
+        'userID': user_id,
+        'organizationID': organization_id,
+        'view': view,
+        'admin': admin,
+      },
+      query="""
+        mutation UpdateUserOrganizationPermissions($userID: UUID!, $organizationID: UUID!, $view: Boolean, $admin: Boolean) {
+          updateUserOrganizationPermissions(userID: $userID, organizationID: $organizationID, view: $view, admin: $admin) {
+            user {
+              username
+            }
+            organization {
+              name
+            }
+            view
+            admin
+          }
+        }
+      """
+    )
+    return result['updateUserOrganizationPermissions']
+
+
+  def update_user_organization_quotas(self, user_id, organization_id, read_quota_bytes, write_quota_bytes):
+    result = self._query_control(
+      variables={
+        'userID': user_id,
+        'organizationID': organization_id,
+        'readQuota': read_quota_bytes,
+        'writeQuota': write_quota_bytes,
+      },
+      query="""
+        mutation UpdateUserOrganizationQuotas($userID: UUID!, $organizationID: UUID!, $readQuota: Int, $writeQuota: Int) {
+          updateUserOrganizationQuotas(userID: $userID, organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota) {
+            username
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['updateUserOrganizationQuotas']
+
+
+  def join_organization(self, name):
+    result = self._query_control(
+      variables={
+        'organizationName': format_entity_name(name),
+      },
+      query="""
+        mutation JoinOrganization($organizationName: String!) {
+          joinOrganization(organizationName: $organizationName) {
+            user {
+              username
+            }
+            organization {
+              name
+            }
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['joinOrganization']
+
+
+  def create_project(self, name, display_name, organization_id, public, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
         'name': format_entity_name(name),
         'displayName': display_name,
         'organizationID': organization_id,
+        'public': public,
         'description': description,
         'site': site_url,
         'photoURL': photo_url,
       },
       query="""
-        mutation CreateProject($name: String!, $displayName: String, $organizationID: UUID!, $site: String, $description: String, $photoURL: String) {
-          createProject(name: $name, displayName: $displayName, organizationID: $organizationID, site: $site, description: $description, photoURL: $photoURL) {
+        mutation CreateProject($name: String!, $displayName: String, $organizationID: UUID!, $public: Boolean! $site: String, $description: String, $photoURL: String) {
+          createProject(name: $name, displayName: $displayName, organizationID: $organizationID, public: $public, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             name
             displayName
             organizationID
+            public
             site
             description
             photoURL
@@ -321,20 +432,22 @@ class AdminClient(BaseClient):
     return result['createProject']
 
 
-  def update_project(self, project_id, display_name, description=None, site_url=None, photo_url=None):
+  def update_project(self, project_id, display_name, public, description=None, site_url=None, photo_url=None):
     result = self._query_control(
       variables={
         'projectID': project_id,
         'displayName': display_name,
+        'public': public,
         'description': description,
         'site': site_url,
         'photoURL': photo_url,
       },
       query="""
-        mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
-          updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+        mutation UpdateProject($projectID: UUID!, $displayName: String, $public: Boolean, $site: String, $description: String, $photoURL: String) {
+          updateProject(projectID: $projectID, displayName: $displayName, public: $public, site: $site, description: $description, photoURL: $photoURL) {
             projectID
             displayName
+            public
             site
             description
             photoURL
@@ -344,6 +457,32 @@ class AdminClient(BaseClient):
       """
     )
     return result['updateProject']
+
+
+  def update_project_organization(self, project_id, organization_id):
+    result = self._query_control(
+      variables={
+        'projectID': project_id,
+        'organizationID': organization_id,
+      },
+      query="""
+        mutation UpdateProjectOrganization($projectID: UUID!, $organizationID: UUID!) {
+          updateProjectOrganization(projectID: $projectID, organizationID: $organizationID) {
+            projectID
+            displayName
+            public
+            site
+            description
+            photoURL
+            updatedOn
+            organization {
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['updateProjectOrganization']
 
 
   def delete_project(self, project_id):
@@ -468,6 +607,30 @@ class AdminClient(BaseClient):
       """
     )
     return result['updateService']
+
+
+  def update_service_organization(self, service_id, organization_id):
+    result = self._query_control(
+      variables={
+        'serviceID': service_id,
+        'organizationID': organization_id,
+      },
+      query="""
+        mutation UpdateServiceOrganization($serviceID: UUID!, $organizationID: UUID!) {
+          updateServiceOrganization(serviceID: $serviceID, organizationID: $organizationID) {
+            serviceID
+            name
+            kind
+            readQuota
+            writeQuota
+            organization {
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['updateServiceOrganization']
 
 
   def delete_service(self, service_id):

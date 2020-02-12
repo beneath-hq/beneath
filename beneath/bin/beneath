@@ -39,9 +39,10 @@ def create_argument_parser():
   _organization_info.set_defaults(func=organization_info)
   _organization_info.add_argument('name', type=str)
 
-  _organization_create = _organization.add_parser('create')
-  _organization_create.set_defaults(func=organization_create)
-  _organization_create.add_argument('name', type=str)
+  _organization_chng_name = _organization.add_parser('update-name')
+  _organization_chng_name.set_defaults(func=organization_update_name)
+  _organization_chng_name.add_argument('organization', type=str)
+  _organization_chng_name.add_argument('--new-name', type=str)
 
   _organization_add_user = _organization.add_parser('add-user')
   _organization_add_user.set_defaults(func=organization_add_user)
@@ -55,6 +56,28 @@ def create_argument_parser():
   _organization_rm_user.add_argument('username', type=str)
   _organization_rm_user.add_argument('-o', '--organization', type=str, required=True)
 
+  _organization_view_perms = _organization.add_parser('view-permissions')
+  _organization_view_perms.set_defaults(func=organization_view_permissions)
+  _organization_view_perms.add_argument('name', type=str)
+
+  _organization_chng_perm = _organization.add_parser('update-permissions')
+  _organization_chng_perm.set_defaults(func=organization_update_user_permissions)
+  _organization_chng_perm.add_argument('organization', type=str)
+  _organization_chng_perm.add_argument('username', type=str)
+  _organization_chng_perm.add_argument('--view', type=str2bool, nargs='?', const=True, default=None)
+  _organization_chng_perm.add_argument('--admin', type=str2bool, nargs='?', const=True, default=None)
+
+  _organization_chng_quot = _organization.add_parser('update-quotas')
+  _organization_chng_quot.set_defaults(func=organization_update_user_quotas)
+  _organization_chng_quot.add_argument('organization', type=str)
+  _organization_chng_quot.add_argument('username', type=str)
+  _organization_chng_quot.add_argument('--read-quota-mb', type=int)
+  _organization_chng_quot.add_argument('--write-quota-mb', type=int)
+
+  _organization_join = _organization.add_parser('join')
+  _organization_join.set_defaults(func=organization_join)
+  _organization_join.add_argument('name', type=str)
+
   # project parser and subparsers
   _project = _root.add_parser('project').add_subparsers()
 
@@ -66,6 +89,7 @@ def create_argument_parser():
   _project_create.add_argument('name', type=str)
   _project_create.add_argument('--display-name', type=str)
   _project_create.add_argument('-o', '--organization', type=str)
+  _project_create.add_argument('--public', type=str2bool, nargs='?', required=True, const=True)
   _project_create.add_argument('--description', type=str)
   _project_create.add_argument('--site-url', type=str)
   _project_create.add_argument('--photo-url', type=str)
@@ -74,9 +98,15 @@ def create_argument_parser():
   _project_update.set_defaults(func=project_update)
   _project_update.add_argument('name', type=str)
   _project_update.add_argument('--display-name', type=str)
+  _project_update.add_argument('--public', type=str2bool, nargs='?', const=True, default=None)
   _project_update.add_argument('--description', type=str)
   _project_update.add_argument('--site-url', type=str)
   _project_update.add_argument('--photo-url', type=str)
+
+  _project_migrate = _project.add_parser('migrate')
+  _project_migrate.set_defaults(func=project_update_organization)
+  _project_migrate.add_argument('name', type=str)
+  _project_migrate.add_argument('--new-organization', type=str, required=True)
 
   _project_delete = _project.add_parser('delete')
   _project_delete.set_defaults(func=project_delete)
@@ -116,6 +146,12 @@ def create_argument_parser():
   _service_update.add_argument('--new-name', type=str)
   _service_update.add_argument('--read-quota-mb', type=int)
   _service_update.add_argument('--write-quota-mb', type=int)
+  
+  _service_migrate = _service.add_parser('migrate')
+  _service_migrate.set_defaults(func=service_update_organization)
+  _service_migrate.add_argument('name', type=str)
+  _service_migrate.add_argument('-o', '--current-organization', type=str, required=True)
+  _service_migrate.add_argument('--new-organization', type=str, required=True)
 
   _service_delete = _service.add_parser('delete')
   _service_delete.set_defaults(func=service_delete)
@@ -278,12 +314,14 @@ def organization_info(args):
   result = admin.get_organization_by_name(name=args.name)
   pretty_print_graphql_result(result)
 
-
-def organization_create(args):
+def organization_update_name(args):
   admin = get_admin_client()
-  result = admin.create_organization(name=args.name)
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_organization_name(
+    organization_id=organization['organizationID'],
+    name=args.new_name,
+  )
   pretty_print_graphql_result(result)
-
 
 def organization_add_user(args):
   admin = get_admin_client()
@@ -305,6 +343,45 @@ def organization_rm_user(args):
     user_id=user['userID'],
     organization_id=organization['organizationID'],
   )
+  pretty_print_graphql_result(result)
+
+
+def organization_view_permissions(args):
+  admin = get_admin_client()
+  organization = admin.get_organization_by_name(args.name)
+  result = admin.users_organizations_permissions(organization_id=organization['organizationID'])
+  pretty_print_graphql_result(result)
+
+
+def organization_update_user_permissions(args):
+  admin = get_admin_client()
+  user = admin.get_user_by_username(args.username)
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_user_organization_permissions(
+    user_id=user['userID'],
+    organization_id=organization['organizationID'],
+    view=args.view,
+    admin=args.admin,
+  )
+  pretty_print_graphql_result(result)
+
+
+def organization_update_user_quotas(args):
+  admin = get_admin_client()
+  user = admin.get_user_by_username(args.username)
+  organization = admin.get_organization_by_name(args.organization)
+  result = admin.update_user_organization_quotas(
+    user_id=user['userID'],
+    organization_id=organization['organizationID'],
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
+  )
+  pretty_print_graphql_result(result)
+
+
+def organization_join(args):
+  admin = get_admin_client()
+  result = admin.join_organization(name=args.name)
   pretty_print_graphql_result(result)
 
 
@@ -333,6 +410,7 @@ def project_create(args):
     name=name,
     display_name=args.display_name,
     organization_id=org['organizationID'],
+    public=args.public,
     description=args.description,
     site_url=args.site_url,
     photo_url=args.photo_url,
@@ -346,9 +424,21 @@ def project_update(args):
   result = admin.update_project(
     project_id=project['projectID'],
     display_name=args.display_name,
+    public=args.public,
     description=args.description,
     site_url=args.site_url,
     photo_url=args.photo_url,
+  )
+  pretty_print_graphql_result(result)
+
+
+def project_update_organization(args):
+  admin = get_admin_client()
+  project = admin.get_project_by_name(args.name)
+  organization = admin.get_organization_by_name(args.new_organization)
+  result = admin.update_project_organization(
+    project_id=project['projectID'],
+    organization_id=organization['organizationID'],
   )
   pretty_print_graphql_result(result)
 
@@ -420,6 +510,16 @@ def service_update(args):
   )
   pretty_print_graphql_result(result)
 
+def service_update_organization(args):
+  admin = get_admin_client()
+  name, org_name = parse_names(args.name, args.current_organization, "organization")
+  service = admin.get_service_by_name_and_organization(name, org_name)
+  organization = admin.get_organization_by_name(args.new_organization)
+  result = admin.update_service_organization(
+    service_id=service['serviceID'],
+    organization_id=organization['organizationID'],
+  )
+  pretty_print_graphql_result(result)
 
 def service_delete(args):
   admin = get_admin_client()
