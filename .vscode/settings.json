@@ -17,11 +17,5 @@
     "-structtag=false"
   ],
   "tslint.jsEnable": true,
-  "go.inferGopath": false,
-  "protoc": {
-    "path": "/usr/local/bin/protoc",
-    "options": [
-      "--proto_path=./beneath-go/proto"
-    ]
-  }
+  "go.inferGopath": false
 }
