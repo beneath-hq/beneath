@@ -9,7 +9,7 @@ import (
 // For more details, see https://github.com/kelseyhightower/envconfig
 func LoadConfig(prefix string, spec interface{}) {
 	// load .env if present
-	err := godotenv.Load()
+	err := godotenv.Load("configs/.env")
 	if err != nil && err.Error() != "open .env: no such file or directory" {
 		panic(err)
 	}
