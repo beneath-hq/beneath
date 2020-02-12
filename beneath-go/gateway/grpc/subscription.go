@@ -32,6 +32,11 @@ func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_Subscribe
 		return status.Error(codes.NotFound, "stream not found")
 	}
 
+	// if batch, check committed
+	if stream.Batch && !stream.Committed {
+		return status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
+	}
+
 	// check permissions
 	perms := secret.StreamPermissions(ss.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {

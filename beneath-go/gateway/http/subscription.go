@@ -107,6 +107,11 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 		return fmt.Errorf("stream not found")
 	}
 
+	// if batch, check committed
+	if stream.Batch && !stream.Committed {
+		return fmt.Errorf("batch has not yet been committed, and so can't be read")
+	}
+
 	// check permissions
 	perms := secret.StreamPermissions(client.Context, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
 	if !perms.Read {
