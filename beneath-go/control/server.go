@@ -42,7 +42,7 @@ type configSpecification struct {
 
 	// TODO: rename to CONTROL_PAYMENT_DRIVERS
 	PaymentsDrivers []string `envconfig:"PAYMENTS_DRIVERS" required:"true"`
-	
+
 	MQDriver        string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
 	LookupDriver    string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
@@ -68,12 +68,8 @@ func init() {
 	// connect postgres, redis, engine, and payment drivers
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
-<<<<<<< HEAD
 	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
-=======
-	db.InitEngine(Config.StreamsDriver, Config.TablesDriver, Config.WarehouseDriver)
 	db.SetPaymentDrivers(payments.InitDrivers(Config.PaymentsDrivers))
->>>>>>> master
 
 	// run migrations
 	migrations.MustRunUp(db.DB)
