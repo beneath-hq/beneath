@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/db"
 
 	"golang.org/x/sync/errgroup"
@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	core.LoadConfig("beneath", &Config)
+	envutil.LoadConfig("beneath", &Config)
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
 	db.InitRedis(Config.RedisURL)
 	db.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)

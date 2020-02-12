@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -27,7 +27,7 @@ type configSpecification struct {
 // New initializes a StripeWire object
 func New() StripeWire {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
 
 	return StripeWire{}
@@ -45,7 +45,7 @@ func (w *StripeWire) GetHTTPHandlers() map[string]httputil.AppHandler {
 // create/update a customer's billing info and Stripe registration
 func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {

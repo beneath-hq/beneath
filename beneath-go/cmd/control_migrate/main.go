@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/beneath-core/beneath-go/control/migrations"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/db"
 )
 
@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 
 	oldVersion, newVersion, err := migrations.Run(db.DB, flag.Args()...)

@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	core.LoadConfig("", &config)
+	envutil.LoadConfig("", &config)
 
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel

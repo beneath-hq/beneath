@@ -17,7 +17,7 @@ import (
 	"github.com/beneath-core/beneath-go/control/gql"
 	"github.com/beneath-core/beneath-go/control/migrations"
 	"github.com/beneath-core/beneath-go/control/resolver"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/core/segment"
 	"github.com/beneath-core/beneath-go/db"
@@ -63,7 +63,7 @@ var (
 
 func init() {
 	// load config
-	core.LoadConfig("beneath", &Config)
+	envutil.LoadConfig("beneath", &Config)
 
 	// connect postgres, redis, engine, and payment drivers
 	db.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)

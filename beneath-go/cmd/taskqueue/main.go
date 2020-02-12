@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/beneath-core/beneath-go/control/taskqueue/worker"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/payments"
@@ -24,7 +24,7 @@ type configSpecification struct {
 
 func main() {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 
 	db.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	db.InitRedis(config.RedisURL)

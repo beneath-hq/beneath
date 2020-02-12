@@ -1,4 +1,4 @@
-package core
+package envutil
 
 import (
 	"github.com/joho/godotenv"

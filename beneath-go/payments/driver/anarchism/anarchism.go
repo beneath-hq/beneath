@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/middleware"
@@ -37,7 +37,7 @@ func (a *Anarchism) GetHTTPHandlers() map[string]httputil.AppHandler {
 // this gets called when users downgrade to the Free plan
 func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {

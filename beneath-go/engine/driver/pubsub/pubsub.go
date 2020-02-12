@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
@@ -35,7 +35,7 @@ var once sync.Once
 func createGlobal() {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_engine_pubsub", &config)
+	envutil.LoadConfig("beneath_engine_pubsub", &config)
 
 	// if EMULATOR_HOST set, configure pubsub for the emulator
 	if config.EmulatorHost != "" {

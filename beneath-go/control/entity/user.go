@@ -13,7 +13,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/beneath-go/control/taskqueue"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
@@ -133,7 +133,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	}
 
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 
 	freeBillingPlan := FindBillingPlan(ctx, uuid.FromStringOrNil(config.FreeBillingPlanID))
 	if freeBillingPlan == nil {

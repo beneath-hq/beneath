@@ -5,7 +5,7 @@ import (
 
 	"github.com/beneath-core/beneath-go/control/entity"
 	"github.com/beneath-core/beneath-go/control/taskqueue"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/log"
 	"github.com/beneath-core/beneath-go/db"
 )
@@ -18,7 +18,7 @@ type configSpecification struct {
 
 func main() {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 	db.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	err := taskqueue.Submit(context.Background(), &entity.RunBillingTask{})

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/engine/driver"
 	"github.com/beneath-core/beneath-go/engine/driver/bigtable/sequencer"
 )
@@ -83,7 +83,7 @@ var once sync.Once
 func createGlobal() {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_engine_bigtable", &config)
+	envutil.LoadConfig("beneath_engine_bigtable", &config)
 
 	// if EMULATOR_HOST set, configure bigtable for the emulator
 	if config.EmulatorHost != "" {

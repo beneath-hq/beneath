@@ -6,7 +6,7 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
@@ -41,7 +41,7 @@ var once sync.Once
 func createGlobal() {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_engine_bigquery", &config)
+	envutil.LoadConfig("beneath_engine_bigquery", &config)
 
 	// create client
 	client, err := bq.NewClient(context.Background(), config.ProjectID)

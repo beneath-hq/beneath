@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/beneath-core/beneath-go/control/entity"
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/core/httputil"
 	"github.com/beneath-core/beneath-go/core/jsonutil"
 	"github.com/beneath-core/beneath-go/core/log"
@@ -56,7 +56,7 @@ type configSpecification struct {
 // New initializes a StripeCard object
 func New() StripeCard {
 	var config configSpecification
-	core.LoadConfig("beneath", &config)
+	envutil.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
 
 	return StripeCard{}
@@ -196,7 +196,7 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
 			var config configSpecification
-			core.LoadConfig("beneath", &config)
+			envutil.LoadConfig("beneath", &config)
 
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
 			freeBillingPlanID := uuid.FromStringOrNil(config.FreeBillingPlanID)

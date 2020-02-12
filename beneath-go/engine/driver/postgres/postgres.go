@@ -3,7 +3,7 @@ package postgres
 import (
 	"sync"
 
-	"github.com/beneath-core/beneath-go/core"
+	"github.com/beneath-core/beneath-go/core/envutil"
 	"github.com/beneath-core/beneath-go/engine/driver"
 )
 
@@ -22,7 +22,7 @@ var once sync.Once
 func createGlobal() {
 	// parse config from env
 	var config configSpecification
-	core.LoadConfig("beneath_engine_postgres", &config)
+	envutil.LoadConfig("beneath_engine_postgres", &config)
 
 	// create instance
 	global = Postgres{}
