@@ -1,3 +1,0 @@
-1. In beneath-python's _version.py, increment __version__.
-2. In beneath-go's gateway/grpc_server.go, increment clientSpec's RecommendedVersion
-3. cd beneath-python, and run ./beneath-build.sh

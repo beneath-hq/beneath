@@ -1,1 +1,0 @@
-Program that dumps every key stored in the local BigTable emulator
