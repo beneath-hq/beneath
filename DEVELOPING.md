@@ -8,7 +8,7 @@ Open source code (SDKs, libraries, examples) will have to be put in separate rep
 
 The project structure is currently:
 
-- beneath-frontend contains JavaScript/TypeScript code for the frontend
+- web contains JavaScript/TypeScript code for the frontend
 - beneath-go contains all Go code, which spans the control plane, the data gateway and the core data pipelines
 
 Checkout the git repo with: `git clone https://gitlab.com/_beneath/beneath-core.git`
@@ -66,6 +66,6 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 ### Frontend (UI)
 
-- Go to `beneath-core/beneath-frontend`
+- Go to `beneath-core/web`
 - Install dependencies with `yarn install` (if you don't have `yarn` installed: https://yarnpkg.com/en/docs/install)
 - Run dev server with `yarn dev`

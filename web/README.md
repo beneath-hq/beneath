@@ -1,4 +1,4 @@
-# beneath-frontend README
+# Frontend README
 
 ## Stack
 
