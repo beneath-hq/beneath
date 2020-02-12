@@ -2,7 +2,7 @@ syntax = "proto3";
 option go_package = "github.com/beneath-core/beneath-go/engine/proto";
 package engine;
 
-import "proto/gateway.proto";
+import "gateway/grpc/proto/gateway.proto";
 
 message WriteRequest {
   bytes write_id = 1;

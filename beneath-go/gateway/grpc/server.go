@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/beneath-core/beneath-go/core/middleware"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/gateway/grpc/proto"
 
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/encoding.md#using-a-compressor
 	_ "google.golang.org/grpc/encoding/gzip"

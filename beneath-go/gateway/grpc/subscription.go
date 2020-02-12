@@ -10,7 +10,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/middleware"
 	"github.com/beneath-core/beneath-go/gateway"
 	"github.com/beneath-core/beneath-go/gateway/subscriptions"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/gateway/grpc/proto"
 )
 
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {

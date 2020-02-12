@@ -14,7 +14,7 @@ import (
 	"github.com/beneath-core/beneath-go/core/timeutil"
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/gateway"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/gateway/grpc/proto"
 )
 
 func (s *gRPCServer) Repartition(ctx context.Context, req *pb.RepartitionRequest) (*pb.RepartitionResponse, error) {

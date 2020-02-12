@@ -17,7 +17,7 @@ import (
 	"github.com/beneath-core/beneath-go/engine"
 	pb_engine "github.com/beneath-core/beneath-go/engine/proto"
 	"github.com/beneath-core/beneath-go/gateway"
-	pb "github.com/beneath-core/beneath-go/proto"
+	pb "github.com/beneath-core/beneath-go/gateway/grpc/proto"
 )
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {

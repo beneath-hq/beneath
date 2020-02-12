@@ -14,7 +14,7 @@ import (
 	"github.com/beneath-core/beneath-go/db"
 	"github.com/beneath-core/beneath-go/engine/driver"
 	pb "github.com/beneath-core/beneath-go/engine/proto"
-	pbgw "github.com/beneath-core/beneath-go/proto"
+	pbgw "github.com/beneath-core/beneath-go/gateway/grpc/proto"
 )
 
 const (
