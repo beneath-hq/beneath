@@ -19,15 +19,15 @@ build_frontend:
     IMAGE: gcr.io/beneathcrypto/frontend
   script: 
     - docker pull ${IMAGE}:latest || true
-    - docker build -f ./web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
+    - docker build -f ./build/web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
 
 .build_go:
   script: 
     - docker pull ${IMAGE}:builder || true
-    - docker build -f ./${CMD_NAME}.Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
-    - docker build -f ./${CMD_NAME}.Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
+    - docker build -f ./build/${CMD_NAME}/Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
+    - docker build -f ./build/${CMD_NAME}/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
     - docker push ${IMAGE}:builder

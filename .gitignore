@@ -13,7 +13,6 @@ __pycache__
 *.pyc
 *.pyd
 *.pyo
-build
 dist
 node_modules
 npm-debug.log
