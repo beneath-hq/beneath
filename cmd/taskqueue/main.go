@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/beneath-core/control/payments"
 	"github.com/beneath-core/control/taskqueue/worker"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/payments"
 
 	// import modules that register tasks in taskqueue
 	_ "github.com/beneath-core/control/entity"
