@@ -33,10 +33,6 @@ These are the main libraries used in the control server
 3. Implement `Run(ctx context.Context) error` on the task struct with the logic you want to execute in the background
 4. When you want to trigger the background task, call `taskqueue.Submit(t)` where t is the instantiated task struct
 
-## Updating protocol buffer definitions
-
-- Run `scripts/proto-build.sh` to (re)generate all protocol buffers classes in the project
-
 ## Payments
 
 ### Changing payment plans
