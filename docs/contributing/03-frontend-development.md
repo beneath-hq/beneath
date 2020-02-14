@@ -1,4 +1,6 @@
-# Frontend README
+# Frontend development
+
+The frontend is found in `web/`.
 
 ## Stack
 

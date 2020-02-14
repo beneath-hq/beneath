@@ -15,9 +15,9 @@ The entire system is implemented in Go with the exception of the frontend, which
 The system spans multiple separate executable services, namely:
 
 - The **control server** (found in `control/`), which manages users, projects, streams, etc. It exposes a GraphQL API and is backed by Postgres and Redis.
-- The **gateway server** (found in `gateway/`), which reads and writes data to Beneath. It exposes REST and gRPC APIs and interfaces with the underlying infrastructure using the **engine** (found in `engine/`).
-- The **pipeline**, which receives data from the gateway and writes/forwards it to the engine.
-- The **task queue**, which executes background jobs issued by the control server.
+- The **task queue** (found in `control/taskqueue/`), which executes background jobs issued by the control server.
+- The **gateway server** (found in `gateway/`), which reads and writes data to Beneath. It exposes REST and gRPC APIs and interfaces with the underlying infrastructure using its **pipeline** and the **engine** (found in `engine/`).
+- The **pipeline** (found in `gateway/pipeline/`), which in the background receives data from the gateway and writes it to the engine.
 
 Here's a rough guide to the project structure:
 
@@ -30,7 +30,6 @@ Here's a rough guide to the project structure:
 - `engine`: code for interfacing with the underlying data infrastructure, e.g., Pubsub, BigTable, BigQuery, etc.
 - `gateway`: code related to the gateway server (excluding data infrastructure code -- that's in `engine`)
 - `internal`: utility libraries that are not directly related to any specific service (e.g., HTTP middleware)
-- `pipeline`: code related to the background data processing pipeline
 - `pkg`: stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
 - `scripts`: contains helper scripts for code generation, etc.
 - `web`: contains the frontend (data terminal) code
