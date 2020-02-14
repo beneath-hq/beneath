@@ -18,6 +18,6 @@ The primary libraries used in the frontend are:
 
 ### Apollo
 
-Regenerate types for Apollo queries (currently only covers queries in queries/*):
+Regenerate types for Apollo queries (currently only covers queries in `web/apollo/queries/`):
 
 ```yarn apollo:generate```
