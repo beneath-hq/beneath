@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 // BillingPlan represents a Billing Plan that an Organization can subscribe to

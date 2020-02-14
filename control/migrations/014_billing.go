@@ -1,9 +1,9 @@
 package migrations
 
 import (
-	"github.com/beneath-core/control/entity"
-
 	"github.com/go-pg/migrations/v7"
+
+	"github.com/beneath-core/control/entity"
 )
 
 func init() {
@@ -28,13 +28,14 @@ func init() {
 
 		// (billing_time, org_id, entity_id, product) unique index
 		_, err = db.Exec(`
-			CREATE UNIQUE INDEX billed_resources_billing_time_organization_id_entity_id_product_key ON public.billed_resources USING btree (billing_time, organization_id, entity_id, product);
+			CREATE UNIQUE INDEX billed_resources_billing_time_organization_id_entity_id_product_key
+				ON public.billed_resources USING btree (billing_time, organization_id, entity_id, product);
 		`)
 		if err != nil {
 			return err
 		}
 
-		// Organization.Personal, Organization.BillingPlanID, Organization.StripeCustomerID, Organization.PaymentMethod
+		// Organization.Personal
 		_, err = db.Exec(`
 			ALTER TABLE organizations
 			ADD personal bool NOT NULL default FALSE;
@@ -81,7 +82,7 @@ func init() {
 			return err
 		}
 
-		// Organization.Personal, Organization.BillingPlanID, Organization.StripeCustomerID, Organization.PaymentMethod
+		// Organization.Personal
 		_, err = db.Exec(`
 			ALTER TABLE organizations DROP personal;
 		`)
@@ -100,7 +101,7 @@ func init() {
 
 		// Project.Locked
 		_, err = db.Exec(`
-			ALTER TABLE projects DROP locked
+			ALTER TABLE projects DROP locked;
 		`)
 		if err != nil {
 			return err

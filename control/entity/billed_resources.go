@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/beneath-core/internal/hub"
 )
 
 // BilledResource represents a resource that an organization used during the past billing period

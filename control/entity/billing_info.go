@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/beneath-core/internal/hub"
+
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -15,7 +16,7 @@ type BillingInfo struct {
 	Organization   *Organization
 	BillingPlanID  uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan    *BillingPlan
-	PaymentsDriver PaymentsDriver // StripeCustomerID is currently the only thing that goes in the payload
+	PaymentsDriver PaymentsDriver
 	DriverPayload  map[string]interface{}
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
