@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/beneath-core/gateway/pipeline"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pipeline"
 )
 
 type configSpecification struct {
