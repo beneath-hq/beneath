@@ -23,8 +23,15 @@ In the future, we may want to extend this list with fundamentally different data
 - `pubsub` implements Google Cloud Pub/Sub as a highly-scalable `MessageQueue` driver.
 - `bigtable` implements Google Cloud Bigtable as a highly-scalable `LookupService` driver.
 - `bigquery` implements Google Cloud BigQuery as a highly-scalable `WarehouseService` driver.
-- `postgres` has not yet been implemented, but is intended to implement the `MessageQueue`, `LookupService` and `WarehouseService` drivers on Postgres for use in development and small-scale (100s GB) self-hosting deployments. 
+- `postgres` has not yet been implemented, but is intended to implement the c drivers on Postgres for use in development and small-scale (100s GB) self-hosting deployments. 
 
 ## Implementing a new driver
 
 To implement a new driver, add a package named after the system to `engine/driver/`, and implement the relevant driver interfaces in `engine/driver/driver.go`. Look at existing drivers for inspiration.
+
+Here's a list of drivers we're very interested in developing
+
+- Postgres as a driver for `MessageQueue`, `LookupService` and `WarehouseService` (as described above)
+- Apache Cassandra as a `LookupService`
+- Apache Kafka as a `MessageQueue` and possibly a `LookupService` (leveraging Kafka Streams and/or ksqlDB)
+- Amazon Redshift as a `WarehouseService`
