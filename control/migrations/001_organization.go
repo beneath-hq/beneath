@@ -23,7 +23,6 @@ func init() {
 				name text NOT NULL,
 				created_on timestamp with time zone DEFAULT now(),
 				updated_on timestamp with time zone DEFAULT now(),
-				deleted_on timestamp with time zone,
 				PRIMARY KEY (organization_id)
 			);
 		`)

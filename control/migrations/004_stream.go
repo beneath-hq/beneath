@@ -25,10 +25,9 @@ func init() {
 				project_id            UUID NOT NULL,
 				created_on            TIMESTAMPTZ DEFAULT Now(),
 				updated_on            TIMESTAMPTZ DEFAULT Now(),
-				deleted_on            TIMESTAMPTZ,
 				PRIMARY KEY (stream_id),
 				FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE RESTRICT
-			)
+			);
 		`)
 		if err != nil {
 			return err
@@ -43,7 +42,17 @@ func init() {
 		}
 
 		// StreamInstance
-		err = db.Model(&entity.StreamInstance{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE stream_instances(
+				stream_instance_id uuid DEFAULT uuid_generate_v4(),
+				stream_id uuid NOT NULL,
+				created_on timestamptz DEFAULT now(),
+				updated_on timestamptz DEFAULT now(),
+				committed_on timestamptz,
+				PRIMARY KEY (stream_instance_id),
+				FOREIGN KEY (stream_id) REFERENCES streams (stream_id) ON DELETE RESTRICT
+			);
+		`)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ func init() {
 		_, err = db.Exec(`
 			CREATE TABLE services (
 				service_id uuid DEFAULT uuid_generate_v4(),
-				name text NOT NULL,
+				name text,
 				kind text NOT NULL,
 				organization_id uuid NOT NULL,
 				read_quota bigint,
@@ -26,7 +26,17 @@ func init() {
 		}
 
 		// PermissionsServicesStreams
-		err = db.Model(&entity.PermissionsServicesStreams{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE permissions_services_streams (
+				service_id uuid,
+				stream_id uuid,
+				read boolean NOT NULL,
+				write boolean NOT NULL,
+				PRIMARY KEY (service_id, stream_id),
+				FOREIGN KEY (service_id) REFERENCES services (service_id) ON DELETE CASCADE,
+				FOREIGN KEY (stream_id) REFERENCES streams (stream_id) ON DELETE CASCADE
+			);
+		`)
 		if err != nil {
 			return err
 		}
@@ -34,14 +44,14 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Service
-		err = db.Model(&entity.Service{}).DropTable(defaultDropOptions)
+		// PermissionsServicesStreams
+		err = db.Model(&entity.PermissionsServicesStreams{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}
 
-		// PermissionsServicesStreams
-		err = db.Model(&entity.PermissionsServicesStreams{}).DropTable(defaultDropOptions)
+		// Service
+		err = db.Model(&entity.Service{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

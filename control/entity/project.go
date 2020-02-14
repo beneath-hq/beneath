@@ -28,7 +28,6 @@ type Project struct {
 	Organization   *Organization
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
-	DeletedOn      time.Time
 	Streams        []*Stream
 	Models         []*Model
 	Users          []*User `pg:"many2many:permissions_users_projects,fk:project_id,joinFK:user_id"`

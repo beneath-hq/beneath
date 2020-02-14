@@ -18,7 +18,6 @@ type Organization struct {
 	Personal       bool      `sql:",notnull"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
-	DeletedOn      time.Time
 	Projects       []*Project
 	Services       []*Service
 	Users          []*User

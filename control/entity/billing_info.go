@@ -20,7 +20,6 @@ type BillingInfo struct {
 	DriverPayload  map[string]interface{}
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
-	DeletedOn      time.Time
 }
 
 // FindBillingInfo finds an organization's billing info by organizationID

@@ -10,20 +10,46 @@ func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Secret
 		_, err = db.Exec(`
-			DROP TABLE secrets;
+			DROP TABLE IF EXISTS secrets;
 		`)
 		if err != nil {
 			return err
 		}
 
 		// ServiceSecret
-		err = db.Model(&entity.ServiceSecret{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE service_secrets (
+				service_secret_id uuid DEFAULT uuid_generate_v4(),
+				prefix text NOT NULL,
+				hashed_token text NOT NULL UNIQUE,
+				description text,
+				created_on timestamptz NOT NULL DEFAULT now(),
+				updated_on timestamptz NOT NULL DEFAULT now(),
+				service_id uuid,
+				PRIMARY KEY (service_secret_id),
+				FOREIGN KEY (service_id) REFERENCES services (service_id) ON DELETE CASCADE
+			);
+		`)
 		if err != nil {
 			return err
 		}
 
 		// UserSecret
-		err = db.Model(&entity.UserSecret{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE user_secrets (
+				user_secret_id uuid DEFAULT uuid_generate_v4(),
+				prefix text NOT NULL,
+				hashed_token text NOT NULL UNIQUE,
+				description text,
+				created_on timestamptz NOT NULL DEFAULT now(),
+				updated_on timestamptz NOT NULL DEFAULT now(),
+				user_id uuid NOT NULL,
+				read_only boolean NOT NULL,
+				public_only boolean NOT NULL,
+				PRIMARY KEY (user_secret_id),
+				FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+			);
+		`)
 		if err != nil {
 			return err
 		}

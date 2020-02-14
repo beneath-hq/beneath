@@ -64,27 +64,10 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// BillingPlan
-		err = db.Model(&entity.BillingPlan{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
 
-		// BilledResource
-		err = db.Model(&entity.BilledResource{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// BillingInfo
-		err = db.Model(&entity.BillingInfo{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// Organization.Personal
+		// Project.Locked
 		_, err = db.Exec(`
-			ALTER TABLE organizations DROP personal;
+			ALTER TABLE projects DROP locked;
 		`)
 		if err != nil {
 			return err
@@ -99,10 +82,28 @@ func init() {
 			return err
 		}
 
-		// Project.Locked
+		// Organization.Personal
 		_, err = db.Exec(`
-			ALTER TABLE projects DROP locked;
+			ALTER TABLE organizations DROP personal;
 		`)
+		if err != nil {
+			return err
+		}
+
+		// BillingInfo
+		err = db.Model(&entity.BillingInfo{}).DropTable(defaultDropOptions)
+		if err != nil {
+			return err
+		}
+
+		// BilledResource
+		err = db.Model(&entity.BilledResource{}).DropTable(defaultDropOptions)
+		if err != nil {
+			return err
+		}
+
+		// BillingPlan
+		err = db.Model(&entity.BillingPlan{}).DropTable(defaultDropOptions)
 		if err != nil {
 			return err
 		}

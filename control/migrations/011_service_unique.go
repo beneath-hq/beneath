@@ -25,17 +25,17 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Project.DisplayName NOT NULL
+		// (Organization, name) unique index
 		_, err = db.Exec(`
-			ALTER TABLE services ALTER COLUMN name DROP NOT NULL;
+			DROP INDEX services_organization_id_name_key;
 		`)
 		if err != nil {
 			return err
 		}
 
-		// (Organization, name) unique index
+		// Project.DisplayName NOT NULL
 		_, err = db.Exec(`
-			DROP INDEX services_organization_id_name_key;
+			ALTER TABLE services ALTER COLUMN name DROP NOT NULL;
 		`)
 		if err != nil {
 			return err

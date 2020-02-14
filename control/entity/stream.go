@@ -14,8 +14,8 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/pkg/schema"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/schema"
 )
 
 // Stream represents a collection of data
@@ -26,7 +26,6 @@ type Stream struct {
 	Description   string    `validate:"omitempty,lte=255"`
 	CreatedOn     time.Time `sql:",default:now()"`
 	UpdatedOn     time.Time `sql:",default:now()"`
-	DeletedOn     time.Time `sql:",default:now()"`
 	ProjectID     uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project       *Project
 	SourceModelID *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`

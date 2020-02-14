@@ -23,7 +23,6 @@ type Model struct {
 	Kind          ModelKind `sql:",notnull",validate:"required,lte=3"`
 	CreatedOn     time.Time `sql:",default:now()"`
 	UpdatedOn     time.Time `sql:",default:now()"`
-	DeletedOn     time.Time
 	ProjectID     uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project       *Project
 	InputStreams  []*Stream `pg:"many2many:streams_into_models,fk:model_id,joinFK:stream_id"`

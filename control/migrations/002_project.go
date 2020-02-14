@@ -9,7 +9,22 @@ import (
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Project
-		err = db.Model(&entity.Project{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE projects (
+				project_id uuid DEFAULT uuid_generate_v4(),
+				name text NOT NULL,
+				display_name text NOT NULL,
+				site text,
+				descripton text,
+				photo_url text,
+				public boolean NOT NULL DEFAULT true,
+				organization_id uuid NOT NULL,
+				created_on timestamp with time zone DEFAULT now(),
+				updated_on timestamp with time zone DEFAULT now(),
+				PRIMARY KEY (project_id),
+				FOREIGN KEY (organization_id) REFERENCES organizations (organization_id) ON DELETE restrict
+			);
+		`)
 		if err != nil {
 			return err
 		}

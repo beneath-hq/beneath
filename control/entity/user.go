@@ -13,10 +13,10 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/control/taskqueue"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
 )
 
 // User represents a Beneath user
@@ -31,7 +31,6 @@ type User struct {
 	GithubID       string    `sql:",unique",validate:"omitempty,lte=255"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
-	DeletedOn      time.Time
 	OrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
 	Projects       []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`

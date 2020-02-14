@@ -6,24 +6,10 @@ import (
 
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// Note: doesn't exist anymore
-		// Secret
-		// err = db.Model(&entity.Secret{}).CreateTable(defaultCreateOptions)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// Done
+		// Removed
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Note: doesn't exist anymore
-		// Secret
-		// err = db.Model(&entity.Secret{}).DropTable(defaultDropOptions)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// Done
+		// Removed
 		return nil
 	})
 }
