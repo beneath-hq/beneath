@@ -15,7 +15,7 @@ func init() {
 				name text NOT NULL,
 				display_name text NOT NULL,
 				site text,
-				descripton text,
+				description text,
 				photo_url text,
 				public boolean NOT NULL DEFAULT true,
 				organization_id uuid NOT NULL,
