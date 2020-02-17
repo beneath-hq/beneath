@@ -4,15 +4,14 @@
   "files.exclude": {
     "**/node_modules": true,
     "**/venv": true,
-<<<<<<< HEAD
-=======
     "**/.env": true,
->>>>>>> beneath-python/master
     "**/.next": true,
-    "**/.pytest_cache": true,
-    "**/__pycache__": true,
-    "**/.ipynb_checkpoints": true,
-<<<<<<< HEAD
+    "clients/python/__pycache__": true,
+    "clients/python/.pytest_cache": true,
+    "clients/python/.ipynb_checkpoints": true,
+    "clients/python/dist": true,
+    "clients/python/build": true,
+    "clients/python/*.egg-info": true,
   },
   "go.formatTool": "goimports",
   "go.testFlags": [
@@ -21,17 +20,12 @@
   "go.vetFlags": [
     "-structtag=false"
   ],
+  "go.inferGopath": false,
   "tslint.jsEnable": true,
-  "go.inferGopath": false
-=======
-    "dist": true,
-    "build": true,
-    "**/*.egg-info": true,
-  },
   "python.formatting.provider": "yapf",
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
-  "python.pythonPath": ".env/bin/python",
+  "python.pythonPath": "clients/python/.env/bin/python",
   "python.testing.unittestArgs": [
     "-v",
     "-s",
@@ -42,5 +36,4 @@
   "python.testing.nosetestsEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false
->>>>>>> beneath-python/master
 }
