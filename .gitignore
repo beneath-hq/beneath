@@ -8,6 +8,7 @@ __pycache__
 .next
 .Python
 .tox
+.venv
 *.code-workspace
 *.egg-info
 *.pyc
@@ -29,3 +30,4 @@ yarn-error.log
 */.vscode/.ropeproject
 .pytest_cache
 beneath-models/.venv
+clients/**/build

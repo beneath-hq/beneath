@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "network.beneath.proto";
+option java_outer_classname = "BeneathProto";
+
+package proto;
+
+import "beneath/proto/engine.proto";
+
+service Gateway {
+  rpc ReadRecords(ReadRecordsRequest) returns (ReadRecordsResponse) {}
+  rpc ReadLatestRecords(ReadLatestRecordsRequest) returns (ReadRecordsResponse) {}
+  rpc WriteRecords(WriteRecordsRequest) returns (WriteRecordsResponse) {}
+  rpc GetStreamDetails(StreamDetailsRequest) returns (StreamDetailsResponse) {}
+  rpc SendClientPing(ClientPing) returns (ClientPong) {}
+}
+
+message ReadRecordsRequest {
+  bytes instance_id = 1;
+  int32 limit = 2;
+  string where = 3;
+  string after = 4;
+}
+
+message ReadRecordsResponse {
+  repeated Record records = 1;
+}
+
+message ReadLatestRecordsRequest {
+  bytes instance_id = 1;
+  int32 limit = 2;
+  int64 before = 3;
+}
+
+message WriteRecordsResponse {
+}
+
+message StreamDetailsRequest {
+  string project_name = 1;
+  string stream_name  = 2;
+}
+
+message StreamDetailsResponse {
+  bytes current_instance_id = 1;
+  bytes project_id = 2;
+  string project_name = 3;
+  string stream_name = 4;
+  repeated string key_fields = 5;
+  string avro_schema = 6;
+  bool public = 7;
+  bool external = 8;
+  bool batch = 9;
+  bool manual = 10;
+}
+
+message ClientPing {
+  string client_id = 1;
+  string client_version = 2;
+}
+
+message ClientPong {
+  bool authenticated = 1;
+  string status = 2;
+  string recommended_version = 3;
+}

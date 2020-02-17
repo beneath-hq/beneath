@@ -4,10 +4,15 @@
   "files.exclude": {
     "**/node_modules": true,
     "**/venv": true,
+<<<<<<< HEAD
+=======
+    "**/.env": true,
+>>>>>>> beneath-python/master
     "**/.next": true,
     "**/.pytest_cache": true,
     "**/__pycache__": true,
     "**/.ipynb_checkpoints": true,
+<<<<<<< HEAD
   },
   "go.formatTool": "goimports",
   "go.testFlags": [
@@ -18,4 +23,24 @@
   ],
   "tslint.jsEnable": true,
   "go.inferGopath": false
+=======
+    "dist": true,
+    "build": true,
+    "**/*.egg-info": true,
+  },
+  "python.formatting.provider": "yapf",
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "python.pythonPath": ".env/bin/python",
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "test*.py"
+  ],
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false
+>>>>>>> beneath-python/master
 }
