@@ -36,6 +36,8 @@ env:
   value: "redis://10.0.0.3/"
 - name: BENEATH_CONTROL_POSTGRES_HOST
   value: "10.76.112.3"
+- name: BENEATH_CONTROL_POSTGRES_DB
+  value: "postgres"
 - name: BENEATH_CONTROL_POSTGRES_USER
   valueFrom:
     secretKeyRef:

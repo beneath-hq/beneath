@@ -17,6 +17,7 @@ type configSpecification struct {
 	WarehouseDriver  string   `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 	RedisURL         string   `envconfig:"CONTROL_REDIS_URL" required:"true"`
 	PostgresHost     string   `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
+	PostgresDB       string   `envconfig:"CONTROL_POSTGRES_DB" required:"true"`
 	PostgresUser     string   `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
 	PostgresPassword string   `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 	PaymentsDrivers  []string `envconfig:"CONTROL_PAYMENTS_DRIVERS" required:"true"`
@@ -28,7 +29,7 @@ func main() {
 
 	log.InitLogger()
 
-	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
+	hub.InitPostgres(config.PostgresHost, config.PostgresDB, config.PostgresUser, config.PostgresPassword)
 	hub.InitRedis(config.RedisURL)
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 

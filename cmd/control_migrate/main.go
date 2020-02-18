@@ -29,6 +29,7 @@ Usage:
 
 type configSpecification struct {
 	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
+	PostgresDB       string `envconfig:"CONTROL_POSTGRES_DB" required:"true"`
 	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
 	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 }
@@ -41,7 +42,7 @@ func main() {
 	envutil.LoadConfig("beneath", &config)
 
 	log.InitLogger()
-	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
+	hub.InitPostgres(config.PostgresHost, config.PostgresDB, config.PostgresUser, config.PostgresPassword)
 
 	oldVersion, newVersion, err := migrations.Run(hub.DB, flag.Args()...)
 	if err != nil {

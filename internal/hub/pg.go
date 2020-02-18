@@ -7,9 +7,10 @@ import (
 	"github.com/go-pg/pg/v9"
 )
 
-func newDatabase(host, username, password string) *pg.DB {
+func newDatabase(host, database, username, password string) *pg.DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     host + ":5432",
+		Database: database,
 		User:     username,
 		Password: password,
 	})

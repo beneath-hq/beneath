@@ -22,8 +22,8 @@ var (
 )
 
 // InitPostgres sets up Postgres connection
-func InitPostgres(host string, username string, password string) {
-	DB = newDatabase(host, username, password)
+func InitPostgres(host string, database string, username string, password string) {
+	DB = newDatabase(host, database, username, password)
 }
 
 // InitRedis sets up Redis connection
