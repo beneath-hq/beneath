@@ -7,13 +7,13 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/internal/segment"
-	"github.com/beneath-core/internal/hub"
 	gw "github.com/beneath-core/gateway"
 	gwgrpc "github.com/beneath-core/gateway/grpc"
 	gwhttp "github.com/beneath-core/gateway/http"
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/internal/segment"
+	"github.com/beneath-core/pkg/envutil"
+	"github.com/beneath-core/pkg/log"
 )
 
 type configSpecification struct {
@@ -33,6 +33,9 @@ func main() {
 	// Config for gateway
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
+
+	// Init logging
+	log.InitLogger()
 
 	// Init connections
 	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)

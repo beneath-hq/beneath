@@ -4,17 +4,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/beneath-core/pkg/envutil"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-// configSpecification defines the config variables to load from ENV
-// See https://github.com/kelseyhightower/envconfig
-type configSpecification struct {
-	Env string `envconfig:"ENV" required:"false" default:"production"`
-}
 
 var (
 	// L is the Zap logger
@@ -22,13 +14,11 @@ var (
 
 	// S is a suggared Zap logger
 	S *zap.SugaredLogger
-
-	// config parsed from env
-	config configSpecification
 )
 
-func init() {
-	envutil.LoadConfig("", &config)
+// InitLogger sets global L and S variables
+func InitLogger() {
+	// env := envutil.GetEnv()
 
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel

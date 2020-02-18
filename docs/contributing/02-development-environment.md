@@ -40,7 +40,7 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 ### Configure environment variables
 
-- Copy `configs/example.env` into `configs/.env` and configure all variables (ask a colleague)
+- Copy `configs/example.env` into `configs/.development.env` and `configs/.test.env` and configure all variables (ask a colleague)
 
 ### Control backend
 

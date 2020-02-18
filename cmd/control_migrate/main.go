@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/beneath-core/pkg/log"
+
 	"github.com/beneath-core/control/migrations"
-	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/envutil"
 )
 
 const usageText = `This program runs command on the db. Supported commands are:
@@ -37,6 +39,8 @@ func main() {
 
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
+
+	log.InitLogger()
 	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 
 	oldVersion, newVersion, err := migrations.Run(hub.DB, flag.Args()...)

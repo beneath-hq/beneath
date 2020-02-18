@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -40,9 +41,11 @@ type User struct {
 }
 
 var (
-	defaultBillingPlan   *BillingPlan
 	userUsernameRegex    *regexp.Regexp
 	nonAlphanumericRegex *regexp.Regexp
+
+	defaultBillingPlan     *BillingPlan
+	defaultBillingPlanOnce sync.Once
 )
 
 const (
@@ -52,16 +55,6 @@ const (
 
 // configure constants and validator
 func init() {
-	var config struct {
-		DefaultBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
-	}
-	envutil.LoadConfig("beneath", &config)
-
-	defaultBillingPlan = FindBillingPlan(context.Background(), uuid.FromStringOrNil(config.DefaultBillingPlanID))
-	if defaultBillingPlan == nil {
-		panic(fmt.Errorf("unable to find default billing plan"))
-	}
-
 	userUsernameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
 	nonAlphanumericRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
 	GetValidator().RegisterStructValidation(userValidation, User{})
@@ -73,6 +66,19 @@ func userValidation(sl validator.StructLevel) {
 
 	if !userUsernameRegex.MatchString(u.Username) {
 		sl.ReportError(u.Username, "Username", "", "alphanumericorunderscore", "")
+	}
+}
+
+// sets defaultBillingPlan (called by defaultBillingPlanOnce)
+func fetchDefaultBillingPlan() {
+	var config struct {
+		DefaultBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
+	}
+	envutil.LoadConfig("beneath", &config)
+
+	defaultBillingPlan = FindBillingPlan(context.Background(), uuid.FromStringOrNil(config.DefaultBillingPlanID))
+	if defaultBillingPlan == nil {
+		panic(fmt.Errorf("unable to find default billing plan"))
 	}
 }
 
@@ -137,6 +143,9 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 			create = true
 		}
 	}
+
+	// make sure defaultBillingPlan is loaded
+	defaultBillingPlanOnce.Do(fetchDefaultBillingPlan)
 
 	// set user fields
 	if githubID != "" {

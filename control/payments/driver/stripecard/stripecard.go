@@ -20,6 +20,7 @@ import (
 
 // StripeCard implements beneath.PaymentsDriver
 type StripeCard struct {
+	config configSpecification
 }
 
 type card struct {
@@ -58,20 +59,21 @@ func New() StripeCard {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
-
-	return StripeCard{}
+	return StripeCard{
+		config: config,
+	}
 }
 
 // GetHTTPHandlers returns the necessary handlers to implement Stripe card payments
 func (c *StripeCard) GetHTTPHandlers() map[string]httputil.AppHandler {
 	return map[string]httputil.AppHandler{
-		"generate_setup_intent": handleGenerateSetupIntent, // this generates a secret that is used in the front-end; then using that secret, front-end sends card info straight to stripe
-		"webhook":               handleStripeWebhook,       // stripe sends the card setup outcome to this webhook
-		"get_payment_details":   handleGetPaymentDetails,
+		"generate_setup_intent": c.handleGenerateSetupIntent, // this generates a secret that is used in the front-end; then using that secret, front-end sends card info straight to stripe
+		"webhook":               c.handleStripeWebhook,       // stripe sends the card setup outcome to this webhook
+		"get_payment_details":   c.handleGetPaymentDetails,
 	}
 }
 
-func handleGenerateSetupIntent(w http.ResponseWriter, req *http.Request) error {
+func (c *StripeCard) handleGenerateSetupIntent(w http.ResponseWriter, req *http.Request) error {
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
 		return httputil.NewError(400, "Unable to get organizationID from the request")
@@ -119,7 +121,7 @@ func handleGenerateSetupIntent(w http.ResponseWriter, req *http.Request) error {
 }
 
 // Q: what's the right way to return errors for the webhook?
-func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
+func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	const MaxBodyBytes = int64(65536)
 	req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
 	payload, err := ioutil.ReadAll(req.Body)
@@ -195,11 +197,8 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
-			var config configSpecification
-			envutil.LoadConfig("beneath", &config)
-
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			freeBillingPlanID := uuid.FromStringOrNil(config.FreeBillingPlanID)
+			freeBillingPlanID := uuid.FromStringOrNil(c.config.FreeBillingPlanID)
 
 			driverPayload := make(map[string]interface{})
 			driverPayload["customer_id"] = invoice.Customer.ID
@@ -249,7 +248,7 @@ func handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
+func (c *StripeCard) handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 	secret := middleware.GetSecret(req.Context())
 
 	user := entity.FindUser(req.Context(), secret.GetOwnerID())

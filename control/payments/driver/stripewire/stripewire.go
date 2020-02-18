@@ -16,7 +16,9 @@ import (
 )
 
 // StripeWire implements beneath.PaymentsDriver
-type StripeWire struct{}
+type StripeWire struct {
+	config configSpecification
+}
 
 type configSpecification struct {
 	StripeSecret        string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
@@ -28,24 +30,22 @@ func New() StripeWire {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 	stripeutil.InitStripe(config.StripeSecret)
-
-	return StripeWire{}
+	return StripeWire{
+		config: config,
+	}
 }
 
 // GetHTTPHandlers returns the necessary handlers to implement Stripe card payments
-func (w *StripeWire) GetHTTPHandlers() map[string]httputil.AppHandler {
+func (s *StripeWire) GetHTTPHandlers() map[string]httputil.AppHandler {
 	return map[string]httputil.AppHandler{
-		"initialize_customer": handleInitializeCustomer,
+		"initialize_customer": s.handleInitializeCustomer,
 		// "webhook":               handleStripeWebhook,       // TODO: when a customer pays by wire, check to see if any important Stripe events are emitted via webhook
-		"get_payment_details": handleGetPaymentDetails,
+		"get_payment_details": s.handleGetPaymentDetails,
 	}
 }
 
 // create/update a customer's billing info and Stripe registration
-func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
-	var config configSpecification
-	envutil.LoadConfig("beneath", &config)
-
+func (s *StripeWire) handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
 		return httputil.NewError(400, "couldn't get organizationID from the request")
@@ -73,7 +73,7 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 
 	// Beneath will call the function from an admin panel (after a customer discussion)
 	secret := middleware.GetSecret(req.Context())
-	if secret.GetSecretID().String() != config.PaymentsAdminSecret {
+	if secret.GetSecretID().String() != s.config.PaymentsAdminSecret {
 		return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to activate"))
 	}
 
@@ -100,7 +100,7 @@ func handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
+func (s *StripeWire) handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 	// TODO: is there anything we want to return to the front-end?
 	// - bank account information where the wire should be sent
 	// - state of recent payment (paid, X days remaining, Y days overdue)
@@ -108,7 +108,7 @@ func handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
 }
 
 // IssueInvoiceForResources implements Payments interface
-func (w *StripeWire) IssueInvoiceForResources(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) error {
+func (s *StripeWire) IssueInvoiceForResources(billingInfo driver.BillingInfo, billedResources []driver.BilledResource) error {
 	inv := stripeutil.CreateStripeInvoice(billingInfo, billedResources)
 	stripeutil.SendInvoice(inv.ID)
 

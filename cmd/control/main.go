@@ -43,6 +43,9 @@ func main() {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 
+	// Init logging
+	log.InitLogger()
+
 	// connect postgres, redis, engine, and payment drivers
 	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	hub.InitRedis(config.RedisURL)

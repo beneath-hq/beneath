@@ -23,7 +23,7 @@ Here's a rough guide to the project structure:
 
 - `build`: Dockerfiles for the deployed executables in `cmd`
 - `cmd`: contains a package with a `main.go` file for each executable program
-- `configs`: should contain a `.env` file that configures the platform in development
+- `configs`: should contain `.development.env` and `.test.env` files that configure the platform in local development
 - `control`: code related to the control server, including Postgres models, GraphQL resolvers, and the task queue
 - `deployments`: Kubernetes and Helm manifests for deploying to production
 - `docs/contributing`: documentation that describes how the codebase is structured and how to contribute to it

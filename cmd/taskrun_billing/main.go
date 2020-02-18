@@ -5,9 +5,9 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/taskqueue"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/internal/hub"
 )
 
 type configSpecification struct {
@@ -19,6 +19,7 @@ type configSpecification struct {
 func main() {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
+	log.InitLogger()
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	err := taskqueue.Submit(context.Background(), &entity.RunBillingTask{})

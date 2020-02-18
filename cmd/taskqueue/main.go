@@ -26,9 +26,12 @@ func main() {
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 
+	log.InitLogger()
+
 	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	hub.InitRedis(config.RedisURL)
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
+
 	hub.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
 
 	log.S.Fatal(worker.Work())

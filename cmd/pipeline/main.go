@@ -18,13 +18,19 @@ type configSpecification struct {
 }
 
 func main() {
+	// Load config
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
 
+	// Init logging
+	log.InitLogger()
+
+	// Init data stores
 	hub.InitPostgres(config.PostgresHost, config.PostgresUser, config.PostgresPassword)
 	hub.InitRedis(config.RedisURL)
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
+	// Run forever (until failure)
 	log.S.Info("pipeline started")
 	log.S.Fatal(pipeline.Run())
 }
