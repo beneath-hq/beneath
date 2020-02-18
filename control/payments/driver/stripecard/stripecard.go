@@ -50,7 +50,7 @@ const (
 
 type configSpecification struct {
 	StripeSecret      string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
-	FreeBillingPlanID string `envconfig:"PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
+	FreeBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
 }
 
 // New initializes a StripeCard object

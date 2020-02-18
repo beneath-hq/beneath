@@ -19,7 +19,7 @@ type configSpecification struct {
 	PostgresHost     string   `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
 	PostgresUser     string   `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
 	PostgresPassword string   `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
-	PaymentsDrivers  []string `envconfig:"PAYMENTS_DRIVERS" required:"true"`
+	PaymentsDrivers  []string `envconfig:"CONTROL_PAYMENTS_DRIVERS" required:"true"`
 }
 
 func main() {

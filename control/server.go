@@ -8,13 +8,10 @@ import (
 
 	"github.com/beneath-core/control/auth"
 	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/control/migrations"
-	"github.com/beneath-core/control/payments"
 	"github.com/beneath-core/control/resolver"
 	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/internal/segment"
-	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/log"
 
@@ -27,67 +24,8 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-type configSpecification struct {
-	ControlPort  int    `envconfig:"CONTROL_PORT" required:"true" default:"8080"`
-	ControlHost  string `envconfig:"CONTROL_HOST" required:"true"`
-	FrontendHost string `envconfig:"FRONTEND_HOST" required:"true"`
-
-	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
-	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
-	PostgresUser     string `envconfig:"CONTROL_POSTGRES_USER" required:"true"`
-	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
-
-	// TODO: rename to CONTROL_PAYMENT_DRIVERS
-	PaymentsDrivers []string `envconfig:"PAYMENTS_DRIVERS" required:"true"`
-
-	MQDriver        string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
-	LookupDriver    string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
-	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
-
-	SegmentSecret    string `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
-	StripeSecret     string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
-	SessionSecret    string `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
-	GithubAuthID     string `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
-	GithubAuthSecret string `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
-	GoogleAuthID     string `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
-	GoogleAuthSecret string `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
-}
-
-var (
-	// Config for control
-	Config configSpecification
-)
-
-func init() {
-	// load config
-	envutil.LoadConfig("beneath", &Config)
-
-	// connect postgres, redis, engine, and payment drivers
-	hub.InitPostgres(Config.PostgresHost, Config.PostgresUser, Config.PostgresPassword)
-	hub.InitRedis(Config.RedisURL)
-	hub.InitEngine(Config.MQDriver, Config.LookupDriver, Config.WarehouseDriver)
-	hub.SetPaymentDrivers(payments.InitDrivers(Config.PaymentsDrivers))
-
-	// run migrations
-	migrations.MustRunUp(hub.DB)
-
-	// init segment
-	segment.InitClient(Config.SegmentSecret)
-
-	// configure auth
-	auth.InitGoth(&auth.GothConfig{
-		ClientHost:       Config.FrontendHost,
-		SessionSecret:    Config.SessionSecret,
-		BackendHost:      Config.ControlHost,
-		GithubAuthID:     Config.GithubAuthID,
-		GithubAuthSecret: Config.GithubAuthSecret,
-		GoogleAuthID:     Config.GoogleAuthID,
-		GoogleAuthSecret: Config.GoogleAuthSecret,
-	})
-}
-
-// ListenAndServeHTTP serves the GraphQL API on HTTP
-func ListenAndServeHTTP(port int) error {
+// Handler serves the GraphQL API on HTTP
+func Handler(host string, frontendHost string) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(chimiddleware.RealIP)
@@ -102,8 +40,8 @@ func ListenAndServeHTTP(port int) error {
 	// Add CORS
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{
-			Config.FrontendHost,
-			Config.ControlHost,
+			host,
+			frontendHost,
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
@@ -136,20 +74,14 @@ func ListenAndServeHTTP(port int) error {
 	))
 
 	// Add payments handlers
-	for _, driverName := range Config.PaymentsDrivers {
-		paymentDriver := hub.PaymentDrivers[driverName]
-		if paymentDriver == nil {
-			panic("couldn't get payments driver")
-		}
-		for subpath, handler := range paymentDriver.GetHTTPHandlers() {
-			path := fmt.Sprintf("/billing/%s/%s", driverName, subpath)
+	for name, driver := range hub.PaymentDrivers {
+		for subpath, handler := range driver.GetHTTPHandlers() {
+			path := fmt.Sprintf("/billing/%s/%s", name, subpath)
 			router.Handle(path, httputil.AppHandler(handler))
 		}
 	}
 
-	// Serve
-	log.S.Infow("control http started", "port", port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
+	return router
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {

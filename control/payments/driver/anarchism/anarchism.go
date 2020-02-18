@@ -17,7 +17,7 @@ import (
 type Anarchism struct{}
 
 type configSpecification struct {
-	PaymentsAdminSecret string `envconfig:"PAYMENTS_ADMIN_SECRET" required:"true"`
+	PaymentsAdminSecret string `envconfig:"CONTROL_PAYMENTS_ADMIN_SECRET" required:"true"`
 }
 
 // New initializes a Anarchism object

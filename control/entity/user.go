@@ -40,6 +40,7 @@ type User struct {
 }
 
 var (
+	defaultBillingPlan   *BillingPlan
 	userUsernameRegex    *regexp.Regexp
 	nonAlphanumericRegex *regexp.Regexp
 )
@@ -49,12 +50,18 @@ const (
 	usernameMaxLength = 50
 )
 
-type configSpecification struct {
-	FreeBillingPlanID string `envconfig:"PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
-}
-
 // configure constants and validator
 func init() {
+	var config struct {
+		DefaultBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
+	}
+	envutil.LoadConfig("beneath", &config)
+
+	defaultBillingPlan = FindBillingPlan(context.Background(), uuid.FromStringOrNil(config.DefaultBillingPlanID))
+	if defaultBillingPlan == nil {
+		panic(fmt.Errorf("unable to find default billing plan"))
+	}
+
 	userUsernameRegex = regexp.MustCompile("^[_a-z][_\\-a-z0-9]*$")
 	nonAlphanumericRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
 	GetValidator().RegisterStructValidation(userValidation, User{})
@@ -131,14 +138,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		}
 	}
 
-	var config configSpecification
-	envutil.LoadConfig("beneath", &config)
-
-	freeBillingPlan := FindBillingPlan(ctx, uuid.FromStringOrNil(config.FreeBillingPlanID))
-	if freeBillingPlan == nil {
-		panic("unable to find Free billing plan")
-	}
-
 	// set user fields
 	if githubID != "" {
 		user.GithubID = githubID
@@ -156,10 +155,10 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		user.PhotoURL = photoURL
 	}
 	if user.ReadQuota == 0 {
-		user.ReadQuota = freeBillingPlan.SeatReadQuota
+		user.ReadQuota = defaultBillingPlan.SeatReadQuota
 	}
 	if user.WriteQuota == 0 {
-		user.WriteQuota = freeBillingPlan.SeatWriteQuota
+		user.WriteQuota = defaultBillingPlan.SeatWriteQuota
 	}
 
 	// set username
@@ -244,7 +243,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		// create billing info and setup with anarchism payments driver
 		bi := &BillingInfo{}
 		bi.OrganizationID = org.OrganizationID
-		bi.BillingPlanID = uuid.FromStringOrNil(FreeBillingPlanID)
+		bi.BillingPlanID = defaultBillingPlan.BillingPlanID
 		bi.PaymentsDriver = AnarchismDriver
 		driverPayload := make(map[string]interface{})
 		bi.DriverPayload = driverPayload
