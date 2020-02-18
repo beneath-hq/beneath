@@ -61,7 +61,7 @@ func LoadConfig(prefix string, spec interface{}) {
 func loadEnv(paths ...string) {
 	for _, path := range paths {
 		err := godotenv.Load(path)
-		if err != nil && err.Error() != "open configs/.env: no such file or directory" {
+		if err != nil && err.Error() != fmt.Sprintf("open %s: no such file or directory", path) {
 			panic(err)
 		}
 	}
