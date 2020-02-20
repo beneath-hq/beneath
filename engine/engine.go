@@ -3,13 +3,14 @@ package engine
 import (
 	"fmt"
 
-	"github.com/beneath-core/pkg/codec"
-	"github.com/beneath-core/pkg/mathutil"
 	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/engine/driver/bigquery"
 	"github.com/beneath-core/engine/driver/bigtable"
+	"github.com/beneath-core/engine/driver/mock"
 	"github.com/beneath-core/engine/driver/postgres"
 	"github.com/beneath-core/engine/driver/pubsub"
+	"github.com/beneath-core/pkg/codec"
+	"github.com/beneath-core/pkg/mathutil"
 )
 
 // Engine interfaces with the data layer
@@ -76,6 +77,8 @@ func makeWarehouse(driver string) driver.WarehouseService {
 		return bigquery.GetWarehouseService()
 	case "postgres":
 		return postgres.GetWarehouseService()
+	case "mock":
+		return mock.GetWarehouseService()
 	default:
 		panic(fmt.Errorf("invalid warehouse driver '%s'", driver))
 	}
