@@ -9,6 +9,7 @@ import (
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/beneath-core/internal/middleware"
+	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 )
 
@@ -23,7 +24,9 @@ func InitClient(segmentKey string) {
 // TrackHTTP logs a new HTTP-related event to segment
 func TrackHTTP(r *http.Request, name string, payload interface{}) {
 	if Client == nil {
-		panic(fmt.Errorf("Must call segment.InitClient before calling segment.Track"))
+		if envutil.GetEnv() != envutil.Test {
+			panic(fmt.Errorf("Must call segment.InitClient before calling segment.Track"))
+		}
 	}
 
 	tags := middleware.GetTags(r.Context())
