@@ -15,3 +15,23 @@ type StreamIndex struct {
 	Primary       bool     `sql:",notnull"`
 	Normalize     bool     `sql:",notnull"`
 }
+
+// GetIndexID implements codec.Index
+func (i *StreamIndex) GetIndexID() uuid.UUID {
+	return i.StreamIndexID
+}
+
+// GetShortID implements codec.Index
+func (i *StreamIndex) GetShortID() int {
+	return i.ShortID
+}
+
+// GetFields implements codec.Index
+func (i *StreamIndex) GetFields() []string {
+	return i.Fields
+}
+
+// GetNormalize implements codec.Index
+func (i *StreamIndex) GetNormalize() bool {
+	return i.Normalize
+}

@@ -13,6 +13,7 @@ func init() {
 			CREATE TABLE stream_indexes(
 				stream_index_id uuid DEFAULT uuid_generate_v4(),
 				stream_id uuid NOT NULL,
+				short_id integer NOT NULL,
 				fields jsonb NOT NULL,
 				"primary" boolean NOT NULL,
 				normalize boolean NOT NULL,

@@ -131,7 +131,26 @@ func (s *Stream) GetRetention() time.Duration {
 
 // GetCodec implements engine/driver.Stream
 func (s *Stream) GetCodec() *codec.Codec {
-	panic(fmt.Errorf("Use EfficientStream if you need the codec"))
+	if len(s.StreamIndexes) == 0 {
+		panic(fmt.Errorf("GetCodec must not be called withut StreamIndexes loaded"))
+	}
+
+	var primaryIndex codec.Index
+	var secondaryIndexes []codec.Index
+	for _, index := range s.StreamIndexes {
+		if index.Primary {
+			primaryIndex = index
+		} else {
+			secondaryIndexes = append(secondaryIndexes, index)
+		}
+	}
+
+	c, err := codec.New(s.CanonicalAvroSchema, primaryIndex, secondaryIndexes)
+	if err != nil {
+		panic(err)
+	}
+
+	return c
 }
 
 // GetBigQuerySchema implements engine/driver.Stream
