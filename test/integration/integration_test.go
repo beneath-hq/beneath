@@ -1,8 +1,12 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -12,28 +16,21 @@ import (
 
 	"github.com/beneath-core/control"
 	"github.com/beneath-core/control/auth"
+	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/migrations"
 	"github.com/beneath-core/control/payments"
 	"github.com/beneath-core/control/taskqueue/worker"
 	"github.com/beneath-core/gateway"
 	gwgrpc "github.com/beneath-core/gateway/grpc"
 	pb "github.com/beneath-core/gateway/grpc/proto"
-	"github.com/beneath-core/gateway/http"
+	gwhttp "github.com/beneath-core/gateway/http"
 	"github.com/beneath-core/gateway/pipeline"
 	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/segment"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 )
 
 type configSpecification struct {
-	ControlPort  int    `envconfig:"CONTROL_PORT" required:"true" default:"8080"`
-	ControlHost  string `envconfig:"CONTROL_HOST" required:"true"`
-	FrontendHost string `envconfig:"FRONTEND_HOST" required:"true"`
-
-	GatewayPortHTTP int `envconfig:"GATEWAY_PORT" default:"8080"`
-	GatewayPortGRPC int `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
-
 	RedisURL         string `envconfig:"CONTROL_REDIS_URL" required:"true"`
 	PostgresHost     string `envconfig:"CONTROL_POSTGRES_HOST" required:"true"`
 	PostgresDB       string `envconfig:"CONTROL_POSTGRES_DB" required:"true"`
@@ -43,18 +40,11 @@ type configSpecification struct {
 	MQDriver        string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
 	LookupDriver    string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
-
-	PaymentsDrivers  []string `envconfig:"CONTROL_PAYMENTS_DRIVERS" required:"true"`
-	SegmentSecret    string   `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
-	StripeSecret     string   `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
-	SessionSecret    string   `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
-	GithubAuthID     string   `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
-	GithubAuthSecret string   `envconfig:"CONTROL_GITHUB_AUTH_SECRET" required:"true"`
-	GoogleAuthID     string   `envconfig:"CONTROL_GOOGLE_AUTH_ID" required:"true"`
-	GoogleAuthSecret string   `envconfig:"CONTROL_GOOGLE_AUTH_SECRET" required:"true"`
 }
 
 var (
+	testUser    *entity.User
+	testSecret  *entity.UserSecret
 	controlHTTP *httptest.Server
 	gatewayHTTP *httptest.Server
 	gatewayGRPC pb.GatewayClient
@@ -75,25 +65,14 @@ func TestMain(m *testing.M) {
 	hub.InitPostgres(config.PostgresHost, config.PostgresDB, config.PostgresUser, config.PostgresPassword)
 	hub.InitRedis(config.RedisURL)
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
-	hub.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
-
-	// init segment
-	segment.InitClient(config.SegmentSecret)
+	hub.SetPaymentDrivers(payments.InitDrivers([]string{"anarchism"}))
 
 	// Init gateway globals
 	gateway.InitMetrics()
 	gateway.InitSubscriptions(hub.Engine)
 
-	// configure auth
-	auth.InitGoth(&auth.GothConfig{
-		ClientHost:       config.FrontendHost,
-		SessionSecret:    config.SessionSecret,
-		BackendHost:      config.ControlHost,
-		GithubAuthID:     config.GithubAuthID,
-		GithubAuthSecret: config.GithubAuthSecret,
-		GoogleAuthID:     config.GoogleAuthID,
-		GoogleAuthSecret: config.GoogleAuthSecret,
-	})
+	// configure auth (empty config, so it doesn't actually work)
+	auth.InitGoth(&auth.GothConfig{})
 
 	// run migrations
 	_, _, err := migrations.Run(hub.DB, "reset")
@@ -109,7 +88,7 @@ func TestMain(m *testing.M) {
 	defer controlHTTP.Close()
 
 	// create gateway HTTP server
-	gatewayHTTP = httptest.NewServer(http.Handler())
+	gatewayHTTP = httptest.NewServer(gwhttp.Handler())
 	defer gatewayHTTP.Close()
 
 	// create gateway GRPC server
@@ -142,6 +121,13 @@ func TestMain(m *testing.M) {
 		panicIf(err)
 	}()
 
+	// create a user and secret
+	ctx := context.Background()
+	testUser, err = entity.CreateOrUpdateUser(ctx, "google", "", "test@example.org", "test", "Test Testeson", "")
+	panicIf(err)
+	testSecret, err = entity.CreateUserSecret(ctx, testUser.UserID, "", false, false)
+	panicIf(err)
+
 	// run tests
 	code := m.Run()
 
@@ -155,4 +141,34 @@ func TestMain(m *testing.M) {
 
 	// exit with code
 	os.Exit(code)
+}
+
+type gqlResponse struct {
+	Data   map[string]map[string]interface{}
+	Errors []map[string]interface{}
+}
+
+func queryGQL(query string, variables interface{}) gqlResponse {
+	body, err := json.Marshal(map[string]interface{}{
+		"query":     query,
+		"variables": variables,
+	})
+	panicIf(err)
+
+	url := fmt.Sprintf("%s/graphql", controlHTTP.URL)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	panicIf(err)
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", testSecret.Token.String()))
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	panicIf(err)
+
+	var resp gqlResponse
+	err = json.NewDecoder(res.Body).Decode(&resp)
+	panicIf(err)
+
+	return resp
 }

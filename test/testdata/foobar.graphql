@@ -1,0 +1,13 @@
+" Schema comment "
+type FooBar
+  @stream(name: "foo-bar")
+  @key(fields: ["a", "b"])
+  @index(fields: ["b"])
+{
+  a: String!
+  b: Int!
+  c: Bytes4!
+  d: Timestamp!
+  e: Numeric
+  f: Bytes
+}
