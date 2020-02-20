@@ -24,9 +24,10 @@ func InitClient(segmentKey string) {
 // TrackHTTP logs a new HTTP-related event to segment
 func TrackHTTP(r *http.Request, name string, payload interface{}) {
 	if Client == nil {
-		if envutil.GetEnv() != envutil.Test {
-			panic(fmt.Errorf("Must call segment.InitClient before calling segment.Track"))
+		if envutil.GetEnv() == envutil.Test {
+			return
 		}
+		panic(fmt.Errorf("Must call segment.InitClient before calling segment.Track"))
 	}
 
 	tags := middleware.GetTags(r.Context())
