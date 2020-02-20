@@ -109,7 +109,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	}
 	defer tx.Rollback() // defer rollback on error
 
-	// find user by ID
+	// find user by ID (and lock for update)
 	var query *orm.Query
 	if githubID != "" {
 		query = tx.Model(user).Where("github_id = ?", githubID)
@@ -151,123 +151,119 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		user.WriteQuota = defaultBillingPlan.SeatWriteQuota
 	}
 
-	// set username
-	usernameSeeds := user.usernameSeeds(nickname)
-	if create {
-		user.Username = usernameSeeds[0]
-		if user.Name == "" {
-			user.Name = user.Username
-		}
-	}
-
-	// validate
-	err = GetValidator().Struct(user)
-	if err != nil {
-		return nil, err
-	}
-
-	// insert or update
+	// if updating, finalize and return
 	if !create {
+		// validate
+		err = GetValidator().Struct(user)
+		if err != nil {
+			return nil, err
+		}
+
+		// update
 		user.UpdatedOn = time.Now()
 		err = tx.Update(user)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		// try out all username seeds
-		for _, username := range usernameSeeds {
-			// savepoint in case insert fails
-			_, err = tx.Exec("SAVEPOINT bi")
+
+		// log
+		log.S.Infow(
+			"control updated user",
+			"user_id", user.UserID,
+		)
+
+		// commit
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
+
+		return user, nil
+	}
+
+	// we're creating a new user
+
+	// prepare "personal" organization
+	org := &Organization{
+		Personal: true,
+	}
+
+	// try out all possible usernames
+	usernameSeeds := user.usernameSeeds(nickname)
+	for _, username := range usernameSeeds {
+		// savepoint in case username is taken
+		_, err = tx.Exec("SAVEPOINT bi")
+		if err != nil {
+			return nil, err
+		}
+
+		// update org and user
+		org.Name = username
+		user.Username = username
+		if user.Name == "" {
+			user.Name = username
+		}
+
+		// insert user and org
+		err = tx.Insert(org)
+		if err == nil {
+			user.OrganizationID = org.OrganizationID
+			err = tx.Insert(user)
+		}
+
+		// success
+		if err == nil {
+			break
+		}
+
+		// rollback on name error
+		if isUniqueError(err) {
+			// rollback to before error, then try next username
+			_, err = tx.Exec("ROLLBACK TO SAVEPOINT bi")
 			if err != nil {
 				return nil, err
 			}
-
-			// insert
-			user.Username = username
-			err = tx.Insert(user)
-			if err == nil {
-				// success
-				break
-			} else if isUniqueUsernameError(err) {
-				// rollback to before error, then try next username
-				_, err = tx.Exec("ROLLBACK TO SAVEPOINT bi")
-				if err != nil {
-					return nil, err
-				}
-				continue
-			} else {
-				// unexpected error
-				return nil, err
-			}
+			continue
 		}
 
-		// create a "personal" organization for the user
-		org := &Organization{
-			Name:     user.Username,
-			Personal: true,
-		}
-
-		_, err := tx.Model(org).Insert()
-		if err != nil {
-			return nil, err
-		}
-
-		// update user.OrganizationID
-		user.OrganizationID = org.OrganizationID
-		err = tx.Update(user)
-		if err != nil {
-			return nil, err
-		}
-
-		// add user to user-organization permissions table
-		err = tx.Insert(&PermissionsUsersOrganizations{
-			UserID:         user.UserID,
-			OrganizationID: org.OrganizationID,
-			View:           true,
-			Admin:          true,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// create billing info and setup with anarchism payments driver
-		bi := &BillingInfo{}
-		bi.OrganizationID = org.OrganizationID
-		bi.BillingPlanID = defaultBillingPlan.BillingPlanID
-		bi.PaymentsDriver = AnarchismDriver
-		driverPayload := make(map[string]interface{})
-		bi.DriverPayload = driverPayload
-
-		_, err = tx.Model(bi).Insert()
-		if err != nil {
-			return nil, err
-		}
+		// unexpected error
+		return nil, err
 	}
 
+	// add user to user-organization permissions table
+	err = tx.Insert(&PermissionsUsersOrganizations{
+		UserID:         user.UserID,
+		OrganizationID: org.OrganizationID,
+		View:           true,
+		Admin:          true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// create billing info and setup with anarchism payments driver
+	bi := &BillingInfo{
+		OrganizationID: org.OrganizationID,
+		BillingPlanID:  defaultBillingPlan.BillingPlanID,
+		PaymentsDriver: AnarchismDriver,
+		DriverPayload:  make(map[string]interface{}),
+	}
+	_, err = tx.Model(bi).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	// commit it all
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 
-	// send "identify" call to Segment
-	// userID should be the user.UserID, secretID or the browserID?
-	// Segment.Client.Enqueue(analytics.Identify{
-	// UserId: user.UserID,
-	// Traits: analytics.NewTraits().
-	//   Set("organization", user.OrganizationID),
-	// })
-
-	if create {
-		log.S.Infow(
-			"control created user",
-			"user_id", user.UserID,
-		)
-	} else {
-		log.S.Infow(
-			"control updated user",
-			"user_id", user.UserID,
-		)
-	}
+	// log new user
+	log.S.Infow(
+		"control created user",
+		"user_id", user.UserID,
+	)
 
 	return user, nil
 }
@@ -461,9 +457,9 @@ func finalizeUsernameSeed(seed string) string {
 	return seed
 }
 
-func isUniqueUsernameError(err error) bool {
+func isUniqueError(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(strings.ToLower(err.Error()), "violates unique constraint \"users_username_key\"")
+	return strings.Contains(strings.ToLower(err.Error()), "violates unique constraint")
 }
