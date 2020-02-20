@@ -133,6 +133,7 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 			return err
 		}
 
+		// register in engine
 		err = hub.Engine.RegisterProject(ctx, p)
 		if err != nil {
 			return err

@@ -17,13 +17,14 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
+		// Irreversible
 		// Project.DisplayName NOT NULL
-		_, err = db.Exec(`
-			ALTER TABLE projects ALTER COLUMN display_name SET NOT NULL;
-		`)
-		if err != nil {
-			return err
-		}
+		// _, err = db.Exec(`
+		// 	ALTER TABLE projects ALTER COLUMN display_name SET NOT NULL;
+		// `)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Done
 		return nil

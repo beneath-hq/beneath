@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/beneath-core/internal/middleware"
 
@@ -89,6 +90,12 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 	err := project.CreateWithUser(ctx, secret.GetOwnerID(), true, true, true)
 	if err != nil {
 		return nil, err
+	}
+
+	// refetching project to include user
+	project = entity.FindProject(ctx, project.ProjectID)
+	if project == nil {
+		panic(fmt.Errorf("expected project with ID %s to exist", project.ProjectID.String()))
 	}
 
 	return project, nil
