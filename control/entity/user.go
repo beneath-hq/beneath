@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 	"unicode"
 
@@ -15,7 +14,6 @@ import (
 
 	"github.com/beneath-core/control/taskqueue"
 	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
 )
@@ -43,9 +41,6 @@ type User struct {
 var (
 	userUsernameRegex    *regexp.Regexp
 	nonAlphanumericRegex *regexp.Regexp
-
-	defaultBillingPlan     *BillingPlan
-	defaultBillingPlanOnce sync.Once
 )
 
 const (
@@ -66,19 +61,6 @@ func userValidation(sl validator.StructLevel) {
 
 	if !userUsernameRegex.MatchString(u.Username) {
 		sl.ReportError(u.Username, "Username", "", "alphanumericorunderscore", "")
-	}
-}
-
-// sets defaultBillingPlan (called by defaultBillingPlanOnce)
-func fetchDefaultBillingPlan() {
-	var config struct {
-		DefaultBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
-	}
-	envutil.LoadConfig("beneath", &config)
-
-	defaultBillingPlan = FindBillingPlan(context.Background(), uuid.FromStringOrNil(config.DefaultBillingPlanID))
-	if defaultBillingPlan == nil {
-		panic(fmt.Errorf("unable to find default billing plan"))
 	}
 }
 
@@ -116,6 +98,8 @@ func FindUserByUsername(ctx context.Context, username string) *User {
 
 // CreateOrUpdateUser consolidates and returns the user matching the args
 func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname, name, photoURL string) (*User, error) {
+	defaultBillingPlan := FindDefaultBillingPlan(ctx)
+
 	user := &User{}
 	create := false
 
@@ -143,9 +127,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 			create = true
 		}
 	}
-
-	// make sure defaultBillingPlan is loaded
-	defaultBillingPlanOnce.Do(fetchDefaultBillingPlan)
 
 	// set user fields
 	if githubID != "" {

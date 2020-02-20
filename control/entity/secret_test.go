@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/beneath-core/pkg/secrettoken"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/secrettoken"
 	"github.com/stretchr/testify/assert"
 )
 
 func init() {
-	hub.InitPostgres("localhost", "postgres", "")
+	hub.InitPostgres("localhost", "", "postgres", "")
 	hub.InitRedis("redis://localhost/")
 }
 

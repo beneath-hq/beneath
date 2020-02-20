@@ -26,6 +26,14 @@ func init() {
 			return err
 		}
 
+		// only one default BillingPlan
+		_, err = db.Exec(`
+			CREATE UNIQUE INDEX ON billing_plans ("default") WHERE "default" = true;
+		`)
+		if err != nil {
+			return err
+		}
+
 		// (billing_time, org_id, entity_id, product) unique index
 		_, err = db.Exec(`
 			CREATE UNIQUE INDEX billed_resources_billing_time_organization_id_entity_id_product_key

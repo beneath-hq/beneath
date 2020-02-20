@@ -50,8 +50,7 @@ const (
 )
 
 type configSpecification struct {
-	StripeSecret      string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
-	FreeBillingPlanID string `envconfig:"CONTROL_PAYMENTS_FREE_BILLING_PLAN_ID" required:"true"`
+	StripeSecret string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
 }
 
 // New initializes a StripeCard object
@@ -198,12 +197,12 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			freeBillingPlanID := uuid.FromStringOrNil(c.config.FreeBillingPlanID)
+			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
 			driverPayload := make(map[string]interface{})
 			driverPayload["customer_id"] = invoice.Customer.ID
 
-			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, freeBillingPlanID, entity.StripeCardDriver, driverPayload)
+			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, defaultBillingPlan.BillingPlanID, entity.StripeCardDriver, driverPayload)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)

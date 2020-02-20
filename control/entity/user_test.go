@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	hub.InitPostgres("localhost", "postgres", "")
+	hub.InitPostgres("localhost", "", "postgres", "")
 	hub.InitRedis("redis://localhost/")
 }
 
