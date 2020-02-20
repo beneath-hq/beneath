@@ -10,20 +10,23 @@ import (
 type Period int
 
 const (
-	// PeriodMinute represents minutes as a Period
-	PeriodMinute Period = iota
+	// PeriodNone represents no period
+	PeriodNone Period = iota
 
-	// PeriodHour represents hours as a Period
-	PeriodHour
-
-	// PeriodDay represents days as a Period
-	PeriodDay
+	// PeriodYear represents years as a Period
+	PeriodYear
 
 	// PeriodMonth represents months as a Period
 	PeriodMonth
 
-	// PeriodYear represents years as a Period
-	PeriodYear
+	// PeriodDay represents days as a Period
+	PeriodDay
+
+	// PeriodHour represents hours as a Period
+	PeriodHour
+
+	// PeriodMinute represents minutes as a Period
+	PeriodMinute
 )
 
 // PeriodFromString does a best attempt at parsing string as a period
