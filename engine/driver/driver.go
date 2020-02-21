@@ -6,9 +6,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
+	pb "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/pkg/codec"
 	"github.com/beneath-core/pkg/queryparse"
-	pb "github.com/beneath-core/engine/proto"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath
@@ -25,6 +25,9 @@ type MessageQueue interface {
 	// Subscribe should create a subscription for new messages on the topic.
 	// If persistent, messages missed when offline should accumulate and be delivered on reconnect.
 	Subscribe(ctx context.Context, topic string, name string, persistent bool, fn func(ctx context.Context, msg []byte) error) error
+
+	// Reset should clear all data in the service (useful during testing)
+	Reset(ctx context.Context) error
 }
 
 // Service encapsulates functionality expected of components that store instance data in Beneath
@@ -52,6 +55,9 @@ type Service interface {
 
 	// RemoveInstance is called when an instance is deleted
 	RemoveInstance(ctx context.Context, p Project, s Stream, i StreamInstance) error
+
+	// Reset should clear all data in the service (useful during testing)
+	Reset(ctx context.Context) error
 }
 
 // LookupService encapsulates functionality necessary to lookup, replay and subscribe to data.

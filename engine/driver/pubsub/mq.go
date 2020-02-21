@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/api/iterator"
+
 	"cloud.google.com/go/pubsub"
 	"github.com/beneath-core/pkg/log"
 	"google.golang.org/grpc/codes"
@@ -140,4 +142,30 @@ func (p PubSub) getEphemeralSubscription(ctx context.Context, topic *pubsub.Topi
 	}
 
 	return subscription
+}
+
+// Reset implements beneath.Service
+func (p PubSub) Reset(ctx context.Context) error {
+	for name, topic := range p.Topics {
+		it := topic.Subscriptions(ctx)
+		for {
+			sub, err := it.Next()
+			if err == iterator.Done {
+				break
+			}
+			err = sub.Delete(ctx)
+			if err != nil {
+				return err
+			}
+		}
+		err := topic.Delete(ctx)
+		if err != nil {
+			return err
+		}
+		err = p.RegisterTopic(name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

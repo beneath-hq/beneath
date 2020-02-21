@@ -9,9 +9,9 @@ import (
 
 	"cloud.google.com/go/bigtable"
 
+	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/pkg/codec"
 	"github.com/beneath-core/pkg/codec/ext/tuple"
-	"github.com/beneath-core/engine/driver"
 )
 
 // Some of the row parsing logic and rowset generating logic should probably go in helper functions in schema.go.

@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/engine/driver"
+	"google.golang.org/api/iterator"
 	"robpike.io/filter"
+
+	"github.com/beneath-core/engine/driver"
+	"github.com/beneath-core/pkg/log"
 )
 
 // MaxKeySize implements beneath.Service
@@ -256,6 +258,24 @@ func (b BigQuery) RemoveInstance(ctx context.Context, p driver.Project, s driver
 		_, err := view.Update(ctx, bigquery.TableMetadataToUpdate{
 			ExpirationTime: time.Now(),
 		}, md.ETag)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Reset implements beneath.Service
+func (b BigQuery) Reset(ctx context.Context) error {
+	datasets := b.Client.Datasets(ctx)
+	for {
+		ds, err := datasets.Next()
+		if err == iterator.Done {
+			break
+		}
+
+		err = ds.Delete(ctx)
 		if err != nil {
 			return err
 		}

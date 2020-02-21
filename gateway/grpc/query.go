@@ -9,12 +9,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/beneath-core/control/entity"
+	"github.com/beneath-core/gateway"
+	pb "github.com/beneath-core/gateway/grpc/proto"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/gateway"
-	pb "github.com/beneath-core/gateway/grpc/proto"
 )
 
 func (s *gRPCServer) Repartition(ctx context.Context, req *pb.RepartitionRequest) (*pb.RepartitionResponse, error) {

@@ -45,3 +45,8 @@ func (b Postgres) PromoteInstance(ctx context.Context, p driver.Project, s drive
 func (b Postgres) RemoveInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
 	panic("todo")
 }
+
+// Reset implements beneath.Service
+func (b Postgres) Reset(ctx context.Context) error {
+	panic("todo")
+}

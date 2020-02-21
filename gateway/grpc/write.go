@@ -10,13 +10,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/engine"
 	pb_engine "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/gateway"
 	pb "github.com/beneath-core/gateway/grpc/proto"
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/internal/middleware"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteResponse, error) {

@@ -7,8 +7,8 @@ import (
 
 	"cloud.google.com/go/pubsub"
 
-	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/engine/driver"
+	"github.com/beneath-core/pkg/envutil"
 )
 
 // configSpecification defines the config variables to load from ENV

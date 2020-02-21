@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"context"
 	"fmt"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/engine/driver/bigquery"
@@ -131,4 +134,23 @@ func (e *Engine) CheckBatchLength(length int) error {
 		return fmt.Errorf("batch length exceeds maximum of %d", e.maxBatchLength)
 	}
 	return nil
+}
+
+// Reset resets the state of the engine (useful during testing)
+func (e *Engine) Reset(ctx context.Context) error {
+	group, ctx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		return e.MQ.Reset(ctx)
+	})
+
+	group.Go(func() error {
+		return e.Lookup.Reset(ctx)
+	})
+
+	group.Go(func() error {
+		return e.Warehouse.Reset(ctx)
+	})
+
+	return group.Wait()
 }

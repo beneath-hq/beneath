@@ -45,3 +45,8 @@ func (m Mock) PromoteInstance(ctx context.Context, p driver.Project, s driver.St
 func (m Mock) RemoveInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
 	return nil
 }
+
+// Reset implements beneath.Service
+func (m Mock) Reset(ctx context.Context) error {
+	return nil
+}

@@ -92,3 +92,24 @@ func (b BigTable) RemoveInstance(ctx context.Context, p driver.Project, s driver
 
 	return nil
 }
+
+// Reset implements beneath.Service
+func (b BigTable) Reset(ctx context.Context) error {
+	tables := []string{
+		logTableName,
+		logExpiringTableName,
+		indexesTableName,
+		indexesExpiringTableName,
+		sequencerTableName,
+		usageTableName,
+	}
+
+	for _, table := range tables {
+		err := b.Admin.DropRowRange(ctx, table, "")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
