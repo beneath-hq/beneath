@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/beneath-core/control"
@@ -67,6 +69,10 @@ func TestMain(m *testing.M) {
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 	hub.SetPaymentDrivers(payments.InitDrivers([]string{"anarchism"}))
 
+	// reset engine
+	err := hub.Engine.Reset(context.Background())
+	panicIf(err)
+
 	// Init gateway globals
 	gateway.InitMetrics()
 	gateway.InitSubscriptions(hub.Engine)
@@ -75,9 +81,7 @@ func TestMain(m *testing.M) {
 	auth.InitGoth(&auth.GothConfig{})
 
 	// run migrations
-	_, _, err := migrations.Run(hub.DB, "reset")
-	panicIf(err)
-	migrations.MustRunUp(hub.DB)
+	migrations.MustRunResetAndUp(hub.DB)
 
 	// flush redis
 	_, err = hub.Redis.FlushAll().Result()
@@ -160,7 +164,7 @@ func queryGQL(query string, variables interface{}) gqlResponse {
 	panicIf(err)
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", testSecret.Token.String()))
+	req.Header.Add("Authorization", authString())
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -171,4 +175,42 @@ func queryGQL(query string, variables interface{}) gqlResponse {
 	panicIf(err)
 
 	return resp
+}
+
+func queryGatewayHTTP(method string, path string, data interface{}) (int, map[string]interface{}) {
+	body, err := json.Marshal(data)
+	panicIf(err)
+	// log.S.Infof("HERE %v", string(body))
+
+	url := fmt.Sprintf("%s/%s", gatewayHTTP.URL, path)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	panicIf(err)
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", authString())
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	panicIf(err)
+
+	var resp interface{}
+	err = json.NewDecoder(res.Body).Decode(&resp)
+	if err != nil && err != io.EOF {
+		panic(err)
+	}
+
+	if resp == nil {
+		return res.StatusCode, nil
+	}
+	return res.StatusCode, resp.(map[string]interface{})
+}
+
+func grpcContext() context.Context {
+	ctx := context.Background()
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", authString())
+	return ctx
+}
+
+func authString() string {
+	return fmt.Sprintf("Bearer %s", testSecret.Token.String())
 }
