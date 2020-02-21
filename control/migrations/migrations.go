@@ -30,6 +30,15 @@ func Run(db *pg.DB, a ...string) (oldVersion, newVersion int64, err error) {
 
 // MustRunUp initializes migrations (if necessary) then applies all new migrations; it panics on error
 func MustRunUp(db *pg.DB) {
+	mustRunMigrations(db, false)
+}
+
+// MustRunResetAndUp is like MustRunUp, but also resets the database
+func MustRunResetAndUp(db *pg.DB) {
+	mustRunMigrations(db, true)
+}
+
+func mustRunMigrations(db *pg.DB, reset bool) {
 	// disable searching for sql files (after go build, migrations folder no longer exists in Docker image)
 	migrations.DefaultCollection.DisableSQLAutodiscover(true)
 
@@ -38,6 +47,14 @@ func MustRunUp(db *pg.DB) {
 	if err != nil {
 		// ignore error if migration table already exists
 		if err.Error() != "ERROR #42P07 relation \"gopg_migrations\" already exists" {
+			log.S.Fatalf("migrations: %s", err.Error())
+		}
+	}
+
+	// reset
+	if reset {
+		_, _, err := migrations.Run(db, "reset")
+		if err != nil {
 			log.S.Fatalf("migrations: %s", err.Error())
 		}
 	}
