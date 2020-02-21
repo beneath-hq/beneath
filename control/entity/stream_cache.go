@@ -361,8 +361,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 					s.project_id,
 					p.name as project_name,
 					s.name as stream_name,
-					s.canonical_avro_schema,
-					s.key_stream_index_id
+					s.canonical_avro_schema
 				from stream_instances si
 				join streams s on si.stream_id = s.stream_id
 				join projects p on s.project_id = p.project_id
@@ -379,7 +378,9 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 		_, err = hub.DB.QueryContext(ctx, &internalResult.Indexes, `
 			select
 				stream_index_id,
+				short_id,
 				fields,
+				"primary",
 				normalize
 			from stream_indexes
 			where stream_id = ?
