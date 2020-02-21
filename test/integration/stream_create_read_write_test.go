@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -79,42 +81,63 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
 
-	// begin data replay
-	res4, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
-		InstanceId: instanceID.Bytes(),
-		Compact:    false,
-		Partitions: 1,
-	})
-	assert.Nil(t, err)
-	assert.Len(t, res4.ReplayCursors, 1)
-	assert.Len(t, res4.ChangeCursors, 1)
+	// test grpc data replay (both compact and uncompact)
+	for _, compact := range []bool{false, true} {
+		// if compact, output will be sorted by primary key, so we must sort the expected values
+		expected := recordsPB
+		if compact {
+			expected = make([]*pb.Record, len(recordsPB))
+			copy(expected, recordsPB)
+			sort.Slice(expected, func(i, j int) bool {
+				return bytes.Compare(expected[i].AvroData, expected[j].AvroData) < 0
+			})
+		}
 
-	// read data page 1
-	n := 30
-	res5, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res4.ReplayCursors[0],
-		Limit:      int32(n),
-	})
-	assert.Nil(t, err)
-	assert.Len(t, res5.Records, n)
-	assert.True(t, len(res5.NextCursor) > 1)
-	for idx, record := range res5.Records {
-		assert.Equal(t, record.AvroData, recordsPB[idx].AvroData)
+		res4, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+			InstanceId: instanceID.Bytes(),
+			Compact:    compact,
+			Partitions: 1,
+		})
+		assert.Nil(t, err)
+		assert.Len(t, res4.ReplayCursors, 1)
+		assert.Len(t, res4.ChangeCursors, 1)
+
+		// read data page 1
+		n := 30
+		res5, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+			InstanceId: instanceID.Bytes(),
+			Cursor:     res4.ReplayCursors[0],
+			Limit:      int32(n),
+		})
+		assert.Nil(t, err)
+		assert.Len(t, res5.Records, n)
+		assert.True(t, len(res5.NextCursor) > 1)
+		for idx, record := range res5.Records {
+			assert.Equal(t, record.AvroData, expected[idx].AvroData)
+		}
+
+		// read data page 2 (ends here)
+		res6, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+			InstanceId: instanceID.Bytes(),
+			Cursor:     res5.NextCursor,
+			Limit:      int32(n),
+		})
+		assert.Nil(t, err)
+		assert.Len(t, res6.Records, 20)
+		assert.Len(t, res6.NextCursor, 0)
+		for idx, record := range res6.Records {
+			assert.Equal(t, record.AvroData, expected[n+idx].AvroData)
+		}
 	}
 
-	// read data page 2 (ends here)
-	res6, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res5.NextCursor,
-		Limit:      int32(n),
-	})
-	assert.Nil(t, err)
-	assert.Len(t, res6.Records, 20)
-	assert.Len(t, res6.NextCursor, 0)
-	for idx, record := range res6.Records {
-		assert.Equal(t, record.AvroData, recordsPB[n+idx].AvroData)
-	}
+	// // TODO: query filtered data with grpc
+	// gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+	// 	InstanceId:
+	// })
+
+	// TODO: subscribe with grpc
+
+	// TODO: subscribe with rest
 
 	// write http records
 	subset = foobars[split:]
@@ -125,13 +148,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
 
-	// write to it
-	// replay it with grpc
-	// replay it with rest
-	// query it with grpc
-	// query it with rest
-	// subscribe to updates with grpc
-	// subscribe to updates with ws
-	// 	push updates
-	// 	check for updates
+	// TODO: check subscription receives
+
+	// TODO: query with rest
 }

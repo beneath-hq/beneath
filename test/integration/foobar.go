@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 )
@@ -60,8 +61,9 @@ func nextChar() byte {
 
 func nextString(n int) string {
 	res := make([]byte, n)
+	idx := nextInt()
 	for i := 0; i < n; i++ {
-		res[i] = nextChar()
+		res[i] = alphabet[((idx+i)/int(math.Pow(float64(len(alphabet)), float64(i))))%len(alphabet)]
 	}
 	return string(res)
 }
