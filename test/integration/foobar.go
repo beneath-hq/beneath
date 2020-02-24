@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var nextIdx = 0
-
 const alphabet = "abcdefghijklmnopqrstuuvwxyz"
 
 type foobar struct {
@@ -21,7 +19,7 @@ type foobar struct {
 	E *big.Rat
 }
 
-func (f foobar) Native() map[string]interface{} {
+func (f foobar) AvroNative() map[string]interface{} {
 	return map[string]interface{}{
 		"a": f.A,
 		"b": f.B,
@@ -50,9 +48,11 @@ func (f foobar) MarshalJSON() ([]byte, error) {
 	})
 }
 
+var counter = 0
+
 func nextInt() int {
-	nextIdx++
-	return nextIdx
+	counter++
+	return counter
 }
 
 func nextChar() byte {

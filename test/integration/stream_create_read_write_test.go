@@ -2,11 +2,16 @@ package integration
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"sort"
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/linkedin/goavro/v2"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +68,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	subset := foobars[0:split]
 	recordsPB := make([]*pb.Record, len(subset))
 	for i, foobar := range subset {
-		data, err := codec.BinaryFromNative(nil, foobar.Native())
+		data, err := codec.BinaryFromNative(nil, foobar.AvroNative())
 		assert.Nil(t, err)
 		recordsPB[i] = &pb.Record{
 			AvroData: data,
@@ -130,25 +135,150 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		}
 	}
 
-	// // TODO: query filtered data with grpc
-	// gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
-	// 	InstanceId:
-	// })
+	// query filtered data with grpc
+	res7, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+		InstanceId: instanceID.Bytes(),
+		Filter:     `{ "a": { "_prefix": "b" } }`,
+		Compact:    true,
+		Partitions: 1,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res7.ReplayCursors, 1)
+	assert.Len(t, res7.ChangeCursors, 1)
 
-	// TODO: subscribe with grpc
+	// the filter will match 2 rows
 
-	// TODO: subscribe with rest
+	// read data page 1 (should return exactly the two rows)
+	res8, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res7.ReplayCursors[0],
+		Limit:      2,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res8.Records, 2)
+	for _, record := range res8.Records {
+		assert.NotEqual(t, record.Timestamp, 0)
+		native, rem, err := codec.NativeFromBinary(record.AvroData)
+		assert.Nil(t, err)
+		assert.Len(t, rem, 0)
+		assert.Equal(t, byte('b'), native.(map[string]interface{})["a"].(string)[0])
+	}
+
+	// read data page 2 (should be empty)
+	res9, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res8.NextCursor,
+		Limit:      10,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res9.Records, 0)
+	assert.Nil(t, res9.NextCursor)
+
+	// get cursor for subscriptions
+	res10, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+		InstanceId: instanceID.Bytes(),
+		Compact:    true,
+		Partitions: 1,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res10.ReplayCursors, 1)
+	assert.Len(t, res10.ChangeCursors, 1)
+
+	recvGRPC := false
+	recvWS := false
+
+	// subscribe with grpc
+	go func() {
+		// create sub
+		ctx, cancel := context.WithCancel(grpcContext())
+		sub, err := gatewayGRPC.Subscribe(ctx, &pb.SubscribeRequest{
+			InstanceId: instanceID.Bytes(),
+			Cursor:     res10.ChangeCursors[0],
+		})
+		panicIf(err)
+
+		// read until we set recvGRPC = true
+		for {
+			_, err := sub.Recv()
+			panicIf(err)
+			recvGRPC = true
+			cancel()
+			break
+		}
+	}()
+
+	// subscribe with websockets
+	go func() {
+		// create sub
+		u := url.URL{
+			Scheme: "ws",
+			Host:   gatewayHTTP.Listener.Addr().String(),
+			Path:   "/ws",
+		}
+		c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		panicIf(err)
+		defer c.Close()
+
+		// authenticate
+		err = c.WriteJSON(map[string]interface{}{
+			"type": "connection_init",
+			"payload": map[string]interface{}{
+				"secret": testSecret.Token.String(),
+			},
+		})
+		panicIf(err)
+
+		// subscribe to cursor
+		err = c.WriteJSON(map[string]interface{}{
+			"type": "start",
+			"id":   "testid",
+			"payload": map[string]interface{}{
+				"instance_id": instanceID.String(),
+				"cursor":      res10.ChangeCursors[0],
+			},
+		})
+		panicIf(err)
+
+		// read until we set recvWS = true
+		for {
+			_, message, err := c.ReadMessage()
+			panicIf(err)
+
+			var res map[string]interface{}
+			err = json.Unmarshal(message, &res)
+			panicIf(err)
+
+			if res["id"] == "testid" {
+				recvWS = true
+				break
+			}
+		}
+	}()
+
+	// check subscriptions not yet triggered
+	assert.False(t, recvGRPC)
+	assert.False(t, recvWS)
 
 	// write http records
 	subset = foobars[split:]
-	code, res7 := queryGatewayHTTP("POST", fmt.Sprintf("streams/instances/%s", instanceID.String()), subset)
+	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("streams/instances/%s", instanceID.String()), subset)
 	assert.Equal(t, 200, code)
-	assert.Nil(t, res7)
+	assert.Nil(t, res11)
 
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
 
-	// TODO: check subscription receives
+	// check subscriptions triggered
+	assert.True(t, recvGRPC)
+	assert.True(t, recvWS)
 
-	// TODO: query with rest
+	// query filtered data with rest
+	// expecting four records (two from each subset)
+	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
+	assert.Equal(t, 200, code)
+	assert.Len(t, res12["data"], 4)
+	for _, record := range res12["data"].([]interface{}) {
+		assert.NotNil(t, record)
+		assert.Equal(t, byte('b'), record.(map[string]interface{})["a"].(string)[0])
+	}
 }

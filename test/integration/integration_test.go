@@ -183,7 +183,7 @@ func queryGatewayHTTP(method string, path string, data interface{}) (int, map[st
 	// log.S.Infof("HERE %v", string(body))
 
 	url := fmt.Sprintf("%s/%s", gatewayHTTP.URL, path)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	panicIf(err)
 
 	req.Header.Add("Content-Type", "application/json")
