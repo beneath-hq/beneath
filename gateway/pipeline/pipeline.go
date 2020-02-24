@@ -83,15 +83,15 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	// overriding ctx to the background context in an attempt to push through with all the writes
 	// (a cancel is most likely due to receiving a SIGINT/SIGTERM, so we'll have a little leeway before being force killed)
 	ctx = context.Background()
-	group, ctx := errgroup.WithContext(ctx)
+	group, cctx := errgroup.WithContext(ctx)
 
 	// write to lookup and warehouse
 	group.Go(func() error {
-		return hub.Engine.Lookup.WriteRecords(ctx, stream, stream, stream, records)
+		return hub.Engine.Lookup.WriteRecords(cctx, stream, stream, stream, records)
 	})
 
 	group.Go(func() error {
-		return hub.Engine.Warehouse.WriteToWarehouse(ctx, stream, stream, stream, records)
+		return hub.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, stream, records)
 	})
 
 	err := group.Wait()
