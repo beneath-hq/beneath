@@ -20,6 +20,9 @@
   "go.vetFlags": [
     "-structtag=false"
   ],
+  "go.testEnvVars": {
+    "ENV": "test"
+  },
   "go.inferGopath": false,
   "tslint.jsEnable": true,
   "python.formatting.provider": "yapf",
