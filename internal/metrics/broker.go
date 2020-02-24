@@ -10,14 +10,18 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 
+	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
-	pb "github.com/beneath-core/engine/proto"
 )
 
 // Broker coordinates the buffer and ticker
 type Broker struct {
+	// options set by NewBroker
+	cacheSize      int
+	commitInterval time.Duration
+
 	// accumulates metrics to commit
 	buffer map[uuid.UUID]pb.QuotaUsage
 
@@ -41,10 +45,6 @@ const (
 )
 
 const (
-	cacheSize = 2500
-
-	commitInterval = 30 * time.Second
-
 	// ReadUsage represents the metrics for read operations
 	ReadUsage = "r"
 
@@ -53,12 +53,14 @@ const (
 )
 
 // NewBroker initializes the Broker
-func NewBroker() *Broker {
+func NewBroker(cacheSize int, commitInterval time.Duration) *Broker {
 	// create the Broker
 	b := &Broker{
-		buffer:       make(map[uuid.UUID]pb.QuotaUsage, cacheSize),
-		commitTicker: time.NewTicker(commitInterval),
-		usageCache:   gcache.New(cacheSize).LRU().Build(),
+		cacheSize:      cacheSize,
+		commitInterval: commitInterval,
+		buffer:         make(map[uuid.UUID]pb.QuotaUsage, cacheSize),
+		commitTicker:   time.NewTicker(commitInterval),
+		usageCache:     gcache.New(cacheSize).LRU().Build(),
 	}
 
 	// start ticking for batch commits to BigTable
@@ -89,7 +91,7 @@ func (b *Broker) commitToTable() error {
 
 	b.mu.Lock()
 	buf := b.buffer
-	b.buffer = make(map[uuid.UUID]pb.QuotaUsage, cacheSize)
+	b.buffer = make(map[uuid.UUID]pb.QuotaUsage, b.cacheSize)
 	b.mu.Unlock()
 
 	// skip if nothing to upload
