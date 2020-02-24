@@ -13,12 +13,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
+	"github.com/beneath-core/gateway"
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/jsonutil"
-	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/gateway"
 )
 
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
@@ -193,44 +193,44 @@ func parseQueryBody(r *http.Request) (queryBody, error) {
 		if err != io.EOF {
 			return body, httputil.NewError(400, "couldn't parse body -- is it valid JSON?")
 		}
+	}
 
-		// parse from url parameters instead
+	// url parameters, if present, supercede body
 
-		// read limit
-		if limitRaw := r.URL.Query().Get("limit"); limitRaw != "" {
-			// get limit
-			limit, err := parseLimit(limitRaw)
-			if err != nil {
-				return body, httputil.NewError(400, err.Error())
-			}
-			body.Limit = limit
+	// read limit
+	if limitRaw := r.URL.Query().Get("limit"); limitRaw != "" {
+		// get limit
+		limit, err := parseLimit(limitRaw)
+		if err != nil {
+			return body, httputil.NewError(400, err.Error())
 		}
+		body.Limit = limit
+	}
 
-		// read cursor
-		if cursorStr := r.URL.Query().Get("cursor"); cursorStr != "" {
-			// convert cursor to bytes
-			cursor, err := base64.StdEncoding.DecodeString(cursorStr)
-			if err != nil {
-				return body, httputil.NewError(400, "invalid cursor")
-			}
-			body.Cursor = cursor
+	// read cursor
+	if cursorStr := r.URL.Query().Get("cursor"); cursorStr != "" {
+		// convert cursor to bytes
+		cursor, err := base64.StdEncoding.DecodeString(cursorStr)
+		if err != nil {
+			return body, httputil.NewError(400, "invalid cursor")
 		}
+		body.Cursor = cursor
+	}
 
-		// read compact
-		if compactRaw := r.URL.Query().Get("compact"); compactRaw != "" {
-			if compactRaw == "true" {
-				body.Compact = true
-			} else if compactRaw == "false" {
-				body.Compact = false
-			} else {
-				return body, httputil.NewError(400, fmt.Sprintf("expected 'compact' parameter to be 'true' or 'false'"))
-			}
+	// read compact
+	if compactRaw := r.URL.Query().Get("compact"); compactRaw != "" {
+		if compactRaw == "true" {
+			body.Compact = true
+		} else if compactRaw == "false" {
+			body.Compact = false
+		} else {
+			return body, httputil.NewError(400, fmt.Sprintf("expected 'compact' parameter to be 'true' or 'false'"))
 		}
+	}
 
-		// read filter
-		if filter := r.URL.Query().Get("filter"); filter != "" {
-			body.Filter = []byte(filter)
-		}
+	// read filter
+	if filter := r.URL.Query().Get("filter"); filter != "" {
+		body.Filter = []byte(filter)
 	}
 
 	// check limit
