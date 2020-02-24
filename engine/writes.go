@@ -7,8 +7,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/segmentio/ksuid"
 
-	"github.com/beneath-core/pkg/ctxutil"
 	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/pkg/ctxutil"
 )
 
 const (
@@ -39,8 +39,8 @@ func (e *Engine) QueueWriteRequest(ctx context.Context, req *pb.WriteRequest) er
 
 // ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
 func (e *Engine) ReadWriteRequests(fn func(context.Context, *pb.WriteRequest) error) error {
-	ctx := ctxutil.WithCancelOnTerminate(context.Background())
-	return e.MQ.Subscribe(ctx, writeRequestsTopic, writeRequestsSubscription, true, func(ctx context.Context, msg []byte) error {
+	cctx := ctxutil.WithCancelOnTerminate(context.Background())
+	return e.MQ.Subscribe(cctx, writeRequestsTopic, writeRequestsSubscription, true, func(ctx context.Context, msg []byte) error {
 		req := &pb.WriteRequest{}
 		err := proto.Unmarshal(msg, req)
 		if err != nil {

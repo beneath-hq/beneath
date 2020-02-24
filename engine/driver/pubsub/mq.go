@@ -72,7 +72,7 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 		err := fn(ctx, msg.Data)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			log.S.Errorf("couldn't process write request: %s", err.Error())
+			log.S.Errorf("couldn't process %s record: %s", topic, err.Error())
 			msg.Nack()
 			cancel()
 			return
