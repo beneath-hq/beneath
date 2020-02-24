@@ -17,9 +17,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	pb "github.com/beneath-core/gateway/grpc/proto"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 func TestStreamCreateReadAndWrite(t *testing.T) {
+	startTime := time.Now()
+
 	// create project
 	res1 := queryGQL(`
 		mutation CreateProject($organizationID: UUID!) {
@@ -31,7 +34,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		}
 	`, map[string]interface{}{"organizationID": testUser.OrganizationID})
 	assert.Empty(t, res1.Errors)
-	project := res1.Data["createProject"]
+	project := res1.Result()["createProject"]
 	assert.Equal(t, "test", project["name"])
 	assert.NotEmpty(t, project["users"])
 
@@ -52,7 +55,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"schema":    schema,
 	})
 	assert.Empty(t, res2.Errors)
-	stream := res2.Data["createExternalStream"]
+	stream := res2.Result()["createExternalStream"]
 	instanceID := uuid.FromStringOrNil(stream["currentStreamInstanceID"].(string))
 	assert.Equal(t, "foo_bar", stream["name"])
 	assert.Len(t, stream["project"], 1)
@@ -272,7 +275,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	assert.True(t, recvGRPC)
 	assert.True(t, recvWS)
 
-	// query filtered data with rest
+	// query filtered data with REST
 	// expecting four records (two from each subset)
 	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
 	assert.Equal(t, 200, code)
@@ -281,4 +284,65 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		assert.NotNil(t, record)
 		assert.Equal(t, byte('b'), record.(map[string]interface{})["a"].(string)[0])
 	}
+
+	// wait to let metrics get committed
+	time.Sleep(200 * time.Millisecond)
+
+	// check metrics have been accurately tracked for stream
+	res13 := queryGQL(`
+		query GetStreamMetrics($streamID: UUID!, $from: Time!) {
+			getStreamMetrics(streamID: $streamID, period: "month", from: $from) {
+				entityID
+				time
+				readOps
+				readBytes
+				readRecords
+				writeOps
+				writeBytes
+				writeRecords
+			}
+		}
+	`, map[string]interface{}{
+		"streamID": stream["streamID"],
+		"from":     timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
+	})
+	assert.Empty(t, res13.Errors)
+	streamMetrics := res13.Results()["getStreamMetrics"]
+	assert.Len(t, streamMetrics, 1)
+	assert.Equal(t, instanceID.String(), streamMetrics[0]["entityID"])
+	assert.Greater(t, int(streamMetrics[0]["readOps"].(float64)), 0)
+	assert.Greater(t, int(streamMetrics[0]["readBytes"].(float64)), 0)
+	assert.Greater(t, int(streamMetrics[0]["readRecords"].(float64)), 0)
+	assert.Equal(t, int(streamMetrics[0]["writeOps"].(float64)), 2)
+	assert.Greater(t, int(streamMetrics[0]["writeBytes"].(float64)), 0)
+	assert.Equal(t, int(streamMetrics[0]["writeRecords"].(float64)), len(foobars))
+
+	// check metrics have been accurately tracked for the user
+	res14 := queryGQL(`
+		query GetUserMetrics($userID: UUID!, $from: Time!) {
+			getUserMetrics(userID: $userID, period: "month", from: $from) {
+				entityID
+				time
+				readOps
+				readBytes
+				readRecords
+				writeOps
+				writeBytes
+				writeRecords
+			}
+		}
+	`, map[string]interface{}{
+		"userID": testUser.UserID.String(),
+		"from":   timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
+	})
+	assert.Empty(t, res14.Errors)
+	userMetrics := res14.Results()["getUserMetrics"]
+	assert.Len(t, userMetrics, 1)
+	assert.Equal(t, testUser.UserID.String(), userMetrics[0]["entityID"])
+	assert.Greater(t, int(userMetrics[0]["readOps"].(float64)), 0)
+	assert.Greater(t, int(userMetrics[0]["readBytes"].(float64)), 0)
+	assert.Greater(t, int(userMetrics[0]["readRecords"].(float64)), 0)
+	assert.Equal(t, int(userMetrics[0]["writeOps"].(float64)), 2)
+	assert.Greater(t, int(userMetrics[0]["writeBytes"].(float64)), 0)
+	assert.Equal(t, int(userMetrics[0]["writeRecords"].(float64)), len(foobars))
 }

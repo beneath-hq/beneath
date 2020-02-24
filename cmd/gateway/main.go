@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -30,6 +31,11 @@ type configSpecification struct {
 	PostgresPassword string `envconfig:"CONTROL_POSTGRES_PASSWORD" required:"true"`
 }
 
+const (
+	metricsCacheSize      = 2500
+	metricsCommitInterval = 30 * time.Second
+)
+
 func main() {
 	// Config for gateway
 	var config configSpecification
@@ -44,7 +50,7 @@ func main() {
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	// Init gateway globals
-	gw.InitMetrics()
+	gw.InitMetrics(metricsCacheSize, metricsCommitInterval)
 	gw.InitSubscriptions(hub.Engine)
 
 	// Init segment

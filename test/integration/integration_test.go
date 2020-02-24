@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -44,6 +45,10 @@ type configSpecification struct {
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 }
 
+const (
+	metricsCommitInterval = 10 * time.Millisecond
+)
+
 var (
 	testUser    *entity.User
 	testSecret  *entity.UserSecret
@@ -74,7 +79,7 @@ func TestMain(m *testing.M) {
 	panicIf(err)
 
 	// Init gateway globals
-	gateway.InitMetrics()
+	gateway.InitMetrics(100, metricsCommitInterval)
 	gateway.InitSubscriptions(hub.Engine)
 
 	// configure auth (empty config, so it doesn't actually work)
@@ -148,8 +153,30 @@ func TestMain(m *testing.M) {
 }
 
 type gqlResponse struct {
-	Data   map[string]map[string]interface{}
+	Data   interface{}
 	Errors []map[string]interface{}
+}
+
+func (r gqlResponse) Result() map[string]map[string]interface{} {
+	res := make(map[string]map[string]interface{})
+	for k1, v1 := range r.Data.(map[string]interface{}) {
+		if res[k1] == nil {
+			res[k1] = make(map[string]interface{})
+		}
+		res[k1] = v1.(map[string]interface{})
+	}
+	return res
+}
+
+func (r gqlResponse) Results() map[string][]map[string]interface{} {
+	res := make(map[string][]map[string]interface{})
+	for k1, v1 := range r.Data.(map[string]interface{}) {
+		results := v1.([]interface{})
+		for _, result := range results {
+			res[k1] = append(res[k1], result.(map[string]interface{}))
+		}
+	}
+	return res
 }
 
 func queryGQL(query string, variables interface{}) gqlResponse {

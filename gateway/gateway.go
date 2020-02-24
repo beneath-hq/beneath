@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"time"
+
 	"github.com/beneath-core/engine"
 	"github.com/beneath-core/gateway/subscriptions"
 	"github.com/beneath-core/internal/metrics"
@@ -15,8 +17,8 @@ var (
 )
 
 // InitMetrics initializes the Metrics global
-func InitMetrics() {
-	Metrics = metrics.NewBroker()
+func InitMetrics(cacheSize int, commitInterval time.Duration) {
+	Metrics = metrics.NewBroker(cacheSize, commitInterval)
 }
 
 // InitSubscriptions initializes the Subscriptionsglobal
