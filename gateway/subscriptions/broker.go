@@ -7,10 +7,10 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/engine"
 	"github.com/beneath-core/engine/driver"
 	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/pkg/log"
 )
 
 // Message encapsulates a subscription update dispatched by a Broker
@@ -42,6 +42,9 @@ type callbacks struct {
 func NewBroker(eng *engine.Engine) *Broker {
 	b := &Broker{
 		Engine: eng,
+		subscriptions: subscriptions{
+			m: make(map[uuid.UUID]*callbacks),
+		},
 	}
 	go b.runForever()
 	return b
@@ -52,7 +55,7 @@ func (b *Broker) Subscribe(instanceID uuid.UUID, cursor []byte, cb func(Message)
 	b.subscriptions.Lock()
 	cbs := b.subscriptions.m[instanceID]
 	if cbs == nil {
-		cbs := &callbacks{m: make(map[int]func(Message))}
+		cbs = &callbacks{m: make(map[int]func(Message))}
 		b.subscriptions.m[instanceID] = cbs
 	}
 	b.subscriptions.i++
