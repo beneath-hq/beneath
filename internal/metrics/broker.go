@@ -12,6 +12,7 @@ import (
 
 	pb "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/bytesutil"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/timeutil"
 )
@@ -42,14 +43,6 @@ type OpType int
 const (
 	OpTypeRead OpType = iota
 	OpTypeWrite
-)
-
-const (
-	// ReadUsage represents the metrics for read operations
-	ReadUsage = "r"
-
-	// WriteUsage represents the metrics for write operations
-	WriteUsage = "w"
 )
 
 // NewBroker initializes the Broker
@@ -112,15 +105,13 @@ func (b *Broker) commitToTable() error {
 			defer sem.Release(1)
 
 			// commit metrics to monthly count
-			rowKey := metricsKey(timeutil.PeriodMonth, id, ts)
-			err := hub.Engine.CommitUsage(ctx, rowKey, usage)
+			err := hub.Engine.CommitUsage(ctx, id, timeutil.PeriodMonth, ts, usage)
 			if err != nil {
 				return err
 			}
 
 			// commit metrics to hourly count
-			rowKey = metricsKey(timeutil.PeriodHour, id, ts)
-			err = hub.Engine.CommitUsage(ctx, rowKey, usage)
+			err = hub.Engine.CommitUsage(ctx, id, timeutil.PeriodHour, ts, usage)
 			if err != nil {
 				return err
 			}
@@ -184,12 +175,13 @@ func (b *Broker) trackOp(op OpType, id uuid.UUID, nrecords int64, nbytes int64) 
 
 // GetCurrentUsage returns an ID's usage for the current monthly or hourly period
 func (b *Broker) GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.QuotaUsage {
-	// create row filter
-	key := metricsKey(timeutil.PeriodMonth, entityID, time.Now())
+	// create cache key
+	timeBytes := bytesutil.IntToBytes(timeutil.Floor(time.Now(), timeutil.PeriodMonth).Unix())
+	cacheKey := string(append(entityID.Bytes(), timeBytes...))
 
-	// first, check cache for usage else get usage from bigtable
+	// first, check cache for usage else get usage from store
 	var usage pb.QuotaUsage
-	val, err := b.usageCache.Get(string(key))
+	val, err := b.usageCache.Get(cacheKey)
 	if err == nil {
 		// use cached value
 		usage = val.(pb.QuotaUsage)
@@ -197,11 +189,11 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.Quo
 		// unexpected
 		panic(err)
 	} else {
-		// load from bigtable
+		// load from store
 		usage := GetCurrentUsage(ctx, entityID)
 
 		// write back to cache
-		b.usageCache.Set(string(key), usage)
+		b.usageCache.Set(cacheKey, usage)
 	}
 
 	// add buffer to quota

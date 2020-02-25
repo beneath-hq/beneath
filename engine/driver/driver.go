@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-core/pkg/timeutil"
+
 	uuid "github.com/satori/go.uuid"
 
 	pb "github.com/beneath-core/engine/proto"
@@ -77,13 +79,13 @@ type LookupService interface {
 	// NOTE: Usage tracking is temporarily implemented here, but really should be implemented on top of the engine, not in it
 
 	// CommitUsage writes a batch of usage metrics
-	CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error
+	CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time, usage pb.QuotaUsage) error
 
 	// ReadSingleUsage reads usage metrics for one key
-	ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsage, error)
+	ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error)
 
 	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
-	ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error
+	ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance

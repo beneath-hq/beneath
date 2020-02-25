@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/engine/driver"
 	"github.com/beneath-core/engine/driver/bigtable/sequencer"
+	"github.com/beneath-core/pkg/envutil"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -33,6 +33,7 @@ type BigTable struct {
 	Indexes         *bigtable.Table
 	IndexesExpiring *bigtable.Table
 	Usage           *bigtable.Table
+	UsageTemp       *bigtable.Table
 }
 
 const (
@@ -67,6 +68,8 @@ const (
 	sequencerTableName = "sequencer"
 
 	usageTableName            = "usage"
+	usageTempTableName        = "usage_tmp"
+	usageTempRetention        = 8 * 24 * time.Hour
 	usageColumnFamilyName     = "f"
 	usageReadOpsColumnName    = "ro"
 	usageReadRowsColumnName   = "rr"
@@ -114,11 +117,14 @@ func createGlobal() {
 		panic(err)
 	}
 
-	global.Log = global.openTable(logTableName, logColumnFamilyName, 1, false)
-	global.LogExpiring = global.openTable(logExpiringTableName, logColumnFamilyName, 1, true)
-	global.Indexes = global.openTable(indexesTableName, indexesColumnFamilyName, 1, false)
-	global.IndexesExpiring = global.openTable(indexesExpiringTableName, indexesColumnFamilyName, 1, true)
-	global.Usage = global.openTable(usageTableName, usageColumnFamilyName, 1, false)
+	// expiring tables have max age of 1 second, making their timestamps expiration dates
+
+	global.Log = global.openTable(logTableName, logColumnFamilyName, 1, 0)
+	global.LogExpiring = global.openTable(logExpiringTableName, logColumnFamilyName, 1, time.Second)
+	global.Indexes = global.openTable(indexesTableName, indexesColumnFamilyName, 1, 0)
+	global.IndexesExpiring = global.openTable(indexesExpiringTableName, indexesColumnFamilyName, 1, time.Second)
+	global.Usage = global.openTable(usageTableName, usageColumnFamilyName, 1, 0)
+	global.UsageTemp = global.openTable(usageTempTableName, usageColumnFamilyName, 1, usageTempRetention)
 }
 
 // GetLookupService returns a BigTable implementation of beneath.LookupService
@@ -127,7 +133,7 @@ func GetLookupService() driver.LookupService {
 	return global
 }
 
-func (b BigTable) openTable(name string, cfName string, maxVersions int, expiring bool) *bigtable.Table {
+func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge time.Duration) *bigtable.Table {
 	// create table
 	err := b.Admin.CreateTable(context.Background(), name)
 	if err != nil {
@@ -148,8 +154,7 @@ func (b BigTable) openTable(name string, cfName string, maxVersions int, expirin
 
 	// set garbage collection policy
 	policy := bigtable.MaxVersionsPolicy(maxVersions)
-	if expiring {
-		// if expiring, set timestamps to be expiration times
+	if maxAge != 0 {
 		policy = bigtable.UnionPolicy(policy, bigtable.MaxAgePolicy(time.Second))
 	}
 

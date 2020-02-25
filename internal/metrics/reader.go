@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/pkg/codec/ext/tuple"
-	"github.com/beneath-core/pkg/timeutil"
-
-	"github.com/beneath-core/internal/hub"
-	pb "github.com/beneath-core/engine/proto"
 	uuid "github.com/satori/go.uuid"
+
+	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 const (
@@ -19,11 +18,8 @@ const (
 
 // GetCurrentUsage returns an ID's usage for the current monthly period
 func GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.QuotaUsage {
-	// create row filter
-	key := metricsKey(timeutil.PeriodMonth, entityID, time.Now())
-
 	// load from bigtable
-	usage, err := hub.Engine.ReadSingleUsage(ctx, key)
+	usage, err := hub.Engine.ReadSingleUsage(ctx, entityID, timeutil.PeriodMonth, time.Now())
 	if err != nil {
 		panic(fmt.Errorf("error reading metrics: %s", err.Error()))
 	}
@@ -53,16 +49,11 @@ func GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, period timeutil
 		return nil, nil, fmt.Errorf("time span too long")
 	}
 
-	// create key range
-	fromKey := metricsKey(period, entityID, from)
-	toKey := tuple.Successor(metricsKey(period, entityID, until))
-
 	// read usage table and collect usage metrics
 	var times []time.Time
 	var usages []pb.QuotaUsage
-	err := hub.Engine.ReadUsage(ctx, fromKey, toKey, func(key []byte, usage pb.QuotaUsage) error {
-		_, _, t := decodeMetricsKey(key)
-		times = append(times, t)
+	err := hub.Engine.ReadUsage(ctx, entityID, period, from, until, func(ts time.Time, usage pb.QuotaUsage) error {
+		times = append(times, ts)
 		usages = append(usages, usage)
 		return nil
 	})

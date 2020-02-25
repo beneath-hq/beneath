@@ -3,14 +3,23 @@ package bigtable
 import (
 	"context"
 	"encoding/binary"
+	"time"
 
 	"cloud.google.com/go/bigtable"
+	uuid "github.com/satori/go.uuid"
 
 	pb "github.com/beneath-core/engine/proto"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 // CommitUsage implements engine.LookupService
-func (b BigTable) CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsage) error {
+func (b BigTable) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time, usage pb.QuotaUsage) error {
+	// get table
+	table := b.Usage
+	if period > timeutil.PeriodDay {
+		table = b.UsageTemp
+	}
+
 	rmw := bigtable.NewReadModifyWrite()
 
 	if usage.ReadOps > 0 {
@@ -25,17 +34,25 @@ func (b BigTable) CommitUsage(ctx context.Context, key []byte, usage pb.QuotaUsa
 		rmw.Increment(usageColumnFamilyName, usageWriteBytesColumnName, usage.WriteBytes)
 	}
 
-	_, err := b.Usage.ApplyReadModifyWrite(ctx, string(key), rmw)
+	key := makeUsageKey(id, period, ts, 0)
+	_, err := table.ApplyReadModifyWrite(ctx, key, rmw)
 	return err
 }
 
 // ReadSingleUsage implements engine.LookupService
-func (b BigTable) ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsage, error) {
+func (b BigTable) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
+	// get table
+	table := b.Usage
+	if period > timeutil.PeriodDay {
+		table = b.UsageTemp
+	}
+
 	// add filter for latest cell value
 	filter := bigtable.RowFilter(bigtable.LatestNFilter(1))
 
 	// read row
-	row, err := b.Usage.ReadRow(ctx, string(key), filter)
+	key := makeUsageKey(id, period, ts, 0)
+	row, err := table.ReadRow(ctx, key, filter)
 	if err != nil {
 		return pb.QuotaUsage{}, err
 	}
@@ -48,19 +65,27 @@ func (b BigTable) ReadSingleUsage(ctx context.Context, key []byte) (pb.QuotaUsag
 }
 
 // ReadUsage implements engine.LookupService
-func (b BigTable) ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, fn func(key []byte, usage pb.QuotaUsage) error) error {
+func (b BigTable) ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
+	// get table
+	table := b.Usage
+	if period > timeutil.PeriodDay {
+		table = b.UsageTemp
+	}
+
 	// convert keyRange to RowSet
-	rr := bigtable.NewRange(string(fromKey), string(toKey))
+	fromKey := makeUsageKey(id, period, from, 0)
+	toKey := makeUsageKey(id, period, until, time.Second)
+	rr := bigtable.NewRange(fromKey, toKey)
 
 	// define callback triggered on each bigtable row
 	var cbErr error
 	cb := func(row bigtable.Row) bool {
 		// get values
-		key := []byte(row.Key())
+		_, _, ts := parseUsageKey(row.Key())
 		usage := b.rowToUsage(row)
 
 		// trigger callback
-		cbErr = fn(key, usage)
+		cbErr = fn(ts, usage)
 		if cbErr != nil {
 			return false // stop
 		}
@@ -70,7 +95,7 @@ func (b BigTable) ReadUsage(ctx context.Context, fromKey []byte, toKey []byte, f
 	}
 
 	// read rows
-	err := b.Usage.ReadRows(ctx, rr, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	err := table.ReadRows(ctx, rr, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 	if err != nil {
 		return err
 	} else if cbErr != nil {
