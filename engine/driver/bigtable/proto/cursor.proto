@@ -10,6 +10,7 @@ message Cursor {
 	enum Type {
     LOG = 0;
 		INDEX = 1;
+		PEEK = 2;
   }	
 	Type type = 1;
 	int64 log_start = 10;

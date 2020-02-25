@@ -5,8 +5,8 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 
-	"github.com/beneath-core/internal/middleware"
 	pb "github.com/beneath-core/gateway/grpc/proto"
+	"github.com/beneath-core/internal/middleware"
 
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/encoding.md#using-a-compressor
 	_ "google.golang.org/grpc/encoding/gzip"
@@ -59,6 +59,10 @@ type queryTags struct {
 	Compact    bool   `json:"compact,omitempty"`
 	Partitions int32  `json:"partitions,omitempty"`
 	BytesRead  int    `json:"bytes,omitempty"`
+}
+
+type peekTags struct {
+	InstanceID string `json:"instance_id,omitempty"`
 }
 
 type readTags struct {

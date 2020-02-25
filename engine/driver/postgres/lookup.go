@@ -3,12 +3,17 @@ package postgres
 import (
 	"context"
 
-	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/engine/driver"
+	"github.com/beneath-core/pkg/queryparse"
 )
 
 // ParseQuery implements driver.LookupService
 func (b Postgres) ParseQuery(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error) {
+	panic("todo")
+}
+
+// Peek implements driver.LookupService
+func (b Postgres) Peek(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) ([]byte, []byte, error) {
 	panic("todo")
 }
 

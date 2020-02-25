@@ -11,11 +11,11 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/ws"
-	"github.com/beneath-core/internal/hub"
 )
 
 const (
@@ -60,8 +60,8 @@ func Handler() http.Handler {
 	handler.Method("GET", "/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	// peek endpoints
-	// handler.Method("GET", "/projects/{projectName}/streams/{streamName}/latest", httputil.AppHandler(getLatestFromProjectAndStream))
-	// handler.Method("GET", "/streams/instances/{instanceID}/latest", httputil.AppHandler(getLatestFromInstance))
+	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/peek", httputil.AppHandler(getLatestFromProjectAndStream))
+	handler.Method("GET", "/streams/instances/{instanceID}/peek", httputil.AppHandler(getLatestFromInstance))
 
 	// meta endpoint
 	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/details", httputil.AppHandler(getStreamDetails))
@@ -97,7 +97,8 @@ type queryTags struct {
 
 type peekTags struct {
 	InstanceID string `json:"instance_id,omitempty"`
-	Limit      int32  `json:"limit,omitempty"`
+	Limit      int    `json:"limit,omitempty"`
+	BytesRead  int    `json:"bytes,omitempty"`
 }
 
 type streamDetailsTags struct {

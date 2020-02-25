@@ -70,6 +70,9 @@ type LookupService interface {
 	// ParseQuery returns (replayCursors, changeCursors, err)
 	ParseQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error)
 
+	// Peek returns (rewindCursor, changeCursor, err)
+	Peek(ctx context.Context, p Project, s Stream, i StreamInstance) ([]byte, []byte, error)
+
 	// ReadCursor returns (records, nextCursor, err)
 	ReadCursor(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
 

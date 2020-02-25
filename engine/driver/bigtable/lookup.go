@@ -168,6 +168,38 @@ func decompileCursorSet(bs []byte) (*pb.CursorSet, error) {
 	return set, nil
 }
 
+// Peek implements driver.LookupService
+func (b BigTable) Peek(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) ([]byte, []byte, error) {
+	// get instance log state
+	state, err := b.Sequencer.GetState(ctx, makeSequencerKey(i.GetStreamInstanceID()))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// create rewind cursor
+	cursor := &pb.Cursor{
+		Type:   pb.Cursor_PEEK,
+		LogEnd: state.NextStable,
+	}
+	rewind, err := compileCursor(cursor)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// create changes cursor
+	cursor = &pb.Cursor{
+		Type:     pb.Cursor_LOG,
+		LogStart: state.NextStable,
+	}
+	changes, err := compileCursor(cursor)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// done
+	return rewind, changes, nil
+}
+
 // ReadCursor implements driver.LookupService
 func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, cursorSet []byte, limit int) (driver.RecordsIterator, error) {
 	// check limit
@@ -196,8 +228,8 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 		}
 	}
 
-	// if index scan, check just one cursor
-	if first.Type == pb.Cursor_INDEX {
+	// if not log scan, check just one cursor
+	if first.Type != pb.Cursor_LOG {
 		if len(set.Cursors) != 1 {
 			return nil, ErrCorruptCursor
 		}
@@ -205,6 +237,8 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 
 	// parse based on type
 	switch first.Type {
+	case pb.Cursor_PEEK:
+		return b.readPeekCursor(ctx, s, i, first, limit)
 	case pb.Cursor_LOG:
 		return b.readLogCursors(ctx, s, i, set, limit)
 	case pb.Cursor_INDEX:
@@ -274,6 +308,37 @@ func (i *batchesIterator) Record() driver.Record {
 // NextCursor implements driver.RecordsIterator
 func (i *batchesIterator) NextCursor() []byte {
 	return i.nextCursor
+}
+
+func (b BigTable) readPeekCursor(ctx context.Context, s driver.Stream, i driver.StreamInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
+	// prepare range
+	end := cursor.LogEnd
+	start := mathutil.MaxInt64(0, end-int64(limit))
+
+	// load from log
+	records, err := b.LoadLogRange(ctx, s, i, start, end, limit)
+
+	// check error
+	if err != nil {
+		return nil, err
+	}
+
+	// encode new cursor
+	var nextCursor []byte
+	if start != 0 {
+		cursor.LogEnd = start
+		compiled, err := compileCursor(cursor)
+		if err != nil {
+			return nil, err
+		}
+		nextCursor = compiled
+	}
+
+	// return iterator
+	return &recordsIterator{
+		records:    records,
+		nextCursor: nextCursor,
+	}, nil
 }
 
 func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.StreamInstance, set *pb.CursorSet, limit int) (driver.RecordsIterator, error) {

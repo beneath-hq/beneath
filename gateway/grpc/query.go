@@ -69,7 +69,7 @@ func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	// run query
 	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "couldn't parse 'where': %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
 	}
 
 	// done

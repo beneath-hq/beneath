@@ -57,11 +57,10 @@ message SubscribeResponse {
 
 message PeekRequest {
   bytes instance_id = 1;
-  int32 limit = 2;
 }
 
 message PeekResponse {
-  repeated Record records = 1;
+  bytes rewind_cursor = 1;
   bytes change_cursor = 2;
 }
 

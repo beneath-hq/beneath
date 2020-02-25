@@ -363,4 +363,30 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	assert.Equal(t, int(userMetrics[0]["writeOps"].(float64)), 2)
 	assert.Greater(t, int(userMetrics[0]["writeBytes"].(float64)), 0)
 	assert.Equal(t, int(userMetrics[0]["writeRecords"].(float64)), len(foobars))
+
+	// test peek by grpc
+	res16, err := gatewayGRPC.Peek(grpcContext(), &pb.PeekRequest{InstanceId: instanceID.Bytes()})
+	assert.Nil(t, err)
+	assert.NotNil(t, res16.RewindCursor)
+	assert.NotNil(t, res16.ChangeCursor)
+
+	// read peek page 1
+	res17, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res16.RewindCursor,
+		Limit:      60,
+	})
+	assert.Nil(t, err)
+	assert.True(t, len(res17.NextCursor) > 0)
+	assert.Len(t, res17.Records, 60)
+
+	// read peek page 2
+	res18, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res17.NextCursor,
+		Limit:      60,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res18.NextCursor, 0)
+	assert.Len(t, res18.Records, 40)
 }
