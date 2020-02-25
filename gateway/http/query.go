@@ -163,6 +163,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// track read metrics
 	gateway.Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
+	gateway.Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
 	if !secret.IsAnonymous() {
 		gateway.Metrics.TrackRead(secret.GetOwnerID(), int64(len(result)), int64(bytesRead))
 	}

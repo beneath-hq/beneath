@@ -109,6 +109,7 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// track write metrics
+	gateway.Metrics.TrackWrite(stream.StreamID, int64(len(req.Records)), int64(bytesWritten))
 	gateway.Metrics.TrackWrite(instanceID, int64(len(req.Records)), int64(bytesWritten))
 	gateway.Metrics.TrackWrite(secret.GetOwnerID(), int64(len(req.Records)), int64(bytesWritten))
 

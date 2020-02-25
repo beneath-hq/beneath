@@ -227,6 +227,7 @@ type ComplexityRoot struct {
 		Empty                        func(childComplexity int) int
 		ExploreProjects              func(childComplexity int) int
 		GetServiceMetrics            func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamInstanceMetrics     func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetStreamMetrics             func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetUserMetrics               func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
 		Me                           func(childComplexity int) int
@@ -391,6 +392,7 @@ type QueryResolver interface {
 	BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error)
 	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*BillingInfo, error)
 	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	Model(ctx context.Context, name string, projectName string) (*entity.Model, error)
@@ -1529,6 +1531,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetServiceMetrics(childComplexity, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
+	case "Query.getStreamInstanceMetrics":
+		if e.complexity.Query.GetStreamInstanceMetrics == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getStreamInstanceMetrics_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetStreamInstanceMetrics(childComplexity, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+
 	case "Query.getStreamMetrics":
 		if e.complexity.Query.GetStreamMetrics == nil {
 			break
@@ -2256,6 +2270,7 @@ type BillingInfo {
 `},
 	&ast.Source{Name: "control/gql/schema/metrics.graphql", Input: `extend type Query {
   getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getServiceMetrics(serviceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
 }
@@ -3497,6 +3512,44 @@ func (ec *executionContext) field_Query_getServiceMetrics_args(ctx context.Conte
 		}
 	}
 	args["serviceID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getStreamInstanceMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamInstanceID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamInstanceID"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["period"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
@@ -8793,6 +8846,50 @@ func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field g
 	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_getStreamInstanceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getStreamInstanceMetrics_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetStreamInstanceMetrics(rctx, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Metrics)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -13897,6 +13994,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getStreamMetrics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getStreamInstanceMetrics":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getStreamInstanceMetrics(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

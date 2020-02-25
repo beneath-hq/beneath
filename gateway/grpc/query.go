@@ -158,6 +158,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 
 	// track read metrics
 	gateway.Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
+	gateway.Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
 	gateway.Metrics.TrackRead(secret.GetOwnerID(), int64(len(response.Records)), int64(bytesRead))
 
 	// update log message

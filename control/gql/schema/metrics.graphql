@@ -1,5 +1,6 @@
 extend type Query {
   getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getServiceMetrics(serviceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
 }

@@ -10,11 +10,26 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/pkg/mathutil"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/timeutil"
 	"github.com/beneath-core/internal/metrics"
+	"github.com/beneath-core/internal/middleware"
+	"github.com/beneath-core/pkg/mathutil"
+	"github.com/beneath-core/pkg/timeutil"
 )
+
+func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, streamInstanceID)
+	if stream == nil {
+		return nil, gqlerror.Errorf("Stream for instance %s not found", streamInstanceID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
+	}
+
+	return getUsage(ctx, streamInstanceID, period, from, until)
+}
 
 func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
 	stream := entity.FindStream(ctx, streamID)
@@ -28,30 +43,7 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
 	}
 
-	// lookup stream ID for batch, instance ID for streaming
-	if stream.Batch {
-		reads, err := getUsage(ctx, stream.StreamID, period, from, until)
-		if err != nil {
-			return nil, err
-		}
-
-		if stream.CurrentStreamInstanceID == nil {
-			return reads, nil
-		}
-
-		writes, err := getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
-		if err != nil {
-			return nil, err
-		}
-
-		return mergeUsage(reads, writes), nil
-	}
-
-	if stream.CurrentStreamInstanceID == nil {
-		return nil, nil
-	}
-
-	return getUsage(ctx, *stream.CurrentStreamInstanceID, period, from, until)
+	return getUsage(ctx, stream.StreamID, period, from, until)
 }
 
 func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {

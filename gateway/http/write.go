@@ -9,15 +9,15 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/pkg/httputil"
-	"github.com/beneath-core/pkg/jsonutil"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/timeutil"
-	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/engine"
 	pb_engine "github.com/beneath-core/engine/proto"
 	"github.com/beneath-core/gateway"
 	pb "github.com/beneath-core/gateway/grpc/proto"
+	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/internal/middleware"
+	"github.com/beneath-core/pkg/httputil"
+	"github.com/beneath-core/pkg/jsonutil"
+	"github.com/beneath-core/pkg/timeutil"
 )
 
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
@@ -152,6 +152,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// track write metrics
+	gateway.Metrics.TrackWrite(stream.StreamID, int64(len(records)), int64(bytesWritten))
 	gateway.Metrics.TrackWrite(instanceID, int64(len(records)), int64(bytesWritten))
 	if !secret.IsAnonymous() {
 		gateway.Metrics.TrackWrite(secret.GetOwnerID(), int64(len(records)), int64(bytesWritten))
