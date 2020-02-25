@@ -24,5 +24,10 @@ func (t *CleanupInstanceTask) Run(ctx context.Context) error {
 		return err
 	}
 
+	err = hub.Engine.ClearUsage(ctx, t.CachedStream.InstanceID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

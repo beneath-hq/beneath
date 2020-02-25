@@ -15,6 +15,11 @@ func (e *Engine) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.
 	return e.Lookup.CommitUsage(ctx, id, period, ts, usage)
 }
 
+// ClearUsage clears all usage data saved for the id
+func (e *Engine) ClearUsage(ctx context.Context, id uuid.UUID) error {
+	return e.Lookup.ClearUsage(ctx, id)
+}
+
 // ReadSingleUsage reads usage metrics for one key
 func (e *Engine) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
 	return e.Lookup.ReadSingleUsage(ctx, id, period, ts)

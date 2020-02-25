@@ -39,6 +39,23 @@ func (b BigTable) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil
 	return err
 }
 
+// ClearUsage clears all usage data saved for the id
+func (b BigTable) ClearUsage(ctx context.Context, id uuid.UUID) error {
+	// clear usage table
+	err := b.Admin.DropRowRange(ctx, usageTableName, string(id.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	// clear temp usage table
+	err = b.Admin.DropRowRange(ctx, usageTempTableName, string(id.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ReadSingleUsage implements engine.LookupService
 func (b BigTable) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
 	// get table

@@ -86,6 +86,9 @@ type LookupService interface {
 
 	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
 	ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error
+
+	// ClearUsage clears all usage data saved for the id
+	ClearUsage(ctx context.Context, id uuid.UUID) error
 }
 
 // WarehouseService encapsulates functionality to analytically query records in an instance

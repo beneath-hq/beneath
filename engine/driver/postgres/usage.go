@@ -15,6 +15,11 @@ func (b Postgres) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil
 	panic("not implemented")
 }
 
+// ClearUsage implements engine.LookupService
+func (b Postgres) ClearUsage(ctx context.Context, id uuid.UUID) error {
+	panic("not implemented")
+}
+
 // ReadSingleUsage implements engine.LookupService
 func (b Postgres) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
 	panic("not implemented")

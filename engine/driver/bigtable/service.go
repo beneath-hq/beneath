@@ -84,12 +84,6 @@ func (b BigTable) RemoveInstance(ctx context.Context, p driver.Project, s driver
 		return err
 	}
 
-	// usage
-	err = b.Admin.DropRowRange(ctx, usageTableName, string(instanceID[:]))
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

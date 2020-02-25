@@ -380,6 +380,14 @@ func (s *Stream) Delete(ctx context.Context) error {
 		return err
 	}
 
+	// background cleanup
+	err = taskqueue.Submit(ctx, &CleanupStreamTask{
+		StreamID: s.StreamID,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
