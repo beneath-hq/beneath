@@ -1,5 +1,5 @@
 " Manually curated stream of known Ethereum addresses (includes both external and smart contract addresses) "
-type KnownAddress @stream(key: "address") {
+type KnownAddress @stream @key(fields: ["address"]) {
   " Address on the Ethereum mainnet "
   address: Bytes20!
 

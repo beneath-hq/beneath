@@ -1,5 +1,8 @@
 " Blocks loaded from the Ethereum mainnet with no delay -- forks will frequently occur in this stream "
-type Block @stream(name: "blocks-unstable", key: "number") {
+type Block
+  @stream(name: "blocks-unstable")
+  @key(fields: ["number"])
+{
   " Block number "
   number: Int!
 

@@ -1,5 +1,8 @@
 " Blocks loaded from the Ethereum mainnet -- delayed by 12 blocks to minimize the chance of forks in this stream "
-type Block @stream(name: "blocks-stable", key: "number") {
+type Block
+  @stream(name: "blocks-stable")
+  @key(fields: ["number"])
+{
   " Block number "
   number: Int!
 
