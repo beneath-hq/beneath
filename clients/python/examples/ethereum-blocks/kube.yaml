@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ethereum-blocks
+  labels:
+    app.kubernetes.io/name: ethereum-blocks
+    app.kubernetes.io/instance: ethereum-blocks
+    app.kubernetes.io/managed-by: Manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ethereum-blocks
+      app.kubernetes.io/instance: ethereum-blocks
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ethereum-blocks
+        app.kubernetes.io/instance: ethereum-blocks
+    spec:
+      containers:
+      - name: ethereum-blocks
+        image: gcr.io/beneathcrypto/ethereum-blocks:latest
+        imagePullPolicy: Always
+        env:
+        - name: WEB3_PROVIDER_URL
+          value: https://cloudflare-eth.com
+        - name: BENEATH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ethereum-blocks
+              key: secret

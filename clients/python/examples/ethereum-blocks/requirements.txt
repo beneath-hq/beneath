@@ -1,0 +1,4 @@
+beneath>=1.0.1
+structlog>=19.1.0
+tenacity>=5.1.1
+web3>=5.2.0

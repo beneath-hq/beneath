@@ -1,0 +1,17 @@
+" Manually curated stream of known Ethereum addresses (includes both external and smart contract addresses) "
+type KnownAddress @stream(key: "address") {
+  " Address on the Ethereum mainnet "
+  address: Bytes20!
+
+  " The category that most suitably applies to the address "
+  category: String!
+
+  " The name of the project or company that the address belongs to "
+  entity: String!
+
+  " A brief description of the purpose of the address within the context of its name  "
+  description: String
+
+  " A note describing possible evidence of the identity "
+  note: String
+}
