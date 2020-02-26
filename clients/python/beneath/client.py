@@ -3,7 +3,6 @@ import uuid
 from beneath import __version__
 from beneath.base import BaseClient
 from beneath.stream import Stream
-from beneath.proto import engine_pb2
 from beneath.proto import gateway_pb2
 from beneath.utils import datetime_to_ms
 from beneath.utils import format_entity_name

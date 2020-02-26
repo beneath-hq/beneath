@@ -77,8 +77,8 @@ class BaseClient:
     self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
 
-  def _send_client_ping(self):
-    return self.stub.SendClientPing(gateway_pb2.ClientPing(
+  def _send_client_ping(self) -> gateway_pb2.PingResponse:
+    return self.stub.Ping(gateway_pb2.PingRequest(
       client_id=config.PYTHON_CLIENT_ID,
       client_version=__version__,
     ), metadata=self.request_metadata)
@@ -92,13 +92,13 @@ class BaseClient:
 
 
   @classmethod
-  def _check_pong_status(cls, pong):
-    if pong.status == "warning":
+  def _check_pong_status(cls, pong: gateway_pb2.PingResponse):
+    if pong.version_status == "warning":
       warnings.warn(
         "This version ({}) of the Beneath python library will soon be deprecated (recommended: {}). "
         "Update with 'pip install --upgrade beneath'.".format(__version__, pong.recommended_version)
       )
-    elif pong.status == "deprecated":
+    elif pong.version_status == "deprecated":
       raise Exception(
         "This version ({}) of the Beneath python library is out-of-date (recommended: {}). "
         "Update with 'pip install --upgrade beneath' to continue.".format(__version__, pong.recommended_version)
@@ -116,6 +116,9 @@ class BaseClient:
       'query': query,
       'variables': variables,
     })
+    if 400 <= response.status_code < 500:
+      error_msg = f"{response.status_code} Client Error: {response.text}"
+      raise requests.HTTPError(error_msg, response=response)
     response.raise_for_status()
     obj = response.json()
     if 'errors' in obj:

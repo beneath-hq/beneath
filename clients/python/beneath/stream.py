@@ -10,7 +10,7 @@ from fastavro import schemaless_writer
 import pandas as pd
 
 from beneath import config
-from beneath.proto import engine_pb2
+from beneath.proto import gateway_pb2
 from beneath.utils import datetime_to_ms
 from beneath.utils import timestamp_to_ms
 from beneath.utils import ms_to_datetime
@@ -298,7 +298,7 @@ class Stream:
       raise TypeError("write error: record must be a dict, got {}".format(record))
     timestamp = self._extract_record_timestamp(record)
     avro = self._encode_avro(record)
-    return engine_pb2.Record(avro_data=avro, timestamp=timestamp)
+    return gateway_pb2.Record(avro_data=avro, timestamp=timestamp)
 
 
   @classmethod

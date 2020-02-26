@@ -412,7 +412,6 @@ class AdminClient(BaseClient):
             projectID
             name
             displayName
-            organizationID
             public
             site
             description
@@ -831,18 +830,26 @@ class AdminClient(BaseClient):
             streamID
             name
             description
+            createdOn
+            updatedOn
+            project {
+              projectID
+              name
+            }
             schema
             avroSchema
-            keyFields
+            streamIndexes {
+              fields
+              primary
+              normalize
+            }
             external
             batch
             manual
-            project {
-              name
-            }
+            retentionSeconds
+            instancesCreatedCount
+            instancesCommittedCount
             currentStreamInstanceID
-            createdOn
-            updatedOn
           }
         }
       """
@@ -869,23 +876,29 @@ class AdminClient(BaseClient):
             streamID
             name
             description
-            schema
-            avroSchema
-            keyFields
-            external
-            batch
-            manual
+            createdOn
+            updatedOn
             project {
               projectID
               name
             }
+            schema
+            avroSchema
+            streamIndexes {
+              fields
+              primary
+              normalize
+            }
+            external
+            batch
+            manual
+            retentionSeconds
+            instancesCreatedCount
+            instancesCommittedCount
             currentStreamInstanceID
-            createdOn
-            updatedOn
           }
         }
-      """
-    )
+      """)
     return result['createExternalStream']
 
 
@@ -908,19 +921,26 @@ class AdminClient(BaseClient):
             streamID
             name
             description
-            schema
-            avroSchema
-            keyFields
-            external
-            batch
-            manual
+            createdOn
+            updatedOn
             project {
               projectID
               name
             }
+            schema
+            avroSchema
+            streamIndexes {
+              fields
+              primary
+              normalize
+            }
+            external
+            batch
+            manual
+            retentionSeconds
+            instancesCreatedCount
+            instancesCommittedCount
             currentStreamInstanceID
-            createdOn
-            updatedOn
           }
         }
       """
@@ -1025,4 +1045,3 @@ class AdminClient(BaseClient):
       """
     )
     return result['clearPendingModelBatches']
-    

@@ -89,7 +89,7 @@ def create_argument_parser():
   _project_create.add_argument('name', type=str)
   _project_create.add_argument('--display-name', type=str)
   _project_create.add_argument('-o', '--organization', type=str)
-  _project_create.add_argument('--public', type=str2bool, nargs='?', required=True, const=True)
+  _project_create.add_argument('--public', type=str2bool, nargs='?', const=True, default=True)
   _project_create.add_argument('--description', type=str)
   _project_create.add_argument('--site-url', type=str)
   _project_create.add_argument('--photo-url', type=str)
@@ -270,7 +270,7 @@ def pretty_print_graphql_result(result, fields=None):
   print(pretty)
 
 
-def str2bool(v):
+def str2bool(v) -> bool:
   if isinstance(v, bool):
     return v
   if v.lower() in ('yes', 'true', 't', 'y', '1'):
