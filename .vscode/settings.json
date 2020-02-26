@@ -3,9 +3,8 @@
   "editor.tabSize": 2,
   "files.exclude": {
     "**/node_modules": true,
-    "**/venv": true,
+    "**/.venv": true,
     "**/.next": true,
-    "clients/python/.env": true,
     "clients/python/__pycache__": true,
     "clients/python/.pytest_cache": true,
     "clients/python/.ipynb_checkpoints": true,
@@ -28,7 +27,7 @@
   "python.formatting.provider": "yapf",
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
-  "python.pythonPath": "clients/python/.env/bin/python",
+  "python.pythonPath": "clients/python/.venv/bin/python",
   "python.testing.unittestArgs": [
     "-v",
     "-s",

@@ -1,0 +1,27 @@
+{
+  "editor.formatOnPaste": true,
+  "editor.tabSize": 2,
+  "files.exclude": {
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ipynb_checkpoints": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/*.egg-info": true,
+  },
+  "python.formatting.provider": "yapf",
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "python.pythonPath": ".venv/bin/python3",
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "test*.py"
+  ],
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false
+}
