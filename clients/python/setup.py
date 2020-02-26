@@ -17,7 +17,7 @@ setuptools.setup(
   author="Beneath Systems",
   author_email="hello@beneath.network",
   description="Python client for Beneath (https://beneath.network/)",
-  url="https://gitlab.com/_beneath/beneath-python",
+  url="https://gitlab.com/_beneath/beneath-core/-/tree/master/clients/python",
   long_description=LONG_DESCRIPTION,
   long_description_content_type='text/markdown',
   packages=setuptools.find_packages(),
@@ -28,12 +28,14 @@ setuptools.setup(
   ],
   scripts=['beneath/bin/beneath'],
   install_requires=[
-    'apache_beam[gcp]==2.16.0',
     'argparse==1.4',
-    'Cython==0.29.13',
-    'fastavro==0.21.24',
-    'grpcio==1.24.1',
-    'pandas==0.25.1',
-    'six==1.12.0',
-  ]
+    'Cython==0.29.15',
+    'fastavro<0.22,>=0.21.4',
+    'grpcio==1.27.2',
+    'pandas==1.0.1',
+    'six==1.14.0',
+  ],
+  extras_require={
+    'beam': ['apache_beam[gcp]==2.19.0'],
+  },
 )

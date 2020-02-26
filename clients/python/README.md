@@ -16,13 +16,13 @@ Beneath is just entering public beta, so there's bound to be some rough edges. B
 - Make sure Python 3 is installed and available as `python3`
 - Initialize and source the Python virtual environment with:
 
-    python3 -m venv .env
-    source .env/bin/activate
+    python3 -m venv .venv
+    source .venv/bin/activate
     pip install -r requirements.txt
 
 - Run tests with `pytest` (though it's sparse on tests at moment)
 - Run `deactivate` to exit the virtual environment and `source .env/bin/activate` to re-activate it
-- For use in VS Code, open `beneath-python` as a workspace root folder. Press `CMD+Shift+P`, search for `Python: Select Interpreter`, and select the Python 3 executable in the `.env` virtual environment.
+- For use in VS Code, open `python` as a workspace root folder. Press `CMD+Shift+P`, search for `Python: Select Interpreter`, and select the Python 3 executable in the `.venv` virtual environment.
 
 Here are some good resources to understand how Python packages work:
 
@@ -33,4 +33,4 @@ Here are some good resources to understand how Python packages work:
 
 - Increment the version number in `beneath/_version.py`
 - Run `./pypi-publish.sh`
-- Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/gateway/grpc_server.go`
+- Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/gateway/grpc/client_version.go`
