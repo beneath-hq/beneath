@@ -1,97 +1,54 @@
-import uuid
+import os
 
 from beneath import __version__
-from beneath.base import BaseClient
-from beneath.stream import Stream
-from beneath.proto import gateway_pb2
-from beneath.utils import datetime_to_ms
-from beneath.utils import format_entity_name
+from beneath import config
+from beneath.admin.models import Models
+from beneath.admin.organizations import Organizations
+from beneath.admin.projects import Projects
+from beneath.admin.secrets import Secrets
+from beneath.admin.services import Services
+from beneath.admin.streams import Streams
+from beneath.admin.users import Users
+from beneath.connection import Connection
 
 
-class Client(BaseClient):
+class Client:
   """
-  Client for interacting with the Beneath Data server.
+  Client for interacting with Beneath.
+  Data-plane features are implemented directly on Client, while control-plane features
+  are isolated in the `admin` member.
   """
 
-  def read_latest_batch(self, instance_id, limit, before=None):
-    response = self.stub.ReadLatestRecords(
-      gateway_pb2.ReadLatestRecordsRequest(
-        instance_id=instance_id.bytes,
-        limit=limit,
-        before=datetime_to_ms(before) if before else 0,
-      ), metadata=self.request_metadata
-    )
-    return response.records
-
-
-  def read_batch(self, instance_id, where, limit, after):
-    response = self.stub.ReadRecords(
-      gateway_pb2.ReadRecordsRequest(
-        instance_id=instance_id.bytes,
-        where=where,
-        limit=limit,
-        after=after,
-      ), metadata=self.request_metadata
-    )
-    return response.records
-
-
-  def write_batch(self, instance_id, encoded_records):
-    self.stub.WriteRecords(
-      engine_pb2.WriteRecordsRequest(
-        instance_id=instance_id.bytes,
-        records=encoded_records
-      ), metadata=self.request_metadata
-    )
-
-
-  def stream(self, project_name, stream_name):
+  def __init__(self, secret=None):
     """
-    Returns a Stream object identifying a Beneath stream
-
     Args:
-      project (str): Name of the project that contains the stream.
-      stream (str): Name of the stream.
+      secret (str): A beneath secret to use for authentication. If not set, reads secret from ~/.beneath.
     """
+    self.connection = Connection(secret=self._get_secret(secret=secret))
+    self.admin = AdminClient(connection=self.connection)
 
-    details = self._query_control(
-      variables={
-        'name': format_entity_name(stream_name),
-        'projectName': format_entity_name(project_name),
-      },
-      query="""
-        query Stream($name: String!, $projectName: String!) {
-          stream(
-            name: $name, 
-            projectName: $projectName,
-          ) {
-            streamID
-            name
-            schema
-            avroSchema
-            keyFields
-            batch
-            project {
-              name
-            }
-            currentStreamInstanceID
-          }
-        }
-      """
-    )
+  @classmethod
+  def _get_secret(cls, secret=None):
+    if not secret:
+      secret = os.getenv("BENEATH_SECRET", default=None)
+    if not secret:
+      secret = config.read_secret()
+    if not isinstance(secret, str):
+      raise TypeError("secret must be a string")
+    return secret.strip()
 
-    current_instance_id = details['stream']['currentStreamInstanceID']
-    if current_instance_id is not None:
-      current_instance_id = uuid.UUID(hex=current_instance_id)
 
-    return Stream(
-      client=self,
-      stream_id=uuid.UUID(hex=details['stream']['streamID']),
-      project_name=details['stream']['project']['name'],
-      stream_name=details['stream']['name'],
-      schema=details['stream']['schema'],
-      key_fields=details['stream']['keyFields'],
-      avro_schema=details['stream']['avroSchema'],
-      batch=details['stream']['batch'],
-      current_instance_id=current_instance_id,
-    )
+class AdminClient:
+  """
+  AdminClient isolates control-plane features
+  """
+
+  def __init__(self, connection: Connection):
+    self.connection = connection
+    self.models = Models(self.connection)
+    self.organizations = Organizations(self.connection)
+    self.projects = Projects(self.connection)
+    self.secrets = Secrets(self.connection)
+    self.services = Services(self.connection)
+    self.streams = Streams(self.connection)
+    self.users = Users(self.connection)
