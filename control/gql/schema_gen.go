@@ -240,7 +240,8 @@ type ComplexityRoot struct {
 		SecretsForUser               func(childComplexity int, userID uuid.UUID) int
 		Service                      func(childComplexity int, serviceID uuid.UUID) int
 		ServiceByNameAndOrganization func(childComplexity int, name string, organizationName string) int
-		Stream                       func(childComplexity int, name string, projectName string) int
+		StreamByID                   func(childComplexity int, streamID uuid.UUID) int
+		StreamByProjectAndName       func(childComplexity int, name string, projectName string) int
 		User                         func(childComplexity int, userID uuid.UUID) int
 		UserByUsername               func(childComplexity int, username string) int
 		UsersOrganizationPermissions func(childComplexity int, organizationID uuid.UUID) int
@@ -405,7 +406,8 @@ type QueryResolver interface {
 	SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.UserSecret, error)
 	Service(ctx context.Context, serviceID uuid.UUID) (*entity.Service, error)
 	ServiceByNameAndOrganization(ctx context.Context, name string, organizationName string) (*entity.Service, error)
-	Stream(ctx context.Context, name string, projectName string) (*entity.Stream, error)
+	StreamByID(ctx context.Context, streamID uuid.UUID) (*entity.Stream, error)
+	StreamByProjectAndName(ctx context.Context, name string, projectName string) (*entity.Stream, error)
 	Me(ctx context.Context) (*Me, error)
 	User(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 	UserByUsername(ctx context.Context, username string) (*entity.User, error)
@@ -1677,17 +1679,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ServiceByNameAndOrganization(childComplexity, args["name"].(string), args["organizationName"].(string)), true
 
-	case "Query.stream":
-		if e.complexity.Query.Stream == nil {
+	case "Query.streamByID":
+		if e.complexity.Query.StreamByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_stream_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_streamByID_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Stream(childComplexity, args["name"].(string), args["projectName"].(string)), true
+		return e.complexity.Query.StreamByID(childComplexity, args["streamID"].(uuid.UUID)), true
+
+	case "Query.streamByProjectAndName":
+		if e.complexity.Query.StreamByProjectAndName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamByProjectAndName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamByProjectAndName(childComplexity, args["name"].(string), args["projectName"].(string)), true
 
 	case "Query.user":
 		if e.complexity.Query.User == nil {
@@ -2474,7 +2488,8 @@ type PermissionsServicesStreams {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/streams.graphql", Input: `extend type Query {
-  stream(name: String!, projectName: String!): Stream!
+  streamByID(streamID: UUID!): Stream!
+  streamByProjectAndName(name: String!, projectName: String!): Stream!
 }
 
 extend type Mutation {
@@ -3781,7 +3796,21 @@ func (ec *executionContext) field_Query_service_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_stream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_streamByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamByProjectAndName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -9396,7 +9425,7 @@ func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Cont
 	return ec.marshalOService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_stream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_streamByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -9413,7 +9442,7 @@ func (ec *executionContext) _Query_stream(ctx context.Context, field graphql.Col
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_stream_args(ctx, rawArgs)
+	args, err := ec.field_Query_streamByID_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -9422,7 +9451,51 @@ func (ec *executionContext) _Query_stream(ctx context.Context, field graphql.Col
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Stream(rctx, args["name"].(string), args["projectName"].(string))
+		return ec.resolvers.Query().StreamByID(rctx, args["streamID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Stream)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_streamByProjectAndName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamByProjectAndName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamByProjectAndName(rctx, args["name"].(string), args["projectName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14166,7 +14239,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_serviceByNameAndOrganization(ctx, field)
 				return res
 			})
-		case "stream":
+		case "streamByID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -14174,7 +14247,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_stream(ctx, field)
+				res = ec._Query_streamByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "streamByProjectAndName":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamByProjectAndName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

@@ -22,7 +22,22 @@ func (r *streamResolver) StreamID(ctx context.Context, obj *entity.Stream) (stri
 	return obj.StreamID.String(), nil
 }
 
-func (r *queryResolver) Stream(ctx context.Context, name string, projectName string) (*entity.Stream, error) {
+func (r *queryResolver) StreamByID(ctx context.Context, streamID uuid.UUID) (*entity.Stream, error) {
+	stream := entity.FindStream(ctx, streamID)
+	if stream == nil {
+		return nil, gqlerror.Errorf("Stream with ID %s not found", streamID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public, stream.External)
+	if !perms.Read {
+		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", streamID.String())
+	}
+
+	return stream, nil
+}
+
+func (r *queryResolver) StreamByProjectAndName(ctx context.Context, name string, projectName string) (*entity.Stream, error) {
 	stream := entity.FindStreamByNameAndProject(ctx, name, projectName)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)

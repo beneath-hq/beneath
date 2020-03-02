@@ -2,7 +2,7 @@ import gql from "graphql-tag";
 
 export const QUERY_STREAM = gql`
   query QueryStream($name: String!, $projectName: String!) {
-    stream(name: $name, projectName: $projectName) {
+    streamByProjectAndName(name: $name, projectName: $projectName) {
       streamID
       name
       description

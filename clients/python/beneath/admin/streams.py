@@ -7,6 +7,43 @@ class Streams:
   def __init__(self, conn: Connection):
     self.conn = conn
 
+  def find_by_id(self, stream_id):
+    result = self.conn.query_control(
+      variables={
+        'streamID': stream_id,
+      },
+      query="""
+        query StreamByID($streamID: UUID!) {
+          streamByID(streamID: $streamID) {
+            streamID
+            name
+            description
+            createdOn
+            updatedOn
+            project {
+              projectID
+              name
+            }
+            schema
+            avroSchema
+            streamIndexes {
+              fields
+              primary
+              normalize
+            }
+            external
+            batch
+            manual
+            retentionSeconds
+            instancesCreatedCount
+            instancesCommittedCount
+            currentStreamInstanceID
+          }
+        }
+      """
+    )
+    return result['streamByID']
+
   def find_by_project_and_name(self, project_name, stream_name):
     result = self.conn.query_control(
       variables={
@@ -14,8 +51,8 @@ class Streams:
         'projectName': format_entity_name(project_name),
       },
       query="""
-        query Stream($name: String!, $projectName: String!) {
-          stream(
+        query StreamByProjectAndName($name: String!, $projectName: String!) {
+          streamByProjectAndName(
             name: $name, 
             projectName: $projectName,
           ) {
@@ -46,7 +83,7 @@ class Streams:
         }
       """
     )
-    return result['stream']
+    return result['streamByProjectAndName']
 
   def create(self, schema, project_id, manual=False, batch=False):
     result = self.conn.query_control(
