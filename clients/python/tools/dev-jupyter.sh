@@ -6,4 +6,4 @@ if [[ ! -f tools/$(basename $0) ]]; then
   exit 1
 fi
 
-PYTHONPATH=$(pwd $0):$PYTHONPATH jupyter notebook
+PYTHONPATH=$(pwd $0):$PYTHONPATH BENEATH_ENV=dev jupyter notebook
