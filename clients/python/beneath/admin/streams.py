@@ -7,8 +7,8 @@ class Streams:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def find_by_id(self, stream_id):
-    result = self.conn.query_control(
+  async def find_by_id(self, stream_id):
+    result = await self.conn.query_control(
       variables={
         'streamID': stream_id,
       },
@@ -44,8 +44,8 @@ class Streams:
     )
     return result['streamByID']
 
-  def find_by_project_and_name(self, project_name, stream_name):
-    result = self.conn.query_control(
+  async def find_by_project_and_name(self, project_name, stream_name):
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(stream_name),
         'projectName': format_entity_name(project_name),
@@ -85,8 +85,8 @@ class Streams:
     )
     return result['streamByProjectAndName']
 
-  def create(self, schema, project_id, manual=False, batch=False):
-    result = self.conn.query_control(
+  async def create(self, schema, project_id, manual=False, batch=False):
+    result = await self.conn.query_control(
       variables={
         'projectID': project_id,
         'schema': schema,
@@ -130,14 +130,14 @@ class Streams:
     )
     return result['createExternalStream']
 
-  def update(self, stream_id, schema=None, manual=None):
+  async def update(self, stream_id, schema=None, manual=None):
     variables = {'streamID': stream_id}
     if schema:
       variables['schema'] = schema
     if manual:
       variables['manual'] = bool(manual)
 
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables=variables,
       query="""
         mutation UpdateExternalStream($streamID: UUID!, $schema: String, $manual: Boolean) {
@@ -175,8 +175,8 @@ class Streams:
     )
     return result['updateExternalStream']
 
-  def delete(self, stream_id):
-    result = self.conn.query_control(
+  async def delete(self, stream_id):
+    result = await self.conn.query_control(
       variables={
         'streamID': stream_id,
       },
@@ -188,8 +188,8 @@ class Streams:
     )
     return result['deleteExternalStream']
 
-  def create_batch(self, stream_id):
-    result = self.conn.query_control(
+  async def create_batch(self, stream_id):
+    result = await self.conn.query_control(
       variables={
         'streamID': stream_id,
       },
@@ -203,8 +203,8 @@ class Streams:
     )
     return result['createExternalStreamBatch']
 
-  def commit_batch(self, instance_id):
-    result = self.conn.query_control(
+  async def commit_batch(self, instance_id):
+    result = await self.conn.query_control(
       variables={
         'instanceID': instance_id,
       },
@@ -216,8 +216,8 @@ class Streams:
     )
     return result['commitExternalStreamBatch']
 
-  def clear_pending_batches(self, stream_id):
-    result = self.conn.query_control(
+  async def clear_pending_batches(self, stream_id):
+    result = await self.conn.query_control(
       variables={
         'streamID': stream_id,
       },

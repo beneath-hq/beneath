@@ -7,8 +7,8 @@ class Models:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def find_by_project_and_name(self, project_name, model_name):
-    result = self.conn.query_control(
+  async def find_by_project_and_name(self, project_name, model_name):
+    result = await self.conn.query_control(
       variables={
         'name': model_name,
         'projectName': format_entity_name(project_name),
@@ -37,7 +37,7 @@ class Models:
     )
     return result['model']
 
-  def create(
+  async def create(
     self,
     name,
     project_id,
@@ -47,7 +47,7 @@ class Models:
     input_stream_ids,
     output_stream_schemas,
   ):
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'input': {
           'projectID': project_id,
@@ -87,7 +87,7 @@ class Models:
     )
     return result['createModel']
 
-  def update(
+  async def update(
     self,
     model_id,
     source_url,
@@ -95,7 +95,7 @@ class Models:
     input_stream_ids,
     output_stream_schemas,
   ):
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'input': {
           'modelID': model_id,
@@ -133,8 +133,8 @@ class Models:
     )
     return result['updateModel']
 
-  def delete(self, model_id):
-    result = self.conn.query_control(
+  async def delete(self, model_id):
+    result = await self.conn.query_control(
       variables={
         'modelID': model_id,
       },
@@ -146,8 +146,8 @@ class Models:
     )
     return result['deleteModel']
 
-  def create_batch(self, model_id):
-    result = self.conn.query_control(
+  async def create_batch(self, model_id):
+    result = await self.conn.query_control(
       variables={
         'modelID': model_id,
       },
@@ -164,8 +164,8 @@ class Models:
     )
     return result['createModelBatch']
 
-  def commit_batch(self, model_id, instance_ids):
-    result = self.conn.query_control(
+  async def commit_batch(self, model_id, instance_ids):
+    result = await self.conn.query_control(
       variables={
         'modelID': model_id,
         'instanceIDs': instance_ids,
@@ -178,8 +178,8 @@ class Models:
     )
     return result['commitModelBatch']
 
-  def clear_pending_batches(self, model_id):
-    result = self.conn.query_control(
+  async def clear_pending_batches(self, model_id):
+    result = await self.conn.query_control(
       variables={
         'modelID': model_id,
       },

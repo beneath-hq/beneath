@@ -1,3 +1,5 @@
+aiogrpc>=1.7
+aiohttp>=3.6.2
 apache_beam[gcp]==2.19.0
 argparse==1.4
 Cython==0.29.15

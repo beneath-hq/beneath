@@ -9,12 +9,12 @@ class Users:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def get_me(self):
+  async def get_me(self):
     """
       Returns info about the authenticated user.
       Returns None if authenticated with a project secret.
     """
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={},
       query="""
         query Me {
@@ -43,11 +43,11 @@ class Users:
       raise Exception("Cannot call get_me when authenticated with a service key")
     return me
 
-  def get_by_id(self, user_id):
+  async def get_by_id(self, user_id):
     """
       Returns info about the user with `user_id`.
     """
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
       },
@@ -82,11 +82,11 @@ class Users:
     )
     return result['user']
 
-  def get_by_username(self, username):
+  async def get_by_username(self, username):
     """
       Returns info about the user with `username`.
     """
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'username': username,
       },
@@ -121,14 +121,14 @@ class Users:
     )
     return result['userByUsername']
 
-  def get_usage(self, user_id, period=None, from_time=None, until=None):
+  async def get_usage(self, user_id, period=None, from_time=None, until=None):
     today = datetime.today()
     if (period is None) or (period == 'M'):
       default_time = datetime(today.year, today.month, 1)
     elif period == 'H':
       default_time = datetime(today.year, today.month, today.day, today.hour)
 
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'period': period if period else 'M',

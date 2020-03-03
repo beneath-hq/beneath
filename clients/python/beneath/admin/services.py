@@ -7,8 +7,8 @@ class Services:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def find_by_organization_and_name(self, organization_name, name):
-    result = self.conn.query_control(
+  async def find_by_organization_and_name(self, organization_name, name):
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(name),
         'organizationName': format_entity_name(organization_name),
@@ -27,8 +27,8 @@ class Services:
     )
     return result['serviceByNameAndOrganization']
 
-  def create(self, name, organization_id, read_quota_bytes, write_quota_bytes):
-    result = self.conn.query_control(
+  async def create(self, name, organization_id, read_quota_bytes, write_quota_bytes):
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(name),
         'organizationID': organization_id,
@@ -50,8 +50,8 @@ class Services:
     return result['createService']
 
 
-  def update_details(self, service_id, name, read_quota_bytes, write_quota_bytes):
-    result = self.conn.query_control(
+  async def update_details(self, service_id, name, read_quota_bytes, write_quota_bytes):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
         'name': format_entity_name(name) if name is not None else None,
@@ -73,8 +73,8 @@ class Services:
     return result['updateService']
 
 
-  def update_organization(self, service_id, organization_id):
-    result = self.conn.query_control(
+  async def update_organization(self, service_id, organization_id):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
         'organizationID': organization_id,
@@ -97,8 +97,8 @@ class Services:
     return result['updateServiceOrganization']
 
 
-  def delete(self, service_id):
-    result = self.conn.query_control(
+  async def delete(self, service_id):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
       },
@@ -111,8 +111,8 @@ class Services:
     return result['deleteService']
 
 
-  def update_permissions_for_stream(self, service_id, stream_id, read, write):
-    result = self.conn.query_control(
+  async def update_permissions_for_stream(self, service_id, stream_id, read, write):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
         'streamID': stream_id,
@@ -132,8 +132,8 @@ class Services:
     )
     return result['updateServicePermissions']
 
-  def issue_secret(self, service_id, description):
-    result = self.conn.query_control(
+  async def issue_secret(self, service_id, description):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
         'description': description,
@@ -148,8 +148,8 @@ class Services:
     )
     return result['issueServiceSecret']
 
-  def list_secrets(self, service_id):
-    result = self.conn.query_control(
+  async def list_secrets(self, service_id):
+    result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
       },

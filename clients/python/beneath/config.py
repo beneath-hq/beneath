@@ -9,7 +9,7 @@ READ_BATCH_SIZE = 1000
 WRITE_BATCH_SIZE = 10000
 WRITE_BATCH_BYTES = 10 * (2**20)
 
-DEV = os.environ.get('ENV') in ['dev', 'development']
+DEV = os.environ.get('BENEATH_ENV') in ['dev', 'development']
 
 if DEV:
   BENEATH_FRONTEND_HOST = "http://localhost:3000"

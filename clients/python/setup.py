@@ -28,6 +28,8 @@ setuptools.setup(
   ],
   scripts=['beneath/bin/beneath'],
   install_requires=[
+    'aiogrpc>=1.7',
+    'aiohttp>=3.6.2',
     'argparse==1.4',
     'Cython==0.29.15',
     'fastavro<0.22,>=0.21.4',

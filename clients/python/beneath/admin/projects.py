@@ -7,8 +7,8 @@ class Projects:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def find_by_name(self, name):
-    result = self.conn.query_control(
+  async def find_by_name(self, name):
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(name),
       },
@@ -36,17 +36,17 @@ class Projects:
     )
     return result['projectByName']
 
-  def create(
+  async def create(
     self,
     name,
-    display_name,
     organization_id,
     public,
+    display_name=None,
     description=None,
     site_url=None,
     photo_url=None,
   ):
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(name),
         'displayName': display_name,
@@ -80,7 +80,7 @@ class Projects:
     )
     return result['createProject']
 
-  def update_details(
+  async def update_details(
     self,
     project_id,
     display_name,
@@ -89,7 +89,7 @@ class Projects:
     site_url=None,
     photo_url=None,
   ):
-    result = self.conn.query_control(
+    result = await self.conn.query_control(
       variables={
         'projectID': project_id,
         'displayName': display_name,
@@ -114,8 +114,8 @@ class Projects:
     )
     return result['updateProject']
 
-  def update_organization(self, project_id, organization_id):
-    result = self.conn.query_control(
+  async def update_organization(self, project_id, organization_id):
+    result = await self.conn.query_control(
       variables={
         'projectID': project_id,
         'organizationID': organization_id,
@@ -139,8 +139,8 @@ class Projects:
     )
     return result['updateProjectOrganization']
 
-  def delete(self, project_id):
-    result = self.conn.query_control(
+  async def delete(self, project_id):
+    result = await self.conn.query_control(
       variables={
         'projectID': project_id,
       },
@@ -152,8 +152,8 @@ class Projects:
     )
     return result['deleteProject']
 
-  def add_user(self, project_id, username, view, create, admin):
-    result = self.conn.query_control(
+  async def add_user(self, project_id, username, view, create, admin):
+    result = await self.conn.query_control(
       variables={
         'username': username,
         'projectID': project_id,
@@ -179,8 +179,8 @@ class Projects:
     )
     return result['addUserToProject']
 
-  def remove_user(self, project_id, user_id):
-    result = self.conn.query_control(
+  async def remove_user(self, project_id, user_id):
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'projectID': project_id,

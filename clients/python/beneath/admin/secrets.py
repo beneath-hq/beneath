@@ -6,8 +6,8 @@ class Secrets:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def revoke(self, secret_id):
-    result = self.conn.query_control(
+  async def revoke(self, secret_id):
+    result = await self.conn.query_control(
       variables={
         'secretID': secret_id,
       },

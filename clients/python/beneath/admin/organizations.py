@@ -7,8 +7,8 @@ class Organizations:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  def find_by_name(self, name):
-    result = self.conn.query_control(
+  async def find_by_name(self, name):
+    result = await self.conn.query_control(
       variables={
         'name': format_entity_name(name),
       },
@@ -39,8 +39,8 @@ class Organizations:
     )
     return result['organizationByName']
 
-  def update_name(self, organization_id, name):
-    result = self.conn.query_control(
+  async def update_name(self, organization_id, name):
+    result = await self.conn.query_control(
       variables={
         'organizationID': organization_id,
         'name': format_entity_name(name),
@@ -72,8 +72,8 @@ class Organizations:
     )
     return result['updateOrganizationName']
 
-  def get_member_permissions(self, organization_id):
-    result = self.conn.query_control(
+  async def get_member_permissions(self, organization_id):
+    result = await self.conn.query_control(
       variables={
         'organizationID': organization_id,
       },
@@ -92,8 +92,8 @@ class Organizations:
     )
     return result['usersOrganizationPermissions']
 
-  def add_user(self, organization_id, username, view, admin):
-    result = self.conn.query_control(
+  async def add_user(self, organization_id, username, view, admin):
+    result = await self.conn.query_control(
       variables={
         'username': username,
         'organizationID': organization_id,
@@ -119,8 +119,8 @@ class Organizations:
     )
     return result['inviteUserToOrganization']
 
-  def join(self, name):
-    result = self.conn.query_control(
+  async def join(self, name):
+    result = await self.conn.query_control(
       variables={
         'organizationName': format_entity_name(name),
       },
@@ -141,8 +141,8 @@ class Organizations:
     )
     return result['joinOrganization']
 
-  def remove_user(self, organization_id, user_id):
-    result = self.conn.query_control(
+  async def remove_user(self, organization_id, user_id):
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'organizationID': organization_id,
@@ -155,8 +155,8 @@ class Organizations:
     )
     return result['removeUserFromOrganization']
 
-  def update_permissions_for_user(self, organization_id, user_id, view, admin):
-    result = self.conn.query_control(
+  async def update_permissions_for_user(self, organization_id, user_id, view, admin):
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'organizationID': organization_id,
@@ -180,8 +180,8 @@ class Organizations:
     )
     return result['updateUserOrganizationPermissions']
 
-  def update_quotas_for_user(self, organization_id, user_id, read_quota_bytes, write_quota_bytes):
-    result = self.conn.query_control(
+  async def update_quotas_for_user(self, organization_id, user_id, read_quota_bytes, write_quota_bytes):
+    result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'organizationID': organization_id,
