@@ -1,5 +1,16 @@
+import asyncio
 import argparse
 import json
+
+
+def async_cmd(cmd):
+
+  def wrapped(args):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(cmd(args))
+
+  return wrapped
 
 
 def pretty_print_graphql_result(result, fields=None):

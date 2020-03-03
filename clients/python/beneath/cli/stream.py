@@ -1,5 +1,5 @@
 from beneath.client import Client
-from beneath.cli.utils import parse_names, pretty_print_graphql_result, str2bool
+from beneath.cli.utils import async_cmd, parse_names, pretty_print_graphql_result, str2bool
 
 
 def add_subparser(root):
@@ -8,11 +8,11 @@ def add_subparser(root):
   root_stream_batch = root_stream.add_parser('batch').add_subparsers()
 
   _list = stream.add_parser('list')
-  _list.set_defaults(func=show_list)
+  _list.set_defaults(func=async_cmd(show_list))
   _list.add_argument('project', type=str)
 
   _create = root_stream.add_parser('create')
-  _create.set_defaults(func=create_root)
+  _create.set_defaults(func=async_cmd(create_root))
   _create.add_argument(
     '-f',
     '--file',
@@ -25,7 +25,7 @@ def add_subparser(root):
   _create.add_argument('--batch', type=str2bool, nargs='?', const=True, default=False)
 
   _update = root_stream.add_parser('update')
-  _update.set_defaults(func=update_root)
+  _update.set_defaults(func=async_cmd(update_root))
   _update.add_argument('stream', type=str)
   _update.add_argument('-p', '--project', type=str)
   _update.add_argument(
@@ -39,41 +39,41 @@ def add_subparser(root):
   _update.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
   _delete = root_stream.add_parser('delete')
-  _delete.set_defaults(func=delete_root)
+  _delete.set_defaults(func=async_cmd(delete_root))
   _delete.add_argument('stream', type=str)
   _delete.add_argument('-p', '--project', type=str)
 
   _batch_create = root_stream_batch.add_parser('create')
-  _batch_create.set_defaults(func=batch_create)
+  _batch_create.set_defaults(func=async_cmd(batch_create))
   _batch_create.add_argument('stream', type=str)
   _batch_create.add_argument('-p', '--project', type=str)
 
   _batch_commit = root_stream_batch.add_parser('commit')
-  _batch_commit.set_defaults(func=batch_commit)
+  _batch_commit.set_defaults(func=async_cmd(batch_commit))
   _batch_commit.add_argument('instance', type=str)
 
   _batches_clear = root_stream_batch.add_parser('clear')
-  _batches_clear.set_defaults(func=batches_clear)
+  _batches_clear.set_defaults(func=async_cmd(batches_clear))
   _batches_clear.add_argument('stream', type=str)
   _batches_clear.add_argument('-p', '--project', type=str)
 
 
-def show_list(args):
+async def show_list(args):
   client = Client()
-  project = client.admin.projects.find_by_name(args.project)
+  project = await client.admin.projects.find_by_name(args.project)
   if len(project['streams']) == 0:
     print("There are no streams currently in this project")
   for streamname in project['streams']:
     print(streamname['name'])
 
 
-def create_root(args):
+async def create_root(args):
   with open(args.file, "r") as f:
     schema = f.read()
 
   client = Client()
-  project = client.admin.projects.find_by_name(args.project)
-  stream = client.admin.streams.create(
+  project = await client.admin.projects.find_by_name(args.project)
+  stream = await client.admin.streams.create(
     schema=schema,
     project_id=project['projectID'],
     manual=args.manual,
@@ -83,7 +83,7 @@ def create_root(args):
   _pretty_print_stream(stream)
 
 
-def update_root(args):
+async def update_root(args):
   schema = None
   if args.file:
     with open(args.file, "r") as f:
@@ -91,48 +91,48 @@ def update_root(args):
 
   client = Client()
   name, project_name = parse_names(args.stream, args.project, "project")
-  stream = client.admin.streams.find_by_project_and_name(
+  stream = await client.admin.streams.find_by_project_and_name(
     project_name=project_name, stream_name=name
   )
 
-  stream = client.admin.streams.update(stream['streamID'], schema=schema, manual=args.manual)
+  stream = await client.admin.streams.update(stream['streamID'], schema=schema, manual=args.manual)
   _pretty_print_stream(stream)
 
 
-def delete_root(args):
+async def delete_root(args):
   client = Client()
   name, project_name = parse_names(args.stream, args.project, "project")
-  stream = client.admin.streams.find_by_project_and_name(
+  stream = await client.admin.streams.find_by_project_and_name(
     project_name=project_name,
     stream_name=name,
   )
-  result = client.admin.streams.delete(stream['streamID'])
+  result = await client.admin.streams.delete(stream['streamID'])
   pretty_print_graphql_result(result)
 
 
-def batch_create(args):
+async def batch_create(args):
   client = Client()
   name, project_name = parse_names(args.stream, args.project, "project")
-  stream = client.admin.streams.find_by_project_and_name(
+  stream = await client.admin.streams.find_by_project_and_name(
     project_name=project_name, stream_name=name
   )
-  batch = client.admin.streams.create_batch(stream['streamID'])
+  batch = await client.admin.streams.create_batch(stream['streamID'])
   pretty_print_graphql_result(batch)
 
 
-def batch_commit(args):
+async def batch_commit(args):
   client = Client()
-  result = client.admin.streams.commit_batch(instance_id=args.instance)
+  result = await client.admin.streams.commit_batch(instance_id=args.instance)
   pretty_print_graphql_result(result)
 
 
-def batches_clear(args):
+async def batches_clear(args):
   client = Client()
   name, project_name = parse_names(args.stream, args.project, "project")
-  stream = client.admin.streams.find_by_project_and_name(
+  stream = await client.admin.streams.find_by_project_and_name(
     project_name=project_name, stream_name=name
   )
-  result = client.admin.streams.clear_pending_batches(stream['streamID'])
+  result = await client.admin.streams.clear_pending_batches(stream['streamID'])
   pretty_print_graphql_result(result)
 
 

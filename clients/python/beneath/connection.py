@@ -45,8 +45,12 @@ class Connection:
 
   # GRPC CONNECTIVITY
 
-  async def _ensure_connected(self):
-    """ Called  either in __init__ or after unpickling """
+  async def ensure_connected(self):
+    """
+    Called before each network call (write, query, etc.). May also be called directly.
+    On first run, it creates grpc objects, sends a ping, checks library version and secret validity.
+    On subsequent runs, it does nothing.
+    """
     if not self.connected:
       self._create_grpc_connection()
       await self._check_grpc_connection()
@@ -104,6 +108,7 @@ class Connection:
 
   async def query_control(self, query, variables):
     """ Sends a GraphQL query to the control server """
+    await self.ensure_connected()
     for k, v in variables.items():
       if isinstance(v, uuid.UUID):
         variables[k] = v.hex
@@ -126,7 +131,7 @@ class Connection:
   # DATA-PLANE
 
   async def write(self, instance_id: uuid.UUID, records: List[gateway_pb2.Record]) -> gateway_pb2.WriteResponse:
-    await self._ensure_connected()
+    await self.ensure_connected()
     return await self.stub.Write(
       gateway_pb2.WriteRequest(
         instance_id=instance_id.bytes,
@@ -136,7 +141,7 @@ class Connection:
     )
 
   async def query(self, instance_id: uuid.UUID, where: str) -> gateway_pb2.QueryResponse:
-    await self._ensure_connected()
+    await self.ensure_connected()
     return await self.stub.Query(
       gateway_pb2.QueryRequest(
         instance_id=instance_id.bytes,
@@ -148,14 +153,14 @@ class Connection:
     )
 
   async def peek(self, instance_id: uuid.UUID) -> gateway_pb2.PeekResponse:
-    await self._ensure_connected()
+    await self.ensure_connected()
     return await self.stub.Peek(
       gateway_pb2.PeekRequest(instance_id=instance_id.bytes,),
       metadata=self.request_metadata,
     )
 
   async def read(self, instance_id: uuid.UUID, cursor: bytes, limit: int) -> gateway_pb2.ReadResponse:
-    await self._ensure_connected()
+    await self.ensure_connected()
     return await self.stub.Read(
       gateway_pb2.ReadRequest(
         instance_id=instance_id.bytes,
