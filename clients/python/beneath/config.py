@@ -1,15 +1,16 @@
 import os
 
+DEV = os.environ.get('BENEATH_ENV') in ['dev', 'development']
+
 BIGQUERY_PROJECT = "beneath"
 PYTHON_CLIENT_ID = "beneath-python"
 
 DEFAULT_MAX_READ_MB = 10
+DEFAULT_READ_BATCH_SIZE = 1000
+DEFAULT_WRITE_BATCH_SIZE = 10000
+DEFAULT_WRITE_BATCH_BYTES = 10000000
+DEFAULT_WRITE_DELAY_SECONDS = 1.0
 
-READ_BATCH_SIZE = 1000
-WRITE_BATCH_SIZE = 10000
-WRITE_BATCH_BYTES = 10 * (2**20)
-
-DEV = os.environ.get('BENEATH_ENV') in ['dev', 'development']
 
 if DEV:
   BENEATH_FRONTEND_HOST = "http://localhost:3000"
