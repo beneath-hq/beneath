@@ -2,6 +2,7 @@ import os
 
 from beneath import __version__
 from beneath import config
+from beneath.stream import Stream
 from beneath.admin.models import Models
 from beneath.admin.organizations import Organizations
 from beneath.admin.projects import Projects
@@ -36,6 +37,11 @@ class Client:
     if not isinstance(secret, str):
       raise TypeError("secret must be a string")
     return secret.strip()
+
+  async def find_stream(self, project: str = None, stream: str = None, stream_id: str = None) -> Stream:
+    stream = Stream(client=self, project=project, stream=stream, stream_id=stream_id)
+    await stream.ensure_loaded()
+    return stream
 
 
 class AdminClient:

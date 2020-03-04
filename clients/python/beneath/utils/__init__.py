@@ -1,3 +1,5 @@
+from beneath.utils.aiobuffer import AIOWindowedBuffer
+
 from datetime import datetime, timezone
 import pandas as pd
 
