@@ -1,4 +1,6 @@
+from collections.abc import Mapping
 import os
+from typing import Iterable
 
 from beneath import __version__
 from beneath import config
@@ -11,6 +13,7 @@ from beneath.admin.services import Services
 from beneath.admin.streams import Streams
 from beneath.admin.users import Users
 from beneath.connection import Connection
+from beneath.config import DEFAULT_READ_ALL_MAX_BYTES, DEFAULT_READ_BATCH_SIZE
 
 
 class Client:
@@ -40,8 +43,29 @@ class Client:
 
   async def find_stream(self, project: str = None, stream: str = None, stream_id: str = None) -> Stream:
     stream = Stream(client=self, project=project, stream=stream, stream_id=stream_id)
-    await stream.ensure_loaded()
+    # pylint: disable=protected-access
+    await stream._ensure_loaded()
     return stream
+
+  async def easy_read(
+    self,
+    project: str = None,
+    stream: str = None,
+    where: str = None,
+    to_dataframe=True,
+    batch_size=DEFAULT_READ_BATCH_SIZE,
+    max_bytes=DEFAULT_READ_ALL_MAX_BYTES,
+    warn_max=True,
+  ) -> Iterable[Mapping]:
+    stream = await self.find_stream(project=project, stream=stream)
+    cursor = await stream.query(where=where)
+    res = await cursor.fetch_all(
+      max_bytes=max_bytes,
+      batch_size=batch_size,
+      warn_max=warn_max,
+      to_dataframe=to_dataframe,
+    )
+    return res
 
 
 class AdminClient:

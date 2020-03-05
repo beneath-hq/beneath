@@ -67,7 +67,7 @@ class Stream:
 
   # LOADING STREAM CONTROL DATA
 
-  async def ensure_loaded(self):
+  async def _ensure_loaded(self):
     if not self._loaded:
       data = await self._load_from_admin()
       self._set_admin_data(data)
@@ -101,6 +101,8 @@ class Stream:
   # WRITING RECORDS
 
   async def write(self, records: Union[Iterable[Mapping], Mapping], immediate=False):
+    if not self._loaded:
+      await self._ensure_loaded()
     if isinstance(records, Mapping):
       records = [records]
     batch = (self._record_to_pb(record) for record in records)
@@ -134,6 +136,8 @@ class Stream:
   # READING RECORDS
 
   async def query(self, where: str = None) -> Cursor:
+    if not self._loaded:
+      await self._ensure_loaded()
     resp = await self.client.connection.query(instance_id=self.instance_id, where=where)
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
@@ -141,13 +145,12 @@ class Stream:
     return Cursor(stream=self, instance_id=self.instance_id, replay_cursor=replay, changes_cursor=changes)
 
   async def peek(self) -> Cursor:
+    if not self._loaded:
+      await self._ensure_loaded()
     resp = await self.client.connection.peek(instance_id=self.instance_id)
     return Cursor(stream=self, instance_id=self.instance_id, replay_cursor=resp.rewind_cursor, changes_cursor=resp.changes_cursor)
 
   # EASY HELPERS
-
-  def easy_read(self, to_dataframe=True):
-    pass
 
   def process(self, record_cb, commit_strategy):
     pass
@@ -167,8 +170,22 @@ class Cursor:
     return [field["name"] for field in self._stream._avro_schema_parsed["fields"]].append("@meta.timestamp")
 
   async def fetch_next(self, limit: int = DEFAULT_READ_BATCH_SIZE, to_dataframe=False) -> Iterable[Mapping]:
-    batch = await self._read_next(limit=limit)
+    batch = await self._read_next_replay(limit=limit)
     records = (self._pb_to_record(pb, to_dataframe) for pb in batch)
+    if to_dataframe:
+      return pd.DataFrame(records, columns=self._columns)
+    return records
+
+  async def fetch_next_changes(self, limit: int = DEFAULT_READ_BATCH_SIZE, to_dataframe=False) -> Iterable[Mapping]:
+    if not self._changes_cursor:
+      return None
+    resp = await self._stream.client.connection.read(
+      instance_id=self._instance_id,
+      cursor=self._changes_cursor,
+      limit=limit,
+    )
+    self._changes_cursor = resp.next_cursor
+    records = (self._pb_to_record(pb, to_dataframe) for pb in resp.records)
     if to_dataframe:
       return pd.DataFrame(records, columns=self._columns)
     return records
@@ -195,7 +212,7 @@ class Cursor:
       limit = min(max_records - len(records), batch_size)
       assert limit >= 0
 
-      batch = await self._read_next(limit=limit)
+      batch = await self._read_next_replay(limit=limit)
       batch_len = 0
       for pb in batch:
         record = self._pb_to_record(pb=pb, to_dataframe=False)
@@ -222,7 +239,9 @@ class Cursor:
       return pd.DataFrame(records, columns=self._columns)
     return records
 
-  async def _read_next(self, limit: int):
+  # subscribe_changes
+
+  async def _read_next_replay(self, limit: int):
     if not self._replay_cursor:
       return None
     resp = await self._stream.client.connection.read(
