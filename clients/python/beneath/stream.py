@@ -9,15 +9,17 @@ if TYPE_CHECKING:
 from collections.abc import Mapping
 import io
 import json
+import sys
 from typing import Iterable, List, Tuple, Union
 import uuid
+import warnings
 
 from fastavro import parse_schema
 from fastavro import schemaless_reader
 from fastavro import schemaless_writer
 import pandas as pd
 
-from beneath.config import DEFAULT_READ_BATCH_SIZE, DEFAULT_WRITE_DELAY_SECONDS, DEFAULT_WRITE_BATCH_SIZE, DEFAULT_WRITE_BATCH_BYTES
+from beneath.config import DEFAULT_READ_ALL_MAX_BYTES, DEFAULT_READ_BATCH_SIZE, DEFAULT_WRITE_DELAY_SECONDS, DEFAULT_WRITE_BATCH_SIZE, DEFAULT_WRITE_BATCH_BYTES
 from beneath.proto import gateway_pb2
 from beneath.utils import AIOWindowedBuffer, ms_to_datetime, ms_to_pd_timestamp, timestamp_to_ms
 
@@ -150,31 +152,86 @@ class Stream:
   def process(self, record_cb, commit_strategy):
     pass
 
+
 class Cursor:
 
   def __init__(self, stream: Stream, instance_id: uuid.UUID, replay_cursor: bytes, changes_cursor: bytes):
-    self.stream = stream
-    self.instance_id = instance_id
-    self.replay_cursor = replay_cursor
-    self.changes_cursor = changes_cursor
+    self._stream = stream
+    self._instance_id = instance_id
+    self._replay_cursor = replay_cursor
+    self._changes_cursor = changes_cursor
 
   @property
   def _columns(self):
     # pylint: disable=protected-access
-    return [field["name"] for field in self.stream._avro_schema_parsed["fields"]].append("@meta.timestamp")
+    return [field["name"] for field in self._stream._avro_schema_parsed["fields"]].append("@meta.timestamp")
 
   async def fetch_next(self, limit: int = DEFAULT_READ_BATCH_SIZE, to_dataframe=False) -> Iterable[Mapping]:
-    if not self.replay_cursor:
-      return None
-    resp = await self.stream.client.connection.read(instance_id=self.instance_id, cursor=self.replay_cursor, limit=limit)
-    self.replay_cursor = resp.next_cursor
-    return self._parse_pbs(pbs=resp.records, to_dataframe=to_dataframe)
-
-  def _parse_pbs(self, pbs: List[gateway_pb2.Record], to_dataframe: bool) -> Iterable[Mapping]:
-    records = (self._pb_to_record(pb, to_dataframe) for pb in pbs)
+    batch = await self._read_next(limit=limit)
+    records = (self._pb_to_record(pb, to_dataframe) for pb in batch)
     if to_dataframe:
       return pd.DataFrame(records, columns=self._columns)
     return records
+
+  async def fetch_all(
+    self,
+    max_records=None,
+    max_bytes=DEFAULT_READ_ALL_MAX_BYTES,
+    batch_size=DEFAULT_READ_BATCH_SIZE,
+    warn_max=True,
+    to_dataframe=False,
+  ) -> Iterable[Mapping]:
+    # compute limits
+    max_records = max_records if max_records else sys.maxsize
+    max_bytes = max_bytes if max_bytes else sys.maxsize
+
+    # loop state
+    records = []
+    complete = False
+    bytes_loaded = 0
+
+    # loop until all records fetched or limits reached
+    while len(records) < max_records and bytes_loaded < max_bytes:
+      limit = min(max_records - len(records), batch_size)
+      assert limit >= 0
+
+      batch = await self._read_next(limit=limit)
+      batch_len = 0
+      for pb in batch:
+        record = self._pb_to_record(pb=pb, to_dataframe=False)
+        records.append(record)
+        batch_len += 1
+        bytes_loaded += len(pb.avro_data)
+
+      if batch_len < limit:
+        complete = True
+        break
+
+    if not complete and warn_max:
+      # Jupyter doesn't always display warnings, so also print
+      if len(records) >= max_records:
+        err = f"Stopped loading because result exceeded max_records={max_records}"
+        print(err)
+        warnings.warn(err)
+      elif bytes_loaded >= max_bytes:
+        err = f"Stopped loading because download size exceeded max_bytes={max_bytes}"
+        print(err)
+        warnings.warn(err)
+
+    if to_dataframe:
+      return pd.DataFrame(records, columns=self._columns)
+    return records
+
+  async def _read_next(self, limit: int):
+    if not self._replay_cursor:
+      return None
+    resp = await self._stream.client.connection.read(
+      instance_id=self._instance_id,
+      cursor=self._replay_cursor,
+      limit=limit,
+    )
+    self._replay_cursor = resp.next_cursor
+    return resp.records
 
   def _pb_to_record(self, pb: gateway_pb2.Record, to_dataframe: bool) -> Mapping:
     record = self._decode_avro(pb.avro_data)
@@ -184,13 +241,6 @@ class Cursor:
   def _decode_avro(self, data):
     reader = io.BytesIO(data)
     # pylint: disable=protected-access
-    record = schemaless_reader(reader, self.stream._avro_schema_parsed)
+    record = schemaless_reader(reader, self._stream._avro_schema_parsed)
     reader.close()
     return record
-
-  # async def fetch_all(self, max_rows=None, max_bytes=None, warn_max=True, to_dataframe=False) -> Iterable[Mapping]:
-  #   pass
-
-
-  # fetch_changes
-  # subscribe_changes
