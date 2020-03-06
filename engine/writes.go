@@ -8,7 +8,6 @@ import (
 	"github.com/segmentio/ksuid"
 
 	pb "github.com/beneath-core/engine/proto"
-	"github.com/beneath-core/pkg/ctxutil"
 )
 
 const (
@@ -38,9 +37,8 @@ func (e *Engine) QueueWriteRequest(ctx context.Context, req *pb.WriteRequest) er
 }
 
 // ReadWriteRequests triggers fn for every WriteRecordsRequest that's written with QueueWriteRequest
-func (e *Engine) ReadWriteRequests(fn func(context.Context, *pb.WriteRequest) error) error {
-	cctx := ctxutil.WithCancelOnTerminate(context.Background())
-	return e.MQ.Subscribe(cctx, writeRequestsTopic, writeRequestsSubscription, true, func(ctx context.Context, msg []byte) error {
+func (e *Engine) ReadWriteRequests(ctx context.Context, fn func(context.Context, *pb.WriteRequest) error) error {
+	return e.MQ.Subscribe(ctx, writeRequestsTopic, writeRequestsSubscription, true, func(ctx context.Context, msg []byte) error {
 		req := &pb.WriteRequest{}
 		err := proto.Unmarshal(msg, req)
 		if err != nil {
@@ -63,8 +61,7 @@ func (e *Engine) QueueWriteReport(ctx context.Context, rep *pb.WriteReport) erro
 }
 
 // ReadWriteReports reads messages published with QueueWriteReport
-func (e *Engine) ReadWriteReports(fn func(context.Context, *pb.WriteReport) error) error {
-	ctx := ctxutil.WithCancelOnTerminate(context.Background())
+func (e *Engine) ReadWriteReports(ctx context.Context, fn func(context.Context, *pb.WriteReport) error) error {
 	return e.MQ.Subscribe(ctx, writeReportsTopic, writeReportsSubscription, false, func(ctx context.Context, msg []byte) error {
 		rep := &pb.WriteReport{}
 		err := proto.Unmarshal(msg, rep)

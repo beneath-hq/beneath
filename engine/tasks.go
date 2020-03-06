@@ -6,7 +6,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/beneath-core/pkg/ctxutil"
 	pb "github.com/beneath-core/engine/proto"
 )
 
@@ -28,8 +27,7 @@ func (e *Engine) QueueTask(ctx context.Context, t *pb.QueuedTask) error {
 }
 
 // ReadTasks reads queued tasks
-func (e *Engine) ReadTasks(fn func(context.Context, *pb.QueuedTask) error) error {
-	ctx := ctxutil.WithCancelOnTerminate(context.Background())
+func (e *Engine) ReadTasks(ctx context.Context, fn func(context.Context, *pb.QueuedTask) error) error {
 	return e.MQ.Subscribe(ctx, tasksTopic, tasksSubscription, true, func(ctx context.Context, msg []byte) error {
 		t := &pb.QueuedTask{}
 		err := proto.Unmarshal(msg, t)
