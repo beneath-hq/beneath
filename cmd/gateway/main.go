@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -13,6 +15,7 @@ import (
 	gwhttp "github.com/beneath-core/gateway/http"
 	"github.com/beneath-core/internal/hub"
 	"github.com/beneath-core/internal/segment"
+	"github.com/beneath-core/pkg/ctxutil"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 )
@@ -56,21 +59,41 @@ func main() {
 	// Init segment
 	segment.InitClient(config.SegmentSecret)
 
-	// coordinates multiple servers
+	// A ctx that we can cancel, and that also cancels on sigint, etc.
+	ctx, cancel := context.WithCancel(ctxutil.WithCancelOnTerminate(context.Background()))
+
+	// Run listenAndServeHTTP and listenAndServeGRPC in the background, cancel if any of them fails
+	go func() {
+		err := listenAndServeHTTP(config.HTTPPort)
+		log.S.Errorw("http serve failed", "error", err)
+		cancel()
+	}()
+
+	go func() {
+		err := listenAndServeGRPC(config.GRPCPort)
+		log.S.Errorw("grpc serve failed", "error", err)
+		cancel()
+	}()
+
+	// Run metrics and subscriptions in the background, exit when ctx is cancelled and they've finished cleaning up
 	group := new(errgroup.Group)
 
-	// http server
 	group.Go(func() error {
-		return listenAndServeHTTP(config.HTTPPort)
+		gw.Metrics.RunForever(ctx)
+		return nil
 	})
 
-	// gRPC server
 	group.Go(func() error {
-		return listenAndServeGRPC(config.GRPCPort)
+		gw.Subscriptions.RunForever(ctx)
+		return nil
 	})
 
-	// run simultaneously
-	log.S.Fatal(group.Wait())
+	// run
+	err := group.Wait()
+	if err != nil {
+		log.S.Fatal(err)
+	}
+	os.Exit(0)
 }
 
 func listenAndServeHTTP(port int) error {

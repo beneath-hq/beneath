@@ -46,8 +46,19 @@ func NewBroker(eng *engine.Engine) *Broker {
 			m: make(map[uuid.UUID]*callbacks),
 		},
 	}
-	go b.runForever()
 	return b
+}
+
+// RunForever brokers subscriptions until ctx is cancelled or an error occurs
+func (b *Broker) RunForever(ctx context.Context) {
+	err := b.Engine.ReadWriteReports(ctx, b.handleWriteReport)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: gracefully shutdown subscriptions
+
+	log.S.Infow("subscriptions broker shutdown gracefully")
 }
 
 // Subscribe opens a new subscription on an instance
@@ -72,14 +83,6 @@ func (b *Broker) Subscribe(instanceID uuid.UUID, cursor []byte, cb func(Message)
 		cbs.Unlock()
 	}
 	return cancel, nil
-}
-
-// runForever subscribes to new write reports
-func (b *Broker) runForever() {
-	err := b.Engine.ReadWriteReports(b.handleWriteReport)
-	if err != nil {
-		panic(err)
-	}
 }
 
 // handleWriteReport processes a write report

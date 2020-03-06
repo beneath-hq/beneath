@@ -56,19 +56,21 @@ func NewBroker(cacheSize int, commitInterval time.Duration) *Broker {
 		usageCache:     gcache.New(cacheSize).LRU().Build(),
 	}
 
-	// start ticking for batch commits to BigTable
-	go b.tick()
-
 	// done
 	return b
 }
 
-// tick continuously writes the buffer to BigTable every X seconds
-func (b *Broker) tick() {
+// RunForever sets the broker to periodically commit buffered metrics until ctx is cancelled or an error occurs
+func (b *Broker) RunForever(ctx context.Context) {
 	for {
 		select {
 		case <-b.commitTicker.C:
 			b.commitToTable()
+		case <-ctx.Done():
+			b.commitTicker.Stop()
+			b.commitToTable()
+			log.S.Infow("metrics committed before stopping")
+			return
 		}
 	}
 }

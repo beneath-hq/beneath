@@ -23,8 +23,8 @@ const (
 
 // Run subscribes to new write requests and stores data in derived systems.
 // It runs forever unless an error occcurs.
-func Run() error {
-	return hub.Engine.ReadWriteRequests(processWriteRequest)
+func Run(ctx context.Context) error {
+	return hub.Engine.ReadWriteRequests(ctx, processWriteRequest)
 }
 
 // ProcessWriteRequest persists a write request

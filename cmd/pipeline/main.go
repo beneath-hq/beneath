@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+
 	"github.com/beneath-core/gateway/pipeline"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/ctxutil"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 )
@@ -32,6 +35,7 @@ func main() {
 	hub.InitEngine(config.MQDriver, config.LookupDriver, config.WarehouseDriver)
 
 	// Run forever (until failure)
+	ctx := ctxutil.WithCancelOnTerminate(context.Background())
 	log.S.Info("pipeline started")
-	log.S.Fatal(pipeline.Run())
+	log.S.Fatal(pipeline.Run(ctx))
 }

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+
 	"github.com/beneath-core/control/payments"
 	"github.com/beneath-core/control/taskqueue/worker"
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/ctxutil"
 	"github.com/beneath-core/pkg/envutil"
 	"github.com/beneath-core/pkg/log"
 
@@ -35,5 +38,6 @@ func main() {
 
 	hub.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
 
-	log.S.Fatal(worker.Work())
+	ctx := ctxutil.WithCancelOnTerminate(context.Background())
+	log.S.Fatal(worker.Work(ctx))
 }
