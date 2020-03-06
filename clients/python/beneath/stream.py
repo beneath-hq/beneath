@@ -173,11 +173,6 @@ class Stream:
       changes_cursor=resp.change_cursor,
     )
 
-  # EASY HELPERS
-
-  def process(self, record_cb, commit_strategy):
-    pass
-
 
 class Cursor:
 

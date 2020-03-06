@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 import os
-from typing import Iterable
+from typing import Awaitable, Callable, Iterable
+
 
 from beneath import __version__
 from beneath import config
@@ -13,7 +14,12 @@ from beneath.admin.services import Services
 from beneath.admin.streams import Streams
 from beneath.admin.users import Users
 from beneath.connection import Connection
-from beneath.config import DEFAULT_READ_ALL_MAX_BYTES, DEFAULT_READ_BATCH_SIZE
+from beneath.config import (
+  DEFAULT_READ_ALL_MAX_BYTES,
+  DEFAULT_READ_BATCH_SIZE,
+  DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+)
 
 
 class Client:
@@ -47,10 +53,12 @@ class Client:
     await stream._ensure_loaded()
     return stream
 
+  # EASY HELPERS
+
   async def easy_read(
     self,
-    project: str = None,
-    stream: str = None,
+    project: str,
+    stream: str,
     where: str = None,
     to_dataframe=True,
     batch_size=DEFAULT_READ_BATCH_SIZE,
@@ -66,6 +74,28 @@ class Client:
       to_dataframe=to_dataframe,
     )
     return res
+
+  async def easy_process_forever(
+    self,
+    project: str,
+    stream: str,
+    callback: Callable[[Mapping], Awaitable[None]],
+    where: str = None,
+    max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+    max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  ):
+    stream = await self.find_stream(project=project, stream=stream)
+    cursor = await stream.query(where=where)
+    await cursor.subscribe_replay(
+      callback=callback,
+      max_prefetched_records=max_prefetched_records,
+      max_concurrent_callbacks=max_concurrent_callbacks,
+    )
+    await cursor.subscribe_changes(
+      callback=callback,
+      max_prefetched_records=max_prefetched_records,
+      max_concurrent_callbacks=max_concurrent_callbacks,
+    )
 
 
 class AdminClient:
