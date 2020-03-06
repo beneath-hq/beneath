@@ -251,6 +251,7 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 // recordsIterator implements driver.RecordsIterator
 type recordsIterator struct {
 	idx        int
+	reverse    bool
 	records    []Record
 	nextCursor []byte
 }
@@ -265,6 +266,9 @@ func (i *recordsIterator) Next() bool {
 func (i *recordsIterator) Record() driver.Record {
 	if i.idx == 0 || i.idx > len(i.records) {
 		panic("invalid call to Record")
+	}
+	if i.reverse {
+		return i.records[len(i.records)-i.idx]
 	}
 	return i.records[i.idx-1]
 }
@@ -336,6 +340,7 @@ func (b BigTable) readPeekCursor(ctx context.Context, s driver.Stream, i driver.
 
 	// return iterator
 	return &recordsIterator{
+		reverse:    true,
 		records:    records,
 		nextCursor: nextCursor,
 	}, nil
