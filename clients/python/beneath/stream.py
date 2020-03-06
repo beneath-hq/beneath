@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
   from beneath.client import Client
 
+import asyncio
 from collections.abc import Mapping
 import io
 import json
 import sys
-from typing import Iterable, List, Tuple, Union
+from typing import Awaitable, Callable, Iterable, List, Tuple, Union
 import uuid
 import warnings
 
@@ -19,9 +20,26 @@ from fastavro import schemaless_reader
 from fastavro import schemaless_writer
 import pandas as pd
 
-from beneath.config import DEFAULT_READ_ALL_MAX_BYTES, DEFAULT_READ_BATCH_SIZE, DEFAULT_WRITE_DELAY_SECONDS, DEFAULT_WRITE_BATCH_SIZE, DEFAULT_WRITE_BATCH_BYTES
+from beneath.config import (
+  DEFAULT_READ_ALL_MAX_BYTES,
+  DEFAULT_READ_BATCH_SIZE,
+  DEFAULT_WRITE_DELAY_SECONDS,
+  DEFAULT_WRITE_BATCH_SIZE,
+  DEFAULT_WRITE_BATCH_BYTES,
+  DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+  DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  DEFAULT_SUBSCRIBE_POLL_AT_LEAST_EVERY_SECONDS,
+  DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_SECONDS,
+)
 from beneath.proto import gateway_pb2
-from beneath.utils import AIOWindowedBuffer, ms_to_datetime, ms_to_pd_timestamp, timestamp_to_ms
+from beneath.utils import (
+  AIOPoller,
+  AIOWorkerPool,
+  AIOWindowedBuffer,
+  ms_to_datetime,
+  ms_to_pd_timestamp,
+  timestamp_to_ms,
+)
 
 
 class Stream:
@@ -239,8 +257,6 @@ class Cursor:
       return pd.DataFrame(records, columns=self._columns)
     return records
 
-  # subscribe_changes
-
   async def _read_next_replay(self, limit: int):
     if not self._replay_cursor:
       return None
@@ -263,3 +279,42 @@ class Cursor:
     record = schemaless_reader(reader, self._stream._avro_schema_parsed)
     reader.close()
     return record
+
+  async def subscribe_changes(
+    self,
+    callback: Callable[[Mapping], Awaitable[None]],
+    max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+    max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  ):
+    if not self._changes_cursor:
+      raise ValueError("cannot subscribe to changes for this query")
+
+    records_pool = AIOWorkerPool(callback=callback, maxsize=max_prefetched_records)
+
+    async def _poll():
+      prev_cursor = None
+      while prev_cursor != self._changes_cursor:
+        prev_cursor = self._changes_cursor
+        batch = await self.fetch_next_changes(limit=min(max_prefetched_records, DEFAULT_READ_BATCH_SIZE))
+        for record in batch:
+          await records_pool.enqueue(record)
+
+    poller = AIOPoller(
+      poll=_poll,
+      at_least_every=DEFAULT_SUBSCRIBE_POLL_AT_LEAST_EVERY_SECONDS,
+      at_most_every=DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_SECONDS,
+    )
+
+    async def _subscribe():
+      subscription = await self._stream.client.connection.subscribe(
+        instance_id=self._instance_id,
+        cursor=self._changes_cursor,
+      )
+      async for _ in subscription:
+        poller.trigger()
+
+    return await asyncio.gather(
+      _subscribe(),
+      poller.run(),
+      records_pool.run(workers=max_concurrent_callbacks),
+    )

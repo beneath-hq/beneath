@@ -1,4 +1,4 @@
-from typing import List
+from typing import AsyncIterator, List
 import uuid
 import warnings
 
@@ -155,7 +155,7 @@ class Connection:
   async def peek(self, instance_id: uuid.UUID) -> gateway_pb2.PeekResponse:
     await self.ensure_connected()
     return await self.stub.Peek(
-      gateway_pb2.PeekRequest(instance_id=instance_id.bytes,),
+      gateway_pb2.PeekRequest(instance_id=instance_id.bytes),
       metadata=self.request_metadata,
     )
 
@@ -167,14 +167,12 @@ class Connection:
         cursor=cursor,
         limit=limit,
       ),
-      metadata=self.request_metadata
+      metadata=self.request_metadata,
     )
 
-  # async def subscribe(self, instance_id: uuid.UUID, cursor: bytes):
-  #   await self._ensure_connected()
-  #   # to do: type hint for streaming results of gateway_pb2.SubscribeResponse?
-  #   raise RuntimeError("Not implemented")
-  #   # return await self.stub.Subscribe(gateway_pb2.SubscribeRequest(
-  #   #   instance_id=instance_id.bytes,
-  #   #   cursor=cursor,
-  #   # ), metadata=self.request_metadata)
+  async def subscribe(self, instance_id: uuid.UUID, cursor: bytes) -> AsyncIterator[gateway_pb2.SubscribeResponse]:
+    await self.ensure_connected()
+    return self.stub.Subscribe(
+      gateway_pb2.SubscribeRequest(instance_id=instance_id.bytes, cursor=cursor),
+      metadata=self.request_metadata,
+    )
