@@ -21,6 +21,7 @@ from fastavro import schemaless_writer
 import pandas as pd
 
 from beneath.config import (
+  BIGQUERY_PROJECT,
   DEFAULT_READ_ALL_MAX_BYTES,
   DEFAULT_READ_BATCH_SIZE,
   DEFAULT_WRITE_DELAY_SECONDS,
@@ -171,6 +172,16 @@ class Stream:
       instance_id=self.instance_id,
       replay_cursor=resp.rewind_cursor,
       changes_cursor=resp.change_cursor,
+    )
+
+  # MISC
+
+  def get_bigquery_table(self, view=True):
+    return "{}.{}.{}{}".format(
+      BIGQUERY_PROJECT,
+      self.info["project_name"].replace("-", "_"),
+      self.info["stream_name"].replace("-", "_"),
+      "" if view else "_{}".format(self.instance_id.hex[0:8]),
     )
 
 
