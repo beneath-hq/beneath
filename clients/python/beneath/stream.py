@@ -189,6 +189,8 @@ class Cursor:
 
   async def fetch_next(self, limit: int = DEFAULT_READ_BATCH_SIZE, to_dataframe=False) -> Iterable[Mapping]:
     batch = await self._read_next_replay(limit=limit)
+    if batch is None:
+      return None
     records = (self._pb_to_record(pb, to_dataframe) for pb in batch)
     if to_dataframe:
       return pd.DataFrame(records, columns=self._columns)
@@ -231,6 +233,10 @@ class Cursor:
       assert limit >= 0
 
       batch = await self._read_next_replay(limit=limit)
+      if batch is None:
+        complete = True
+        break
+
       batch_len = 0
       for pb in batch:
         record = self._pb_to_record(pb=pb, to_dataframe=False)
@@ -279,6 +285,31 @@ class Cursor:
     record = schemaless_reader(reader, self._stream._avro_schema_parsed)
     reader.close()
     return record
+
+  async def subscribe_replay(
+    self,
+    callback: Callable[[Mapping], Awaitable[None]],
+    max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+    max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  ):
+    if not self._replay_cursor:
+      return None
+
+    records_pool = AIOWorkerPool(callback=callback, maxsize=max_prefetched_records)
+
+    async def _fetch():
+      while True:
+        batch = await self.fetch_next(limit=min(max_prefetched_records, DEFAULT_READ_BATCH_SIZE))
+        if batch is None:
+          await records_pool.join()
+          return
+        for record in batch:
+          await records_pool.enqueue(record)
+
+    return await asyncio.gather(
+      _fetch(),
+      records_pool.run(workers=max_concurrent_callbacks),
+    )
 
   async def subscribe_changes(
     self,
