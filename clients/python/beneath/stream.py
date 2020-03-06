@@ -166,7 +166,12 @@ class Stream:
     if not self._loaded:
       await self._ensure_loaded()
     resp = await self.client.connection.peek(instance_id=self.instance_id)
-    return Cursor(stream=self, instance_id=self.instance_id, replay_cursor=resp.rewind_cursor, changes_cursor=resp.changes_cursor)
+    return Cursor(
+      stream=self,
+      instance_id=self.instance_id,
+      replay_cursor=resp.rewind_cursor,
+      changes_cursor=resp.change_cursor,
+    )
 
   # EASY HELPERS
 
