@@ -13,7 +13,14 @@ It's a good idea to run each dependency in a separate tab of a single terminal w
 
 ### Run Postgres
 
-We suggest you install https://postgresapp.com/ and run it in the background. It's useful to keep an open `psql` terminal tab to query the database directly.
+- We suggest you install https://postgresapp.com/ and run it in the background. It's useful to keep an open `psql` terminal tab to query the database directly.
+- Optionally, on Macs, we like using Postico, which you can find here: https://eggerapps.at/postico/
+
+### Install Google Cloud SDK
+
+Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably home or documents). 
+
+Check that everything installed correctly and that you're in the `beneathcrypto` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
 
 ### Run Cloud Pubsub emulator
 
@@ -24,12 +31,6 @@ We suggest you install https://postgresapp.com/ and run it in the background. It
 
 - Follow install instructions here: https://cloud.google.com/bigtable/docs/emulator
 - Run with `gcloud beta emulators bigtable start`
-
-### Install Google Cloud SDK
-
-Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably home or documents). 
-
-Check that everything installed correctly and that you're in the `beneathcrypto` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
 
 ### Install VS Code
 
