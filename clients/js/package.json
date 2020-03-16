@@ -1,0 +1,17 @@
+{
+  "name": "beneath",
+  "version": "1.0.0",
+  "description": "Client library for https://beneath.dev",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Beneath",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}
