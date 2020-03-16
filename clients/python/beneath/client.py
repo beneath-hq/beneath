@@ -75,6 +75,23 @@ class Client:
     )
     return res
 
+  async def easy_process_once(
+    self,
+    project: str,
+    stream: str,
+    callback: Callable[[Mapping], Awaitable[None]],
+    where: str = None,
+    max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
+    max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
+  ):
+    stream = await self.find_stream(project=project, stream=stream)
+    cursor = await stream.query(where=where)
+    await cursor.subscribe_replay(
+      callback=callback,
+      max_prefetched_records=max_prefetched_records,
+      max_concurrent_callbacks=max_concurrent_callbacks,
+    )
+
   async def easy_process_forever(
     self,
     project: str,
