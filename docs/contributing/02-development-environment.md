@@ -45,21 +45,21 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 ### Control backend
 
-- Run with `go run cmd/control/main.go`
+- For development, run with `ENV=dev go run cmd/control/main.go`
 - If successful, you can access a GraphQL Playground at http://localhost:4000/playground
 
 ### Gateway backend
 
-- Run with `go run cmd/gateway/main.go`
+- Run with `ENV=dev go run cmd/gateway/main.go`
 - If successful, you can ping the gateway at http://localhost:5000/
 
 ### Pipeline
 
-- Run with `go run cmd/pipeline/main.go`
+- Run with `ENV=dev go run cmd/pipeline/main.go`
 
 ### Task queue
 
-- Run with `go run cmd/taskqueue/main.go`
+- Run with `ENV=dev go run cmd/taskqueue/main.go`
 
 ### Frontend (UI)
 
