@@ -1,0 +1,20 @@
+{
+  "name": "beneath",
+  "version": "1.0.0",
+  "description": "Client library for https://beneath.dev",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "jest"
+  },
+  "author": "Beneath",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "jest": "^25.1.0",
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3"
+  }
+}
