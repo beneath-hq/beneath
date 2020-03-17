@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/beneath-core/pkg/queryparse"
-
 	"github.com/go-chi/chi"
 	uuid "github.com/satori/go.uuid"
 
@@ -18,6 +16,7 @@ import (
 	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/pkg/httputil"
 	"github.com/beneath-core/pkg/jsonutil"
+	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/pkg/timeutil"
 )
 
