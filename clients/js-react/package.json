@@ -13,9 +13,15 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^25.1.4",
+    "@types/react": "^16.9.23",
     "jest": "^25.1.0",
     "ts-jest": "^25.2.1",
     "tslint": "^6.1.0",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "beneath": "file:../js",
+    "react": "^16.13.0",
+    "subscriptions-transport-ws": "^0.9.16"
   }
 }
