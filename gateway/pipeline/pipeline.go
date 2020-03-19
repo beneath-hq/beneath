@@ -160,3 +160,7 @@ func (r record) GetAvro() []byte {
 func (r record) GetStructured() map[string]interface{} {
 	return r.Structured
 }
+
+func (r record) GetPrimaryKey() []byte {
+	panic(fmt.Errorf("not implemented"))
+}
