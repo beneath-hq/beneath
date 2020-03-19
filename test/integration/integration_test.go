@@ -80,7 +80,9 @@ func TestMain(m *testing.M) {
 
 	// Init gateway globals
 	gateway.InitMetrics(100, metricsCommitInterval)
+	go gateway.Metrics.RunForever(context.Background())
 	gateway.InitSubscriptions(hub.Engine)
+	go gateway.Subscriptions.RunForever(context.Background())
 
 	// configure auth (empty config, so it doesn't actually work)
 	auth.InitGoth(&auth.GothConfig{})
@@ -120,13 +122,13 @@ func TestMain(m *testing.M) {
 
 	// start pipeline
 	go func() {
-		err := pipeline.Run()
+		err := pipeline.Run(context.Background())
 		panicIf(err)
 	}()
 
 	// start taskqueue
 	go func() {
-		err := worker.Work()
+		err := worker.Work(context.Background())
 		panicIf(err)
 	}()
 
