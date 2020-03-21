@@ -152,8 +152,8 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// prepare result for encoding
 	encode := map[string]interface{}{
-		"data":    result,
-		"cursors": cursors,
+		"data":   result,
+		"cursor": cursors,
 	}
 
 	// write and finish
