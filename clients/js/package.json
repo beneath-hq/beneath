@@ -14,9 +14,14 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/node": "^13.9.1",
+    "@types/ws": "^7.2.3",
     "jest": "^25.1.0",
     "ts-jest": "^25.2.1",
     "tslint": "^6.1.0",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "graphql": "^14.6.0",
+    "subscriptions-transport-ws": "^0.9.16"
   }
 }

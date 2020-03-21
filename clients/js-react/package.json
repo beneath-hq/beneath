@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "beneath": "file:../js",
-    "react": "^16.13.0",
-    "subscriptions-transport-ws": "^0.9.16"
+    "react": "^16.13.0"
   }
 }

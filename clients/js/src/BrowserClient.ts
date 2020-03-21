@@ -1,28 +1,22 @@
-interface BrowserClientOptions {
+import { BrowserStream } from "./BrowserStream";
+import { BrowserConnection } from "./BrowserConnection";
+import { StreamQualifier } from "./shared";
+
+export interface BrowserClientOptions {
   secret?: string;
 }
 
 export class BrowserClient {
   public secret: string | undefined;
+  private connection: BrowserConnection;
 
   constructor(opts?: BrowserClientOptions) {
     this.secret = opts && opts.secret;
+    this.connection = new BrowserConnection(this.secret);
+  }
+
+  findStream<TRecord = any>(streamQualifier: StreamQualifier) {
+    return new BrowserStream<TRecord>(this.connection, streamQualifier);
   }
 
 }
-
-/*
-
-USE CASES
-
-- figure out frontend needs
-- write react hooks
-- then write the client
-
-LATER
-
-- worry about server-side loads/writes (node.js)
-- worry about creating one to X mapping models in Node
-
-*/
-
