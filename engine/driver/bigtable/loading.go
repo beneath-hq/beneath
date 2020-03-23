@@ -60,6 +60,11 @@ func (r Record) GetStructured() map[string]interface{} {
 	return structured
 }
 
+// GetPrimaryKey implements driver.Record
+func (r Record) GetPrimaryKey() []byte {
+	return r.PrimaryKey
+}
+
 // LoadPrimaryIndexRange reads indexed records by primary key
 func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i driver.StreamInstance, kr codec.KeyRange, limit int) ([]Record, codec.KeyRange, error) {
 	// - Create bigtable range for primary index
@@ -421,6 +426,7 @@ func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.St
 		record := Record{
 			Offset:     offset,
 			PrimaryKey: primaryKey,
+			Stream:     s,
 		}
 
 		// set columns
@@ -478,6 +484,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 		// prep record
 		record := Record{
 			PrimaryKey: primaryKey,
+			Stream:     s,
 		}
 
 		// extract columns

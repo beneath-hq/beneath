@@ -134,8 +134,11 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			return httputil.NewError(400, err.Error())
 		}
 
-		// set timestamp
-		data["@meta"] = map[string]int64{"timestamp": timeutil.UnixMilli(record.GetTimestamp())}
+		// set meta
+		data["@meta"] = map[string]interface{}{
+			"key":       record.GetPrimaryKey(),
+			"timestamp": timeutil.UnixMilli(record.GetTimestamp()),
+		}
 
 		// track
 		result = append(result, data)
@@ -149,8 +152,8 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// prepare result for encoding
 	encode := map[string]interface{}{
-		"data":    result,
-		"cursors": cursors,
+		"data":   result,
+		"cursor": cursors,
 	}
 
 	// write and finish

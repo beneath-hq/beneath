@@ -2,8 +2,6 @@ export const ENV = (typeof process !== "undefined") && process.env.BENEATH_ENV |
 
 export const DEV = ["dev", "development"].includes(ENV);
 
-export const BIGQUERY_PROJECT = "beneath";
-
 export const JS_CLIENT_ID = "beneath-js";
 
 export const BENEATH_FRONTEND_HOST = DEV ? "http://localhost:3000" : "https://beneath.dev";

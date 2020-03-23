@@ -285,6 +285,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	for idx, recordT := range res12["data"].([]interface{}) {
 		record := recordT.(map[string]interface{})
 		assert.NotNil(t, record)
+		assert.Len(t, record["@meta"], 2)
 		assert.Equal(t, subset[idx].A, record["a"])
 		assert.Equal(t, float64(subset[idx].B), record["b"])
 		assert.Equal(t, "0x"+hex.EncodeToString(subset[idx].C), record["c"])
@@ -298,9 +299,11 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
 	assert.Equal(t, 200, code)
 	assert.Len(t, res13["data"], 4)
-	for _, record := range res13["data"].([]interface{}) {
+	for _, recordT := range res13["data"].([]interface{}) {
+		record := recordT.(map[string]interface{})
 		assert.NotNil(t, record)
-		assert.Equal(t, byte('b'), record.(map[string]interface{})["a"].(string)[0])
+		assert.Len(t, record["@meta"], 2)
+		assert.Equal(t, byte('b'), record["a"].(string)[0])
 	}
 
 	// wait to let metrics get committed

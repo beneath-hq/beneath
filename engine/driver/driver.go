@@ -162,4 +162,9 @@ type Record interface {
 
 	// GetStructured should return the structured representation of the record
 	GetStructured() map[string]interface{}
+
+	// GetPrimaryKey should return a byte-encoded representation of the record's primary key
+	// Only implemented on driver output, not necessary for input (where key is computed from schema and data)
+	// TODO: not beautiful/necessary; it's a convenience to avoid recomputing the primary key in the REST gateway
+	GetPrimaryKey() []byte
 }
