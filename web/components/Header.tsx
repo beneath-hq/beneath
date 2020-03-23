@@ -26,8 +26,8 @@ import {
 
 const tabs = [
   { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$", external: false },
-  { label: "Docs", href: "https://about.beneath.network/docs", selectRegex: "^/docs$", external: true },
-  { label: "Blog", href: "https://about.beneath.network/blog", selectRegex: "^/blog$", external: true },
+  { label: "Docs", href: "https://about.beneath.dev/docs", selectRegex: "^/docs$", external: true },
+  { label: "Blog", href: "https://about.beneath.dev/blog", selectRegex: "^/blog$", external: true },
 ];
 
 const useStyles = makeStyles((theme) => ({

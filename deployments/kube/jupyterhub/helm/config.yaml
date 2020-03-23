@@ -15,11 +15,11 @@ ingress:
     kubernetes.io/tls-acme: "true"
     certmanager.k8s.io/cluster-issuer: letsencrypt-prod
   hosts:
-  - lab.beneath.network
+  - lab.beneath.dev
   tls:
   - secretName: lab-beneath-network-tls
     hosts:
-    - lab.beneath.network
+    - lab.beneath.dev
 
 hub:
   extraConfig: |-

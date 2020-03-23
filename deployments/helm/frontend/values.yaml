@@ -10,8 +10,8 @@ image:
 
 ingress:
   hosts:
-  - beneath.network
-  - www.beneath.network
+  - beneath.dev
+  - www.beneath.dev
 
 resources: {}
   # limits:
