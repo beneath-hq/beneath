@@ -5,6 +5,7 @@
     "**/node_modules": true,
     "**/.venv": true,
     "**/.next": true,
+    "**/.pytest_cache": true,
     "clients/python/__pycache__": true,
     "clients/python/.pytest_cache": true,
     "clients/python/.ipynb_checkpoints": true,
