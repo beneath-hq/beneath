@@ -24,25 +24,43 @@ export class BrowserStream<TRecord = any> {
     opts.compact = opts.compact === undefined ? true : opts.compact;
 
     // fetch
-    const { records, error, cursor } = await this.connection.query(this.streamQualifier, opts.compact, opts.filter, opts.pageSize);
+    const { records, error, cursor } = await this.connection.query(this.streamQualifier, {
+      compact: opts.compact,
+      filter: opts.filter,
+      limit: opts.pageSize,
+    });
     if (error) {
       return { error };
     }
 
     // wrap cursor and return
-    const cursorWrap = new BrowserCursor<TRecord>(this.connection, this.streamQualifier, records || [], cursor?.next, cursor?.changes);
+    const cursorWrap = new BrowserCursor<TRecord>({
+      connection: this.connection,
+      streamQualifier: this.streamQualifier,
+      cursorType: "query",
+      cursor,
+      defaultPageSize: opts?.pageSize,
+      initialRecords: records,
+    });
+
     return { cursor: cursorWrap };
   }
 
   public async peek(opts?: ReadOptions): Promise<BrowserQueryResult<TRecord>> {
-    opts = opts || {};
-    const { records, error, cursor } = await this.connection.peek<TRecord>(this.streamQualifier, opts.pageSize);
+    const { records, error, cursor } = await this.connection.peek<TRecord>(this.streamQualifier, { limit: opts?.pageSize });
     if (error) {
       return { error };
     }
 
     // wrap cursor and return
-    const cursorWrap = new BrowserCursor<TRecord>(this.connection, this.streamQualifier, records || [], cursor?.next, cursor?.changes);
+    const cursorWrap = new BrowserCursor<TRecord>({
+      connection: this.connection,
+      streamQualifier: this.streamQualifier,
+      cursorType: "peek",
+      cursor,
+      defaultPageSize: opts?.pageSize,
+      initialRecords: records,
+    });
     return { cursor: cursorWrap };
   }
 

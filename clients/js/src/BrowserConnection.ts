@@ -7,6 +7,10 @@ export interface Response<TRecord> {
   cursor?: { next?: string, changes?: string };
 }
 
+export type QueryArgs = { limit?: number } & ({ compact: boolean, filter?: string } | { cursor: string });
+
+export type PeekArgs = { limit?: number, cursor?: string };
+
 export class BrowserConnection {
   public secret?: string;
 
@@ -14,32 +18,27 @@ export class BrowserConnection {
     this.secret = secret;
   }
 
-  public async query<TRecord = any>(streamQualifier: StreamQualifier, compact: boolean, filter?: string, pageSize?: number): Promise<Response<TRecord>> {
-    let path;
-    if ("instanceID" in streamQualifier) {
-      path = `streams/instances/${streamQualifier.instanceID}`;
-    } else {
-      path = `projects/${streamQualifier.project}/streams/${streamQualifier.stream}`;
-    }
-
-    const args = { compact, filter, limit: pageSize };
-
+  public async query<TRecord = any>(streamQualifier: StreamQualifier, args: QueryArgs): Promise<Response<TRecord>> {
+    const path = this.makePath(streamQualifier);
     return this.fetch("GET", path, args);
   }
 
-  public async peek<TRecord = any>(streamQualifier: StreamQualifier, pageSize?: number): Promise<Response<TRecord>> {
-    let path;
-    if ("instanceID" in streamQualifier) {
-      path = `streams/instances/${streamQualifier.instanceID}/latest`;
-    } else {
-      path = `projects/${streamQualifier.project}/streams/${streamQualifier.stream}/latest`;
-    }
-
-    return this.fetch("GET", path, { limit: pageSize });
+  public async peek<TRecord = any>(streamQualifier: StreamQualifier, args: PeekArgs): Promise<Response<TRecord>> {
+    const path = `${this.makePath(streamQualifier)}/peek`;
+    return this.fetch("GET", path, args);
   }
 
   public async write(instanceID: string, records: any[]) {
     // const url = `${connection.GATEWAY_URL}/streams/instances/${instanceID}`;
+  }
+
+  private makePath(sq: StreamQualifier): string {
+    if ("instanceID" in sq && sq.instanceID) {
+      return `streams/instances/${sq.instanceID}`;
+    } else if ("project" in sq && "stream" in sq) {
+      return `projects/${sq.project}/streams/${sq.stream}`;
+    }
+    throw Error("invalid stream qualifier");
   }
 
   private async fetch<TRecord>(method: "GET" | "POST", path: string, body: { [key: string]: any; }): Promise<Response<TRecord>> {
@@ -64,12 +63,8 @@ export class BrowserConnection {
       body: method === "POST" ? JSON.stringify(body) : undefined,
     });
 
-    // parse as json
-    let json;
-    try {
-      json = await res.json();
-    } catch {
-      // not json: if successful, return empty; else return just error
+    // if not json: if successful, return empty; else return just error
+    if (res.headers.get("Content-Type") !== "application/json") {
       if (res.ok) {
         return {};
       }
@@ -80,7 +75,8 @@ export class BrowserConnection {
       return { error: Error(error) };
     }
 
-    // check json and return
+    // parse json and return
+    const json = await res.json();
     const { data, cursor, error } = json;
 
     if (error) {
