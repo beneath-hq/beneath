@@ -20,7 +20,9 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "beneath": "file:../js",
-    "react": "^16.13.0"
+    "beneath": "file:../js"
+  },
+  "peerDependencies": {
+    "react": "^16.11.0"
   }
 }
