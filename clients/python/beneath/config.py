@@ -21,10 +21,10 @@ if DEV:
   BENEATH_GATEWAY_HOST = "http://localhost:5000"
   BENEATH_GATEWAY_HOST_GRPC = "localhost:50051"
 else:
-  BENEATH_FRONTEND_HOST = "https://beneath.network"
-  BENEATH_CONTROL_HOST = "https://control.beneath.network"
-  BENEATH_GATEWAY_HOST = "https://data.beneath.network"
-  BENEATH_GATEWAY_HOST_GRPC = "grpc.data.beneath.network"
+  BENEATH_FRONTEND_HOST = "https://beneath.dev"
+  BENEATH_CONTROL_HOST = "https://control.beneath.dev"
+  BENEATH_GATEWAY_HOST = "https://data.beneath.dev"
+  BENEATH_GATEWAY_HOST_GRPC = "grpc.data.beneath.dev"
 
 
 def read_secret():

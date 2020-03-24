@@ -13,7 +13,7 @@ image:
   tag: latest
 
 ingress:
-  host: control.beneath.network
+  host: control.beneath.dev
 
 resources: {}
   # limits:
@@ -29,9 +29,9 @@ env:
 - name: BENEATH_CONTROL_PORT
   value: "8080"
 - name: BENEATH_CONTROL_HOST
-  value: "https://control.beneath.network"
+  value: "https://control.beneath.dev"
 - name: BENEATH_FRONTEND_HOST
-  value: "https://beneath.network"
+  value: "https://beneath.dev"
 - name: BENEATH_CONTROL_REDIS_URL
   value: "redis://10.0.0.3/"
 - name: BENEATH_CONTROL_POSTGRES_HOST

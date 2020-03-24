@@ -99,7 +99,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                   helperText={
                     <>
                       You can query the stream on indexed fields, check out the{" "}
-                      <LinkTypography href="https://about.beneath.network/docs/using-the-explore-tab/">
+                      <LinkTypography href="https://about.beneath.dev/docs/using-the-explore-tab/">
                         docs
                       </LinkTypography>{" "}
                       for more info.

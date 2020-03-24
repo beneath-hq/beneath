@@ -1,11 +1,11 @@
 # Beneath Python Client Library
 
-This repository contains the source code for the [Beneath](https://beneath.network) Python library. Learn more about it with these resources:
+This repository contains the source code for the [Beneath](https://beneath.dev) Python library. Learn more about it with these resources:
 
-- [Getting started tutorial](https://about.beneath.network/docs)
-- [Reading data from Beneath](https://about.beneath.network/docs)
-- [Using the command-line interface](https://about.beneath.network/docs)
-- [Writing new analytics to Beneath](https://about.beneath.network/docs)
+- [Getting started tutorial](https://about.beneath.dev/docs)
+- [Reading data from Beneath](https://about.beneath.dev/docs)
+- [Using the command-line interface](https://about.beneath.dev/docs)
+- [Writing new analytics to Beneath](https://about.beneath.dev/docs)
 
 ### Providing feedback
 

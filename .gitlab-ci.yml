@@ -79,7 +79,7 @@ build_taskqueue:
     KUBE_NAMESPACE: production
   environment:
     name: production
-    url: https://beneath.network
+    url: https://beneath.dev
 
 deploy_frontend:
   extends:

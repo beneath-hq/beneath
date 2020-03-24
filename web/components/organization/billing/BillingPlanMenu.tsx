@@ -40,7 +40,7 @@ const BillingPlanMenu: FC = () => {
           <Typography align="center">Consider upgrading to one of our premium plans.</Typography>
         </Grid>
         <Grid item>
-          <Typography align="center">Find detailed descriptions at about.beneath.network/pricing.</Typography>
+          <Typography align="center">Find detailed descriptions at about.beneath.dev/enterprise.</Typography>
         </Grid>
         <Grid container item spacing={3} alignItems="center" justify="center">
           <Grid item>
