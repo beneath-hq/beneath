@@ -2,7 +2,7 @@ import React, { FC } from "react";
 
 import { Container, Link as MUILink, makeStyles, Paper, Theme, Typography } from "@material-ui/core";
 
-import { QueryStream, QueryStream_stream } from "../../apollo/types/QueryStream";
+import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
 import { GATEWAY_URL } from "../../lib/connection";
 import { toURLName } from "../../lib/names";
 
@@ -18,7 +18,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const StreamAPI: FC<QueryStream> = ({ stream }) => {
+interface StreamAPIProps {
+  stream: QueryStream_streamByProjectAndName;
+}
+
+const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
   const me = useMe();
   const classes = useStyles();
   return (
@@ -92,11 +96,7 @@ df = stream.read()`}</CodeBlock>
       </Typography>
       <Typography variant="body2" paragraph>
         You can query this stream however you want using its public BigQuery dataset. Here's an example of how to query
-        it from the BigQuery{" "}
-        <LinkTypography href="https://console.cloud.google.com/bigquery">
-          console
-        </LinkTypography>
-        .
+        it from the BigQuery <LinkTypography href="https://console.cloud.google.com/bigquery">console</LinkTypography>.
       </Typography>
       <CodeBlock language={"sql"}>{`select * from \`${bigQueryName(stream)}\``}</CodeBlock>
       <Typography variant="body2" paragraph>
@@ -126,7 +126,7 @@ df = stream.read()`}</CodeBlock>
 
 export default StreamAPI;
 
-const bigQueryName = (stream: QueryStream_stream) => {
+const bigQueryName = (stream: QueryStream_streamByProjectAndName) => {
   const projectName = stream.project.name.replace(/-/g, "_");
   const streamName = stream.name.replace(/-/g, "_");
   // const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;

@@ -3,7 +3,7 @@ import { FC } from "react";
 
 import { GET_STREAM_METRICS } from "../../apollo/queries/metrics";
 import { GetStreamMetrics, GetStreamMetricsVariables } from "../../apollo/types/GetStreamMetrics";
-import { QueryStream } from "../../apollo/types/QueryStream";
+import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
 import BatchTopIndicators from "../metrics/stream/BatchTopIndicators";
 import StreamingTopIndicators from "../metrics/stream/StreamingTopIndicators";
 import { hourFloor, monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
@@ -17,7 +17,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const StreamMetrics: FC<QueryStream> = ({ stream }) => {
+interface StreamMetricsProps {
+  stream: QueryStream_streamByProjectAndName;
+}
+
+const StreamMetrics: FC<StreamMetricsProps> = ({ stream }) => {
   const classes = useStyles();
 
   if (!stream.currentStreamInstanceID) {
@@ -81,7 +85,7 @@ const useWeeklyData = (streamID: string) => {
   return { metrics, total, latest, error, loading };
 };
 
-const StreamingMetricsOverview: FC<QueryStream> = ({ stream }) => {
+const StreamingMetricsOverview: FC<StreamMetricsProps> = ({ stream }) => {
   const { metrics, total, latest, error } = useMonthlyData(stream.streamID);
   return (
     <>
@@ -91,7 +95,7 @@ const StreamingMetricsOverview: FC<QueryStream> = ({ stream }) => {
   );
 };
 
-const StreamingMetricsWeek: FC<QueryStream> = ({ stream }) => {
+const StreamingMetricsWeek: FC<StreamMetricsProps> = ({ stream }) => {
   const { metrics, total, latest, error } = useWeeklyData(stream.streamID);
   return (
     <>
@@ -101,7 +105,7 @@ const StreamingMetricsWeek: FC<QueryStream> = ({ stream }) => {
   );
 };
 
-const BatchMetricsOverview: FC<QueryStream> = ({ stream }) => {
+const BatchMetricsOverview: FC<StreamMetricsProps> = ({ stream }) => {
   const { metrics, total, latest, error } = useMonthlyData(stream.streamID);
   return (
     <>
@@ -117,7 +121,7 @@ const BatchMetricsOverview: FC<QueryStream> = ({ stream }) => {
   );
 };
 
-const BatchMetricsWeek: FC<QueryStream> = ({ stream }) => {
+const BatchMetricsWeek: FC<StreamMetricsProps> = ({ stream }) => {
   const { metrics, total, latest, error } = useWeeklyData(stream.streamID);
   return (
     <>

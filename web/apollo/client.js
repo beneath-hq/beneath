@@ -87,6 +87,8 @@ const dataIdFromObject = (object) => {
       return `${object.billingPlanID}`;
     case "BillingInfo":
       return `${object.organizationID}`;
+    case "StreamIndex":
+      return `${object.indexID}`;
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);
@@ -97,11 +99,7 @@ const dataIdFromObject = (object) => {
 const makeErrorHook = ({ token, res }) => {
   return ({ graphQLErrors, networkError }) => {
     // redirect to /auth/logout if error is `unauthenticated` (probably means the user logged out in another window)
-    if (
-      networkError &&
-      networkError.result &&
-      networkError.result.error.match(/authentication error.*/)
-    ) {
+    if (networkError?.result?.error?.match(/authentication error.*/)) {
       if (token) {
         if (process.browser) {
           document.location.href = "/auth/logout";

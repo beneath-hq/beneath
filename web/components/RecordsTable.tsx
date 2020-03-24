@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export interface RecordsTableProps {
   schema: Schema;
-  records: Records_records_data[] | null;
+  records: any[] | null;
   highlightTopN?: number;
 }
 
@@ -98,13 +98,13 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, highlightTopN })
           {records &&
             records.map((record, idx) => (
               <TableRow
-                key={record.recordID}
+                key={record["@meta"].key + record["@meta"].timestamp}
                 className={clsx(classes.row, idx < (highlightTopN || 0) && classes.highlightedCell)}
                 hover={true}
               >
                 {schema.columns.map((column) => (
                   <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
-                    {column.formatRecord(record.data)}
+                    {column.formatRecord(record)}
                   </TableCell>
                 ))}
               </TableRow>

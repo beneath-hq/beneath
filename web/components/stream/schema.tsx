@@ -4,18 +4,27 @@ import dynamic from "next/dynamic";
 import numbro from "numbro";
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
-import { QueryStream_stream } from "../../apollo/types/QueryStream";
+import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
 
 type TimeagoType = "timeago";
 
 export class Schema {
+  public streamID: string;
   public keyFields: string[];
   public avroSchema: avro.types.RecordType;
   public columns: Column[];
   public includeTimestamp: boolean;
 
-  constructor(stream: QueryStream_stream, includeTimestamp: boolean) {
-    this.keyFields = stream.keyFields;
+  constructor(stream: QueryStream_streamByProjectAndName, includeTimestamp: boolean) {
+    this.streamID = stream.streamID;
+    this.keyFields = [];
+    for (const index of stream.streamIndexes) {
+      if (index.primary) {
+        this.keyFields = index.fields;
+        break;
+      }
+    }
+
     this.avroSchema = avro.Type.forSchema(JSON.parse(stream.avroSchema), {
       logicalTypes: {
         decimal: Decimal,

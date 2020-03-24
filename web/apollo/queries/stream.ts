@@ -6,21 +6,30 @@ export const QUERY_STREAM = gql`
       streamID
       name
       description
-      schema
-      avroSchema
-      keyFields
-      external
-      batch
-      manual
+      createdOn
+      updatedOn
       project {
         projectID
         name
       }
-      currentStreamInstanceID
+
+      schema
+      avroSchema
+      streamIndexes {
+        indexID
+        fields
+        primary
+        normalize
+      }
+
+      external
+      batch
+      manual
+      retentionSeconds
+
       instancesCreatedCount
       instancesCommittedCount
-      createdOn
-      updatedOn
+      currentStreamInstanceID
     }
   }
 `;

@@ -6,7 +6,7 @@ import { Button, makeStyles, Theme, Typography } from "@material-ui/core";
 
 import { CREATE_RECORDS } from "../../apollo/queries/local/records";
 import { CreateRecords, CreateRecordsVariables } from "../../apollo/types/CreateRecords";
-import { QueryStream } from "../../apollo/types/QueryStream";
+import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
 import CodeTextField from "../CodeTextField";
 import { Schema } from "./schema";
 
@@ -35,14 +35,18 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const ExploreStream: FC<QueryStream> = ({ stream }) => {
+interface WriteStreamProps {
+  stream: QueryStream_streamByProjectAndName;
+}
+
+const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {
   const schema = new Schema(stream, false);
 
   const [values, setValues] = React.useState({
     json: "",
     error: "",
     flash: "",
-  } as { json: string, error: string | null, flash: string | null });
+  } as { json: string; error: string | null; flash: string | null });
 
   const [createRecords, { loading, error }] = useMutation<CreateRecords, CreateRecordsVariables>(CREATE_RECORDS, {
     onCompleted: ({ createRecords }) => {
@@ -52,7 +56,7 @@ const ExploreStream: FC<QueryStream> = ({ stream }) => {
         setValues({
           json: "",
           error: "",
-          flash: "Successfully wrote record, but it might take a while before it shows up."
+          flash: "Successfully wrote record, but it might take a while before it shows up.",
         });
       }
     },

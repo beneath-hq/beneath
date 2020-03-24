@@ -14,7 +14,6 @@ import Page from "../components/Page";
 import PageTitle from "../components/PageTitle";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
-import StreamLatest from "../components/stream/StreamLatest";
 import StreamMetrics from "../components/stream/StreamMetrics";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
@@ -34,7 +33,7 @@ const StreamPage = () => {
 
   if (loading) {
     return (
-      <Page title="Project" subheader>
+      <Page title="Stream" subheader>
         <Loading justify="center" />
       </Page>
     );
@@ -44,20 +43,16 @@ const StreamPage = () => {
     return <ErrorPage apolloError={error} />;
   }
 
-  const { stream } = data;
+  const stream = data.streamByProjectAndName;
 
   const tabs = [];
 
   if (stream.currentStreamInstanceID) {
-    tabs.push({ value: "lookup", label: "Lookup", render: () => <ExploreStream stream={stream} /> });
-
-    if (!stream.batch) {
-      tabs.push({
-        value: "streaming",
-        label: "Streaming",
-        render: (props: SubrouteTabProps) => <StreamLatest stream={stream} {...props} />,
-      });
-    }
+    tabs.push({
+      value: "lookup",
+      label: "Lookup",
+      render: (props: SubrouteTabProps) => <ExploreStream stream={stream} {...props} />,
+    });
   }
 
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });

@@ -1,38 +1,48 @@
 /* tslint:disable */
 /* eslint-disable */
+// @generated
 // This file was automatically generated and should not be edited.
 
 // ====================================================
 // GraphQL query operation: QueryStream
 // ====================================================
 
-export interface QueryStream_stream_project {
+export interface QueryStream_streamByProjectAndName_project {
   __typename: "Project";
   projectID: string;
   name: string;
 }
 
-export interface QueryStream_stream {
+export interface QueryStream_streamByProjectAndName_streamIndexes {
+  __typename: "StreamIndex";
+  indexID: string;
+  fields: string[];
+  primary: boolean;
+  normalize: boolean;
+}
+
+export interface QueryStream_streamByProjectAndName {
   __typename: "Stream";
   streamID: string;
   name: string;
   description: string | null;
+  createdOn: ControlTime;
+  updatedOn: ControlTime;
+  project: QueryStream_streamByProjectAndName_project;
   schema: string;
   avroSchema: string;
-  keyFields: string[];
+  streamIndexes: QueryStream_streamByProjectAndName_streamIndexes[];
   external: boolean;
   batch: boolean;
   manual: boolean;
-  project: QueryStream_stream_project;
-  currentStreamInstanceID: ControlUUID | null;
+  retentionSeconds: number;
   instancesCreatedCount: number;
   instancesCommittedCount: number;
-  createdOn: ControlTime;
-  updatedOn: ControlTime;
+  currentStreamInstanceID: ControlUUID | null;
 }
 
 export interface QueryStream {
-  stream: QueryStream_stream;
+  streamByProjectAndName: QueryStream_streamByProjectAndName;
 }
 
 export interface QueryStreamVariables {
