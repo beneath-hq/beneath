@@ -1,5 +1,5 @@
 import { BrowserClient, BrowserQueryResult } from "beneath";
-import { useState, useEffect, FC } from "react";
+import { useEffect, useState } from "react";
 
 const DEFAULT_PAGE_SIZE = 25;
 const DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MILLISECONDS = 250;
@@ -45,15 +45,17 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
   const [subscribed, setSubscribed] = useState<boolean>(false);
   const [fetchMore, setFetchMore] = useState<FetchMoreFunction | undefined>(undefined);
 
-  // fetch (and maybe subscribe to) records (will get called every time opts change)
+  // // fetch (and maybe subscribe to) records (will get called every time opts change)
   useEffect(() => {
     // cancellation mechanism for async/await (dirty, but it works)
+    // tslint:disable-next-line: max-line-length
     // see: https://dev.to/n1ru4l/homebrew-react-hooks-useasynceffect-or-how-to-handle-async-operations-with-useeffect-1fa8
     let cancel = false;
 
     // async scope
     (async () => {
       // set default fields in opts for optional fields
+      opts = { ...opts }; // clone
       opts.view = opts.view || "lookup";
       opts.pageSize = opts.pageSize || DEFAULT_PAGE_SIZE;
       if (opts.subscribe) {
@@ -90,7 +92,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       } else {
         throw Error(`invalid view option <${opts.view}>`);
       }
-      if (cancel) return; // check cancel after await
+      if (cancel) { return; } // check cancel after await
 
       // parse query
       if (query.error) {
@@ -104,7 +106,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // fetch first page and set
       const read = await cursor.readNext({ pageSize: opts.pageSize });
-      if (cancel) return; // check cancel after await
+      if (cancel) { return; } // check cancel after await
       if (read.error) {
         setError(read.error);
         return;
@@ -116,9 +118,9 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       setLoading(false);
 
       // set fetch more
-      setFetchMore(async (fetchMoreOpts?: FetchMoreOptions) => {
+      const fetchMore = async (fetchMoreOpts?: FetchMoreOptions) => {
         // stop if cancelled
-        if (cancel) return;
+        if (cancel) { return; }
 
         // normalize fetchMoreOpts
         fetchMoreOpts = fetchMoreOpts || {};
@@ -129,42 +131,52 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
         // fetch more
         const read = await cursor.readNext({ pageSize: fetchMoreOpts.pageSize });
-        if (cancel) return; // check cancel after await
+        if (cancel) { return; } // check cancel after await
         if (read.error) {
           setError(read.error);
           return;
         }
 
         // append to records
-        if (opts.view === "latest") {
-          const prepend = read.records || [];
-          records = prepend.concat(records);
-          setRecords(records);
-        } else {
-          records = records.concat(read.records || []);
-          setRecords(records);
-        }
+        records = records.concat(read.records || []);
+        setRecords(records);
 
         // done loading
         setLoading(false);
         return;
-      });
+      };
+      setFetchMore(() => fetchMore);
 
-      // done if not asked to subscribe changes
-      if (!opts.subscribe) {
-        return;
-      }
+      // // prepend
+      // const prepend = read.records || [];
+      // records = prepend.concat(records);
+      // setRecords(records);
 
-      // done if can't subscrine
-      if (opts.filter) { // || !cursor.canSubscribeChanges
-        return;
-      }
+      //     // done if not asked to subscribe changes
+      //     if (!opts.subscribe) {
+      //       return;
+      //     }
 
-      
+      //     // done if can't subscrine
+      //     if (opts.filter) { // || !cursor.canSubscribeChanges
+      //       return;
+      //     }
+
+      //     // TODO
+      //     // establish subscription
+      //     // set it to be cancelled in cleanup()
+      //     // setSubscribed(true)
+      //     // respect pollAtMostEveryMilliseconds and renderAtMostEveryMilliseconds
+      //     // on latest: prepend, on log: append, on lookup: merge on @meta.key or insert lexicographically sorted
+      //     // stream.subscribeChanges({
+      //     //   pollAtMostEveryMilliseconds: opts.subscribe.pollAtMostEveryMilliseconds,
+      //     //   onRecords: (records: TRecord[]) => {
+      //     //     return;
+      //     //   },
+      //     // });
 
       // done with effect
     })();
-
 
     return function cleanup() {
       // cancel async/await
@@ -180,7 +192,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // cleanup subscription
     };
-  }, [opts]);
+  }, [opts.secret, opts.project, opts.stream, opts.instanceID, opts.view, opts.filter, opts.pageSize, opts.subscribe]);
 
   // UseRecordsResult
   return {
