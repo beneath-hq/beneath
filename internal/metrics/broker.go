@@ -192,7 +192,7 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.Quo
 		panic(err)
 	} else {
 		// load from store
-		usage := GetCurrentUsage(ctx, entityID)
+		usage = GetCurrentUsage(ctx, entityID)
 
 		// write back to cache
 		b.usageCache.Set(cacheKey, usage)
