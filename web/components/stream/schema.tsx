@@ -13,10 +13,10 @@ export class Schema {
   public keyFields: string[];
   public avroSchema: avro.types.RecordType;
   public columns: Column[];
-  public includeTimestamp: boolean;
 
-  constructor(stream: QueryStream_streamByProjectAndName, includeTimestamp: boolean) {
+  constructor(stream: QueryStream_streamByProjectAndName) {
     this.streamID = stream.streamID;
+
     this.keyFields = [];
     for (const index of stream.streamIndexes) {
       if (index.primary) {
@@ -31,25 +31,21 @@ export class Schema {
         "timestamp-millis": DateType,
       },
     }) as avro.types.RecordType;
-    this.columns = [];
-    this.includeTimestamp = includeTimestamp;
-    for (const field of this.avroSchema.fields) {
+
+    this.columns = this.avroSchema.fields.map((field) => {
       const key = this.keyFields.includes(field.name);
-      this.columns.push(new Column(field.name, field.name, field.type, key, (field as any).doc));
-    }
-    if (includeTimestamp) {
-      this.columns.push(new Column("@meta.timestamp", "Time ago", "timeago", false, undefined));
-    }
+      return new Column(field.name, field.name, field.type, key, (field as any).doc);
+    });
   }
 
-  public makeUniqueIdentifier(record: any) {
-    let id = this.keyFields.reduce((prev, curr) => `${prev}-${record[curr]}`, "");
-    if (this.includeTimestamp) {
-      const ts = record["@meta"] && record["@meta"].timestamp;
-      id = `${id}-${ts || ""}`;
+  public getColumns(includeTimestamp?: boolean) {
+    if (includeTimestamp) {
+      const tsCol = new Column("@meta.timestamp", "Time ago", "timeago", false, undefined);
+      return this.columns.concat([tsCol]);
     }
-    return id;
+    return this.columns;
   }
+
 }
 
 class Column {
