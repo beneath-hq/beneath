@@ -45,9 +45,8 @@ func FindBillingPlan(ctx context.Context, billingPlanID uuid.UUID) *BillingPlan 
 // FindDefaultBillingPlan returns the current default billing plan
 func FindDefaultBillingPlan(ctx context.Context) *BillingPlan {
 	// find default plan
-	var plan *BillingPlan
-	err := hub.DB.Model(plan).Where(`"default" = true`).Select()
-
+	plan := &BillingPlan{}
+	err := hub.DB.ModelContext(ctx, plan).Where(`"default" = true`).Select()
 	// if none was found
 	if !AssertFoundOne(err) {
 		// create a default plan (OnConflict works because there's a unique index on default = true)
@@ -73,8 +72,8 @@ func makeDefaultBillingPlan() *BillingPlan {
 		Description:     "Default Billing Plan",
 		Currency:        DollarCurrency,
 		Period:          timeutil.PeriodMonth,
-		SeatReadQuota:   10000000000,
-		SeatWriteQuota:  10000000000,
+		SeatReadQuota:   2000000000,
+		SeatWriteQuota:  1000000000,
 		Personal:        true,
 		PrivateProjects: false,
 	}

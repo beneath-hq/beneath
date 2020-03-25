@@ -35,6 +35,7 @@ setuptools.setup(
     'fastavro<0.22,>=0.21.4',
     'grpcio==1.27.2',
     'pandas==1.0.1',
+    'protobuf==3.11.3',
     'six==1.14.0',
   ],
   extras_require={

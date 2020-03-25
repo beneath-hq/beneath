@@ -2,10 +2,9 @@
 
 This repository contains the source code for the [Beneath](https://beneath.dev) Python library. Learn more about it with these resources:
 
-- [Getting started tutorial](https://about.beneath.dev/docs)
-- [Reading data from Beneath](https://about.beneath.dev/docs)
-- [Using the command-line interface](https://about.beneath.dev/docs)
-- [Writing new analytics to Beneath](https://about.beneath.dev/docs)
+- [Overview](https://about.beneath.dev/docs/overview/)
+- [Reading data from Beneath](https://about.beneath.dev/docs/read-data-into-jupyter-notebook/)
+- [Writing data to Beneath](https://about.beneath.dev/docs/write-data-from-your-app/)
 
 ### Providing feedback
 
@@ -32,5 +31,5 @@ Here are some good resources to understand how Python packages work:
 ### Publishing to PyPI
 
 - Increment the version number in `beneath/_version.py`
-- Run `./pypi-publish.sh`
+- Run `./tools/pypi-publish.sh`
 - Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/gateway/grpc/client_version.go`
