@@ -79,38 +79,39 @@ const Explore: NextPage = () => {
     <Page title="Explore" contentMarginTop="hero">
       <Container maxWidth="lg">
         <Typography className={classes.title} component="h1" variant="h1" align="center" gutterBottom>
-          Become a Blockchain Analytics Power User
+          Welcome to the Beneath Data Terminal
         </Typography>
       </Container>
       <Container maxWidth="md">
         <Typography className={classes.subtitle} component="h2" variant="subtitle1" align="center" gutterBottom>
-          Beneath is a full blockchain data science platform. From real-time data extraction to analytics development,
-          deployment, integration and public sharing.
+          Discover real-time data streams that have been shared with the world. Consume public data or create your own stream in minutes.
+          {/* Beneath is a full data science platform. From real-time data extraction to analytics development,
+          deployment, integration and public sharing. */}
         </Typography>
         {loggedIn && (
           <Grid className={classes.buttons} container spacing={2} justify="center">
             <Grid item>
               <Button
                 size="medium"
-                color="default"
+                color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
-                href={`https://about.beneath.network/docs/`}
+                href={`https://about.beneath.dev/docs/read-data-into-jupyter-notebook/`}
               >
                 Docs
               </Button>
             </Grid>
-            <Grid item>
+            {/* <Grid item>
               <Button
                 size="medium"
                 color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.primaryButton)}
-                href={`mailto:contact@beneath.network`}
+                href={`mailto:contact@beneath.dev`}
               >
                 Get in touch
               </Button>
-            </Grid>
+            </Grid> */}
           </Grid>
         )}
         {!loggedIn && (
@@ -121,7 +122,7 @@ const Explore: NextPage = () => {
                 color="default"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
-                href={`https://about.beneath.network/docs/`}
+                href={`https://about.beneath.dev/docs/`}
               >
                 Overview
               </Button>
