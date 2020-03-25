@@ -40,7 +40,7 @@ interface WriteStreamProps {
 }
 
 const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {
-  const schema = new Schema(stream, false);
+  const schema = new Schema(stream);
 
   const [values, setValues] = React.useState({
     json: "",

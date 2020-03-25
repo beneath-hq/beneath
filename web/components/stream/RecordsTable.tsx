@@ -15,8 +15,8 @@ import {
 import InfoIcon from "@material-ui/icons/InfoSharp";
 import SearchIcon from "@material-ui/icons/SearchSharp";
 
-import { Records_records_data } from "../apollo/types/Records";
-import { Schema } from "./stream/schema";
+import { Record } from "./beneath";
+import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -60,18 +60,19 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export interface RecordsTableProps {
   schema: Schema;
-  records: any[] | null;
-  highlightTopN?: number;
+  records: Record[];
+  showTimestamps?: boolean;
 }
 
-const RecordsTable: FC<RecordsTableProps> = ({ schema, records, highlightTopN }) => {
+const RecordsTable: FC<RecordsTableProps> = ({ schema, records, showTimestamps }) => {
   const classes = useStyles();
+  const columns = schema.getColumns(showTimestamps);
   return (
     <div className={classes.paper}>
       <Table className={classes.table} size="small">
         <TableHead>
           <TableRow>
-            {schema.columns.map((column) => (
+            {columns.map((column) => (
               <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
                 <div className={classes.headerCellContent}>
                   <span className={classes.headerCellText}>{column.displayName}</span>
@@ -95,20 +96,19 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, highlightTopN })
           </TableRow>
         </TableHead>
         <TableBody>
-          {records &&
-            records.map((record, idx) => (
-              <TableRow
-                key={record["@meta"].key + record["@meta"].timestamp}
-                className={clsx(classes.row, idx < (highlightTopN || 0) && classes.highlightedCell)}
-                hover={true}
-              >
-                {schema.columns.map((column) => (
-                  <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
-                    {column.formatRecord(record)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+          {records.map((record, idx) => (
+            <TableRow
+              key={`${record["@meta"].key};${record["@meta"].timestamp}`}
+              className={clsx(classes.row, record["@meta"].flash && classes.highlightedCell)}
+              hover={true}
+            >
+              {columns.map((column) => (
+                <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
+                  {column.formatRecord(record)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>

@@ -1,6 +1,6 @@
 export type StreamQualifier = { instanceID: string } | { project: string, stream: string };
 
-export type Record<TRecord> = TRecord & {
+export type Record<TRecord = any> = TRecord & {
   "@meta": {
     key: string;
     timestamp: number;

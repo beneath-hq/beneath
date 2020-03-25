@@ -16,6 +16,7 @@ export interface SelectFieldProps {
   label?: string;
   required?: boolean;
   helperText?: string;
+  controlClass?: string;
   onChange?: (
     event: React.ChangeEvent<{ name?: string; value: unknown }>,
     child: React.ReactNode,
@@ -24,7 +25,7 @@ export interface SelectFieldProps {
 
 const SelectField: FC<SelectFieldProps> = (props) => {
   return (
-    <FormControl>
+    <FormControl className={props.controlClass}>
       {props.label && (
         <InputLabel htmlFor={props.id} required={props.required}>
           {props.label}
