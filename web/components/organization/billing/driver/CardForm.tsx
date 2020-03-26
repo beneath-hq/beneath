@@ -185,12 +185,14 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
     return
   }
 
-  const handleDialogClose = () => {
+  const handleDialogClose = async () => {
     if (values.stripeError || values.error) {
       setValues({ ...values, ...{ dialog: false } })
     }
     if (values.status !== null && values.status === "succeeded") {
-      // possibly wait a few seconds
+      // wait a second so that we can process Stripe's response and show the user their new billing plan
+      await new Promise(r => setTimeout(r, 1000));
+      
       // reload the page to get new customer billing info from Stripe
       window.location.reload(true)
     }
