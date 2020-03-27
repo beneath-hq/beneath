@@ -59,14 +59,15 @@ class Client:
     self,
     project: str,
     stream: str,
-    where: str = None,
+    # pylint: disable=redefined-builtin
+    filter: str = None,
     to_dataframe=True,
     batch_size=DEFAULT_READ_BATCH_SIZE,
     max_bytes=DEFAULT_READ_ALL_MAX_BYTES,
     warn_max=True,
   ) -> Iterable[Mapping]:
     stream = await self.find_stream(project=project, stream=stream)
-    cursor = await stream.query(where=where)
+    cursor = await stream.query_index(filter=filter)
     res = await cursor.fetch_all(
       max_bytes=max_bytes,
       batch_size=batch_size,
@@ -80,12 +81,13 @@ class Client:
     project: str,
     stream: str,
     callback: Callable[[Mapping], Awaitable[None]],
-    where: str = None,
+    # pylint: disable=redefined-builtin
+    filter: str = None,
     max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
     max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
   ):
     stream = await self.find_stream(project=project, stream=stream)
-    cursor = await stream.query(where=where)
+    cursor = await stream.query_index(filter=filter)
     await cursor.subscribe_replay(
       callback=callback,
       max_prefetched_records=max_prefetched_records,
@@ -97,12 +99,11 @@ class Client:
     project: str,
     stream: str,
     callback: Callable[[Mapping], Awaitable[None]],
-    where: str = None,
     max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
     max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
   ):
     stream = await self.find_stream(project=project, stream=stream)
-    cursor = await stream.query(where=where)
+    cursor = await stream.query_index()
     await cursor.subscribe_replay(
       callback=callback,
       max_prefetched_records=max_prefetched_records,

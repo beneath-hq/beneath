@@ -14,45 +14,35 @@ class GatewayStub(object):
     Args:
       channel: A grpc.Channel.
     """
-    self.Query = channel.unary_unary(
-        '/gateway.Gateway/Query',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.QueryRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryResponse.FromString,
+    self.Ping = channel.unary_unary(
+        '/gateway.v1.Gateway/Ping',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.PingRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.PingResponse.FromString,
+        )
+    self.Write = channel.unary_unary(
+        '/gateway.v1.Gateway/Write',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.WriteRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.WriteResponse.FromString,
+        )
+    self.QueryLog = channel.unary_unary(
+        '/gateway.v1.Gateway/QueryLog',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.QueryLogRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryLogResponse.FromString,
+        )
+    self.QueryIndex = channel.unary_unary(
+        '/gateway.v1.Gateway/QueryIndex',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.QueryIndexRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryIndexResponse.FromString,
         )
     self.Read = channel.unary_unary(
-        '/gateway.Gateway/Read',
+        '/gateway.v1.Gateway/Read',
         request_serializer=beneath_dot_proto_dot_gateway__pb2.ReadRequest.SerializeToString,
         response_deserializer=beneath_dot_proto_dot_gateway__pb2.ReadResponse.FromString,
         )
     self.Subscribe = channel.unary_stream(
-        '/gateway.Gateway/Subscribe',
+        '/gateway.v1.Gateway/Subscribe',
         request_serializer=beneath_dot_proto_dot_gateway__pb2.SubscribeRequest.SerializeToString,
         response_deserializer=beneath_dot_proto_dot_gateway__pb2.SubscribeResponse.FromString,
-        )
-    self.Peek = channel.unary_unary(
-        '/gateway.Gateway/Peek',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.PeekRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.PeekResponse.FromString,
-        )
-    self.Repartition = channel.unary_unary(
-        '/gateway.Gateway/Repartition',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.RepartitionRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.RepartitionResponse.FromString,
-        )
-    self.Write = channel.unary_unary(
-        '/gateway.Gateway/Write',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.WriteRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.WriteResponse.FromString,
-        )
-    self.Ping = channel.unary_unary(
-        '/gateway.Gateway/Ping',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.PingRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.PingResponse.FromString,
-        )
-    self.GetStream = channel.unary_unary(
-        '/gateway.Gateway/GetStream',
-        request_serializer=beneath_dot_proto_dot_gateway__pb2.GetStreamRequest.SerializeToString,
-        response_deserializer=beneath_dot_proto_dot_gateway__pb2.GetStreamResponse.FromString,
         )
 
 
@@ -60,7 +50,28 @@ class GatewayServicer(object):
   # missing associated documentation comment in .proto file
   pass
 
-  def Query(self, request, context):
+  def Ping(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def Write(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def QueryLog(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def QueryIndex(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -81,48 +92,28 @@ class GatewayServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
-  def Peek(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def Repartition(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def Write(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def Ping(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def GetStream(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
 
 def add_GatewayServicer_to_server(servicer, server):
   rpc_method_handlers = {
-      'Query': grpc.unary_unary_rpc_method_handler(
-          servicer.Query,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.QueryResponse.SerializeToString,
+      'Ping': grpc.unary_unary_rpc_method_handler(
+          servicer.Ping,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.PingRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.PingResponse.SerializeToString,
+      ),
+      'Write': grpc.unary_unary_rpc_method_handler(
+          servicer.Write,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.WriteRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.WriteResponse.SerializeToString,
+      ),
+      'QueryLog': grpc.unary_unary_rpc_method_handler(
+          servicer.QueryLog,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryLogRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.QueryLogResponse.SerializeToString,
+      ),
+      'QueryIndex': grpc.unary_unary_rpc_method_handler(
+          servicer.QueryIndex,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryIndexRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.QueryIndexResponse.SerializeToString,
       ),
       'Read': grpc.unary_unary_rpc_method_handler(
           servicer.Read,
@@ -134,32 +125,7 @@ def add_GatewayServicer_to_server(servicer, server):
           request_deserializer=beneath_dot_proto_dot_gateway__pb2.SubscribeRequest.FromString,
           response_serializer=beneath_dot_proto_dot_gateway__pb2.SubscribeResponse.SerializeToString,
       ),
-      'Peek': grpc.unary_unary_rpc_method_handler(
-          servicer.Peek,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.PeekRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.PeekResponse.SerializeToString,
-      ),
-      'Repartition': grpc.unary_unary_rpc_method_handler(
-          servicer.Repartition,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.RepartitionRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.RepartitionResponse.SerializeToString,
-      ),
-      'Write': grpc.unary_unary_rpc_method_handler(
-          servicer.Write,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.WriteRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.WriteResponse.SerializeToString,
-      ),
-      'Ping': grpc.unary_unary_rpc_method_handler(
-          servicer.Ping,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.PingRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.PingResponse.SerializeToString,
-      ),
-      'GetStream': grpc.unary_unary_rpc_method_handler(
-          servicer.GetStream,
-          request_deserializer=beneath_dot_proto_dot_gateway__pb2.GetStreamRequest.FromString,
-          response_serializer=beneath_dot_proto_dot_gateway__pb2.GetStreamResponse.SerializeToString,
-      ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-      'gateway.Gateway', rpc_method_handlers)
+      'gateway.v1.Gateway', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))

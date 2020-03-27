@@ -140,22 +140,26 @@ class Connection:
       metadata=self.request_metadata,
     )
 
-  async def query(self, instance_id: uuid.UUID, where: str) -> gateway_pb2.QueryResponse:
+  async def query_log(self, instance_id: uuid.UUID, peek: bool) -> gateway_pb2.QueryLogResponse:
     await self.ensure_connected()
-    return await self.stub.Query(
-      gateway_pb2.QueryRequest(
+    return await self.stub.QueryLog(
+      gateway_pb2.QueryLogRequest(
         instance_id=instance_id.bytes,
-        filter=where,
-        compact=True,
         partitions=1,
+        peek=peek,
       ),
       metadata=self.request_metadata,
     )
 
-  async def peek(self, instance_id: uuid.UUID) -> gateway_pb2.PeekResponse:
+  # pylint: disable=redefined-builtin
+  async def query_index(self, instance_id: uuid.UUID, filter: str) -> gateway_pb2.QueryIndexResponse:
     await self.ensure_connected()
-    return await self.stub.Peek(
-      gateway_pb2.PeekRequest(instance_id=instance_id.bytes),
+    return await self.stub.QueryIndex(
+      gateway_pb2.QueryIndexRequest(
+        instance_id=instance_id.bytes,
+        partitions=1,
+        filter=filter,
+      ),
       metadata=self.request_metadata,
     )
 

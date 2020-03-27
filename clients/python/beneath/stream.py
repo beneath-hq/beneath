@@ -154,25 +154,24 @@ class Stream:
 
   # READING RECORDS
 
-  async def query(self, where: str = None) -> Cursor:
+  async def query_log(self, peek: bool = False) -> Cursor:
     if not self._loaded:
       await self._ensure_loaded()
-    resp = await self.client.connection.query(instance_id=self.instance_id, where=where)
+    resp = await self.client.connection.query_log(instance_id=self.instance_id, peek=peek)
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
     changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
     return Cursor(stream=self, instance_id=self.instance_id, replay_cursor=replay, changes_cursor=changes)
 
-  async def peek(self) -> Cursor:
+  # pylint: disable=redefined-builtin
+  async def query_index(self, filter: str = None) -> Cursor:
     if not self._loaded:
       await self._ensure_loaded()
-    resp = await self.client.connection.peek(instance_id=self.instance_id)
-    return Cursor(
-      stream=self,
-      instance_id=self.instance_id,
-      replay_cursor=resp.rewind_cursor,
-      changes_cursor=resp.change_cursor,
-    )
+    resp = await self.client.connection.query_index(instance_id=self.instance_id, filter=filter)
+    assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
+    replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
+    changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
+    return Cursor(stream=self, instance_id=self.instance_id, replay_cursor=replay, changes_cursor=changes)
 
   # MISC
 
