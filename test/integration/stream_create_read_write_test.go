@@ -3,7 +3,6 @@ package integration
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/mr-tron/base58"
 
 	"github.com/gorilla/websocket"
 	"github.com/linkedin/goavro/v2"
@@ -91,60 +92,90 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
 
-	// test grpc data replay (both compact and uncompact)
-	for _, compact := range []bool{false, true} {
-		// if compact, output will be sorted by primary key, so we must sort the expected values
-		expected := recordsPB
-		if compact {
-			expected = make([]*pb.Record, len(recordsPB))
-			copy(expected, recordsPB)
-			sort.Slice(expected, func(i, j int) bool {
-				return bytes.Compare(expected[i].AvroData, expected[j].AvroData) < 0
-			})
-		}
+	// test grpc log data replay
+	res4, err := gatewayGRPC.QueryLog(grpcContext(), &pb.QueryLogRequest{
+		InstanceId: instanceID.Bytes(),
+		Partitions: 1,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res4.ReplayCursors, 1)
+	assert.Len(t, res4.ChangeCursors, 1)
 
-		res4, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
-			InstanceId: instanceID.Bytes(),
-			Compact:    compact,
-			Partitions: 1,
-		})
-		assert.Nil(t, err)
-		assert.Len(t, res4.ReplayCursors, 1)
-		assert.Len(t, res4.ChangeCursors, 1)
+	// read data page 1
+	n := 30
+	res5, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res4.ReplayCursors[0],
+		Limit:      int32(n),
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res5.Records, n)
+	assert.True(t, len(res5.NextCursor) > 1)
+	for idx, record := range res5.Records {
+		assert.Equal(t, record.AvroData, recordsPB[idx].AvroData)
+	}
 
-		// read data page 1
-		n := 30
-		res5, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-			InstanceId: instanceID.Bytes(),
-			Cursor:     res4.ReplayCursors[0],
-			Limit:      int32(n),
-		})
-		assert.Nil(t, err)
-		assert.Len(t, res5.Records, n)
-		assert.True(t, len(res5.NextCursor) > 1)
-		for idx, record := range res5.Records {
-			assert.Equal(t, record.AvroData, expected[idx].AvroData)
-		}
+	// read data page 2 (ends here)
+	res6, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res5.NextCursor,
+		Limit:      int32(n),
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res6.Records, 20)
+	assert.Len(t, res6.NextCursor, 0)
+	for idx, record := range res6.Records {
+		assert.Equal(t, record.AvroData, recordsPB[n+idx].AvroData)
+	}
 
-		// read data page 2 (ends here)
-		res6, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-			InstanceId: instanceID.Bytes(),
-			Cursor:     res5.NextCursor,
-			Limit:      int32(n),
-		})
-		assert.Nil(t, err)
-		assert.Len(t, res6.Records, 20)
-		assert.Len(t, res6.NextCursor, 0)
-		for idx, record := range res6.Records {
-			assert.Equal(t, record.AvroData, expected[n+idx].AvroData)
-		}
+	// test grpc index data replay
+
+	// output will be sorted by primary key, so we must sort the expected values
+	expected := make([]*pb.Record, len(recordsPB))
+	copy(expected, recordsPB)
+	sort.Slice(expected, func(i, j int) bool {
+		return bytes.Compare(expected[i].AvroData, expected[j].AvroData) < 0
+	})
+
+	res4a, err := gatewayGRPC.QueryIndex(grpcContext(), &pb.QueryIndexRequest{
+		InstanceId: instanceID.Bytes(),
+		Partitions: 1,
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res4a.ReplayCursors, 1)
+	assert.Len(t, res4a.ChangeCursors, 1)
+
+	// read data page 1
+	n = 30
+	res5a, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res4a.ReplayCursors[0],
+		Limit:      int32(n),
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res5a.Records, n)
+	assert.True(t, len(res5a.NextCursor) > 1)
+	for idx, record := range res5a.Records {
+		assert.Equal(t, record.AvroData, expected[idx].AvroData)
+	}
+
+	// read data page 2 (ends here)
+	res6a, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
+		InstanceId: instanceID.Bytes(),
+		Cursor:     res5a.NextCursor,
+		Limit:      int32(n),
+	})
+	assert.Nil(t, err)
+	assert.Len(t, res6a.Records, 20)
+	assert.Len(t, res6a.NextCursor, 0)
+	for idx, record := range res6a.Records {
+		assert.Equal(t, record.AvroData, expected[n+idx].AvroData)
 	}
 
 	// query filtered data with grpc
-	res7, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+	res7, err := gatewayGRPC.QueryIndex(grpcContext(), &pb.QueryIndexRequest{
 		InstanceId: instanceID.Bytes(),
 		Filter:     `{ "a": { "_prefix": "b" } }`,
-		Compact:    true,
 		Partitions: 1,
 	})
 	assert.Nil(t, err)
@@ -180,9 +211,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	assert.Nil(t, res9.NextCursor)
 
 	// get cursor for subscriptions
-	res10, err := gatewayGRPC.Query(grpcContext(), &pb.QueryRequest{
+	res10, err := gatewayGRPC.QueryIndex(grpcContext(), &pb.QueryIndexRequest{
 		InstanceId: instanceID.Bytes(),
-		Compact:    true,
 		Partitions: 1,
 	})
 	assert.Nil(t, err)
@@ -218,7 +248,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		u := url.URL{
 			Scheme: "ws",
 			Host:   gatewayHTTP.Listener.Addr().String(),
-			Path:   "/ws",
+			Path:   "/v1/ws",
 		}
 		c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 		panicIf(err)
@@ -266,7 +296,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// write http records
 	subset = foobars[split:]
-	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("streams/instances/%s", instanceID.String()), subset)
+	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("v1/streams/instances/%s", instanceID.String()), subset)
 	assert.Equal(t, 200, code)
 	assert.Nil(t, res11)
 
@@ -278,9 +308,10 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	assert.True(t, recvWS)
 
 	// query change data with REST
-	changeCursor := base64.StdEncoding.EncodeToString(res10.ChangeCursors[0])
-	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`projects/test/streams/foo-bar?cursor=%s`, changeCursor), nil)
+	changeCursor := base58.Encode(res10.ChangeCursors[0])
+	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/projects/test/streams/foo-bar?cursor=%s`, changeCursor), nil)
 	assert.Equal(t, 200, code)
+	assert.Len(t, res12["meta"], 2)
 	assert.Len(t, res12["data"], 50)
 	for idx, recordT := range res12["data"].([]interface{}) {
 		record := recordT.(map[string]interface{})
@@ -296,8 +327,9 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// query some filtered data with REST
 	// expecting four records (two from each subset)
-	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
+	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
 	assert.Equal(t, 200, code)
+	assert.Len(t, res13["meta"], 2)
 	assert.Len(t, res13["data"], 4)
 	for _, recordT := range res13["data"].([]interface{}) {
 		record := recordT.(map[string]interface{})
@@ -368,15 +400,19 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	assert.Equal(t, int(userMetrics[0]["writeRecords"].(float64)), len(foobars))
 
 	// test peek by grpc
-	res16, err := gatewayGRPC.Peek(grpcContext(), &pb.PeekRequest{InstanceId: instanceID.Bytes()})
+	res16, err := gatewayGRPC.QueryLog(grpcContext(), &pb.QueryLogRequest{
+		InstanceId: instanceID.Bytes(),
+		Peek:       true,
+		Partitions: 1,
+	})
 	assert.Nil(t, err)
-	assert.NotNil(t, res16.RewindCursor)
-	assert.NotNil(t, res16.ChangeCursor)
+	assert.Len(t, res16.ReplayCursors, 1)
+	assert.Len(t, res16.ChangeCursors, 1)
 
 	// read peek page 1
 	res17, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
 		InstanceId: instanceID.Bytes(),
-		Cursor:     res16.RewindCursor,
+		Cursor:     res16.ReplayCursors[0],
 		Limit:      60,
 	})
 	assert.Nil(t, err)

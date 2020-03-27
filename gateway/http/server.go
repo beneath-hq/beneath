@@ -50,21 +50,14 @@ func Handler() http.Handler {
 
 	// create websocket broker and start accepting new connections on /ws
 	wss := ws.NewBroker(&wsServer{})
-	handler.Method("GET", "/ws", httputil.AppHandler(wss.HTTPHandler))
+	handler.Method("GET", "/v1/ws", httputil.AppHandler(wss.HTTPHandler))
 
 	// write endpoint
-	handler.Method("POST", "/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
+	handler.Method("POST", "/v1/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	// query endpoints
-	handler.Method("GET", "/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
-	handler.Method("GET", "/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
-
-	// peek endpoints
-	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/peek", httputil.AppHandler(getLatestFromProjectAndStream))
-	handler.Method("GET", "/streams/instances/{instanceID}/peek", httputil.AppHandler(getLatestFromInstance))
-
-	// meta endpoint
-	handler.Method("GET", "/projects/{projectName}/streams/{streamName}/details", httputil.AppHandler(getStreamDetails))
+	handler.Method("GET", "/v1/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
+	handler.Method("GET", "/v1/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	return handler
 }
@@ -77,33 +70,6 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		log.S.Errorf("Gateway database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-}
-
-type writeTags struct {
-	InstanceID   string `json:"instance_id,omitempty"`
-	RecordsCount int    `json:"records,omitempty"`
-	BytesWritten int    `json:"bytes,omitempty"`
-}
-
-type queryTags struct {
-	InstanceID string `json:"instance_id,omitempty"`
-	Limit      int    `json:"limit,omitempty"`
-	Cursor     []byte `json:"cursor,omitempty"`
-	Filter     string `json:"filter,omitempty"`
-	Compact    bool   `json:"compact,omitempty"`
-	Partitions int32  `json:"partitions,omitempty"`
-	BytesRead  int    `json:"bytes,omitempty"`
-}
-
-type peekTags struct {
-	InstanceID string `json:"instance_id,omitempty"`
-	Limit      int    `json:"limit,omitempty"`
-	BytesRead  int    `json:"bytes,omitempty"`
-}
-
-type streamDetailsTags struct {
-	Stream  string `json:"stream"`
-	Project string `json:"project"`
 }
 
 func parseLimit(val interface{}) (int, error) {

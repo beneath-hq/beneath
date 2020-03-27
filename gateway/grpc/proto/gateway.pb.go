@@ -71,70 +71,250 @@ func (m *Record) GetTimestamp() int64 {
 	return 0
 }
 
-type QueryRequest struct {
-	InstanceId           []byte   `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	Filter               string   `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
-	Compact              bool     `protobuf:"varint,3,opt,name=compact,proto3" json:"compact,omitempty"`
-	Partitions           int32    `protobuf:"varint,4,opt,name=partitions,proto3" json:"partitions,omitempty"`
+type PingRequest struct {
+	ClientId             string   `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientVersion        string   `protobuf:"bytes,2,opt,name=client_version,json=clientVersion,proto3" json:"client_version,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryRequest) Reset()         { *m = QueryRequest{} }
-func (m *QueryRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryRequest) ProtoMessage()    {}
-func (*QueryRequest) Descriptor() ([]byte, []int) {
+func (m *PingRequest) Reset()         { *m = PingRequest{} }
+func (m *PingRequest) String() string { return proto.CompactTextString(m) }
+func (*PingRequest) ProtoMessage()    {}
+func (*PingRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1fb7a2419213bb16, []int{1}
 }
 
-func (m *QueryRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryRequest.Unmarshal(m, b)
+func (m *PingRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PingRequest.Unmarshal(m, b)
 }
-func (m *QueryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryRequest.Marshal(b, m, deterministic)
+func (m *PingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PingRequest.Marshal(b, m, deterministic)
 }
-func (m *QueryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryRequest.Merge(m, src)
+func (m *PingRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PingRequest.Merge(m, src)
 }
-func (m *QueryRequest) XXX_Size() int {
-	return xxx_messageInfo_QueryRequest.Size(m)
+func (m *PingRequest) XXX_Size() int {
+	return xxx_messageInfo_PingRequest.Size(m)
 }
-func (m *QueryRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryRequest.DiscardUnknown(m)
+func (m *PingRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_PingRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryRequest proto.InternalMessageInfo
+var xxx_messageInfo_PingRequest proto.InternalMessageInfo
 
-func (m *QueryRequest) GetInstanceId() []byte {
+func (m *PingRequest) GetClientId() string {
+	if m != nil {
+		return m.ClientId
+	}
+	return ""
+}
+
+func (m *PingRequest) GetClientVersion() string {
+	if m != nil {
+		return m.ClientVersion
+	}
+	return ""
+}
+
+type PingResponse struct {
+	Authenticated        bool     `protobuf:"varint,1,opt,name=authenticated,proto3" json:"authenticated,omitempty"`
+	VersionStatus        string   `protobuf:"bytes,2,opt,name=version_status,json=versionStatus,proto3" json:"version_status,omitempty"`
+	RecommendedVersion   string   `protobuf:"bytes,3,opt,name=recommended_version,json=recommendedVersion,proto3" json:"recommended_version,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PingResponse) Reset()         { *m = PingResponse{} }
+func (m *PingResponse) String() string { return proto.CompactTextString(m) }
+func (*PingResponse) ProtoMessage()    {}
+func (*PingResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{2}
+}
+
+func (m *PingResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PingResponse.Unmarshal(m, b)
+}
+func (m *PingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PingResponse.Marshal(b, m, deterministic)
+}
+func (m *PingResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PingResponse.Merge(m, src)
+}
+func (m *PingResponse) XXX_Size() int {
+	return xxx_messageInfo_PingResponse.Size(m)
+}
+func (m *PingResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_PingResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PingResponse proto.InternalMessageInfo
+
+func (m *PingResponse) GetAuthenticated() bool {
+	if m != nil {
+		return m.Authenticated
+	}
+	return false
+}
+
+func (m *PingResponse) GetVersionStatus() string {
+	if m != nil {
+		return m.VersionStatus
+	}
+	return ""
+}
+
+func (m *PingResponse) GetRecommendedVersion() string {
+	if m != nil {
+		return m.RecommendedVersion
+	}
+	return ""
+}
+
+type WriteRequest struct {
+	InstanceId           []byte    `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	Records              []*Record `protobuf:"bytes,2,rep,name=records,proto3" json:"records,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
+}
+
+func (m *WriteRequest) Reset()         { *m = WriteRequest{} }
+func (m *WriteRequest) String() string { return proto.CompactTextString(m) }
+func (*WriteRequest) ProtoMessage()    {}
+func (*WriteRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{3}
+}
+
+func (m *WriteRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteRequest.Unmarshal(m, b)
+}
+func (m *WriteRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteRequest.Marshal(b, m, deterministic)
+}
+func (m *WriteRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteRequest.Merge(m, src)
+}
+func (m *WriteRequest) XXX_Size() int {
+	return xxx_messageInfo_WriteRequest.Size(m)
+}
+func (m *WriteRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteRequest proto.InternalMessageInfo
+
+func (m *WriteRequest) GetInstanceId() []byte {
 	if m != nil {
 		return m.InstanceId
 	}
 	return nil
 }
 
-func (m *QueryRequest) GetFilter() string {
+func (m *WriteRequest) GetRecords() []*Record {
 	if m != nil {
-		return m.Filter
+		return m.Records
 	}
-	return ""
+	return nil
 }
 
-func (m *QueryRequest) GetCompact() bool {
-	if m != nil {
-		return m.Compact
-	}
-	return false
+type WriteResponse struct {
+	WriteId              []byte   `protobuf:"bytes,1,opt,name=write_id,json=writeId,proto3" json:"write_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryRequest) GetPartitions() int32 {
+func (m *WriteResponse) Reset()         { *m = WriteResponse{} }
+func (m *WriteResponse) String() string { return proto.CompactTextString(m) }
+func (*WriteResponse) ProtoMessage()    {}
+func (*WriteResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{4}
+}
+
+func (m *WriteResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteResponse.Unmarshal(m, b)
+}
+func (m *WriteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteResponse.Marshal(b, m, deterministic)
+}
+func (m *WriteResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteResponse.Merge(m, src)
+}
+func (m *WriteResponse) XXX_Size() int {
+	return xxx_messageInfo_WriteResponse.Size(m)
+}
+func (m *WriteResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteResponse proto.InternalMessageInfo
+
+func (m *WriteResponse) GetWriteId() []byte {
+	if m != nil {
+		return m.WriteId
+	}
+	return nil
+}
+
+type QueryLogRequest struct {
+	InstanceId           []byte   `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	Partitions           int32    `protobuf:"varint,2,opt,name=partitions,proto3" json:"partitions,omitempty"`
+	Peek                 bool     `protobuf:"varint,3,opt,name=peek,proto3" json:"peek,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *QueryLogRequest) Reset()         { *m = QueryLogRequest{} }
+func (m *QueryLogRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryLogRequest) ProtoMessage()    {}
+func (*QueryLogRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{5}
+}
+
+func (m *QueryLogRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryLogRequest.Unmarshal(m, b)
+}
+func (m *QueryLogRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryLogRequest.Marshal(b, m, deterministic)
+}
+func (m *QueryLogRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLogRequest.Merge(m, src)
+}
+func (m *QueryLogRequest) XXX_Size() int {
+	return xxx_messageInfo_QueryLogRequest.Size(m)
+}
+func (m *QueryLogRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLogRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLogRequest proto.InternalMessageInfo
+
+func (m *QueryLogRequest) GetInstanceId() []byte {
+	if m != nil {
+		return m.InstanceId
+	}
+	return nil
+}
+
+func (m *QueryLogRequest) GetPartitions() int32 {
 	if m != nil {
 		return m.Partitions
 	}
 	return 0
 }
 
-type QueryResponse struct {
+func (m *QueryLogRequest) GetPeek() bool {
+	if m != nil {
+		return m.Peek
+	}
+	return false
+}
+
+type QueryLogResponse struct {
 	ReplayCursors        [][]byte `protobuf:"bytes,1,rep,name=replay_cursors,json=replayCursors,proto3" json:"replay_cursors,omitempty"`
 	ChangeCursors        [][]byte `protobuf:"bytes,2,rep,name=change_cursors,json=changeCursors,proto3" json:"change_cursors,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -142,39 +322,141 @@ type QueryResponse struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryResponse) Reset()         { *m = QueryResponse{} }
-func (m *QueryResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryResponse) ProtoMessage()    {}
-func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{2}
+func (m *QueryLogResponse) Reset()         { *m = QueryLogResponse{} }
+func (m *QueryLogResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryLogResponse) ProtoMessage()    {}
+func (*QueryLogResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{6}
 }
 
-func (m *QueryResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryResponse.Unmarshal(m, b)
+func (m *QueryLogResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryLogResponse.Unmarshal(m, b)
 }
-func (m *QueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryResponse.Marshal(b, m, deterministic)
+func (m *QueryLogResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryLogResponse.Marshal(b, m, deterministic)
 }
-func (m *QueryResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryResponse.Merge(m, src)
+func (m *QueryLogResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLogResponse.Merge(m, src)
 }
-func (m *QueryResponse) XXX_Size() int {
-	return xxx_messageInfo_QueryResponse.Size(m)
+func (m *QueryLogResponse) XXX_Size() int {
+	return xxx_messageInfo_QueryLogResponse.Size(m)
 }
-func (m *QueryResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryResponse.DiscardUnknown(m)
+func (m *QueryLogResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLogResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryLogResponse proto.InternalMessageInfo
 
-func (m *QueryResponse) GetReplayCursors() [][]byte {
+func (m *QueryLogResponse) GetReplayCursors() [][]byte {
 	if m != nil {
 		return m.ReplayCursors
 	}
 	return nil
 }
 
-func (m *QueryResponse) GetChangeCursors() [][]byte {
+func (m *QueryLogResponse) GetChangeCursors() [][]byte {
+	if m != nil {
+		return m.ChangeCursors
+	}
+	return nil
+}
+
+type QueryIndexRequest struct {
+	InstanceId           []byte   `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	Partitions           int32    `protobuf:"varint,2,opt,name=partitions,proto3" json:"partitions,omitempty"`
+	Filter               string   `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *QueryIndexRequest) Reset()         { *m = QueryIndexRequest{} }
+func (m *QueryIndexRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryIndexRequest) ProtoMessage()    {}
+func (*QueryIndexRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{7}
+}
+
+func (m *QueryIndexRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryIndexRequest.Unmarshal(m, b)
+}
+func (m *QueryIndexRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryIndexRequest.Marshal(b, m, deterministic)
+}
+func (m *QueryIndexRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIndexRequest.Merge(m, src)
+}
+func (m *QueryIndexRequest) XXX_Size() int {
+	return xxx_messageInfo_QueryIndexRequest.Size(m)
+}
+func (m *QueryIndexRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIndexRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryIndexRequest proto.InternalMessageInfo
+
+func (m *QueryIndexRequest) GetInstanceId() []byte {
+	if m != nil {
+		return m.InstanceId
+	}
+	return nil
+}
+
+func (m *QueryIndexRequest) GetPartitions() int32 {
+	if m != nil {
+		return m.Partitions
+	}
+	return 0
+}
+
+func (m *QueryIndexRequest) GetFilter() string {
+	if m != nil {
+		return m.Filter
+	}
+	return ""
+}
+
+type QueryIndexResponse struct {
+	ReplayCursors        [][]byte `protobuf:"bytes,1,rep,name=replay_cursors,json=replayCursors,proto3" json:"replay_cursors,omitempty"`
+	ChangeCursors        [][]byte `protobuf:"bytes,2,rep,name=change_cursors,json=changeCursors,proto3" json:"change_cursors,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *QueryIndexResponse) Reset()         { *m = QueryIndexResponse{} }
+func (m *QueryIndexResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryIndexResponse) ProtoMessage()    {}
+func (*QueryIndexResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1fb7a2419213bb16, []int{8}
+}
+
+func (m *QueryIndexResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryIndexResponse.Unmarshal(m, b)
+}
+func (m *QueryIndexResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryIndexResponse.Marshal(b, m, deterministic)
+}
+func (m *QueryIndexResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIndexResponse.Merge(m, src)
+}
+func (m *QueryIndexResponse) XXX_Size() int {
+	return xxx_messageInfo_QueryIndexResponse.Size(m)
+}
+func (m *QueryIndexResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIndexResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryIndexResponse proto.InternalMessageInfo
+
+func (m *QueryIndexResponse) GetReplayCursors() [][]byte {
+	if m != nil {
+		return m.ReplayCursors
+	}
+	return nil
+}
+
+func (m *QueryIndexResponse) GetChangeCursors() [][]byte {
 	if m != nil {
 		return m.ChangeCursors
 	}
@@ -194,7 +476,7 @@ func (m *ReadRequest) Reset()         { *m = ReadRequest{} }
 func (m *ReadRequest) String() string { return proto.CompactTextString(m) }
 func (*ReadRequest) ProtoMessage()    {}
 func (*ReadRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{3}
+	return fileDescriptor_1fb7a2419213bb16, []int{9}
 }
 
 func (m *ReadRequest) XXX_Unmarshal(b []byte) error {
@@ -248,7 +530,7 @@ func (m *ReadResponse) Reset()         { *m = ReadResponse{} }
 func (m *ReadResponse) String() string { return proto.CompactTextString(m) }
 func (*ReadResponse) ProtoMessage()    {}
 func (*ReadResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{4}
+	return fileDescriptor_1fb7a2419213bb16, []int{10}
 }
 
 func (m *ReadResponse) XXX_Unmarshal(b []byte) error {
@@ -295,7 +577,7 @@ func (m *SubscribeRequest) Reset()         { *m = SubscribeRequest{} }
 func (m *SubscribeRequest) String() string { return proto.CompactTextString(m) }
 func (*SubscribeRequest) ProtoMessage()    {}
 func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{5}
+	return fileDescriptor_1fb7a2419213bb16, []int{11}
 }
 
 func (m *SubscribeRequest) XXX_Unmarshal(b []byte) error {
@@ -340,7 +622,7 @@ func (m *SubscribeResponse) Reset()         { *m = SubscribeResponse{} }
 func (m *SubscribeResponse) String() string { return proto.CompactTextString(m) }
 func (*SubscribeResponse) ProtoMessage()    {}
 func (*SubscribeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{6}
+	return fileDescriptor_1fb7a2419213bb16, []int{12}
 }
 
 func (m *SubscribeResponse) XXX_Unmarshal(b []byte) error {
@@ -361,723 +643,67 @@ func (m *SubscribeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SubscribeResponse proto.InternalMessageInfo
 
-type PeekRequest struct {
-	InstanceId           []byte   `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PeekRequest) Reset()         { *m = PeekRequest{} }
-func (m *PeekRequest) String() string { return proto.CompactTextString(m) }
-func (*PeekRequest) ProtoMessage()    {}
-func (*PeekRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{7}
-}
-
-func (m *PeekRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PeekRequest.Unmarshal(m, b)
-}
-func (m *PeekRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PeekRequest.Marshal(b, m, deterministic)
-}
-func (m *PeekRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PeekRequest.Merge(m, src)
-}
-func (m *PeekRequest) XXX_Size() int {
-	return xxx_messageInfo_PeekRequest.Size(m)
-}
-func (m *PeekRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_PeekRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PeekRequest proto.InternalMessageInfo
-
-func (m *PeekRequest) GetInstanceId() []byte {
-	if m != nil {
-		return m.InstanceId
-	}
-	return nil
-}
-
-type PeekResponse struct {
-	RewindCursor         []byte   `protobuf:"bytes,1,opt,name=rewind_cursor,json=rewindCursor,proto3" json:"rewind_cursor,omitempty"`
-	ChangeCursor         []byte   `protobuf:"bytes,2,opt,name=change_cursor,json=changeCursor,proto3" json:"change_cursor,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PeekResponse) Reset()         { *m = PeekResponse{} }
-func (m *PeekResponse) String() string { return proto.CompactTextString(m) }
-func (*PeekResponse) ProtoMessage()    {}
-func (*PeekResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{8}
-}
-
-func (m *PeekResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PeekResponse.Unmarshal(m, b)
-}
-func (m *PeekResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PeekResponse.Marshal(b, m, deterministic)
-}
-func (m *PeekResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PeekResponse.Merge(m, src)
-}
-func (m *PeekResponse) XXX_Size() int {
-	return xxx_messageInfo_PeekResponse.Size(m)
-}
-func (m *PeekResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PeekResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PeekResponse proto.InternalMessageInfo
-
-func (m *PeekResponse) GetRewindCursor() []byte {
-	if m != nil {
-		return m.RewindCursor
-	}
-	return nil
-}
-
-func (m *PeekResponse) GetChangeCursor() []byte {
-	if m != nil {
-		return m.ChangeCursor
-	}
-	return nil
-}
-
-type RepartitionRequest struct {
-	InstanceId           []byte   `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	Partitions           int32    `protobuf:"varint,2,opt,name=partitions,proto3" json:"partitions,omitempty"`
-	ReplayCursors        [][]byte `protobuf:"bytes,3,rep,name=replay_cursors,json=replayCursors,proto3" json:"replay_cursors,omitempty"`
-	ChangeCursors        [][]byte `protobuf:"bytes,4,rep,name=change_cursors,json=changeCursors,proto3" json:"change_cursors,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RepartitionRequest) Reset()         { *m = RepartitionRequest{} }
-func (m *RepartitionRequest) String() string { return proto.CompactTextString(m) }
-func (*RepartitionRequest) ProtoMessage()    {}
-func (*RepartitionRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{9}
-}
-
-func (m *RepartitionRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RepartitionRequest.Unmarshal(m, b)
-}
-func (m *RepartitionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RepartitionRequest.Marshal(b, m, deterministic)
-}
-func (m *RepartitionRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepartitionRequest.Merge(m, src)
-}
-func (m *RepartitionRequest) XXX_Size() int {
-	return xxx_messageInfo_RepartitionRequest.Size(m)
-}
-func (m *RepartitionRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RepartitionRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RepartitionRequest proto.InternalMessageInfo
-
-func (m *RepartitionRequest) GetInstanceId() []byte {
-	if m != nil {
-		return m.InstanceId
-	}
-	return nil
-}
-
-func (m *RepartitionRequest) GetPartitions() int32 {
-	if m != nil {
-		return m.Partitions
-	}
-	return 0
-}
-
-func (m *RepartitionRequest) GetReplayCursors() [][]byte {
-	if m != nil {
-		return m.ReplayCursors
-	}
-	return nil
-}
-
-func (m *RepartitionRequest) GetChangeCursors() [][]byte {
-	if m != nil {
-		return m.ChangeCursors
-	}
-	return nil
-}
-
-type RepartitionResponse struct {
-	ReplayCursors        [][]byte `protobuf:"bytes,1,rep,name=replay_cursors,json=replayCursors,proto3" json:"replay_cursors,omitempty"`
-	ChangeCursors        [][]byte `protobuf:"bytes,2,rep,name=change_cursors,json=changeCursors,proto3" json:"change_cursors,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RepartitionResponse) Reset()         { *m = RepartitionResponse{} }
-func (m *RepartitionResponse) String() string { return proto.CompactTextString(m) }
-func (*RepartitionResponse) ProtoMessage()    {}
-func (*RepartitionResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{10}
-}
-
-func (m *RepartitionResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RepartitionResponse.Unmarshal(m, b)
-}
-func (m *RepartitionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RepartitionResponse.Marshal(b, m, deterministic)
-}
-func (m *RepartitionResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepartitionResponse.Merge(m, src)
-}
-func (m *RepartitionResponse) XXX_Size() int {
-	return xxx_messageInfo_RepartitionResponse.Size(m)
-}
-func (m *RepartitionResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RepartitionResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RepartitionResponse proto.InternalMessageInfo
-
-func (m *RepartitionResponse) GetReplayCursors() [][]byte {
-	if m != nil {
-		return m.ReplayCursors
-	}
-	return nil
-}
-
-func (m *RepartitionResponse) GetChangeCursors() [][]byte {
-	if m != nil {
-		return m.ChangeCursors
-	}
-	return nil
-}
-
-type WriteRequest struct {
-	InstanceId           []byte    `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
-	Records              []*Record `protobuf:"bytes,2,rep,name=records,proto3" json:"records,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *WriteRequest) Reset()         { *m = WriteRequest{} }
-func (m *WriteRequest) String() string { return proto.CompactTextString(m) }
-func (*WriteRequest) ProtoMessage()    {}
-func (*WriteRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{11}
-}
-
-func (m *WriteRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_WriteRequest.Unmarshal(m, b)
-}
-func (m *WriteRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_WriteRequest.Marshal(b, m, deterministic)
-}
-func (m *WriteRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WriteRequest.Merge(m, src)
-}
-func (m *WriteRequest) XXX_Size() int {
-	return xxx_messageInfo_WriteRequest.Size(m)
-}
-func (m *WriteRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_WriteRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_WriteRequest proto.InternalMessageInfo
-
-func (m *WriteRequest) GetInstanceId() []byte {
-	if m != nil {
-		return m.InstanceId
-	}
-	return nil
-}
-
-func (m *WriteRequest) GetRecords() []*Record {
-	if m != nil {
-		return m.Records
-	}
-	return nil
-}
-
-type WriteResponse struct {
-	WriteId              []byte   `protobuf:"bytes,1,opt,name=write_id,json=writeId,proto3" json:"write_id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *WriteResponse) Reset()         { *m = WriteResponse{} }
-func (m *WriteResponse) String() string { return proto.CompactTextString(m) }
-func (*WriteResponse) ProtoMessage()    {}
-func (*WriteResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{12}
-}
-
-func (m *WriteResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_WriteResponse.Unmarshal(m, b)
-}
-func (m *WriteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_WriteResponse.Marshal(b, m, deterministic)
-}
-func (m *WriteResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WriteResponse.Merge(m, src)
-}
-func (m *WriteResponse) XXX_Size() int {
-	return xxx_messageInfo_WriteResponse.Size(m)
-}
-func (m *WriteResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_WriteResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_WriteResponse proto.InternalMessageInfo
-
-func (m *WriteResponse) GetWriteId() []byte {
-	if m != nil {
-		return m.WriteId
-	}
-	return nil
-}
-
-type PingRequest struct {
-	ClientId             string   `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientVersion        string   `protobuf:"bytes,2,opt,name=client_version,json=clientVersion,proto3" json:"client_version,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PingRequest) Reset()         { *m = PingRequest{} }
-func (m *PingRequest) String() string { return proto.CompactTextString(m) }
-func (*PingRequest) ProtoMessage()    {}
-func (*PingRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{13}
-}
-
-func (m *PingRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PingRequest.Unmarshal(m, b)
-}
-func (m *PingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PingRequest.Marshal(b, m, deterministic)
-}
-func (m *PingRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PingRequest.Merge(m, src)
-}
-func (m *PingRequest) XXX_Size() int {
-	return xxx_messageInfo_PingRequest.Size(m)
-}
-func (m *PingRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_PingRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PingRequest proto.InternalMessageInfo
-
-func (m *PingRequest) GetClientId() string {
-	if m != nil {
-		return m.ClientId
-	}
-	return ""
-}
-
-func (m *PingRequest) GetClientVersion() string {
-	if m != nil {
-		return m.ClientVersion
-	}
-	return ""
-}
-
-type PingResponse struct {
-	Authenticated        bool     `protobuf:"varint,1,opt,name=authenticated,proto3" json:"authenticated,omitempty"`
-	VersionStatus        string   `protobuf:"bytes,2,opt,name=version_status,json=versionStatus,proto3" json:"version_status,omitempty"`
-	RecommendedVersion   string   `protobuf:"bytes,3,opt,name=recommended_version,json=recommendedVersion,proto3" json:"recommended_version,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PingResponse) Reset()         { *m = PingResponse{} }
-func (m *PingResponse) String() string { return proto.CompactTextString(m) }
-func (*PingResponse) ProtoMessage()    {}
-func (*PingResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{14}
-}
-
-func (m *PingResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PingResponse.Unmarshal(m, b)
-}
-func (m *PingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PingResponse.Marshal(b, m, deterministic)
-}
-func (m *PingResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PingResponse.Merge(m, src)
-}
-func (m *PingResponse) XXX_Size() int {
-	return xxx_messageInfo_PingResponse.Size(m)
-}
-func (m *PingResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PingResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PingResponse proto.InternalMessageInfo
-
-func (m *PingResponse) GetAuthenticated() bool {
-	if m != nil {
-		return m.Authenticated
-	}
-	return false
-}
-
-func (m *PingResponse) GetVersionStatus() string {
-	if m != nil {
-		return m.VersionStatus
-	}
-	return ""
-}
-
-func (m *PingResponse) GetRecommendedVersion() string {
-	if m != nil {
-		return m.RecommendedVersion
-	}
-	return ""
-}
-
-type GetStreamRequest struct {
-	ProjectName          string   `protobuf:"bytes,1,opt,name=project_name,json=projectName,proto3" json:"project_name,omitempty"`
-	StreamName           string   `protobuf:"bytes,2,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GetStreamRequest) Reset()         { *m = GetStreamRequest{} }
-func (m *GetStreamRequest) String() string { return proto.CompactTextString(m) }
-func (*GetStreamRequest) ProtoMessage()    {}
-func (*GetStreamRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{15}
-}
-
-func (m *GetStreamRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetStreamRequest.Unmarshal(m, b)
-}
-func (m *GetStreamRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetStreamRequest.Marshal(b, m, deterministic)
-}
-func (m *GetStreamRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetStreamRequest.Merge(m, src)
-}
-func (m *GetStreamRequest) XXX_Size() int {
-	return xxx_messageInfo_GetStreamRequest.Size(m)
-}
-func (m *GetStreamRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetStreamRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetStreamRequest proto.InternalMessageInfo
-
-func (m *GetStreamRequest) GetProjectName() string {
-	if m != nil {
-		return m.ProjectName
-	}
-	return ""
-}
-
-func (m *GetStreamRequest) GetStreamName() string {
-	if m != nil {
-		return m.StreamName
-	}
-	return ""
-}
-
-type GetStreamResponse struct {
-	ProjectId            []byte                `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ProjectName          string                `protobuf:"bytes,2,opt,name=project_name,json=projectName,proto3" json:"project_name,omitempty"`
-	StreamId             []byte                `protobuf:"bytes,3,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
-	StreamName           string                `protobuf:"bytes,4,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
-	CurrentInstanceId    []byte                `protobuf:"bytes,5,opt,name=current_instance_id,json=currentInstanceId,proto3" json:"current_instance_id,omitempty"`
-	Public               bool                  `protobuf:"varint,6,opt,name=public,proto3" json:"public,omitempty"`
-	External             bool                  `protobuf:"varint,7,opt,name=external,proto3" json:"external,omitempty"`
-	Batch                bool                  `protobuf:"varint,8,opt,name=batch,proto3" json:"batch,omitempty"`
-	Manual               bool                  `protobuf:"varint,9,opt,name=manual,proto3" json:"manual,omitempty"`
-	Committed            bool                  `protobuf:"varint,10,opt,name=committed,proto3" json:"committed,omitempty"`
-	RetentionSeconds     int32                 `protobuf:"varint,11,opt,name=retention_seconds,json=retentionSeconds,proto3" json:"retention_seconds,omitempty"`
-	AvroSchema           string                `protobuf:"bytes,12,opt,name=avro_schema,json=avroSchema,proto3" json:"avro_schema,omitempty"`
-	Indexes              []*StreamIndexDetails `protobuf:"bytes,13,rep,name=indexes,proto3" json:"indexes,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
-}
-
-func (m *GetStreamResponse) Reset()         { *m = GetStreamResponse{} }
-func (m *GetStreamResponse) String() string { return proto.CompactTextString(m) }
-func (*GetStreamResponse) ProtoMessage()    {}
-func (*GetStreamResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{16}
-}
-
-func (m *GetStreamResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetStreamResponse.Unmarshal(m, b)
-}
-func (m *GetStreamResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetStreamResponse.Marshal(b, m, deterministic)
-}
-func (m *GetStreamResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetStreamResponse.Merge(m, src)
-}
-func (m *GetStreamResponse) XXX_Size() int {
-	return xxx_messageInfo_GetStreamResponse.Size(m)
-}
-func (m *GetStreamResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetStreamResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetStreamResponse proto.InternalMessageInfo
-
-func (m *GetStreamResponse) GetProjectId() []byte {
-	if m != nil {
-		return m.ProjectId
-	}
-	return nil
-}
-
-func (m *GetStreamResponse) GetProjectName() string {
-	if m != nil {
-		return m.ProjectName
-	}
-	return ""
-}
-
-func (m *GetStreamResponse) GetStreamId() []byte {
-	if m != nil {
-		return m.StreamId
-	}
-	return nil
-}
-
-func (m *GetStreamResponse) GetStreamName() string {
-	if m != nil {
-		return m.StreamName
-	}
-	return ""
-}
-
-func (m *GetStreamResponse) GetCurrentInstanceId() []byte {
-	if m != nil {
-		return m.CurrentInstanceId
-	}
-	return nil
-}
-
-func (m *GetStreamResponse) GetPublic() bool {
-	if m != nil {
-		return m.Public
-	}
-	return false
-}
-
-func (m *GetStreamResponse) GetExternal() bool {
-	if m != nil {
-		return m.External
-	}
-	return false
-}
-
-func (m *GetStreamResponse) GetBatch() bool {
-	if m != nil {
-		return m.Batch
-	}
-	return false
-}
-
-func (m *GetStreamResponse) GetManual() bool {
-	if m != nil {
-		return m.Manual
-	}
-	return false
-}
-
-func (m *GetStreamResponse) GetCommitted() bool {
-	if m != nil {
-		return m.Committed
-	}
-	return false
-}
-
-func (m *GetStreamResponse) GetRetentionSeconds() int32 {
-	if m != nil {
-		return m.RetentionSeconds
-	}
-	return 0
-}
-
-func (m *GetStreamResponse) GetAvroSchema() string {
-	if m != nil {
-		return m.AvroSchema
-	}
-	return ""
-}
-
-func (m *GetStreamResponse) GetIndexes() []*StreamIndexDetails {
-	if m != nil {
-		return m.Indexes
-	}
-	return nil
-}
-
-type StreamIndexDetails struct {
-	IndexId              []byte   `protobuf:"bytes,1,opt,name=index_id,json=indexId,proto3" json:"index_id,omitempty"`
-	Fields               []string `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
-	Primary              bool     `protobuf:"varint,3,opt,name=primary,proto3" json:"primary,omitempty"`
-	Normalize            bool     `protobuf:"varint,4,opt,name=normalize,proto3" json:"normalize,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StreamIndexDetails) Reset()         { *m = StreamIndexDetails{} }
-func (m *StreamIndexDetails) String() string { return proto.CompactTextString(m) }
-func (*StreamIndexDetails) ProtoMessage()    {}
-func (*StreamIndexDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1fb7a2419213bb16, []int{17}
-}
-
-func (m *StreamIndexDetails) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StreamIndexDetails.Unmarshal(m, b)
-}
-func (m *StreamIndexDetails) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StreamIndexDetails.Marshal(b, m, deterministic)
-}
-func (m *StreamIndexDetails) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StreamIndexDetails.Merge(m, src)
-}
-func (m *StreamIndexDetails) XXX_Size() int {
-	return xxx_messageInfo_StreamIndexDetails.Size(m)
-}
-func (m *StreamIndexDetails) XXX_DiscardUnknown() {
-	xxx_messageInfo_StreamIndexDetails.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StreamIndexDetails proto.InternalMessageInfo
-
-func (m *StreamIndexDetails) GetIndexId() []byte {
-	if m != nil {
-		return m.IndexId
-	}
-	return nil
-}
-
-func (m *StreamIndexDetails) GetFields() []string {
-	if m != nil {
-		return m.Fields
-	}
-	return nil
-}
-
-func (m *StreamIndexDetails) GetPrimary() bool {
-	if m != nil {
-		return m.Primary
-	}
-	return false
-}
-
-func (m *StreamIndexDetails) GetNormalize() bool {
-	if m != nil {
-		return m.Normalize
-	}
-	return false
-}
-
 func init() {
-	proto.RegisterType((*Record)(nil), "gateway.Record")
-	proto.RegisterType((*QueryRequest)(nil), "gateway.QueryRequest")
-	proto.RegisterType((*QueryResponse)(nil), "gateway.QueryResponse")
-	proto.RegisterType((*ReadRequest)(nil), "gateway.ReadRequest")
-	proto.RegisterType((*ReadResponse)(nil), "gateway.ReadResponse")
-	proto.RegisterType((*SubscribeRequest)(nil), "gateway.SubscribeRequest")
-	proto.RegisterType((*SubscribeResponse)(nil), "gateway.SubscribeResponse")
-	proto.RegisterType((*PeekRequest)(nil), "gateway.PeekRequest")
-	proto.RegisterType((*PeekResponse)(nil), "gateway.PeekResponse")
-	proto.RegisterType((*RepartitionRequest)(nil), "gateway.RepartitionRequest")
-	proto.RegisterType((*RepartitionResponse)(nil), "gateway.RepartitionResponse")
-	proto.RegisterType((*WriteRequest)(nil), "gateway.WriteRequest")
-	proto.RegisterType((*WriteResponse)(nil), "gateway.WriteResponse")
-	proto.RegisterType((*PingRequest)(nil), "gateway.PingRequest")
-	proto.RegisterType((*PingResponse)(nil), "gateway.PingResponse")
-	proto.RegisterType((*GetStreamRequest)(nil), "gateway.GetStreamRequest")
-	proto.RegisterType((*GetStreamResponse)(nil), "gateway.GetStreamResponse")
-	proto.RegisterType((*StreamIndexDetails)(nil), "gateway.StreamIndexDetails")
+	proto.RegisterType((*Record)(nil), "gateway.v1.Record")
+	proto.RegisterType((*PingRequest)(nil), "gateway.v1.PingRequest")
+	proto.RegisterType((*PingResponse)(nil), "gateway.v1.PingResponse")
+	proto.RegisterType((*WriteRequest)(nil), "gateway.v1.WriteRequest")
+	proto.RegisterType((*WriteResponse)(nil), "gateway.v1.WriteResponse")
+	proto.RegisterType((*QueryLogRequest)(nil), "gateway.v1.QueryLogRequest")
+	proto.RegisterType((*QueryLogResponse)(nil), "gateway.v1.QueryLogResponse")
+	proto.RegisterType((*QueryIndexRequest)(nil), "gateway.v1.QueryIndexRequest")
+	proto.RegisterType((*QueryIndexResponse)(nil), "gateway.v1.QueryIndexResponse")
+	proto.RegisterType((*ReadRequest)(nil), "gateway.v1.ReadRequest")
+	proto.RegisterType((*ReadResponse)(nil), "gateway.v1.ReadResponse")
+	proto.RegisterType((*SubscribeRequest)(nil), "gateway.v1.SubscribeRequest")
+	proto.RegisterType((*SubscribeResponse)(nil), "gateway.v1.SubscribeResponse")
 }
 
 func init() { proto.RegisterFile("gateway/grpc/proto/gateway.proto", fileDescriptor_1fb7a2419213bb16) }
 
 var fileDescriptor_1fb7a2419213bb16 = []byte{
-	// 1004 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x5f, 0x8f, 0xdb, 0x44,
-	0x10, 0x3f, 0x27, 0x97, 0x4b, 0x3c, 0x71, 0xa0, 0xb7, 0xd7, 0x56, 0x6e, 0x52, 0x20, 0x18, 0x90,
-	0x42, 0x81, 0x04, 0x15, 0x55, 0xea, 0x33, 0x3d, 0x51, 0x05, 0x24, 0xd4, 0x3a, 0x52, 0x41, 0x27,
-	0x50, 0xb4, 0xb1, 0x87, 0x64, 0xc1, 0xff, 0x58, 0xaf, 0x7b, 0x77, 0xbc, 0x20, 0xde, 0xf9, 0x16,
-	0x7c, 0x19, 0x3e, 0x14, 0x0f, 0x68, 0xff, 0xd8, 0xd9, 0x24, 0x27, 0x74, 0x08, 0xf1, 0x14, 0xcd,
-	0x6f, 0xc6, 0xbf, 0xfd, 0xcd, 0xce, 0xec, 0x4c, 0x60, 0xbc, 0xa6, 0x02, 0x2f, 0xe9, 0xf5, 0x6c,
-	0xcd, 0x8b, 0x68, 0x56, 0xf0, 0x5c, 0xe4, 0x33, 0x03, 0x4d, 0x95, 0x45, 0xba, 0xc6, 0x0c, 0x9e,
-	0xc1, 0x49, 0x88, 0x51, 0xce, 0x63, 0x32, 0x02, 0x97, 0xbe, 0xe6, 0xf9, 0x32, 0xa6, 0x82, 0xfa,
-	0xce, 0xd8, 0x99, 0x78, 0x61, 0x4f, 0x02, 0xe7, 0x54, 0x50, 0xf2, 0x10, 0x5c, 0xc1, 0x52, 0x2c,
-	0x05, 0x4d, 0x0b, 0xbf, 0x35, 0x76, 0x26, 0xed, 0x70, 0x0b, 0x04, 0xbf, 0x39, 0xe0, 0xbd, 0xac,
-	0x90, 0x5f, 0x87, 0xf8, 0x73, 0x85, 0xa5, 0x20, 0xef, 0x40, 0x9f, 0x65, 0xa5, 0xa0, 0x59, 0x84,
-	0x4b, 0x16, 0x1b, 0x36, 0xa8, 0xa1, 0x79, 0x4c, 0xee, 0xc3, 0xc9, 0x0f, 0x2c, 0x11, 0xc8, 0x15,
-	0x99, 0x1b, 0x1a, 0x8b, 0xf8, 0xd0, 0x8d, 0xf2, 0xb4, 0xa0, 0x91, 0xf0, 0xdb, 0x63, 0x67, 0xd2,
-	0x0b, 0x6b, 0x93, 0xbc, 0x0d, 0x50, 0x50, 0x2e, 0x98, 0x60, 0x79, 0x56, 0xfa, 0xc7, 0x63, 0x67,
-	0xd2, 0x09, 0x2d, 0x24, 0xf8, 0x1e, 0x06, 0x46, 0x42, 0x59, 0xe4, 0x59, 0x89, 0xe4, 0x03, 0x78,
-	0x83, 0x63, 0x91, 0xd0, 0xeb, 0x65, 0x54, 0xf1, 0x32, 0xe7, 0xa5, 0xef, 0x8c, 0xdb, 0x13, 0x2f,
-	0x1c, 0x68, 0xf4, 0x99, 0x06, 0x65, 0x58, 0xb4, 0xa1, 0xd9, 0x1a, 0x9b, 0xb0, 0x96, 0x0e, 0xd3,
-	0xa8, 0x09, 0x0b, 0xbe, 0x83, 0x7e, 0x88, 0x34, 0xfe, 0x37, 0x09, 0x6a, 0x3e, 0x95, 0xa0, 0x17,
-	0x1a, 0x8b, 0xdc, 0x85, 0x4e, 0xc2, 0x52, 0xa6, 0xd3, 0xeb, 0x84, 0xda, 0x08, 0x2e, 0xc0, 0xd3,
-	0xec, 0x46, 0xfb, 0x87, 0xd0, 0xe5, 0xaa, 0x2a, 0x5a, 0x74, 0xff, 0xf1, 0x9b, 0xd3, 0xba, 0x7e,
-	0xba, 0x5a, 0x61, 0xed, 0x97, 0x4a, 0x32, 0xbc, 0x12, 0xcb, 0x9d, 0xd3, 0x40, 0x42, 0x5a, 0x7a,
-	0xf0, 0x15, 0xdc, 0x59, 0x54, 0xab, 0x32, 0xe2, 0x6c, 0x85, 0xff, 0x55, 0x7e, 0x70, 0x06, 0xa7,
-	0x16, 0x99, 0x56, 0x1b, 0x4c, 0xa1, 0xff, 0x02, 0xf1, 0xa7, 0xdb, 0x92, 0x07, 0xdf, 0x82, 0xa7,
-	0xe3, 0x4d, 0xb6, 0xef, 0xc1, 0x80, 0xe3, 0x25, 0xcb, 0xe2, 0x3a, 0x09, 0xfd, 0x89, 0xa7, 0x41,
-	0x9d, 0x86, 0x0c, 0xda, 0xa9, 0x93, 0x11, 0xe6, 0xd9, 0x65, 0x0a, 0xfe, 0x70, 0x80, 0x84, 0xd8,
-	0x74, 0xc5, 0xad, 0xd3, 0xdd, 0x6d, 0xae, 0xd6, 0x7e, 0x73, 0xdd, 0xd0, 0x4b, 0xed, 0xdb, 0xf5,
-	0xd2, 0xf1, 0x4d, 0xbd, 0x14, 0xc1, 0xd9, 0x8e, 0xc8, 0xff, 0xa5, 0x61, 0x2f, 0xc0, 0xfb, 0x86,
-	0x33, 0x71, 0xfb, 0x92, 0x5b, 0x3d, 0xd7, 0xfa, 0xe7, 0x9e, 0x0b, 0x1e, 0xc1, 0xc0, 0x70, 0x1b,
-	0xe9, 0x0f, 0xa0, 0x77, 0x29, 0x81, 0x2d, 0x73, 0x57, 0xd9, 0xf3, 0x38, 0x78, 0x09, 0xfd, 0x17,
-	0x2c, 0x5b, 0xd7, 0x32, 0x46, 0xe0, 0x46, 0x09, 0xc3, 0x4c, 0xd4, 0xa1, 0x6e, 0xd8, 0xd3, 0xc0,
-	0x3c, 0x56, 0xa9, 0x69, 0xe7, 0x6b, 0xe4, 0x25, 0xcb, 0x33, 0x33, 0x1d, 0x06, 0x1a, 0x7d, 0xa5,
-	0xc1, 0xe0, 0x77, 0x07, 0x3c, 0xcd, 0x69, 0x8e, 0x7f, 0x1f, 0x06, 0xb4, 0x12, 0x1b, 0xcc, 0x04,
-	0x8b, 0xa8, 0x40, 0x4d, 0xdc, 0x0b, 0x77, 0x41, 0xc9, 0x6e, 0x68, 0x97, 0xa5, 0xa0, 0xa2, 0x2a,
-	0x6b, 0x76, 0x83, 0x2e, 0x14, 0x48, 0x66, 0x70, 0x26, 0xf3, 0x4c, 0x53, 0xcc, 0x62, 0x8c, 0x1b,
-	0x25, 0x6d, 0x15, 0x4b, 0x2c, 0x57, 0x2d, 0xe7, 0x15, 0xdc, 0x79, 0x8e, 0x62, 0x21, 0x38, 0xd2,
-	0xb4, 0x4e, 0xf3, 0x5d, 0xf0, 0x0a, 0x9e, 0xff, 0x88, 0x91, 0x58, 0x66, 0x34, 0x45, 0x93, 0x69,
-	0xdf, 0x60, 0x5f, 0xd3, 0x14, 0x65, 0x41, 0x4a, 0xf5, 0x8d, 0x8e, 0xd0, 0x5a, 0x40, 0x43, 0x32,
-	0x20, 0xf8, 0xb3, 0x0d, 0xa7, 0x16, 0xb1, 0xc9, 0xf5, 0x2d, 0x80, 0x9a, 0xb9, 0xb9, 0x6c, 0xd7,
-	0x20, 0xf3, 0xf8, 0xe0, 0xe0, 0xd6, 0xe1, 0xc1, 0x23, 0x70, 0xcd, 0xc1, 0x2c, 0x56, 0x69, 0x79,
-	0x61, 0x4f, 0x03, 0xf3, 0x78, 0x5f, 0xd5, 0xf1, 0xbe, 0x2a, 0x32, 0x85, 0xb3, 0xa8, 0xe2, 0x5c,
-	0x55, 0xd0, 0xea, 0xa7, 0x8e, 0xe2, 0x39, 0x35, 0xae, 0xf9, 0xce, 0x24, 0x29, 0xaa, 0x55, 0xc2,
-	0x22, 0xff, 0x44, 0x15, 0xc5, 0x58, 0x64, 0x08, 0x3d, 0xbc, 0x12, 0xc8, 0x33, 0x9a, 0xf8, 0x5d,
-	0xe5, 0x69, 0x6c, 0x39, 0x24, 0x57, 0x54, 0x44, 0x1b, 0xbf, 0xa7, 0x1c, 0xda, 0x90, 0x4c, 0x29,
-	0xcd, 0x2a, 0x9a, 0xf8, 0xae, 0x66, 0xd2, 0x96, 0xdc, 0x4d, 0xb2, 0x26, 0x4c, 0xc8, 0xca, 0x83,
-	0x72, 0x6d, 0x01, 0xf2, 0x11, 0x9c, 0x72, 0x14, 0xb2, 0x0b, 0x64, 0xdd, 0x31, 0xca, 0xb3, 0xb8,
-	0xf4, 0xfb, 0xea, 0x85, 0xdf, 0x69, 0x1c, 0x0b, 0x8d, 0xcb, 0xec, 0xd5, 0x0e, 0x2c, 0xa3, 0x0d,
-	0xa6, 0xd4, 0xf7, 0x74, 0xf6, 0x12, 0x5a, 0x28, 0x84, 0x3c, 0x81, 0x2e, 0xcb, 0x62, 0xbc, 0xc2,
-	0xd2, 0x1f, 0xa8, 0x47, 0x32, 0x6a, 0x1e, 0x89, 0xae, 0xd3, 0x5c, 0x7a, 0xcf, 0x51, 0x50, 0x96,
-	0x94, 0x61, 0x1d, 0x1b, 0xfc, 0x0a, 0xe4, 0xd0, 0x2d, 0x5f, 0x8d, 0x0a, 0xb0, 0x5e, 0x8d, 0xb2,
-	0xeb, 0xfd, 0x88, 0x89, 0x79, 0x8b, 0x6a, 0x3f, 0x4a, 0x4b, 0xee, 0xc7, 0x82, 0xb3, 0x94, 0xf2,
-	0xeb, 0x7a, 0x3f, 0x1a, 0x53, 0xde, 0x42, 0x96, 0xf3, 0x94, 0x26, 0xec, 0x17, 0x5d, 0xb6, 0x5e,
-	0xb8, 0x05, 0x1e, 0xff, 0xd5, 0x86, 0xee, 0x73, 0x2d, 0x94, 0x3c, 0x85, 0x8e, 0xda, 0x94, 0xe4,
-	0x5e, 0xa3, 0xdd, 0x5e, 0xde, 0xc3, 0xfb, 0xfb, 0xb0, 0x19, 0xf3, 0x47, 0xe4, 0x09, 0x1c, 0xcb,
-	0x35, 0x45, 0xee, 0x5a, 0x93, 0xa1, 0xd9, 0x89, 0xc3, 0x7b, 0x7b, 0x68, 0xf3, 0xd9, 0x17, 0xe0,
-	0x36, 0x4b, 0x83, 0x3c, 0xd8, 0x5e, 0xd8, 0xde, 0x56, 0x1a, 0x0e, 0x6f, 0x72, 0xd5, 0x2c, 0x9f,
-	0x3a, 0xf2, 0x78, 0xb9, 0x37, 0xac, 0xe3, 0xad, 0xb5, 0x63, 0x1d, 0x6f, 0x2f, 0x97, 0xe0, 0x88,
-	0x7c, 0x29, 0x57, 0x77, 0x33, 0x6e, 0xc9, 0xc8, 0x92, 0xb9, 0xbf, 0x29, 0x86, 0x0f, 0x6f, 0x76,
-	0x36, 0x5c, 0x4f, 0xa1, 0xa3, 0x26, 0x9f, 0x75, 0x77, 0xf6, 0x94, 0xb5, 0xee, 0x6e, 0x67, 0x40,
-	0xea, 0xbb, 0x93, 0x33, 0xcb, 0x16, 0xbf, 0x1d, 0x8b, 0xb6, 0x78, 0x6b, 0xb0, 0x05, 0x47, 0xe4,
-	0x1c, 0xdc, 0x66, 0x06, 0x58, 0x77, 0xb7, 0x3f, 0x70, 0xac, 0xbb, 0x3b, 0x18, 0x19, 0xc1, 0xd1,
-	0xe7, 0x1f, 0x5f, 0x3c, 0x5a, 0x33, 0xb1, 0xa9, 0x56, 0xd3, 0x28, 0x4f, 0x67, 0x2b, 0xcc, 0x90,
-	0x8a, 0xcd, 0x27, 0x51, 0xce, 0x71, 0x76, 0xf8, 0x57, 0x71, 0x75, 0xa2, 0x7e, 0x3e, 0xfb, 0x3b,
-	0x00, 0x00, 0xff, 0xff, 0xed, 0xe0, 0xf8, 0x88, 0x47, 0x0a, 0x00, 0x00,
+	// 644 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0x6d, 0x4f, 0x13, 0x41,
+	0x10, 0xe6, 0x28, 0x2d, 0xed, 0xb4, 0x45, 0x58, 0x0c, 0x96, 0xf2, 0x62, 0x73, 0x91, 0xa4, 0x21,
+	0xd8, 0x2a, 0x7e, 0x24, 0xf1, 0x83, 0x98, 0x90, 0x46, 0x4c, 0x64, 0x49, 0x34, 0x31, 0x9a, 0xba,
+	0xbd, 0x1b, 0xda, 0x8d, 0xed, 0xde, 0xb9, 0xb7, 0xc7, 0xcb, 0x7f, 0xf0, 0x8f, 0xf8, 0x2f, 0xcd,
+	0xed, 0xde, 0xb5, 0x7b, 0x14, 0x22, 0x89, 0xfa, 0xa9, 0x9d, 0x67, 0xe6, 0x9e, 0x7d, 0x9e, 0xd9,
+	0x99, 0x3b, 0x68, 0x0d, 0x99, 0xc2, 0x2b, 0x76, 0xd3, 0x1d, 0xca, 0xd0, 0xeb, 0x86, 0x32, 0x50,
+	0x41, 0x37, 0x85, 0x3a, 0x3a, 0x22, 0x90, 0x85, 0x97, 0x2f, 0xdd, 0x63, 0x28, 0x51, 0xf4, 0x02,
+	0xe9, 0x93, 0x2d, 0xa8, 0xb0, 0x4b, 0x19, 0xf4, 0x7d, 0xa6, 0x58, 0xc3, 0x69, 0x39, 0xed, 0x1a,
+	0x2d, 0x27, 0xc0, 0x5b, 0xa6, 0x18, 0xd9, 0x86, 0x8a, 0xe2, 0x13, 0x8c, 0x14, 0x9b, 0x84, 0x8d,
+	0xc5, 0x96, 0xd3, 0x2e, 0xd0, 0x19, 0xe0, 0x9e, 0x41, 0xf5, 0x03, 0x17, 0x43, 0x8a, 0x3f, 0x62,
+	0x8c, 0x54, 0xc2, 0xe4, 0x8d, 0x39, 0x0a, 0xd5, 0xe7, 0xbe, 0x66, 0xaa, 0xd0, 0xb2, 0x01, 0x7a,
+	0x3e, 0xd9, 0x83, 0x95, 0x34, 0x79, 0x89, 0x32, 0xe2, 0x81, 0xd0, 0x74, 0x15, 0x5a, 0x37, 0xe8,
+	0x47, 0x03, 0xba, 0x3f, 0x1d, 0xa8, 0x19, 0xce, 0x28, 0x0c, 0x44, 0x84, 0xe4, 0x19, 0xd4, 0x59,
+	0xac, 0x46, 0x28, 0x14, 0xf7, 0x98, 0x42, 0x43, 0x5c, 0xa6, 0x79, 0x30, 0x61, 0x4f, 0x69, 0xfb,
+	0x91, 0x62, 0x2a, 0x8e, 0x32, 0xf6, 0x14, 0x3d, 0xd7, 0x20, 0xe9, 0xc2, 0xba, 0x44, 0x2f, 0x98,
+	0x4c, 0x50, 0xf8, 0xe8, 0x4f, 0x95, 0x14, 0x74, 0x2d, 0xb1, 0x52, 0x99, 0x9c, 0xaf, 0x50, 0xfb,
+	0x24, 0xb9, 0xc2, 0xcc, 0xe2, 0x53, 0xa8, 0x72, 0x11, 0x29, 0x26, 0x3c, 0xcc, 0x4c, 0xd6, 0x28,
+	0x64, 0x50, 0xcf, 0x27, 0x07, 0xb0, 0x2c, 0x75, 0x5f, 0x13, 0x05, 0x85, 0x76, 0xf5, 0x90, 0x74,
+	0x66, 0x5d, 0xef, 0x98, 0x96, 0xd3, 0xac, 0xc4, 0xdd, 0x87, 0x7a, 0x4a, 0x9f, 0xba, 0xdd, 0x84,
+	0xf2, 0x55, 0x02, 0xcc, 0xc8, 0x97, 0x75, 0xdc, 0xf3, 0xdd, 0x0b, 0x78, 0x74, 0x16, 0xa3, 0xbc,
+	0x39, 0x0d, 0x86, 0x0f, 0x56, 0xb3, 0x0b, 0x10, 0x32, 0xa9, 0xb8, 0xe2, 0x81, 0x30, 0x2d, 0x29,
+	0x52, 0x0b, 0x21, 0x04, 0x96, 0x42, 0xc4, 0xef, 0xba, 0x01, 0x65, 0xaa, 0xff, 0xbb, 0xdf, 0x60,
+	0x75, 0x76, 0x4e, 0x2a, 0x6b, 0x0f, 0x56, 0x24, 0x86, 0x63, 0x76, 0xd3, 0xf7, 0x62, 0x19, 0x05,
+	0x32, 0x6a, 0x38, 0xad, 0x42, 0xbb, 0x46, 0xeb, 0x06, 0x3d, 0x36, 0xa0, 0xbe, 0xe3, 0x11, 0x13,
+	0x43, 0x9c, 0x96, 0x2d, 0x9a, 0x32, 0x83, 0xa6, 0x65, 0xee, 0x18, 0xd6, 0xf4, 0x09, 0x3d, 0xe1,
+	0xe3, 0xf5, 0x3f, 0xf3, 0xb2, 0x01, 0xa5, 0x0b, 0x3e, 0x56, 0x28, 0xd3, 0xeb, 0x4c, 0x23, 0x77,
+	0x00, 0xc4, 0x3e, 0xed, 0xbf, 0x38, 0xfa, 0x02, 0x55, 0x8a, 0xcc, 0x7f, 0xb0, 0x97, 0x0d, 0x28,
+	0x19, 0x3e, 0xed, 0xa3, 0x46, 0xd3, 0x88, 0x3c, 0x86, 0xe2, 0x98, 0x4f, 0xb8, 0xd2, 0x16, 0x8a,
+	0xd4, 0x04, 0xc9, 0x10, 0x1a, 0xf6, 0x54, 0xbb, 0x35, 0x63, 0xce, 0x1f, 0x67, 0x2c, 0x11, 0x23,
+	0xf0, 0x5a, 0xf5, 0x73, 0x07, 0x42, 0x02, 0x19, 0xf5, 0xee, 0x3b, 0x58, 0x3d, 0x8f, 0x07, 0x91,
+	0x27, 0xf9, 0x00, 0xff, 0xd6, 0x81, 0xbb, 0x0e, 0x6b, 0x16, 0x99, 0x11, 0x7c, 0xf8, 0xab, 0x00,
+	0xcb, 0x27, 0x46, 0x21, 0x39, 0x82, 0xa5, 0x64, 0xbf, 0xc9, 0x13, 0x5b, 0xb3, 0xf5, 0x16, 0x69,
+	0x36, 0xe6, 0x13, 0x86, 0xc6, 0x5d, 0x20, 0xaf, 0xa1, 0xa8, 0xf7, 0x85, 0xe4, 0x8a, 0xec, 0x0d,
+	0x6d, 0x6e, 0xde, 0x91, 0x99, 0x3e, 0x7f, 0x02, 0xe5, 0x6c, 0xb6, 0xc9, 0x96, 0x5d, 0x78, 0x6b,
+	0xb3, 0x9a, 0xdb, 0x77, 0x27, 0xa7, 0x44, 0xef, 0x01, 0x66, 0x43, 0x45, 0x76, 0xe6, 0xaa, 0xed,
+	0xd1, 0x6e, 0xee, 0xde, 0x97, 0x9e, 0xd2, 0x1d, 0xc1, 0x52, 0x72, 0xc3, 0xf9, 0xa6, 0x58, 0x13,
+	0x95, 0x6f, 0x8a, 0x3d, 0x0c, 0xee, 0x02, 0x39, 0x85, 0xca, 0xb4, 0xe5, 0x24, 0x27, 0xfc, 0xf6,
+	0xb5, 0x36, 0x77, 0xee, 0xc9, 0x66, 0x5c, 0x2f, 0x9c, 0x37, 0x07, 0x9f, 0xf7, 0x87, 0x5c, 0x8d,
+	0xe2, 0x41, 0xc7, 0x0b, 0x26, 0xdd, 0x01, 0x0a, 0x64, 0x6a, 0xf4, 0xdc, 0x0b, 0x24, 0x76, 0xe7,
+	0x3f, 0x30, 0x83, 0x92, 0xfe, 0x79, 0xf5, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x84, 0xc8, 0xd3, 0xf6,
+	0x7d, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1092,14 +718,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type GatewayClient interface {
-	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
+	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
+	QueryLog(ctx context.Context, in *QueryLogRequest, opts ...grpc.CallOption) (*QueryLogResponse, error)
+	QueryIndex(ctx context.Context, in *QueryIndexRequest, opts ...grpc.CallOption) (*QueryIndexResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (Gateway_SubscribeClient, error)
-	Peek(ctx context.Context, in *PeekRequest, opts ...grpc.CallOption) (*PeekResponse, error)
-	Repartition(ctx context.Context, in *RepartitionRequest, opts ...grpc.CallOption) (*RepartitionResponse, error)
-	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
-	GetStream(ctx context.Context, in *GetStreamRequest, opts ...grpc.CallOption) (*GetStreamResponse, error)
 }
 
 type gatewayClient struct {
@@ -1110,9 +734,36 @@ func NewGatewayClient(cc *grpc.ClientConn) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
-	out := new(QueryResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Query", in, out, opts...)
+func (c *gatewayClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
+	out := new(PingResponse)
+	err := c.cc.Invoke(ctx, "/gateway.v1.Gateway/Ping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error) {
+	out := new(WriteResponse)
+	err := c.cc.Invoke(ctx, "/gateway.v1.Gateway/Write", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) QueryLog(ctx context.Context, in *QueryLogRequest, opts ...grpc.CallOption) (*QueryLogResponse, error) {
+	out := new(QueryLogResponse)
+	err := c.cc.Invoke(ctx, "/gateway.v1.Gateway/QueryLog", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gatewayClient) QueryIndex(ctx context.Context, in *QueryIndexRequest, opts ...grpc.CallOption) (*QueryIndexResponse, error) {
+	out := new(QueryIndexResponse)
+	err := c.cc.Invoke(ctx, "/gateway.v1.Gateway/QueryIndex", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,7 +772,7 @@ func (c *gatewayClient) Query(ctx context.Context, in *QueryRequest, opts ...grp
 
 func (c *gatewayClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
 	out := new(ReadResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Read", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gateway.v1.Gateway/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1129,7 +780,7 @@ func (c *gatewayClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.
 }
 
 func (c *gatewayClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (Gateway_SubscribeClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Gateway_serviceDesc.Streams[0], "/gateway.Gateway/Subscribe", opts...)
+	stream, err := c.cc.NewStream(ctx, &_Gateway_serviceDesc.Streams[0], "/gateway.v1.Gateway/Subscribe", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1160,69 +811,31 @@ func (x *gatewaySubscribeClient) Recv() (*SubscribeResponse, error) {
 	return m, nil
 }
 
-func (c *gatewayClient) Peek(ctx context.Context, in *PeekRequest, opts ...grpc.CallOption) (*PeekResponse, error) {
-	out := new(PeekResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Peek", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) Repartition(ctx context.Context, in *RepartitionRequest, opts ...grpc.CallOption) (*RepartitionResponse, error) {
-	out := new(RepartitionResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Repartition", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error) {
-	out := new(WriteResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Write", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/Ping", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gatewayClient) GetStream(ctx context.Context, in *GetStreamRequest, opts ...grpc.CallOption) (*GetStreamResponse, error) {
-	out := new(GetStreamResponse)
-	err := c.cc.Invoke(ctx, "/gateway.Gateway/GetStream", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // GatewayServer is the server API for Gateway service.
 type GatewayServer interface {
-	Query(context.Context, *QueryRequest) (*QueryResponse, error)
+	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	Write(context.Context, *WriteRequest) (*WriteResponse, error)
+	QueryLog(context.Context, *QueryLogRequest) (*QueryLogResponse, error)
+	QueryIndex(context.Context, *QueryIndexRequest) (*QueryIndexResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Subscribe(*SubscribeRequest, Gateway_SubscribeServer) error
-	Peek(context.Context, *PeekRequest) (*PeekResponse, error)
-	Repartition(context.Context, *RepartitionRequest) (*RepartitionResponse, error)
-	Write(context.Context, *WriteRequest) (*WriteResponse, error)
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
-	GetStream(context.Context, *GetStreamRequest) (*GetStreamResponse, error)
 }
 
 // UnimplementedGatewayServer can be embedded to have forward compatible implementations.
 type UnimplementedGatewayServer struct {
 }
 
-func (*UnimplementedGatewayServer) Query(ctx context.Context, req *QueryRequest) (*QueryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
+func (*UnimplementedGatewayServer) Ping(ctx context.Context, req *PingRequest) (*PingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (*UnimplementedGatewayServer) Write(ctx context.Context, req *WriteRequest) (*WriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
+}
+func (*UnimplementedGatewayServer) QueryLog(ctx context.Context, req *QueryLogRequest) (*QueryLogResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryLog not implemented")
+}
+func (*UnimplementedGatewayServer) QueryIndex(ctx context.Context, req *QueryIndexRequest) (*QueryIndexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryIndex not implemented")
 }
 func (*UnimplementedGatewayServer) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
@@ -1230,40 +843,79 @@ func (*UnimplementedGatewayServer) Read(ctx context.Context, req *ReadRequest) (
 func (*UnimplementedGatewayServer) Subscribe(req *SubscribeRequest, srv Gateway_SubscribeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
 }
-func (*UnimplementedGatewayServer) Peek(ctx context.Context, req *PeekRequest) (*PeekResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Peek not implemented")
-}
-func (*UnimplementedGatewayServer) Repartition(ctx context.Context, req *RepartitionRequest) (*RepartitionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Repartition not implemented")
-}
-func (*UnimplementedGatewayServer) Write(ctx context.Context, req *WriteRequest) (*WriteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
-}
-func (*UnimplementedGatewayServer) Ping(ctx context.Context, req *PingRequest) (*PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
-func (*UnimplementedGatewayServer) GetStream(ctx context.Context, req *GetStreamRequest) (*GetStreamResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStream not implemented")
-}
 
 func RegisterGatewayServer(s *grpc.Server, srv GatewayServer) {
 	s.RegisterService(&_Gateway_serviceDesc, srv)
 }
 
-func _Gateway_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRequest)
+func _Gateway_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).Query(ctx, in)
+		return srv.(GatewayServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gateway.Gateway/Query",
+		FullMethod: "/gateway.v1.Gateway/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Query(ctx, req.(*QueryRequest))
+		return srv.(GatewayServer).Ping(ctx, req.(*PingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).Write(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.v1.Gateway/Write",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).Write(ctx, req.(*WriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_QueryLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).QueryLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.v1.Gateway/QueryLog",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).QueryLog(ctx, req.(*QueryLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gateway_QueryIndex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryIndexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GatewayServer).QueryIndex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gateway.v1.Gateway/QueryIndex",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GatewayServer).QueryIndex(ctx, req.(*QueryIndexRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1278,7 +930,7 @@ func _Gateway_Read_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gateway.Gateway/Read",
+		FullMethod: "/gateway.v1.Gateway/Read",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GatewayServer).Read(ctx, req.(*ReadRequest))
@@ -1307,127 +959,29 @@ func (x *gatewaySubscribeServer) Send(m *SubscribeResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Gateway_Peek_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PeekRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).Peek(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/Peek",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Peek(ctx, req.(*PeekRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_Repartition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RepartitionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).Repartition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/Repartition",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Repartition(ctx, req.(*RepartitionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WriteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).Write(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/Write",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Write(ctx, req.(*WriteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/Ping",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Ping(ctx, req.(*PingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Gateway_GetStream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStreamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).GetStream(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gateway.Gateway/GetStream",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).GetStream(ctx, req.(*GetStreamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Gateway_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "gateway.Gateway",
+	ServiceName: "gateway.v1.Gateway",
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Query",
-			Handler:    _Gateway_Query_Handler,
-		},
-		{
-			MethodName: "Read",
-			Handler:    _Gateway_Read_Handler,
-		},
-		{
-			MethodName: "Peek",
-			Handler:    _Gateway_Peek_Handler,
-		},
-		{
-			MethodName: "Repartition",
-			Handler:    _Gateway_Repartition_Handler,
+			MethodName: "Ping",
+			Handler:    _Gateway_Ping_Handler,
 		},
 		{
 			MethodName: "Write",
 			Handler:    _Gateway_Write_Handler,
 		},
 		{
-			MethodName: "Ping",
-			Handler:    _Gateway_Ping_Handler,
+			MethodName: "QueryLog",
+			Handler:    _Gateway_QueryLog_Handler,
 		},
 		{
-			MethodName: "GetStream",
-			Handler:    _Gateway_GetStream_Handler,
+			MethodName: "QueryIndex",
+			Handler:    _Gateway_QueryIndex_Handler,
+		},
+		{
+			MethodName: "Read",
+			Handler:    _Gateway_Read_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

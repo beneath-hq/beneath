@@ -47,22 +47,27 @@ func Server() *grpc.Server {
 	return server
 }
 
+type pingTags struct {
+	ClientID      string `json:"client_id,omitempty"`
+	ClientVersion string `json:"client_version,omitempty"`
+}
+
 type writeTags struct {
 	InstanceID   string `json:"instance_id,omitempty"`
 	RecordsCount int    `json:"records,omitempty"`
 	BytesWritten int    `json:"bytes,omitempty"`
 }
 
-type queryTags struct {
+type queryLogTags struct {
 	InstanceID string `json:"instance_id,omitempty"`
-	Filter     string `json:"filter,omitempty"`
-	Compact    bool   `json:"compact,omitempty"`
 	Partitions int32  `json:"partitions,omitempty"`
-	BytesRead  int    `json:"bytes,omitempty"`
+	Peek       bool   `json:"peek,omitempty"`
 }
 
-type peekTags struct {
+type queryIndexTags struct {
 	InstanceID string `json:"instance_id,omitempty"`
+	Partitions int32  `json:"partitions,omitempty"`
+	Filter     string `json:"filter,omitempty"`
 }
 
 type readTags struct {
@@ -70,14 +75,4 @@ type readTags struct {
 	Cursor     []byte `json:"cursor,omitempty"`
 	Limit      int32  `json:"limit,omitempty"`
 	BytesRead  int    `json:"bytes,omitempty"`
-}
-
-type pingTags struct {
-	ClientID      string `json:"client_id,omitempty"`
-	ClientVersion string `json:"client_version,omitempty"`
-}
-
-type streamDetailsTags struct {
-	Stream  string `json:"stream"`
-	Project string `json:"project"`
 }
