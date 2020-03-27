@@ -9,11 +9,11 @@ const Index: NextPage = (props) => {
 Index.getInitialProps = async ({ res }) => {
   if (res) {
     res.writeHead(302, {
-      Location: "/explore",
+      Location: "/terminal",
     });
     res.end();
   } else {
-    Router.replace("/explore");
+    Router.replace("/terminal");
   }
   return {};
 };
