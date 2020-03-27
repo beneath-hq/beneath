@@ -25,7 +25,7 @@ import {
 } from "@material-ui/icons";
 
 const tabs = [
-  { label: "Explore", href: "/explore", selectRegex: "^/(explore|project|stream|user).*$", external: false },
+  { label: "Terminal", href: "/terminal", selectRegex: "^/(terminal|project|stream|user).*$", external: false },
   { label: "Docs", href: "https://about.beneath.dev/docs", selectRegex: "^/docs$", external: true },
   { label: "Blog", href: "https://about.beneath.dev/blog", selectRegex: "^/blog$", external: true },
 ];

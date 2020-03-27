@@ -37,11 +37,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   buttons: {
     marginBottom: theme.spacing(6),
   },
-  exploreTitle: {
+  terminalTitle: {
     fontSize: theme.typography.pxToRem(24),
     marginBottom: theme.spacing(8),
   },
-  exploreTitleJoke: {
+  terminalTitleJoke: {
     marginTop: theme.spacing(2),
   },
   button: {},
@@ -61,7 +61,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const Explore: NextPage = () => {
+const Terminal: NextPage = () => {
   const classes = useStyles();
   const me = useMe();
   const loggedIn = !!me;
@@ -76,7 +76,7 @@ const Explore: NextPage = () => {
   }
 
   return (
-    <Page title="Explore" contentMarginTop="hero">
+    <Page title="Terminal" contentMarginTop="hero">
       <Container maxWidth="lg">
         <Typography className={classes.title} component="h1" variant="h1" align="center" gutterBottom>
           Welcome to the Beneath Data Terminal
@@ -143,9 +143,9 @@ const Explore: NextPage = () => {
         )}
       </Container>
       <Container maxWidth="lg">
-        <Typography className={classes.exploreTitle} variant="h3" gutterBottom align="center">
+        <Typography className={classes.terminalTitle} variant="h3" gutterBottom align="center">
           Top projects
-          <Typography className={classes.exploreTitleJoke} variant="body2" gutterBottom align="center">
+          <Typography className={classes.terminalTitleJoke} variant="body2" gutterBottom align="center">
             ... well, currently the only projects
           </Typography>
         </Typography>
@@ -176,4 +176,4 @@ const Explore: NextPage = () => {
   );
 };
 
-export default withApollo(Explore);
+export default withApollo(Terminal);
