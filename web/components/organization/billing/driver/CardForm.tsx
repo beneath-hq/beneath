@@ -8,6 +8,7 @@ import _ from 'lodash'
 import { useToken } from '../../../../hooks/useToken'
 import useMe from "../../../../hooks/useMe";
 import connection from "../../../../lib/connection"
+import billing from "../../../../lib/billing"
 import Loading from "../../../Loading"
 
 const useStyles = makeStyles((theme) => ({
@@ -184,12 +185,14 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
     return
   }
 
-  const handleDialogClose = () => {
+  const handleDialogClose = async () => {
     if (values.stripeError || values.error) {
       setValues({ ...values, ...{ dialog: false } })
     }
     if (values.status !== null && values.status === "succeeded") {
-      // possibly wait a few seconds
+      // wait a second so that we can process Stripe's response and show the user their new billing plan
+      await new Promise(r => setTimeout(r, 1000));
+      
       // reload the page to get new customer billing info from Stripe
       window.location.reload(true)
     }
@@ -385,7 +388,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
           {values.status !== null && values.status === "succeeded" && (
             <React.Fragment>
               <Typography variant="h5" gutterBottom>
-                Thank you for your order!
+                Thank you. Enjoy your upgraded account!
               </Typography>
               <Typography variant="subtitle1">
                 We will send your bill to your email on file at the beginning of each billing cycle.
@@ -705,7 +708,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
   componentDidMount() {
     // Create Stripe instance in componentDidMount (componentDidMount only fires in browser/DOM environment) 
     // note that updating the state like this will cause the CardForm to fire/initially render twice
-    this.setState({ stripe: window.Stripe('pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr') })
+    this.setState({ stripe: window.Stripe(billing.STRIPE_KEY) })
   }
 
   render() {

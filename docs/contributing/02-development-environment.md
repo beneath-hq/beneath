@@ -36,6 +36,7 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 - If you can stand it, we recommend you use VS Code: https://code.visualstudio.com/
 - Also install the CLI shortcut: Hit Shift-Command-P and search for "Shell Command: Install 'code' command in PATH
+- Install the Go extension from Microsoft and all of its Go Tool dependencies: https://github.com/microsoft/vscode-go#how-to-use-this-extension
 
 ## Running Beneath locally
 

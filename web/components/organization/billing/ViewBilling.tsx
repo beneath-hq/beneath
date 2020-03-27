@@ -33,7 +33,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
     return <BillingPlanMenu/>
   } else {
     // decode billing period
-    if (data.billingInfo.billingPlan.period === '\u0003') {
+    if (data.billingInfo.billingPlan.period === '\u0002') {
       var billingPeriod: string = billing.MONTHLY_BILLING_PLAN_STRING
     } else {
       return <p>Error: your organization has an unknown billing plan period</p>;

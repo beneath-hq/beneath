@@ -80,6 +80,16 @@ func UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingPla
 		for _, u := range users {
 			u.ReadQuota = newBillingPlan.SeatReadQuota
 			u.WriteQuota = newBillingPlan.SeatWriteQuota
+
+			// clear cache for the user's secrets
+			secrets := FindUserSecrets(ctx, u.UserID)
+			if secrets == nil {
+				panic("could not find user secrets")
+			}
+
+			for _, s := range secrets {
+				getSecretCache().Delete(ctx, s.HashedToken)
+			}
 		}
 
 		_, err = hub.DB.ModelContext(ctx, &users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()

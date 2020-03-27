@@ -37,11 +37,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   buttons: {
     marginBottom: theme.spacing(6),
   },
-  exploreTitle: {
+  terminalTitle: {
     fontSize: theme.typography.pxToRem(24),
     marginBottom: theme.spacing(8),
   },
-  exploreTitleJoke: {
+  terminalTitleJoke: {
     marginTop: theme.spacing(2),
   },
   button: {},
@@ -61,7 +61,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const Explore: NextPage = () => {
+const Terminal: NextPage = () => {
   const classes = useStyles();
   const me = useMe();
   const loggedIn = !!me;
@@ -76,41 +76,42 @@ const Explore: NextPage = () => {
   }
 
   return (
-    <Page title="Explore" contentMarginTop="hero">
+    <Page title="Terminal" contentMarginTop="hero">
       <Container maxWidth="lg">
         <Typography className={classes.title} component="h1" variant="h1" align="center" gutterBottom>
-          Become a Blockchain Analytics Power User
+          Welcome to the Beneath Data Terminal
         </Typography>
       </Container>
       <Container maxWidth="md">
         <Typography className={classes.subtitle} component="h2" variant="subtitle1" align="center" gutterBottom>
-          Beneath is a full blockchain data science platform. From real-time data extraction to analytics development,
-          deployment, integration and public sharing.
+          Discover real-time data streams that have been shared with the world. Consume public data or create your own stream in minutes.
+          {/* Beneath is a full data science platform. From real-time data extraction to analytics development,
+          deployment, integration and public sharing. */}
         </Typography>
         {loggedIn && (
           <Grid className={classes.buttons} container spacing={2} justify="center">
             <Grid item>
               <Button
                 size="medium"
-                color="default"
+                color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
-                href={`https://about.beneath.network/docs/`}
+                href={`https://about.beneath.dev/docs/read-data-into-jupyter-notebook/`}
               >
                 Docs
               </Button>
             </Grid>
-            <Grid item>
+            {/* <Grid item>
               <Button
                 size="medium"
                 color="primary"
                 variant="outlined"
                 className={clsx(classes.button, classes.primaryButton)}
-                href={`mailto:contact@beneath.network`}
+                href={`mailto:contact@beneath.dev`}
               >
                 Get in touch
               </Button>
-            </Grid>
+            </Grid> */}
           </Grid>
         )}
         {!loggedIn && (
@@ -121,7 +122,7 @@ const Explore: NextPage = () => {
                 color="default"
                 variant="outlined"
                 className={clsx(classes.button, classes.secondaryButton)}
-                href={`https://about.beneath.network/docs/`}
+                href={`https://about.beneath.dev/docs/`}
               >
                 Overview
               </Button>
@@ -142,9 +143,9 @@ const Explore: NextPage = () => {
         )}
       </Container>
       <Container maxWidth="lg">
-        <Typography className={classes.exploreTitle} variant="h3" gutterBottom align="center">
+        <Typography className={classes.terminalTitle} variant="h3" gutterBottom align="center">
           Top projects
-          <Typography className={classes.exploreTitleJoke} variant="body2" gutterBottom align="center">
+          <Typography className={classes.terminalTitleJoke} variant="body2" gutterBottom align="center">
             ... well, currently the only projects
           </Typography>
         </Typography>
@@ -175,4 +176,4 @@ const Explore: NextPage = () => {
   );
 };
 
-export default withApollo(Explore);
+export default withApollo(Terminal);
