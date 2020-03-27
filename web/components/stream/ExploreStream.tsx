@@ -1,4 +1,4 @@
-import { FetchMoreFunction, useRecords } from "beneath-react";
+import { useRecords } from "beneath-react";
 
 import React, { FC, useEffect, useState } from "react";
 
@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreStreamProps) => {
   // state
-  const [view, setView] = useState<"lookup" | "log" | "latest">("lookup");
+  const [view, setView] = useState<"latest" | "index" | "log">("latest");
   const [pageSize, setPageSize] = useState(25);
   const [pendingFilter, setPendingFilter] = useState(""); // the value in the text field
   const [filter, setFilter] = useState(""); // updated when text field is submitted (used in call to useRecords)
@@ -84,15 +84,15 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
               label="View"
               value={view}
               options={[
-                { label: "Lookup", value: "lookup" },
                 { label: "Latest", value: "latest" },
+                { label: "Index", value: "index" },
                 { label: "Log", value: "log" },
               ]}
-              onChange={({ target }) => setView(target.value as "lookup" | "log" | "latest")}
+              onChange={({ target }) => setView(target.value as "index" | "log" | "latest")}
               controlClass={classes.selectViewControl}
             />
           </Grid>
-          {view === "lookup" && (
+          {view === "index" && (
             <>
               <Grid item xs>
                 <BNTextField
@@ -135,7 +135,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
       <VSpace units={2} />
       {loading && records.length === 0 && <Loading justify="center" />}
       {(!loading || records.length > 0) && (
-        <RecordsTable schema={schema} records={records} showTimestamps={view !== "lookup"} />
+        <RecordsTable schema={schema} records={records} showTimestamps={view !== "index"} />
       )}
       <VSpace units={4} />
       {fetchMore && (

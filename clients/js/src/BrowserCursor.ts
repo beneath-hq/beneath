@@ -1,86 +1,122 @@
-import { BrowserConnection, Response } from "./BrowserConnection";
-import { Record, ReadOptions, ReadResult, StreamQualifier } from "./shared";
-
-interface BrowserCursorState<TRecord> {
-  connection: BrowserConnection;
-  streamQualifier: StreamQualifier;
-  cursorType: "query" | "peek";
-  cursor?: {
-    next?: string;
-    changes?: string;
-  };
-  defaultPageSize?: number;
-  initialRecords?: Record<TRecord>[];
-}
+import { BrowserConnection, Response, ResponseMeta } from "./BrowserConnection";
+import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "./shared";
 
 export class BrowserCursor<TRecord = any> {
-  private state: BrowserCursorState<TRecord>;
+  private connection: BrowserConnection;
+  private streamQualifier: StreamQualifier;
+  private nextCursor?: string;
+  private changeCursor?: string;
+  private defaultPageSize?: number;
+  private initialData?: Record<TRecord>[];
 
-  constructor(state: BrowserCursorState<TRecord>) {
-    this.state = state;
+  constructor(connection: BrowserConnection, streamQualifier: StreamQualifier, meta?: ResponseMeta, data?: Record<TRecord>[], defaultPageSize?: number) {
+    this.connection = connection;
+    this.streamQualifier = streamQualifier;
+    this.nextCursor = meta?.nextCursor;
+    this.changeCursor = meta?.changeCursor;
+    this.defaultPageSize = defaultPageSize;
+
+    if (meta?.instanceID) {
+      this.streamQualifier = { instanceID: meta.instanceID };
+    }
+
+    this.initialData = data;
   }
 
-  public canReadNext(): boolean {
-    return !!this.state.cursor?.next;
+  public hasNext(): boolean {
+    return !!this.nextCursor;
+  }
+
+  public hasNextChanges(): boolean {
+    return !!this.changeCursor;
   }
 
   public async readNext(opts?: ReadOptions): Promise<ReadResult<TRecord>> {
-    let limit = opts?.pageSize || this.state.defaultPageSize;
+    let limit = opts?.pageSize || this.defaultPageSize;
 
-    // tmp contains records from initialRecords to return
+    // tmp contains records from initialData to return
     let tmp: Record<TRecord>[] | undefined;
-    if (this.state.initialRecords) {
+    if (this.initialData) {
       if (!limit) {
-        tmp = this.state.initialRecords;
-        this.state.initialRecords = undefined;
-        return { records: tmp };
+        tmp = this.initialData;
+        this.initialData = undefined;
+        return { data: tmp };
       }
 
-      if (this.state.initialRecords.length >= limit) {
-        tmp = this.state.initialRecords.slice(0, limit);
-        if (limit === this.state.initialRecords.length) {
-          this.state.initialRecords = undefined;
+      if (this.initialData.length >= limit) {
+        tmp = this.initialData.slice(0, limit);
+        if (limit === this.initialData.length) {
+          this.initialData = undefined;
         } else {
-          this.state.initialRecords = this.state.initialRecords.slice(limit);
+          this.initialData = this.initialData.slice(limit);
         }
-        return { records: tmp };
+        return { data: tmp };
       }
 
-      tmp = this.state.initialRecords;
-      this.state.initialRecords = undefined;
+      tmp = this.initialData;
+      this.initialData = undefined;
       limit -= tmp.length;
     }
 
     // check can fetch more
-    if (!this.state.cursor?.next) {
+    if (!this.nextCursor) {
       if (tmp) {
-        return {records: tmp};
+        return { data: tmp };
       }
       return { error: Error("reached end of cursor") };
     }
 
     // fetch more
-    let resp: Response<TRecord>;
-    if (this.state.cursorType === "query") {
-      resp = await this.state.connection.query<TRecord>(this.state.streamQualifier, { limit, cursor: this.state.cursor.next });
-    } else if (this.state.cursorType === "peek") {
-      resp = await this.state.connection.peek<TRecord>(this.state.streamQualifier, { limit, cursor: this.state.cursor.next });
-    } else {
-      throw Error(`unexpected value for this.state.cursor.type: <${this.state.cursorType}>`);
+    const { meta, data, error } = await this.connection.read<TRecord>(this.streamQualifier, { limit, cursor: this.nextCursor });
+    if (error) {
+      return { error };
     }
 
-    // parse resp
-    if (resp.error) {
-      return { error: resp.error };
+    this.nextCursor = meta?.nextCursor;
+
+    if (tmp) {
+      return { data: tmp.concat(data || []) };
     }
 
-    if (!resp.cursor) {
-      this.state.cursor.next = undefined;
-    } else {
-      this.state.cursor.next = resp.cursor.next;
+    return { data };
+  }
+
+  public async readNextChanges(opts?: ReadOptions): Promise<ReadResult<TRecord>> {
+    const limit = opts?.pageSize || this.defaultPageSize;
+
+    if (!this.changeCursor) {
+      return { error: Error("cannot fetch changes for this query") };
     }
 
-    return { records: resp.records };
+    const { meta, data, error } = await this.connection.read<TRecord>(this.streamQualifier, { limit, cursor: this.changeCursor });
+    if (error) {
+      return { error };
+    }
+
+    this.changeCursor = meta?.changeCursor;
+
+    return { data };
+  }
+
+  public async subscribeChanges(opts: SubscribeOptions<TRecord>): Promise<void> {
+    // make sure can subscribe
+    if (!this.changeCursor) {
+      throw Error("cannot subscribe to changes for this query");
+    }
+    if (!("instanceID" in this.streamQualifier) || !this.streamQualifier.instanceID) {
+      throw Error("cannot subscribe to changes for this query");
+    }
+
+    this.connection.subscribe({
+      instanceID: this.streamQualifier.instanceID,
+      cursor: this.changeCursor,
+      onResult: () => {
+        // TODO
+      },
+      onComplete: (error?: Error) => {
+        // TODO
+      },
+    });
   }
 
 }

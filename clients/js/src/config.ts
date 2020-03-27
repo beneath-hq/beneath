@@ -12,6 +12,8 @@ export const BENEATH_GATEWAY_HOST = DEV ? "http://localhost:5000" : "https://dat
 
 export const BENEATH_GATEWAY_HOST_GRPC = DEV ? "localhost:50051" : "grpc.data.beneath.dev";
 
+export const BENEATH_GATEWAY_HOST_WS = DEV ? "ws://localhost:5000" : "wss://data.beneath.dev";
+
 export const DEFAULT_WRITE_BATCH_SIZE = 10000;
 
 export const DEFAULT_WRITE_BATCH_BYTES = 10000000;
