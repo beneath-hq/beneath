@@ -1,23 +1,15 @@
 export type StreamQualifier = { instanceID: string } | { project: string, stream: string };
 
 export type Record<TRecord = any> = TRecord & {
-  "@meta": {
-    key: string;
-    timestamp: number;
-  }
+  "@meta": { key: string, timestamp: number }
 };
 
-export interface ReadResult<TRecord = any> {
-  records?: Record<TRecord>[];
-  error?: Error;
-}
+export type ReadResult<TRecord = any> = { data?: Record<TRecord>[], error?: Error };
 
-export interface ReadOptions {
-  pageSize?: number;
-}
+export type ReadOptions = { pageSize?: number };
 
-export interface QueryOptions extends ReadOptions {
-  compact?: boolean;
-  filter?: string;
-}
+export type QueryLogOptions = ReadOptions & { peek?: boolean; };
 
+export type QueryIndexOptions = ReadOptions & { filter?: string; };
+
+export type SubscribeOptions<TRecord> = {};

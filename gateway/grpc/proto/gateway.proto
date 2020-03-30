@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "github.com/beneath-core/gateway/grpc/proto";
-package gateway;
+package gateway.v1;
 
 message Record {
   bytes avro_data = 1;
@@ -8,27 +8,52 @@ message Record {
 }
 
 service Gateway {
-  rpc Query(QueryRequest) returns (QueryResponse) {}
+  rpc Ping(PingRequest) returns (PingResponse) {}
+  rpc Write(WriteRequest) returns (WriteResponse) {}
+  rpc QueryLog(QueryLogRequest) returns (QueryLogResponse) {}
+  rpc QueryIndex(QueryIndexRequest) returns (QueryIndexResponse) {}
   rpc Read(ReadRequest) returns (ReadResponse) {}
   rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
-  rpc Peek(PeekRequest) returns (PeekResponse) {}
-  rpc Repartition(RepartitionRequest) returns (RepartitionResponse) {}
-  rpc Write(WriteRequest) returns (WriteResponse) {}
-
-  rpc Ping(PingRequest) returns (PingResponse) {}
-  rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
 }
 
-message QueryRequest {
+message PingRequest {
+  string client_id = 1;
+  string client_version = 2;
+}
+
+message PingResponse {
+  bool authenticated = 1;
+  string version_status = 2;
+  string recommended_version = 3;
+}
+
+message WriteRequest {
+  bytes instance_id = 1;
+  repeated Record records = 2;
+}
+
+message WriteResponse {
+  bytes write_id = 1;
+}
+
+message QueryLogRequest {
+  bytes instance_id = 1;
+  int32 partitions = 2;
+  bool  peek = 3;
+}
+
+message QueryLogResponse {
+  repeated bytes replay_cursors = 1;
+  repeated bytes change_cursors = 2;
+}
+
+message QueryIndexRequest {
   bytes  instance_id = 1;
-  string filter      = 2;
-  bool   compact     = 3;
-  int32  partitions  = 4;
-  // dry
-  // sample
+  int32  partitions  = 2;
+  string filter      = 3;
 }
 
-message QueryResponse {
+message QueryIndexResponse {
   repeated bytes replay_cursors = 1;
   repeated bytes change_cursors = 2;
 }
@@ -53,73 +78,4 @@ message SubscribeResponse {
   // repeated Record records = 1;
   // bytes from_cursor = 2;
   // bytes next_cursor = 3;
-}
-
-message PeekRequest {
-  bytes instance_id = 1;
-}
-
-message PeekResponse {
-  bytes rewind_cursor = 1;
-  bytes change_cursor = 2;
-}
-
-message RepartitionRequest {
-  bytes instance_id = 1;
-  int32 partitions = 2;
-  repeated bytes replay_cursors = 3;
-  repeated bytes change_cursors = 4;
-}
-
-message RepartitionResponse {
-  repeated bytes replay_cursors = 1;
-  repeated bytes change_cursors = 2;
-}
-
-message WriteRequest {
-  bytes instance_id = 1;
-  repeated Record records = 2;
-}
-
-message WriteResponse {
-  bytes write_id = 1;
-}
-
-message PingRequest {
-  string client_id = 1;
-  string client_version = 2;
-}
-
-message PingResponse {
-  bool  authenticated = 1;
-  string version_status = 2;
-  string recommended_version = 3;
-}
-
-message GetStreamRequest {
-  string project_name = 1;
-  string stream_name  = 2;
-}
-
-message GetStreamResponse {
-  bytes  project_id = 1;
-  string project_name = 2;
-  bytes  stream_id = 3;
-  string stream_name = 4;
-  bytes current_instance_id = 5;
-  bool public = 6;
-  bool external = 7;
-  bool batch = 8;
-  bool manual = 9;
-  bool committed = 10;
-  int32 retention_seconds = 11;
-  string avro_schema = 12;
-  repeated StreamIndexDetails indexes = 13;
-}
-
-message StreamIndexDetails {
-  bytes index_id = 1;
-  repeated string fields = 2;
-  bool primary = 3;
-  bool normalize = 4;
 }

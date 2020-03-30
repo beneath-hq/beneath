@@ -64,7 +64,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     // async scope
     (async () => {
       // set default fields in opts for optional fields
-      opts = { ...opts }; // clone
+      opts = {...opts}; // clone
       opts.view = opts.view || "index";
       opts.pageSize = opts.pageSize || DEFAULT_PAGE_SIZE;
       if (opts.subscribe) {
@@ -171,28 +171,28 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       // records = prepend.concat(records);
       // setRecords(records);
 
-      //     // done if not asked to subscribe changes
-      //     if (!opts.subscribe) {
-      //       return;
-      //     }
+  //     // done if not asked to subscribe changes
+  //     if (!opts.subscribe) {
+  //       return;
+  //     }
 
-      //     // done if can't subscrine
-      //     if (opts.filter) { // || !cursor.canSubscribeChanges
-      //       return;
-      //     }
+  //     // done if can't subscrine
+  //     if (opts.filter) { // || !cursor.canSubscribeChanges
+  //       return;
+  //     }
 
-      //     // TODO
-      //     // establish subscription
-      //     // set it to be cancelled in cleanup()
-      //     // setSubscribed(true)
-      //     // respect pollAtMostEveryMilliseconds and renderAtMostEveryMilliseconds
-      //     // on latest: prepend, on log: append, on lookup: merge on @meta.key or insert lexicographically sorted
-      //     // stream.subscribeChanges({
-      //     //   pollAtMostEveryMilliseconds: opts.subscribe.pollAtMostEveryMilliseconds,
-      //     //   onRecords: (records: TRecord[]) => {
-      //     //     return;
-      //     //   },
-      //     // });
+  //     // TODO
+  //     // establish subscription
+  //     // set it to be cancelled in cleanup()
+  //     // setSubscribed(true)
+  //     // respect pollAtMostEveryMilliseconds and renderAtMostEveryMilliseconds
+  //     // on latest: prepend, on log: append, on lookup: merge on @meta.key or insert lexicographically sorted
+  //     // stream.subscribeChanges({
+  //     //   pollAtMostEveryMilliseconds: opts.subscribe.pollAtMostEveryMilliseconds,
+  //     //   onRecords: (records: TRecord[]) => {
+  //     //     return;
+  //     //   },
+  //     // });
 
       // done with effect
     })();

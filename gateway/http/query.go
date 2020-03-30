@@ -1,11 +1,12 @@
 package http
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/mr-tron/base58"
 
 	"github.com/go-chi/chi"
 	uuid "github.com/satori/go.uuid"
@@ -19,6 +20,33 @@ import (
 	"github.com/beneath-core/pkg/queryparse"
 	"github.com/beneath-core/pkg/timeutil"
 )
+
+const (
+	queryBodyTypeNone  = ""
+	queryBodyTypeIndex = "index"
+	queryBodyTypeLog   = "log"
+)
+
+type queryBody struct {
+	Limit       int             `json:"limit,omitempty"`
+	Cursor      string          `json:"cursor,omitempty"`
+	CursorBytes []byte          `json:"-"`
+	Type        string          `json:"type,omitempty"`
+	Filter      json.RawMessage `json:"filter,omitempty"`
+	Peek        bool            `json:"peek,omitempty"`
+}
+
+type queryTags struct {
+	InstanceID string    `json:"instance_id,omitempty"`
+	Body       queryBody `json:"body,omitempty"`
+	BytesRead  int       `json:"bytes,omitempty"`
+}
+
+type queryResponseMeta struct {
+	InstanceID   uuid.UUID `json:"instance_id,omitempty"`
+	NextCursor   string    `json:"next_cursor,omitempty"`
+	ChangeCursor string    `json:"change_cursor,omitempty"`
+}
 
 func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	projectName := toBackendName(chi.URLParam(r, "projectName"))
@@ -71,51 +99,84 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		}
 	}
 
-	// prepare cursors info
-	cursors := make(map[string][]byte)
-
 	// read body
 	body, err := parseQueryBody(r)
 	if err != nil {
 		return err
 	}
 
+	// prepare meta
+	meta := queryResponseMeta{
+		InstanceID: instanceID,
+	}
+
 	// create cursor if not provided
-	if body.Cursor == nil {
-		// make query
-		filter, err := queryparse.JSONStringToQuery(string(body.Filter))
-		if err != nil {
-			return httputil.NewError(400, fmt.Sprintf("couldn't parse filter query: %s", err.Error()))
-		}
+	// TODO: clean up this mess once we've refactored the engine interfaces
+	if body.CursorBytes == nil {
+		if body.Type == queryBodyTypeIndex {
+			// make filter
+			filter, err := queryparse.JSONStringToQuery(string(body.Filter))
+			if err != nil {
+				return httputil.NewError(400, fmt.Sprintf("couldn't parse 'filter': %s", err.Error()))
+			}
 
-		// run query
-		replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, filter, body.Compact, 1)
-		if err != nil {
-			return httputil.NewError(400, err.Error())
-		}
+			// run query
+			replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, filter, true, 1)
+			if err != nil {
+				return httputil.NewError(400, err.Error())
+			}
 
-		// set
-		body.Cursor = replayCursors[0]
-		if len(changeCursors) != 0 {
-			cursors["changes"] = changeCursors[0]
+			// set cursors
+			body.CursorBytes = replayCursors[0]
+			if len(changeCursors) != 0 {
+				meta.ChangeCursor = base58.Encode(changeCursors[0])
+			}
+		} else if body.Type == queryBodyTypeLog {
+			// depends on whether it's a peek
+			var replayCursor, changeCursor []byte
+			if body.Peek {
+				replayCursor, changeCursor, err = hub.Engine.Lookup.Peek(r.Context(), stream, stream, stream)
+				if err != nil {
+					return httputil.NewError(400, err.Error())
+				}
+			} else {
+				replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, nil, false, 1)
+				if err != nil {
+					return httputil.NewError(400, err.Error())
+				}
+				replayCursor = replayCursors[0]
+				if len(changeCursors) > 0 {
+					changeCursor = changeCursors[0]
+				}
+			}
+
+			// set cursors
+			body.CursorBytes = replayCursor
+			if changeCursor != nil {
+				meta.ChangeCursor = base58.Encode(changeCursor)
+			}
 		}
 	}
 
 	// update payload
-	payload.Limit = body.Limit
-	payload.Filter = string(body.Filter)
-	payload.Compact = body.Compact
-	payload.Cursor = body.Cursor
+	payload.Body = body
 	middleware.SetTagsPayload(r.Context(), payload)
 
 	// read rows from engine
-	it, err := hub.Engine.Lookup.ReadCursor(r.Context(), stream, stream, stream, body.Cursor, body.Limit)
+	it, err := hub.Engine.Lookup.ReadCursor(r.Context(), stream, stream, stream, body.CursorBytes, body.Limit)
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}
 
+	// how much memory to pre-allocate for result
+	cap := body.Limit
+	if body.Type == queryBodyTypeIndex && body.Filter != nil {
+		// underlying assumption: there'll be a lot of unique lookups over REST
+		cap = 1
+	}
+
 	// begin json object
-	result := make([]interface{}, 0, 1)
+	result := make([]interface{}, 0, cap)
 	bytesRead := 0
 
 	for it.Next() {
@@ -147,13 +208,13 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// set next cursor
 	if next := it.NextCursor(); next != nil {
-		cursors["next"] = next
+		meta.NextCursor = base58.Encode(next)
 	}
 
 	// prepare result for encoding
 	encode := map[string]interface{}{
-		"data":   result,
-		"cursor": cursors,
+		"meta": meta,
+		"data": result,
 	}
 
 	// write and finish
@@ -177,18 +238,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	return nil
 }
 
-type queryBody struct {
-	Limit   int
-	Cursor  []byte
-	Filter  json.RawMessage
-	Compact bool
-}
-
 func parseQueryBody(r *http.Request) (queryBody, error) {
 	// defaults
-	body := queryBody{
-		Compact: true,
-	}
+	body := queryBody{}
 
 	// parse body
 	err := jsonutil.Unmarshal(r.Body, &body)
@@ -211,21 +263,17 @@ func parseQueryBody(r *http.Request) (queryBody, error) {
 	}
 
 	// read cursor
-	if cursorStr := r.URL.Query().Get("cursor"); cursorStr != "" {
-		// convert cursor to bytes
-		cursor, err := base64.StdEncoding.DecodeString(cursorStr)
-		if err != nil {
-			return body, httputil.NewError(400, "invalid cursor")
-		}
-		body.Cursor = cursor
-	}
+	body.Cursor = r.URL.Query().Get("cursor")
 
-	// read compact
-	if compactRaw := r.URL.Query().Get("compact"); compactRaw != "" {
-		if compactRaw == "true" {
-			body.Compact = true
-		} else if compactRaw == "false" {
-			body.Compact = false
+	// read type
+	body.Type = r.URL.Query().Get("type")
+
+	// read peek
+	if peekRaw := r.URL.Query().Get("peek"); peekRaw != "" {
+		if peekRaw == "true" {
+			body.Peek = true
+		} else if peekRaw == "false" {
+			body.Peek = false
 		} else {
 			return body, httputil.NewError(400, fmt.Sprintf("expected 'compact' parameter to be 'true' or 'false'"))
 		}
@@ -236,6 +284,17 @@ func parseQueryBody(r *http.Request) (queryBody, error) {
 		body.Filter = []byte(filter)
 	}
 
+	// check params are consistent
+
+	// check cursor
+	if body.Cursor != "" {
+		cursor, err := base58.Decode(body.Cursor)
+		if err != nil {
+			return body, httputil.NewError(400, "invalid cursor")
+		}
+		body.CursorBytes = cursor
+	}
+
 	// check limit
 	if body.Limit == 0 {
 		body.Limit = defaultReadLimit
@@ -243,11 +302,33 @@ func parseQueryBody(r *http.Request) (queryBody, error) {
 		return body, httputil.NewError(400, fmt.Sprintf("limit exceeds maximum of %d", maxReadLimit))
 	}
 
-	// check query isn't provided if cursor is set
-	if body.Cursor != nil {
-		if body.Filter != nil || !body.Compact {
-			return body, httputil.NewError(400, "you cannot provide 'filter' or 'compact' parameters along with 'cursor'")
+	// check nothing else if cursor is set
+	if body.CursorBytes != nil {
+		if body.Type != "" || body.Filter != nil || body.Peek {
+			return body, httputil.NewError(400, "you cannot provide query parameters ('type', 'filter' or 'peek') along with a 'cursor'")
 		}
+
+		// succesful for a read
+		return body, nil
+	}
+
+	// checking only query now (not cursor reads)
+
+	// check body type
+	if body.Type == queryBodyTypeNone {
+		body.Type = queryBodyTypeIndex
+	} else if body.Type != queryBodyTypeIndex && body.Type != queryBodyTypeLog {
+		return body, httputil.NewError(400, fmt.Sprintf("unrecognized query type '%s'; options are '%s' (default) and '%s'", body.Type, queryBodyTypeIndex, queryBodyTypeLog))
+	}
+
+	// check index-only params
+	if body.Type == queryBodyTypeLog && body.Filter != nil {
+		return body, httputil.NewError(400, "you cannot provide the 'filter' parameter for a 'log' query")
+	}
+
+	// check log-only params
+	if body.Type == queryBodyTypeIndex && body.Peek {
+		return body, httputil.NewError(400, "you cannot provide the 'peek' parameter for a 'query' query")
 	}
 
 	// done

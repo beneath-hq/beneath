@@ -17,11 +17,7 @@ import (
 	"github.com/beneath-core/pkg/timeutil"
 )
 
-func (s *gRPCServer) Repartition(ctx context.Context, req *pb.RepartitionRequest) (*pb.RepartitionResponse, error) {
-	panic("not implemented")
-}
-
-func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.QueryResponse, error) {
+func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb.QueryLogResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
 	if secret == nil {
@@ -35,11 +31,81 @@ func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	}
 
 	// set payload
-	payload := queryTags{
+	payload := queryLogTags{
 		InstanceID: instanceID.String(),
-		Filter:     req.Filter,
 		Partitions: req.Partitions,
-		Compact:    req.Compact,
+		Peek:       req.Peek,
+	}
+	middleware.SetTagsPayload(ctx, payload)
+
+	// get cached stream
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	if stream == nil {
+		return nil, status.Error(codes.NotFound, "stream not found")
+	}
+
+	// if batch, check committed
+	if stream.Batch && !stream.Committed {
+		return nil, status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
+	}
+
+	// check permissions
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	if !perms.Read {
+		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
+	}
+
+	// run peek query
+	if req.Peek {
+		// check partitions == 1 on peek
+		if req.Partitions > 1 {
+			return nil, grpc.Errorf(codes.InvalidArgument, "cannot return more than one partition for a peek")
+		}
+
+		// run query
+		replayCursor, changeCursor, err := hub.Engine.Lookup.Peek(ctx, stream, stream, stream)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
+		}
+
+		// done
+		return &pb.QueryLogResponse{
+			ReplayCursors: [][]byte{replayCursor},
+			ChangeCursors: [][]byte{changeCursor},
+		}, nil
+	}
+
+	// run normal query
+	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, nil, false, int(req.Partitions))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
+	}
+
+	// done
+	return &pb.QueryLogResponse{
+		ReplayCursors: replayCursors,
+		ChangeCursors: changeCursors,
+	}, nil
+}
+
+func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) (*pb.QueryIndexResponse, error) {
+	// get auth
+	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
+
+	// read instanceID
+	instanceID := uuid.FromBytesOrNil(req.InstanceId)
+	if instanceID == uuid.Nil {
+		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+	}
+
+	// set payload
+	payload := queryIndexTags{
+		InstanceID: instanceID.String(),
+		Partitions: req.Partitions,
+		Filter:     req.Filter,
 	}
 	middleware.SetTagsPayload(ctx, payload)
 
@@ -67,13 +133,13 @@ func (s *gRPCServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	}
 
 	// run query
-	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, req.Compact, int(req.Partitions))
+	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, true, int(req.Partitions))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
 	}
 
 	// done
-	return &pb.QueryResponse{
+	return &pb.QueryIndexResponse{
 		ReplayCursors: replayCursors,
 		ChangeCursors: changeCursors,
 	}, nil

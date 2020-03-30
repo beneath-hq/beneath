@@ -20,6 +20,12 @@ import (
 	"github.com/beneath-core/pkg/timeutil"
 )
 
+type writeTags struct {
+	InstanceID   string `json:"instance_id,omitempty"`
+	RecordsCount int    `json:"records,omitempty"`
+	BytesWritten int    `json:"bytes,omitempty"`
+}
+
 func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	// get auth
 	secret := middleware.GetSecret(r.Context())
