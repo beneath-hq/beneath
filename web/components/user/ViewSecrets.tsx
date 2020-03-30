@@ -33,7 +33,7 @@ const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
 
   return (
     <List dense={true}>
-      {data.secretsForUser.map(({ createdOn, description, userSecretID, prefix }) => (
+      {data.secretsForUser.filter(secret => secret.description !== "Browser session").map(({ createdOn, description, userSecretID, prefix }) => (
         <ListItem key={userSecretID} disableGutters>
           <ListItemText
             primary={

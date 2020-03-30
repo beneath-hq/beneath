@@ -18,6 +18,7 @@ import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
 import ViewProjects from "../components/user/ViewProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
+import ViewBrowserSessions from "../components/user/ViewBrowserSessions";
 import ViewServices from "../components/organization/ViewServices";
 import ViewBilling from "../components/organization/billing/ViewBilling";
 
@@ -65,8 +66,8 @@ const UserPage = () => {
           <IssueSecret userID={user.userID} />
           <ViewSecrets userID={user.userID} />
         </>
-      ),
-    });
+      )}),
+    tabs.push({ value: "security", label: "Security", render: () => <ViewBrowserSessions userID={user.userID} /> })
 
     if (me.organization.personal) {
       // const org: OrganizationByName_organizationByName = organization
