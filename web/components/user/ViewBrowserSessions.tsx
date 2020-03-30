@@ -33,8 +33,8 @@ const ViewBrowserSessions: FC<ViewBrowserSessionsProps> = ({ userID }) => {
 
   return (
     <>
-      <Typography>Here are all of your active browser sessions. You can delete any old sessions or any sessions that you don't recognize.</Typography>
-      <Typography>Note that if you delete your current session, you'll have to log-in again.</Typography>
+      <Typography variant="h3">Active browser sessions</Typography>
+      <Typography>You can delete any old sessions or any sessions that you don't recognize. Note that if you delete your current session, you'll have to log-in again.</Typography>
       <List dense={true}>
         {data.secretsForUser.filter(secret => secret.description == "Browser session").map(({ createdOn, description, userSecretID, prefix }) => (
           <ListItem key={userSecretID} disableGutters>
