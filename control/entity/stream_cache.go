@@ -27,6 +27,8 @@ type CachedStream struct {
 	Manual           bool
 	Committed        bool
 	RetentionSeconds int32
+	OrganizationID   uuid.UUID
+	OrganizationName string
 	ProjectID        uuid.UUID
 	ProjectName      string
 	StreamName       string
@@ -73,6 +75,8 @@ type internalCachedStream struct {
 	Manual              bool
 	Committed           bool
 	RetentionSeconds    int32
+	OrganizationID      uuid.UUID
+	OrganizationName    string
 	ProjectID           uuid.UUID
 	ProjectName         string
 	StreamName          string
@@ -84,6 +88,10 @@ type internalCachedStream struct {
 func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 	if s.Project == nil {
 		panic("Stream project must be loaded")
+	}
+
+	if s.Project.Organization == nil {
+		panic("Stream organization must be loaded")
 	}
 
 	committed := false
@@ -110,6 +118,8 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 		Manual:              s.Manual,
 		Committed:           committed,
 		RetentionSeconds:    s.RetentionSeconds,
+		OrganizationID:      s.Project.Organization.OrganizationID,
+		OrganizationName:    s.Project.Organization.Name,
 		ProjectID:           s.Project.ProjectID,
 		ProjectName:         s.Project.Name,
 		StreamName:          s.Name,
@@ -139,6 +149,8 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 		Manual:           c.Manual,
 		Committed:        c.Committed,
 		RetentionSeconds: c.RetentionSeconds,
+		OrganizationID:   c.OrganizationID,
+		OrganizationName: c.OrganizationName,
 		ProjectID:        c.ProjectID,
 		ProjectName:      c.ProjectName,
 		StreamName:       c.StreamName,
@@ -196,7 +208,17 @@ func (c *CachedStream) DecodeMsgpack(dec *msgpack.Decoder) error {
 	return c.UnmarshalBinary(bin)
 }
 
-// CachedStream implements both engine/driver.Project and engine/driver.Stream
+// CachedStream implements engine/driver.Organization, engine/driver.Project, engine/driver.StreamInstance, and engine/driver.Stream
+
+// GetOrganizationID implements engine/driver.Organization
+func (c *CachedStream) GetOrganizationID() uuid.UUID {
+	return c.OrganizationID
+}
+
+// GetOrganizationName implements engine/driver.Organization
+func (c *CachedStream) GetOrganizationName() string {
+	return c.OrganizationName
+}
 
 // GetProjectID implements engine/driver.Project
 func (c *CachedStream) GetProjectID() uuid.UUID {
@@ -358,6 +380,8 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 					s.manual,
 					si.committed_on is not null as committed,
 					s.retention_seconds,
+					p.organization_id,
+					o.name as organization_name,
 					s.project_id,
 					p.name as project_name,
 					s.name as stream_name,
@@ -365,6 +389,7 @@ func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func(
 				from stream_instances si
 				join streams s on si.stream_id = s.stream_id
 				join projects p on s.project_id = p.project_id
+				join organizations o on p.organization_id = o.organization_id
 				where si.stream_instance_id = ?
 			`, instanceID)
 
@@ -405,6 +430,8 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.Manual = source.Manual
 	target.Committed = source.Committed
 	target.RetentionSeconds = source.RetentionSeconds
+	target.OrganizationID = source.OrganizationID
+	target.OrganizationName = source.OrganizationName
 	target.ProjectID = source.ProjectID
 	target.ProjectName = source.ProjectName
 	target.StreamName = source.StreamName

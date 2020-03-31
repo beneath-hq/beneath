@@ -27,16 +27,16 @@ func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*entity.Project,
 	return entity.FindProjects(ctx), nil
 }
 
-func (r *queryResolver) ProjectByName(ctx context.Context, name string) (*entity.Project, error) {
-	project := entity.FindProjectByName(ctx, name)
+func (r *queryResolver) ProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) (*entity.Project, error) {
+	project := entity.FindProjectByOrganizationAndName(ctx, organizationName, projectName)
 	if project == nil {
-		return nil, gqlerror.Errorf("Project %s not found", name)
+		return nil, gqlerror.Errorf("Project %s/%s not found", projectName, organizationName)
 	}
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, project.ProjectID, project.Public)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to read project %s", name)
+		return nil, gqlerror.Errorf("Not allowed to read project %s/%s", projectName, organizationName)
 	}
 
 	return project, nil

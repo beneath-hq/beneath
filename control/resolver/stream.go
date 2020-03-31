@@ -37,16 +37,16 @@ func (r *queryResolver) StreamByID(ctx context.Context, streamID uuid.UUID) (*en
 	return stream, nil
 }
 
-func (r *queryResolver) StreamByProjectAndName(ctx context.Context, name string, projectName string) (*entity.Stream, error) {
-	stream := entity.FindStreamByNameAndProject(ctx, name, projectName)
+func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*entity.Stream, error) {
+	stream := entity.FindStreamByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
 	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s/%s not found", projectName, name)
+		return nil, gqlerror.Errorf("Stream %s/%s/%s not found", organizationName, projectName, streamName)
 	}
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public, stream.External)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s", projectName, name)
+		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s/%s", organizationName, projectName, streamName)
 	}
 
 	return stream, nil

@@ -82,7 +82,7 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	}
 	err := hub.DB.ModelContext(ctx, stream).
 		WherePK().
-		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
+		Column("stream.*", "Project", "Project.Organization", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -90,13 +90,14 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	return stream
 }
 
-// FindStreamByNameAndProject finds a stream
-func FindStreamByNameAndProject(ctx context.Context, name string, projectName string) *Stream {
+// FindStreamByOrganizationProjectAndName finds a stream
+func FindStreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) *Stream {
 	stream := &Stream{}
 	err := hub.DB.ModelContext(ctx, stream).
-		Column("stream.*", "Project", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
-		Where("lower(stream.name) = lower(?)", name).
+		Column("stream.*", "Project", "Project.Organization", "CurrentStreamInstance", "SourceModel", "StreamIndexes"). // Q: should I not select the whole organization table? and instead just select the name?
+		Where("lower(project__organization.name) = lower(?)", organizationName).
 		Where("lower(project.name) = lower(?)", projectName).
+		Where("lower(stream.name) = lower(?)", streamName).
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -104,9 +105,9 @@ func FindStreamByNameAndProject(ctx context.Context, name string, projectName st
 	return stream
 }
 
-// FindInstanceIDByNameAndProject returns the current instance ID of the stream
-func FindInstanceIDByNameAndProject(ctx context.Context, name string, projectName string) uuid.UUID {
-	return getInstanceCache().get(ctx, name, projectName)
+// FindInstanceIDByOrganizationProjectAndName returns the current instance ID of the stream
+func FindInstanceIDByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) uuid.UUID {
+	return getInstanceCache().get(ctx, organizationName, projectName, streamName)
 }
 
 // FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
@@ -225,6 +226,11 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 	// populate s.Project if not set
 	if s.Project == nil {
 		s.Project = FindProject(ctx, s.ProjectID)
+	}
+
+	// populate s.Project.Organization if not set
+	if s.Project.Organization == nil {
+		s.Project.Organization = FindOrganization(ctx, s.Project.OrganizationID)
 	}
 
 	return nil
@@ -451,7 +457,7 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 		return nil, err
 	}
 	if count > 0 {
-		return nil, fmt.Errorf("Another batch is already outstanding for stream '%s/%s' – commit or clear it before continuing", s.Project.Name, s.Name)
+		return nil, fmt.Errorf("Another batch is already outstanding for stream '%s/%s/%s' – commit or clear it before continuing", s.Project.Organization.Name, s.Project.Name, s.Name)
 	}
 
 	// create new
@@ -510,7 +516,7 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 	}
 
 	// clear instance cache in redis
-	getInstanceCache().clear(tx.Context(), s.Name, s.Project.Name)
+	getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
 	getStreamCache().clear(tx.Context(), instance.StreamInstanceID)
 	if prevInstanceID != nil {
 		getStreamCache().clear(tx.Context(), *prevInstanceID)

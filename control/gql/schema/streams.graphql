@@ -1,6 +1,6 @@
 extend type Query {
   streamByID(streamID: UUID!): Stream!
-  streamByProjectAndName(name: String!, projectName: String!): Stream!
+  streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
 }
 
 extend type Mutation {

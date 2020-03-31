@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
@@ -77,11 +78,14 @@ func FindProjects(ctx context.Context) []*Project {
 	return projects
 }
 
-// FindProjectByName finds a project by name
-func FindProjectByName(ctx context.Context, name string) *Project {
+// FindProjectByOrganizationAndName finds a project by organization name and project name
+func FindProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) *Project {
 	project := &Project{}
 	err := hub.DB.ModelContext(ctx, project).
-		Where("lower(project.name) = lower(?)", name).
+		Relation("Organization", func(q *orm.Query) (*orm.Query, error) {
+			return q.Where("lower(organization.name) = lower(?)", organizationName), nil
+		}).
+		Where("lower(project.name) = lower(?)", projectName).
 		Column("project.*", "Streams", "Users").
 		Select()
 	if !AssertFoundOne(err) {

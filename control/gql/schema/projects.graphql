@@ -1,6 +1,6 @@
 extend type Query {
   exploreProjects: [Project!]!
-  projectByName(name: String!): Project
+  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project
   projectByID(projectID: UUID!): Project
 }
 

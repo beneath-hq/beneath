@@ -35,13 +35,13 @@ func getInstanceCache() instanceCache {
 	return _instanceCache
 }
 
-func (c instanceCache) get(ctx context.Context, streamName string, projectName string) uuid.UUID {
+func (c instanceCache) get(ctx context.Context, organizationName string, projectName string, streamName string) uuid.UUID {
 	var instanceID uuid.UUID
 	err := c.codec.Once(&cache.Item{
-		Key:        c.redisKey(streamName, projectName),
+		Key:        c.redisKey(organizationName, projectName, streamName),
 		Object:     &instanceID,
 		Expiration: c.cacheTime(),
-		Func:       c.getterFunc(ctx, streamName, projectName),
+		Func:       c.getterFunc(ctx, organizationName, projectName, streamName),
 	})
 
 	if err != nil {
@@ -51,8 +51,8 @@ func (c instanceCache) get(ctx context.Context, streamName string, projectName s
 	return instanceID
 }
 
-func (c instanceCache) clear(ctx context.Context, streamName string, projectName string) {
-	err := c.codec.Delete(c.redisKey(streamName, projectName))
+func (c instanceCache) clear(ctx context.Context, organizationName string, projectName string, streamName string) {
+	err := c.codec.Delete(c.redisKey(organizationName, projectName, streamName))
 	if err != nil && err != cache.ErrCacheMiss {
 		panic(err)
 	}
@@ -70,8 +70,8 @@ func (c instanceCache) cacheLRUTime() time.Duration {
 	return 1 * time.Minute
 }
 
-func (c instanceCache) redisKey(streamName string, projectName string) string {
-	return fmt.Sprintf("instance_id:%s:%s", projectName, streamName)
+func (c instanceCache) redisKey(organizationName string, projectName string, streamName string) string {
+	return fmt.Sprintf("instance_id:%s:%s:%s", organizationName, projectName, streamName)
 }
 
 func (c instanceCache) marshal(v interface{}) ([]byte, error) {
@@ -85,17 +85,19 @@ func (c instanceCache) unmarshal(b []byte, v interface{}) (err error) {
 	return err
 }
 
-func (c instanceCache) getterFunc(ctx context.Context, streamName string, projectName string) func() (interface{}, error) {
+func (c instanceCache) getterFunc(ctx context.Context, organizationName string, projectName string, streamName string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		res := uuid.Nil
 		_, err := hub.DB.QueryContext(ctx, pg.Scan(&res), `
 			select s.current_stream_instance_id
 			from streams s
 			join projects p on s.project_id = p.project_id
+			join organizations o on p.organization_id = o.organization_id
 			where lower(s.name) = lower(?)
 			and lower(p.name) = lower(?)
+			and lower(o.name) = lower(?)
 			and current_stream_instance_id is not null
-		`, streamName, projectName)
+		`, streamName, projectName, organizationName)
 		if err == pg.ErrNoRows {
 			return res, nil
 		}
