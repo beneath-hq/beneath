@@ -41,7 +41,9 @@ export class BrowserConnection {
       reconnect: true,
       connectionParams,
       connectionCallback: (error: Error[], result?: any) => {
-        console.log("WHAT'S THIS", error, result);
+        if (error) {
+          console.error("Beneath subscription error: ", error);
+        }
       },
     });
   }
@@ -67,7 +69,7 @@ export class BrowserConnection {
   }
 
   public subscribe<TRecord = any>(args: SubscribeArgs): { unsubscribe: () => void } {
-    const payload = { cursor: args.cursor, instance_id: args.instanceID };
+    const payload = { query: " ", cursor: args.cursor, instance_id: args.instanceID };
     const req = this.subscription.request(payload).subscribe({
       next: (result) => {
         args.onResult();

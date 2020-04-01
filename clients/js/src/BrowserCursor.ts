@@ -1,4 +1,5 @@
 import { BrowserConnection, Response, ResponseMeta } from "./BrowserConnection";
+import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "./config";
 import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "./shared";
 
 export class BrowserCursor<TRecord = any> {
@@ -93,12 +94,12 @@ export class BrowserCursor<TRecord = any> {
       return { error };
     }
 
-    this.changeCursor = meta?.changeCursor;
+    this.changeCursor = meta?.nextCursor;
 
     return { data };
   }
 
-  public async subscribeChanges(opts: SubscribeOptions<TRecord>): Promise<void> {
+  public subscribeChanges(opts: SubscribeOptions<TRecord>): { unsubscribe: () => void } {
     // make sure can subscribe
     if (!this.changeCursor) {
       throw Error("cannot subscribe to changes for this query");
@@ -107,16 +108,86 @@ export class BrowserCursor<TRecord = any> {
       throw Error("cannot subscribe to changes for this query");
     }
 
-    this.connection.subscribe({
+    const self = this;
+
+    const pageSize = opts.pageSize || DEFAULT_READ_BATCH_SIZE;
+    const pollAtMostEveryMilliseconds = opts.pollAtMostEveryMilliseconds || DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS;
+
+    const state = {
+      stop: false,
+      poll: false,
+      polling: false,
+      lastPoll: 0,
+      // tslint:disable-next-line: no-empty
+      unsubscribe: () => {},
+    };
+
+    const _unsubscribe = (error?: Error) => {
+      if (!state.stop) {
+        state.stop = true;
+        state.unsubscribe();
+        opts.onComplete(error);
+      }
+    };
+
+    const poll = async () => {
+      // semantics: Regardless of how many times or how frequently poll() is called, it should make as few
+      // network calls as possible (i.e. calls to readNextChanges); however, it must ensure a fetch occurs
+      // soon after every call to poll().
+
+      // remember: execution only stops in between awaits; we leverage this extensively
+
+      if (state.stop) { return; }
+      state.poll = true;
+      if (state.polling) { return; }
+      state.polling = true;
+
+      while (state.poll && !state.stop) {
+        state.poll = false;
+
+        // ensure poll at most every pollAtMostEveryMilliseconds
+        const now = Date.now();
+        const delta = Math.max(now - state.lastPoll, 0);
+        if (delta < pollAtMostEveryMilliseconds) {
+          const sleep = pollAtMostEveryMilliseconds - delta;
+          await new Promise(r => setTimeout(r, sleep));
+          if (state.stop) { break; }
+        }
+        state.lastPoll = Date.now();
+
+        const { data, error } = await self.readNextChanges({ pageSize });
+        if (state.stop) { break; }
+
+        if (error || !data) {
+          _unsubscribe(error);
+          break;
+        }
+
+        if (data.length > 0) {
+          opts.onData(data);
+        }
+
+        if (data.length === pageSize) {
+          state.poll = true;
+        }
+      }
+
+      state.polling = false;
+    };
+
+    const { unsubscribe } = this.connection.subscribe({
       instanceID: this.streamQualifier.instanceID,
       cursor: this.changeCursor,
       onResult: () => {
-        // TODO
+        poll();
       },
       onComplete: (error?: Error) => {
-        // TODO
+        _unsubscribe(error); // idempotent
       },
     });
+
+    state.unsubscribe = unsubscribe;
+    return { unsubscribe: _unsubscribe };
   }
 
 }
