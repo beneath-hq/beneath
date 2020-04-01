@@ -69,7 +69,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Organization").Select()
+	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Projects.Organization", "Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -89,7 +89,7 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 // FindUserByUsername returns user with username (if exists)
 func FindUserByUsername(ctx context.Context, username string) *User {
 	user := &User{}
-	err := hub.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Relation("Projects").Select()
+	err := hub.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Column("user.*", "Projects", "Projects.Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}

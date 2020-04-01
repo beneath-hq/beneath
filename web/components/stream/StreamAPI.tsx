@@ -2,7 +2,7 @@ import React, { FC } from "react";
 
 import { Container, Link as MUILink, makeStyles, Paper, Theme, Typography } from "@material-ui/core";
 
-import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { GATEWAY_URL } from "../../lib/connection";
 import { toURLName } from "../../lib/names";
 
@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 interface StreamAPIProps {
-  stream: QueryStream_streamByProjectAndName;
+  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
 }
 
 const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
@@ -126,7 +126,7 @@ df = stream.read()`}</CodeBlock>
 
 export default StreamAPI;
 
-const bigQueryName = (stream: QueryStream_streamByProjectAndName) => {
+const bigQueryName = (stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName) => {
   const projectName = stream.project.name.replace(/-/g, "_");
   const streamName = stream.name.replace(/-/g, "_");
   // const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;

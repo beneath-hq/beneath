@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import numbro from "numbro";
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
-import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 
 type TimeagoType = "timeago";
 
@@ -14,7 +14,7 @@ export class Schema {
   public avroSchema: avro.types.RecordType;
   public columns: Column[];
 
-  constructor(stream: QueryStream_streamByProjectAndName) {
+  constructor(stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName) {
     this.streamID = stream.streamID;
 
     this.keyFields = [];

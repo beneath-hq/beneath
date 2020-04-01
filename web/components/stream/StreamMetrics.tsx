@@ -3,7 +3,7 @@ import { FC } from "react";
 
 import { GET_STREAM_METRICS } from "../../apollo/queries/metrics";
 import { GetStreamMetrics, GetStreamMetricsVariables } from "../../apollo/types/GetStreamMetrics";
-import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import BatchTopIndicators from "../metrics/stream/BatchTopIndicators";
 import StreamingTopIndicators from "../metrics/stream/StreamingTopIndicators";
 import { hourFloor, monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 interface StreamMetricsProps {
-  stream: QueryStream_streamByProjectAndName;
+  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
 }
 
 const StreamMetrics: FC<StreamMetricsProps> = ({ stream }) => {

@@ -6,7 +6,7 @@ import validator from "validator";
 import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 
 import { UPDATE_PROJECT } from "../../apollo/queries/project";
-import { ProjectByName_projectByName } from "../../apollo/types/ProjectByName";
+import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { UpdateProject, UpdateProjectVariables } from "../../apollo/types/UpdateProject";
 import VSpace from "../VSpace";
 
@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 interface EditProjectProps {
-  project: ProjectByName_projectByName;
+  project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
 const EditProject: FC<EditProjectProps> = ({ project }) => {

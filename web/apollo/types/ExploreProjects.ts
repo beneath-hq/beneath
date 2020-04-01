@@ -7,6 +7,11 @@
 // GraphQL query operation: ExploreProjects
 // ====================================================
 
+export interface ExploreProjects_exploreProjects_organization {
+  __typename: "Organization";
+  name: string;
+}
+
 export interface ExploreProjects_exploreProjects {
   __typename: "Project";
   projectID: string;
@@ -16,6 +21,7 @@ export interface ExploreProjects_exploreProjects {
   photoURL: string | null;
   createdOn: ControlTime;
   updatedOn: ControlTime;
+  organization: ExploreProjects_exploreProjects_organization;
 }
 
 export interface ExploreProjects {

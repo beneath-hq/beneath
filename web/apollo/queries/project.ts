@@ -10,13 +10,16 @@ export const EXPLORE_PROJECTS = gql`
       photoURL
       createdOn
       updatedOn
+      organization {
+        name
+      }
     }
   }
 `;
 
 export const QUERY_PROJECT = gql`
-  query ProjectByName($name: String!) {
-    projectByName(name: $name) {
+  query ProjectByOrganizationAndName($organizationName: String!, $projectName: String!) {
+    projectByOrganizationAndName(organizationName: $organizationName, projectName: $projectName) {
       projectID
       name
       displayName
@@ -25,6 +28,9 @@ export const QUERY_PROJECT = gql`
       photoURL
       createdOn
       updatedOn
+      organization {
+        name
+      }
       users {
         userID
         name
@@ -50,6 +56,9 @@ export const UPDATE_PROJECT = gql`
       description
       photoURL
       updatedOn
+      organization {
+        name
+      }
     }
   }
 `;

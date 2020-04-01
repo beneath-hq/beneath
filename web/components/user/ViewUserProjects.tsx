@@ -17,19 +17,18 @@ interface Props {
   user: User_user;
 }
 
-const ViewProjects: FC<Props> = ({ user }) => {
+const ViewUserProjects: FC<Props> = ({ user }) => {
   const classes = useStyles();
   return (
     <>
       <List>
-        {user.projects.map(({ projectID, name, displayName, description, photoURL }) => (
+        {user.projects.map(({ projectID, name, displayName, description, photoURL, organization }) => (
           <ListItem
             component={NextMuiLinkList}
-            href={`/project?name=${toURLName(name)}`}
+            href={`/${toURLName(organization.name)}/${toURLName(name)}`}
             button
             disableGutters
             key={projectID}
-            as={`/projects/${toURLName(name)}`}
           >
             <ListItemAvatar>
               <Avatar size="list" label={displayName || name} src={photoURL || undefined} />
@@ -47,4 +46,4 @@ const ViewProjects: FC<Props> = ({ user }) => {
   );
 };
 
-export default ViewProjects;
+export default ViewUserProjects;

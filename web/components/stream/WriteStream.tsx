@@ -6,7 +6,7 @@ import { Button, makeStyles, Theme, Typography } from "@material-ui/core";
 
 import { CREATE_RECORDS } from "../../apollo/queries/local/records";
 import { CreateRecords, CreateRecordsVariables } from "../../apollo/types/CreateRecords";
-import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import CodeTextField from "../CodeTextField";
 import { Schema } from "./schema";
 
@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 interface WriteStreamProps {
-  stream: QueryStream_streamByProjectAndName;
+  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
 }
 
 const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {

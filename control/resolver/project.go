@@ -30,13 +30,13 @@ func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*entity.Project,
 func (r *queryResolver) ProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) (*entity.Project, error) {
 	project := entity.FindProjectByOrganizationAndName(ctx, organizationName, projectName)
 	if project == nil {
-		return nil, gqlerror.Errorf("Project %s/%s not found", projectName, organizationName)
+		return nil, gqlerror.Errorf("Project %s/%s not found", organizationName, projectName)
 	}
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, project.ProjectID, project.Public)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to read project %s/%s", projectName, organizationName)
+		return nil, gqlerror.Errorf("Not allowed to read project %s/%s", organizationName, projectName)
 	}
 
 	return project, nil

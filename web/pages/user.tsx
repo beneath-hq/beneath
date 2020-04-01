@@ -16,7 +16,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 import EditMe from "../components/user/EditMe";
 import IssueSecret from "../components/user/IssueSecret";
 import Monitoring from "../components/user/Monitoring";
-import ViewProjects from "../components/user/ViewProjects";
+import ViewUserProjects from "../components/user/ViewUserProjects";
 import ViewSecrets from "../components/user/ViewSecrets";
 import ViewBrowserSessions from "../components/user/ViewBrowserSessions";
 import ViewServices from "../components/organization/ViewServices";
@@ -53,7 +53,7 @@ const UserPage = () => {
     return <ErrorPage statusCode={404} />;
   }
 
-  const tabs = [{ value: "projects", label: "Projects", render: () => <ViewProjects user={user} /> }];
+  const tabs = [{ value: "projects", label: "Projects", render: () => <ViewUserProjects user={user} /> }];
 
   if (me && me.userID === user.userID) {
     tabs.push({ value: "monitoring", label: "Monitoring", render: () => <Monitoring me={me} /> });

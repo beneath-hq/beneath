@@ -9,7 +9,7 @@ import ErrorPage from "../ErrorPage";
 import Loading from "../Loading";
 import Page from "../Page";
 import UsageIndicator from "../metrics/user/UsageIndicator";
-import ViewProjects from "../../components/user/ViewProjects";
+import ViewUserProjects from "../../components/user/ViewUserProjects";
 import { monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
 
 import { QUERY_USER_BY_USERNAME } from "../../apollo/queries/user";
@@ -66,7 +66,7 @@ const Springboard: FC = () => {
 
   if (loading || loading2) {
     return (
-      <Page subheader>
+      <Page>
         <Loading justify="center" />
       </Page>
     );
@@ -90,7 +90,7 @@ const Springboard: FC = () => {
       </Grid>
       
       <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">My projects</Typography>
-      <ViewProjects user={user} />
+      <ViewUserProjects user={user} />
 
       <Grid className={classes.buttons} container spacing={2} justify="center">
         {/* <Grid item>

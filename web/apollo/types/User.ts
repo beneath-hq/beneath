@@ -7,6 +7,11 @@
 // GraphQL query operation: User
 // ====================================================
 
+export interface User_user_projects_organization {
+  __typename: "Organization";
+  name: string;
+}
+
 export interface User_user_projects {
   __typename: "Project";
   projectID: string;
@@ -14,6 +19,7 @@ export interface User_user_projects {
   displayName: string;
   description: string | null;
   photoURL: string | null;
+  organization: User_user_projects_organization;
 }
 
 export interface User_user {

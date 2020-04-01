@@ -4,16 +4,16 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: QueryStream
+// GraphQL query operation: StreamByOrganizationProjectAndName
 // ====================================================
 
-export interface QueryStream_streamByProjectAndName_project {
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project {
   __typename: "Project";
   projectID: string;
   name: string;
 }
 
-export interface QueryStream_streamByProjectAndName_streamIndexes {
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes {
   __typename: "StreamIndex";
   indexID: string;
   fields: string[];
@@ -21,17 +21,17 @@ export interface QueryStream_streamByProjectAndName_streamIndexes {
   normalize: boolean;
 }
 
-export interface QueryStream_streamByProjectAndName {
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName {
   __typename: "Stream";
   streamID: string;
   name: string;
   description: string | null;
   createdOn: ControlTime;
   updatedOn: ControlTime;
-  project: QueryStream_streamByProjectAndName_project;
+  project: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project;
   schema: string;
   avroSchema: string;
-  streamIndexes: QueryStream_streamByProjectAndName_streamIndexes[];
+  streamIndexes: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes[];
   external: boolean;
   batch: boolean;
   manual: boolean;
@@ -41,11 +41,12 @@ export interface QueryStream_streamByProjectAndName {
   currentStreamInstanceID: ControlUUID | null;
 }
 
-export interface QueryStream {
-  streamByProjectAndName: QueryStream_streamByProjectAndName;
+export interface StreamByOrganizationProjectAndName {
+  streamByOrganizationProjectAndName: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
 }
 
-export interface QueryStreamVariables {
-  name: string;
+export interface StreamByOrganizationProjectAndNameVariables {
+  organizationName: string;
   projectName: string;
+  streamName: string;
 }

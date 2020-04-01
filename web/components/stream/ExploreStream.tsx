@@ -7,7 +7,7 @@ import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 
-import { QueryStream_streamByProjectAndName } from "../../apollo/types/QueryStream";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import BNTextField from "../BNTextField";
 import LinkTypography from "../LinkTypography";
@@ -18,7 +18,7 @@ import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
 
 interface ExploreStreamProps {
-  stream: QueryStream_streamByProjectAndName;
+  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   setLoading: (loading: boolean) => void;
 }
 

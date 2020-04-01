@@ -71,7 +71,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 // FindProjects returns a sample of projects
 func FindProjects(ctx context.Context) []*Project {
 	var projects []*Project
-	err := hub.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Select()
+	err := hub.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Relation("Organization").Select()
 	if err != nil {
 		panic(err)
 	}

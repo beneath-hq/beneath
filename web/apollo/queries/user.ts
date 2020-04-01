@@ -15,6 +15,9 @@ export const QUERY_USER = gql`
         displayName
         description
         photoURL
+        organization {
+          name
+        }
       }
     }
   }
@@ -35,6 +38,9 @@ export const QUERY_USER_BY_USERNAME = gql`
         displayName
         description
         photoURL
+        organization {
+          name
+        }
       }
     }
   }
@@ -63,6 +69,9 @@ export const QUERY_ME = gql`
           displayName
           description
           photoURL
+          organization {
+            name
+          }
         }
       }
       organization {

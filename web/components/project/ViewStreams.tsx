@@ -2,13 +2,13 @@ import React, { FC } from "react";
 
 import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
 
-import { ProjectByName_projectByName } from "../../apollo/types/ProjectByName";
+import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import NextMuiLinkList from "../NextMuiLinkList";
 
 interface ViewStreamsProps {
-  project: ProjectByName_projectByName;
+  project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -26,8 +26,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
           <ListItem
             key={streamID}
             component={NextMuiLinkList}
-            as={`/projects/${toURLName(project.name)}/streams/${toURLName(name)}`}
-            href={`/stream?name=${toURLName(name)}&project_name=${toURLName(project.name)}`}
+            href={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/streams/${toURLName(name)}`}
             button
             disableGutters
           >

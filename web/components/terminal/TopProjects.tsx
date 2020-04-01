@@ -60,9 +60,9 @@ const TopProjects: FC = () => {
                 </Typography>
         </Typography>
         <Grid container spacing={3} justify="center">
-          {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL }) => (
+          {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL, organization }) => (
             <Grid key={projectID} item lg={4} md={6} xs={12}>
-              <Link href={`/project?name=${toURLName(name)}`} as={`/projects/${toURLName(name)}`}>
+              <Link href={`/${toURLName(organization.name)}/${toURLName(name)}`}>
                 <Paper className={classes.paper}>
                   <Grid container wrap="nowrap" spacing={0}>
                     <Grid item className={classes.avatar}>
@@ -71,7 +71,7 @@ const TopProjects: FC = () => {
                     <Grid item>
                       <Typography variant="h2">{displayName || toURLName(name)}</Typography>
                       <Typography color="textSecondary" variant="body2" gutterBottom>
-                        /projects/{toURLName(name)}
+                        /{toURLName(organization.name)}/{toURLName(name)}
                       </Typography>
                     </Grid>
                   </Grid>
