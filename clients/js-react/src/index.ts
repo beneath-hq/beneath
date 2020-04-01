@@ -1,9 +1,11 @@
 import { BrowserClient, BrowserQueryResult } from "beneath";
+import { sortedUniqBy } from "lodash";
 import { useEffect, useState } from "react";
 
 const DEFAULT_PAGE_SIZE = 25;
-const DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MILLISECONDS = 250;
-const DEFAULT_SUBSCRIBE_RENDER_AT_MOST_EVERY_MILLISECONDS = 250;
+const DEFAULT_FLASH_DURATION = 2000;
+const DEFAULT_RENDER_FREQUENCY = 250;
+const DEFAULT_SUBSCRIBE_POLL_FREQUENCY = 250;
 
 export interface UseRecordsOptions {
   secret?: string;
@@ -14,20 +16,32 @@ export interface UseRecordsOptions {
   filter?: string;
   pageSize?: number;
   subscribe?: boolean | SubscribeOptions;
+  maxRecords?: number;
+  truncatePolicy?: "start" | "end" | "auto";
+  flashDurationMs?: number;
+  renderFrequencyMs?: number;
 }
 
 export interface UseRecordsResult<TRecord> {
   client?: BrowserClient;
-  records: TRecord[];
+  records: Record<TRecord>[];
   error?: Error;
-  loading: boolean;
-  subscribed: boolean;
   fetchMore?: FetchMoreFunction;
+  fetchMoreChanges?: FetchMoreFunction;
+  loading: boolean;
+  subscription: {
+    online: boolean;
+    error?: Error;
+  };
+  truncation: {
+    start: boolean;
+    end: boolean;
+  };
 }
 
 export interface SubscribeOptions {
-  pollAtMostEveryMilliseconds?: number;
-  renderAtMostEveryMilliseconds?: number;
+  pageSize?: number;
+  pollFrequencyMs?: number;
 }
 
 export type FetchMoreFunction = (opts?: FetchMoreOptions) => Promise<void>;
@@ -42,49 +56,62 @@ export type Record<TRecord = any> = TRecord & {
     key: string;
     timestamp: number;
     flash?: boolean;
+    _key?: Buffer;
+    _flashTime?: number;
   };
 };
 
 export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsResult<TRecord> {
-  // prepare state
-  const [client, setClient] = useState<BrowserClient | undefined>(undefined);
-  const [records, setRecords] = useState<Array<Record<TRecord>>>([]);
+  // values
+  const [client, setClient] = useState<BrowserClient>(() => new BrowserClient({ secret: opts.secret }));
+  const [records, setRecords] = useState<Record<TRecord>[]>([]);
   const [error, setError] = useState<Error | undefined>(undefined);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [subscribed, setSubscribed] = useState<boolean>(false);
   const [fetchMore, setFetchMore] = useState<FetchMoreFunction | undefined>(undefined);
+  const [fetchMoreChanges, setFetchMoreChanges] = useState<FetchMoreFunction | undefined>(undefined);
+
+  // flags
+  const [loading, setLoading] = useState<boolean>(true);
+  const [truncatedStart, setTruncatedStart] = useState<boolean>(false);
+  const [truncatedEnd, setTruncatedEnd] = useState<boolean>(false);
+  const [subscriptionOnline, setSubscriptionOnline] = useState<boolean>(false);
+  const [subscriptionError, setSubscriptionError] = useState<Error | undefined>(undefined);
 
   // // fetch (and maybe subscribe to) records (will get called every time opts change)
   useEffect(() => {
+    // Section: PARSING OPTIONS
+
+    const view = opts.view || "index";
+    const pageSize = opts.pageSize || DEFAULT_PAGE_SIZE;
+    const maxRecords = opts.maxRecords;
+    const truncatePolicy = opts.truncatePolicy || "auto";
+    const flashDuration = opts.flashDurationMs === undefined ? DEFAULT_FLASH_DURATION : opts.flashDurationMs;
+    const renderFrequency = opts.renderFrequencyMs || DEFAULT_RENDER_FREQUENCY;
+
+    const subscribeOpts = (typeof opts.subscribe === "object") ? opts.subscribe : {};
+    const subscribePageSize = subscribeOpts.pageSize || pageSize;
+    const subscribePollFrequency = subscribeOpts.pollFrequencyMs || DEFAULT_SUBSCRIBE_POLL_FREQUENCY;
+
+    if (view !== "index" && opts.filter) {
+      throw Error("useRecords cannot apply a filter to a non-index query (set view to 'index')");
+    }
+
+    if (!maxRecords && opts.truncatePolicy) {
+      throw Error("useRecords cannot apply a truncate policy when maxRecords is not specified");
+    }
+
+    // SECTION: State stored outside async scope
+
     // cancellation mechanism for async/await (dirty, but it works)
     // tslint:disable-next-line: max-line-length
     // see: https://dev.to/n1ru4l/homebrew-react-hooks-useasynceffect-or-how-to-handle-async-operations-with-useeffect-1fa8
     let cancel = false;
 
+    let subscriptionUnsubscribe: (() => any) | undefined;
+
     // async scope
     (async () => {
-      // set default fields in opts for optional fields
-      opts = { ...opts }; // clone
-      opts.view = opts.view || "index";
-      opts.pageSize = opts.pageSize || DEFAULT_PAGE_SIZE;
-      if (opts.subscribe) {
-        if (typeof opts.subscribe === "boolean") {
-          opts.subscribe = {};
-        }
-        if (!opts.subscribe.pollAtMostEveryMilliseconds) {
-          opts.subscribe.pollAtMostEveryMilliseconds = DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MILLISECONDS;
-        }
-        if (!opts.subscribe.renderAtMostEveryMilliseconds) {
-          opts.subscribe.renderAtMostEveryMilliseconds = DEFAULT_SUBSCRIBE_RENDER_AT_MOST_EVERY_MILLISECONDS;
-        }
-      }
-      if (opts.view !== "index" && opts.filter) {
-        throw Error("useRecords cannot apply a filter to a non-index query (set view to 'index')");
-      }
 
-      // make client
-      const client = new BrowserClient({ secret: opts.secret });
-      setClient(client);
+      // Section: INITIAL LOAD
 
       // get stream object
       const stream = client.findStream({
@@ -95,14 +122,14 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // query stream
       let query: BrowserQueryResult<TRecord>;
-      if (opts.view === "index") {
-        query = await stream.queryIndex({ filter: opts.filter, pageSize: opts.pageSize });
-      } else if (opts.view === "log") {
-        query = await stream.queryLog({ pageSize: opts.pageSize });
-      } else if (opts.view === "latest") {
-        query = await stream.queryLog({ peek: true, pageSize: opts.pageSize });
+      if (view === "index") {
+        query = await stream.queryIndex({ filter: opts.filter, pageSize });
+      } else if (view === "log") {
+        query = await stream.queryLog({ pageSize });
+      } else if (view === "latest") {
+        query = await stream.queryLog({ peek: true, pageSize });
       } else {
-        throw Error(`invalid view option <${opts.view}>`);
+        throw Error(`invalid view option <${view}>`);
       }
       if (cancel) { return; } // check cancel after await
 
@@ -117,17 +144,123 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       }
 
       // fetch first page and set
-      const read = await cursor.readNext({ pageSize: opts.pageSize });
+      const read = await cursor.readNext({ pageSize });
       if (cancel) { return; } // check cancel after await
       if (read.error) {
         setError(read.error);
         return;
       }
-      let records = read.data || [];
-      setRecords(records);
+      setRecords(read.data || []);
 
       // done loading
       setLoading(false);
+
+      // Section: BUFFERED RENDERING LOGIC
+
+      let lastRender = 0;
+      let renderScheduled = false;
+      let deflashScheduled = false;
+      let moreBuffer: Record<TRecord>[] = [];
+      let changesBuffer: Record<TRecord>[] = [];
+
+      const deflash = (records: Record<TRecord>[]) => {
+        const cutoff = Date.now() - flashDuration;
+        for (const record of records) {
+          if (record["@meta"]._flashTime && record["@meta"]._flashTime <= cutoff) {
+            delete record["@meta"].flash;
+            delete record["@meta"]._flashTime;
+          }
+        }
+        return records;
+      };
+
+      const render = () => {
+        if (cancel) { return; }
+
+        // update records
+        setRecords((records) => {
+          let result = records;
+          if (deflashScheduled) {
+            result = deflash(result);
+          }
+
+          if (moreBuffer.length > 0) {
+            result = result.concat(moreBuffer);
+          }
+
+          if (changesBuffer.length > 0) {
+            if (view === "latest") {
+              result = changesBuffer.reverse().concat(result);
+            } else if (view === "log") {
+              result = result.concat(changesBuffer);
+            } else if (view === "index") {
+              result = mergeIndexedRecordsAndChanges(result, changesBuffer, false, cursor.hasNext());
+            }
+          }
+
+          // if all changes were in-place, we copy over to a new array (to get react to notice the update)
+          if (result === records) {
+            result = [...result];
+          }
+
+          return result;
+        });
+
+        lastRender = Date.now();
+        renderScheduled = false;
+        deflashScheduled = false;
+        moreBuffer = [];
+        changesBuffer = [];
+      };
+
+      const scheduleRender = (deflash: boolean) => {
+        if (deflash) {
+          deflashScheduled = true;
+        }
+        if (!renderScheduled) {
+          renderScheduled = true;
+          const delta = Math.max(0, Date.now() - lastRender);
+          const wait = renderFrequency - delta;
+          if (wait > 0) {
+            setTimeout(render, wait);
+          } else {
+            render();
+          }
+        }
+      };
+
+      const handleFlash = (data: Record<TRecord>[], flash: boolean) => {
+        flash = flash && flashDuration !== 0;
+        if (flash) {
+          const now = Date.now();
+          // tslint:disable-next-line: prefer-for-of
+          for (let i = 0; i < data.length; i++) {
+            const record = data[i] as Record<TRecord>;
+            record["@meta"].flash = true;
+            record["@meta"]._flashTime = now;
+          }
+
+          // schedule deflash
+          setTimeout(() => {
+            if (cancel) { return; }
+            scheduleRender(true);
+          }, flashDuration);
+        }
+      };
+
+      const handleChangeData = (data: Record<TRecord>[], flash: boolean) => {
+        handleFlash(data, flash);
+        changesBuffer = changesBuffer.concat(data);
+        scheduleRender(false);
+      };
+
+      const handleMoreData = (data: Record<TRecord>[], flash: boolean) => {
+        handleFlash(data, flash);
+        moreBuffer = moreBuffer.concat(data);
+        scheduleRender(false);
+      };
+
+      // SECTION: Fetching more
 
       // set fetch more
       if (cursor.hasNext()) {
@@ -136,14 +269,13 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
           if (cancel) { return; }
 
           // normalize fetchMoreOpts
-          fetchMoreOpts = fetchMoreOpts || {};
-          fetchMoreOpts.pageSize = fetchMoreOpts.pageSize || opts.pageSize;
+          const fetchMorePageSize = fetchMoreOpts?.pageSize || pageSize;
 
           // set loading
           setLoading(true);
 
           // fetch more
-          const read = await cursor.readNext({ pageSize: fetchMoreOpts.pageSize });
+          const read = await cursor.readNext({ pageSize: fetchMorePageSize });
           if (cancel) { return; } // check cancel after await
           if (read.error) {
             setError(read.error);
@@ -151,8 +283,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
           }
 
           // append to records
-          records = records.concat(read.data || []);
-          setRecords(records);
+          handleMoreData(read.data || [], true);
 
           // update fetch more
           if (!cursor.hasNext()) {
@@ -166,33 +297,61 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         setFetchMore(() => fetchMore);
       }
 
-      // // prepend
-      // const prepend = read.records || [];
-      // records = prepend.concat(records);
-      // setRecords(records);
+      // SECTION: Changes
 
-      //     // done if not asked to subscribe changes
-      //     if (!opts.subscribe) {
-      //       return;
-      //     }
+      if (cursor.hasNextChanges() && !opts.filter) {
+        if (opts.subscribe && !(view === "log" && cursor.hasNext())) {
+          // create subscription
+          const { unsubscribe } = cursor.subscribeChanges({
+            pageSize: subscribePageSize,
+            pollAtMostEveryMilliseconds: subscribePollFrequency,
+            onData: (data) => {
+              handleChangeData(data, true);
+            },
+            onComplete: (error) => {
+              if (cancel) { return; }
+              setSubscriptionOnline(false);
+              setSubscriptionError(error);
+            },
+          });
 
-      //     // done if can't subscrine
-      //     if (opts.filter) { // || !cursor.canSubscribeChanges
-      //       return;
-      //     }
+          subscriptionUnsubscribe = unsubscribe;
+        } else {
+          // create manual fetch changes handler
+          const fetchMoreChanges = async (fetchMoreOpts?: FetchMoreOptions) => {
+            // stop if cancelled
+            if (cancel) { return; }
 
-      //     // TODO
-      //     // establish subscription
-      //     // set it to be cancelled in cleanup()
-      //     // setSubscribed(true)
-      //     // respect pollAtMostEveryMilliseconds and renderAtMostEveryMilliseconds
-      //     // on latest: prepend, on log: append, on lookup: merge on @meta.key or insert lexicographically sorted
-      //     // stream.subscribeChanges({
-      //     //   pollAtMostEveryMilliseconds: opts.subscribe.pollAtMostEveryMilliseconds,
-      //     //   onRecords: (records: TRecord[]) => {
-      //     //     return;
-      //     //   },
-      //     // });
+            // normalize fetchMoreOpts
+            const fetchMorePageSize = fetchMoreOpts?.pageSize || pageSize;
+
+            // set loading
+            setLoading(true);
+
+            // fetch more
+            const read = await cursor.readNextChanges({ pageSize: fetchMorePageSize });
+            if (cancel) { return; } // check cancel after await
+            if (read.error) {
+              setError(read.error);
+              return;
+            }
+
+            // append to records
+            handleChangeData(read.data || [], true);
+
+            // update fetch more
+            if (!cursor.hasNextChanges()) {
+              setFetchMoreChanges(undefined);
+            }
+
+            // done loading
+            setLoading(false);
+            return;
+          };
+          setFetchMoreChanges(() => fetchMoreChanges);
+        }
+
+      }
 
       // done with effect
     })();
@@ -201,17 +360,34 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       // cancel async/await
       cancel = true;
 
+      // stop subscription if open
+      if (subscriptionUnsubscribe) {
+        subscriptionUnsubscribe();
+      }
+
       // reset state (cleanup is also called when reacting to opts changes), so complete dealloc is not guaranteed
-      setFetchMore(undefined);
-      setSubscribed(false);
+      setSubscriptionError(undefined);
+      setSubscriptionOnline(false);
+      setTruncatedEnd(false);
+      setTruncatedStart(false);
       setLoading(true);
+      setFetchMoreChanges(undefined);
+      setFetchMore(undefined);
       setError(undefined);
       setRecords([]);
-      setClient(undefined);
 
       // cleanup subscription
     };
-  }, [opts.secret, opts.project, opts.stream, opts.instanceID, opts.view, opts.filter, opts.pageSize, opts.subscribe]);
+  }, [
+    opts.secret,
+    opts.project,
+    opts.stream,
+    opts.instanceID,
+    opts.view,
+    opts.filter,
+    opts.pageSize,
+    !!opts.subscribe,
+  ]);
 
   // UseRecordsResult
   return {
@@ -219,7 +395,99 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     records,
     error,
     loading,
-    subscribed,
     fetchMore,
+    fetchMoreChanges,
+    subscription: {
+      online: subscriptionOnline,
+      error: subscriptionError,
+    },
+    truncation: {
+      start: truncatedStart,
+      end: truncatedEnd,
+    },
   };
+}
+
+function mergeIndexedRecordsAndChanges<TRecord>(
+  records: Record<TRecord>[],
+  changes: Record<TRecord>[],
+  skipStart: boolean,
+  skipEnd: boolean,
+): Record<TRecord>[] {
+  // sort changes a) lexicographically by _key, b) equal keys sorted descending by timestamp
+  changes.sort((a, b) => {
+    const ak = getBufferKey(a);
+    const bk = getBufferKey(b);
+    const c = ak.compare(bk);
+    if (c === 0) {
+      const at = a["@meta"].timestamp;
+      const bt = b["@meta"].timestamp;
+      if (at < bt) {
+        return 1;
+      } else if (at > bt) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+    return c;
+  });
+
+  // remove duplicates (keeps order, keeps first occurence)
+  const sortedUniqChanges = sortedUniqBy(changes, (record) => record["@meta"].key);
+
+  // construuct new merged array
+  const result = [];
+  let recordsIdx = 0;
+  let changesIdx = 0;
+
+  // iterate and merge
+  while (changesIdx < sortedUniqChanges.length || recordsIdx < records.length) {
+    if (changesIdx < sortedUniqChanges.length && recordsIdx < records.length) {
+      const changeRecord = sortedUniqChanges[changesIdx];
+      const existingRecord = records[recordsIdx];
+
+      const changeKey = getBufferKey(changeRecord);
+      const existingKey = getBufferKey(existingRecord);
+
+      const comp = changeKey.compare(existingKey);
+      if (comp < 0) {
+        if (!skipStart || recordsIdx !== 0) {
+          result.push(changeRecord);
+        }
+        changesIdx++;
+      } else if (comp > 0) {
+        result.push(existingRecord);
+        recordsIdx++;
+      } else {
+        if (changeRecord["@meta"].timestamp >= existingRecord["@meta"].timestamp) {
+          result.push(changeRecord);
+        } else {
+          result.push(existingRecord);
+        }
+        changesIdx++;
+        recordsIdx++;
+      }
+    } else if (recordsIdx < records.length) {
+      result.push(records[recordsIdx]);
+      recordsIdx++;
+    } else if (changesIdx < sortedUniqChanges.length) {
+      if (skipEnd) {
+        changesIdx = sortedUniqChanges.length;
+      } else {
+        result.push(sortedUniqChanges[changesIdx]);
+        changesIdx++;
+      }
+    }
+  }
+
+  // done
+  return result;
+}
+
+function getBufferKey<TRecord>(record: Record<TRecord>): Buffer {
+  if (record["@meta"]._key === undefined) {
+    record["@meta"]._key = Buffer.from(record["@meta"].key, "base64");
+  }
+  return record["@meta"]._key;
 }
