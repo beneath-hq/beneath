@@ -34,6 +34,9 @@ type Client struct {
 	// StartTime tracks the server time the client connected
 	StartTime time.Time
 
+	// Initialized tracks if the client has sent a connectionInitMsgType message
+	Initialized bool
+
 	// Err is set if the client was closed unexpectedly
 	Err error
 
@@ -183,7 +186,9 @@ func (c *Client) finalizeClose() {
 	for id := range c.queryState {
 		c.stopQuery(id)
 	}
-	c.broker.server.CloseClient(c)
+	if c.Initialized {
+		c.broker.server.CloseClient(c)
+	}
 	close(c.outbound)
 	_ = c.ws.Close()
 }

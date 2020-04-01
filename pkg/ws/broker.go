@@ -174,12 +174,17 @@ func (b *Broker) processInitRequest(r clientRequest) {
 	if err != nil {
 		r.Client.sendConnectionError(err.Error())
 	} else {
+		r.Client.Initialized = true
 		r.Client.sendConnectionAck()
 	}
 }
 
 // process a startMsgType
 func (b *Broker) processStartRequest(r clientRequest) {
+	if !r.Client.Initialized {
+		r.Client.sendError(r.Message.ID, "must send connection_init as first message")
+		return
+	}
 	r.Client.startQuery(r.Message.ID, r.Message.Payload)
 }
 
