@@ -6,9 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/mr-tron/base58"
-
 	"github.com/go-chi/chi"
+	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
