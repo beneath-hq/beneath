@@ -1,4 +1,4 @@
-import { useRecords } from "beneath-react";
+import { useRecords } from "./beneath";
 
 import React, { FC, useEffect, useState } from "react";
 
@@ -55,20 +55,30 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
 
   // get records
   const token = useToken();
-  const { records, error, loading, subscribed, fetchMore } = useRecords({
+  const {
+    records,
+    error,
+    loading,
+    fetchMore,
+    fetchMoreChanges,
+    subscription,
+    truncation,
+  } = useRecords({
     secret: token || undefined,
     project: stream.project.name,
     stream: stream.name,
     instanceID: stream.currentStreamInstanceID || undefined,
     view,
-    pageSize,
     filter: filter === "" ? undefined : filter,
-    subscribe: false,
+    pageSize,
+    subscribe: { pageSize: 100 },
+    maxRecords: 2000,
   });
 
   const classes = useStyles();
   return (
     <>
+      <p>{subscription.error}</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -155,9 +165,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
       )}
       {!loading && !fetchMore && (
         <Typography className={classes.noMoreDataCaption} variant="body2" align="center">
-          {records.length === 0 ? "Found no rows" : "Loaded all rows"}
-          {" "}
-          {filter !== "" ? "that match the filter" : ""}
+          {records.length === 0 ? "Found no rows" : "Loaded all rows"} {filter !== "" ? "that match the filter" : ""}
         </Typography>
       )}
       {error && (
