@@ -1,6 +1,6 @@
 {
   "name": "beneath-react",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "React bindings for the Beneath javascript library (https://www.npmjs.com/package/beneath)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "beneath": "file:../js",
+    "beneath": "^1.0.2",
     "lodash": "^4.17.15"
   },
   "peerDependencies": {

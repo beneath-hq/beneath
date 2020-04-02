@@ -29,23 +29,25 @@ export type SubscribeArgs = {
 
 export class BrowserConnection {
   public secret?: string;
-  private subscription: SubscriptionClient;
+  private subscription?: SubscriptionClient;
 
   constructor(secret?: string) {
     this.secret = secret;
 
     const connectionParams = secret ? { secret: this.secret } : undefined;
-    this.subscription = new SubscriptionClient(`${BENEATH_GATEWAY_HOST_WS}/v1/ws`, {
-      lazy: true,
-      inactivityTimeout: 10000,
-      reconnect: true,
-      connectionParams,
-      connectionCallback: (error: Error[], result?: any) => {
-        if (error) {
-          console.error("Beneath subscription error: ", error);
-        }
-      },
-    });
+    if (typeof window !== 'undefined') {
+      this.subscription = new SubscriptionClient(`${BENEATH_GATEWAY_HOST_WS}/v1/ws`, {
+        lazy: true,
+        inactivityTimeout: 10000,
+        reconnect: true,
+        connectionParams,
+        connectionCallback: (error: Error[], result?: any) => {
+          if (error) {
+            console.error("Beneath subscription error: ", error);
+          }
+        },
+      });
+    }
   }
 
   public async queryLog<TRecord = any>(streamQualifier: StreamQualifier, args: QueryLogArgs): Promise<Response<TRecord>> {
@@ -69,6 +71,9 @@ export class BrowserConnection {
   }
 
   public subscribe<TRecord = any>(args: SubscribeArgs): { unsubscribe: () => void } {
+    if (!this.subscription) {
+      throw Error("cannot subscribe to websocket updates outside of browser");
+    }
     const payload = { query: " ", cursor: args.cursor, instance_id: args.instanceID };
     const req = this.subscription.request(payload).subscribe({
       next: (result) => {

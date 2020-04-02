@@ -87,6 +87,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     const flashDuration = opts.flashDurationMs === undefined ? DEFAULT_FLASH_DURATION : opts.flashDurationMs;
     const renderFrequency = opts.renderFrequencyMs || DEFAULT_RENDER_FREQUENCY;
 
+    const subscribeEnabled = typeof window === "undefined" ? false : !!opts.subscribe;
     const subscribeOpts = (typeof opts.subscribe === "object") ? opts.subscribe : {};
     const subscribePageSize = subscribeOpts.pageSize || pageSize;
     const subscribePollFrequency = subscribeOpts.pollFrequencyMs || DEFAULT_SUBSCRIBE_POLL_FREQUENCY;
@@ -349,7 +350,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // SECTION: Changes
       if (cursor.hasNextChanges() && !opts.filter) {
-        if (opts.subscribe && !(view === "log" && cursor.hasNext())) {
+        if (subscribeEnabled && !(view === "log" && cursor.hasNext())) {
           // create subscription
           const { unsubscribe } = cursor.subscribeChanges({
             pageSize: subscribePageSize,
