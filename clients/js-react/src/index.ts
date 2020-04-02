@@ -64,7 +64,7 @@ export type Record<TRecord = any> = TRecord & {
 export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsResult<TRecord> {
   // values
   const [client, setClient] = useState<BrowserClient>(() => new BrowserClient({ secret: opts.secret }));
-  const [records, setRecords] = useState<Record<TRecord>[]>([]);
+  const [data, setData] = useState<{ records: Record<TRecord>[] }>({ records: [] });
   const [error, setError] = useState<Error | undefined>(undefined);
   const [fetchMore, setFetchMore] = useState<FetchMoreFunction | undefined>(undefined);
   const [fetchMoreChanges, setFetchMoreChanges] = useState<FetchMoreFunction | undefined>(undefined);
@@ -151,7 +151,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         setError(read.error);
         return;
       }
-      setRecords(read.data || []);
+      setData({ records: read.data || [] });
 
       // done loading
       setLoading(false);
@@ -179,69 +179,79 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         if (cancel) { return; }
 
         // update records
-        setRecords((records) => {
-          let result = records;
-          if (deflashScheduled) {
-            result = deflash(result);
-          }
+        let data: undefined | { records: Record<TRecord>[] };
+        setData((currentData) => {
+          data = currentData;
+          return currentData;
+        });
 
-          if (moreBuffer.length > 0) {
-            result = result.concat(moreBuffer);
-          }
+        // NOTE: This manoeuvre to get a fresh copy of data is horrible! It only works because there's
+        // no async code before the next call to setData. Why not just put the whole block below in the
+        // setData callback above? Because the setXXX calls in the code somehow triggered a nested rerun
+        // of the setData callback precisely on the 20th run. This is such a weird bug, but this horrible
+        // hack solves it.
 
-          if (changesBuffer.length > 0) {
-            if (view === "latest") {
-              result = changesBuffer.reverse().concat(result);
-            } else if (view === "log") {
-              result = result.concat(changesBuffer);
-            } else if (view === "index") {
-              result = mergeIndexedRecordsAndChanges(result, changesBuffer, false, cursor.hasNext());
-            }
-          }
+        if (!data) {
+          throw Error("unexpected internal error!");
+        }
 
-          // if all changes were in-place, we copy over to a new array (to get react to notice the update)
-          if (result === records) {
-            result = [...result];
-          }
+        let result = data.records;
+        if (deflashScheduled) {
+          result = deflash(result);
+        }
 
-          if (maxRecords && result.length > maxRecords) {
-            if (truncatePolicy === "start") {
+        if (moreBuffer.length > 0) {
+          result.push(...moreBuffer);
+        }
+
+        if (changesBuffer.length > 0) {
+          if (view === "latest") {
+            changesBuffer.reverse().push(...result);
+            result = changesBuffer;
+          } else if (view === "log") {
+            result.push(...changesBuffer);
+          } else if (view === "index") {
+            result = mergeIndexedRecordsAndChanges(result, changesBuffer, false, cursor.hasNext());
+          }
+        }
+
+        if (maxRecords && result.length > maxRecords) {
+          if (truncatePolicy === "start") {
+            result = result.slice(result.length - maxRecords);
+            setTruncatedStart(true);
+          } else if (truncatePolicy === "end") {
+            result = result.slice(0, maxRecords);
+            setTruncatedEnd(true);
+          } else if (truncatePolicy === "auto") {
+            if (view === "log") {
+              // truncate start
               result = result.slice(result.length - maxRecords);
               setTruncatedStart(true);
-            } else if (truncatePolicy === "end") {
-              result = result.slice(0, maxRecords);
-              setTruncatedEnd(true);
-            } else if (truncatePolicy === "auto") {
-              if (view === "log") {
+            } else {
+              if (loadedMore) {
                 // truncate start
                 result = result.slice(result.length - maxRecords);
                 setTruncatedStart(true);
-              } else {
-                if (loadedMore) {
-                  // truncate start
-                  result = result.slice(result.length - maxRecords);
-                  setTruncatedStart(true);
 
-                  // disable subscription (since the user is likely paging anyway)
-                  if (subscriptionUnsubscribe) {
-                    subscriptionUnsubscribe();
-                  }
-                  setSubscriptionError(Error("Real-time updates were disabled since too many rows have been loaded (refresh page to reset)"));
-                  setSubscriptionOnline(false);
-                } else {
-                  // truncate end
-                  result = result.slice(0, maxRecords);
-                  setTruncatedEnd(true);
-
-                  // disable fetching more (since ends wouldn't match)
-                  setFetchMore(undefined);
+                // disable subscription (since the user is likely paging anyway)
+                if (subscriptionUnsubscribe) {
+                  subscriptionUnsubscribe();
                 }
+                setSubscriptionError(Error("Real-time updates were disabled since too many rows have been loaded (refresh page to reset)"));
+                setSubscriptionOnline(false);
+              } else {
+                // truncate end
+                result = result.slice(0, maxRecords);
+                setTruncatedEnd(true);
+
+                // disable fetching more (since ends wouldn't match)
+                setFetchMore(undefined);
               }
             }
           }
+        }
 
-          return result;
-        });
+        setData({ records: result });
 
         lastRender = Date.now();
         renderScheduled = false;
@@ -338,7 +348,6 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       }
 
       // SECTION: Changes
-
       if (cursor.hasNextChanges() && !opts.filter) {
         if (opts.subscribe && !(view === "log" && cursor.hasNext())) {
           // create subscription
@@ -414,7 +423,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       setFetchMoreChanges(undefined);
       setFetchMore(undefined);
       setError(undefined);
-      setRecords([]);
+      setData({ records: [] });
 
       // cleanup subscription
     };
@@ -432,7 +441,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
   // UseRecordsResult
   return {
     client,
-    records,
+    records: data.records,
     error,
     loading,
     fetchMore,
