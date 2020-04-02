@@ -186,6 +186,7 @@ type ComplexityRoot struct {
 		Name           func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
 		Personal       func(childComplexity int) int
+		Projects       func(childComplexity int) int
 		Services       func(childComplexity int) int
 		UpdatedOn      func(childComplexity int) int
 		Users          func(childComplexity int) int
@@ -1315,6 +1316,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Organization.Personal(childComplexity), true
 
+	case "Organization.projects":
+		if e.complexity.Organization.Projects == nil {
+			break
+		}
+
+		return e.complexity.Organization.Projects(childComplexity), true
+
 	case "Organization.services":
 		if e.complexity.Organization.Services == nil {
 			break
@@ -2372,6 +2380,7 @@ type Organization {
   updatedOn: Time!
   services: [Service!]!
   users: [User!]!
+  projects: [Project!]!
 }
 
 type PermissionsUsersOrganizations {
@@ -7918,6 +7927,43 @@ func (ec *executionContext) _Organization_users(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Organization_projects(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Organization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Projects, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PermissionsServicesStreams_serviceID(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsServicesStreams) (ret graphql.Marshaler) {
@@ -13821,6 +13867,11 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "users":
 			out.Values[i] = ec._Organization_users(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "projects":
+			out.Values[i] = ec._Organization_projects(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

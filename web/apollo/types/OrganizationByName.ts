@@ -24,6 +24,16 @@ export interface OrganizationByName_organizationByName_services {
   kind: string;
 }
 
+export interface OrganizationByName_organizationByName_projects {
+  __typename: "Project";
+  projectID: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  photoURL: string | null;
+  public: boolean;
+}
+
 export interface OrganizationByName_organizationByName {
   __typename: "Organization";
   organizationID: string;
@@ -32,6 +42,7 @@ export interface OrganizationByName_organizationByName {
   updatedOn: ControlTime;
   users: OrganizationByName_organizationByName_users[];
   services: OrganizationByName_organizationByName_services[];
+  projects: OrganizationByName_organizationByName_projects[];
 }
 
 export interface OrganizationByName {

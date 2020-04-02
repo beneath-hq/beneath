@@ -19,6 +19,7 @@ type Organization {
   updatedOn: Time!
   services: [Service!]!
   users: [User!]!
+  projects: [Project!]!
 }
 
 type PermissionsUsersOrganizations {

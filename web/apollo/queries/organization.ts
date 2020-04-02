@@ -20,6 +20,14 @@ export const QUERY_ORGANIZATION = gql`
         name
         kind
       }
+      projects {
+        projectID 
+        name
+        displayName
+        description
+        photoURL
+        public
+      }
     }
   }
 `;

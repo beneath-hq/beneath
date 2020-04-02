@@ -6,6 +6,7 @@ import (
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
 	"github.com/beneath-core/internal/middleware"
+	"github.com/beneath-core/pkg/log"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -22,6 +23,7 @@ func (r *organizationResolver) OrganizationID(ctx context.Context, obj *entity.O
 }
 
 func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*entity.Organization, error) {
+	// OPTION 1: doing logic in the resolver
 	organization := entity.FindOrganizationByName(ctx, name)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", name)
@@ -29,9 +31,37 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+	user := entity.FindUser(ctx, secret.GetOwnerID()) // get the user's projects
+
+	// if you're not a member of the organization, hide the services
 	if !perms.View {
-		return nil, gqlerror.Errorf("You are not allowed to view organization %s", name)
+		organization.Services = nil
 	}
+
+	// if you don't have permission for a project, hide it
+	for i, orgProject := range organization.Projects {
+		if !orgProject.Public {
+			hide := true
+			if user != nil {
+				for _, userProject := range user.Projects {
+					log.S.Info(userProject)
+					if orgProject.ProjectID == userProject.ProjectID {
+						hide = false
+						break
+					}
+				}
+			}
+			if hide {
+				sliceLength := len(organization.Projects)
+				organization.Projects[sliceLength-1], organization.Projects[i] = organization.Projects[i], organization.Projects[sliceLength-1]
+				organization.Projects = organization.Projects[:sliceLength-1]
+			}
+		}
+	}
+
+	// Q: should I instead do Option 2 or 3?
+	// OPTION 2: doing logic in the entity.FindOrganizationByNameForUser(ctx, name, userID) function
+	// OPTION 3: hybrid of 1 and 2
 
 	return organization, nil
 }
