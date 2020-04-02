@@ -1,4 +1,4 @@
-import { useRecords } from "./beneath";
+import { useRecords } from "beneath-react";
 
 import React, { FC, useEffect, useState } from "react";
 
@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     marginTop: theme.spacing(1.5),
   },
   fetchMoreButton: {},
-  noMoreDataCaption: {
+  infoCaption: {
     color: theme.palette.text.disabled,
   },
   errorCaption: {
@@ -55,15 +55,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
 
   // get records
   const token = useToken();
-  const {
-    records,
-    error,
-    loading,
-    fetchMore,
-    fetchMoreChanges,
-    subscription,
-    truncation,
-  } = useRecords({
+  const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
     secret: token || undefined,
     project: stream.project.name,
     stream: stream.name,
@@ -71,14 +63,32 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
     view,
     filter: filter === "" ? undefined : filter,
     pageSize,
-    subscribe: { pageSize: 100 },
-    maxRecords: 2000,
+    subscribe: !process.browser ? false : {
+      pageSize: 100,
+      pollFrequencyMs: 250,
+    },
+    renderFrequencyMs: 250,
+    maxRecords: 1000,
+    flashDurationMs: 2000,
   });
 
+  useEffect(() => {
+    setLoading(subscription.online);
+    return function cleanup() {
+      setLoading(false);
+    };
+  }, [subscription.online]);
+
   const classes = useStyles();
+
+  const Message: FC<{ children: string, error?: boolean }> = ({ error, children }) => (
+    <Typography className={error ? classes.errorCaption : classes.infoCaption} variant="body2" align="center">
+      {children}
+    </Typography>
+  );
+
   return (
     <>
-      <p>{subscription.error}</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -121,7 +131,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                       for more info.
                     </>
                   }
-                  errorText={filter !== "" && error ? error.message : undefined}
                   fullWidth
                 />
               </Grid>
@@ -142,12 +151,16 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
           )}
         </Grid>
       </form>
+      {filter !== "" && error && <Message error={true}>{error.message}</Message>}
+      {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
+      {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
       <VSpace units={2} />
       {loading && records.length === 0 && <Loading justify="center" />}
       {(!loading || records.length > 0) && (
         <RecordsTable schema={schema} records={records} showTimestamps={view !== "index"} />
       )}
       <VSpace units={4} />
+      {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
       {fetchMore && (
         <Grid container justify="center">
           <Grid item>
@@ -163,15 +176,28 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
           </Grid>
         </Grid>
       )}
-      {!loading && !fetchMore && (
-        <Typography className={classes.noMoreDataCaption} variant="body2" align="center">
-          {records.length === 0 ? "Found no rows" : "Loaded all rows"} {filter !== "" ? "that match the filter" : ""}
-        </Typography>
+      {!fetchMore && fetchMoreChanges && (
+        <Grid container justify="center">
+          <Grid item>
+            <Button
+              variant="outlined"
+              color="primary"
+              className={classes.fetchMoreButton}
+              disabled={loading}
+              onClick={() => fetchMoreChanges({ pageSize })}
+            >
+              Fetch more changes
+            </Button>
+          </Grid>
+        </Grid>
       )}
-      {error && (
-        <Typography className={classes.errorCaption} variant="body2" align="center">
-          {error.message}
-        </Typography>
+      {filter === "" && error && <Message error={true}>{error.message}</Message>}
+      {!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end && (
+        <Message>
+          {`${records.length === 0 ? "Found no rows" : "Loaded all rows"} ${
+            filter !== "" ? "that match the filter" : ""
+          }`}
+        </Message>
       )}
       <VSpace units={8} />
     </>

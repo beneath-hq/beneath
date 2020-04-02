@@ -2276,13 +2276,18 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-"beneath-react@file:../clients/js-react":
-  version "1.0.0"
+beneath-react@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.0.3.tgz#d51ada2916f30f7378849d603eb814bde27ee88a"
+  integrity sha512-pI09P4X8FSXSemOw1Ibyg3Njhsahx4eImI3FCthPVxbZuHmjvH2P6yZ1UTSw43c/Dej4zXt3iDzsZIor6kvWCQ==
   dependencies:
-    beneath "file:../../../Library/Caches/Yarn/v6/npm-beneath-react-1.0.0-c3e4fcf1-f258-4f05-81de-3a70815e9e41-1584977511835/node_modules/js"
+    beneath "^1.0.2"
+    lodash "^4.17.15"
 
-"beneath@file:../clients/js":
-  version "1.0.0"
+beneath@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.0.2.tgz#e72a731265091b5ce254d4124c1d8c5da1d85dca"
+  integrity sha512-UOJZt3+bDR3DshN3+DkucCkl/1zaW8h38SYUvw1GL5SweJLdy8fau5UL3+hJDX23Y0ffwkoKABtfCY8xq78eJw==
   dependencies:
     graphql "^14.6.0"
     subscriptions-transport-ws "^0.9.16"

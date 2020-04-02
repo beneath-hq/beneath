@@ -1,3 +1,4 @@
+import { Record } from "beneath-react";
 import clsx from "clsx";
 import React, { FC } from "react";
 
@@ -15,7 +16,6 @@ import {
 import InfoIcon from "@material-ui/icons/InfoSharp";
 import SearchIcon from "@material-ui/icons/SearchSharp";
 
-import { Record } from "./beneath";
 import { Schema } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({

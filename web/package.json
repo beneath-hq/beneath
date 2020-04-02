@@ -21,7 +21,7 @@
     "apollo-link": "^1.2.13",
     "apollo-utilities": "^1.3.3",
     "avsc": "^5.4.12",
-    "beneath-react": "file:../clients/js-react",
+    "beneath-react": "^1.0.3",
     "clsx": "^1.0.4",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.4",
