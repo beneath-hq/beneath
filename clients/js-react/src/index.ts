@@ -106,6 +106,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     // see: https://dev.to/n1ru4l/homebrew-react-hooks-useasynceffect-or-how-to-handle-async-operations-with-useeffect-1fa8
     let cancel = false;
 
+    let loadedMore = false;
     let subscriptionUnsubscribe: (() => any) | undefined;
 
     // async scope
@@ -203,6 +204,42 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
             result = [...result];
           }
 
+          if (maxRecords && result.length > maxRecords) {
+            if (truncatePolicy === "start") {
+              result = result.slice(result.length - maxRecords);
+              setTruncatedStart(true);
+            } else if (truncatePolicy === "end") {
+              result = result.slice(0, maxRecords);
+              setTruncatedEnd(true);
+            } else if (truncatePolicy === "auto") {
+              if (view === "log") {
+                // truncate start
+                result = result.slice(result.length - maxRecords);
+                setTruncatedStart(true);
+              } else {
+                if (loadedMore) {
+                  // truncate start
+                  result = result.slice(result.length - maxRecords);
+                  setTruncatedStart(true);
+
+                  // disable subscription (since the user is likely paging anyway)
+                  if (subscriptionUnsubscribe) {
+                    subscriptionUnsubscribe();
+                  }
+                  setSubscriptionError(Error("Real-time updates were disabled since too many rows have been loaded (refresh page to reset)"));
+                  setSubscriptionOnline(false);
+                } else {
+                  // truncate end
+                  result = result.slice(0, maxRecords);
+                  setTruncatedEnd(true);
+
+                  // disable fetching more (since ends wouldn't match)
+                  setFetchMore(undefined);
+                }
+              }
+            }
+          }
+
           return result;
         });
 
@@ -274,6 +311,9 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
           // set loading
           setLoading(true);
 
+          // update flag used for 'auto' truncate policy
+          loadedMore = true;
+
           // fetch more
           const read = await cursor.readNext({ pageSize: fetchMorePageSize });
           if (cancel) { return; } // check cancel after await
@@ -314,8 +354,8 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
               setSubscriptionError(error);
             },
           });
-
           subscriptionUnsubscribe = unsubscribe;
+          setSubscriptionOnline(true);
         } else {
           // create manual fetch changes handler
           const fetchMoreChanges = async (fetchMoreOpts?: FetchMoreOptions) => {
