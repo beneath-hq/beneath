@@ -2,18 +2,18 @@ package http
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"time"
 
+	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
+	"github.com/beneath-core/gateway"
+	"github.com/beneath-core/gateway/subscriptions"
 	"github.com/beneath-core/pkg/log"
 	"github.com/beneath-core/pkg/secrettoken"
 	"github.com/beneath-core/pkg/ws"
-	"github.com/beneath-core/gateway"
-	"github.com/beneath-core/gateway/subscriptions"
 )
 
 // wsServer implements ws.Server
@@ -93,9 +93,9 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 	if !ok {
 		return fmt.Errorf("payload must contain key 'cursor'")
 	}
-	cursor, err := base64.StdEncoding.DecodeString(cursorStr)
+	cursor, err := base58.Decode(cursorStr)
 	if err != nil {
-		return fmt.Errorf("payload key 'cursor' must contain a base64-encoded cursor")
+		return fmt.Errorf("payload key 'cursor' must contain a base58-encoded cursor")
 	}
 
 	// the client state is the secret
@@ -137,6 +137,13 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 
 	// set cancel as query state
 	client.SetQueryState(id, cancel)
+
+	// log
+	s.logWithSecret(secret, "ws start query",
+		"ip", client.GetRemoteAddr(),
+		"id", id,
+		"instance", stream.InstanceID.String(),
+	)
 
 	return nil
 }

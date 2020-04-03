@@ -1,4 +1,4 @@
-import { useRecords } from "beneath-react";
+import { useRecords } from "./beneath";
 
 import React, { FC, useEffect, useState } from "react";
 
@@ -27,21 +27,24 @@ const useStyles = makeStyles((theme: Theme) => ({
     marginTop: theme.spacing(1.5),
   },
   fetchMoreButton: {},
-  noMoreDataCaption: {
+  infoCaption: {
     color: theme.palette.text.disabled,
   },
   errorCaption: {
     color: theme.palette.error.main,
   },
-  selectViewControl: {
+  selectQueryControl: {
     minWidth: 100,
+  },
+  selectPeekControl: {
+    minWidth: 150,
   },
 }));
 
 const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreStreamProps) => {
   // state
-  const [view, setView] = useState<"latest" | "index" | "log">("latest");
-  const [pageSize, setPageSize] = useState(25);
+  const [queryType, setQueryType] = useState<"log" | "index">("log");
+  const [logPeek, setLogPeek] = useState(true);
   const [pendingFilter, setPendingFilter] = useState(""); // the value in the text field
   const [filter, setFilter] = useState(""); // updated when text field is submitted (used in call to useRecords)
 
@@ -55,18 +58,43 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
 
   // get records
   const token = useToken();
-  const { records, error, loading, subscribed, fetchMore } = useRecords({
+  const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
     secret: token || undefined,
     project: stream.project.name,
     stream: stream.name,
     instanceID: stream.currentStreamInstanceID || undefined,
-    view,
-    pageSize,
-    filter: filter === "" ? undefined : filter,
-    subscribe: false,
+    query:
+      queryType === "index"
+        ? { type: "index", filter: filter === "" ? undefined : filter }
+        : { type: "log", peek: logPeek },
+    pageSize: 25,
+    subscribe:
+      typeof window === "undefined"
+        ? false
+        : {
+            pageSize: 100,
+            pollFrequencyMs: 250,
+          },
+    renderFrequencyMs: 250,
+    maxRecords: 1000,
+    flashDurationMs: 2000,
   });
 
+  useEffect(() => {
+    setLoading(subscription.online);
+    return function cleanup() {
+      setLoading(false);
+    };
+  }, [subscription.online]);
+
   const classes = useStyles();
+
+  const Message: FC<{ children: string, error?: boolean }> = ({ error, children }) => (
+    <Typography className={error ? classes.errorCaption : classes.infoCaption} variant="body2" align="center">
+      {children}
+    </Typography>
+  );
+
   return (
     <>
       <form
@@ -78,21 +106,35 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
         }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={"auto"}>
+          <Grid item xs={queryType === "log" ? "auto" : 12} sm={"auto"}>
             <SelectField
-              id="view"
-              label="View"
-              value={view}
+              id="query"
+              label="Query"
+              value={queryType}
               options={[
-                { label: "Latest", value: "latest" },
-                { label: "Index", value: "index" },
                 { label: "Log", value: "log" },
+                { label: "Index", value: "index" },
               ]}
-              onChange={({ target }) => setView(target.value as "index" | "log" | "latest")}
-              controlClass={classes.selectViewControl}
+              onChange={({ target }) => setQueryType(target.value as "log" | "index")}
+              controlClass={classes.selectQueryControl}
             />
           </Grid>
-          {view === "index" && (
+          {queryType === "log" && (
+            <Grid item sm={"auto"}>
+              <SelectField
+                id="peek"
+                label="Order"
+                value={logPeek ? "true" : "false"}
+                options={[
+                  { label: "Latest first", value: "true" },
+                  { label: "Oldest first", value: "false" },
+                ]}
+                onChange={({ target }) => setLogPeek(target.value === "true")}
+                controlClass={classes.selectPeekControl}
+              />
+            </Grid>
+          )}
+          {queryType === "index" && (
             <>
               <Grid item xs>
                 <BNTextField
@@ -111,7 +153,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                       for more info.
                     </>
                   }
-                  errorText={filter !== "" && error ? error.message : undefined}
                   fullWidth
                 />
               </Grid>
@@ -132,12 +173,16 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
           )}
         </Grid>
       </form>
+      {filter !== "" && error && <Message error={true}>{error.message}</Message>}
+      {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
+      {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
       <VSpace units={2} />
       {loading && records.length === 0 && <Loading justify="center" />}
       {(!loading || records.length > 0) && (
-        <RecordsTable schema={schema} records={records} showTimestamps={view !== "index"} />
+        <RecordsTable schema={schema} records={records} showTimestamps={queryType === "log"} />
       )}
       <VSpace units={4} />
+      {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
       {fetchMore && (
         <Grid container justify="center">
           <Grid item>
@@ -146,24 +191,35 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
               color="primary"
               className={classes.fetchMoreButton}
               disabled={loading}
-              onClick={() => fetchMore({ pageSize })}
+              onClick={() => fetchMore()}
             >
               Fetch more
             </Button>
           </Grid>
         </Grid>
       )}
-      {!loading && !fetchMore && (
-        <Typography className={classes.noMoreDataCaption} variant="body2" align="center">
-          {records.length === 0 ? "Found no rows" : "Loaded all rows"}
-          {" "}
-          {filter !== "" ? "that match the filter" : ""}
-        </Typography>
+      {!fetchMore && fetchMoreChanges && (
+        <Grid container justify="center">
+          <Grid item>
+            <Button
+              variant="outlined"
+              color="primary"
+              className={classes.fetchMoreButton}
+              disabled={loading}
+              onClick={() => fetchMoreChanges()}
+            >
+              Fetch more changes
+            </Button>
+          </Grid>
+        </Grid>
       )}
-      {error && (
-        <Typography className={classes.errorCaption} variant="body2" align="center">
-          {error.message}
-        </Typography>
+      {filter === "" && error && <Message error={true}>{error.message}</Message>}
+      {!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end && (
+        <Message>
+          {`${records.length === 0 ? "Found no rows" : "Loaded all rows"} ${
+            filter !== "" ? "that match the filter" : ""
+          }`}
+        </Message>
       )}
       <VSpace units={8} />
     </>

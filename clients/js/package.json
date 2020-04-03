@@ -1,6 +1,6 @@
 {
   "name": "beneath",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Client library for https://beneath.dev",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

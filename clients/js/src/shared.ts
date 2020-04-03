@@ -12,4 +12,9 @@ export type QueryLogOptions = ReadOptions & { peek?: boolean; };
 
 export type QueryIndexOptions = ReadOptions & { filter?: string; };
 
-export type SubscribeOptions<TRecord> = {};
+export type SubscribeOptions<TRecord> = {
+  onData: (data: Record<TRecord>[]) => void,
+  onComplete: (error?: Error) => void,
+  pageSize?: number,
+  pollAtMostEveryMilliseconds?: number,
+};

@@ -3,7 +3,7 @@ import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import React, { FunctionComponent } from "react";
 
-export type BNTextFieldProps = TextFieldProps & { errorText: string | undefined, successText?: string | undefined };
+export type BNTextFieldProps = TextFieldProps & { errorText?: string, successText?: string | undefined };
 
 const BNTextField: FunctionComponent<BNTextFieldProps> = ({ helperText, errorText, successText, ...props }) => {
   let elem: JSX.Element | undefined;

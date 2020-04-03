@@ -6,9 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/mr-tron/base58"
-
 	"github.com/go-chi/chi"
+	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/beneath-core/control/entity"
@@ -127,7 +126,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			}
 
 			// set cursors
-			body.CursorBytes = replayCursors[0]
+			if len(replayCursors) != 0 {
+				body.CursorBytes = replayCursors[0]
+			}
 			if len(changeCursors) != 0 {
 				meta.ChangeCursor = base58.Encode(changeCursors[0])
 			}
@@ -144,7 +145,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 				if err != nil {
 					return httputil.NewError(400, err.Error())
 				}
-				replayCursor = replayCursors[0]
+				if len(replayCursors) != 0 {
+					replayCursor = replayCursors[0]
+				}
 				if len(changeCursors) > 0 {
 					changeCursor = changeCursors[0]
 				}

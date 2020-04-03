@@ -72,7 +72,7 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 func (b BigTable) createUncompactedCursors(state sequencer.State, partitions int) ([][]byte, [][]byte, error) {
 	// to get the modulo arithmetic to match, NextStable must be greater than the number of partitions
 	if state.NextStable < int64(partitions) {
-		partitions = 1
+		partitions = int(state.NextStable)
 	}
 
 	// create replay cursors
@@ -84,6 +84,11 @@ func (b BigTable) createUncompactedCursors(state sequencer.State, partitions int
 		end = int64(state.NextStable/int64(partitions)) * int64(i+1)
 		if i+1 == partitions {
 			end = state.NextStable
+		}
+
+		// skip if start == end (e.g. if NextStable is 0)
+		if start == end {
+			continue
 		}
 
 		// compile
@@ -205,6 +210,11 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 	// check limit
 	if limit == 0 || limit > maxLimit {
 		return nil, ErrInvalidLimit
+	}
+
+	// check cursor
+	if cursorSet == nil {
+		return &recordsIterator{}, nil
 	}
 
 	// parse cursor set

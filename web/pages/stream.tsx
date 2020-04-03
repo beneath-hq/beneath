@@ -51,8 +51,8 @@ const StreamPage = () => {
 
   if (stream.currentStreamInstanceID) {
     tabs.push({
-      value: "lookup",
-      label: "Lookup",
+      value: "explore",
+      label: "Explore",
       render: (props: SubrouteTabProps) => <ExploreStream stream={stream} {...props} />,
     });
   }
@@ -65,7 +65,7 @@ const StreamPage = () => {
 
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <StreamMetrics stream={stream} /> });
 
-  const defaultValue = stream.currentStreamInstanceID ? "lookup" : "api";
+  const defaultValue = stream.currentStreamInstanceID ? "explore" : "api";
   return (
     <Page title="Stream" subheader>
       <PageTitle title={`${toURLName(stream.project.name)}/${toURLName(stream.name)}`} />
