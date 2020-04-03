@@ -138,6 +138,13 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 	// set cancel as query state
 	client.SetQueryState(id, cancel)
 
+	// log
+	s.logWithSecret(secret, "ws start query",
+		"ip", client.GetRemoteAddr(),
+		"id", id,
+		"instance", stream.InstanceID.String(),
+	)
+
 	return nil
 }
 
