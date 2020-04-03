@@ -1,4 +1,4 @@
-import { useRecords } from "./beneath";
+import { useRecords } from "beneath-react";
 
 import React, { FC, useEffect, useState } from "react";
 
