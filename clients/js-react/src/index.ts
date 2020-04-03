@@ -12,8 +12,7 @@ export interface UseRecordsOptions {
   project: string;
   stream: string;
   instanceID?: string;
-  view?: "index" | "log" | "latest";
-  filter?: string;
+  query?: { type: "index", filter?: string } | { type: "log", peek?: boolean };
   pageSize?: number;
   subscribe?: boolean | SubscribeOptions;
   maxRecords?: number;
@@ -80,7 +79,9 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
   useEffect(() => {
     // Section: PARSING OPTIONS
 
-    const view = opts.view || "index";
+    const queryType = opts.query?.type || "index";
+    const queryPeek = opts.query?.type === "log" ? opts.query.peek || false : undefined;
+    const queryFilter = opts.query?.type === "index" ? opts.query.filter : undefined;
     const pageSize = opts.pageSize || DEFAULT_PAGE_SIZE;
     const maxRecords = opts.maxRecords;
     const truncatePolicy = opts.truncatePolicy || "auto";
@@ -91,10 +92,6 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     const subscribeOpts = (typeof opts.subscribe === "object") ? opts.subscribe : {};
     const subscribePageSize = subscribeOpts.pageSize || pageSize;
     const subscribePollFrequency = subscribeOpts.pollFrequencyMs || DEFAULT_SUBSCRIBE_POLL_FREQUENCY;
-
-    if (view !== "index" && opts.filter) {
-      throw Error("useRecords cannot apply a filter to a non-index query (set view to 'index')");
-    }
 
     if (!maxRecords && opts.truncatePolicy) {
       throw Error("useRecords cannot apply a truncate policy when maxRecords is not specified");
@@ -124,14 +121,12 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // query stream
       let query: BrowserQueryResult<TRecord>;
-      if (view === "index") {
-        query = await stream.queryIndex({ filter: opts.filter, pageSize });
-      } else if (view === "log") {
-        query = await stream.queryLog({ pageSize });
-      } else if (view === "latest") {
-        query = await stream.queryLog({ peek: true, pageSize });
+      if (queryType === "index") {
+        query = await stream.queryIndex({ filter: queryFilter, pageSize });
+      } else if (queryType === "log") {
+        query = await stream.queryLog({ pageSize, peek: queryPeek });
       } else {
-        throw Error(`invalid view option <${view}>`);
+        throw Error(`invalid view option <${queryType}>`);
       }
       if (cancel) { return; } // check cancel after await
 
@@ -189,8 +184,8 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         // NOTE: This manoeuvre to get a fresh copy of data is horrible! It only works because there's
         // no async code before the next call to setData. Why not just put the whole block below in the
         // setData callback above? Because the setXXX calls in the code somehow triggered a nested rerun
-        // of the setData callback precisely on the 20th run. This is such a weird bug, but this horrible
-        // hack solves it.
+        // of the setData callback precisely on the 20th run. This is such a weird bug, and this horrible
+        // hack (seemingly) solves it.
 
         if (!data) {
           throw Error("unexpected internal error!");
@@ -206,13 +201,14 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         }
 
         if (changesBuffer.length > 0) {
-          if (view === "latest") {
-            changesBuffer.reverse().push(...result);
-            result = changesBuffer;
-          } else if (view === "log") {
-            result.push(...changesBuffer);
-          } else if (view === "index") {
+          if (queryType === "index") {
             result = mergeIndexedRecordsAndChanges(result, changesBuffer, false, cursor.hasNext());
+          } else if (queryType === "log") {
+            if (queryPeek) {
+              result.unshift(...changesBuffer.reverse());
+            } else {
+              result.push(...changesBuffer);
+            }
           }
         }
 
@@ -224,7 +220,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
             result = result.slice(0, maxRecords);
             setTruncatedEnd(true);
           } else if (truncatePolicy === "auto") {
-            if (view === "log") {
+            if (queryType === "log" && !queryPeek) {
               // truncate start
               result = result.slice(result.length - maxRecords);
               setTruncatedStart(true);
@@ -349,8 +345,8 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       }
 
       // SECTION: Changes
-      if (cursor.hasNextChanges() && !opts.filter) {
-        if (subscribeEnabled && !(view === "log" && cursor.hasNext())) {
+      if (cursor.hasNextChanges() && !queryFilter) {
+        if (subscribeEnabled && !(queryType === "log" && !queryPeek && cursor.hasNext())) {
           // create subscription
           const { unsubscribe } = cursor.subscribeChanges({
             pageSize: subscribePageSize,
@@ -433,8 +429,8 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     opts.project,
     opts.stream,
     opts.instanceID,
-    opts.view,
-    opts.filter,
+    opts.query?.type,
+    opts.query?.type === "log" ? opts.query.peek : opts.query?.type === "index" ? opts.query.filter : undefined,
     opts.pageSize,
     !!opts.subscribe,
   ]);
