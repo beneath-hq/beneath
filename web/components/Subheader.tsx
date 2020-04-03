@@ -34,31 +34,31 @@ interface SubheaderProps {
 
 const Subheader: FC<SubheaderProps> = ({ router }) => {
   let crumbs = null;
-  if (router.route === "/[organization]/[project]") {
+  if (router.route === "/project") {
     crumbs = [
       <TerminalCrumb key={0} />,
       <OrganizationCrumb
         key={1}
-        organization={router.query.organization as string}
+        organization={router.query.organization_name as string}
       />,
       <ProjectCrumb
         key={2} 
         isCurrent 
-        organization={router.query.organization as string}
-        project={router.query.project as string} 
+        organization={router.query.organization_name as string}
+        project={router.query.project_name as string} 
       />,
     ];
-  } else if (router.route === "/[organization]/[project]/streams/[stream]") {
+  } else if (router.route === "/stream") {
     crumbs = [
       <TerminalCrumb key={0} />,
-      <OrganizationCrumb key={1} organization={router.query.organization as string} />,
-      <ProjectCrumb key={2} organization={router.query.organization as string} project={router.query.project as string} />,
+      <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
+      <ProjectCrumb key={2} organization={router.query.organization_name as string} project={router.query.project_name as string} />,
       <StreamCrumb
         key={3}
         isCurrent
-        organization={router.query.organization as string}
-        project={router.query.project as string}
-        stream={router.query.stream as string}
+        organization={router.query.organization_name as string}
+        project={router.query.project_name as string}
+        stream={router.query.stream_name as string}
       />,
     ];
   } else if (router.route === "/user") {
@@ -70,13 +70,13 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
         username={router.query.name as string} 
       />,
     ];
-  } else if (router.route === "/[organization]") {
+  } else if (router.route === "/organization") {
     crumbs = [
       <TerminalCrumb key={0} />,
       <OrganizationCrumb 
         key={1} 
         isCurrent 
-        organization={router.query.organization as string} 
+        organization={router.query.organization_name as string} 
       />,
     ];
   }
@@ -130,7 +130,7 @@ interface ProjectCrumbProps {
 
 const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent }) => (
   <Crumb 
-    href={`/${organization}/${project}`} 
+    href={`/project?organization_name=${organization}&project_name=${project}`} 
     as={`/${organization}/${project}`} 
     label={project} 
     isCurrent={isCurrent} />
@@ -145,7 +145,7 @@ interface StreamCrumbProps {
 
 const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => (
   <Crumb
-    href={`/${organization}/${project}/streams/${stream}`}
+    href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
     as={`/${organization}/${project}/streams/${stream}`}
     label={stream}
     isCurrent={isCurrent}
@@ -177,7 +177,7 @@ const OrganizationCrumb: FC<OrganizationCrumbProps> = ({ organization, isCurrent
   return (
     <Crumb
       isCurrent={isCurrent}
-      href={`/${organization}`}
+      href={`/organization?organization_name=${organization}`}
       as={`/${organization}`}
       label={organization}
     />

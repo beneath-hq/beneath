@@ -2,33 +2,33 @@ import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React from "react";
 
-import Loading from "../../../components/Loading";
-import Page from "../../../components/Page";
-import PageTitle from "../../../components/PageTitle";
-import ProfileHero from "../../../components/ProfileHero";
-import SubrouteTabs from "../../../components/SubrouteTabs";
+import Loading from "../components/Loading";
+import Page from "../components/Page";
+import PageTitle from "../components/PageTitle";
+import ProfileHero from "../components/ProfileHero";
+import SubrouteTabs from "../components/SubrouteTabs";
 
-import EditProject from "../../../components/project/EditProject";
-import ViewStreams from "../../../components/project/ViewStreams";
+import EditProject from "../components/project/EditProject";
+import ViewStreams from "../components/project/ViewStreams";
 
-import { QUERY_PROJECT } from "../../../apollo/queries/project";
-import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../../../apollo/types/ProjectByOrganizationAndName";
-import { withApollo } from "../../../apollo/withApollo";
-import ErrorPage from "../../../components/ErrorPage";
-import useMe from "../../../hooks/useMe";
-import { toBackendName, toURLName } from "../../../lib/names";
+import { QUERY_PROJECT } from "../apollo/queries/project";
+import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
+import { withApollo } from "../apollo/withApollo";
+import ErrorPage from "../components/ErrorPage";
+import useMe from "../hooks/useMe";
+import { toBackendName, toURLName } from "../lib/names";
 
 const ProjectPage = () => {
   const router = useRouter();
 
-  if (typeof router.query.organization !== "string" || typeof router.query.project !== "string") {
+  if (typeof router.query.organization_name !== "string" || typeof router.query.project_name !== "string") {
     return <ErrorPage statusCode={404} />;
   }
 
   const me = useMe();
   const { loading, error, data } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(QUERY_PROJECT, {
     fetchPolicy: "cache-and-network",
-    variables: { organizationName: toBackendName(router.query.organization), projectName: toBackendName(router.query.project) },
+    variables: { organizationName: toBackendName(router.query.organization_name), projectName: toBackendName(router.query.project_name) },
   });
 
   if (loading) {

@@ -2,34 +2,34 @@ import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import { QUERY_STREAM } from "../../../../apollo/queries/stream";
-import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "../../../../apollo/types/StreamByOrganizationProjectAndName";
-import { withApollo } from "../../../../apollo/withApollo";
-import { toBackendName, toURLName } from "../../../../lib/names";
+import { QUERY_STREAM } from "../apollo/queries/stream";
+import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "../apollo/types/StreamByOrganizationProjectAndName";
+import { withApollo } from "../apollo/withApollo";
+import { toBackendName, toURLName } from "../lib/names";
 
-import ErrorPage from "../../../../components/ErrorPage";
-import Loading from "../../../../components/Loading";
-import ModelHero from "../../../../components/ModelHero";
-import Page from "../../../../components/Page";
-import PageTitle from "../../../../components/PageTitle";
-import ExploreStream from "../../../../components/stream/ExploreStream";
-import StreamAPI from "../../../../components/stream/StreamAPI";
-import StreamMetrics from "../../../../components/stream/StreamMetrics";
-import WriteStream from "../../../../components/stream/WriteStream";
-import SubrouteTabs, { SubrouteTabProps } from "../../../../components/SubrouteTabs";
+import ErrorPage from "../components/ErrorPage";
+import Loading from "../components/Loading";
+import ModelHero from "../components/ModelHero";
+import Page from "../components/Page";
+import PageTitle from "../components/PageTitle";
+import ExploreStream from "../components/stream/ExploreStream";
+import StreamAPI from "../components/stream/StreamAPI";
+import StreamMetrics from "../components/stream/StreamMetrics";
+import WriteStream from "../components/stream/WriteStream";
+import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
 const StreamPage = () => {
   const router = useRouter();
 
-  if (typeof router.query.organization !== "string" || typeof router.query.project !== "string" || typeof router.query.stream !== "string") {
+  if (typeof router.query.organization_name !== "string" || typeof router.query.project_name !== "string" || typeof router.query.stream_name !== "string") {
     return <ErrorPage statusCode={404} />;
   }
 
   const { loading, error, data } = useQuery<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>(QUERY_STREAM, {
     variables: {
-      organizationName: toBackendName(router.query.organization as string),
-      projectName: toBackendName(router.query.project as string),
-      streamName: toBackendName(router.query.stream as string),
+      organizationName: toBackendName(router.query.organization_name as string),
+      projectName: toBackendName(router.query.project_name as string),
+      streamName: toBackendName(router.query.stream_name as string),
     },
   });
 

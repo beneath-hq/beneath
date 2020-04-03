@@ -27,7 +27,8 @@ const ViewOrganizationProjects: FC<Props> = ({ organization }) => {
         {organization.projects.map(({ projectID, name, displayName, description, photoURL }) => (
           <ListItem
             component={NextMuiLinkList}
-            href={`/${toURLName(organization.name)}/${toURLName(name)}`}
+            href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
+            as={`/${toURLName(organization.name)}/${toURLName(name)}`}
             button
             disableGutters
             key={projectID}

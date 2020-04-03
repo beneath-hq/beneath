@@ -96,14 +96,16 @@ app.prepare().then(() => {
     });
   };
 
-  addRoute("/projects/:project_name/streams/:name", "/stream");
-  addRoute("/projects/:project_name/streams/:name/:tab", "/stream");
-  addRoute("/projects/:name", "/project");
-  addRoute("/projects/:name/:tab", "/project");
   addRoute("/users/:name", "/user");
   addRoute("/users/:name/:tab", "/user");
-  addRoute("/organizations/:name", "/organization");
-  addRoute("/organizations/:name/:tab", "/organization");
+
+  addRoute("/terminal", "/terminal");
+  addRoute("/:organization_name", "/organization");
+  addRoute("/:organization_name/-/:tab", "/organization");
+  addRoute("/:organization_name/:project_name", "/project");
+  addRoute("/:organization_name/:project_name/-/:tab", "/project");
+  addRoute("/:organization_name/:project_name/streams/:stream_name", "/stream");
+  addRoute("/:organization_name/:project_name/streams/:stream_name/-/:tab", "/stream");
 
   // Next.js handlers
   server.get("*", (req, res) => {

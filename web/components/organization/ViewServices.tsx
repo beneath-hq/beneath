@@ -22,11 +22,11 @@ const ViewServices: FC<Props> = ({ organization }) => {
         {organization.services.map(({ serviceID, name }) => (
           <ListItem
             component={NextMuiLinkList}
-            href={`/organizations/${organization.name}/services`} // TODO: send to a service monitoring page
+            href={`/organization?organization_name=${organization.name}&tab=services`} // TODO: send to a service monitoring page
+            as={`/${organization.name}/-/services`} // TODO: send to a service monitoring page
             button
             disableGutters
             key={serviceID}
-            as={`/organizations/${organization.name}/services`} // TODO: send to a service monitoring page
           >
             <ListItemText primary={ name } />
           </ListItem>

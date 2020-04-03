@@ -151,8 +151,8 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                 })}
                 {!me.organization.personal && makeMenuItem("Organization", {
                   onClick: closeMenu,
-                  as: `/organizations/${me.organization.name}`,
-                  href: `/organizations/${me.organization.name}`,
+                  as: `/${me.organization.name}`,
+                  href: `/organization?organization_name=${me.organization.name}`,
                 })}
                 {makeMenuItem("Logout", {
                   href: `/auth/logout`,

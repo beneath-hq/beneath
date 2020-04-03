@@ -26,7 +26,8 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
           <ListItem
             key={streamID}
             component={NextMuiLinkList}
-            href={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/streams/${toURLName(name)}`}
+            href={`/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(project.name)}&stream_name=${toURLName(name)}`}
+            as={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/streams/${toURLName(name)}`}
             button
             disableGutters
           >
