@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/pkg/secrettoken"
+	"gitlab.com/beneath-org/beneath/pkg/secrettoken"
 
-	pb "github.com/beneath-core/engine/proto"
+	pb "gitlab.com/beneath-org/beneath/engine/proto"
 	uuid "github.com/satori/go.uuid"
 )
 

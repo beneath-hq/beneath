@@ -3,8 +3,8 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/control/gql"
 )
 
 // StreamInstance returns the gql.StreamInstanceResolver

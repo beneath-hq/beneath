@@ -11,11 +11,11 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/httputil"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/ws"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-org/beneath/pkg/httputil"
+	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-org/beneath/pkg/ws"
 )
 
 const (

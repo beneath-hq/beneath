@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/beneath-core/internal/middleware"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/control/gql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )

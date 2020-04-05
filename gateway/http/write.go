@@ -8,16 +8,16 @@ import (
 	"github.com/go-chi/chi"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/engine"
-	pb_engine "github.com/beneath-core/engine/proto"
-	"github.com/beneath-core/gateway"
-	pb "github.com/beneath-core/gateway/grpc/proto"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/httputil"
-	"github.com/beneath-core/pkg/jsonutil"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/engine"
+	pb_engine "gitlab.com/beneath-org/beneath/engine/proto"
+	"gitlab.com/beneath-org/beneath/gateway"
+	pb "gitlab.com/beneath-org/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-org/beneath/pkg/httputil"
+	"gitlab.com/beneath-org/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-org/beneath/pkg/timeutil"
 )
 
 type writeTags struct {

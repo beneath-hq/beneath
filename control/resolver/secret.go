@@ -6,9 +6,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/internal/middleware"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/control/gql"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
 )
 
 // ServiceSecret returns the gql.ServiceSecretResolver

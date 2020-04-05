@@ -19,8 +19,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
-	pb "github.com/beneath-core/gateway/grpc/proto"
-	"github.com/beneath-core/pkg/timeutil"
+	pb "gitlab.com/beneath-org/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-org/beneath/pkg/timeutil"
 )
 
 func TestStreamCreateReadAndWrite(t *testing.T) {

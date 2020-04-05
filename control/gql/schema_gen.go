@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/beneath-core/control/entity"
+	"gitlab.com/beneath-org/beneath/control/entity"
 	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"

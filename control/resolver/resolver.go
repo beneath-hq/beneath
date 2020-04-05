@@ -3,7 +3,7 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/control/gql"
+	"gitlab.com/beneath-org/beneath/control/gql"
 )
 
 // Resolver implements gql.ResolverRoot

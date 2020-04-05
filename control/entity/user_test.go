@@ -3,7 +3,7 @@ package entity
 import (
 	"testing"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/hub"
 )
 
 func init() {

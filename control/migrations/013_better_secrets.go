@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/beneath-core/control/entity"
+	"gitlab.com/beneath-org/beneath/control/entity"
 
 	"github.com/go-pg/migrations/v7"
 )

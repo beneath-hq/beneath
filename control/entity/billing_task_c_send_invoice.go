@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/control/payments/driver"
-	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-org/beneath/control/payments/driver"
+	"gitlab.com/beneath-org/beneath/control/taskqueue"
+	"gitlab.com/beneath-org/beneath/internal/hub"
 	uuid "github.com/satori/go.uuid"
 )
 

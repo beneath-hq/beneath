@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/hub"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"

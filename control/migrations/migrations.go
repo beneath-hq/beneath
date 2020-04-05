@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-org/beneath/pkg/log"
 	"github.com/go-pg/migrations/v7"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"

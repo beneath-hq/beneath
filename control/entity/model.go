@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/hub"
 )
 
 // Model represents a Beneath model

@@ -8,13 +8,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/gateway"
-	pb "github.com/beneath-core/gateway/grpc/proto"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/queryparse"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/gateway"
+	pb "gitlab.com/beneath-org/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-org/beneath/pkg/queryparse"
+	"gitlab.com/beneath-org/beneath/pkg/timeutil"
 )
 
 func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb.QueryLogResponse, error) {

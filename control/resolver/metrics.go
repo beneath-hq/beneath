@@ -8,12 +8,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/internal/metrics"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/mathutil"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/control/gql"
+	"gitlab.com/beneath-org/beneath/internal/metrics"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-org/beneath/pkg/mathutil"
+	"gitlab.com/beneath-org/beneath/pkg/timeutil"
 )
 
 func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {

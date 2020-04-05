@@ -3,9 +3,9 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-org/beneath/pkg/log"
 
-	pb "github.com/beneath-core/engine/proto"
+	pb "gitlab.com/beneath-org/beneath/engine/proto"
 	uuid "github.com/satori/go.uuid"
 )
 

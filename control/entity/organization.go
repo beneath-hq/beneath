@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-org/beneath/internal/hub"
 )
 
 // Organization represents the entity that manages billing on behalf of its users

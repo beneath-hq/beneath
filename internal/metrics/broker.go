@@ -10,11 +10,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 
-	pb "github.com/beneath-core/engine/proto"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/bytesutil"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/timeutil"
+	pb "gitlab.com/beneath-org/beneath/engine/proto"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/pkg/bytesutil"
+	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-org/beneath/pkg/timeutil"
 )
 
 // Broker coordinates the buffer and ticker

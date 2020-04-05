@@ -5,10 +5,10 @@ import (
 
 	"github.com/vektah/gqlparser/gqlerror"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/internal/metrics"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/control/gql"
+	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-org/beneath/internal/metrics"
 	uuid "github.com/satori/go.uuid"
 )
 

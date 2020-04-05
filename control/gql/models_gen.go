@@ -5,7 +5,7 @@ package gql
 import (
 	"time"
 
-	"github.com/beneath-core/control/entity"
+	"gitlab.com/beneath-org/beneath/control/entity"
 	"github.com/satori/go.uuid"
 )
 

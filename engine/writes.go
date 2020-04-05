@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/segmentio/ksuid"
 
-	pb "github.com/beneath-core/engine/proto"
+	pb "gitlab.com/beneath-org/beneath/engine/proto"
 )
 
 const (

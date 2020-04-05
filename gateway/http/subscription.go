@@ -8,12 +8,12 @@ import (
 	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/gateway"
-	"github.com/beneath-core/gateway/subscriptions"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/secrettoken"
-	"github.com/beneath-core/pkg/ws"
+	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-org/beneath/gateway"
+	"gitlab.com/beneath-org/beneath/gateway/subscriptions"
+	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-org/beneath/pkg/secrettoken"
+	"gitlab.com/beneath-org/beneath/pkg/ws"
 )
 
 // wsServer implements ws.Server

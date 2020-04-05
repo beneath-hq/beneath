@@ -7,15 +7,15 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/beneath-core/pkg/codec"
+	"gitlab.com/beneath-org/beneath/pkg/codec"
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/schema"
+	"gitlab.com/beneath-org/beneath/control/taskqueue"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/pkg/schema"
 )
 
 // Stream represents a collection of data

@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/beneath-core/pkg/jsonutil"
+	"gitlab.com/beneath-org/beneath/pkg/jsonutil"
 )
 
 // ConditionOp is an enum representing possible conditions on fields

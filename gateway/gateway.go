@@ -3,9 +3,9 @@ package gateway
 import (
 	"time"
 
-	"github.com/beneath-core/engine"
-	"github.com/beneath-core/gateway/subscriptions"
-	"github.com/beneath-core/internal/metrics"
+	"gitlab.com/beneath-org/beneath/engine"
+	"gitlab.com/beneath-org/beneath/gateway/subscriptions"
+	"gitlab.com/beneath-org/beneath/internal/metrics"
 )
 
 var (

@@ -3,8 +3,8 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/secrettoken"
+	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-org/beneath/pkg/secrettoken"
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
