@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // Mock implements beneath.WarehouseService

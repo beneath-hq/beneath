@@ -3,8 +3,8 @@ package postgres
 import (
 	"sync"
 
-	"gitlab.com/beneath-org/beneath/pkg/envutil"
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // configSpecification defines the config variables to load from ENV

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 
 	"cloud.google.com/go/bigtable"
-	"gitlab.com/beneath-org/beneath/pkg/codec"
-	"gitlab.com/beneath-org/beneath/pkg/codec/ext/tuple"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
 	uuid "github.com/satori/go.uuid"
 )
 

@@ -8,8 +8,8 @@ import (
 
 	"cloud.google.com/go/bigquery"
 
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // ExternalRow represents a record saved for external use (i.e. with columns matching schema)

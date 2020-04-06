@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/control/taskqueue"
-	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // RunBillingTask triggers billing (computation, invoice creation, and stripe)

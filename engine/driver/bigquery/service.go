@@ -9,8 +9,8 @@ import (
 	"google.golang.org/api/iterator"
 	"robpike.io/filter"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // MaxKeySize implements beneath.Service

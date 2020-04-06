@@ -5,8 +5,8 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 
-	pb "gitlab.com/beneath-org/beneath/gateway/grpc/proto"
-	"gitlab.com/beneath-org/beneath/internal/middleware"
+	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/encoding.md#using-a-compressor
 	_ "google.golang.org/grpc/encoding/gzip"

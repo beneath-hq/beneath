@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // ProjectPermissions represents permissions that a secret has for a given project

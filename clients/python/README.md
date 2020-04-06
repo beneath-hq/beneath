@@ -1,5 +1,9 @@
 # Beneath Python Client Library
 
+[![PyPI version](https://img.shields.io/pypi/v/beneath.svg)](https://pypi.org/project/beneath)
+<!-- [![Docs badge](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pypi.org/project/beneath) -->
+[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+
 This repository contains the source code for the [Beneath](https://beneath.dev) Python library. Learn more about it with these resources:
 
 - [Overview](https://about.beneath.dev/docs/overview/)
@@ -33,3 +37,35 @@ Here are some good resources to understand how Python packages work:
 - Increment the version number in `beneath/_version.py`
 - Run `./tools/pypi-publish.sh`
 - Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/gateway/grpc/client_version.go`
+
+
+
+<!-- TODO
+
+https://www.npmjs.com/package/beneath
+
+Intro
+
+PYTHON USE CASES
+- Load into Jupyter
+- Query from web server API
+- Write from web server API
+- Running model and saving results
+
+Combines a CLI and a python library. Based on Asyncio and requires Python X+.
+
+Quick start
+- In jupyter
+- In code
+
+Creating a client
+- Authentication options
+
+Reading from a stream
+
+Writing to a stream
+
+Admin functionality
+- recommend CLI
+
+-->

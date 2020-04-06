@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // WriteToWarehouse implements beneath.WarehouseService

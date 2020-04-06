@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
 
 // Task is the abstract interface for a worker task

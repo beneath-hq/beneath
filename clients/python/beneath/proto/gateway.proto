@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "gitlab.com/beneath-org/beneath/gateway/grpc/proto";
+option go_package = "gitlab.com/beneath-hq/beneath/gateway/grpc/proto";
 package gateway.v1;
 
 message Record {

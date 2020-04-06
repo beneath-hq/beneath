@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/control/taskqueue"
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/pkg/log"
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // Work runs a worker

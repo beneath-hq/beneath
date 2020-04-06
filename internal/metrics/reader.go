@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 const (

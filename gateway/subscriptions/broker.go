@@ -7,10 +7,10 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-org/beneath/engine"
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
-	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/engine"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // Message encapsulates a subscription update dispatched by a Broker

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"gitlab.com/beneath-org/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-org/beneath/pkg/schema"
+	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-hq/beneath/pkg/schema"
 
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"

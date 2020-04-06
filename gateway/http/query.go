@@ -10,14 +10,14 @@ import (
 	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-org/beneath/control/entity"
-	"gitlab.com/beneath-org/beneath/gateway"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/internal/middleware"
-	"gitlab.com/beneath-org/beneath/pkg/httputil"
-	"gitlab.com/beneath-org/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-org/beneath/pkg/queryparse"
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/gateway"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 const (

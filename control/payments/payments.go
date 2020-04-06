@@ -1,10 +1,10 @@
 package payments
 
 import (
-	"gitlab.com/beneath-org/beneath/control/payments/driver"
-	"gitlab.com/beneath-org/beneath/control/payments/driver/anarchism"
-	"gitlab.com/beneath-org/beneath/control/payments/driver/stripecard"
-	"gitlab.com/beneath-org/beneath/control/payments/driver/stripewire"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver/anarchism"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver/stripecard"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver/stripewire"
 )
 
 // InitDrivers initializes all of the payments drivers

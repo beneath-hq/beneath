@@ -11,12 +11,12 @@ import (
 	"cloud.google.com/go/bigtable"
 	"github.com/golang/protobuf/proto"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	pb "gitlab.com/beneath-org/beneath/engine/driver/bigtable/proto"
-	"gitlab.com/beneath-org/beneath/engine/driver/bigtable/sequencer"
-	"gitlab.com/beneath-org/beneath/pkg/codec"
-	"gitlab.com/beneath-org/beneath/pkg/mathutil"
-	"gitlab.com/beneath-org/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/engine/driver/bigtable/proto"
+	"gitlab.com/beneath-hq/beneath/engine/driver/bigtable/sequencer"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/pkg/mathutil"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 const (

@@ -6,14 +6,14 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	"gitlab.com/beneath-org/beneath/engine/driver/bigquery"
-	"gitlab.com/beneath-org/beneath/engine/driver/bigtable"
-	"gitlab.com/beneath-org/beneath/engine/driver/mock"
-	"gitlab.com/beneath-org/beneath/engine/driver/postgres"
-	"gitlab.com/beneath-org/beneath/engine/driver/pubsub"
-	"gitlab.com/beneath-org/beneath/pkg/codec"
-	"gitlab.com/beneath-org/beneath/pkg/mathutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver/bigquery"
+	"gitlab.com/beneath-hq/beneath/engine/driver/bigtable"
+	"gitlab.com/beneath-hq/beneath/engine/driver/mock"
+	"gitlab.com/beneath-hq/beneath/engine/driver/postgres"
+	"gitlab.com/beneath-hq/beneath/engine/driver/pubsub"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/pkg/mathutil"
 )
 
 // Engine interfaces with the data layer

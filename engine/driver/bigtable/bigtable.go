@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	"gitlab.com/beneath-org/beneath/engine/driver/bigtable/sequencer"
-	"gitlab.com/beneath-org/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver/bigtable/sequencer"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
 // configSpecification defines the config variables to load from ENV

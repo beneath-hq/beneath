@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 )

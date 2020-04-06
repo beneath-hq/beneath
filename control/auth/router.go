@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"gitlab.com/beneath-org/beneath/control/entity"
-	"gitlab.com/beneath-org/beneath/pkg/httputil"
-	"gitlab.com/beneath-org/beneath/pkg/log"
-	"gitlab.com/beneath-org/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 
 	"github.com/go-chi/chi"
 	"github.com/markbates/goth/gothic"

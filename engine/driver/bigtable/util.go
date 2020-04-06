@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 const (

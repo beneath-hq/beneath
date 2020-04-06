@@ -14,36 +14,36 @@ resolver:
 autobind: []
 models:
   UUID:
-    model: gitlab.com/beneath-org/beneath/control/gql.UUID
+    model: gitlab.com/beneath-hq/beneath/control/gql.UUID
   UserSecret: 
-    model: gitlab.com/beneath-org/beneath/control/entity.UserSecret
+    model: gitlab.com/beneath-hq/beneath/control/entity.UserSecret
   ServiceSecret: 
-    model: gitlab.com/beneath-org/beneath/control/entity.ServiceSecret
+    model: gitlab.com/beneath-hq/beneath/control/entity.ServiceSecret
   Project:
-    model: gitlab.com/beneath-org/beneath/control/entity.Project
+    model: gitlab.com/beneath-hq/beneath/control/entity.Project
   Model:
-    model: gitlab.com/beneath-org/beneath/control/entity.Model
+    model: gitlab.com/beneath-hq/beneath/control/entity.Model
   Stream:
-    model: gitlab.com/beneath-org/beneath/control/entity.Stream
+    model: gitlab.com/beneath-hq/beneath/control/entity.Stream
   StreamInstance:
-    model: gitlab.com/beneath-org/beneath/control/entity.StreamInstance
+    model: gitlab.com/beneath-hq/beneath/control/entity.StreamInstance
   StreamIndex:
-    model: gitlab.com/beneath-org/beneath/control/entity.StreamIndex
+    model: gitlab.com/beneath-hq/beneath/control/entity.StreamIndex
   User:
-    model: gitlab.com/beneath-org/beneath/control/entity.User
+    model: gitlab.com/beneath-hq/beneath/control/entity.User
   Organization:
-    model: gitlab.com/beneath-org/beneath/control/entity.Organization
+    model: gitlab.com/beneath-hq/beneath/control/entity.Organization
   Service:
-    model: gitlab.com/beneath-org/beneath/control/entity.Service
+    model: gitlab.com/beneath-hq/beneath/control/entity.Service
   PermissionsUsersProjects:
-    model: gitlab.com/beneath-org/beneath/control/entity.PermissionsUsersProjects
+    model: gitlab.com/beneath-hq/beneath/control/entity.PermissionsUsersProjects
   PermissionsUsersOrganizations:
-    model: gitlab.com/beneath-org/beneath/control/entity.PermissionsUsersOrganizations
+    model: gitlab.com/beneath-hq/beneath/control/entity.PermissionsUsersOrganizations
   PermissionsServicesStreams:
-    model: gitlab.com/beneath-org/beneath/control/entity.PermissionsServicesStreams
+    model: gitlab.com/beneath-hq/beneath/control/entity.PermissionsServicesStreams
   BillingPlan:
-    model: gitlab.com/beneath-org/beneath/control/entity.BillingPlan
+    model: gitlab.com/beneath-hq/beneath/control/entity.BillingPlan
   BilledResource:
-    model: gitlab.com/beneath-org/beneath/control/entity.BilledResource
+    model: gitlab.com/beneath-hq/beneath/control/entity.BilledResource
   PaymentMethod:
-    model: gitlab.com/beneath-org/beneath/control/entity.PaymentMethod
+    model: gitlab.com/beneath-hq/beneath/control/entity.PaymentMethod

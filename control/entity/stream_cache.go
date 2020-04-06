@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"github.com/bluele/gcache"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"

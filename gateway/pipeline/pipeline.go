@@ -8,13 +8,13 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-org/beneath/control/entity"
-	"gitlab.com/beneath-org/beneath/engine/driver"
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
-	pbgw "gitlab.com/beneath-org/beneath/gateway/grpc/proto"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/pkg/log"
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	pbgw "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 const (

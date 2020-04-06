@@ -8,11 +8,11 @@ import (
 	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-org/beneath/control/taskqueue"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/internal/metrics"
-	"gitlab.com/beneath-org/beneath/pkg/log"
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/metrics"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // ComputeBillResourcesTask computes all items on an organization's bill

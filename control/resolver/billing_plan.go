@@ -3,8 +3,8 @@ package resolver
 import (
 	"context"
 
-	"gitlab.com/beneath-org/beneath/control/entity"
-	"gitlab.com/beneath-org/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
 )
 
 // BillingPlan returns the gql.BillingPlanResolver

@@ -7,8 +7,8 @@ import (
 	"github.com/linkedin/goavro/v2"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-org/beneath/pkg/codec/ext/tuple"
-	"gitlab.com/beneath-org/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 // Codec marshals keys (potentially multiple values) into lexicographically sortable binary

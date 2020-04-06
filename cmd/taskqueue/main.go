@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 
-	"gitlab.com/beneath-org/beneath/control/payments"
-	"gitlab.com/beneath-org/beneath/control/taskqueue/worker"
-	"gitlab.com/beneath-org/beneath/internal/hub"
-	"gitlab.com/beneath-org/beneath/pkg/ctxutil"
-	"gitlab.com/beneath-org/beneath/pkg/envutil"
-	"gitlab.com/beneath-org/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/control/payments"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue/worker"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	// import modules that register tasks in taskqueue
-	_ "gitlab.com/beneath-org/beneath/control/entity"
+	_ "gitlab.com/beneath-hq/beneath/control/entity"
 )
 
 type configSpecification struct {

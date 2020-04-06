@@ -3,7 +3,7 @@ package taskqueue
 import (
 	"context"
 
-	"gitlab.com/beneath-org/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // Submit queues a task for proocessing

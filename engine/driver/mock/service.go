@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/beneath-org/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // MaxKeySize implements beneath.Service

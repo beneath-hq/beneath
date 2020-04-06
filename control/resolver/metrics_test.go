@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/control/gql"
 	"github.com/stretchr/testify/assert"
 )
 

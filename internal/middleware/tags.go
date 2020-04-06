@@ -9,7 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 
-	"gitlab.com/beneath-org/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/entity"
 )
 
 // Tags represents annotations on a request made available both up and down the

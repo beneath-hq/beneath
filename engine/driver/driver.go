@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-org/beneath/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 
 	uuid "github.com/satori/go.uuid"
 
-	pb "gitlab.com/beneath-org/beneath/engine/proto"
-	"gitlab.com/beneath-org/beneath/pkg/codec"
-	"gitlab.com/beneath-org/beneath/pkg/queryparse"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath
