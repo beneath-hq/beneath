@@ -4,15 +4,15 @@
 
 Beneath aims to use a single git repository (monorepo) for all core code. Hopefully that makes it easier to manage dependencies and get a full view of development.
 
-Checkout the git repo with: `git clone https://gitlab.com/_beneath/beneath-core.git`
+Checkout the git repo with: `git clone https://gitlab.com/beneath-hq/beneath.git`
 
-Client libraries (i.e. language-specific libraries that read from and write to Beneath) should go in separate repositories. As an example, see the [Python client library](https://gitlab.com/_beneath/beneath-python).
+Client libraries (i.e. language-specific libraries that read from and write to Beneath) are found in the `clients/` directory. As an example, see the [Python client library](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python).
 
 ## Core components
 
-The entire system is implemented in Go with the exception of the frontend, which is implemented in TypeScript (and React).
+The entire system is implemented in Go with the exception of the frontend, which is implemented in TypeScript (and React), and the client libraries, which are implemented for a variety of different languages.
 
-The system spans multiple separate executable services, namely:
+The core system spans multiple separate executable services, namely:
 
 - The **control server** (found in `control/`), which manages users, projects, streams, etc. It exposes a GraphQL API and is backed by Postgres and Redis.
 - The **task queue** (found in `control/taskqueue/`), which executes background jobs issued by the control server.
@@ -21,14 +21,16 @@ The system spans multiple separate executable services, namely:
 
 Here's a rough guide to the project structure:
 
+- `assets`: Assets such as logos, images, etc.
 - `build`: Dockerfiles for the deployed executables in `cmd`
+- `clients`: Language-specific libraries used to interface with Beneath, including reading and writing data
 - `cmd`: contains a package with a `main.go` file for each executable program
 - `configs`: should contain `.development.env` and `.test.env` files that configure the platform in local development
 - `control`: code related to the control server, including Postgres models, GraphQL resolvers, and the task queue
 - `deployments`: Kubernetes and Helm manifests for deploying to production
 - `docs/contributing`: documentation that describes how the codebase is structured and how to contribute to it
-- `engine`: code for interfacing with the underlying data infrastructure, e.g., Pubsub, BigTable, BigQuery, etc.
-- `gateway`: code related to the gateway server (excluding data infrastructure code -- that's in `engine`)
+- `engine`: drivers for interfacing with the underlying data infrastructure, e.g., Pubsub, BigTable, BigQuery, etc.
+- `gateway`: code related to the data gateway server (excluding data infrastructure code -- that's in `engine`)
 - `internal`: utility libraries that are not directly related to any specific service (e.g., HTTP middleware)
 - `pkg`: stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
 - `scripts`: contains helper scripts for code generation, etc.
