@@ -1,5 +1,14 @@
-# README
+<p align="center">
+  <p align="center">
+    <a href="https://about.beneath.dev/?utm_source=gitlab&utm_medium=logo" target="_blank">
+      <img src="https://gitlab.com/beneath-org/beneath/-/raw/master/assets/logo/banner-icon-text-background.png" alt="Beneath" height="100">
+    </a>
+  </p>
+</p>
 
-[![Go Report Card](https://goreportcard.com/badge/gitlab.com/_beneath/beneath-core?style=flat-square)](https://goreportcard.com/report/gitlab.com/_beneath/beneath-core)
-<!-- [![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/gitlab.com/_beneath/beneath-core)
-[![Release](https://img.shields.io/github/release/golang-standards/project-layout.svg?style=flat-square)](https://gitlab.com/_beneath/beneath-core/-/releases) -->
+<hr />
+
+[![Go Report Card](https://goreportcard.com/badge/gitlab.com/beneath-org/beneath?style=flat-square)](https://goreportcard.com/report/gitlab.com/beneath-org/beneath)
+[![GoDoc](https://godoc.org/gitlab.com/beneath-org/beneath?status.svg)](https://godoc.org/gitlab.com/beneath-org/beneath)
+
+Beneath is a single platform for building analytics applications. Our ambition is to bundle all the useful tools and best practices in data management, so developers and data scientists can focus on models and the user experience.
