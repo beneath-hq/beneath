@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 
-	"github.com/beneath-core/control/migrations"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/control/migrations"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
 const usageText = `This program runs command on the db. Supported commands are:

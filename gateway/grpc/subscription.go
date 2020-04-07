@@ -6,11 +6,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/gateway"
-	"github.com/beneath-core/gateway/subscriptions"
-	pb "github.com/beneath-core/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/gateway"
+	"gitlab.com/beneath-hq/beneath/gateway/subscriptions"
+	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 )
 
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {

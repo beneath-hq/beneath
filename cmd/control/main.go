@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/beneath-core/control"
-	"github.com/beneath-core/control/auth"
-	"github.com/beneath-core/control/migrations"
-	"github.com/beneath-core/control/payments"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/segment"
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/control"
+	"gitlab.com/beneath-hq/beneath/control/auth"
+	"gitlab.com/beneath-hq/beneath/control/migrations"
+	"gitlab.com/beneath-hq/beneath/control/payments"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/segment"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type configSpecification struct {

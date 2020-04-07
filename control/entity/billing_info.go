@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 
 	uuid "github.com/satori/go.uuid"
 )

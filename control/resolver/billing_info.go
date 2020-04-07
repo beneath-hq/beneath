@@ -3,8 +3,8 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 )

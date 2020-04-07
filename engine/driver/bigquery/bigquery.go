@@ -6,8 +6,8 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // configSpecification defines the config variables to load from ENV

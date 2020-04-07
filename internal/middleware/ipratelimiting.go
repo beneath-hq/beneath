@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 )
 
 var (

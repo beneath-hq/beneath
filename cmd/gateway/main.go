@@ -10,14 +10,14 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	gw "github.com/beneath-core/gateway"
-	gwgrpc "github.com/beneath-core/gateway/grpc"
-	gwhttp "github.com/beneath-core/gateway/http"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/segment"
-	"github.com/beneath-core/pkg/ctxutil"
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/pkg/log"
+	gw "gitlab.com/beneath-hq/beneath/gateway"
+	gwgrpc "gitlab.com/beneath-hq/beneath/gateway/grpc"
+	gwhttp "gitlab.com/beneath-hq/beneath/gateway/http"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/segment"
+	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type configSpecification struct {

@@ -3,7 +3,7 @@ package driver
 import (
 	"time"
 
-	"github.com/beneath-core/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	uuid "github.com/satori/go.uuid"
 )
 

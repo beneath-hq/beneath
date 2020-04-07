@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/beneath-core/engine/proto";
+option go_package = "gitlab.com/beneath-hq/beneath/engine/proto";
 package engine;
 
 message QuotaUsage {

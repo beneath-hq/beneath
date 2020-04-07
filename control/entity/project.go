@@ -12,7 +12,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // Project represents a Beneath project

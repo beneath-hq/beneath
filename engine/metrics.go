@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	pb "github.com/beneath-core/engine/proto"
-	"github.com/beneath-core/pkg/timeutil"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // CommitUsage writes a batch of usage metrics

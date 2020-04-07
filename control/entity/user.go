@@ -12,10 +12,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // User represents a Beneath user

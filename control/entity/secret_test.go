@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/secrettoken"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 	"github.com/stretchr/testify/assert"
 )
 

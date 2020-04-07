@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/beneath-core/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // RegisterProject is called when a project is created *or updated*

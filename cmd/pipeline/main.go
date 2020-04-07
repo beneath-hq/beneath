@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 
-	"github.com/beneath-core/gateway/pipeline"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/ctxutil"
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/gateway/pipeline"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type configSpecification struct {

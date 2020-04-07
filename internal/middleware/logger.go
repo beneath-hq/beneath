@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // Logger is a middleware that logs each request, along with some useful data about what

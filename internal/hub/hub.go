@@ -1,8 +1,8 @@
 package hub
 
 import (
-	"github.com/beneath-core/control/payments/driver"
-	"github.com/beneath-core/engine"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver"
+	"gitlab.com/beneath-hq/beneath/engine"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/redis/v7"
 )

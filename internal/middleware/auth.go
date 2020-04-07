@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/pkg/httputil"
-	"github.com/beneath-core/pkg/secrettoken"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	uuid "github.com/satori/go.uuid"
 )
