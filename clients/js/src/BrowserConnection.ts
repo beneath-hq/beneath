@@ -36,7 +36,7 @@ export class BrowserConnection {
 
     const connectionParams = secret ? { secret: this.secret } : undefined;
     if (typeof window !== 'undefined') {
-      this.subscription = new SubscriptionClient(`${BENEATH_GATEWAY_HOST_WS}/v1/ws`, {
+      this.subscription = new SubscriptionClient(`${BENEATH_GATEWAY_HOST_WS}/v1/-/ws`, {
         lazy: true,
         inactivityTimeout: 10000,
         reconnect: true,
@@ -91,12 +91,40 @@ export class BrowserConnection {
   }
 
   private makePath(sq: StreamQualifier): string {
+    if (typeof sq === "string") {
+      sq = this.pathStringToObject(sq);
+    }
     if ("instanceID" in sq && sq.instanceID) {
-      return `v1/streams/instances/${sq.instanceID}`;
+      return `v1/-/instances/${sq.instanceID}`;
     } else if ("project" in sq && "stream" in sq) {
-      return `v1/projects/${sq.project}/streams/${sq.stream}`;
+      return `v1/${sq.organization}/${sq.project}/streams/${sq.stream}`;
     }
     throw Error("invalid stream qualifier");
+  }
+
+  private pathStringToObject(path: string): { organization: string, project: string, stream: string } {
+    const parts = path.split("/");
+
+    // trim leading/trailing "/"
+    if (parts.length > 0 && parts[0] === "/") { parts.shift(); }
+    if (parts.length > 0 && parts[parts.length - 1] === "/") { parts.pop(); }
+
+    // handle org/proj/stream and org/proj/streams/stream
+    if (parts.length === 3) {
+      return {
+        organization: parts[0],
+        project: parts[1],
+        stream: parts[2],
+      };
+    } else if (parts.length === 4 && parts[2] === "streams") {
+      return {
+        organization: parts[0],
+        project: parts[1],
+        stream: parts[3],
+      };
+    }
+
+    throw Error(`Cannot parse stream path "${path}"; it must have the format "organization/project/stream"`);
   }
 
   private async fetch<TRecord>(method: "GET" | "POST", path: string, body: { [key: string]: any; }): Promise<Response<TRecord>> {

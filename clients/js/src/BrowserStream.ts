@@ -1,6 +1,6 @@
 import { BrowserCursor } from "./BrowserCursor";
 import { BrowserConnection } from "./BrowserConnection";
-import { StreamQualifier, ReadOptions, QueryLogOptions, QueryIndexOptions } from "./shared";
+import { StreamQualifier, QueryLogOptions, QueryIndexOptions } from "./shared";
 
 export interface BrowserQueryResult<TRecord = any> {
   cursor?: BrowserCursor<TRecord>;
