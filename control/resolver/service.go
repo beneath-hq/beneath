@@ -3,11 +3,12 @@ package resolver
 import (
 	"context"
 
+	uuid "github.com/satori/go.uuid"
+	"github.com/vektah/gqlparser/gqlerror"
+
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
-	uuid "github.com/satori/go.uuid"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
 // Service returns the gql.ServiceResolver

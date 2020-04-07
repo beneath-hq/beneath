@@ -3,13 +3,13 @@ package resolver
 import (
 	"context"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
-	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/internal/metrics"
-	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
 // User returns the gql.UserResolver

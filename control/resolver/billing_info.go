@@ -3,10 +3,11 @@ package resolver
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/gql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
+
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
 )
 
 func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUID) (*gql.BillingInfo, error) {

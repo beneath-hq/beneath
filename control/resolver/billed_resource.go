@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
+	"github.com/vektah/gqlparser/gqlerror"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
-	uuid "github.com/satori/go.uuid"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
 // BilledResource returns the gql.BilledResourceResolver

@@ -3,10 +3,10 @@ package resolver
 import (
 	"context"
 
-	"github.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
