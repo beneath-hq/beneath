@@ -44,7 +44,7 @@ export interface SubrouteTabProps {
 
 const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => {
   const selectedValue = router.query.tab || defaultValue || tabs[0].value;
-  const asPathBase = router.query.tab ? router.asPath.substring(0, router.asPath.lastIndexOf("/")) : router.asPath;
+  const asPathBase = router.query.tab ? router.asPath.substring(0, router.asPath.lastIndexOf("/-/")) : router.asPath;
   const selectedTab = tabs.find((tab) => tab.value === selectedValue);
   const [loading, setLoading] = React.useState(false);
   const classes = useStyles();
@@ -72,7 +72,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
             component={NextMuiLink}
             shallow
             replace
-            as={`${asPathBase}/${tab.value}`}
+            as={`${asPathBase}/-/${tab.value}`}
             href={{
               pathname: router.pathname,
               query: {
