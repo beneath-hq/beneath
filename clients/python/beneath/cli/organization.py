@@ -7,7 +7,7 @@ def add_subparser(root):
 
   _show = organization.add_parser('show')
   _show.set_defaults(func=async_cmd(show))
-  _show.add_argument('name', type=str)
+  _show.add_argument('organization', type=str)
 
   _rename = organization.add_parser('rename')
   _rename.set_defaults(func=async_cmd(rename))
@@ -69,7 +69,7 @@ def add_subparser(root):
 
 async def show(args):
   client = Client()
-  result = await client.admin.organizations.find_by_name(name=args.name)
+  result = await client.admin.organizations.find_by_name(name=args.organization)
   pretty_print_graphql_result(result)
 
 

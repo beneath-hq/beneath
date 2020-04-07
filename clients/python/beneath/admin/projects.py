@@ -7,14 +7,15 @@ class Projects:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  async def find_by_name(self, name):
+  async def find_by_organization_and_name(self, organization_name, project_name):
     result = await self.conn.query_control(
       variables={
-        'name': format_entity_name(name),
+        'organizationName': format_entity_name(organization_name),
+        'projectName': format_entity_name(project_name),
       },
       query="""
-        query ProjectByName($name: String!) {
-          projectByName(name: $name) {
+        query ProjectByOrganizationAndName($organizationName: String!, $projectName: String!) {
+          projectByOrganizationAndName(organizationName: $organizationName, projectName: $projectName) {
             projectID
             name
             displayName
@@ -34,7 +35,7 @@ class Projects:
         }
       """
     )
-    return result['projectByName']
+    return result['projectByOrganizationAndName']
 
   async def create(
     self,

@@ -1,5 +1,6 @@
 from beneath.client import Client
-from beneath.cli.utils import async_cmd, parse_names, pretty_print_graphql_result, str2bool
+from beneath.utils import ProjectQualifier, StreamQualifier
+from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 
 
 def add_subparser(root):
@@ -9,7 +10,7 @@ def add_subparser(root):
 
   _list = stream.add_parser('list')
   _list.set_defaults(func=async_cmd(show_list))
-  _list.add_argument('project', type=str)
+  _list.add_argument('project_path', type=str)
 
   _create = root_stream.add_parser('create')
   _create.set_defaults(func=async_cmd(create_root))
@@ -20,14 +21,13 @@ def add_subparser(root):
     required=True,
     help="This file should contain the GraphQL schema for the stream you would like to create"
   )
-  _create.add_argument('-p', '--project', type=str, required=True)
+  _create.add_argument('-p', '--project-path', type=str, required=True)
   _create.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
   _create.add_argument('--batch', type=str2bool, nargs='?', const=True, default=False)
 
   _update = root_stream.add_parser('update')
   _update.set_defaults(func=async_cmd(update_root))
-  _update.add_argument('stream', type=str)
-  _update.add_argument('-p', '--project', type=str)
+  _update.add_argument('stream_path', type=str)
   _update.add_argument(
     '-f',
     '--file',
@@ -40,13 +40,11 @@ def add_subparser(root):
 
   _delete = root_stream.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete_root))
-  _delete.add_argument('stream', type=str)
-  _delete.add_argument('-p', '--project', type=str)
+  _delete.add_argument('stream_path', type=str)
 
   _batch_create = root_stream_batch.add_parser('create')
   _batch_create.set_defaults(func=async_cmd(batch_create))
-  _batch_create.add_argument('stream', type=str)
-  _batch_create.add_argument('-p', '--project', type=str)
+  _batch_create.add_argument('stream_path', type=str)
 
   _batch_commit = root_stream_batch.add_parser('commit')
   _batch_commit.set_defaults(func=async_cmd(batch_commit))
@@ -54,17 +52,17 @@ def add_subparser(root):
 
   _batches_clear = root_stream_batch.add_parser('clear')
   _batches_clear.set_defaults(func=async_cmd(batches_clear))
-  _batches_clear.add_argument('stream', type=str)
-  _batches_clear.add_argument('-p', '--project', type=str)
+  _batches_clear.add_argument('stream_path', type=str)
 
 
 async def show_list(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.project)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   if len(project['streams']) == 0:
     print("There are no streams currently in this project")
   for streamname in project['streams']:
-    print(streamname['name'])
+    print(f"{pq.organization}/{pq.project}/{streamname['name']}")
 
 
 async def create_root(args):
@@ -72,7 +70,8 @@ async def create_root(args):
     schema = f.read()
 
   client = Client()
-  project = await client.admin.projects.find_by_name(args.project)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   stream = await client.admin.streams.create(
     schema=schema,
     project_id=project['projectID'],
@@ -90,9 +89,11 @@ async def update_root(args):
       schema = f.read()
 
   client = Client()
-  name, project_name = parse_names(args.stream, args.project, "project")
-  stream = await client.admin.streams.find_by_project_and_name(
-    project_name=project_name, stream_name=name
+  sq = StreamQualifier.from_path(args.stream_path)
+  stream = await client.admin.streams.find_by_organization_project_and_name(
+    organization_name=sq.organization,
+    project_name=sq.project,
+    stream_name=sq.stream,
   )
 
   stream = await client.admin.streams.update(stream['streamID'], schema=schema, manual=args.manual)
@@ -101,10 +102,11 @@ async def update_root(args):
 
 async def delete_root(args):
   client = Client()
-  name, project_name = parse_names(args.stream, args.project, "project")
-  stream = await client.admin.streams.find_by_project_and_name(
-    project_name=project_name,
-    stream_name=name,
+  sq = StreamQualifier.from_path(args.stream_path)
+  stream = await client.admin.streams.find_by_organization_project_and_name(
+    organization_name=sq.organization,
+    project_name=sq.project,
+    stream_name=sq.stream,
   )
   result = await client.admin.streams.delete(stream['streamID'])
   pretty_print_graphql_result(result)
@@ -112,9 +114,11 @@ async def delete_root(args):
 
 async def batch_create(args):
   client = Client()
-  name, project_name = parse_names(args.stream, args.project, "project")
-  stream = await client.admin.streams.find_by_project_and_name(
-    project_name=project_name, stream_name=name
+  sq = StreamQualifier.from_path(args.stream_path)
+  stream = await client.admin.streams.find_by_organization_project_and_name(
+    organization_name=sq.organization,
+    project_name=sq.project,
+    stream_name=sq.stream,
   )
   batch = await client.admin.streams.create_batch(stream['streamID'])
   pretty_print_graphql_result(batch)
@@ -128,9 +132,11 @@ async def batch_commit(args):
 
 async def batches_clear(args):
   client = Client()
-  name, project_name = parse_names(args.stream, args.project, "project")
-  stream = await client.admin.streams.find_by_project_and_name(
-    project_name=project_name, stream_name=name
+  sq = StreamQualifier.from_path(args.stream_path)
+  stream = await client.admin.streams.find_by_organization_project_and_name(
+    organization_name=sq.organization,
+    project_name=sq.project,
+    stream_name=sq.stream,
   )
   result = await client.admin.streams.clear_pending_batches(stream['streamID'])
   pretty_print_graphql_result(result)

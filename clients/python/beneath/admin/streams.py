@@ -44,17 +44,19 @@ class Streams:
     )
     return result['streamByID']
 
-  async def find_by_project_and_name(self, project_name, stream_name):
+  async def find_by_organization_project_and_name(self, organization_name, project_name, stream_name):
     result = await self.conn.query_control(
       variables={
-        'name': format_entity_name(stream_name),
+        'organizationName': format_entity_name(organization_name),
         'projectName': format_entity_name(project_name),
+        'streamName': format_entity_name(stream_name),
       },
       query="""
-        query StreamByProjectAndName($name: String!, $projectName: String!) {
-          streamByProjectAndName(
-            name: $name, 
+        query StreamByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $streamName: String!) {
+          streamByOrganizationProjectAndName(
+            organizationName: $organizationName,
             projectName: $projectName,
+            streamName: $streamName, 
           ) {
             streamID
             name
@@ -83,7 +85,7 @@ class Streams:
         }
       """
     )
-    return result['streamByProjectAndName']
+    return result['streamByOrganizationProjectAndName']
 
   async def create(self, schema, project_id, manual=False, batch=False):
     result = await self.conn.query_control(

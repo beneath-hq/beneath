@@ -20,6 +20,7 @@ from beneath.config import (
   DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
   DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
 )
+from beneath.utils import StreamQualifier
 
 
 class Client:
@@ -47,8 +48,9 @@ class Client:
       raise TypeError("secret must be a string")
     return secret.strip()
 
-  async def find_stream(self, project: str = None, stream: str = None, stream_id: str = None) -> Stream:
-    stream = Stream(client=self, project=project, stream=stream, stream_id=stream_id)
+  async def find_stream(self, path: str = None) -> Stream:
+    qualifier = StreamQualifier.from_path(path)
+    stream = Stream(client=self, qualifier=qualifier)
     # pylint: disable=protected-access
     await stream._ensure_loaded()
     return stream
@@ -57,8 +59,7 @@ class Client:
 
   async def easy_read(
     self,
-    project: str,
-    stream: str,
+    stream_path: str,
     # pylint: disable=redefined-builtin
     filter: str = None,
     to_dataframe=True,
@@ -66,7 +67,7 @@ class Client:
     max_bytes=DEFAULT_READ_ALL_MAX_BYTES,
     warn_max=True,
   ) -> Iterable[Mapping]:
-    stream = await self.find_stream(project=project, stream=stream)
+    stream = await self.find_stream(path=stream_path)
     cursor = await stream.query_index(filter=filter)
     res = await cursor.fetch_all(
       max_bytes=max_bytes,
@@ -78,15 +79,14 @@ class Client:
 
   async def easy_process_once(
     self,
-    project: str,
-    stream: str,
+    stream_path: str,
     callback: Callable[[Mapping], Awaitable[None]],
     # pylint: disable=redefined-builtin
     filter: str = None,
     max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
     max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
   ):
-    stream = await self.find_stream(project=project, stream=stream)
+    stream = await self.find_stream(path=stream_path)
     cursor = await stream.query_index(filter=filter)
     await cursor.subscribe_replay(
       callback=callback,
@@ -96,13 +96,12 @@ class Client:
 
   async def easy_process_forever(
     self,
-    project: str,
-    stream: str,
+    stream_path: str,
     callback: Callable[[Mapping], Awaitable[None]],
     max_prefetched_records=DEFAULT_SUBSCRIBE_PREFETCHED_RECORDS,
     max_concurrent_callbacks=DEFAULT_SUBSCRIBE_CONCURRENT_CALLBACKS,
   ):
-    stream = await self.find_stream(project=project, stream=stream)
+    stream = await self.find_stream(path=stream_path)
     cursor = await stream.query_index()
     await cursor.subscribe_replay(
       callback=callback,

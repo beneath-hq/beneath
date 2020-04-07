@@ -1,4 +1,5 @@
 from beneath.client import Client
+from beneath.utils import StreamQualifier
 from beneath.cli.utils import async_cmd, mb_to_bytes, parse_names, pretty_print_graphql_result, str2bool
 
 
@@ -39,8 +40,7 @@ def add_subparser(root):
   _add_perm.set_defaults(func=async_cmd(update_permission))
   _add_perm.add_argument('service_name', type=str)
   _add_perm.add_argument('-o', '--service-organization', type=str)
-  _add_perm.add_argument('stream_name', type=str)
-  _add_perm.add_argument('-p', '--stream-project', type=str)
+  _add_perm.add_argument('stream_path', type=str)
   _add_perm.add_argument('--read', type=str2bool, nargs='?', const=True, default=None)
   _add_perm.add_argument('--write', type=str2bool, nargs='?', const=True, default=None)
 
@@ -129,13 +129,15 @@ async def delete(args):
 async def update_permission(args):
   client = Client()
   service_name, org_name = parse_names(args.service_name, args.service_organization, "organization")
-  stream_name, project_name = parse_names(args.stream_name, args.stream_project, "project")
   service = await client.admin.services.find_by_organization_and_name(
     organization_name=org_name,
     name=service_name,
   )
-  stream = await client.admin.streams.find_by_project_and_name(
-    project_name=project_name, stream_name=stream_name
+  sq = StreamQualifier.from_path(args.stream_path)
+  stream = await client.admin.streams.find_by_organization_project_and_name(
+    organization_name=sq.organization,
+    project_name=sq.project,
+    stream_name=sq.stream,
   )
   result = await client.admin.services.update_permissions_for_stream(
     service_id=service['serviceID'],

@@ -7,15 +7,16 @@ class Models:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  async def find_by_project_and_name(self, project_name, model_name):
+  async def find_by_organization_project_and_name(self, organization_name, project_name, model_name):
     result = await self.conn.query_control(
       variables={
-        'name': model_name,
+        'organizationName': format_entity_name(organization_name),
         'projectName': format_entity_name(project_name),
+        'modelName': format_entity_name(model_name),
       },
       query="""
-        query Model($name: String!, $projectName: String!) {
-          model(name: $name, projectName: $projectName) {
+        query Model($modelName: String!, $projectName: String!, $organizationName: String!) {
+          model(modelName: $modelName, projectName: $projectName, organizationName: $organizationName) {
             modelID
             name
             description

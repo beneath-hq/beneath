@@ -119,7 +119,7 @@ class Connection:
       async with session.post(url=url, headers=headers, json=body) as response:
         # handles malformed queries
         if 400 <= response.status < 500:
-          raise ValueError(f"{response.status} Client Error: {response.text}")
+          raise ValueError(f"{response.status} Client Error: {await response.text()}")
         response.raise_for_status()
         obj = await response.json()
         # handles resolver errors
