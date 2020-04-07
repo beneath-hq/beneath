@@ -1,4 +1,4 @@
-import { BrowserClient, BrowserQueryResult } from "beneath";
+import { BrowserClient, BrowserQueryResult, StreamQualifier } from "beneath";
 import { sortedUniqBy } from "lodash";
 import { useEffect, useState } from "react";
 
@@ -9,9 +9,7 @@ const DEFAULT_SUBSCRIBE_POLL_FREQUENCY = 250;
 
 export interface UseRecordsOptions {
   secret?: string;
-  project: string;
-  stream: string;
-  instanceID?: string;
+  stream: StreamQualifier;
   query?: { type: "index", filter?: string } | { type: "log", peek?: boolean };
   pageSize?: number;
   subscribe?: boolean | SubscribeOptions;
@@ -113,11 +111,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       // Section: INITIAL LOAD
 
       // get stream object
-      const stream = client.findStream({
-        project: opts.project,
-        stream: opts.stream,
-        instanceID: opts.instanceID,
-      });
+      const stream = client.findStream(opts.stream);
 
       // query stream
       let query: BrowserQueryResult<TRecord>;
@@ -426,9 +420,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     };
   }, [
     opts.secret,
-    opts.project,
-    opts.stream,
-    opts.instanceID,
+    (typeof opts.stream === "string") ? opts.stream : ("instanceID" in opts.stream) ? opts.stream.instanceID : `${opts.stream.organization}/${opts.stream.project}/${opts.stream.stream}`,
     opts.query?.type,
     opts.query?.type === "log" ? opts.query.peek : opts.query?.type === "index" ? opts.query.filter : undefined,
     opts.pageSize,
