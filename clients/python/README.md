@@ -36,7 +36,7 @@ Here are some good resources to understand how Python packages work:
 
 - Increment the version number in `beneath/_version.py`
 - Run `./tools/pypi-publish.sh`
-- Make sure to appropriately update configuration of recommended and deprecated versions in `beneath-core/gateway/grpc/client_version.go`
+- Make sure to appropriately update configuration of recommended and deprecated versions in `beneath/gateway/grpc/client_version.go`
 
 
 
