@@ -5,8 +5,8 @@ package gql
 import (
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/control/entity"
 	"github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/control/entity"
 )
 
 type BillingInfo struct {
