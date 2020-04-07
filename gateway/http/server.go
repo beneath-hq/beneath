@@ -50,14 +50,14 @@ func Handler() http.Handler {
 
 	// create websocket broker and start accepting new connections on /ws
 	wss := ws.NewBroker(&wsServer{})
-	handler.Method("GET", "/v1/ws", httputil.AppHandler(wss.HTTPHandler))
+	handler.Method("GET", "/v1/-/ws", httputil.AppHandler(wss.HTTPHandler))
 
 	// write endpoint
-	handler.Method("POST", "/v1/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
+	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	// query endpoints
-	handler.Method("GET", "/v1/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
-	handler.Method("GET", "/v1/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
+	handler.Method("GET", "/v1/{organizationName}/{projectName}/streams/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
+	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	return handler
 }

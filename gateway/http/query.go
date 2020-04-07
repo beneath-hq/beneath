@@ -47,10 +47,11 @@ type queryResponseMeta struct {
 	ChangeCursor string    `json:"change_cursor,omitempty"`
 }
 
-func getFromProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+func getFromOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+	organizationName := toBackendName(chi.URLParam(r, "organizationName"))
 	projectName := toBackendName(chi.URLParam(r, "projectName"))
 	streamName := toBackendName(chi.URLParam(r, "streamName"))
-	instanceID := entity.FindInstanceIDByNameAndProject(r.Context(), streamName, projectName)
+	instanceID := entity.FindInstanceIDByOrganizationProjectAndName(r.Context(), organizationName, projectName, streamName)
 	if instanceID == uuid.Nil {
 		return httputil.NewError(404, "instance for stream not found")
 	}

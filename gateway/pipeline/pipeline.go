@@ -114,6 +114,7 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	elapsed := time.Since(start)
 	log.S.Infow(
 		"pipeline write",
+		"organization", stream.OrganizationName,
 		"project", stream.ProjectName,
 		"stream", stream.StreamName,
 		"instance", instanceID.String(),
