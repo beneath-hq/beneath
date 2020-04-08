@@ -6,11 +6,17 @@ Please first read the section "Documentation for contributors" in `docs/contribu
 
 We believe documentation should exist as close to the source code as possible. That makes it more likely to be seen and kept updated.
 
+### Guidelines for commenting
+
 These are roughly our guidelines for where to place your comments:
 
 1. For single pieces of code, the best place to explain it is in comments right next to it
 1. For entire files *or large parts of them*, the best place is in comments at the beginning of the file (*not* in the middle even though they only apply to half the file!)
-1. For architecture that extends beyond a single file, as well as useful commands or testing guidelines, create/use a `README.md` file stored in the given subdirectory
+1. For architecture that extends beyond a single file, as well as useful commands, guidelines, testing notes, etc., create a `README.md` file stored in the given subdirectory
+  - Every major directory in the project should have such a file
+  - For clarity, they should always start with a h1 header with the path relative to root (browse the repo for examples)
+
+### Guidelines on things to document
 
 This is a non-exhaustive list of things that are useful to document about your code:
 
