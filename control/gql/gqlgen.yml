@@ -45,5 +45,9 @@ models:
     model: github.com/beneath-core/control/entity.BillingPlan
   BilledResource:
     model: github.com/beneath-core/control/entity.BilledResource
+  BillingMethod:
+    model: github.com/beneath-core/control/entity.BillingMethod
+  BillingInfo:
+    model: github.com/beneath-core/control/entity.BillingInfo
   PaymentMethod:
     model: github.com/beneath-core/control/entity.PaymentMethod

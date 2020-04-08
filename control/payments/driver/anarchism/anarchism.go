@@ -41,6 +41,7 @@ func (a *Anarchism) GetHTTPHandlers() map[string]httputil.AppHandler {
 // update a customer's billing info
 // this does NOT get called when a customer initially signs up, since we place them on the Anarchy plan in the ...control/entity/user/CreateOrUpdateUser fxn
 // this gets called when users downgrade to the Free plan
+// TODO: this function should be deleted and moved to a resolver for UpdateBillingInfo()
 func (a *Anarchism) handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organizationID"))
 	if err != nil {
@@ -82,9 +83,12 @@ func (a *Anarchism) handleInitializeCustomer(w http.ResponseWriter, req *http.Re
 		}
 	}
 
-	driverPayload := billingInfo.DriverPayload // this ensures we retain the customer's Stripe customerID in the event a customer goes from paying->free->paying
+	bm := entity.FindBillingMethodByOrganizationAndDriver(req.Context(), organizationID, entity.AnarchismDriver)
+	if bm == nil {
+		panic("error!")
+	}
 
-	_, err = entity.UpdateBillingInfo(req.Context(), organization.OrganizationID, billingPlan.BillingPlanID, entity.AnarchismDriver, driverPayload)
+	_, err = billingInfo.Update(req.Context(), bm.BillingMethodID, billingPlan.BillingPlanID)
 	if err != nil {
 		log.S.Errorf("Error updating billing info: %v\\n", err)
 		return httputil.NewError(500, "error updating billing info: %v\\n", err)

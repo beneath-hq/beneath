@@ -83,27 +83,13 @@ func (c *StripeCard) handleGenerateSetupIntent(w http.ResponseWriter, req *http.
 		return httputil.NewError(400, "Organization not found")
 	}
 
-	billingPlanID, err := uuid.FromString(req.URL.Query().Get("billingPlanID"))
-	if err != nil {
-		return httputil.NewError(400, "Unable to get billingPlanID from the request")
-	}
-
-	billingPlan := entity.FindBillingPlan(req.Context(), billingPlanID)
-	if billingPlan == nil {
-		return httputil.NewError(400, "Billing plan not found")
-	}
-
-	if !billingPlan.Personal { // checks for enterprise plans
-		return httputil.NewError(403, "Signing up for Enterprise billing plans requires contacting Beneath")
-	}
-
 	secret := middleware.GetSecret(req.Context())
 	perms := secret.OrganizationPermissions(req.Context(), organizationID)
 	if !perms.Admin {
 		return httputil.NewError(403, fmt.Sprintf("You are not allowed to perform admin functions in organization %s", organizationID.String()))
 	}
 
-	setupIntent := stripeutil.GenerateSetupIntent(organizationID, billingPlanID)
+	setupIntent := stripeutil.GenerateSetupIntent(organizationID)
 
 	// create json response
 	json, err := jsonutil.Marshal(map[string]interface{}{
@@ -154,11 +140,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			panic("organization not found")
 		}
 
-		billingPlan := entity.FindBillingPlan(req.Context(), uuid.FromStringOrNil(setupIntent.Metadata["BillingPlanID"]))
-		if billingPlan == nil {
-			panic("billing plan not found")
-		}
-
+		// TODO: instead, check BillingMethods to see if the customer already has a stripe customerID
 		billingInfo := entity.FindBillingInfo(req.Context(), organization.OrganizationID) // existing billing info (to check for existing stripe customer_id below)
 		if billingInfo == nil {
 			panic("billing info not found")
@@ -168,8 +150,8 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 
 		// Our requests to Stripe differ whether or not the customer is already registered in Stripe
 		var customer *stripe.Customer
-		if billingInfo.DriverPayload["customer_id"] != nil {
-			customerID := billingInfo.DriverPayload["customer_id"].(string)
+		if billingInfo.BillingMethod.DriverPayload["customer_id"] != nil {
+			customerID := billingInfo.BillingMethod.DriverPayload["customer_id"].(string)
 			paymentMethod := stripeutil.AttachPaymentMethod(customerID, paymentMethod.ID)
 			customer = stripeutil.UpdateCardCustomer(customerID, paymentMethod.BillingDetails.Email, paymentMethod.ID)
 		} else {
@@ -179,11 +161,13 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		driverPayload := make(map[string]interface{})
 		driverPayload["customer_id"] = customer.ID
 
-		_, err = entity.UpdateBillingInfo(req.Context(), organization.OrganizationID, billingPlan.BillingPlanID, entity.StripeCardDriver, driverPayload)
+		_, err = entity.CreateBillingMethod(req.Context(), organization.OrganizationID, entity.StripeCardDriver, driverPayload)
 		if err != nil {
-			log.S.Errorf("Error updating billing info: %v\\n", err)
-			return httputil.NewError(500, "error updating billing info: %v\\n", err)
+			log.S.Errorf("Error creating billing method: %v\\n", err)
+			return httputil.NewError(500, "error creating billing method: %v\\n", err)
 		}
+
+		// TODO: in frontend, user needs to select the desired billing plan and update billing info
 
 	case "invoice.payment_failed":
 		var invoice stripe.Invoice
@@ -199,10 +183,12 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
 			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
-			driverPayload := make(map[string]interface{})
-			driverPayload["customer_id"] = invoice.Customer.ID
+			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
+			if billingInfo == nil {
+				panic("could not find organization's billing info")
+			}
 
-			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, defaultBillingPlan.BillingPlanID, entity.StripeCardDriver, driverPayload)
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // don't change billing method, only change the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -224,12 +210,14 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		// when invoice goes "past_due", shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodSendInvoice) && (invoice.Status == "past_due") && (invoice.Paid == false) {
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			freeBillingPlanID := uuid.FromStringOrNil(entity.FreeBillingPlanID)
+			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
-			driverPayload := make(map[string]interface{})
-			driverPayload["customer_id"] = invoice.Customer.ID
+			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
+			if billingInfo == nil {
+				panic("could not find organization's billing info")
+			}
 
-			_, err = entity.UpdateBillingInfo(req.Context(), organizationID, freeBillingPlanID, entity.StripeCardDriver, driverPayload)
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // don't change billing method, only change the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -254,7 +242,7 @@ func (c *StripeCard) handleGetPaymentDetails(w http.ResponseWriter, req *http.Re
 	if user == nil {
 		return httputil.NewError(400, "user not found")
 	}
-	organizationID := user.OrganizationID
+	organizationID := user.BillingOrganizationID
 
 	perms := secret.OrganizationPermissions(req.Context(), organizationID)
 	if !perms.Admin {
@@ -266,11 +254,11 @@ func (c *StripeCard) handleGetPaymentDetails(w http.ResponseWriter, req *http.Re
 		return httputil.NewError(500, fmt.Sprintf("billing info not found for organization %s", organizationID.String()))
 	}
 
-	if billingInfo.PaymentsDriver != "stripecard" {
+	if billingInfo.BillingMethod.PaymentsDriver != "stripecard" {
 		return httputil.NewError(400, fmt.Sprintf("the organization is not on the 'stripecard' payments driver"))
 	}
 
-	customer := stripeutil.RetrieveCustomer(billingInfo.DriverPayload["customer_id"].(string))
+	customer := stripeutil.RetrieveCustomer(billingInfo.BillingMethod.DriverPayload["customer_id"].(string))
 	pm := stripeutil.RetrievePaymentMethod(customer.InvoiceSettings.DefaultPaymentMethod.ID)
 
 	// create json response

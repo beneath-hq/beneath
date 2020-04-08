@@ -33,7 +33,7 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		panic("didn't find any billed resources")
 	}
 
-	paymentDriver := hub.PaymentDrivers[string(billingInfo.PaymentsDriver)]
+	paymentDriver := hub.PaymentDrivers[string(billingInfo.BillingMethod.PaymentsDriver)]
 	if paymentDriver == nil {
 		panic("couldn't get payments driver")
 	}
