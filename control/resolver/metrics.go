@@ -54,9 +54,9 @@ func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, pe
 
 	secret := middleware.GetSecret(ctx)
 	if secret.GetOwnerID() != userID {
-		perms := secret.OrganizationPermissions(ctx, user.OrganizationID)
+		perms := secret.OrganizationPermissions(ctx, user.BillingOrganizationID)
 		if !perms.View {
-			return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
+			return nil, gqlerror.Errorf("you do not have permission to view this user's metrics")
 		}
 	}
 

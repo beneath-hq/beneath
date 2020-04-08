@@ -7,8 +7,8 @@ import (
 
 	"github.com/beneath-core/control/entity"
 	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/internal/middleware"
 	"github.com/beneath-core/internal/metrics"
+	"github.com/beneath-core/internal/middleware"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -72,18 +72,20 @@ func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 	usage := metrics.GetCurrentUsage(ctx, u.UserID)
 
 	return &gql.Me{
-		UserID:       u.UserID.String(),
-		User:         u,
-		Email:        u.Email,
-		ReadUsage:    int(usage.ReadBytes),
-		ReadQuota:    int(u.ReadQuota),
-		WriteUsage:   int(usage.WriteBytes),
-		WriteQuota:   int(u.WriteQuota),
-		UpdatedOn:    u.UpdatedOn,
-		Organization: u.Organization,
+		UserID:               u.UserID.String(),
+		User:                 u,
+		Email:                u.Email,
+		ReadUsage:            int(usage.ReadBytes),
+		ReadQuota:            int(u.ReadQuota),
+		WriteUsage:           int(usage.WriteBytes),
+		WriteQuota:           int(u.WriteQuota),
+		UpdatedOn:            u.UpdatedOn,
+		PersonalOrganization: u.PersonalOrganization,
+		BillingOrganization:     u.BillingOrganization,
 	}
 }
 
+// TODO: part of org-invite refactor
 func (r *mutationResolver) JoinOrganization(ctx context.Context, organizationName string) (*gql.Me, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsUser() {
@@ -105,7 +107,7 @@ func (r *mutationResolver) JoinOrganization(ctx context.Context, organizationNam
 		return nil, gqlerror.Errorf("You don't have permission to join organization %s", organizationName)
 	}
 
-	prevOrganization := entity.FindOrganization(ctx, user.OrganizationID)
+	prevOrganization := entity.FindOrganization(ctx, user.BillingOrganizationID)
 	if prevOrganization == nil {
 		return nil, gqlerror.Errorf("The user's existing organization was not found")
 	}

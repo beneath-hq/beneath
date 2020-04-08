@@ -20,22 +20,24 @@ import (
 
 // User represents a Beneath user
 type User struct {
-	UserID         uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Username       string    `sql:",notnull",validate:"gte=3,lte=50"`
-	Email          string    `sql:",notnull",validate:"required,email"`
-	Name           string    `sql:",notnull",validate:"required,gte=1,lte=50"`
-	Bio            string    `validate:"omitempty,lte=255"`
-	PhotoURL       string    `validate:"omitempty,url,lte=400"`
-	GoogleID       string    `sql:",unique",validate:"omitempty,lte=255"`
-	GithubID       string    `sql:",unique",validate:"omitempty,lte=255"`
-	CreatedOn      time.Time `sql:",default:now()"`
-	UpdatedOn      time.Time `sql:",default:now()"`
-	OrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
-	Organization   *Organization
-	Projects       []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
-	Secrets        []*UserSecret
-	ReadQuota      int64
-	WriteQuota     int64
+	UserID                 uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Username               string    `sql:",notnull",validate:"gte=3,lte=50"`
+	Email                  string    `sql:",notnull",validate:"required,email"`
+	Name                   string    `sql:",notnull",validate:"required,gte=1,lte=50"`
+	Bio                    string    `validate:"omitempty,lte=255"`
+	PhotoURL               string    `validate:"omitempty,url,lte=400"`
+	GoogleID               string    `sql:",unique",validate:"omitempty,lte=255"`
+	GithubID               string    `sql:",unique",validate:"omitempty,lte=255"`
+	CreatedOn              time.Time `sql:",default:now()"`
+	UpdatedOn              time.Time `sql:",default:now()"`
+	PersonalOrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
+	PersonalOrganization   *Organization
+	BillingOrganizationID  uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
+	BillingOrganization    *Organization
+	Projects               []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
+	Secrets                []*UserSecret
+	ReadQuota              int64
+	WriteQuota             int64
 }
 
 var (
@@ -69,7 +71,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Projects.Organization", "Organization").Select()
+	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Projects.Organization.name", "BillingOrganization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -89,7 +91,7 @@ func FindUserByEmail(ctx context.Context, email string) *User {
 // FindUserByUsername returns user with username (if exists)
 func FindUserByUsername(ctx context.Context, username string) *User {
 	user := &User{}
-	err := hub.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Column("user.*", "Projects", "Projects.Organization").Select()
+	err := hub.DB.ModelContext(ctx, user).Where("lower(username) = lower(?)", username).Column("user.*", "Projects", "Projects.Organization.name").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -207,7 +209,8 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		// insert user and org
 		err = tx.Insert(org)
 		if err == nil {
-			user.OrganizationID = org.OrganizationID
+			user.PersonalOrganizationID = org.OrganizationID
+			user.BillingOrganizationID = org.OrganizationID
 			err = tx.Insert(user)
 		}
 
@@ -241,12 +244,22 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		return nil, err
 	}
 
-	// create billing info and setup with anarchism payments driver
-	bi := &BillingInfo{
+	// create anarchism billing method
+	bm := &BillingMethod{
 		OrganizationID: org.OrganizationID,
-		BillingPlanID:  defaultBillingPlan.BillingPlanID,
 		PaymentsDriver: AnarchismDriver,
 		DriverPayload:  make(map[string]interface{}),
+	}
+	_, err = tx.Model(bm).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	// create billing info and setup with anarchism
+	bi := &BillingInfo{
+		OrganizationID:  org.OrganizationID,
+		BillingMethodID: bm.BillingMethodID,
+		BillingPlanID:   defaultBillingPlan.BillingPlanID,
 	}
 	_, err = tx.Model(bi).Insert()
 	if err != nil {
@@ -276,14 +289,15 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 		panic("could not find billing info for the organization-to-join")
 	}
 
+	prevOrganizationID := u.BillingOrganizationID
+
 	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
+	err := commitCurrentUsageToNextBill(ctx, prevOrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return nil, err
 	}
 
-	prevOrganizationID := u.OrganizationID
-	u.OrganizationID = organizationID
+	u.BillingOrganizationID = organizationID
 	u.ReadQuota = bi.BillingPlan.SeatReadQuota
 	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
 	u.UpdatedOn = time.Now()
@@ -342,7 +356,7 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 // Delete removes the user from the database
 // if user is the last one in an organization, in resolver, need to check if there are any services or projects that are still tied to the organization
 func (u *User) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, u.OrganizationID, UserEntityKind, u.UserID, u.Username, false)
+	err := commitCurrentUsageToNextBill(ctx, u.BillingOrganizationID, UserEntityKind, u.UserID, u.Username, false)
 	if err != nil {
 		return err
 	}
@@ -352,9 +366,9 @@ func (u *User) Delete(ctx context.Context) error {
 		return err
 	}
 
-	org := FindOrganization(ctx, u.OrganizationID)
+	org := FindOrganization(ctx, u.BillingOrganizationID)
 	if org == nil {
-		panic("could not find previous organization")
+		panic("could not find organization")
 	}
 
 	// if the organization now has no more members, trigger bill (which will also delete organization)

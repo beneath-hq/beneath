@@ -25,7 +25,8 @@ type Me {
   userID: ID!
   user: User!
   email: String!
-  organization: Organization!
+  personalOrganization: Organization!
+  billingOrganization: Organization!
   readUsage: Int!
   readQuota: Int!
   writeUsage: Int!

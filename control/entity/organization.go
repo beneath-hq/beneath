@@ -9,6 +9,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/beneath-core/internal/hub"
+	"github.com/beneath-core/pkg/log"
 )
 
 // Organization represents the entity that manages billing on behalf of its users
@@ -20,7 +21,7 @@ type Organization struct {
 	UpdatedOn      time.Time `sql:",default:now()"`
 	Projects       []*Project
 	Services       []*Service
-	Users          []*User
+	Users          []*User `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
 }
 
 var (
@@ -60,13 +61,32 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := hub.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Projects", "Services", "Users").
+		Column("organization.*", "Projects", "Services", "Users"). // Q: unable to find Users
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
 	return organization
 }
+
+// TODO: is it better to do it in one query? or does it work to do in the resolver?
+// FindOrganizationByNameForUser finds a organization by name for a given user
+// func FindOrganizationByNameForUser(ctx context.Context, name string, userID uuid.UUID) *Organization {
+// 	//
+// 	organization := &Organization{}
+// 	err := hub.DB.ModelContext(ctx, organization).
+// 		Where("lower(name) = lower(?)", name).
+// 		Relation("Projects")
+// 	// get user_project_permissions, get project_ids
+// 	// get user_org_permissions, get view/admin
+// 	// where
+// 	Column("organization.*", "Projects", "Services", "Users").
+// 		Select()
+// 	if !AssertFoundOne(err) {
+// 		return nil
+// 	}
+// 	return organization
+// }
 
 // FindAllOrganizations returns all active organizations
 func FindAllOrganizations(ctx context.Context) []*Organization {
@@ -80,29 +100,106 @@ func FindAllOrganizations(ctx context.Context) []*Organization {
 	return organizations
 }
 
-// UpdatePersonalStatus updates an organization's "personal" status
-// this is called when a user changes plans to/from an Enterprise plan
-func (o *Organization) UpdatePersonalStatus(ctx context.Context, personal bool) error {
+// CreateOrganizationWithUser creates an organization with the given user as its first member
+func CreateOrganizationWithUser(ctx context.Context, userID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*Organization, error) {
+	user := FindUser(ctx, userID)
+	if user == nil {
+		panic("can't find the user to initialize the enterprise organization")
+	}
+
 	org := &Organization{
-		OrganizationID: o.OrganizationID,
-		Personal:       personal,
-		UpdatedOn:      time.Now(),
+		Personal: false,
 	}
 
-	_, err := hub.DB.ModelContext(ctx, org).
-		Column("personal", "updated_on").
-		WherePK().
-		Update()
+	tx, err := hub.DB.Begin()
 	if err != nil {
-		return err
+		return nil, err
+	}
+	defer tx.Rollback() // defer rollback on error
+
+	// try out all possible names
+	organizationNameSeeds := org.organizationNameSeeds()
+	for _, name := range organizationNameSeeds {
+		// savepoint in case name is taken
+		_, err = tx.Exec("SAVEPOINT bi")
+		if err != nil {
+			return nil, err
+		}
+
+		org.Name = name
+
+		// insert org and user
+		err = tx.Insert(org)
+		if err == nil {
+			user.BillingOrganizationID = org.OrganizationID
+			err = tx.Insert(user)
+		}
+
+		// success
+		if err == nil {
+			break
+		}
+
+		// rollback on name error
+		if isUniqueError(err) {
+			// rollback to before error, then try next name
+			_, err = tx.Exec("ROLLBACK TO SAVEPOINT bi")
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		// unexpected error
+		return nil, err
 	}
 
-	// TODO: if upgrading to a non-personal plan, trigger an email to the user:
-	// -- if prevBillingPlan.Personal && !newBillingPlan.Personal, need to prompt the user to
-	// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
-	// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
+	// add user to user-organization permissions table
+	err = tx.Insert(&PermissionsUsersOrganizations{
+		UserID:         user.UserID,
+		OrganizationID: org.OrganizationID,
+		View:           true,
+		Admin:          true,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	// create billing method
+	bm := &BillingMethod{
+		OrganizationID: org.OrganizationID,
+		PaymentsDriver: paymentsDriver,
+		DriverPayload:  driverPayload,
+	}
+	_, err = tx.Model(bm).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	// create billing info
+	bi := &BillingInfo{
+		OrganizationID:  org.OrganizationID,
+		BillingMethodID: bm.BillingMethodID,
+		BillingPlanID:   billingPlanID,
+	}
+	_, err = tx.Model(bi).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	// commit it all
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	// log new organization
+	log.S.Infow(
+		"control created enterprise organization",
+		"organization_id", org.OrganizationID,
+	)
+
+	return org, nil
 }
 
 // InviteUser gives a user permission to join the organization
@@ -141,8 +238,8 @@ func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	})
 }
 
-// ChangeName changes an organization's name
-func (o *Organization) ChangeName(ctx context.Context, name string) (*Organization, error) {
+// UpdateName updates an organization's name
+func (o *Organization) UpdateName(ctx context.Context, name string) (*Organization, error) {
 	o.Name = name
 	o.UpdatedOn = time.Now()
 
@@ -228,4 +325,15 @@ func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) 
 	}
 
 	return permissions
+}
+
+func (o *Organization) organizationNameSeeds() []string {
+	var seeds []string
+
+	for i := 0; i <= 3; i++ {
+		organizationName := "enterprise-" + uuid.NewV4().String()[0:6]
+		seeds = append(seeds, organizationName)
+	}
+
+	return seeds
 }

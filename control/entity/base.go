@@ -99,8 +99,3 @@ const (
 	// AnarchismDriver means the organization doesn't pay!!!
 	AnarchismDriver PaymentsDriver = "anarchism"
 )
-
-const (
-	// FreeBillingPlanID is the UUID of the Free plan
-	FreeBillingPlanID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-)
