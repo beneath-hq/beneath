@@ -1,6 +1,6 @@
-# Control server development
+# `control/`
 
-The control server code is predominantly found in `control/`. 
+This directory contains the code for the control server, including the Postgres entities, GraphQL resolvers, and background task queue. As always, refer to `docs/contributing/02-project-structure.md` for an introduction to the repository.
 
 ## Stack
 
