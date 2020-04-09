@@ -44,7 +44,7 @@ export interface SubrouteTabProps {
 
 const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => {
   const selectedValue = router.query.tab || defaultValue || tabs[0].value;
-  const asPathBase = router.query.tab ? router.asPath.substr(0, router.asPath.lastIndexOf("/", router.asPath.lastIndexOf("/") - 1)) : router.asPath;
+  const asPathBase = router.query.tab ? router.asPath.substring(0, router.asPath.lastIndexOf("/-/")) : router.asPath;
   const selectedTab = tabs.find((tab) => tab.value === selectedValue);
   const [loading, setLoading] = React.useState(false);
   const classes = useStyles();

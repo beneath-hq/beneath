@@ -1,4 +1,4 @@
-# README: Helm
+# `deployments/helm/`
 
 Before using a Helm chart in production, please:
 

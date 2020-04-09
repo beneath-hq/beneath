@@ -14,10 +14,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
+	"gitlab.com/beneath-hq/beneath/control/entity"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -241,7 +241,7 @@ type ComplexityRoot struct {
 		GetStreamMetrics                   func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetUserMetrics                     func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
 		Me                                 func(childComplexity int) int
-		Model                              func(childComplexity int, name string, projectName string) int
+		Model                              func(childComplexity int, organizationName string, projectName string, modelName string) int
 		OrganizationByName                 func(childComplexity int, name string) int
 		Ping                               func(childComplexity int) int
 		ProjectByID                        func(childComplexity int, projectID uuid.UUID) int
@@ -410,7 +410,7 @@ type QueryResolver interface {
 	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	Model(ctx context.Context, name string, projectName string) (*entity.Model, error)
+	Model(ctx context.Context, organizationName string, projectName string, modelName string) (*entity.Model, error)
 	OrganizationByName(ctx context.Context, name string) (*entity.Organization, error)
 	UsersOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) ([]*entity.PermissionsUsersOrganizations, error)
 	ExploreProjects(ctx context.Context) ([]*entity.Project, error)
@@ -1647,7 +1647,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Model(childComplexity, args["name"].(string), args["projectName"].(string)), true
+		return e.complexity.Query.Model(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["modelName"].(string)), true
 
 	case "Query.organizationByName":
 		if e.complexity.Query.OrganizationByName == nil {
@@ -2373,7 +2373,7 @@ type Metrics {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/models.graphql", Input: `extend type Query {
-  model(name: String!, projectName: String!): Model!
+  model(organizationName: String!, projectName: String!, modelName: String!): Model!
 }
 
 extend type Mutation {
@@ -2844,7 +2844,7 @@ func (ec *executionContext) field_Mutation_createModel_args(ctx context.Context,
 	args := map[string]interface{}{}
 	var arg0 CreateModelInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateModelInput2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐCreateModelInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐCreateModelInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3288,7 +3288,7 @@ func (ec *executionContext) field_Mutation_updateModel_args(ctx context.Context,
 	args := map[string]interface{}{}
 	var arg0 UpdateModelInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdateModelInput2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐUpdateModelInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐUpdateModelInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3775,13 +3775,13 @@ func (ec *executionContext) field_Query_model_args(ctx context.Context, rawArgs 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
+	if tmp, ok := rawArgs["organizationName"]; ok {
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["organizationName"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["projectName"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
@@ -3790,6 +3790,14 @@ func (ec *executionContext) field_Query_model_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["projectName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["modelName"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["modelName"] = arg2
 	return args, nil
 }
 
@@ -4618,7 +4626,7 @@ func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field 
 	res := resTmp.(*entity.BillingPlan)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingPlan2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
+	return ec.marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingMethod_billingMethodID(ctx context.Context, field graphql.CollectedField, obj *entity.BillingMethod) (ret graphql.Marshaler) {
@@ -5207,7 +5215,7 @@ func (ec *executionContext) _Me_user(ctx context.Context, field graphql.Collecte
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_email(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -5318,7 +5326,7 @@ func (ec *executionContext) _Me_billingOrganization(ctx context.Context, field g
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_readUsage(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -6126,7 +6134,7 @@ func (ec *executionContext) _Model_project(ctx context.Context, field graphql.Co
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Model_inputStreams(ctx context.Context, field graphql.CollectedField, obj *entity.Model) (ret graphql.Marshaler) {
@@ -6163,7 +6171,7 @@ func (ec *executionContext) _Model_inputStreams(ctx context.Context, field graph
 	res := resTmp.([]*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Model_outputStreams(ctx context.Context, field graphql.CollectedField, obj *entity.Model) (ret graphql.Marshaler) {
@@ -6200,7 +6208,7 @@ func (ec *executionContext) _Model_outputStreams(ctx context.Context, field grap
 	res := resTmp.([]*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Model_service(ctx context.Context, field graphql.CollectedField, obj *entity.Model) (ret graphql.Marshaler) {
@@ -6237,7 +6245,7 @@ func (ec *executionContext) _Model_service(ctx context.Context, field graphql.Co
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6359,7 +6367,7 @@ func (ec *executionContext) _Mutation_createModel(ctx context.Context, field gra
 	res := resTmp.(*entity.Model)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6403,7 +6411,7 @@ func (ec *executionContext) _Mutation_updateModel(ctx context.Context, field gra
 	res := resTmp.(*entity.Model)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6491,7 +6499,7 @@ func (ec *executionContext) _Mutation_createModelBatch(ctx context.Context, fiel
 	res := resTmp.([]*entity.StreamInstance)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStreamInstance2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
+	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_commitModelBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6620,7 +6628,7 @@ func (ec *executionContext) _Mutation_inviteUserToOrganization(ctx context.Conte
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeUserFromOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6708,7 +6716,7 @@ func (ec *executionContext) _Mutation_updateOrganizationName(ctx context.Context
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUserOrganizationQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6752,7 +6760,7 @@ func (ec *executionContext) _Mutation_updateUserOrganizationQuotas(ctx context.C
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUserOrganizationPermissions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6796,7 +6804,7 @@ func (ec *executionContext) _Mutation_updateUserOrganizationPermissions(ctx cont
 	res := resTmp.(*entity.PermissionsUsersOrganizations)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
+	return ec.marshalNPermissionsUsersOrganizations2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6840,7 +6848,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6884,7 +6892,7 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateProjectOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6928,7 +6936,7 @@ func (ec *executionContext) _Mutation_updateProjectOrganization(ctx context.Cont
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7013,7 +7021,7 @@ func (ec *executionContext) _Mutation_addUserToProject(ctx context.Context, fiel
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeUserFromProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7101,7 +7109,7 @@ func (ec *executionContext) _Mutation_issueServiceSecret(ctx context.Context, fi
 	res := resTmp.(*NewServiceSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNNewServiceSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewServiceSecret(ctx, field.Selections, res)
+	return ec.marshalNNewServiceSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewServiceSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_issueUserSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7145,7 +7153,7 @@ func (ec *executionContext) _Mutation_issueUserSecret(ctx context.Context, field
 	res := resTmp.(*NewUserSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNNewUserSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewUserSecret(ctx, field.Selections, res)
+	return ec.marshalNNewUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewUserSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_revokeServiceSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7277,7 +7285,7 @@ func (ec *executionContext) _Mutation_createService(ctx context.Context, field g
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7321,7 +7329,7 @@ func (ec *executionContext) _Mutation_updateService(ctx context.Context, field g
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateServiceOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7365,7 +7373,7 @@ func (ec *executionContext) _Mutation_updateServiceOrganization(ctx context.Cont
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7453,7 +7461,7 @@ func (ec *executionContext) _Mutation_updateServicePermissions(ctx context.Conte
 	res := resTmp.(*entity.PermissionsServicesStreams)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPermissionsServicesStreams2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx, field.Selections, res)
+	return ec.marshalNPermissionsServicesStreams2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7497,7 +7505,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	res := resTmp.(*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7541,7 +7549,7 @@ func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, 
 	res := resTmp.(*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7629,7 +7637,7 @@ func (ec *executionContext) _Mutation_createExternalStreamBatch(ctx context.Cont
 	res := resTmp.(*entity.StreamInstance)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStreamInstance2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
+	return ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_commitExternalStreamBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7761,7 +7769,7 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	res := resTmp.(*Me)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+	return ec.marshalNMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_joinOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7805,7 +7813,7 @@ func (ec *executionContext) _Mutation_joinOrganization(ctx context.Context, fiel
 	res := resTmp.(*Me)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+	return ec.marshalNMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewServiceSecret_secret(ctx context.Context, field graphql.CollectedField, obj *NewServiceSecret) (ret graphql.Marshaler) {
@@ -7842,7 +7850,7 @@ func (ec *executionContext) _NewServiceSecret_secret(ctx context.Context, field 
 	res := resTmp.(*entity.ServiceSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNServiceSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx, field.Selections, res)
+	return ec.marshalNServiceSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewServiceSecret_token(ctx context.Context, field graphql.CollectedField, obj *NewServiceSecret) (ret graphql.Marshaler) {
@@ -7916,7 +7924,7 @@ func (ec *executionContext) _NewUserSecret_secret(ctx context.Context, field gra
 	res := resTmp.(*entity.UserSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUserSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx, field.Selections, res)
+	return ec.marshalNUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewUserSecret_token(ctx context.Context, field graphql.CollectedField, obj *NewUserSecret) (ret graphql.Marshaler) {
@@ -8175,7 +8183,7 @@ func (ec *executionContext) _Organization_services(ctx context.Context, field gr
 	res := resTmp.([]*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_users(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
@@ -8212,7 +8220,7 @@ func (ec *executionContext) _Organization_users(ctx context.Context, field graph
 	res := resTmp.([]*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_projects(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
@@ -8249,7 +8257,7 @@ func (ec *executionContext) _Organization_projects(ctx context.Context, field gr
 	res := resTmp.([]*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PermissionsServicesStreams_serviceID(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsServicesStreams) (ret graphql.Marshaler) {
@@ -8434,7 +8442,7 @@ func (ec *executionContext) _PermissionsUsersOrganizations_user(ctx context.Cont
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PermissionsUsersOrganizations_organization(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
@@ -8471,7 +8479,7 @@ func (ec *executionContext) _PermissionsUsersOrganizations_organization(ctx cont
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PermissionsUsersOrganizations_view(ctx context.Context, field graphql.CollectedField, obj *entity.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
@@ -8832,7 +8840,7 @@ func (ec *executionContext) _Project_organization(ctx context.Context, field gra
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
@@ -8943,7 +8951,7 @@ func (ec *executionContext) _Project_streams(ctx context.Context, field graphql.
 	res := resTmp.([]*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_models(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
@@ -8980,7 +8988,7 @@ func (ec *executionContext) _Project_models(ctx context.Context, field graphql.C
 	res := resTmp.([]*entity.Model)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalNModel2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_users(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
@@ -9017,7 +9025,7 @@ func (ec *executionContext) _Project_users(ctx context.Context, field graphql.Co
 	res := resTmp.([]*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9132,7 +9140,7 @@ func (ec *executionContext) _Query_billedResources(ctx context.Context, field gr
 	res := resTmp.([]*entity.BilledResource)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBilledResource2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBilledResource(ctx, field.Selections, res)
+	return ec.marshalNBilledResource2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBilledResource(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_billingInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9176,7 +9184,7 @@ func (ec *executionContext) _Query_billingInfo(ctx context.Context, field graphq
 	res := resTmp.(*entity.BillingInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingInfo2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9220,7 +9228,7 @@ func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field g
 	res := resTmp.([]*Metrics)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getStreamInstanceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9264,7 +9272,7 @@ func (ec *executionContext) _Query_getStreamInstanceMetrics(ctx context.Context,
 	res := resTmp.([]*Metrics)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9308,7 +9316,7 @@ func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field gra
 	res := resTmp.([]*Metrics)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getServiceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9352,7 +9360,7 @@ func (ec *executionContext) _Query_getServiceMetrics(ctx context.Context, field 
 	res := resTmp.([]*Metrics)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_model(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9381,7 +9389,7 @@ func (ec *executionContext) _Query_model(ctx context.Context, field graphql.Coll
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Model(rctx, args["name"].(string), args["projectName"].(string))
+		return ec.resolvers.Query().Model(rctx, args["organizationName"].(string), args["projectName"].(string), args["modelName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9396,7 +9404,7 @@ func (ec *executionContext) _Query_model(ctx context.Context, field graphql.Coll
 	res := resTmp.(*entity.Model)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_organizationByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9437,7 +9445,7 @@ func (ec *executionContext) _Query_organizationByName(ctx context.Context, field
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalOOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_usersOrganizationPermissions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9481,7 +9489,7 @@ func (ec *executionContext) _Query_usersOrganizationPermissions(ctx context.Cont
 	res := resTmp.([]*entity.PermissionsUsersOrganizations)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPermissionsUsersOrganizations2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
+	return ec.marshalNPermissionsUsersOrganizations2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_exploreProjects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9518,7 +9526,7 @@ func (ec *executionContext) _Query_exploreProjects(ctx context.Context, field gr
 	res := resTmp.([]*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectByOrganizationAndName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9559,7 +9567,7 @@ func (ec *executionContext) _Query_projectByOrganizationAndName(ctx context.Cont
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9600,7 +9608,7 @@ func (ec *executionContext) _Query_projectByID(ctx context.Context, field graphq
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_secretsForService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9644,7 +9652,7 @@ func (ec *executionContext) _Query_secretsForService(ctx context.Context, field 
 	res := resTmp.([]*entity.ServiceSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNServiceSecret2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx, field.Selections, res)
+	return ec.marshalNServiceSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_secretsForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9688,7 +9696,7 @@ func (ec *executionContext) _Query_secretsForUser(ctx context.Context, field gra
 	res := resTmp.([]*entity.UserSecret)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUserSecret2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx, field.Selections, res)
+	return ec.marshalNUserSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9729,7 +9737,7 @@ func (ec *executionContext) _Query_service(ctx context.Context, field graphql.Co
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9770,7 +9778,7 @@ func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Cont
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_streamByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9814,7 +9822,7 @@ func (ec *executionContext) _Query_streamByID(ctx context.Context, field graphql
 	res := resTmp.(*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_streamByOrganizationProjectAndName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9858,7 +9866,7 @@ func (ec *executionContext) _Query_streamByOrganizationProjectAndName(ctx contex
 	res := resTmp.(*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9892,7 +9900,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	res := resTmp.(*Me)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+	return ec.marshalOMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9933,7 +9941,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_userByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9974,7 +9982,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10197,7 +10205,7 @@ func (ec *executionContext) _Service_organization(ctx context.Context, field gra
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Service_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
@@ -10419,7 +10427,7 @@ func (ec *executionContext) _ServiceSecret_service(ctx context.Context, field gr
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ServiceSecret_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.ServiceSecret) (ret graphql.Marshaler) {
@@ -10712,7 +10720,7 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -10746,7 +10754,7 @@ func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graph
 	res := resTmp.(*entity.Model)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+	return ec.marshalOModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_schema(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -10894,7 +10902,7 @@ func (ec *executionContext) _Stream_streamIndexes(ctx context.Context, field gra
 	res := resTmp.([]*entity.StreamIndex)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamIndex(ctx, field.Selections, res)
+	return ec.marshalNStreamIndex2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -11372,7 +11380,7 @@ func (ec *executionContext) _StreamInstance_stream(ctx context.Context, field gr
 	res := resTmp.(*entity.Stream)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _StreamInstance_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
@@ -11727,7 +11735,7 @@ func (ec *executionContext) _User_projects(ctx context.Context, field graphql.Co
 	res := resTmp.([]*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
@@ -11949,7 +11957,7 @@ func (ec *executionContext) _UserSecret_user(ctx context.Context, field graphql.
 	res := resTmp.(*entity.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserSecret_readOnly(ctx context.Context, field graphql.CollectedField, obj *entity.UserSecret) (ret graphql.Marshaler) {
@@ -15466,11 +15474,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBilledResource2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v entity.BilledResource) graphql.Marshaler {
+func (ec *executionContext) marshalNBilledResource2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v entity.BilledResource) graphql.Marshaler {
 	return ec._BilledResource(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBilledResource2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v []*entity.BilledResource) graphql.Marshaler {
+func (ec *executionContext) marshalNBilledResource2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v []*entity.BilledResource) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15494,7 +15502,7 @@ func (ec *executionContext) marshalNBilledResource2ᚕᚖgithubᚗcomᚋbeneath�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBilledResource2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBilledResource(ctx, sel, v[i])
+			ret[i] = ec.marshalNBilledResource2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBilledResource(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15507,7 +15515,7 @@ func (ec *executionContext) marshalNBilledResource2ᚕᚖgithubᚗcomᚋbeneath�
 	return ret
 }
 
-func (ec *executionContext) marshalNBilledResource2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v *entity.BilledResource) graphql.Marshaler {
+func (ec *executionContext) marshalNBilledResource2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBilledResource(ctx context.Context, sel ast.SelectionSet, v *entity.BilledResource) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15517,11 +15525,11 @@ func (ec *executionContext) marshalNBilledResource2ᚖgithubᚗcomᚋbeneathᚑc
 	return ec._BilledResource(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v entity.BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v BillingInfo) graphql.Marshaler {
 	return ec._BillingInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *entity.BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *BillingInfo) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15531,25 +15539,11 @@ func (ec *executionContext) marshalNBillingInfo2ᚖgithubᚗcomᚋbeneathᚑcore
 	return ec._BillingInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBillingMethod2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v entity.BillingMethod) graphql.Marshaler {
-	return ec._BillingMethod(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNBillingMethod2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v *entity.BillingMethod) graphql.Marshaler {
-	if v == nil {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._BillingMethod(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNBillingPlan2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v entity.BillingPlan) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingPlan2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v entity.BillingPlan) graphql.Marshaler {
 	return ec._BillingPlan(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBillingPlan2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v *entity.BillingPlan) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v *entity.BillingPlan) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15573,7 +15567,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateModelInput2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐCreateModelInput(ctx context.Context, v interface{}) (CreateModelInput, error) {
+func (ec *executionContext) unmarshalNCreateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐCreateModelInput(ctx context.Context, v interface{}) (CreateModelInput, error) {
 	return ec.unmarshalInputCreateModelInput(ctx, v)
 }
 
@@ -15633,11 +15627,11 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNMe2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
+func (ec *executionContext) marshalNMe2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
 	return ec._Me(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v *Me) graphql.Marshaler {
+func (ec *executionContext) marshalNMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v *Me) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15647,11 +15641,11 @@ func (ec *executionContext) marshalNMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontro
 	return ec._Me(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMetrics2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v Metrics) graphql.Marshaler {
+func (ec *executionContext) marshalNMetrics2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v Metrics) graphql.Marshaler {
 	return ec._Metrics(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v []*Metrics) graphql.Marshaler {
+func (ec *executionContext) marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v []*Metrics) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15675,7 +15669,7 @@ func (ec *executionContext) marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMetrics2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx, sel, v[i])
+			ret[i] = ec.marshalNMetrics2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15688,7 +15682,7 @@ func (ec *executionContext) marshalNMetrics2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 	return ret
 }
 
-func (ec *executionContext) marshalNMetrics2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v *Metrics) graphql.Marshaler {
+func (ec *executionContext) marshalNMetrics2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v *Metrics) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15698,11 +15692,11 @@ func (ec *executionContext) marshalNMetrics2ᚖgithubᚗcomᚋbeneathᚑcoreᚋc
 	return ec._Metrics(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNModel2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v entity.Model) graphql.Marshaler {
+func (ec *executionContext) marshalNModel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v entity.Model) graphql.Marshaler {
 	return ec._Model(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNModel2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v []*entity.Model) graphql.Marshaler {
+func (ec *executionContext) marshalNModel2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v []*entity.Model) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15726,7 +15720,7 @@ func (ec *executionContext) marshalNModel2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx, sel, v[i])
+			ret[i] = ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15739,7 +15733,7 @@ func (ec *executionContext) marshalNModel2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v *entity.Model) graphql.Marshaler {
+func (ec *executionContext) marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v *entity.Model) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15749,11 +15743,11 @@ func (ec *executionContext) marshalNModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcon
 	return ec._Model(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNNewServiceSecret2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewServiceSecret(ctx context.Context, sel ast.SelectionSet, v NewServiceSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNNewServiceSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewServiceSecret(ctx context.Context, sel ast.SelectionSet, v NewServiceSecret) graphql.Marshaler {
 	return ec._NewServiceSecret(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNewServiceSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewServiceSecret(ctx context.Context, sel ast.SelectionSet, v *NewServiceSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNNewServiceSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewServiceSecret(ctx context.Context, sel ast.SelectionSet, v *NewServiceSecret) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15763,11 +15757,11 @@ func (ec *executionContext) marshalNNewServiceSecret2ᚖgithubᚗcomᚋbeneath�
 	return ec._NewServiceSecret(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNNewUserSecret2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewUserSecret(ctx context.Context, sel ast.SelectionSet, v NewUserSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNNewUserSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewUserSecret(ctx context.Context, sel ast.SelectionSet, v NewUserSecret) graphql.Marshaler {
 	return ec._NewUserSecret(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNewUserSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐNewUserSecret(ctx context.Context, sel ast.SelectionSet, v *NewUserSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNNewUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐNewUserSecret(ctx context.Context, sel ast.SelectionSet, v *NewUserSecret) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15777,11 +15771,11 @@ func (ec *executionContext) marshalNNewUserSecret2ᚖgithubᚗcomᚋbeneathᚑco
 	return ec._NewUserSecret(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v entity.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v entity.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *entity.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *entity.Organization) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15791,11 +15785,11 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcor
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPermissionsServicesStreams2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx context.Context, sel ast.SelectionSet, v entity.PermissionsServicesStreams) graphql.Marshaler {
+func (ec *executionContext) marshalNPermissionsServicesStreams2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx context.Context, sel ast.SelectionSet, v entity.PermissionsServicesStreams) graphql.Marshaler {
 	return ec._PermissionsServicesStreams(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPermissionsServicesStreams2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx context.Context, sel ast.SelectionSet, v *entity.PermissionsServicesStreams) graphql.Marshaler {
+func (ec *executionContext) marshalNPermissionsServicesStreams2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsServicesStreams(ctx context.Context, sel ast.SelectionSet, v *entity.PermissionsServicesStreams) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15805,11 +15799,11 @@ func (ec *executionContext) marshalNPermissionsServicesStreams2ᚖgithubᚗcom�
 	return ec._PermissionsServicesStreams(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPermissionsUsersOrganizations2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v entity.PermissionsUsersOrganizations) graphql.Marshaler {
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v entity.PermissionsUsersOrganizations) graphql.Marshaler {
 	return ec._PermissionsUsersOrganizations(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v []*entity.PermissionsUsersOrganizations) graphql.Marshaler {
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v []*entity.PermissionsUsersOrganizations) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15833,7 +15827,7 @@ func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚕᚖgithub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, sel, v[i])
+			ret[i] = ec.marshalNPermissionsUsersOrganizations2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15846,7 +15840,7 @@ func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚕᚖgithub�
 	return ret
 }
 
-func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v *entity.PermissionsUsersOrganizations) graphql.Marshaler {
+func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx context.Context, sel ast.SelectionSet, v *entity.PermissionsUsersOrganizations) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15856,11 +15850,11 @@ func (ec *executionContext) marshalNPermissionsUsersOrganizations2ᚖgithubᚗco
 	return ec._PermissionsUsersOrganizations(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProject2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v []*entity.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v []*entity.Project) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15884,7 +15878,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15897,7 +15891,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 	return ret
 }
 
-func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v *entity.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v *entity.Project) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15907,11 +15901,11 @@ func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋc
 	return ec._Project(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNService2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v entity.Service) graphql.Marshaler {
+func (ec *executionContext) marshalNService2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v entity.Service) graphql.Marshaler {
 	return ec._Service(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNService2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v []*entity.Service) graphql.Marshaler {
+func (ec *executionContext) marshalNService2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v []*entity.Service) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15935,7 +15929,7 @@ func (ec *executionContext) marshalNService2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx, sel, v[i])
+			ret[i] = ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15948,7 +15942,7 @@ func (ec *executionContext) marshalNService2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 	return ret
 }
 
-func (ec *executionContext) marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v *entity.Service) graphql.Marshaler {
+func (ec *executionContext) marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v *entity.Service) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15958,11 +15952,11 @@ func (ec *executionContext) marshalNService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋc
 	return ec._Service(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNServiceSecret2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v entity.ServiceSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v entity.ServiceSecret) graphql.Marshaler {
 	return ec._ServiceSecret(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNServiceSecret2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v []*entity.ServiceSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v []*entity.ServiceSecret) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -15986,7 +15980,7 @@ func (ec *executionContext) marshalNServiceSecret2ᚕᚖgithubᚗcomᚋbeneath�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNServiceSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx, sel, v[i])
+			ret[i] = ec.marshalNServiceSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15999,7 +15993,7 @@ func (ec *executionContext) marshalNServiceSecret2ᚕᚖgithubᚗcomᚋbeneath�
 	return ret
 }
 
-func (ec *executionContext) marshalNServiceSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v *entity.ServiceSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNServiceSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐServiceSecret(ctx context.Context, sel ast.SelectionSet, v *entity.ServiceSecret) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16009,11 +16003,11 @@ func (ec *executionContext) marshalNServiceSecret2ᚖgithubᚗcomᚋbeneathᚑco
 	return ec._ServiceSecret(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStream2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v entity.Stream) graphql.Marshaler {
+func (ec *executionContext) marshalNStream2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v entity.Stream) graphql.Marshaler {
 	return ec._Stream(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v []*entity.Stream) graphql.Marshaler {
+func (ec *executionContext) marshalNStream2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v []*entity.Stream) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -16037,7 +16031,7 @@ func (ec *executionContext) marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx, sel, v[i])
+			ret[i] = ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -16050,7 +16044,7 @@ func (ec *executionContext) marshalNStream2ᚕᚖgithubᚗcomᚋbeneathᚑcore�
 	return ret
 }
 
-func (ec *executionContext) marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v *entity.Stream) graphql.Marshaler {
+func (ec *executionContext) marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx context.Context, sel ast.SelectionSet, v *entity.Stream) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16060,11 +16054,11 @@ func (ec *executionContext) marshalNStream2ᚖgithubᚗcomᚋbeneathᚑcoreᚋco
 	return ec._Stream(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStreamIndex2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v entity.StreamIndex) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamIndex2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v entity.StreamIndex) graphql.Marshaler {
 	return ec._StreamIndex(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamIndex) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamIndex2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamIndex) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -16088,7 +16082,7 @@ func (ec *executionContext) marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStreamIndex2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamIndex(ctx, sel, v[i])
+			ret[i] = ec.marshalNStreamIndex2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -16101,7 +16095,7 @@ func (ec *executionContext) marshalNStreamIndex2ᚕᚖgithubᚗcomᚋbeneathᚑc
 	return ret
 }
 
-func (ec *executionContext) marshalNStreamIndex2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v *entity.StreamIndex) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamIndex2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx context.Context, sel ast.SelectionSet, v *entity.StreamIndex) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16111,11 +16105,11 @@ func (ec *executionContext) marshalNStreamIndex2ᚖgithubᚗcomᚋbeneathᚑcore
 	return ec._StreamIndex(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStreamInstance2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v entity.StreamInstance) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamInstance2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v entity.StreamInstance) graphql.Marshaler {
 	return ec._StreamInstance(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStreamInstance2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamInstance) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamInstance) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -16139,7 +16133,7 @@ func (ec *executionContext) marshalNStreamInstance2ᚕᚖgithubᚗcomᚋbeneath�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStreamInstance2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx, sel, v[i])
+			ret[i] = ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -16152,7 +16146,7 @@ func (ec *executionContext) marshalNStreamInstance2ᚕᚖgithubᚗcomᚋbeneath�
 	return ret
 }
 
-func (ec *executionContext) marshalNStreamInstance2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *entity.StreamInstance) graphql.Marshaler {
+func (ec *executionContext) marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *entity.StreamInstance) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16262,15 +16256,15 @@ func (ec *executionContext) marshalNUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐ
 	return ret
 }
 
-func (ec *executionContext) unmarshalNUpdateModelInput2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐUpdateModelInput(ctx context.Context, v interface{}) (UpdateModelInput, error) {
+func (ec *executionContext) unmarshalNUpdateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐUpdateModelInput(ctx context.Context, v interface{}) (UpdateModelInput, error) {
 	return ec.unmarshalInputUpdateModelInput(ctx, v)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v entity.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v []*entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v []*entity.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -16294,7 +16288,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -16307,7 +16301,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋc
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16317,11 +16311,11 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcont
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserSecret2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v entity.UserSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNUserSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v entity.UserSecret) graphql.Marshaler {
 	return ec._UserSecret(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserSecret2ᚕᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v []*entity.UserSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNUserSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v []*entity.UserSecret) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -16345,7 +16339,7 @@ func (ec *executionContext) marshalNUserSecret2ᚕᚖgithubᚗcomᚋbeneathᚑco
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -16358,7 +16352,7 @@ func (ec *executionContext) marshalNUserSecret2ᚕᚖgithubᚗcomᚋbeneathᚑco
 	return ret
 }
 
-func (ec *executionContext) marshalNUserSecret2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v *entity.UserSecret) graphql.Marshaler {
+func (ec *executionContext) marshalNUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v *entity.UserSecret) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -16640,55 +16634,55 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOMe2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
+func (ec *executionContext) marshalOMe2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {
 	return ec._Me(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOMe2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v *Me) graphql.Marshaler {
+func (ec *executionContext) marshalOMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v *Me) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Me(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOModel2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v entity.Model) graphql.Marshaler {
+func (ec *executionContext) marshalOModel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v entity.Model) graphql.Marshaler {
 	return ec._Model(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOModel2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v *entity.Model) graphql.Marshaler {
+func (ec *executionContext) marshalOModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx context.Context, sel ast.SelectionSet, v *entity.Model) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Model(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOrganization2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v entity.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v entity.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *entity.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *entity.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProject2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v *entity.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v *entity.Project) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Project(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOService2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v entity.Service) graphql.Marshaler {
+func (ec *executionContext) marshalOService2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v entity.Service) graphql.Marshaler {
 	return ec._Service(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v *entity.Service) graphql.Marshaler {
+func (ec *executionContext) marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v *entity.Service) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -16764,11 +16758,11 @@ func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐ
 	return ec.marshalOUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOUser2githubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v entity.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

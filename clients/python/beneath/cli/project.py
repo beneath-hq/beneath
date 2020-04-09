@@ -1,5 +1,6 @@
 from beneath.client import Client
-from beneath.cli.utils import async_cmd, parse_names, pretty_print_graphql_result, str2bool
+from beneath.utils import ProjectQualifier
+from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 
 
 def add_subparser(root):
@@ -10,9 +11,8 @@ def add_subparser(root):
 
   _create = project.add_parser('create')
   _create.set_defaults(func=async_cmd(create))
-  _create.add_argument('name', type=str)
+  _create.add_argument('project_path', type=str)
   _create.add_argument('--display-name', type=str)
-  _create.add_argument('-o', '--organization', type=str)
   _create.add_argument('--public', type=str2bool, nargs='?', const=True, default=True)
   _create.add_argument('--description', type=str)
   _create.add_argument('--site-url', type=str)
@@ -20,7 +20,7 @@ def add_subparser(root):
 
   _update = project.add_parser('update')
   _update.set_defaults(func=async_cmd(update))
-  _update.add_argument('name', type=str)
+  _update.add_argument('project_path', type=str)
   _update.add_argument('--display-name', type=str)
   _update.add_argument('--public', type=str2bool, nargs='?', const=True, default=None)
   _update.add_argument('--description', type=str)
@@ -29,11 +29,11 @@ def add_subparser(root):
 
   _delete = project.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete))
-  _delete.add_argument('name', type=str)
+  _delete.add_argument('project_path', type=str)
 
   _add_user = project.add_parser('add-member')
   _add_user.set_defaults(func=async_cmd(add_member))
-  _add_user.add_argument('project', type=str)
+  _add_user.add_argument('project_path', type=str)
   _add_user.add_argument('username', type=str)
   _add_user.add_argument('--view', type=str2bool, nargs='?', const=True, default=True)
   _add_user.add_argument('--create', type=str2bool, nargs='?', const=True, default=True)
@@ -41,12 +41,12 @@ def add_subparser(root):
 
   _remove_user = project.add_parser('remove-member')
   _remove_user.set_defaults(func=async_cmd(remove_member))
-  _remove_user.add_argument('project', type=str)
+  _remove_user.add_argument('project_path', type=str)
   _remove_user.add_argument('username', type=str)
 
   _migrate = project.add_parser('migrate-organization')
   _migrate.set_defaults(func=async_cmd(migrate_organization))
-  _migrate.add_argument('project', type=str)
+  _migrate.add_argument('project_path', type=str)
   _migrate.add_argument('--new-organization', type=str, required=True)
 
 
@@ -55,15 +55,15 @@ async def show_list(args):
   me = await client.admin.users.get_me()
   user = await client.admin.users.get_by_id(me['userID'])
   for project in user['projects']:
-    print(project['name'])
+    print(f'{project["organization"]["name"]}/{project["name"]}')
 
 
 async def create(args):
   client = Client()
-  name, org_name = parse_names(args.name, args.organization, "organization")
-  organization = await client.admin.organizations.find_by_name(org_name)
+  pq = ProjectQualifier.from_path(args.project_path)
+  organization = await client.admin.organizations.find_by_name(pq.organization)
   result = await client.admin.projects.create(
-    name=name,
+    name=pq.project,
     display_name=args.display_name,
     organization_id=organization['organizationID'],
     public=args.public,
@@ -76,7 +76,8 @@ async def create(args):
 
 async def update(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.name)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   result = await client.admin.projects.update_details(
     project_id=project['projectID'],
     display_name=args.display_name,
@@ -90,14 +91,16 @@ async def update(args):
 
 async def delete(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.name)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   result = await client.admin.projects.delete(project_id=project['projectID'])
   pretty_print_graphql_result(result)
 
 
 async def add_member(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.project)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   result = await client.admin.projects.add_user(
     project_id=project['projectID'],
     username=args.username,
@@ -110,7 +113,8 @@ async def add_member(args):
 
 async def remove_member(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.project)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   user = await client.admin.users.get_by_username(args.username)
   result = await client.admin.projects.remove_user(
     project_id=project['projectID'],
@@ -121,7 +125,8 @@ async def remove_member(args):
 
 async def migrate_organization(args):
   client = Client()
-  project = await client.admin.projects.find_by_name(args.project)
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   organization = await client.admin.organizations.find_by_name(args.new_organization)
   result = await client.admin.projects.update_organization(
     project_id=project['projectID'],

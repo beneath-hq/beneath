@@ -20,7 +20,7 @@ It's a good idea to run each dependency in a separate tab of a single terminal w
 
 Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably home or documents). 
 
-Check that everything installed correctly and that you're in the `beneathcrypto` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
+Check that everything installed correctly and that you're in the `beneath` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
 
 ### Run Cloud Pubsub emulator
 
@@ -42,7 +42,7 @@ Check that everything installed correctly and that you're in the `beneathcrypto`
 
 ### Configure environment variables
 
-- Copy `configs/example.env` into `configs/.development.env` and `configs/.test.env` and configure all variables (ask a colleague)
+- Copy `configs/example.env` into `configs/.development.env` and `configs/.test.env` and configure all variables (ask a core team member)
 
 ### Control backend
 

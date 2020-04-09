@@ -104,17 +104,14 @@ func FindModel(ctx context.Context, modelID uuid.UUID) *Model {
 	return model
 }
 
-// FindModelByNameAndProject finds a model
-func FindModelByNameAndProject(ctx context.Context, name string, projectName string) *Model {
+// FindModelByOrganizationProjectAndNameProject finds a model
+func FindModelByOrganizationProjectAndNameProject(ctx context.Context, organizationName string, projectName string, modelName string) *Model {
 	model := &Model{}
 	err := hub.DB.ModelContext(ctx, model).
-		Column("model.*").
-		Relation("Project").
-		Relation("OutputStreams").
-		Relation("InputStreams").
-		Relation("Service").
-		Where("lower(model.name) = lower(?)", name).
+		Column("model.*", "Project", "Project.Organization", "OutputStreams", "InputStreams", "Service").
+		Where("lower(project__organization.name) = lower(?)", organizationName).
 		Where("lower(project.name) = lower(?)", projectName).
+		Where("lower(model.name) = lower(?)", modelName).
 		Select()
 	if !AssertFoundOne(err) {
 		return nil

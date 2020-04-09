@@ -1,4 +1,4 @@
-# README
+# `deployments/kube/`
 
 Kubernetes is tricky. For everything not deployed completely through Gitlab, this file should contain a complete log of commands executed against the cluster.
 

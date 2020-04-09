@@ -8,8 +8,7 @@ How do users currently solve the problem (if applicable)?
 ### Validation of the problem
 
 <!--
-Please provide anecdotes, stories, statements from users, links to other products, or any other proof that validates
-that it's valuable to address the problem.
+Please provide anecdotes, stories, statements from users, links to other products, or any other proof that validates that it's valuable to address the problem.
 -->
 
 ### Impact of the solution

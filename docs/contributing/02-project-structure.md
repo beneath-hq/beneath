@@ -2,7 +2,7 @@
 
 ## Monorepo
 
-Beneath aims to use a single git repository (monorepo) for all core code. Hopefully that makes it easier to manage dependencies and get a full view of development.
+Beneath aims to use a single git repository (monorepo) for all code and documentation. Hopefully that makes it easier to manage dependencies and get a full view of development.
 
 Checkout the git repo with: `git clone https://gitlab.com/beneath-hq/beneath.git`
 
@@ -34,6 +34,7 @@ Here's a rough guide to the project structure:
 - `internal`: utility libraries that are not directly related to any specific service (e.g., HTTP middleware)
 - `pkg`: stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
 - `scripts`: contains helper scripts for code generation, etc.
+- `test`: contains end-to-end and integration tests
 - `web`: contains the frontend (data terminal) code
 
 ## Technologies

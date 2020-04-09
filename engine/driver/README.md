@@ -1,8 +1,6 @@
-# Driver development
+# `engine/driver/`
 
-Drivers connect Beneath functionality to the underlying features offered by a data management system. They allow Beneath to offer uniform user experience while benefitting from the unique advantages of different data systems.
-
-The Beneath drivers are found in `engine/driver`. 
+Drivers connect Beneath functionality to the underlying features offered by a data management system. They allow Beneath to offer a uniform user experience while benefiting from the unique advantages of different data systems.
 
 ## Driver types
 
@@ -20,10 +18,11 @@ In the future, we may want to extend this list with fundamentally different data
 
 ## Existing drivers
 
-- `pubsub` implements Google Cloud Pub/Sub as a highly-scalable `MessageQueue` driver.
-- `bigtable` implements Google Cloud Bigtable as a highly-scalable `LookupService` driver.
 - `bigquery` implements Google Cloud BigQuery as a highly-scalable `WarehouseService` driver.
-- `postgres` has not yet been implemented, but is intended to implement the c drivers on Postgres for use in development and small-scale (100s GB) self-hosting deployments. 
+- `bigtable` implements Google Cloud Bigtable as a highly-scalable `LookupService` driver.
+- `mock` implements a `WarehouseService` driver that simply discards data and pretends to have successfully stored it.
+- `pubsub` implements Google Cloud Pub/Sub as a highly-scalable `MessageQueue` driver.
+- `postgres` has not yet been implemented, but is intended to implement all driver types on Postgres for use in development and small-scale (100s GB) self-hosting deployments. 
 
 ## Implementing a new driver
 

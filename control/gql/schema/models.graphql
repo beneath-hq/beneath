@@ -1,5 +1,5 @@
 extend type Query {
-  model(name: String!, projectName: String!): Model!
+  model(organizationName: String!, projectName: String!, modelName: String!): Model!
 }
 
 extend type Mutation {

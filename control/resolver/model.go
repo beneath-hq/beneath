@@ -26,16 +26,16 @@ func (r *modelResolver) Kind(ctx context.Context, obj *entity.Model) (string, er
 	return string(obj.Kind), nil
 }
 
-func (r *queryResolver) Model(ctx context.Context, name string, projectName string) (*entity.Model, error) {
-	model := entity.FindModelByNameAndProject(ctx, name, projectName)
+func (r *queryResolver) Model(ctx context.Context, organizationName string, projectName string, modelName string) (*entity.Model, error) {
+	model := entity.FindModelByOrganizationProjectAndNameProject(ctx, organizationName, projectName, modelName)
 	if model == nil {
-		return nil, gqlerror.Errorf("Model %s/%s not found", projectName, name)
+		return nil, gqlerror.Errorf("Model %s/%s not found", projectName, modelName)
 	}
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.ProjectPermissions(ctx, model.ProjectID, model.Project.Public)
 	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, name)
+		return nil, gqlerror.Errorf("Not allowed to read model %s/%s", projectName, modelName)
 	}
 
 	return model, nil

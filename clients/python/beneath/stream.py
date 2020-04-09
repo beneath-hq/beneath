@@ -39,6 +39,7 @@ from beneath.utils import (
   AIOWindowedBuffer,
   ms_to_datetime,
   ms_to_pd_timestamp,
+  StreamQualifier,
   timestamp_to_ms,
 )
 
@@ -55,20 +56,12 @@ class Stream:
   def __init__(
     self,
     client: Client,
-    project: str = None,
-    stream: str = None,
-    stream_id: str = None,
+    qualifier: StreamQualifier = None,
     max_write_delay_seconds: float = DEFAULT_WRITE_DELAY_SECONDS
   ):
-    # check stream_id xor (project, stream)
-    if bool(stream_id) == bool(project and stream):
-      raise ValueError("must provide either stream_id or (project and stream) parameters, but not both")
-
     # config
     self.client = client
-    self._project_name = project
-    self._stream_name = stream
-    self._stream_id = stream_id
+    self._qualifier = qualifier
 
     # prep state to load
     self.info: dict = None
@@ -93,11 +86,10 @@ class Stream:
       self._loaded = True
 
   async def _load_from_admin(self):
-    if self._stream_id:
-      return await self.client.admin.streams.find_by_id(stream_id=self._stream_id)
-    return await self.client.admin.streams.find_by_project_and_name(
-      project_name=self._project_name,
-      stream_name=self._stream_name,
+    return await self.client.admin.streams.find_by_organization_project_and_name(
+      organization_name=self._qualifier.organization,
+      project_name=self._qualifier.project,
+      stream_name=self._qualifier.stream,
     )
 
   def _set_admin_data(self, data):
