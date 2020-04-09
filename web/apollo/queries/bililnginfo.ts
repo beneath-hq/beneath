@@ -17,7 +17,9 @@ export const QUERY_BILLING_INFO = gql`
 	    baseReadQuota
 	    baseWriteQuota
     }
-    paymentsDriver
+    billingMethod {
+      paymentsDriver
+    }
   }
 }
 `;

@@ -22,11 +22,16 @@ export interface BillingInfo_billingInfo_billingPlan {
   baseWriteQuota: number;
 }
 
+export interface BillingInfo_billingInfo_billingMethod {
+  __typename: "BillingMethod";
+  paymentsDriver: string;
+}
+
 export interface BillingInfo_billingInfo {
   __typename: "BillingInfo";
   organizationID: ControlUUID;
   billingPlan: BillingInfo_billingInfo_billingPlan;
-  paymentsDriver: string;
+  billingMethod: BillingInfo_billingInfo_billingMethod;
 }
 
 export interface BillingInfo {
