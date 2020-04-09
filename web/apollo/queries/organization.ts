@@ -11,6 +11,7 @@ export const QUERY_ORGANIZATION = gql`
         userID
         name
         username
+        bio
         photoURL
         readQuota
         writeQuota
@@ -28,6 +29,7 @@ export const QUERY_ORGANIZATION = gql`
         photoURL
         public
       }
+      personal
     }
   }
 `;

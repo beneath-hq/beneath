@@ -2,10 +2,10 @@ import React, { FC } from "react";
 
 import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
 
-import { User_user } from "../../apollo/types/User";
-import { toURLName } from "../../lib/names";
-import Avatar from "../Avatar";
-import NextMuiLinkList from "../NextMuiLinkList";
+import { User_user } from "../../../apollo/types/User";
+import { toURLName } from "../../../lib/names";
+import Avatar from "../../Avatar";
+import NextMuiLinkList from "../../NextMuiLinkList";
 
 const useStyles = makeStyles((theme) => ({
   noDataCaption: {

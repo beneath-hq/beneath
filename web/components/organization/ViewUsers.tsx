@@ -92,11 +92,11 @@ const ViewUsers: FC<Props> = ({ organization }) => {
             {organization.users.map(({ userID, name, username, photoURL, readQuota, writeQuota }) => (
               <ListItem
                 component={NextMuiLinkList}
-                href={`/user?name=${toURLName(username)}`}
+                href={`/organization?organization_name=${toURLName(username)}`}
                 button
                 disableGutters
                 key={userID}
-                as={`/users/${toURLName(username)}`}
+                as={`/${toURLName(username)}`}
               >
                 <ListItemAvatar>
                   <Avatar size="list" label={username || name} src={photoURL || undefined} />

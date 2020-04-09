@@ -161,8 +161,8 @@ const UserCrumb: FC<UserCrumbProps> = ({ username, isCurrent }) => {
   return (
     <Crumb
       isCurrent={isCurrent}
-      href={`/user?name=${username}`}
-      as={`/users/${username}`}
+      href={`/organization?organization_name=${username}`}
+      as={`/${username}`}
       label={username}
     />
   );
