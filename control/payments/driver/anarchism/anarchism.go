@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
-	uuid "github.com/satori/go.uuid"
 )
 
 // Anarchism implements beneath.PaymentsDriver
@@ -88,7 +88,7 @@ func (a *Anarchism) handleInitializeCustomer(w http.ResponseWriter, req *http.Re
 		panic("error!")
 	}
 
-	_, err = billingInfo.Update(req.Context(), bm.BillingMethodID, billingPlan.BillingPlanID)
+	_, err = billingInfo.UpdateBillingPlan(req.Context(), billingPlan.BillingPlanID)
 	if err != nil {
 		log.S.Errorf("Error updating billing info: %v\\n", err)
 		return httputil.NewError(500, "error updating billing info: %v\\n", err)

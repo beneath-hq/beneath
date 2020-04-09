@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"gitlab.com/beneath-hq/beneath/control/entity"
@@ -166,7 +166,8 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID) int
+		UpdateBillingInfoBillingMethod    func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID) int
+		UpdateBillingInfoBillingPlan      func(childComplexity int, organizationID uuid.UUID, billingPlanID uuid.UUID) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
@@ -359,7 +360,8 @@ type ModelResolver interface {
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
-	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*entity.BillingInfo, error)
+	UpdateBillingInfoBillingMethod(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID) (*entity.BillingInfo, error)
+	UpdateBillingInfoBillingPlan(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID) (*entity.BillingInfo, error)
 	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
 	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
 	DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error)
@@ -1169,17 +1171,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
-	case "Mutation.updateBillingInfo":
-		if e.complexity.Mutation.UpdateBillingInfo == nil {
+	case "Mutation.updateBillingInfoBillingMethod":
+		if e.complexity.Mutation.UpdateBillingInfoBillingMethod == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateBillingInfo_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateBillingInfoBillingMethod_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID)), true
+		return e.complexity.Mutation.UpdateBillingInfoBillingMethod(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID)), true
+
+	case "Mutation.updateBillingInfoBillingPlan":
+		if e.complexity.Mutation.UpdateBillingInfoBillingPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateBillingInfoBillingPlan_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateBillingInfoBillingPlan(childComplexity, args["organizationID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID)), true
 
 	case "Mutation.updateExternalStream":
 		if e.complexity.Mutation.UpdateExternalStream == nil {
@@ -2324,7 +2338,8 @@ type BilledResource {
 }
 
 extend type Mutation {
-  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID!, billingPlanID: UUID!): BillingInfo!
+  updateBillingInfoBillingMethod(organizationID: UUID!, billingMethodID: UUID!): BillingInfo!
+  updateBillingInfoBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
 }
 
 type BillingInfo {
@@ -3185,7 +3200,7 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateBillingInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateBillingInfoBillingMethod_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 uuid.UUID
@@ -3204,14 +3219,28 @@ func (ec *executionContext) field_Mutation_updateBillingInfo_args(ctx context.Co
 		}
 	}
 	args["billingMethodID"] = arg1
-	var arg2 uuid.UUID
-	if tmp, ok := rawArgs["billingPlanID"]; ok {
-		arg2, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateBillingInfoBillingPlan_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["billingPlanID"] = arg2
+	args["organizationID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["billingPlanID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["billingPlanID"] = arg1
 	return args, nil
 }
 
@@ -6282,7 +6311,7 @@ func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateBillingInfoBillingMethod(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -6299,7 +6328,7 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateBillingInfo_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateBillingInfoBillingMethod_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -6308,7 +6337,51 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateBillingInfo(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID))
+		return ec.resolvers.Mutation().UpdateBillingInfoBillingMethod(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.BillingInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateBillingInfoBillingPlan(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateBillingInfoBillingPlan_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateBillingInfoBillingPlan(rctx, args["organizationID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13921,8 +13994,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "empty":
 			out.Values[i] = ec._Mutation_empty(ctx, field)
-		case "updateBillingInfo":
-			out.Values[i] = ec._Mutation_updateBillingInfo(ctx, field)
+		case "updateBillingInfoBillingMethod":
+			out.Values[i] = ec._Mutation_updateBillingInfoBillingMethod(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateBillingInfoBillingPlan":
+			out.Values[i] = ec._Mutation_updateBillingInfoBillingPlan(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

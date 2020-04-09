@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	uuid "github.com/satori/go.uuid"
+	stripe "github.com/stripe/stripe-go"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver/stripeutil"
@@ -11,8 +13,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
-	uuid "github.com/satori/go.uuid"
-	stripe "github.com/stripe/stripe-go"
 )
 
 // StripeWire implements beneath.PaymentsDriver
@@ -67,24 +67,33 @@ func (s *StripeWire) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 		return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to activate"))
 	}
 
-	// TODO: instead, check BillingMethods to see if the customer already has a stripe customerID
-	billingInfo := entity.FindBillingInfo(req.Context(), organization.OrganizationID) // existing billing info (to check for existing stripe customer_id below)
-	if billingInfo == nil {
-		panic("billing info not found")
+	billingMethods := entity.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
+	if billingMethods == nil {
+		panic("no existing billing methods found for the organization")
+	}
+
+	// if customer has already been registered with stripe, get customerID from driver_payload
+	customerID := ""
+	for _, bm := range billingMethods {
+		if bm.PaymentsDriver == entity.StripeCardDriver || bm.PaymentsDriver == entity.StripeWireDriver {
+			customerID = bm.DriverPayload["customer_id"].(string)
+			break
+		}
 	}
 
 	// Our requests to Stripe differ whether or not the customer is already registered in Stripe
 	var customer *stripe.Customer
-	driverPayload := make(map[string]interface{})
-	if billingInfo.BillingMethod.DriverPayload["customer_id"] != nil {
+	if customerID != "" {
 		// customer is already registered with Stripe
-		driverPayload["customer_id"] = billingInfo.BillingMethod.DriverPayload["customer_id"]
-		stripeutil.UpdateWireCustomer(driverPayload["customer_id"].(string), emailAddress)
+		stripeutil.UpdateWireCustomer(customerID, emailAddress)
 	} else {
 		// customer needs to be registered with stripe
 		customer = stripeutil.CreateWireCustomer(organization.OrganizationID, organization.Name, emailAddress)
-		driverPayload["customer_id"] = customer.ID
+		customerID = customer.ID
 	}
+
+	driverPayload := make(map[string]interface{})
+	driverPayload["customer_id"] = customerID
 
 	_, err = entity.CreateBillingMethod(req.Context(), organization.OrganizationID, entity.StripeWireDriver, driverPayload)
 	if err != nil {

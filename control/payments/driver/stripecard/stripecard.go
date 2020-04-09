@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	uuid "github.com/satori/go.uuid"
+	stripe "github.com/stripe/stripe-go"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver/stripeutil"
@@ -14,8 +16,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
-	uuid "github.com/satori/go.uuid"
-	stripe "github.com/stripe/stripe-go"
 )
 
 // StripeCard implements beneath.PaymentsDriver
@@ -140,34 +140,42 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			panic("organization not found")
 		}
 
-		// TODO: instead, check BillingMethods to see if the customer already has a stripe customerID
-		billingInfo := entity.FindBillingInfo(req.Context(), organization.OrganizationID) // existing billing info (to check for existing stripe customer_id below)
-		if billingInfo == nil {
-			panic("billing info not found")
+		billingMethods := entity.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
+		if billingMethods == nil {
+			panic("no existing billing methods found for the organization")
 		}
 
+		// if customer has already been registered with stripe, get customerID from driver_payload
+		customerID := ""
+		for _, bm := range billingMethods {
+			if bm.PaymentsDriver == entity.StripeCardDriver || bm.PaymentsDriver == entity.StripeWireDriver {
+				customerID = bm.DriverPayload["customer_id"].(string)
+				break
+			}
+		}
+
+		// get full paymentMethod object
 		paymentMethod := stripeutil.RetrievePaymentMethod(setupIntent.PaymentMethod.ID)
 
 		// Our requests to Stripe differ whether or not the customer is already registered in Stripe
 		var customer *stripe.Customer
-		if billingInfo.BillingMethod.DriverPayload["customer_id"] != nil {
-			customerID := billingInfo.BillingMethod.DriverPayload["customer_id"].(string)
+		if customerID != "" {
 			paymentMethod := stripeutil.AttachPaymentMethod(customerID, paymentMethod.ID)
 			customer = stripeutil.UpdateCardCustomer(customerID, paymentMethod.BillingDetails.Email, paymentMethod.ID)
 		} else {
 			customer = stripeutil.CreateCardCustomer(organization.OrganizationID, organization.Name, paymentMethod.BillingDetails.Email, setupIntent.PaymentMethod)
+			customerID = customer.ID
 		}
 
 		driverPayload := make(map[string]interface{})
-		driverPayload["customer_id"] = customer.ID
+		driverPayload["customer_id"] = customerID
+		driverPayload["payment_method_id"] = paymentMethod.ID
 
 		_, err = entity.CreateBillingMethod(req.Context(), organization.OrganizationID, entity.StripeCardDriver, driverPayload)
 		if err != nil {
 			log.S.Errorf("Error creating billing method: %v\\n", err)
 			return httputil.NewError(500, "error creating billing method: %v\\n", err)
 		}
-
-		// TODO: in frontend, user needs to select the desired billing plan and update billing info
 
 	case "invoice.payment_failed":
 		var invoice stripe.Invoice
@@ -188,7 +196,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // don't change billing method, only change the billing plan
+			billingInfo.UpdateBillingPlan(req.Context(), defaultBillingPlan.BillingPlanID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -217,7 +225,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // don't change billing method, only change the billing plan
+			billingInfo.UpdateBillingPlan(req.Context(), defaultBillingPlan.BillingPlanID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
