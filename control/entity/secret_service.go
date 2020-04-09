@@ -5,9 +5,9 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // ServiceSecret implements Secret for Token entities
@@ -90,6 +90,11 @@ func (s *ServiceSecret) IsUser() bool {
 // IsService implements the Secret interface
 func (s *ServiceSecret) IsService() bool {
 	return true
+}
+
+// IsMaster implements the Secret interface
+func (s *ServiceSecret) IsMaster() bool {
+	return false
 }
 
 // StreamPermissions implements the Secret interface

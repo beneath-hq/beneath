@@ -96,6 +96,16 @@ func (s *UserSecret) IsService() bool {
 	return false
 }
 
+// IsMaster implements the Secret interface
+func (s *UserSecret) IsMaster() bool {
+	// TODO: look up this information in the correct place && instead use UUIDs
+	if s.User.Username == "greenep12" || s.User.Username == "_bem" {
+		return true
+	}
+
+	return false
+}
+
 // StreamPermissions implements the Secret interface
 func (s *UserSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions {
 	projectPerms := CachedUserProjectPermissions(ctx, s.UserID, projectID)

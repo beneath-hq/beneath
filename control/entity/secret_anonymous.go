@@ -5,8 +5,8 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 
-	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 	uuid "github.com/satori/go.uuid"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
 
 // AnonymousSecret implements Secret for anonymous requests
@@ -34,6 +34,11 @@ func (s *AnonymousSecret) IsUser() bool {
 
 // IsService implements the Secret interface
 func (s *AnonymousSecret) IsService() bool {
+	return false
+}
+
+// IsMaster implements the Secret interface
+func (s *AnonymousSecret) IsMaster() bool {
 	return false
 }
 

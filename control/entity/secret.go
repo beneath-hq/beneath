@@ -6,8 +6,8 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 
-	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 	uuid "github.com/satori/go.uuid"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
 
 const (
@@ -29,11 +29,14 @@ type Secret interface {
 	// IsAnonymous is true iff the secret is anonymous
 	IsAnonymous() bool
 
+	// IsUser is true iff the secret is a user
+	IsUser() bool
+
 	// IsService is true iff the secret is a service
 	IsService() bool
 
-	// IsUser is true iff the secret is a user
-	IsUser() bool
+	// IsMaster is true iff the secret is a master secret
+	IsMaster() bool
 
 	// Checks if the secret owner is within its read quota
 	CheckReadQuota(u pb.QuotaUsage) bool
