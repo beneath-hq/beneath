@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/beneath-core/internal/middleware"
-	pb "github.com/beneath-core/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 )
 
 func (s *gRPCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {

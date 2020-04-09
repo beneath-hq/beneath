@@ -8,7 +8,7 @@ import (
 	"google.golang.org/api/iterator"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

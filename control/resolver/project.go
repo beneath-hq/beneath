@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/beneath-core/internal/middleware"
-
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
+
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
 // Project returns the gql.ProjectResolver

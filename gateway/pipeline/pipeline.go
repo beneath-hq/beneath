@@ -8,13 +8,13 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/engine/driver"
-	pb "github.com/beneath-core/engine/proto"
-	pbgw "github.com/beneath-core/gateway/grpc/proto"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	pbgw "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 const (
@@ -114,6 +114,7 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	elapsed := time.Since(start)
 	log.S.Infow(
 		"pipeline write",
+		"organization", stream.OrganizationName,
 		"project", stream.ProjectName,
 		"stream", stream.StreamName,
 		"instance", instanceID.String(),

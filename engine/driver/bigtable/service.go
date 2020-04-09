@@ -3,7 +3,7 @@ package bigtable
 import (
 	"context"
 
-	"github.com/beneath-core/engine/driver"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 // MaxKeySize implements beneath.Service

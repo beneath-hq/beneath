@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 var one = big.NewInt(1)

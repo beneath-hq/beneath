@@ -3,8 +3,8 @@ package entity
 import (
 	"context"
 
-	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/internal/hub"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // CleanupInstanceTask is a task that removes all data and tables related to an instance

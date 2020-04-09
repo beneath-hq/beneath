@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beneath-core/control/gql"
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/beneath-hq/beneath/control/gql"
 )
 
 func TestAddMetrics(t *testing.T) {

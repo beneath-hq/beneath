@@ -8,8 +8,8 @@ import (
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
 
-	pb "github.com/beneath-core/engine/proto"
-	"github.com/beneath-core/pkg/timeutil"
+	pb "gitlab.com/beneath-hq/beneath/engine/proto"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // CommitUsage implements engine.LookupService

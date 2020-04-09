@@ -104,7 +104,7 @@ export class BrowserCursor<TRecord = any> {
     if (!this.changeCursor) {
       throw Error("cannot subscribe to changes for this query");
     }
-    if (!("instanceID" in this.streamQualifier) || !this.streamQualifier.instanceID) {
+    if ((typeof this.streamQualifier === "string") || !("instanceID" in this.streamQualifier) || !this.streamQualifier.instanceID) {
       throw Error("cannot subscribe to changes for this query");
     }
 

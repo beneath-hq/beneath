@@ -3,13 +3,13 @@ package resolver
 import (
 	"context"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/gql"
-	"github.com/beneath-core/internal/metrics"
-	"github.com/beneath-core/internal/middleware"
-	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/internal/metrics"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
 // User returns the gql.UserResolver
@@ -81,7 +81,7 @@ func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 		WriteQuota:           int(u.WriteQuota),
 		UpdatedOn:            u.UpdatedOn,
 		PersonalOrganization: u.PersonalOrganization,
-		BillingOrganization:     u.BillingOrganization,
+		BillingOrganization:  u.BillingOrganization,
 	}
 }
 

@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 
-	"github.com/beneath-core/control/entity"
-	"github.com/beneath-core/control/taskqueue"
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/envutil"
-	"github.com/beneath-core/pkg/log"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type configSpecification struct {

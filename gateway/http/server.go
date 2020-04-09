@@ -11,11 +11,11 @@ import (
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/internal/middleware"
-	"github.com/beneath-core/pkg/httputil"
-	"github.com/beneath-core/pkg/log"
-	"github.com/beneath-core/pkg/ws"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/ws"
 )
 
 const (
@@ -50,14 +50,14 @@ func Handler() http.Handler {
 
 	// create websocket broker and start accepting new connections on /ws
 	wss := ws.NewBroker(&wsServer{})
-	handler.Method("GET", "/v1/ws", httputil.AppHandler(wss.HTTPHandler))
+	handler.Method("GET", "/v1/-/ws", httputil.AppHandler(wss.HTTPHandler))
 
 	// write endpoint
-	handler.Method("POST", "/v1/streams/instances/{instanceID}", httputil.AppHandler(postToInstance))
+	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	// query endpoints
-	handler.Method("GET", "/v1/projects/{projectName}/streams/{streamName}", httputil.AppHandler(getFromProjectAndStream))
-	handler.Method("GET", "/v1/streams/instances/{instanceID}", httputil.AppHandler(getFromInstance))
+	handler.Method("GET", "/v1/{organizationName}/{projectName}/streams/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
+	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	return handler
 }

@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beneath-core/pkg/codec/ext/tuple"
+	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
 
-	"github.com/beneath-core/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
 
 	"github.com/go-test/deep"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/beneath-core/pkg/jsonutil"
-	"github.com/beneath-core/pkg/schema"
+	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-hq/beneath/pkg/schema"
 )
 
 // Index represents a set of fields to generate keys for

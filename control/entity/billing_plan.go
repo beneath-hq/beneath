@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/beneath-core/internal/hub"
-	"github.com/beneath-core/pkg/timeutil"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // BillingPlan represents a Billing Plan that an Organization can subscribe to

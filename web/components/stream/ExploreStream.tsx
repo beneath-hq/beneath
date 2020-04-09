@@ -1,5 +1,4 @@
 import { useRecords } from "beneath-react";
-
 import React, { FC, useEffect, useState } from "react";
 
 import { makeStyles, Theme } from "@material-ui/core";
@@ -42,6 +41,10 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreStreamProps) => {
+  if (!stream.currentStreamInstanceID) {
+    throw Error("internal error: can't use ExploreStream for stream without a current instance ID");
+  }
+
   // state
   const [queryType, setQueryType] = useState<"log" | "index">("log");
   const [logPeek, setLogPeek] = useState(true);
@@ -60,9 +63,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
   const token = useToken();
   const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
     secret: token || undefined,
-    project: stream.project.name,
-    stream: stream.name,
-    instanceID: stream.currentStreamInstanceID || undefined,
+    stream: {
+      instanceID: stream.currentStreamInstanceID,
+    },
     query:
       queryType === "index"
         ? { type: "index", filter: filter === "" ? undefined : filter }
