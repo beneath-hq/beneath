@@ -4589,7 +4589,7 @@ func (ec *executionContext) _BillingInfo_billingMethod(ctx context.Context, fiel
 	res := resTmp.(*entity.BillingMethod)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingMethod2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
+	return ec.marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
@@ -5289,7 +5289,7 @@ func (ec *executionContext) _Me_personalOrganization(ctx context.Context, field 
 	res := resTmp.(*entity.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_billingOrganization(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -6323,7 +6323,7 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	res := resTmp.(*entity.BillingInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingInfo2ᚖgithubᚗcomᚋbeneathᚑcoreᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9184,7 +9184,7 @@ func (ec *executionContext) _Query_billingInfo(ctx context.Context, field graphq
 	res := resTmp.(*entity.BillingInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx, field.Selections, res)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -15525,11 +15525,11 @@ func (ec *executionContext) marshalNBilledResource2ᚖgitlabᚗcomᚋbeneathᚑh
 	return ec._BilledResource(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v entity.BillingInfo) graphql.Marshaler {
 	return ec._BillingInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *entity.BillingInfo) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15537,6 +15537,20 @@ func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhq�
 		return graphql.Null
 	}
 	return ec._BillingInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBillingMethod2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v entity.BillingMethod) graphql.Marshaler {
+	return ec._BillingMethod(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v *entity.BillingMethod) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._BillingMethod(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNBillingPlan2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v entity.BillingPlan) graphql.Marshaler {
