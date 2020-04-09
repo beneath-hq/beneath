@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/beneath-core/control/entity"
 	"github.com/go-pg/migrations/v7"
+	"gitlab.com/beneath-hq/beneath/control/entity"
 )
 
 func init() {
