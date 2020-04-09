@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/beneath-core/internal/hub"
 	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // BillingMethod represents an organization's method of payment
