@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: "access-management"
-    weight: 250
-weight: 250
+    weight: 100
+weight: 100
 ---
 
 - View permissions allow the member to see all of the project's contents.

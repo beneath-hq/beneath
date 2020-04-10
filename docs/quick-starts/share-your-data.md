@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: quick-starts
-    weight: 90
-weight: 90
+    weight: 400
+weight: 400
 ---
 
 Time required: 1 minute.

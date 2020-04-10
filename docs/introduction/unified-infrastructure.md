@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: introduction
-    weight: 20
-weight: 20
+    weight: 200
+weight: 200
 ---
 
 In order to provide a seamless data experience, Beneath is built with a comprehensive stack of database technologies. The Beneath system is an all-in-one package: no need to configure, manage, or integrate any of these services.

@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: transforming-data
-    weight: 240
-weight: 240
+    weight: 200
+weight: 200
 ---
 
 Applying stateful functions to your Beneath data streams are possible using Apache Beam. Fully integrating Beam into the Beneath platform is on the near-term roadmap.

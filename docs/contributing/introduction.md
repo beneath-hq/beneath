@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: contributing
-    weight: 0
-weight: 0
+    weight: 1
+weight: 1
 ---
 
 ## Bug reports, questions, and feature requests

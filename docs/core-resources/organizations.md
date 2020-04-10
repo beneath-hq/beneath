@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 170
-weight: 170
+    weight: 600
+weight: 600
 ---
 An organization allows enterprises to place all of their Beneath users onto one billing plan and onto one bill. The organization admin pays the bill on behalf of all of its users.
 

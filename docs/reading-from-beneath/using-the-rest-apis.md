@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: reading-from-beneath
-    weight: 190
-weight: 190
+    weight: 200
+weight: 200
 ---
 Every stream is available via a REST API. Using your language of choice, you can access the data and import it into your environment. We provide examples below for the Command Line, Python, and Javascript. 
 

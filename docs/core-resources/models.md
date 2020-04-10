@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 140
-weight: 140
+    weight: 400
+weight: 400
 ---
 One of Beneath’s core features is the ability to create _models_ to manipulate data streams. Models enable both stateless and stateful stream processing.
 

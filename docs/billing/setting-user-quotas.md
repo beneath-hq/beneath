@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: billing
-    weight: 290
-weight: 290
+    weight: 200
+weight: 200
 ---
 
 As an organization admin, it is possible to set custom quotas for each of your organization's members.

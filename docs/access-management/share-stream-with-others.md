@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: access-management
-    weight: 270
-weight: 270
+    weight: 300
+weight: 300
 ---
 
 In order to share a data stream with another user, you must give the other user read access to the stream's project.

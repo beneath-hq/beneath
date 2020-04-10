@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: writing-to-beneath
-    weight: 210
-weight: 210
+    weight: 100
+weight: 100
 ---
 When writing data to Beneath, you must first provide a file with the stream's schema. By explicitly defining the schema, Beneath's infrastructure knows exactly what to expect. The schema file should follow the format of the “GraphQL schema language.” 
 

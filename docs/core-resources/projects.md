@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 120
-weight: 120
+    weight: 200
+weight: 200
 ---
 Projects are collections of Beneath streams and models. A project is analogous to a GitHub repository. 
 

@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: reading-from-beneath
-    weight: 180
-weight: 180
+    weight: 100
+weight: 100
 ---
 The Explore tab provides a quick, in-browser way to explore the data on Beneath. If you’d like to look at stream schema, validate data entry, or filter for a subset of data, this tab is a great place to start.
 

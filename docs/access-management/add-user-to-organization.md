@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: access-management
-    weight: 260
-weight: 260
+    weight: 200
+weight: 200
 ---
 
 - View permissions are for all users whose billing will be handled by the organization.

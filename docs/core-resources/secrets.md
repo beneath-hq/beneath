@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 110
-weight: 110
+    weight: 100
+weight: 100
 ---
 Secrets are Beneath's terminology for API private keys. Secrets are used to authenticate to Beneath. 
 

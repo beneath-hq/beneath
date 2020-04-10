@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 150
-weight: 150
+    weight: 500
+weight: 500
 ---
 Services, and their corresponding secrets, are entities used when specific, limited credentials are required. 
 The use of *service* secrets allows you to protect your *user* secret from abuse. Additionally, service secrets can be allocated a fixed usage quota.

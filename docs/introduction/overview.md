@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: introduction
-    weight: 10
-weight: 10
+    weight: 100
+weight: 100
 ---
 ##### What is Beneath?
 Beneath is unified data infrastructure for analytics applications. Beneath's infrastructure encompasses the full data lifecycle: data ingress, stream processing, data storage, and data egress. By building with Beneath, data workers no longer spend time on data engineering -- instead, they focus on their data and analytics.

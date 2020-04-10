@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: core-resources
-    weight: 130
-weight: 130
+    weight: 300
+weight: 300
 ---
 Streams are data streams that run on Beneath. Whether a data set is an event stream or batch upload, Beneath interprets all data sets as "streams." 
 Even a batch upload has an associated timestamp, and future uploads or revisions of that data set will also have associated timestamps.

@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: introduction
-    weight: 40
-weight: 40
+    weight: 400
+weight: 400
 ---
 
 The following are concepts that are core to Beneath's simplicity and ease-of-use.

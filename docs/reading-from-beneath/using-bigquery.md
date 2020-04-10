@@ -4,8 +4,8 @@ description:
 menu:
   docs:
     parent: reading-from-beneath
-    weight: 200
-weight: 200
+    weight: 300
+weight: 300
 ---
 All data streams on Beneath are stored in BigQuery and are accessible via BigQuery’s web console or via BigQuery’s easy-to-use API.
 
