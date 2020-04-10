@@ -4,4 +4,5 @@ menu:
     identifier: billing
     name: Billing
     weight: 800
+weight: 800
 ---
