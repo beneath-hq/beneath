@@ -1,4 +1,12 @@
-# Introduction
+---
+title: Introduction
+description: 
+menu:
+  docs:
+    parent: contributing
+    weight: 0
+weight: 0
+---
 
 ## Bug reports, questions, and feature requests
 

@@ -1,4 +1,12 @@
-# Setting up a development environment
+---
+title: Setting up a development environment
+description: 
+menu:
+  docs:
+    parent: contributing
+    weight: 300
+weight: 300
+---
 
 In order to develop Beneath on your local machine, you need to setup local installations of its dependencies.
 

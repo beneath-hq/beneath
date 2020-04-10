@@ -1,4 +1,12 @@
-# Coding guidelines
+---
+title: Coding guidelines
+description: 
+menu:
+  docs:
+    parent: contributing
+    weight: 400
+weight: 400
+---
 
 ## Documenting your code
 
