@@ -2,8 +2,13 @@ extend type Query {
   billingInfo(organizationID: UUID!): BillingInfo!
 }
 
+extend type Mutation {
+  updateBillingInfoBillingMethod(organizationID: UUID!, billingMethodID: UUID!): BillingInfo!
+  updateBillingInfoBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
+}
+
 type BillingInfo {
   organizationID: UUID!
+  billingMethod: BillingMethod!
   billingPlan: BillingPlan!
-	paymentsDriver: String!
 }

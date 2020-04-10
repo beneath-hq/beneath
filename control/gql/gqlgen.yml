@@ -45,5 +45,9 @@ models:
     model: gitlab.com/beneath-hq/beneath/control/entity.BillingPlan
   BilledResource:
     model: gitlab.com/beneath-hq/beneath/control/entity.BilledResource
+  BillingMethod:
+    model: gitlab.com/beneath-hq/beneath/control/entity.BillingMethod
+  BillingInfo:
+    model: gitlab.com/beneath-hq/beneath/control/entity.BillingInfo
   PaymentMethod:
     model: gitlab.com/beneath-hq/beneath/control/entity.PaymentMethod

@@ -134,25 +134,25 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                   <UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />,
                   {
                     onClick: closeMenu,
-                    as: `/users/${me.user.username}/monitoring`,
-                    href: `/user?name=${me.user.username}&tab=monitoring`,
+                    as: `/${me.user.username}/monitoring`,
+                    href: `/organization?organization_name=${me.user.username}&tab=monitoring`,
                     className: classes.menuItemUsage,
                   }
                 )}
                 {makeMenuItem("Profile", {
                   onClick: closeMenu,
-                  as: `/users/${me.user.username}`,
-                  href: `/user?name=${me.user.username}`,
+                  as: `/${me.user.username}`,
+                  href: `/organization?organization_name=${me.user.username}`,
                 })}
                 {makeMenuItem("Secrets", {
                   onClick: closeMenu,
-                  as: `/users/${me.user.username}/secrets`,
-                  href: `/user?name=${me.user.username}&tab=secrets`,
+                  as: `/${me.user.username}/secrets`,
+                  href: `/organization?organization_name=${me.user.username}&tab=secrets`,
                 })}
-                {!me.organization.personal && makeMenuItem("Organization", {
+                {!me.billingOrganization.personal && makeMenuItem("Organization", {
                   onClick: closeMenu,
-                  as: `/${me.organization.name}`,
-                  href: `/organization?organization_name=${me.organization.name}`,
+                  as: `/${me.billingOrganization.name}`,
+                  href: `/organization?organization_name=${me.billingOrganization.name}`,
                 })}
                 {makeMenuItem("Logout", {
                   href: `/auth/logout`,

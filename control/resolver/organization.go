@@ -6,7 +6,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -24,7 +23,6 @@ func (r *organizationResolver) OrganizationID(ctx context.Context, obj *entity.O
 }
 
 func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*entity.Organization, error) {
-	// OPTION 1: doing logic in the resolver
 	organization := entity.FindOrganizationByName(ctx, name)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", name)
@@ -45,7 +43,6 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 			hide := true
 			if user != nil {
 				for _, userProject := range user.Projects {
-					log.S.Info(userProject)
 					if orgProject.ProjectID == userProject.ProjectID {
 						hide = false
 						break
@@ -59,10 +56,6 @@ func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*e
 			}
 		}
 	}
-
-	// Q: should I instead do Option 2 or 3?
-	// OPTION 2: doing logic in the entity.FindOrganizationByNameForUser(ctx, name, userID) function
-	// OPTION 3: hybrid of 1 and 2
 
 	return organization, nil
 }
@@ -160,7 +153,16 @@ func (r *mutationResolver) UpdateOrganizationName(ctx context.Context, organizat
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
-	organization, err := organization.ChangeName(ctx, name)
+	if organization.Personal {
+		return nil, gqlerror.Errorf("Cannot change the name of a personal organization. Instead, to achieve the same effect, update your username.")
+	}
+
+	existingOrg := entity.FindOrganizationByName(ctx, name)
+	if existingOrg != nil {
+		return nil, gqlerror.Errorf("Pick another name. There's already an organization named %s", name)
+	}
+
+	organization, err := organization.UpdateName(ctx, name)
 	if err != nil {
 		return nil, gqlerror.Errorf("Failed to update organization name")
 	}

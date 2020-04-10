@@ -33,7 +33,7 @@ export interface Me_me_user {
   projects: Me_me_user_projects[];
 }
 
-export interface Me_me_organization {
+export interface Me_me_billingOrganization {
   __typename: "Organization";
   organizationID: string;
   name: string;
@@ -50,7 +50,7 @@ export interface Me_me {
   writeQuota: number;
   updatedOn: ControlTime;
   user: Me_me_user;
-  organization: Me_me_organization;
+  billingOrganization: Me_me_billingOrganization;
 }
 
 export interface Me {

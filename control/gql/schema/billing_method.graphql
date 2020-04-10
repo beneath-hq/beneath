@@ -1,0 +1,5 @@
+type BillingMethod {
+  billingMethodID: UUID!
+  organizationID: UUID!
+	paymentsDriver: String!
+}

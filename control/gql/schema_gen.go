@@ -39,6 +39,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	BilledResource() BilledResourceResolver
+	BillingMethod() BillingMethodResolver
 	BillingPlan() BillingPlanResolver
 	Model() ModelResolver
 	Mutation() MutationResolver
@@ -76,9 +77,15 @@ type ComplexityRoot struct {
 	}
 
 	BillingInfo struct {
+		BillingMethod  func(childComplexity int) int
 		BillingPlan    func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
-		PaymentsDriver func(childComplexity int) int
+	}
+
+	BillingMethod struct {
+		BillingMethodID func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		PaymentsDriver  func(childComplexity int) int
 	}
 
 	BillingPlan struct {
@@ -96,15 +103,16 @@ type ComplexityRoot struct {
 	}
 
 	Me struct {
-		Email        func(childComplexity int) int
-		Organization func(childComplexity int) int
-		ReadQuota    func(childComplexity int) int
-		ReadUsage    func(childComplexity int) int
-		UpdatedOn    func(childComplexity int) int
-		User         func(childComplexity int) int
-		UserID       func(childComplexity int) int
-		WriteQuota   func(childComplexity int) int
-		WriteUsage   func(childComplexity int) int
+		BillingOrganization  func(childComplexity int) int
+		Email                func(childComplexity int) int
+		PersonalOrganization func(childComplexity int) int
+		ReadQuota            func(childComplexity int) int
+		ReadUsage            func(childComplexity int) int
+		UpdatedOn            func(childComplexity int) int
+		User                 func(childComplexity int) int
+		UserID               func(childComplexity int) int
+		WriteQuota           func(childComplexity int) int
+		WriteUsage           func(childComplexity int) int
 	}
 
 	Metrics struct {
@@ -158,6 +166,8 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
+		UpdateBillingInfoBillingMethod    func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID) int
+		UpdateBillingInfoBillingPlan      func(childComplexity int, organizationID uuid.UUID, billingPlanID uuid.UUID) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
@@ -336,6 +346,9 @@ type BilledResourceResolver interface {
 
 	Currency(ctx context.Context, obj *entity.BilledResource) (string, error)
 }
+type BillingMethodResolver interface {
+	PaymentsDriver(ctx context.Context, obj *entity.BillingMethod) (string, error)
+}
 type BillingPlanResolver interface {
 	Currency(ctx context.Context, obj *entity.BillingPlan) (string, error)
 	Period(ctx context.Context, obj *entity.BillingPlan) (string, error)
@@ -347,6 +360,8 @@ type ModelResolver interface {
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
+	UpdateBillingInfoBillingMethod(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID) (*entity.BillingInfo, error)
+	UpdateBillingInfoBillingPlan(ctx context.Context, organizationID uuid.UUID, billingPlanID uuid.UUID) (*entity.BillingInfo, error)
 	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
 	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
 	DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error)
@@ -392,7 +407,7 @@ type QueryResolver interface {
 	Empty(ctx context.Context) (*string, error)
 	Ping(ctx context.Context) (string, error)
 	BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error)
-	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*BillingInfo, error)
+	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error)
 	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
@@ -544,6 +559,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BilledResource.UpdatedOn(childComplexity), true
 
+	case "BillingInfo.billingMethod":
+		if e.complexity.BillingInfo.BillingMethod == nil {
+			break
+		}
+
+		return e.complexity.BillingInfo.BillingMethod(childComplexity), true
+
 	case "BillingInfo.billingPlan":
 		if e.complexity.BillingInfo.BillingPlan == nil {
 			break
@@ -558,12 +580,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingInfo.OrganizationID(childComplexity), true
 
-	case "BillingInfo.paymentsDriver":
-		if e.complexity.BillingInfo.PaymentsDriver == nil {
+	case "BillingMethod.billingMethodID":
+		if e.complexity.BillingMethod.BillingMethodID == nil {
 			break
 		}
 
-		return e.complexity.BillingInfo.PaymentsDriver(childComplexity), true
+		return e.complexity.BillingMethod.BillingMethodID(childComplexity), true
+
+	case "BillingMethod.organizationID":
+		if e.complexity.BillingMethod.OrganizationID == nil {
+			break
+		}
+
+		return e.complexity.BillingMethod.OrganizationID(childComplexity), true
+
+	case "BillingMethod.paymentsDriver":
+		if e.complexity.BillingMethod.PaymentsDriver == nil {
+			break
+		}
+
+		return e.complexity.BillingMethod.PaymentsDriver(childComplexity), true
 
 	case "BillingPlan.baseReadQuota":
 		if e.complexity.BillingPlan.BaseReadQuota == nil {
@@ -642,6 +678,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.WriteOveragePriceCents(childComplexity), true
 
+	case "Me.billingOrganization":
+		if e.complexity.Me.BillingOrganization == nil {
+			break
+		}
+
+		return e.complexity.Me.BillingOrganization(childComplexity), true
+
 	case "Me.email":
 		if e.complexity.Me.Email == nil {
 			break
@@ -649,12 +692,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Me.Email(childComplexity), true
 
-	case "Me.organization":
-		if e.complexity.Me.Organization == nil {
+	case "Me.personalOrganization":
+		if e.complexity.Me.PersonalOrganization == nil {
 			break
 		}
 
-		return e.complexity.Me.Organization(childComplexity), true
+		return e.complexity.Me.PersonalOrganization(childComplexity), true
 
 	case "Me.readQuota":
 		if e.complexity.Me.ReadQuota == nil {
@@ -1127,6 +1170,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
+
+	case "Mutation.updateBillingInfoBillingMethod":
+		if e.complexity.Mutation.UpdateBillingInfoBillingMethod == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateBillingInfoBillingMethod_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateBillingInfoBillingMethod(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID)), true
+
+	case "Mutation.updateBillingInfoBillingPlan":
+		if e.complexity.Mutation.UpdateBillingInfoBillingPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateBillingInfoBillingPlan_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateBillingInfoBillingPlan(childComplexity, args["organizationID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID)), true
 
 	case "Mutation.updateExternalStream":
 		if e.complexity.Mutation.UpdateExternalStream == nil {
@@ -2270,9 +2337,20 @@ type BilledResource {
   billingInfo(organizationID: UUID!): BillingInfo!
 }
 
+extend type Mutation {
+  updateBillingInfoBillingMethod(organizationID: UUID!, billingMethodID: UUID!): BillingInfo!
+  updateBillingInfoBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
+}
+
 type BillingInfo {
   organizationID: UUID!
+  billingMethod: BillingMethod!
   billingPlan: BillingPlan!
+}
+`},
+	&ast.Source{Name: "control/gql/schema/billing_method.graphql", Input: `type BillingMethod {
+  billingMethodID: UUID!
+  organizationID: UUID!
 	paymentsDriver: String!
 }
 `},
@@ -2585,7 +2663,8 @@ type Me {
   userID: ID!
   user: User!
   email: String!
-  organization: Organization!
+  personalOrganization: Organization!
+  billingOrganization: Organization!
   readUsage: Int!
   readQuota: Int!
   writeUsage: Int!
@@ -3118,6 +3197,50 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 		}
 	}
 	args["secretID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateBillingInfoBillingMethod_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["billingMethodID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["billingMethodID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateBillingInfoBillingPlan_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["billingPlanID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["billingPlanID"] = arg1
 	return args, nil
 }
 
@@ -4424,7 +4547,7 @@ func (ec *executionContext) _BilledResource_updatedOn(ctx context.Context, field
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingInfo_organizationID(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingInfo_organizationID(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4461,7 +4584,44 @@ func (ec *executionContext) _BillingInfo_organizationID(ctx context.Context, fie
 	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingInfo_billingMethod(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BillingMethod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.BillingMethod)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4498,7 +4658,7 @@ func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field 
 	return ec.marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingInfo_paymentsDriver(ctx context.Context, field graphql.CollectedField, obj *BillingInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingMethod_billingMethodID(ctx context.Context, field graphql.CollectedField, obj *entity.BillingMethod) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4508,7 +4668,7 @@ func (ec *executionContext) _BillingInfo_paymentsDriver(ctx context.Context, fie
 		ec.Tracer.EndFieldExecution(ctx)
 	}()
 	rctx := &graphql.ResolverContext{
-		Object:   "BillingInfo",
+		Object:   "BillingMethod",
 		Field:    field,
 		Args:     nil,
 		IsMethod: false,
@@ -4517,7 +4677,81 @@ func (ec *executionContext) _BillingInfo_paymentsDriver(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PaymentsDriver, nil
+		return obj.BillingMethodID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingMethod_organizationID(ctx context.Context, field graphql.CollectedField, obj *entity.BillingMethod) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingMethod",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OrganizationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingMethod_paymentsDriver(ctx context.Context, field graphql.CollectedField, obj *entity.BillingMethod) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingMethod",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BillingMethod().PaymentsDriver(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5050,7 +5284,7 @@ func (ec *executionContext) _Me_email(ctx context.Context, field graphql.Collect
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Me_organization(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_personalOrganization(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5069,7 +5303,44 @@ func (ec *executionContext) _Me_organization(ctx context.Context, field graphql.
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Organization, nil
+		return obj.PersonalOrganization, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Me_billingOrganization(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Me",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BillingOrganization, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6038,6 +6309,94 @@ func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateBillingInfoBillingMethod(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateBillingInfoBillingMethod_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateBillingInfoBillingMethod(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.BillingInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateBillingInfoBillingPlan(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateBillingInfoBillingPlan_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateBillingInfoBillingPlan(rctx, args["organizationID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.BillingInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8895,10 +9254,10 @@ func (ec *executionContext) _Query_billingInfo(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*BillingInfo)
+	res := resTmp.(*entity.BillingInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx, field.Selections, res)
+	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -13217,7 +13576,7 @@ func (ec *executionContext) _BilledResource(ctx context.Context, sel ast.Selecti
 
 var billingInfoImplementors = []string{"BillingInfo"}
 
-func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionSet, obj *BillingInfo) graphql.Marshaler {
+func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionSet, obj *entity.BillingInfo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, billingInfoImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -13231,16 +13590,62 @@ func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "billingMethod":
+			out.Values[i] = ec._BillingInfo_billingMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "billingPlan":
 			out.Values[i] = ec._BillingInfo_billingPlan(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "paymentsDriver":
-			out.Values[i] = ec._BillingInfo_paymentsDriver(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var billingMethodImplementors = []string{"BillingMethod"}
+
+func (ec *executionContext) _BillingMethod(ctx context.Context, sel ast.SelectionSet, obj *entity.BillingMethod) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, billingMethodImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BillingMethod")
+		case "billingMethodID":
+			out.Values[i] = ec._BillingMethod_billingMethodID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "organizationID":
+			out.Values[i] = ec._BillingMethod_organizationID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "paymentsDriver":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BillingMethod_paymentsDriver(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13370,8 +13775,13 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "organization":
-			out.Values[i] = ec._Me_organization(ctx, field, obj)
+		case "personalOrganization":
+			out.Values[i] = ec._Me_personalOrganization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "billingOrganization":
+			out.Values[i] = ec._Me_billingOrganization(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -13584,6 +13994,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "empty":
 			out.Values[i] = ec._Mutation_empty(ctx, field)
+		case "updateBillingInfoBillingMethod":
+			out.Values[i] = ec._Mutation_updateBillingInfoBillingMethod(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateBillingInfoBillingPlan":
+			out.Values[i] = ec._Mutation_updateBillingInfoBillingPlan(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createModel":
 			out.Values[i] = ec._Mutation_createModel(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -15183,11 +15603,11 @@ func (ec *executionContext) marshalNBilledResource2ᚖgitlabᚗcomᚋbeneathᚑh
 	return ec._BilledResource(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v entity.BillingInfo) graphql.Marshaler {
 	return ec._BillingInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *BillingInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx context.Context, sel ast.SelectionSet, v *entity.BillingInfo) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -15195,6 +15615,20 @@ func (ec *executionContext) marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhq�
 		return graphql.Null
 	}
 	return ec._BillingInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBillingMethod2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v entity.BillingMethod) graphql.Marshaler {
+	return ec._BillingMethod(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v *entity.BillingMethod) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._BillingMethod(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNBillingPlan2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v entity.BillingPlan) graphql.Marshaler {

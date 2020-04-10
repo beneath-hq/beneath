@@ -52,8 +52,11 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	var userIDs []uuid.UUID
 	var usernames []string
 	for _, user := range billingInfo.Organization.Users {
-		userIDs = append(userIDs, user.UserID)
-		usernames = append(usernames, user.Username)
+		// only bill those organization users who have it as their billing org
+		if user.BillingOrganizationID == t.OrganizationID {
+			userIDs = append(userIDs, user.UserID)
+			usernames = append(usernames, user.Username)
+		}
 	}
 	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, UserEntityKind, userIDs, usernames, usageBillTimes)
 	if err != nil {
@@ -103,19 +106,22 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 
 	var billedResources []*BilledResource
 	for _, user := range users {
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        user.UserID,
-			EntityName:      user.Username,
-			EntityKind:      UserEntityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         SeatProduct,
-			Quantity:        1,
-			TotalPriceCents: billingPlan.SeatPriceCents,
-			Currency:        billingPlan.Currency,
-		})
+		// only bill those organization users who have it as their billing org
+		if user.BillingOrganizationID == organizationID {
+			billedResources = append(billedResources, &BilledResource{
+				OrganizationID:  organizationID,
+				BillingTime:     billTimes.BillingTime,
+				EntityID:        user.UserID,
+				EntityName:      user.Username,
+				EntityKind:      UserEntityKind,
+				StartTime:       billTimes.StartTime,
+				EndTime:         billTimes.EndTime,
+				Product:         SeatProduct,
+				Quantity:        1,
+				TotalPriceCents: billingPlan.SeatPriceCents,
+				Currency:        billingPlan.Currency,
+			})
+		}
 	}
 
 	err := CreateOrUpdateBilledResources(ctx, billedResources)

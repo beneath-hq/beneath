@@ -74,7 +74,7 @@ export const QUERY_ME = gql`
           }
         }
       }
-      organization {
+      billingOrganization {
         organizationID
         name
         personal

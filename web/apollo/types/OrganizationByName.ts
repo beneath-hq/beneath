@@ -12,6 +12,7 @@ export interface OrganizationByName_organizationByName_users {
   userID: string;
   name: string;
   username: string;
+  bio: string | null;
   photoURL: string | null;
   readQuota: number;
   writeQuota: number;
@@ -43,6 +44,7 @@ export interface OrganizationByName_organizationByName {
   users: OrganizationByName_organizationByName_users[];
   services: OrganizationByName_organizationByName_services[];
   projects: OrganizationByName_organizationByName_projects[];
+  personal: boolean;
 }
 
 export interface OrganizationByName {

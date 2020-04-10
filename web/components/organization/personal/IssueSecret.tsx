@@ -16,8 +16,8 @@ import {
   Typography,
 } from "@material-ui/core";
 
-import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "../../apollo/queries/secret";
-import { IssueUserSecret, IssueUserSecretVariables } from "../../apollo/types/IssueUserSecret";
+import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "../../../apollo/queries/secret";
+import { IssueUserSecret, IssueUserSecretVariables } from "../../../apollo/types/IssueUserSecret";
 
 const useStyles = makeStyles((theme) => ({
   issueSecretButton: {

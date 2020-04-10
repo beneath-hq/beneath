@@ -96,9 +96,7 @@ app.prepare().then(() => {
     });
   };
 
-  addRoute("/users/:name", "/user");
-  addRoute("/users/:name/:tab", "/user");
-
+  addRoute("/auth", "/auth");
   addRoute("/terminal", "/terminal");
   addRoute("/:organization_name", "/organization");
   addRoute("/:organization_name/-/:tab", "/organization");

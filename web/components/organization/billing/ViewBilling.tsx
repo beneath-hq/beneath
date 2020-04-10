@@ -40,19 +40,19 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
     }
 
     // get payment details for correct driver
-    if (data.billingInfo.paymentsDriver === billing.STRIPECARD_DRIVER) {
+    if (data.billingInfo.billingMethod.paymentsDriver === billing.STRIPECARD_DRIVER) {
       return (
         // CurrentBillingPlan is bundled inside CardDetails so that CurrentBillingPlan doesn't persist when editing someone edits their card details
         <CardDetails billingPlanID={data.billingInfo.billingPlan.billingPlanID} billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
       )
-    } else if (data.billingInfo.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
+    } else if (data.billingInfo.billingMethod.paymentsDriver === billing.STRIPEWIRE_DRIVER) {
       return (
         <Grid container spacing={2}>
           <CurrentBillingPlan billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />
           <WireDetails />
         </Grid>
       )
-    } else if (data.billingInfo.paymentsDriver === billing.ANARCHISM_DRIVER) {
+    } else if (data.billingInfo.billingMethod.paymentsDriver === billing.ANARCHISM_DRIVER) {
       return (
         <Grid container spacing={2}>
           <CurrentBillingPlan billingPeriod={billingPeriod} description={data.billingInfo.billingPlan.description} />

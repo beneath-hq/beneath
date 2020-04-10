@@ -91,7 +91,7 @@ const CardDetails: FC<Props> = ({ billingPlanID, billingPeriod, description }) =
   // Q: is this a problem that it gets hits twice upon page reload? doesn't seem to have a visual effect.
   // I don't think this leads to flicker, because the other user profile tabs have a flicker too, even when Billing is not present
   if (paymentDetails == null) {
-    console.log("paymentDetails is null")
+    // console.log("paymentDetails is null")
     return <p></p>
   }
 

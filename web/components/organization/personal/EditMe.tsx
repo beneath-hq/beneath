@@ -5,11 +5,11 @@ import Moment from "react-moment";
 
 import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 
-import { QUERY_ME, UPDATE_ME } from "../../apollo/queries/user";
-import { Me, Me_me } from "../../apollo/types/Me";
-import { UpdateMe, UpdateMeVariables } from "../../apollo/types/UpdateMe";
-import Loading from "../Loading";
-import VSpace from "../VSpace";
+import { QUERY_ME, UPDATE_ME } from "../../../apollo/queries/user";
+import { Me, Me_me } from "../../../apollo/types/Me";
+import { UpdateMe, UpdateMeVariables } from "../../../apollo/types/UpdateMe";
+import Loading from "../../Loading";
+import VSpace from "../../VSpace";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {
@@ -50,8 +50,8 @@ const EditMeForm: FC<{ me: Me_me }> = ({ me }) => {
       if (data.updateMe) {
         const username = data.updateMe.user.username;
         if (username !== router.query.name) {
-          const href = `/user?name=${username}&tab=edit`;
-          const as = `/users/${username}/edit`;
+          const href = `/organization?organization_name=${username}&tab=edit`;
+          const as = `/${username}/edit`;
           router.replace(href, as, { shallow: true });
         }
       }

@@ -1,13 +1,13 @@
 import { useQuery } from "@apollo/react-hooks";
 import { FC } from "react";
 
-import { GET_USER_METRICS } from "../../apollo/queries/metrics";
-import { GetUserMetrics, GetUserMetricsVariables } from "../../apollo/types/GetUserMetrics";
-import { Me_me } from "../../apollo/types/Me";
-import TopIndicators from "../metrics/user/TopIndicators";
-import UsageIndicator from "../metrics/user/UsageIndicator";
-import { hourFloor, monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
-import WeekChart from "../metrics/WeekChart";
+import { GET_USER_METRICS } from "../../../apollo/queries/metrics";
+import { GetUserMetrics, GetUserMetricsVariables } from "../../../apollo/types/GetUserMetrics";
+import { Me_me } from "../../../apollo/types/Me";
+import TopIndicators from "../../metrics/user/TopIndicators";
+import UsageIndicator from "../../metrics/user/UsageIndicator";
+import { hourFloor, monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../../metrics/util";
+import WeekChart from "../../metrics/WeekChart";
 
 import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 

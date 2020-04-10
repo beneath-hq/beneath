@@ -6,12 +6,12 @@ To report a bug, request a feature, or ask a question, visit/search the [Issues]
 
 ## Documentation for contributors
 
+It's our ambition that all information relevant to developing the core Beneath platform is stored as close to the source code as possible, i.e., in this repository.
+
 The documentation for contributors is structured as follows:
 
 - This directory (`docs/contributing`) provides general information for contributors, including an overview of the codebase and a guideline to setting up a development environment
 - The `README.md` file in each subdirectory provides implementation details about the specific module, such as its purpose, design decisions, and notes for contributors
-
-It's our ambition that all information relevant to developing the core Beneath platform is stored as close to the source code as possible, i.e., in this repository.
 
 The only files in this repository that are considered user-facing (i.e. *not* for contributors) are:
 

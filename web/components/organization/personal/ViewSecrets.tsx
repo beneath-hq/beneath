@@ -5,10 +5,10 @@ import Moment from "react-moment";
 import { IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText, Button } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 
-import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../apollo/queries/secret";
-import { RevokeUserSecret, RevokeUserSecretVariables } from "../../apollo/types/RevokeUserSecret";
-import { SecretsForUser, SecretsForUserVariables } from "../../apollo/types/SecretsForUser";
-import Loading from "../Loading";
+import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../../apollo/queries/secret";
+import { RevokeUserSecret, RevokeUserSecretVariables } from "../../../apollo/types/RevokeUserSecret";
+import { SecretsForUser, SecretsForUserVariables } from "../../../apollo/types/SecretsForUser";
+import Loading from "../../Loading";
 
 interface ViewSecretsProps {
   userID: string;

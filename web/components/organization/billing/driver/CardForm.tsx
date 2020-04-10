@@ -73,10 +73,9 @@ interface CheckoutStateTypes {
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
-  billingPlanID: string
 }
 
-const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
+const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
   const [values, setValues] = React.useState<CheckoutStateTypes>({
     city: "",
     country: "",
@@ -118,8 +117,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, billingPlanID }) => {
 
       const headers = { authorization: `Bearer ${token}` }
       let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
-      url += `?organizationID=${me.organization.organizationID}`
-      url += `&billingPlanID=${billingPlanID}`
+      url += `?organizationID=${me.billingOrganization.organizationID}`
       const res = await fetch(url, { headers })
 
       if (isMounted && me) {
@@ -669,18 +667,14 @@ const countries = [
 
 // * convert the CardFormWrappedFxn functional component to the CardFormWrappedCls class component, so that we can use the injectStripe HOC * //
 // HOCs are only for class components
-interface BillingParams {
-  billingPlanID: string
-}
 
-class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps & BillingParams, BillingParams> {
-  constructor(props: ReactStripeElements.InjectedStripeProps & BillingParams) {
+class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps> {
+  constructor(props: ReactStripeElements.InjectedStripeProps) {
     super(props);
-    this.state = { billingPlanID: props.billingPlanID };
   }
 
   render() {
-    return <CardFormWrappedFxn stripe={this.props.stripe} billingPlanID={this.state.billingPlanID} />
+    return <CardFormWrappedFxn stripe={this.props.stripe} />
   }
 }
 
@@ -715,7 +709,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
     return (
       <StripeProvider stripe={this.state.stripe}>
         <Elements>
-          <CardFormInjectedStripe billingPlanID={this.state.billingPlanID} />
+          <CardFormInjectedStripe />
         </Elements>
       </StripeProvider>
     );

@@ -23,13 +23,12 @@ func InitStripe(stripeKey string) {
 }
 
 // GenerateSetupIntent gets ready for a customer to add credit card information
-func GenerateSetupIntent(organizationID uuid.UUID, billingPlanID uuid.UUID) *stripe.SetupIntent {
+func GenerateSetupIntent(organizationID uuid.UUID) *stripe.SetupIntent {
 	params := &stripe.SetupIntentParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.PaymentMethodTypeCard)}),
 		Usage:              stripe.String(string(stripe.SetupIntentUsageOffSession)),
 	}
 	params.AddMetadata("OrganizationID", organizationID.String())
-	params.AddMetadata("BillingPlanID", billingPlanID.String())
 
 	setupIntent, err := setupintent.New(params)
 	if err != nil {

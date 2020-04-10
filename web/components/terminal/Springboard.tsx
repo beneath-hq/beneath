@@ -9,7 +9,7 @@ import ErrorPage from "../ErrorPage";
 import Loading from "../Loading";
 import Page from "../Page";
 import UsageIndicator from "../metrics/user/UsageIndicator";
-import ViewUserProjects from "../../components/user/ViewUserProjects";
+import ViewUserProjects from "../organization/personal/ViewUserProjects";
 import { monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
 
 import { QUERY_USER_BY_USERNAME } from "../../apollo/queries/user";

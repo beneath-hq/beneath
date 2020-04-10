@@ -42,9 +42,10 @@ const CurrentBillingPlan: FC<Props> = ({ description, billingPeriod }) => {
   useEffect(() => {
     const cancelPlan = (async () => {
       if (cancel) {
+        // TODO: this needs to call UpdateBillingInfo() resolver, not this API; then delete the endpoint
         const headers = { authorization: `Bearer ${token}` }
         let url = `${connection.API_URL}/billing/anarchism/initialize_customer`
-        url += `?organizationID=${me.organization.organizationID}`
+        url += `?organizationID=${me.billingOrganization.organizationID}`
         url += `&billingPlanID=${billing.FREE_BILLING_PLAN_ID}`
         
         const res = await fetch(url, { headers })
