@@ -10,13 +10,9 @@ weight: 400
 
 Time required: 1 minute.
 
-##### 1. Download the CLI if you haven't already
-From your command line:
-```bash
-pip install beneath
-```
+This quick-start assumes you've already installed the Beneath SDK and assumes that you have a Beneath project with a data stream.
 
-##### 2. Add a user to the project
+##### 1. Add a user to the project
 From your command line:
 ```bash
 project add-user yoda -p starwars --view true --create true --admin false 

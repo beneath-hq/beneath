@@ -10,6 +10,8 @@ weight: 200
 
 Time required: 3 minutes.
 
+In this quick-start, we read an event stream from Beneath into a web application. You can read any public data stream or any of the private data streams that you have access to.
+
 ##### 1. Log in to the Data Terminal
 Go to <a href="https://www.beneath.dev">https://www.beneath.dev</a>, and log in. If you don't yet have an account, create one.
 
