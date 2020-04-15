@@ -11,7 +11,7 @@ import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 import ViewUsers from "../components/organization/ViewUsers";
 import ViewServices from "../components/organization/ViewServices";
-import ViewBilling from "../components/organization/billing/ViewBilling";
+import ViewBilling from "../components/organization/billing/ViewBillingInfo";
 import ViewUserProjects from "../components/organization/personal/ViewUserProjects";
 import ViewOrganizationProjects from "../components/organization/ViewOrganizationProjects";
 import { OrganizationByName, OrganizationByNameVariables } from "../apollo/types/OrganizationByName";

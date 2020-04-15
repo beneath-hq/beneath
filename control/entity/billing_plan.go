@@ -69,7 +69,7 @@ func FindDefaultBillingPlan(ctx context.Context) *BillingPlan {
 func makeDefaultBillingPlan() *BillingPlan {
 	return &BillingPlan{
 		Default:         true,
-		Description:     "Default Billing Plan",
+		Description:     "Free",
 		Currency:        DollarCurrency,
 		Period:          timeutil.PeriodMonth,
 		SeatReadQuota:   2000000000,

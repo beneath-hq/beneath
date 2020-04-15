@@ -345,7 +345,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
           </Grid>
         </Grid>
         <Typography variant="h6" gutterBottom className={classes.title}>
-          Payment method
+          Card details
         </Typography>
         <Grid container>
           <Grid item xs={12} md={6}>
@@ -386,10 +386,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
           {values.status !== null && values.status === "succeeded" && (
             <React.Fragment>
               <Typography variant="h5" gutterBottom>
-                Thank you. Enjoy your upgraded account!
-              </Typography>
-              <Typography variant="subtitle1">
-                We will send your bill to your email on file at the beginning of each billing cycle.
+                Thank you. Your card has been approved.
               </Typography>
             </React.Fragment>)}
           {values.status !== null && values.status !== "succeeded" && (
@@ -685,18 +682,16 @@ const CardFormInjectedStripe = injectStripe(CardFormWrappedCls)
 
 // * set our Stripe key and return the CardForm * //
 interface CardFormProps {
-  billingPlanID: string;
 }
 
 interface CardFormState {
   stripe: stripe.Stripe | null;
-  billingPlanID: string;
 }
 
 class CardForm extends React.Component<CardFormProps, CardFormState> {
   constructor(props: CardFormProps) {
     super(props);
-    this.state = { stripe: null, billingPlanID: props.billingPlanID };
+    this.state = { stripe: null };
   }
 
   componentDidMount() {

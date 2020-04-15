@@ -4,10 +4,10 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL mutation operation: UpdateBillingInfoBillingPlan
+// GraphQL mutation operation: UpdateBillingInfo
 // ====================================================
 
-export interface UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan_billingPlan {
+export interface UpdateBillingInfo_updateBillingInfo_billingPlan {
   __typename: "BillingPlan";
   billingPlanID: ControlUUID;
   description: string | null;
@@ -22,23 +22,24 @@ export interface UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan_billi
   baseWriteQuota: number;
 }
 
-export interface UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan_billingMethod {
+export interface UpdateBillingInfo_updateBillingInfo_billingMethod {
   __typename: "BillingMethod";
   paymentsDriver: string;
 }
 
-export interface UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan {
+export interface UpdateBillingInfo_updateBillingInfo {
   __typename: "BillingInfo";
   organizationID: ControlUUID;
-  billingPlan: UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan_billingPlan;
-  billingMethod: UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan_billingMethod;
+  billingPlan: UpdateBillingInfo_updateBillingInfo_billingPlan;
+  billingMethod: UpdateBillingInfo_updateBillingInfo_billingMethod;
 }
 
-export interface UpdateBillingInfoBillingPlan {
-  updateBillingInfoBillingPlan: UpdateBillingInfoBillingPlan_updateBillingInfoBillingPlan;
+export interface UpdateBillingInfo {
+  updateBillingInfo: UpdateBillingInfo_updateBillingInfo;
 }
 
-export interface UpdateBillingInfoBillingPlanVariables {
+export interface UpdateBillingInfoVariables {
   organizationID: ControlUUID;
+  billingMethodID: ControlUUID;
   billingPlanID: ControlUUID;
 }

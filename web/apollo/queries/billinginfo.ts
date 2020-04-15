@@ -24,9 +24,9 @@ export const QUERY_BILLING_INFO = gql`
 }
 `;
 
-export const UPDATE_BILLING_INFO_BILLING_METHOD = gql`
-  mutation UpdateBillingInfoBillingMethod($organizationID: UUID!, $billingMethodID: UUID!){
-  updateBillingInfoBillingMethod(organizationID: $organizationID, billingMethodID: $billingMethodID) {
+export const UPDATE_BILLING_INFO = gql`
+  mutation UpdateBillingInfo($organizationID: UUID!, $billingMethodID: UUID! $billingPlanID: UUID!){
+  updateBillingInfo(organizationID: $organizationID, billingMethodID: $billingMethodID, billingPlanID: $billingPlanID ) {
     organizationID
     billingPlan {
       billingPlanID
@@ -48,9 +48,9 @@ export const UPDATE_BILLING_INFO_BILLING_METHOD = gql`
 }
 `;
 
-export const UPDATE_BILLING_INFO_BILLING_PLAN = gql`
-  mutation UpdateBillingInfoBillingPlan($organizationID: UUID!, $billingPlanID: UUID!){
-  updateBillingInfoBillingPlan(organizationID: $organizationID, billingPlanID: $billingPlanID ) {
+export const UPDATE_BILLING_INFO_BILLING_METHOD = gql`
+  mutation UpdateBillingInfoBillingMethod($organizationID: UUID!, $billingMethodID: UUID!){
+  updateBillingInfoBillingMethod(organizationID: $organizationID, billingMethodID: $billingMethodID) {
     organizationID
     billingPlan {
       billingPlanID
