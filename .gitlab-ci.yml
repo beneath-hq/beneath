@@ -2,20 +2,7 @@ stages:
   - build
   - deploy
 
-python_docs:
-  stage: build
-  image: python:3.7-buster
-  script:
-  - cd clients/python
-  - make apidocs
-  artifacts:
-    paths:
-    - clients/python/docs/_build
-  when: manual
-  only:
-  - master
-
-js_docs:
+build_docs_js:
   stage: build
   image: node:12-alpine
   script:
@@ -25,7 +12,20 @@ js_docs:
   artifacts:
     paths:
     - clients/js/docs
-  # when: manual
+  when: manual
+  only:
+  - master
+
+build_docs_python:
+  stage: build
+  image: python:3.7-buster
+  script:
+  - cd clients/python
+  - make apidocs
+  artifacts:
+    paths:
+    - clients/python/docs/_build
+  when: manual
   only:
   - master
 
