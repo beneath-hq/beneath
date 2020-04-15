@@ -2,33 +2,6 @@ stages:
   - build
   - deploy
 
-build_docs_js:
-  stage: build
-  image: node:12-alpine
-  script:
-  - cd clients/js
-  - yarn install
-  - yarn docs
-  artifacts:
-    paths:
-    - clients/js/docs
-  when: manual
-  only:
-  - master
-
-build_docs_python:
-  stage: build
-  image: python:3.7-buster
-  script:
-  - cd clients/python
-  - make apidocs
-  artifacts:
-    paths:
-    - clients/python/docs/_build
-  when: manual
-  only:
-  - master
-
 .build:
   stage: build
   image: docker:stable
