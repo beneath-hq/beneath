@@ -4,10 +4,9 @@ stages:
 
 pages:
   stage: deploy
-  image: python:3.7-alpine
+  image: python:3.7-slim
   script:
   # python docs
-  - apk add --update make
   - cd clients/python
   - make apidocs
   - cd ../..
