@@ -4,7 +4,7 @@ stages:
 
 pages:
   stage: deploy
-  image: python:3.7-slim
+  image: python:3.7-buster
   script:
   # python docs
   - cd clients/python
