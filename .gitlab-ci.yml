@@ -11,7 +11,7 @@ pages:
   - make apidocs
   - cd ../..
   - mkdir -p public/python
-  - cp -r clients/python/docs/_build public/python
+  - cp -r clients/python/docs/_build/ public/python/
   artifacts:
     paths:
     - public
