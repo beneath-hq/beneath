@@ -1,0 +1,3 @@
+[build]
+  command = "make docs"
+  publish = "docs/_public"
