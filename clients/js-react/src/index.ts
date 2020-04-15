@@ -7,6 +7,9 @@ const DEFAULT_FLASH_DURATION = 2000;
 const DEFAULT_RENDER_FREQUENCY = 250;
 const DEFAULT_SUBSCRIBE_POLL_FREQUENCY = 250;
 
+/**
+ * Options passed to {@linkcode useRecords}
+ */
 export interface UseRecordsOptions {
   secret?: string;
   stream: StreamQualifier;
@@ -58,6 +61,11 @@ export type Record<TRecord = any> = TRecord & {
   };
 };
 
+/**
+ * React hook that you can use to query streams, including paging through data
+ * and getting real-time updates over websockets.
+ * @param opts  Options, including required parameters. See {@linkcode UseRecordsOptions} for details.
+ */
 export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsResult<TRecord> {
   // values
   const [client, setClient] = useState<BrowserClient>(() => new BrowserClient({ secret: opts.secret }));
