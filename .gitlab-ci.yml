@@ -2,6 +2,19 @@ stages:
   - build
   - deploy
 
+pages:
+  stage: deploy
+  image: python:3.7-buster
+  script:
+  # python docs
+  - cd clients/python
+  - make apidocs
+  artifacts:
+    paths:
+    - clients/python/docs/_build/
+  only:
+  - master
+
 .build:
   stage: build
   image: docker:stable
