@@ -31,6 +31,18 @@ func FindBillingMethod(ctx context.Context, billingMethodID uuid.UUID) *BillingM
 	return billingMethod
 }
 
+// FindBillingMethodsByOrganization finds all billing methods for an organization
+func FindBillingMethodsByOrganization(ctx context.Context, organizationID uuid.UUID) []*BillingMethod {
+	var billingMethods []*BillingMethod
+	err := hub.DB.ModelContext(ctx, &billingMethods).
+		Where("organization_id = ?", organizationID).
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return billingMethods
+}
+
 // FindBillingMethodByOrganizationAndDriver finds a billing method by organization and driver
 // TODO: currently assuming that an organization does not have more than one card
 func FindBillingMethodByOrganizationAndDriver(ctx context.Context, organizationID uuid.UUID, paymentDriver PaymentsDriver) *BillingMethod {

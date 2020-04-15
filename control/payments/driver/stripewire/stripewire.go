@@ -40,7 +40,6 @@ func (s *StripeWire) GetHTTPHandlers() map[string]httputil.AppHandler {
 	return map[string]httputil.AppHandler{
 		"initialize_customer": s.handleInitializeCustomer,
 		// "webhook":               handleStripeWebhook,       // TODO: when a customer pays by wire, check to see if any important Stripe events are emitted via webhook
-		"get_payment_details": s.handleGetPaymentDetails,
 	}
 }
 
@@ -101,13 +100,6 @@ func (s *StripeWire) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 		return httputil.NewError(500, "error creating billing method: %v\\n", err)
 	}
 
-	return nil
-}
-
-func (s *StripeWire) handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
-	// TODO: is there anything we want to return to the front-end?
-	// - bank account information where the wire should be sent
-	// - state of recent payment (paid, X days remaining, Y days overdue)
 	return nil
 }
 

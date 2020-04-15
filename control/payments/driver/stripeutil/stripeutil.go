@@ -1,9 +1,6 @@
 package stripeutil
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/payments/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
@@ -11,6 +8,9 @@ import (
 	"github.com/stripe/stripe-go/invoiceitem"
 	"github.com/stripe/stripe-go/paymentmethod"
 	"github.com/stripe/stripe-go/setupintent"
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/payments/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 const (

@@ -68,7 +68,6 @@ func (c *StripeCard) GetHTTPHandlers() map[string]httputil.AppHandler {
 	return map[string]httputil.AppHandler{
 		"generate_setup_intent": c.handleGenerateSetupIntent, // this generates a secret that is used in the front-end; then using that secret, front-end sends card info straight to stripe
 		"webhook":               c.handleStripeWebhook,       // stripe sends the card setup outcome to this webhook
-		"get_payment_details":   c.handleGetPaymentDetails,
 	}
 }
 
@@ -170,6 +169,10 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		driverPayload := make(map[string]interface{})
 		driverPayload["customer_id"] = customerID
 		driverPayload["payment_method_id"] = paymentMethod.ID
+		driverPayload["brand"] = paymentMethod.Card.Brand
+		driverPayload["last4"] = paymentMethod.Card.Last4
+		driverPayload["expMonth"] = paymentMethod.Card.ExpMonth
+		driverPayload["expYear"] = paymentMethod.Card.ExpYear
 
 		_, err = entity.CreateBillingMethod(req.Context(), organization.OrganizationID, entity.StripeCardDriver, driverPayload)
 		if err != nil {
@@ -196,7 +199,9 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.UpdateBillingPlan(req.Context(), defaultBillingPlan.BillingPlanID)
+			// Q: should we delete the faulty billing method? if so, move them to the anarchism billing method
+
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // not changing the billing method
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -225,7 +230,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.UpdateBillingPlan(req.Context(), defaultBillingPlan.BillingPlanID)
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID) // not changing the billing method
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -240,67 +245,6 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return nil
-}
-
-func (c *StripeCard) handleGetPaymentDetails(w http.ResponseWriter, req *http.Request) error {
-	secret := middleware.GetSecret(req.Context())
-
-	user := entity.FindUser(req.Context(), secret.GetOwnerID())
-	if user == nil {
-		return httputil.NewError(400, "user not found")
-	}
-	organizationID := user.BillingOrganizationID
-
-	perms := secret.OrganizationPermissions(req.Context(), organizationID)
-	if !perms.Admin {
-		return httputil.NewError(403, fmt.Sprintf("not allowed to perform admin functions in organization %s", organizationID.String()))
-	}
-
-	billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
-	if billingInfo == nil {
-		return httputil.NewError(500, fmt.Sprintf("billing info not found for organization %s", organizationID.String()))
-	}
-
-	if billingInfo.BillingMethod.PaymentsDriver != "stripecard" {
-		return httputil.NewError(400, fmt.Sprintf("the organization is not on the 'stripecard' payments driver"))
-	}
-
-	customer := stripeutil.RetrieveCustomer(billingInfo.BillingMethod.DriverPayload["customer_id"].(string))
-	pm := stripeutil.RetrievePaymentMethod(customer.InvoiceSettings.DefaultPaymentMethod.ID)
-
-	// create json response
-	json, err := jsonutil.Marshal(map[string]map[string]interface{}{
-		"data": {
-			"organizationID": organizationID,
-			"card": &card{
-				Brand:    string(pm.Card.Brand),
-				Last4:    pm.Card.Last4,
-				ExpMonth: int(pm.Card.ExpMonth),
-				ExpYear:  int(pm.Card.ExpYear),
-			},
-			"billingDetails": &billingDetails{
-				Name: pm.BillingDetails.Name,
-				Address: &address{
-					Line1:      pm.BillingDetails.Address.Line1,
-					Line2:      pm.BillingDetails.Address.Line2,
-					City:       pm.BillingDetails.Address.City,
-					State:      pm.BillingDetails.Address.State,
-					PostalCode: pm.BillingDetails.Address.PostalCode,
-					Country:    pm.BillingDetails.Address.Country,
-				},
-				Email: pm.BillingDetails.Email,
-			},
-		}})
-
-	if err != nil {
-		return httputil.NewError(500, err.Error())
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(json)
-	w.WriteHeader(http.StatusOK)
-
 	return nil
 }
 

@@ -1,5 +1,10 @@
+extend type Query {
+  billingMethods(organizationID: UUID!): [BillingMethod!]!
+}
+
 type BillingMethod {
   billingMethodID: UUID!
   organizationID: UUID!
 	paymentsDriver: String!
+  driverPayload: String!
 }

@@ -53,9 +53,10 @@ func (bi *BillingInfo) UpdateBillingMethod(ctx context.Context, billingMethodID 
 	return bi, nil
 }
 
-// UpdateBillingPlan updates an organization's billing plan
-func (bi *BillingInfo) UpdateBillingPlan(ctx context.Context, billingPlanID uuid.UUID) (*BillingInfo, error) {
+// Update updates an organization's billing method and billing plan
+func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
+	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID
 
 	// upsert
