@@ -9,12 +9,9 @@ pages:
   # python docs
   - cd clients/python
   - make apidocs
-  - cd ../..
-  - mkdir -p public/python
-  - cp -r clients/python/docs/_build/ public/python/
   artifacts:
     paths:
-    - public
+    - clients/python/docs/_build/
   only:
   - master
 
