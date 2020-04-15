@@ -2,6 +2,22 @@ stages:
   - build
   - deploy
 
+pages:
+  stage: deploy
+  image: python:3.7-alpine
+  script:
+  # python docs
+  - cd clients/python
+  - make apidocs
+  - cd ../..
+  - mkdir -p public/python
+  - cp -r clients/python/docs/_build public/python
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
+
 .build:
   stage: build
   image: docker:stable

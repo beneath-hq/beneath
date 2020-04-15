@@ -31,3 +31,4 @@ yarn-error.log
 .pytest_cache
 beneath-models/.venv
 clients/**/build
+/public
