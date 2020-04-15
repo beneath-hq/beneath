@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/beneath.svg)](https://pypi.org/project/beneath)
 <!-- [![Docs badge](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pypi.org/project/beneath) -->
 [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e2dacc5a-486e-4043-9a42-350acb658efc/deploy-status)](https://app.netlify.com/sites/beneath-clients-python/deploys)
 
 This repository contains the source code for the [Beneath](https://beneath.dev) Python library. Learn more about it with these resources:
 
