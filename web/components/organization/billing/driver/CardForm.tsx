@@ -353,7 +353,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
           </Grid>
         </Grid>
         <Grid container className={classes.buttons} spacing={2}>
-          <Grid item>
+          {/* <Grid item>
             <Button
               variant="contained"
               onClick={() => {
@@ -362,7 +362,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
               }}>
               Back
             </Button>
-          </Grid>
+          </Grid> */}
           <Grid item>
             <Button variant="contained" type="submit" color="primary">Submit</Button>
           </Grid>

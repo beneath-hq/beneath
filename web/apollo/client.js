@@ -83,10 +83,12 @@ const dataIdFromObject = (object) => {
       return defaultDataIdFromObject(object);
     case "Metrics":
       return `metrics:${object.entityID}:${object.period}:${object.time}`;
-    case "BillingPlan":
-      return `${object.billingPlanID}`;
     case "BillingInfo":
       return `${object.organizationID}`;
+    case "BillingMethod":
+      return `${object.billingMethodID}`;
+    case "BillingPlan":
+      return `${object.billingPlanID}`;
     case "StreamIndex":
       return `${object.indexID}`;
     default: {

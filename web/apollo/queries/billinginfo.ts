@@ -19,6 +19,7 @@ export const QUERY_BILLING_INFO = gql`
     }
     billingMethod {
       paymentsDriver
+      driverPayload
     }
   }
 }
@@ -43,6 +44,7 @@ export const UPDATE_BILLING_INFO = gql`
     }
     billingMethod {
       paymentsDriver
+      driverPayload
     }
   }
 }
@@ -67,6 +69,7 @@ export const UPDATE_BILLING_INFO_BILLING_METHOD = gql`
     }
     billingMethod {
       paymentsDriver
+      driverPayload
     }
   }
 }

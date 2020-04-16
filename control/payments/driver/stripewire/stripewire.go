@@ -62,7 +62,7 @@ func (s *StripeWire) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 
 	// Beneath will call the function from an admin panel (after a customer discussion)
 	secret := middleware.GetSecret(req.Context())
-	if secret.GetSecretID().String() != s.config.PaymentsAdminSecret {
+	if !secret.IsMaster() {
 		return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to activate"))
 	}
 
