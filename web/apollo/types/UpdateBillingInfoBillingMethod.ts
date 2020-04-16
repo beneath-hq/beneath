@@ -25,6 +25,7 @@ export interface UpdateBillingInfoBillingMethod_updateBillingInfoBillingMethod_b
 export interface UpdateBillingInfoBillingMethod_updateBillingInfoBillingMethod_billingMethod {
   __typename: "BillingMethod";
   paymentsDriver: string;
+  driverPayload: string;
 }
 
 export interface UpdateBillingInfoBillingMethod_updateBillingInfoBillingMethod {
