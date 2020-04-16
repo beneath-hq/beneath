@@ -16,7 +16,7 @@ Beneath is a single platform for building analytics applications. Our ambition i
 
 Here's a list of useful links:
 
-- Homepage: [https://beneath.dev](https://beneath.dev)
+- Homepage: [https://about.beneath.dev](https://about.beneath.dev)
 - Documentation and tutorials: [https://about.beneath.dev/docs](https://about.beneath.dev/docs)
 - Ask questions, report bugs, and request features: [https://gitlab.com/beneath-hq/beneath/-/issues](https://gitlab.com/beneath-hq/beneath/-/issues)
 - Client libraries: [https://gitlab.com/beneath-hq/beneath/-/tree/master/clients](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients)
