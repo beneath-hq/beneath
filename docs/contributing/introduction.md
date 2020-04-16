@@ -10,7 +10,7 @@ weight: 1
 
 ## Bug reports, questions, and feature requests
 
-To report a bug, request a feature, or ask a question, visit/search the [Issues](https://gitlab.com/beneath-hq/beneath/-/issues) (when posting, use either the "Bug", "Feature" or "Support" description templates). We love getting your input, so don't hesitate to engage!
+To report a bug, request a feature, or ask a question, visit/search the [Issues](https://gitlab.com/beneath-hq/beneath/-/issues) (when posting, use either the "Bug", "Feature" or "Question" description templates). We love getting your input, so don't hesitate to engage!
 
 ## Documentation for contributors
 
@@ -18,7 +18,7 @@ It's our ambition that all information relevant to developing the core Beneath p
 
 The documentation for contributors is structured as follows:
 
-- This directory (`docs/contributing`) provides general information for contributors, including an overview of the codebase and a guideline to setting up a development environment
+- This directory (`docs/contributing/`) provides general information for contributors, including an overview of the codebase and a guideline to setting up a development environment
 - The `README.md` file in each subdirectory provides implementation details about the specific module, such as its purpose, design decisions, and notes for contributors
 
 The only files in this repository that are considered user-facing (i.e. *not* for contributors) are:

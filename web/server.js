@@ -78,6 +78,17 @@ app.prepare().then(() => {
     res.redirect("/");
   });
 
+  // Redirect to billing
+  server.get("/-/redirects/upgrade-pro", (req, res) => {
+    let loggedIn = !!req.cookies["token"];
+    if (loggedIn) {
+      // TODO: 
+      res.redirect("/");
+    } else {
+      res.redirect("/auth");
+    }
+  });
+
   // Redirect "/" based on whether user logged in
   // server.get("/", (req, res) => {
   //   res.redirect("/explore");
