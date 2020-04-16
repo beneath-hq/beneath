@@ -99,7 +99,8 @@ func (s *UserSecret) IsService() bool {
 // IsMaster implements the Secret interface
 func (s *UserSecret) IsMaster() bool {
 	// TODO: look up this information in the correct place && instead use UUIDs
-	if s.User.Username == "greenep12" || s.User.Username == "_bem" {
+	user := FindUser(context.Background(), s.UserID)
+	if user.Username == "greenep12" || user.Username == "_bem" {
 		return true
 	}
 
