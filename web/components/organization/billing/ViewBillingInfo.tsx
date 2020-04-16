@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import useMe from "../../../hooks/useMe";
+import _ from 'lodash'
 
 import { QUERY_BILLING_INFO, UPDATE_BILLING_INFO } from '../../../apollo/queries/billinginfo';
 import { QUERY_BILLING_METHODS } from '../../../apollo/queries/billingmethod';
@@ -13,9 +14,7 @@ import SelectField from "../../SelectField";
 import { makeStyles } from "@material-ui/core/styles"
 import CheckIcon from '@material-ui/icons/Check';
 
-import CardDetails from "./driver/CardDetails"
-import WireDetails from "./driver/WireDetails"
-import CardForm from './driver/CardForm';
+import CardForm from './CardForm';
 import billing from "../../../lib/billing"
 
 const useStyles = makeStyles((theme) => ({
@@ -33,6 +32,9 @@ const useStyles = makeStyles((theme) => ({
   },
   icon: {
     marginRight: theme.spacing(2),
+  },
+  billingMethod: {
+    marginBottom: theme.spacing(2),
   },
   selectBillingMethodControl: {
     marginTop: theme.spacing(2),
@@ -123,26 +125,57 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
         You can find detailed information about our billing plans at <Link href="https://about.beneath.dev/enterprise">about.beneath.dev/enterprise</Link>.
         </Typography>
       </Paper>
+
       <Grid container>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="h6" className={classes.title}>
-            Billing methods on file
-          </Typography>
-          {cards.map(({ billingMethodID, driverPayload }) => (
-            <React.Fragment key={billingMethodID}>
-              <CardDetails billingMethodID={billingMethodID} driverPayload={driverPayload} />
-            </React.Fragment>
-          ))}
 
-          {wire.map(({ billingMethodID }) => (
-            <WireDetails />
-          ))}
-
-          {cards.length == 0 && wire.length == 0 && (
-            <Typography>
-              You have no billing methods on file.
+        {/* BILLING METHODS ON FILE */}
+        <Grid item container xs={12} sm={6}>
+          <Grid item>
+            <Typography variant="h6" className={classes.title}>
+              Billing methods on file
             </Typography>
-          )}
+          </Grid>
+          <Grid item>
+            {cards.map(({ billingMethodID, driverPayload }) => {
+              const payload = JSON.parse(driverPayload)
+              const rows = [
+                { name: 'Card type', detail: _.startCase(_.toLower(payload.brand)) },
+                { name: 'Card number', detail: 'xxxx-xxxx-xxxx-' + payload.last4 },
+                { name: 'Expiration', detail: payload.expMonth.toString() + '/' + payload.expYear.toString().substring(2, 4) },
+              ]
+
+              return (
+                <React.Fragment key={billingMethodID}>
+                  <Grid item className={classes.billingMethod}>
+                    {rows.map(rows => (
+                      <React.Fragment key={rows.name}>
+                        <Grid container>
+                          <Grid item xs={12} sm={6}>
+                            <Typography gutterBottom>{rows.name}</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography gutterBottom>{rows.detail}</Typography>
+                          </Grid>
+                        </Grid>
+                      </React.Fragment>
+                    ))}
+                  </Grid>
+                </React.Fragment>
+              )
+            })}
+
+            {wire.map(() => (
+              <Grid item className={classes.billingMethod}>
+                <Typography gutterBottom>You're authorized to pay by wire. Wire payments must be received within 15 days of the invoice.</Typography>
+              </Grid>
+            ))}
+
+            {cards.length == 0 && wire.length == 0 && (
+              <Typography>
+                You have no billing methods on file.
+              </Typography>
+            )}
+          </Grid>
           <Button
             className={classes.button}
             color="primary"
@@ -163,6 +196,8 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
             <DialogActions />
           </Dialog>
         </Grid>
+
+        {/* BILLING INFO */}
         <Grid item container direction="column" xs={12} sm={6}>
           <Typography variant="h6" className={classes.title}>
             Billing info

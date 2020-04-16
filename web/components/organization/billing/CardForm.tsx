@@ -5,11 +5,11 @@ import { Autocomplete } from "@material-ui/lab"
 import { makeStyles } from "@material-ui/core/styles"
 import _ from 'lodash'
 
-import { useToken } from '../../../../hooks/useToken'
-import useMe from "../../../../hooks/useMe";
-import connection from "../../../../lib/connection"
-import billing from "../../../../lib/billing"
-import Loading from "../../../Loading"
+import { useToken } from '../../../hooks/useToken'
+import useMe from "../../../hooks/useMe";
+import connection from "../../../lib/connection"
+import billing from "../../../lib/billing"
+import Loading from "../../Loading"
 
 const useStyles = makeStyles((theme) => ({
   title: {
