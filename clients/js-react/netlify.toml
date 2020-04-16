@@ -1,0 +1,4 @@
+[build]
+  command = "yarn docs"
+  publish = "docs"
+  ignore = "git diff --quiet HEAD^ HEAD ."
