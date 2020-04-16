@@ -8,7 +8,7 @@ import { BillingInfo, BillingInfoVariables, BillingInfo_billingInfo } from '../.
 import { UpdateBillingInfo, UpdateBillingInfoVariables } from '../../../apollo/types/UpdateBillingInfo';
 import { BillingMethods, BillingMethodsVariables } from '../../../apollo/types/BillingMethods';
 
-import { Button, Typography, Grid, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText, Select, InputLabel, MenuItem, ListItemText, FormHelperText, ListItem } from "@material-ui/core"
+import { Button, Typography, Grid, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText, Select, InputLabel, MenuItem, ListItemText, FormHelperText, ListItem, Link, Paper } from "@material-ui/core"
 import SelectField from "../../SelectField";
 import { makeStyles } from "@material-ui/core/styles"
 import CheckIcon from '@material-ui/icons/Check';
@@ -19,6 +19,9 @@ import CardForm from './driver/CardForm';
 import billing from "../../../lib/billing"
 
 const useStyles = makeStyles((theme) => ({
+  banner: {
+    padding: theme.spacing(2),
+  },
   title: {
     marginTop: theme.spacing(4),
     marginBottom: theme.spacing(2),
@@ -109,19 +112,21 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
   }
 
   const billingInfo = [
-    { name: 'Plan name', detail: data.billingInfo.billingPlan.description },
-    { name: 'Billing method', detail: displayBillingMethod(data.billingInfo) },
+    { name: 'Plan name', detail: data.billingInfo.billingPlan.description, editButton: false },
+    { name: 'Billing method', detail: displayBillingMethod(data.billingInfo), editButton: true },
   ]
     
   return (
     <React.Fragment>
-      <Typography>
-        You can find information about our billing plans at about.beneath.dev/enterprise.
-      </Typography>
+      <Paper elevation={1} square>
+        <Typography className={classes.banner}>
+        You can find detailed information about our billing plans at <Link href="https://about.beneath.dev/enterprise">about.beneath.dev/enterprise</Link>.
+        </Typography>
+      </Paper>
       <Grid container>
         <Grid item xs={12} sm={6}>
           <Typography variant="h6" className={classes.title}>
-            Billing methods
+            Billing methods on file
           </Typography>
           {cards.map(({ billingMethodID, driverPayload }) => (
             <React.Fragment key={billingMethodID}>
@@ -140,7 +145,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
           )}
           <Button
             className={classes.button}
-            variant="contained"
+            color="primary"
             onClick={() => {setAddCardDialogue(true)}}
           >
             Add Credit Card
@@ -162,15 +167,91 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
           <Typography variant="h6" className={classes.title}>
             Billing info
           </Typography>
-          <Grid container>
+          <Grid container alignItems="center">
             {billingInfo.map(billingInfo => (
               <React.Fragment key={billingInfo.name}>
                 <Grid item xs={6}>
-                  <Typography gutterBottom>{billingInfo.name}</Typography>
+                  <Typography>{billingInfo.name}</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography gutterBottom>{billingInfo.detail}</Typography>
+                <Grid item>
+                  <Typography>{billingInfo.detail}</Typography>
                 </Grid>
+                {data.billingInfo.billingPlan.description == billing.PRO_BILLING_PLAN_DESCRIPTION && billingInfo.editButton && (
+                  <Grid item>
+                    <Button color="primary"
+                      onClick={() => {
+                        setChangeBillingMethodDialogue(true)
+                      }}>
+                      Edit
+                    </Button>
+                    <Dialog
+                      open={changeBillingMethodDialogue}
+                      fullWidth={true}
+                      maxWidth={"sm"}
+                      onBackdropClick={() => { setChangeBillingMethodDialogue(false) }}
+                    >
+                      <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
+                      <DialogContent>
+                        <Grid container direction="column">
+                          <Grid item>
+                            <SelectField
+                              id="billing_method"
+                              label="Billing method"
+                              value={selectedBillingMethod}
+                              options={cards.map((card) => {
+                                const payload = JSON.parse(card.driverPayload)
+                                return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: card.billingMethodID }
+                              })}
+                              onChange={({ target }) => setSelectedBillingMethod(target.value as string)}
+                              controlClass={classes.selectBillingMethodControl}
+                            />
+                          </Grid>
+                        </Grid>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button color="primary" autoFocus onClick={() => {
+                          setChangeBillingMethodDialogue(false)
+                        }}>
+                          Cancel
+                        </Button>
+                        <Button color="primary" variant="contained" autoFocus onClick={() => {
+                          if (selectedBillingMethod) {
+                            updateBillingInfo({
+                              variables: {
+                                organizationID: organizationID,
+                                billingMethodID: selectedBillingMethod,
+                                billingPlanID: billing.PRO_MONTHLY_BILLING_PLAN_ID
+                              }
+                            })
+                          } else {
+                            setErrorDialogue(true)
+                          }
+                        }}>
+                          Change Billing Method
+                        </Button>
+                        <Dialog
+                          open={errorDialogue}
+                          aria-describedby="alert-dialog-description"
+                        >
+                          <DialogContent>
+                            {errorDialogue && (
+                              <Typography variant="body1" color="error">
+                                Please select your billing method.
+                              </Typography>)}
+                          </DialogContent>
+                          <DialogActions>
+                            <Button
+                              onClick={() => setErrorDialogue(false)}
+                              color="primary"
+                              autoFocus>
+                              Ok
+                      </Button>
+                          </DialogActions>
+                        </Dialog>
+                      </DialogActions>
+                    </Dialog>
+                  </Grid>
+                )}
               </React.Fragment>
             ))}
           </Grid>
@@ -278,9 +359,8 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                 <Button
                   variant="contained"
                   className={classes.button}
-                  onClick={() => {
-                    window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
-                  }}>
+                  href="https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
+                >
                   Discuss Enterprise Plan
                 </Button>
               </Grid>
@@ -289,88 +369,12 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
           
           {data.billingInfo.billingPlan.description == billing.PRO_BILLING_PLAN_DESCRIPTION && (
             <Grid item container direction="column">
-              <Grid item>
-                <Button
-                  variant="contained"
-                  className={classes.button}
-                  onClick={() => {
-                    setChangeBillingMethodDialogue(true)
-                  }}>
-                  Change Billing Method
-                </Button>
-                <Dialog
-                  open={changeBillingMethodDialogue}
-                  fullWidth={true}
-                  maxWidth={"sm"}
-                  onBackdropClick={() => { setChangeBillingMethodDialogue(false) }}
-                >
-                  <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
-                  <DialogContent>
-                    <Grid container direction="column">
-                      <Grid item>
-                        <SelectField
-                          id="billing_method"
-                          label="Billing method"
-                          value={selectedBillingMethod}
-                          options={cards.map((card) => {
-                            const payload = JSON.parse(card.driverPayload)
-                            return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: card.billingMethodID }
-                          })}
-                          onChange={({ target }) => setSelectedBillingMethod(target.value as string)}
-                          controlClass={classes.selectBillingMethodControl}
-                        />
-                      </Grid>
-                    </Grid>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button color="primary" autoFocus onClick={() => {
-                      setChangeBillingMethodDialogue(false)
-                    }}>
-                      Cancel
-                  </Button>
-                    <Button color="primary" variant="contained" autoFocus onClick={() => {
-                      if (selectedBillingMethod) {
-                        updateBillingInfo({
-                          variables: {
-                            organizationID: organizationID,
-                            billingMethodID: selectedBillingMethod,
-                            billingPlanID: billing.PRO_MONTHLY_BILLING_PLAN_ID
-                          }
-                        })
-                      } else {
-                        setErrorDialogue(true)
-                      }
-                    }}>
-                      Change Billing Method
-                  </Button>
-                    <Dialog
-                      open={errorDialogue}
-                      aria-describedby="alert-dialog-description"
-                    >
-                      <DialogContent>
-                        {errorDialogue && (
-                          <Typography variant="body1" color="error">
-                            Please select your billing method.
-                          </Typography>)}
-                      </DialogContent>
-                      <DialogActions>
-                        <Button
-                          onClick={() => setErrorDialogue(false)}
-                          color="primary"
-                          autoFocus>
-                          Ok
-                        </Button>
-                      </DialogActions>
-                    </Dialog>
-                  </DialogActions>
-                </Dialog>
-              </Grid>
               <Grid container item>
 
                 <Grid item>
                   <Button
-                    variant="contained"
-                    color="secondary"
+                    variant="outlined"
+                    // color="secondary"
                     className={classes.button}
                     onClick={() => {
                       setCancelDialogue(true)
