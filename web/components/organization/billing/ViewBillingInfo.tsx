@@ -115,6 +115,8 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
 
   const billingInfo = [
     { name: 'Plan name', detail: data.billingInfo.billingPlan.description, editButton: false },
+    { name: 'Read quota', detail: (data.billingInfo.billingPlan.seatReadQuota/10**9).toString() + " GB", editButton: false},
+    { name: 'Write quota', detail: (data.billingInfo.billingPlan.seatWriteQuota/10**9).toString() + " GB", editButton: false},
     { name: 'Billing method', detail: displayBillingMethod(data.billingInfo), editButton: true },
   ]
     
