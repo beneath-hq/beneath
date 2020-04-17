@@ -61,7 +61,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 	project := &Project{
 		ProjectID: projectID,
 	}
-	err := hub.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Users").Select()
+	err := hub.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Users", "Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
