@@ -48,11 +48,25 @@ class Client:
       raise TypeError("secret must be a string")
     return secret.strip()
 
-  async def find_stream(self, path: str = None) -> Stream:
+  async def find_stream(self, path: str) -> Stream:
     qualifier = StreamQualifier.from_path(path)
     stream = Stream(client=self, qualifier=qualifier)
     # pylint: disable=protected-access
     await stream._ensure_loaded()
+    return stream
+
+  async def stage_stream(self, path: str, schema: str) -> Stream:
+    qualifier = StreamQualifier.from_path(path)
+    project = await self.admin.projects.find_by_organization_and_name(qualifier.organization, qualifier.project)
+    try:
+      await self.admin.streams.create(schema=schema, project_id=project["projectID"])
+    except beneath.GraphQLError:
+      await client.admin.streams.find_by_organization_project_and_name(
+        organization_name=qualifier.organization,
+        project_name=qualifier.project,
+        stream_name=qualifier.stream,
+      )
+    stream = await self.find_stream(path)
     return stream
 
   # EASY HELPERS
