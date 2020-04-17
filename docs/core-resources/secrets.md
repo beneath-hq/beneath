@@ -25,4 +25,4 @@ Authenticate your CLI session by providing your user secret. From your command l
 ```bash
 beneath auth SECRET
 ```
-Beneath stores your secret in a hidden folder on your Desktop called “.beneath”
+Beneath stores your secret in a hidden folder in your home directory called “.beneath”
