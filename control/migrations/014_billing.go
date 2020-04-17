@@ -21,7 +21,20 @@ func init() {
 		}
 
 		// BillingInfo
-		err = db.Model(&entity.BillingInfo{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE billing_infos(
+				billing_info_id       UUID DEFAULT uuid_generate_v4(),
+				organization_id				UUID NOT NULL,
+				billing_plan_id 			UUID NOT NULL,
+				payments_driver 			TEXT NOT NULL,
+				driver_payload 				JSONB,
+				created_on 						timestamp with time zone DEFAULT now(),
+				updated_on 						timestamp with time zone DEFAULT now(),
+				PRIMARY KEY (billing_info_id),
+				FOREIGN KEY (organization_id) REFERENCES organizations (organization_id) ON DELETE CASCADE,
+				FOREIGN KEY (billing_plan_id) REFERENCES billing_plans (billing_plan_id) ON DELETE RESTRICT
+			);
+		`)
 		if err != nil {
 			return err
 		}

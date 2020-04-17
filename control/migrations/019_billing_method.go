@@ -16,7 +16,7 @@ func init() {
 		// BillingInfo.BillingMethodID
 		_, err = db.Exec(`
 			ALTER TABLE billing_infos
-			ADD billing_method_id UUID,
+			ADD billing_method_id UUID NOT NULL,
 			ADD FOREIGN KEY (billing_method_id) REFERENCES billing_methods (billing_method_id) ON DELETE RESTRICT;
 		`)
 		if err != nil {

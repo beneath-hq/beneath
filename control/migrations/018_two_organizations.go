@@ -40,6 +40,16 @@ func init() {
 			return err
 		}
 
+		// migrate data
+		_, err = db.Exec(`
+			insert into users(personal_organization_id)
+			select u.billing_organization_id
+			from users u;
+		`)
+		if err != nil {
+			return err
+		}
+
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
