@@ -110,10 +110,10 @@ const Springboard: FC = () => {
             color="default"
             variant="outlined"
             className={clsx(classes.button, classes.secondaryButton)}
-            href={`//about.beneath.dev/docs/write-data-from-your-app/`}
+            href={`//about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
             component={NextMuiLinkList}
           >
-            Tutorials
+            Create Project
           </Button>
         </Grid>
         <Grid item>
@@ -122,7 +122,8 @@ const Springboard: FC = () => {
             color="default"
             variant="outlined"
             className={clsx(classes.button, classes.secondaryButton)}
-            href={`/user?name=${username}&tab=monitoring`}
+            as={`/${username}/-/monitoring`}
+            href={`/organization?organization_name=${username}&tab=monitoring`}
             component={NextMuiLinkList}
           >
             Monitor

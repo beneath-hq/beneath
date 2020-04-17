@@ -2,27 +2,16 @@ package anarchism
 
 import (
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // Anarchism implements beneath.PaymentsDriver
-type Anarchism struct {
-	config configSpecification
-}
-
-type configSpecification struct {
-	PaymentsAdminSecret string `envconfig:"CONTROL_PAYMENTS_ADMIN_SECRET" required:"true"`
-}
+type Anarchism struct{}
 
 // New initializes a Anarchism object
 func New() Anarchism {
-	var config configSpecification
-	envutil.LoadConfig("beneath", &config)
-	return Anarchism{
-		config: config,
-	}
+	return Anarchism{}
 }
 
 // GetHTTPHandlers returns the necessary handlers to implement Anarchism

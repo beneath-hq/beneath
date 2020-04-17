@@ -21,8 +21,7 @@ type StripeWire struct {
 }
 
 type configSpecification struct {
-	StripeSecret        string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
-	PaymentsAdminSecret string `envconfig:"CONTROL_PAYMENTS_ADMIN_SECRET" required:"true"`
+	StripeSecret string `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
 }
 
 // New initializes a StripeWire object

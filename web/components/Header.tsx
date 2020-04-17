@@ -134,7 +134,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                   <UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />,
                   {
                     onClick: closeMenu,
-                    as: `/${me.user.username}/monitoring`,
+                    as: `/${me.user.username}/-/monitoring`,
                     href: `/organization?organization_name=${me.user.username}&tab=monitoring`,
                     className: classes.menuItemUsage,
                   }
@@ -146,7 +146,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                 })}
                 {makeMenuItem("Secrets", {
                   onClick: closeMenu,
-                  as: `/${me.user.username}/secrets`,
+                  as: `/${me.user.username}/-/secrets`,
                   href: `/organization?organization_name=${me.user.username}&tab=secrets`,
                 })}
                 {!me.billingOrganization.personal && makeMenuItem("Organization", {
