@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(2),
   },
   billingMethod: {
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(1),
   },
   selectBillingMethodControl: {
     marginTop: theme.spacing(2),
@@ -129,13 +129,13 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
       <Grid container>
 
         {/* BILLING METHODS ON FILE */}
-        <Grid item container xs={12} sm={6}>
+        <Grid item container direction="column" xs={12} sm={6}>
           <Grid item>
             <Typography variant="h6" className={classes.title}>
               Billing methods on file
             </Typography>
           </Grid>
-          <Grid item>
+          <Grid item container direction="column">
             {cards.map(({ billingMethodID, driverPayload }) => {
               const payload = JSON.parse(driverPayload)
               const rows = [
@@ -171,30 +171,32 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
             ))}
 
             {cards.length == 0 && wire.length == 0 && (
-              <Typography>
-                You have no billing methods on file.
-              </Typography>
+              <Grid item className={classes.billingMethod}>
+                <Typography>You have no billing methods on file.</Typography>
+              </Grid>
             )}
           </Grid>
-          <Button
-            className={classes.button}
-            color="primary"
-            onClick={() => {setAddCardDialogue(true)}}
-          >
-            Add Credit Card
-          </Button>
-          <Dialog 
-            open={addCardDialogue} 
-            fullWidth={true} 
-            maxWidth={"md"}
-            onBackdropClick={() => {setAddCardDialogue(false)}}
-          >
-            <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
-            <DialogContent>
-              <CardForm />
-            </DialogContent>
-            <DialogActions />
-          </Dialog>
+          <Grid item>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {setAddCardDialogue(true)}}
+            >
+              Add Credit Card
+            </Button>
+            <Dialog 
+              open={addCardDialogue} 
+              fullWidth={true} 
+              maxWidth={"md"}
+              onBackdropClick={() => {setAddCardDialogue(false)}}
+            >
+              <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
+              <DialogContent>
+                <CardForm />
+              </DialogContent>
+              <DialogActions />
+            </Dialog>
+          </Grid>
         </Grid>
 
         {/* BILLING INFO */}
