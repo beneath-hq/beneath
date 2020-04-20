@@ -10,8 +10,8 @@ import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 import ViewUsers from "../components/organization/ViewUsers";
+import BillingTab from "../components/organization/billing/BillingTab";
 import ViewServices from "../components/organization/ViewServices";
-import ViewBilling from "../components/organization/billing/ViewBillingInfo";
 import ViewUserProjects from "../components/organization/personal/ViewUserProjects";
 import ViewOrganizationProjects from "../components/organization/ViewOrganizationProjects";
 import { OrganizationByName, OrganizationByNameVariables } from "../apollo/types/OrganizationByName";
@@ -72,7 +72,7 @@ const OrganizationPage = () => {
       }
       // { value: "services", label: "Services", render: () => <ViewServices organization={organization} /> }
       // TODO: billing tab should only be viewable to admins of the organization
-      tabs.push({ value: "billing", label: "Billing", render: () => <ViewBilling organizationID={me.billingOrganization.organizationID} /> });
+      tabs.push({ value: "billing", label: "Billing", render: () => <BillingTab organizationID={me.billingOrganization.organizationID} /> });
     }
   }
 
