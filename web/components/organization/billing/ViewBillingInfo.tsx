@@ -55,6 +55,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
   const [addCardDialogue, setAddCardDialogue] = React.useState(false)
   const [upgradeDialogue, setUpgradeDialogue] = React.useState(false)
   const [errorDialogue, setErrorDialogue] = React.useState(false)
+  const [error, setError] = React.useState("")
   const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false)
   const [cancelDialogue, setCancelDialogue] = React.useState(false)
   const [selectedBillingMethod, setSelectedBillingMethod] = React.useState("")
@@ -64,13 +65,13 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
     return <p>Need to log in to see your current billing plan</p>
   }
 
-  const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+  const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     variables: {
       organizationID: organizationID,
     },
   });
 
-  const { loading: loading2, error: error2, data: data2 } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
+  const { loading: loading2, error: queryError2, data: data2 } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
     variables: {
       organizationID: organizationID,
     },
@@ -78,23 +79,25 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
 
   const [updateBillingInfo] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
     onCompleted: (data) => {
-      // TODO: handle errors  
-      // on success, reload the page
       window.location.reload(true)
+    },
+    onError: (error) => {
+      setError(error.message.replace("GraphQL error:", ""))
+      setErrorDialogue(true)
     },
   })
 
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
+  if (queryError1 || !data) {
+    return <p>Error: {JSON.stringify(queryError1)}</p>;
   }
   
-  if (error2 || !data2) {
-    return <p>Error: {JSON.stringify(error2)}</p>;
+  if (queryError2 || !data2) {
+    return <p>Error: {JSON.stringify(queryError2)}</p>;
   }
   
-  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == "stripecard")
-  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == "stripewire")
-  const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == "anarchism")
+  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
+  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)
+  const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)
   
   // if (data.billingInfo.billingPlan.period === '\u0002') {
   //   var billingPeriod: string = billing.MONTHLY_BILLING_PLAN_STRING
@@ -105,10 +108,10 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
   const displayBillingMethod = (billingInfo: BillingInfo_billingInfo ) => {
     if (billingInfo.billingPlan.description == billing.FREE_BILLING_PLAN_DESCRIPTION) {
       return "N/A"
-    } else if (billingInfo.billingMethod.paymentsDriver == "stripecard"){
+    } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER){
       const payload = JSON.parse(billingInfo.billingMethod.driverPayload)
       return payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " " + payload.last4
-    } else if (billingInfo.billingMethod.paymentsDriver == "stripewire") {
+    } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
       return "Wire"
     }
   }
@@ -166,11 +169,11 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
               )
             })}
 
-            {wire.map(() => (
+            {wire[0] && (
               <Grid item className={classes.billingMethod}>
                 <Typography gutterBottom>You're authorized to pay by wire. Wire payments must be received within 15 days of the invoice.</Typography>
               </Grid>
-            ))}
+            )}
 
             {cards.length == 0 && wire.length == 0 && (
               <Grid item className={classes.billingMethod}>
@@ -237,9 +240,15 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                               id="billing_method"
                               label="Billing method"
                               value={selectedBillingMethod}
-                              options={cards.map((card) => {
-                                const payload = JSON.parse(card.driverPayload)
-                                return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: card.billingMethodID }
+                              options={data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver != billing.ANARCHISM_DRIVER).map((billingMethod) => {
+                                if (billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
+                                  const payload = JSON.parse(billingMethod.driverPayload)
+                                  return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
+                                } else if (billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
+                                  return { label: "Wire payment", value: billingMethod.billingMethodID }
+                                } else {
+                                  return { label: "", value: ""}
+                                }
                               })}
                               onChange={({ target }) => setSelectedBillingMethod(target.value as string)}
                               controlClass={classes.selectBillingMethodControl}
@@ -263,6 +272,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                               }
                             })
                           } else {
+                            setError("Please select your billing method.")
                             setErrorDialogue(true)
                           }
                         }}>
@@ -275,7 +285,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                           <DialogContent>
                             {errorDialogue && (
                               <Typography variant="body1" color="error">
-                                Please select your billing method.
+                                {error}
                               </Typography>)}
                           </DialogContent>
                           <DialogActions>
@@ -321,10 +331,12 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                       <Typography>
                         {["5 GB writes included in base. Then $2/GB.", "25 GB reads included in base. Then $1/GB.", "Private projects", "Role-based access controls"].map((feature) => {
                           return (
-                            <ListItem>
-                              <CheckIcon className={classes.icon}/>
-                              <ListItemText>{feature}</ListItemText>
-                            </ListItem>
+                            <React.Fragment key={feature}>
+                              <ListItem>
+                                <CheckIcon className={classes.icon}/>
+                                <Typography component="span">{feature}</Typography>
+                              </ListItem>
+                            </React.Fragment>
                           )
                         })}
                       </Typography>
@@ -337,9 +349,15 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                         id="billing_method"
                         label="Billing method"
                         value={selectedBillingMethod}
-                        options={cards.map((card) => {
-                          const payload = JSON.parse(card.driverPayload)
-                          return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: card.billingMethodID}
+                        options={data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver != billing.ANARCHISM_DRIVER).map((billingMethod) => {
+                          if (billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
+                            const payload = JSON.parse(billingMethod.driverPayload)
+                            return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
+                          } else if (billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
+                            return { label: "Wire payment", value: billingMethod.billingMethodID }
+                          } else {
+                            return { label: "", value: "" }
+                          }
                         })}
                         onChange={({ target }) => setSelectedBillingMethod(target.value as string)}
                         controlClass={classes.selectBillingMethodControl}
@@ -368,6 +386,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                         }
                       })
                     } else {
+                      setError("Please select your billing method.")
                       setErrorDialogue(true)
                     }
                   }}>
@@ -380,7 +399,7 @@ const ViewBilling: FC<Props> = ({ organizationID }) => {
                     <DialogContent>
                       {errorDialogue && (
                         <Typography variant="body1" color="error">
-                          Please select your billing method.
+                          {error}
                         </Typography>)}
                     </DialogContent>
                     <DialogActions>
