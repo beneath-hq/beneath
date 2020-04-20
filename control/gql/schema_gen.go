@@ -94,6 +94,7 @@ type ComplexityRoot struct {
 		BaseWriteQuota         func(childComplexity int) int
 		BillingPlanID          func(childComplexity int) int
 		Currency               func(childComplexity int) int
+		Default                func(childComplexity int) int
 		Description            func(childComplexity int) int
 		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
@@ -237,6 +238,7 @@ type ComplexityRoot struct {
 		BilledResources                    func(childComplexity int, organizationID uuid.UUID, billingTime time.Time) int
 		BillingInfo                        func(childComplexity int, organizationID uuid.UUID) int
 		BillingMethods                     func(childComplexity int, organizationID uuid.UUID) int
+		BillingPlans                       func(childComplexity int) int
 		Empty                              func(childComplexity int) int
 		ExploreProjects                    func(childComplexity int) int
 		GetServiceMetrics                  func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
@@ -412,6 +414,7 @@ type QueryResolver interface {
 	BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error)
 	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error)
 	BillingMethods(ctx context.Context, organizationID uuid.UUID) ([]*entity.BillingMethod, error)
+	BillingPlans(ctx context.Context) ([]*entity.BillingPlan, error)
 	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
@@ -639,6 +642,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.Currency(childComplexity), true
+
+	case "BillingPlan.default":
+		if e.complexity.BillingPlan.Default == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.Default(childComplexity), true
 
 	case "BillingPlan.description":
 		if e.complexity.BillingPlan.Description == nil {
@@ -1605,6 +1615,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.BillingMethods(childComplexity, args["organizationID"].(uuid.UUID)), true
 
+	case "Query.billingPlans":
+		if e.complexity.Query.BillingPlans == nil {
+			break
+		}
+
+		return e.complexity.Query.BillingPlans(childComplexity), true
+
 	case "Query.empty":
 		if e.complexity.Query.Empty == nil {
 			break
@@ -2382,8 +2399,13 @@ type BillingMethod {
   driverPayload: String!
 }
 `},
-	&ast.Source{Name: "control/gql/schema/billing_plans.graphql", Input: `type BillingPlan {
+	&ast.Source{Name: "control/gql/schema/billing_plans.graphql", Input: `extend type Query {
+  billingPlans: [BillingPlan!]!
+}
+
+type BillingPlan {
   billingPlanID: UUID!
+	default: Boolean!
 	description: String
 	currency: String!
 	period: String!
@@ -4891,6 +4913,43 @@ func (ec *executionContext) _BillingPlan_billingPlanID(ctx context.Context, fiel
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_default(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Default, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_description(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
@@ -9391,6 +9450,43 @@ func (ec *executionContext) _Query_billingMethods(ctx context.Context, field gra
 	return ec.marshalNBillingMethod2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_billingPlans(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().BillingPlans(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.BillingPlan)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBillingPlan2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -13818,6 +13914,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "default":
+			out.Values[i] = ec._BillingPlan_default(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "description":
 			out.Values[i] = ec._BillingPlan_description(ctx, field, obj)
 		case "currency":
@@ -14707,6 +14808,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_billingMethods(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "billingPlans":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_billingPlans(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -15829,6 +15944,43 @@ func (ec *executionContext) marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhq
 
 func (ec *executionContext) marshalNBillingPlan2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v entity.BillingPlan) graphql.Marshaler {
 	return ec._BillingPlan(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBillingPlan2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v []*entity.BillingPlan) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx context.Context, sel ast.SelectionSet, v *entity.BillingPlan) graphql.Marshaler {
