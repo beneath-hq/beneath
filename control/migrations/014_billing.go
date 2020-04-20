@@ -27,6 +27,7 @@ func init() {
 				"write_overage_price_cents" integer NOT NULL,
 				"personal" boolean NOT NULL,
 				"private_projects" boolean NOT NULL,
+				"available_in_ui" boolean NOT NULL,
 				PRIMARY KEY ("billing_plan_id")
 			)
 		`)

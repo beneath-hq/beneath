@@ -5,9 +5,11 @@ import _ from 'lodash'
 
 import { QUERY_BILLING_INFO, UPDATE_BILLING_INFO } from '../../../apollo/queries/billinginfo';
 import { QUERY_BILLING_METHODS } from '../../../apollo/queries/billingmethod';
+import { QUERY_BILLING_PLANS } from '../../../apollo/queries/billingplan';
 import { BillingInfo, BillingInfoVariables, BillingInfo_billingInfo } from '../../../apollo/types/BillingInfo';
 import { UpdateBillingInfo, UpdateBillingInfoVariables } from '../../../apollo/types/UpdateBillingInfo';
 import { BillingMethods, BillingMethodsVariables } from '../../../apollo/types/BillingMethods';
+import { BillingPlans } from '../../../apollo/types/BillingPlans';
 
 import { Button, Typography, Grid, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText, ListItem } from "@material-ui/core"
 import SelectField from "../../SelectField";
@@ -67,6 +69,8 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
       organizationID: organizationID,
     },
   });
+  
+  const { loading: loading3, error: queryError3, data: data3 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
 
   const [updateBillingInfo] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
     onCompleted: (data) => {
@@ -85,17 +89,22 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
   if (queryError2 || !data2) {
     return <p>Error: {JSON.stringify(queryError2)}</p>;
   }
-    
-  // if (data.billingInfo.billingPlan.period === '\u0002') {
-  //   var billingPeriod: string = billing.MONTHLY_BILLING_PLAN_STRING
-  // } else {
-  //   return <p>Error: your organization has an unknown billing plan period</p>
-  // }
+  
+  if (queryError3 || !data3) {
+    return <p>Error: {JSON.stringify(queryError3)}</p>;
+  }
 
-  const displayBillingMethod = (billingInfo: BillingInfo_billingInfo ) => {
-    if (billingInfo.billingPlan.description == billing.FREE_BILLING_PLAN_DESCRIPTION) {
+  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
+  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)
+  const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
+
+  const freePlan = data3.billingPlans.filter(billingPlan => billingPlan.default)[0]
+  const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
+
+  const displayBillingMethod = (billingInfo: BillingInfo_billingInfo) => {
+    if (billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID) {
       return "N/A"
-    } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER){
+    } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
       const payload = JSON.parse(billingInfo.billingMethod.driverPayload)
       return payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " " + payload.last4
     } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
@@ -105,14 +114,10 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
 
   const billingInfo = [
     { name: 'Plan name', detail: data.billingInfo.billingPlan.description, editButton: false },
-    { name: 'Read quota', detail: (data.billingInfo.billingPlan.seatReadQuota/10**9).toString() + " GB", editButton: false},
-    { name: 'Write quota', detail: (data.billingInfo.billingPlan.seatWriteQuota/10**9).toString() + " GB", editButton: false},
+    { name: 'Read quota', detail: (data.billingInfo.billingPlan.seatReadQuota / 10 ** 9).toString() + " GB", editButton: false },
+    { name: 'Write quota', detail: (data.billingInfo.billingPlan.seatWriteQuota / 10 ** 9).toString() + " GB", editButton: false },
     { name: 'Billing method', detail: displayBillingMethod(data.billingInfo), editButton: true },
   ]
-
-  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
-  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)
-  const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
     
   return (
     <React.Fragment>
@@ -129,7 +134,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               <Grid item>
                 <Typography>{billingInfo.detail}</Typography>
               </Grid>
-              {data.billingInfo.billingPlan.description == billing.PRO_BILLING_PLAN_DESCRIPTION && billingInfo.editButton && (
+              {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && billingInfo.editButton && (
                 <Grid item>
                   <Button color="primary"
                     onClick={() => {
@@ -179,7 +184,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
                             variables: {
                               organizationID: organizationID,
                               billingMethodID: selectedBillingMethod,
-                              billingPlanID: billing.PRO_MONTHLY_BILLING_PLAN_ID
+                              billingPlanID: proPlan.billingPlanID
                             }
                           })
                         } else {
@@ -215,7 +220,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
             </React.Fragment>
           ))}
         </Grid>
-        {data.billingInfo.billingPlan.description == billing.FREE_BILLING_PLAN_DESCRIPTION && (
+        {data.billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID && (
           <Grid item>
             <Button
               variant="contained"
@@ -293,7 +298,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
                       variables: {
                         organizationID: organizationID,
                         billingMethodID: selectedBillingMethod,
-                        billingPlanID: billing.PRO_MONTHLY_BILLING_PLAN_ID
+                        billingPlanID: proPlan.billingPlanID
                       }
                     })
                   } else {
@@ -336,7 +341,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           </Grid>
         )}
         
-        {data.billingInfo.billingPlan.description == billing.PRO_BILLING_PLAN_DESCRIPTION && (
+        {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && (
           <Grid item container direction="column">
             <Grid container item>
 
@@ -364,7 +369,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
                       No, go back
                   </Button>
                     <Button color="primary" autoFocus onClick={() => {
-                      updateBillingInfo({ variables: { organizationID: organizationID, billingMethodID: anarchism.billingMethodID, billingPlanID: billing.FREE_BILLING_PLAN_ID } });
+                      updateBillingInfo({ variables: { organizationID: organizationID, billingMethodID: anarchism.billingMethodID, billingPlanID: freePlan.billingPlanID } });
                     }}>
                       Yes, I'm sure
                   </Button>

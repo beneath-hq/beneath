@@ -1,5 +1,10 @@
+extend type Query {
+  billingPlans: [BillingPlan!]!
+}
+
 type BillingPlan {
   billingPlanID: UUID!
+	default: Boolean!
 	description: String
 	currency: String!
 	period: String!

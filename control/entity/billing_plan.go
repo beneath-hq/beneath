@@ -28,6 +28,7 @@ type BillingPlan struct {
 	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
 	Personal               bool            `sql:",notnull"` // probably want to rename to "MultipleUsers" and flip the sign
 	PrivateProjects        bool            `sql:",notnull"`
+	AvailableInUI          bool            `sql:",notnull,default:false"`
 }
 
 // FindBillingPlan finds a billing plan by ID
@@ -66,6 +67,19 @@ func FindDefaultBillingPlan(ctx context.Context) *BillingPlan {
 	return plan
 }
 
+// FindBillingPlansAvailableInUI finds the billing plans available in the UI
+func FindBillingPlansAvailableInUI(ctx context.Context) []*BillingPlan {
+	var billingPlans []*BillingPlan
+	err := hub.DB.ModelContext(ctx, &billingPlans).
+		Column("billing_plan.*").
+		Where("available_in_ui = true").
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return billingPlans
+}
+
 func makeDefaultBillingPlan() *BillingPlan {
 	return &BillingPlan{
 		Default:         true,
@@ -76,5 +90,6 @@ func makeDefaultBillingPlan() *BillingPlan {
 		SeatWriteQuota:  1000000000,
 		Personal:        true,
 		PrivateProjects: false,
+		AvailableInUI:   true,
 	}
 }
