@@ -9,13 +9,51 @@ import (
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
 		// BillingPlan
-		err = db.Model(&entity.BillingPlan{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE billing_plans(
+				"billing_plan_id" uuid DEFAULT uuid_generate_v4(),
+				"default" boolean NOT NULL DEFAULT false,
+				"description" text,
+				"created_on" timestamptz NOT NULL DEFAULT now(),
+				"updated_on" timestamptz NOT NULL DEFAULT now(),
+				"currency" text NOT NULL,
+				"period" bigint NOT NULL,
+				"seat_price_cents" integer NOT NULL,
+				"seat_read_quota" bigint NOT NULL,
+				"seat_write_quota" bigint NOT NULL,
+				"base_read_quota" bigint NOT NULL,
+				"base_write_quota" bigint NOT NULL,
+				"read_overage_price_cents" integer NOT NULL,
+				"write_overage_price_cents" integer NOT NULL,
+				"personal" boolean NOT NULL,
+				"private_projects" boolean NOT NULL,
+				PRIMARY KEY ("billing_plan_id")
+			)
+		`)
 		if err != nil {
 			return err
 		}
 
 		// BilledResource
-		err = db.Model(&entity.BilledResource{}).CreateTable(defaultCreateOptions)
+		_, err = db.Exec(`
+			CREATE TABLE billed_resources(
+				"billed_resource_id" uuid DEFAULT uuid_generate_v4(),
+				"organization_id" uuid NOT NULL,
+				"billing_time" timestamptz NOT NULL,
+				"entity_id" uuid NOT NULL,
+				"entity_name" text NOT NULL,
+				"entity_kind" text NOT NULL,
+				"start_time" timestamptz NOT NULL,
+				"end_time" timestamptz NOT NULL,
+				"product" text NOT NULL,
+				"quantity" bigint NOT NULL,
+				"total_price_cents" integer NOT NULL,
+				"currency" text NOT NULL,
+				"created_on" timestamptz NOT NULL DEFAULT now(),
+				"updated_on" timestamptz NOT NULL DEFAULT now(),
+				PRIMARY KEY ("billed_resource_id")
+			)
+		`)
 		if err != nil {
 			return err
 		}

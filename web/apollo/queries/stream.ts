@@ -11,6 +11,9 @@ export const QUERY_STREAM = gql`
       project {
         projectID
         name
+        organization {
+          name
+        }
       }
 
       schema

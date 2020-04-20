@@ -7,10 +7,16 @@
 // GraphQL query operation: StreamByOrganizationProjectAndName
 // ====================================================
 
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization {
+  __typename: "Organization";
+  name: string;
+}
+
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project {
   __typename: "Project";
   projectID: string;
   name: string;
+  organization: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization;
 }
 
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes {

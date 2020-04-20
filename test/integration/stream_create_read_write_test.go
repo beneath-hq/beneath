@@ -35,7 +35,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 				users { userID }
 			}
 		}
-	`, map[string]interface{}{"organizationID": testUser.OrganizationID})
+	`, map[string]interface{}{"organizationID": testUser.PersonalOrganizationID})
 	assert.Empty(t, res1.Errors)
 	project := res1.Result()["createProject"]
 	assert.Equal(t, "test", project["name"])
@@ -248,7 +248,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		u := url.URL{
 			Scheme: "ws",
 			Host:   gatewayHTTP.Listener.Addr().String(),
-			Path:   "/v1/ws",
+			Path:   "/v1/-/ws",
 		}
 		c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 		panicIf(err)
@@ -296,7 +296,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// write http records
 	subset = foobars[split:]
-	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("v1/streams/instances/%s", instanceID.String()), subset)
+	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("v1/-/instances/%s", instanceID.String()), subset)
 	assert.Equal(t, 200, code)
 	assert.Nil(t, res11)
 
@@ -309,7 +309,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// query change data with REST
 	changeCursor := base58.Encode(res10.ChangeCursors[0])
-	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/projects/test/streams/foo-bar?cursor=%s`, changeCursor), nil)
+	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?cursor=%s`, testUser.Username, changeCursor), nil)
 	assert.Equal(t, 200, code)
 	assert.Len(t, res12["meta"], 2)
 	assert.Len(t, res12["data"], 50)
@@ -327,7 +327,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// query some filtered data with REST
 	// expecting four records (two from each subset)
-	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/projects/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`), nil)
+	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`, testUser.Username), nil)
 	assert.Equal(t, 200, code)
 	assert.Len(t, res13["meta"], 2)
 	assert.Len(t, res13["data"], 4)

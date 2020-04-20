@@ -58,10 +58,9 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
         We provide a Python library that makes it easy to get data into e.g. a Jupyter notebook. Just copy and paste
         this snippet:
       </Typography>
-      <CodeBlock language={"python"}>{`from beneath import Client
-client = Client()
-stream = client.stream(project_name="${toURLName(stream.project.name)}", stream_name="${toURLName(stream.name)}")
-df = stream.read()`}</CodeBlock>
+      <CodeBlock language={"python"}>{`import beneath
+client = beneath.Client()
+df = await client.easy_read("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")`}</CodeBlock>
       <Typography variant="body2" paragraph>
         To run this code, you must first install our Python library with <code>pip install beneath</code> and
         authenticate by running <code>beneath auth SECRET</code> on the command-line.
