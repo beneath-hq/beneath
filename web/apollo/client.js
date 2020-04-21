@@ -104,9 +104,9 @@ const makeErrorHook = ({ token, res }) => {
     if (networkError?.result?.error?.match(/authentication error.*/)) {
       if (token) {
         if (process.browser) {
-          document.location.href = "/auth/logout";
+          document.location.href = "/-/redirects/auth/logout";
         } else {
-          res.redirect("/auth/logout");
+          res.redirect("/-/redirects/auth/logout");
         }
       }
     }

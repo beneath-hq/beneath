@@ -45,7 +45,7 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
           )}
           {!me && (
             <>
-              You'll first have to <LinkTypography href="/auth">create a user</LinkTypography> to get a secret for
+              You'll first have to <LinkTypography href="/-/auth">create a user</LinkTypography> to get a secret for
               connecting to Beneath (don't worry, it's free and we won't share your data with anyone)
             </>
           )}

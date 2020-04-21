@@ -119,7 +119,7 @@ interface TerminalCrumbProps {
 }
 
 const TerminalCrumb: FC<TerminalCrumbProps> = ({ isCurrent }) => (
-  <Crumb href="/terminal" as="/terminal" label="Terminal" isCurrent={isCurrent} />
+  <Crumb href="/" as="/" label="Terminal" isCurrent={isCurrent} />
 );
 
 interface ProjectCrumbProps {
@@ -131,8 +131,8 @@ interface ProjectCrumbProps {
 const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent }) => (
   <Crumb 
     href={`/project?organization_name=${organization}&project_name=${project}`} 
-    as={`/${organization}/${project}`} 
-    label={project} 
+    as={`/${organization}/${project}`}
+    label={project}
     isCurrent={isCurrent} />
 );
 

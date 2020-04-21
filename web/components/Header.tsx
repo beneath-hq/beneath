@@ -25,9 +25,9 @@ import {
 } from "@material-ui/icons";
 
 const tabs = [
-  { label: "Terminal", href: "/terminal", selectRegex: "^/(terminal|project|stream|user).*$", external: false },
-  { label: "Docs", href: "https://about.beneath.dev/docs", selectRegex: "^/docs$", external: true },
-  { label: "Blog", href: "https://about.beneath.dev/blog", selectRegex: "^/blog$", external: true },
+  { label: "Terminal", href: "/", selectRegex: "^/.*$", external: false },
+  { label: "Docs", href: "https://about.beneath.dev/docs", selectRegex: "^$", external: true },
+  { label: "Blog", href: "https://about.beneath.dev/blog", selectRegex: "^$", external: true },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -108,7 +108,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
             makeButton("Login", {
               color: "inherit",
               size: "small",
-              href: "/auth",
+              href: "/-/auth",
             })}
           {me && (
             <React.Fragment>
@@ -149,13 +149,14 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
                   as: `/${me.user.username}/-/secrets`,
                   href: `/organization?organization_name=${me.user.username}&tab=secrets`,
                 })}
-                {!me.billingOrganization.personal && makeMenuItem("Organization", {
-                  onClick: closeMenu,
-                  as: `/${me.billingOrganization.name}`,
-                  href: `/organization?organization_name=${me.billingOrganization.name}`,
-                })}
+                {!me.billingOrganization.personal &&
+                  makeMenuItem("Organization", {
+                    onClick: closeMenu,
+                    as: `/${me.billingOrganization.name}`,
+                    href: `/organization?organization_name=${me.billingOrganization.name}`,
+                  })}
                 {makeMenuItem("Logout", {
-                  href: `/auth/logout`,
+                  href: `/-/redirects/auth/logout`,
                 })}
               </Menu>
             </React.Fragment>

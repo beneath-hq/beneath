@@ -50,25 +50,26 @@ app.prepare().then(() => {
     next();
   });
 
-  // Logout
-  server.get("/auth/logout", (req, res) => {
-    // If the user is logged in, we'll let the backend logout the token (i.e. delete the token from it's registries)
-    // Can't do it with a direct <a> on the client because we have to set the token in the header
-    let token = req.cookies.token;
-    if (token) {
-      let headers = { authorization: `Bearer ${token}` };
-      let x = fetch(`${connection.API_URL}/auth/logout`, { headers }).then((r) => {
-        console.log(`Successfully logged out ${token}`);
-      }).catch((e) => {
-        console.error("Error occurred calling backend /auth/logout: ", e);
-      });
+  // Redirect "/" based on whether user logged in
+  server.get("/", (req, res, next) => {
+    let loggedIn = !!req.cookies.token;
+    if (!loggedIn) {
+      let noredirect = req.query.noredirect;
+      if (!noredirect) {
+        res.redirect("https://about.beneath.dev/");
+        return;
+      }
     }
-    res.clearCookie("token");
+    next();
+  });
+
+  // Redirect "/-/" to "/"
+  server.get("/-/", (req, res) => {
     res.redirect("/");
   });
 
   // Redirected to by backend after login
-  server.get("/auth/callback/login", (req, res) => {
+  server.get("/-/redirects/auth/login/callback", (req, res) => {
     let token = req.query.token;
     if (token) {
       res.cookie("token", token, { secure: !dev });
@@ -78,48 +79,59 @@ app.prepare().then(() => {
     res.redirect("/");
   });
 
+  // Logout
+  server.get("/-/redirects/auth/logout", (req, res) => {
+    // If the user is logged in, we'll let the backend logout the token (i.e. delete the token from it's registries)
+    // Can't do it with a direct <a> on the client because we have to set the token in the header
+    let token = req.cookies.token;
+    if (token) {
+      let headers = { authorization: `Bearer ${token}` };
+      fetch(`${connection.API_URL}/auth/logout`, { headers }).then((r) => {
+        console.log(`Successfully logged out ${token}`);
+      }).catch((e) => {
+        console.error("Error occurred calling backend /auth/logout: ", e);
+      });
+    }
+    res.clearCookie("token");
+    res.redirect("/");
+  });
+
   // Redirect to billing
   server.get("/-/redirects/upgrade-pro", (req, res) => {
-    let loggedIn = !!req.cookies["token"];
+    let loggedIn = !!req.cookies.token;
     if (loggedIn) {
-      // TODO: 
+      // TODO: get username, main org, upgrade path
       res.redirect("/");
     } else {
-      res.redirect("/auth");
+      res.redirect("/-/auth");
     }
   });
 
-  // Redirect "/" based on whether user logged in
-  // server.get("/", (req, res) => {
-  //   res.redirect("/explore");
-  //   // let loggedIn = !!req.cookies["token"];
-  //   // if (loggedIn) {
-  //   //   res.redirect("/explore");
-  //   // } else {
-  //   //   res.redirect("/about");
-  //   // }
-  // });
+  // Use to config routes
+  const addStaticRoute = (route) => {
+    server.get(route, (req, res) => {
+      return handle(req, res);
+    });
+  };
 
-  // Routes
-  const addRoute = (route, page) => {
+  const addDynamicRoute = (route, page) => {
     server.get(route, (req, res) => {
       app.render(req, res, page, req.params);
     });
   };
 
-  addRoute("/auth", "/auth");
-  addRoute("/terminal", "/terminal");
-  addRoute("/:organization_name", "/organization");
-  addRoute("/:organization_name/-/:tab", "/organization");
-  addRoute("/:organization_name/:project_name", "/project");
-  addRoute("/:organization_name/:project_name/-/:tab", "/project");
-  addRoute("/:organization_name/:project_name/streams/:stream_name", "/stream");
-  addRoute("/:organization_name/:project_name/streams/:stream_name/-/:tab", "/stream");
-
-  // Next.js handlers
-  server.get("*", (req, res) => {
-    return handle(req, res);
-  });
+  // Add routes in order of precedence
+  addStaticRoute("/-/*");
+  addStaticRoute("/assets/*");
+  addStaticRoute("/robots.txt");
+  addStaticRoute("/favicon.ico");
+  addDynamicRoute("/:organization_name", "/organization");
+  addDynamicRoute("/:organization_name/-/:tab", "/organization");
+  addDynamicRoute("/:organization_name/:project_name", "/project");
+  addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
+  addDynamicRoute("/:organization_name/:project_name/streams/:stream_name", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/streams/:stream_name/-/:tab", "/stream");
+  addStaticRoute("*"); // catchall
 
   // Run server
   server.listen(port, err => {
