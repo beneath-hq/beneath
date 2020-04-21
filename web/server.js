@@ -100,8 +100,8 @@ app.prepare().then(() => {
   server.get("/-/redirects/upgrade-pro", (req, res) => {
     let loggedIn = !!req.cookies.token;
     if (loggedIn) {
-      // TODO: get username, main org, upgrade path
-      res.redirect("/");
+      // "me" gets replaced with billing org name in the organization page
+      res.redirect("/me/-/billing");
     } else {
       res.redirect("/-/auth");
     }
