@@ -24,7 +24,7 @@ func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUI
 	return billingInfo, nil
 }
 
-func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*entity.BillingInfo, error) {
+func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, state *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationID)
@@ -59,8 +59,12 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		}
 	}
 
-	// TODO: check for eligibility to use X plan with Y billing method
+	// TODO: check for eligibility to use X plan with Y billing method with Z tax info
+	// payments.CheckBlacklist()
+	// payments.CheckWirePermission()
+	// payments.Check...
 
+	// TODO: update this!
 	newBillingInfo, err := billingInfo.Update(ctx, billingMethodID, billingPlanID)
 	if err != nil {
 		return nil, gqlerror.Errorf("Unable to update the organization's billing plan")
@@ -69,6 +73,7 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 	return newBillingInfo, nil
 }
 
+// TODO: delete this in favor of full update
 func (r *mutationResolver) UpdateBillingInfoBillingMethod(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID) (*entity.BillingInfo, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {

@@ -79,7 +79,11 @@ type ComplexityRoot struct {
 	BillingInfo struct {
 		BillingMethod  func(childComplexity int) int
 		BillingPlan    func(childComplexity int) int
+		CompanyName    func(childComplexity int) int
+		Country        func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
+		Region         func(childComplexity int) int
+		TaxNumber      func(childComplexity int) int
 	}
 
 	BillingMethod struct {
@@ -168,7 +172,7 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID) int
+		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
 		UpdateBillingInfoBillingMethod    func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
@@ -365,7 +369,7 @@ type ModelResolver interface {
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
-	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*entity.BillingInfo, error)
+	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error)
 	UpdateBillingInfoBillingMethod(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID) (*entity.BillingInfo, error)
 	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
 	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
@@ -580,12 +584,40 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingInfo.BillingPlan(childComplexity), true
 
+	case "BillingInfo.companyName":
+		if e.complexity.BillingInfo.CompanyName == nil {
+			break
+		}
+
+		return e.complexity.BillingInfo.CompanyName(childComplexity), true
+
+	case "BillingInfo.country":
+		if e.complexity.BillingInfo.Country == nil {
+			break
+		}
+
+		return e.complexity.BillingInfo.Country(childComplexity), true
+
 	case "BillingInfo.organizationID":
 		if e.complexity.BillingInfo.OrganizationID == nil {
 			break
 		}
 
 		return e.complexity.BillingInfo.OrganizationID(childComplexity), true
+
+	case "BillingInfo.region":
+		if e.complexity.BillingInfo.Region == nil {
+			break
+		}
+
+		return e.complexity.BillingInfo.Region(childComplexity), true
+
+	case "BillingInfo.taxNumber":
+		if e.complexity.BillingInfo.TaxNumber == nil {
+			break
+		}
+
+		return e.complexity.BillingInfo.TaxNumber(childComplexity), true
 
 	case "BillingMethod.billingMethodID":
 		if e.complexity.BillingMethod.BillingMethodID == nil {
@@ -1202,7 +1234,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID)), true
+		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string)), true
 
 	case "Mutation.updateBillingInfoBillingMethod":
 		if e.complexity.Mutation.UpdateBillingInfoBillingMethod == nil {
@@ -2378,7 +2410,7 @@ type BilledResource {
 }
 
 extend type Mutation {
-  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID!, billingPlanID: UUID!): BillingInfo!
+  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID!, billingPlanID: UUID!, country: String!, region: String, companyName: String, taxNumber: String): BillingInfo!
   updateBillingInfoBillingMethod(organizationID: UUID!, billingMethodID: UUID!): BillingInfo!
 }
 
@@ -2386,6 +2418,10 @@ type BillingInfo {
   organizationID: UUID!
   billingMethod: BillingMethod!
   billingPlan: BillingPlan!
+  country: String!
+  region: String
+  companyName: String
+  taxNumber: String
 }
 `},
 	&ast.Source{Name: "control/gql/schema/billing_method.graphql", Input: `extend type Query {
@@ -3299,6 +3335,38 @@ func (ec *executionContext) field_Mutation_updateBillingInfo_args(ctx context.Co
 		}
 	}
 	args["billingPlanID"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["country"]; ok {
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["country"] = arg3
+	var arg4 *string
+	if tmp, ok := rawArgs["region"]; ok {
+		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["region"] = arg4
+	var arg5 *string
+	if tmp, ok := rawArgs["companyName"]; ok {
+		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["companyName"] = arg5
+	var arg6 *string
+	if tmp, ok := rawArgs["taxNumber"]; ok {
+		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["taxNumber"] = arg6
 	return args, nil
 }
 
@@ -4728,6 +4796,145 @@ func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBillingPlan2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingInfo_country(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Country, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingInfo_region(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingInfo_companyName(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompanyName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingInfo_taxNumber(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TaxNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingMethod_billingMethodID(ctx context.Context, field graphql.CollectedField, obj *entity.BillingMethod) (ret graphql.Marshaler) {
@@ -6483,7 +6690,7 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateBillingInfo(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID))
+		return ec.resolvers.Mutation().UpdateBillingInfo(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13827,6 +14034,17 @@ func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "country":
+			out.Values[i] = ec._BillingInfo_country(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "region":
+			out.Values[i] = ec._BillingInfo_region(ctx, field, obj)
+		case "companyName":
+			out.Values[i] = ec._BillingInfo_companyName(ctx, field, obj)
+		case "taxNumber":
+			out.Values[i] = ec._BillingInfo_taxNumber(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

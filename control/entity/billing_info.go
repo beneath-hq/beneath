@@ -18,6 +18,10 @@ type BillingInfo struct {
 	BillingMethod   *BillingMethod
 	BillingPlanID   uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan     *BillingPlan
+	Country         string `sql:",notnull"`
+	Region          string
+	CompanyName     string
+	TaxNumber       string
 	CreatedOn       time.Time `sql:",default:now()"`
 	UpdatedOn       time.Time `sql:",default:now()"`
 }

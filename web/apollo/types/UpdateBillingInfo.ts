@@ -33,6 +33,10 @@ export interface UpdateBillingInfo_updateBillingInfo {
   organizationID: ControlUUID;
   billingPlan: UpdateBillingInfo_updateBillingInfo_billingPlan;
   billingMethod: UpdateBillingInfo_updateBillingInfo_billingMethod;
+  country: string;
+  region: string | null;
+  companyName: string | null;
+  taxNumber: string | null;
 }
 
 export interface UpdateBillingInfo {
@@ -43,4 +47,8 @@ export interface UpdateBillingInfoVariables {
   organizationID: ControlUUID;
   billingMethodID: ControlUUID;
   billingPlanID: ControlUUID;
+  country: string;
+  state?: string | null;
+  companyName?: string | null;
+  taxNumber?: string | null;
 }
