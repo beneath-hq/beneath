@@ -5,9 +5,7 @@ import clsx from "clsx";
 
 import NextMuiLinkList from "../NextMuiLinkList";
 import ProfileHero from "../ProfileHero";
-import ErrorPage from "../ErrorPage";
 import Loading from "../Loading";
-import Page from "../Page";
 import UsageIndicator from "../metrics/user/UsageIndicator";
 import ViewUserProjects from "../organization/personal/ViewUserProjects";
 import { monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
@@ -65,24 +63,20 @@ const Springboard: FC = () => {
   const { metrics, total, latest } = normalizeMetrics(from, until, "month", data2 ? data2.getUserMetrics : null);
 
   if (loading || loading2) {
-    return (
-      <Page>
-        <Loading justify="center" />
-      </Page>
-    );
+    return <Loading justify="center" />;
   }
 
   if (error || error2 || !data) {
-    return <ErrorPage apolloError={error} />;
+    return <p>Error: {JSON.stringify(error || error2)}</p>;
   }
 
   const user = data.userByUsername;
   if (!user) {
-    return <ErrorPage statusCode={404} />;
+    return <p>Error: User not found</p>;
   }
 
   return (
-    <React.Fragment>
+    <>
       <ProfileHero name={user.name} description={user.bio} avatarURL={user.photoURL} />
       <Grid container justify="center" spacing={2} item xs={12}>
         <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={me.readQuota} />
@@ -131,7 +125,7 @@ const Springboard: FC = () => {
         </Grid>
       </Grid>
       <TopProjects/>
-    </React.Fragment>
+    </>
   )
 }
 
