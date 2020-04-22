@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import {
   Container,
@@ -13,7 +13,6 @@ import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import { EXPLORE_PROJECTS } from "../../apollo/queries/project";
 import { ExploreProjects } from "../../apollo/types/ExploreProjects";
-import ErrorPage from "../ErrorPage";
 import Loading from "../Loading";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -47,11 +46,11 @@ const TopProjects: FC = () => {
   }
 
   if (error || !data) {
-    return <ErrorPage apolloError={error} />;
+    return <p>Error: {JSON.stringify(error)}</p>;
   }
 
   return (
-    <React.Fragment>
+    <>
       <Container maxWidth="lg">
         <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">
           Top projects
@@ -82,7 +81,7 @@ const TopProjects: FC = () => {
           ))}
         </Grid>
       </Container>
-    </React.Fragment>
+    </>
   )
 }
 

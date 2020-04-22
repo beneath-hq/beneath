@@ -1,21 +1,22 @@
 import { NextPage } from "next";
-import Router from "next/router";
 import React from "react";
 
-const Index: NextPage = (props) => {
-  return <></>;
+import { withApollo } from "../apollo/withApollo";
+import Page from "../components/Page";
+import Springboard from "../components/terminal/Springboard";
+import Welcome from "../components/terminal/Welcome";
+import useMe from "../hooks/useMe";
+
+const Terminal: NextPage = () => {
+  const me = useMe();
+  const loggedIn = !!me;
+
+  return (
+    <Page title="Terminal" contentMarginTop="normal">
+      {loggedIn && <Springboard />}
+      {!loggedIn && <Welcome />}
+    </Page>
+  );
 };
 
-Index.getInitialProps = async ({ res }) => {
-  if (res) {
-    res.writeHead(302, {
-      Location: "/terminal",
-    });
-    res.end();
-  } else {
-    Router.replace("/terminal");
-  }
-  return {};
-};
-
-export default Index;
+export default withApollo(Terminal);

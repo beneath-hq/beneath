@@ -1,15 +1,10 @@
-import React, { FC } from "react";
-import {
-  Button,
-  Container,
-  Grid,
-  makeStyles,
-  Theme,
-  Typography,
-} from "@material-ui/core";
 import clsx from "clsx";
-import NextMuiLinkList from "../NextMuiLinkList";
+import React, { FC } from "react";
+
+import { Button, Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+
 import TopProjects from "../../components/terminal/TopProjects";
+import NextMuiLinkList from "../NextMuiLinkList";
 
 const useStyles = makeStyles((theme: Theme) => ({
   title: {
@@ -32,7 +27,7 @@ const Welcome: FC = () => {
   const classes = useStyles();
 
   return (
-    <React.Fragment>
+    <>
       <Container maxWidth="lg">
         <Typography className={classes.title} component="h1" variant="h1" align="center" gutterBottom>
           Welcome to the Beneath Data Terminal
@@ -40,7 +35,8 @@ const Welcome: FC = () => {
       </Container>
       <Container maxWidth="md">
         <Typography className={classes.subtitle} component="h2" variant="subtitle1" align="center" gutterBottom>
-          Discover real-time data streams that have been shared with the world. Consume public data or create your own stream in minutes.
+          Discover real-time data streams that have been shared with the world.
+          Consume public data or create your own stream in minutes.
         </Typography>
         <Grid className={classes.buttons} container spacing={2} justify="center">
           <Grid item>
@@ -60,7 +56,7 @@ const Welcome: FC = () => {
               color="primary"
               variant="outlined"
               className={clsx(classes.button, classes.primaryButton)}
-              href={`/auth`}
+              href={`/-/auth`}
               component={NextMuiLinkList}
             >
               Create Account
@@ -69,7 +65,7 @@ const Welcome: FC = () => {
         </Grid>
       </Container>
       <TopProjects/>
-    </React.Fragment>
+    </>
   )
 }
 

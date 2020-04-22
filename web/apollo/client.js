@@ -53,6 +53,14 @@ const createApolloClient = ({ req, res, initialState }) => {
     cache,
     typeDefs,
     resolvers,
+    defaultOptions: {
+      mutate: {
+        errorPolicy: "all",
+      },
+      query: {
+        errorPolicy: "all",
+      },
+    },
   });
 };
 
@@ -104,17 +112,10 @@ const makeErrorHook = ({ token, res }) => {
     if (networkError?.result?.error?.match(/authentication error.*/)) {
       if (token) {
         if (process.browser) {
-          document.location.href = "/auth/logout";
+          document.location.href = "/-/redirects/auth/logout";
         } else {
-          res.redirect("/auth/logout");
+          res.redirect("/-/redirects/auth/logout");
         }
-      }
-    }
-
-    if (graphQLErrors && graphQLErrors.length > 0) {
-      let error = graphQLErrors[0];
-      if (error.extensions && error.extensions.code === "VALIDATION_ERROR") {
-        console.log("Validation error", error.extensions.exception);
       }
     }
   };
