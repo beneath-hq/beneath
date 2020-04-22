@@ -31,11 +31,10 @@ func InitDrivers(drivers []string) map[string]driver.PaymentsDriver {
 // IsBlacklisted checks to see if a country is sanctioned by the EU
 func IsBlacklisted(country string) bool {
 	blacklist := []string{"North Korea"} // +Iran, +Syria, +Russia, +Ukraine? see: https://sanctionsmap.eu/#/main, need to read details
-
 	for _, sanctioned := range blacklist {
 		if country == sanctioned {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
