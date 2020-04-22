@@ -53,7 +53,7 @@ interface PaymentMethodData {
   }
 }
 
-interface CheckoutStateTypes {
+interface CardFormStateTypes {
   city: string,
   country: string,
   line1: string,
@@ -76,15 +76,15 @@ interface Props {
 }
 
 const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
-  const [values, setValues] = React.useState<CheckoutStateTypes>({
-    city: "",
-    country: "",
+  const [values, setValues] = React.useState<CardFormStateTypes>({
+    cardholder: "",
     line1: "",
     line2: "",
-    postalCode: "",
+    city: "",
     state: "",
+    postalCode: "",
+    country: "",
     email: "",
-    cardholder: "",
     formSubmit: 0,
     dialog: false,
     error: "",

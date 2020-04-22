@@ -48,7 +48,7 @@ export interface UpdateBillingInfoVariables {
   billingMethodID: ControlUUID;
   billingPlanID: ControlUUID;
   country: string;
-  state?: string | null;
+  region?: string | null;
   companyName?: string | null;
   taxNumber?: string | null;
 }
