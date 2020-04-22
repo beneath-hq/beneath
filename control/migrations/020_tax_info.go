@@ -9,7 +9,7 @@ func init() {
 		// BillingInfo tax info
 		_, err = db.Exec(`
 			ALTER TABLE billing_infos
-			ADD country text DEFAULT 'placeholder' NOT NULL,
+			ADD country text,
 			ADD region text,
 			ADD company_name text,
 			ADD tax_number text;

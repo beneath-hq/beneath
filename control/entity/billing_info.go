@@ -18,7 +18,7 @@ type BillingInfo struct {
 	BillingMethod   *BillingMethod
 	BillingPlanID   uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan     *BillingPlan
-	Country         string `sql:",notnull"`
+	Country         string
 	Region          string
 	CompanyName     string
 	TaxNumber       string
@@ -58,10 +58,20 @@ func (bi *BillingInfo) UpdateBillingMethod(ctx context.Context, billingMethodID 
 }
 
 // Update updates an organization's billing method and billing plan
-func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*BillingInfo, error) {
+func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
 	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID
+	bi.Country = country
+	if region != nil {
+		bi.Region = *region
+	}
+	if companyName != nil {
+		bi.CompanyName = *companyName
+	}
+	if taxNumber != nil {
+		bi.TaxNumber = *taxNumber
+	}
 
 	// upsert
 	_, err := hub.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()

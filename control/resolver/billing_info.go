@@ -7,6 +7,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/payments"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
@@ -24,12 +25,7 @@ func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUI
 	return billingInfo, nil
 }
 
-func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, state *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID)
-	}
-
+func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error) {
 	secret := middleware.GetSecret(ctx)
 
 	perms := secret.OrganizationPermissions(ctx, organizationID)
@@ -59,13 +55,17 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		}
 	}
 
-	// TODO: check for eligibility to use X plan with Y billing method with Z tax info
-	// payments.CheckBlacklist()
-	// payments.CheckWirePermission()
-	// payments.Check...
+	if payments.IsBlacklisted(country) {
+		return nil, gqlerror.Errorf("Beneath does not sell its services to %s, as it's sanctioned by the EU", country)
+	}
 
-	// TODO: update this!
-	newBillingInfo, err := billingInfo.Update(ctx, billingMethodID, billingPlanID)
+	if newBillingMethod.PaymentsDriver == entity.StripeWireDriver && newBillingPlan.Personal {
+		return nil, gqlerror.Errorf("Only Enterprise plans allow payment by wire")
+	}
+
+	// TODO: check for eligibility to use X plan with Y billing method with Z tax info. Any more?
+
+	newBillingInfo, err := billingInfo.Update(ctx, billingMethodID, billingPlanID, country, region, companyName, taxNumber)
 	if err != nil {
 		return nil, gqlerror.Errorf("Unable to update the organization's billing plan")
 	}
