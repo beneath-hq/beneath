@@ -44,19 +44,6 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	return billingInfo
 }
 
-// UpdateBillingMethod updates an organization's billing method
-func (bi *BillingInfo) UpdateBillingMethod(ctx context.Context, billingMethodID uuid.UUID) (*BillingInfo, error) {
-	bi.BillingMethodID = billingMethodID
-
-	// upsert
-	_, err := hub.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	return bi, nil
-}
-
 // Update updates an organization's billing method and billing plan
 func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function

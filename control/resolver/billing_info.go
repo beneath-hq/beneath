@@ -72,37 +72,3 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 
 	return newBillingInfo, nil
 }
-
-// TODO: delete this in favor of full update
-func (r *mutationResolver) UpdateBillingInfoBillingMethod(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID) (*entity.BillingInfo, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID)
-	}
-
-	secret := middleware.GetSecret(ctx)
-
-	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
-	}
-
-	billingInfo := entity.FindBillingInfo(ctx, organizationID)
-	if billingInfo == nil {
-		return nil, gqlerror.Errorf("Existing billing info not found")
-	}
-
-	newBillingMethod := entity.FindBillingMethod(ctx, billingMethodID)
-	if newBillingMethod == nil {
-		return nil, gqlerror.Errorf("Billing method %s not found", billingMethodID)
-	}
-
-	// TODO: check for eligibility to use Y billing method with X plan
-
-	newBillingInfo, err := billingInfo.UpdateBillingMethod(ctx, billingMethodID)
-	if err != nil {
-		return nil, gqlerror.Errorf("Unable to update the organization's billing method")
-	}
-
-	return newBillingInfo, nil
-}
