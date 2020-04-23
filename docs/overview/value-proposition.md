@@ -20,4 +20,4 @@ Beneath is for any project that wants to deliver more data-driven features. It e
 
 - You have a cool ad-hoc data project that you want to put into production (e.g. to keep the results updated in real-time or to integrate it into a product)
 - Your data infrastructure and pipelines increasingly consume valuable engineering time that you would rather spend differently
-- You're looking for a tool to help you break down data silos and make it easier to share and collaborate on data with industry partners or the public
+- You're looking for a tool to help you break down data silos and make it easier to share and collaborate on data with partners or the public

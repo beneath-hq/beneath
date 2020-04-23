@@ -1,14 +1,15 @@
 ---
 title: Introduction
-description: Welcome to the Beneath documentation
+description: Welcome to the Beneath documentation!
 menu:
   docs:
     parent: overview
+    identifier: overview-introduction
     weight: 100
 weight: 100
 ---
 
-Welcome to the Beneath documentation! These pages explain both Beneath's high-level features and the technical details of how to operate it. They're intended to give the majority of readers a comfortable understanding of Beneath. 
+These pages explain both Beneath's high-level features and the technical details of how to operate it. They're intended to give the majority of readers a comfortable understanding of Beneath. 
 
 The documentation is organized as follows:
 

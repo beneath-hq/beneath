@@ -4,6 +4,7 @@ description:
 menu:
   docs:
     parent: contributing
+    identifier: contributing-introduction
     weight: 1
 weight: 1
 ---
