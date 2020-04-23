@@ -309,6 +309,9 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             } else if (values.country == "United States of America" && !values.region) {
               setError("Please select your state.")
               setErrorDialogue(true)
+            } else if (values.companyName != "" && !values.taxID) {
+              setError("Please provide your tax ID.")
+              setErrorDialogue(true)
             } else {
               updateBillingInfo({
                 variables: {
@@ -316,6 +319,9 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                   billingMethodID: values.billingMethod,
                   billingPlanID: proPlan.billingPlanID,
                   country: values.country,
+                  region: values.region,
+                  companyName: values.companyName,
+                  taxNumber: values.taxID
                 }
               })
             }

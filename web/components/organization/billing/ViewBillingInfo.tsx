@@ -81,15 +81,17 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
     }
   }
 
-  const billingInfo = [
-    { name: 'Plan name', detail: data.billingInfo.billingPlan.description, editButton: false },
-    { name: 'Read quota', detail: (data.billingInfo.billingPlan.seatReadQuota / 10 ** 9).toString() + " GB", editButton: false },
-    { name: 'Write quota', detail: (data.billingInfo.billingPlan.seatWriteQuota / 10 ** 9).toString() + " GB", editButton: false },
-    { name: 'Country', detail: data.billingInfo.country, editButton: false },
-    { name: 'Region', detail: data.billingInfo.region, editButton: false },
-    { name: 'Company Name', detail: data.billingInfo.companyName, editButton: false },
-    { name: 'Tax ID', detail: data.billingInfo.taxNumber, editButton: false },
-    { name: 'Billing method', detail: displayBillingMethod(data.billingInfo), editButton: true },
+  const billingPlan = [
+    { name: 'Plan name', detail: data.billingInfo.billingPlan.description },
+    { name: 'Read quota', detail: (data.billingInfo.billingPlan.seatReadQuota / 10 ** 9).toString() + " GB" },
+    { name: 'Write quota', detail: (data.billingInfo.billingPlan.seatWriteQuota / 10 ** 9).toString() + " GB" },
+  ]
+
+  const taxInfo = [
+    { name: 'Country', detail: data.billingInfo.country },
+    { name: 'Region', detail: data.billingInfo.region },
+    { name: 'Company', detail: data.billingInfo.companyName },
+    { name: 'Tax ID', detail: data.billingInfo.taxNumber },
   ]
 
   const handleCloseDialogue = () => {
@@ -117,84 +119,111 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
     
   return (
     <React.Fragment>
-      <Grid item container direction="column" xs={12} sm={6}>
-        <Typography variant="h6" className={classes.title}>
-          Billing info
-        </Typography>
-        <Grid container alignItems="center">
-          {billingInfo.map(billingInfo => (
-            <React.Fragment key={billingInfo.name}>
-              <Grid item xs={6}>
-                <Typography>{billingInfo.name}</Typography>
-              </Grid>
-              <Grid item>
-                <Typography>{billingInfo.detail}</Typography>
-              </Grid>
-              {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && billingInfo.editButton && (
-                <Grid item>
-                  <Button color="primary"
-                    onClick={() => {
-                      setChangeBillingMethodDialogue(true)
-                    }}>
-                    Edit
-                  </Button>
+      <Grid container spacing={3}>
+        <Grid item xs={4}>
+          <Typography variant="h6" className={classes.title}>
+            Billing plan
+          </Typography>
+          {billingPlan.map(billingPlan => (
+            <React.Fragment key={billingPlan.name}>
+              <Grid container>
+                <Grid item xs={4}>
+                  <Typography>{billingPlan.name}</Typography>
                 </Grid>
-              )}
+                <Grid item>
+                  <Typography>{billingPlan.detail}</Typography>
+                </Grid>
+              </Grid>
             </React.Fragment>
           ))}
         </Grid>
-        {data.billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID && (
+        <Grid item xs={4}>
+          <Grid container alignItems="center">
+            <Grid item>
+              <Typography variant="h6" className={classes.title}>
+                Billing method
+              </Typography>
+            </Grid>
+            {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && (
+              <Grid item>
+                <Button 
+                  color="primary"
+                  onClick={() => {setChangeBillingMethodDialogue(true)}}
+                >
+                  Edit
+                </Button>
+              </Grid>
+            )}
+          </Grid>
+          {displayBillingMethod(data.billingInfo)}            
+        </Grid>
+        <Grid item xs={4}>
+          <Typography variant="h6" className={classes.title}>
+            Tax info
+          </Typography>
+          {data.billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID && (
+            <Typography>N/A</Typography>
+          )}
+          {data.billingInfo.billingPlan.billingPlanID != freePlan.billingPlanID && taxInfo.map(taxInfo => (
+            <React.Fragment key={taxInfo.name}>
+              <Grid container>
+                <Grid item xs={4}>
+                  <Typography>{taxInfo.name}</Typography>
+                </Grid>
+                <Grid item>
+                  <Typography>{taxInfo.detail}</Typography>
+                </Grid>
+              </Grid>
+            </React.Fragment>
+          ))}
+        </Grid>
+      </Grid>
+
+      {/* BUTTONS */}
+      {data.billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID && (
+        <Grid container>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              onClick={() => {setUpgradeDialogue(true)}}>
+              Upgrade to Professional Plan
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              href="https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
+            >
+              Discuss Enterprise Plan
+            </Button>
+          </Grid>
+        </Grid>
+      )}
+      {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && (
+        <Grid container>
+          <Grid item>
+            <Button
+              variant="outlined"
+              className={classes.button}
+              onClick={() => {setCancelDialogue(true)}}>
+              Cancel plan
+            </Button>
+          </Grid>
           <Grid item>
             <Button
               variant="contained"
               color="primary"
               className={classes.button}
               onClick={() => {
-                setUpgradeDialogue(true)
+                window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
               }}>
-              Upgrade to Professional Plan
+              Discuss Enterprise Plan
             </Button>
-            <Grid item>
-              <Button
-                variant="contained"
-                className={classes.button}
-                href="https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
-              >
-                Discuss Enterprise Plan
-              </Button>
-            </Grid>
           </Grid>
-        )}
-        
-        {data.billingInfo.billingPlan.billingPlanID == proPlan.billingPlanID && (
-          <Grid item container direction="column">
-            <Grid container item>
-
-              <Grid item>
-                <Button
-                  variant="outlined"
-                  // color="secondary"
-                  className={classes.button}
-                  onClick={() => {
-                    setCancelDialogue(true)
-                  }}>
-                  Cancel plan
-              </Button>
-              </Grid>
-              <Grid item>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  className={classes.button}
-                  onClick={() => {
-                    window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
-                  }}>
-                  Discuss Enterprise Plan
-                </Button>
-              </Grid>
-            </Grid>
-          </Grid>)}
-      </Grid>
+        </Grid>)}
     </React.Fragment>
   )
 };
