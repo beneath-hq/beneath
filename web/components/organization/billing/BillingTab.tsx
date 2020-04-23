@@ -28,12 +28,13 @@ const BillingTab: FC<Props> = ({ organizationID }) => {
         </Typography>
       </Paper>
 
-      <Grid container>
-
-        <ViewBillingMethods organizationID={organizationID} />
-
-        <ViewBillingInfo organizationID={organizationID} />
-
+      <Grid container direction="column">
+        <Grid item>
+          <ViewBillingInfo organizationID={organizationID} />
+        </Grid>
+        <Grid item>
+          <ViewBillingMethods organizationID={organizationID} />
+        </Grid>
       </Grid>
     </React.Fragment>
   )

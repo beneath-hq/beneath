@@ -56,7 +56,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
 
   return (
     <React.Fragment>
-      <Grid item container direction="column" xs={12} sm={6}>
+      <Grid container direction="column" xs={12} sm={6}>
         <Grid item>
           <Typography variant="h6" className={classes.title}>
             Billing methods on file

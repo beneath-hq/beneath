@@ -33,6 +33,10 @@ export interface BillingInfo_billingInfo {
   organizationID: ControlUUID;
   billingPlan: BillingInfo_billingInfo_billingPlan;
   billingMethod: BillingInfo_billingInfo_billingMethod;
+  country: string;
+  region: string | null;
+  companyName: string | null;
+  taxNumber: string | null;
 }
 
 export interface BillingInfo {

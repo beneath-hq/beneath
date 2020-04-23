@@ -18,6 +18,10 @@ type BillingInfo struct {
 	BillingMethod   *BillingMethod
 	BillingPlanID   uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan     *BillingPlan
+	Country         string
+	Region          string
+	CompanyName     string
+	TaxNumber       string
 	CreatedOn       time.Time `sql:",default:now()"`
 	UpdatedOn       time.Time `sql:",default:now()"`
 }
@@ -40,24 +44,21 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	return billingInfo
 }
 
-// UpdateBillingMethod updates an organization's billing method
-func (bi *BillingInfo) UpdateBillingMethod(ctx context.Context, billingMethodID uuid.UUID) (*BillingInfo, error) {
-	bi.BillingMethodID = billingMethodID
-
-	// upsert
-	_, err := hub.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	return bi, nil
-}
-
 // Update updates an organization's billing method and billing plan
-func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID) (*BillingInfo, error) {
+func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
 	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID
+	bi.Country = country
+	if region != nil {
+		bi.Region = *region
+	}
+	if companyName != nil {
+		bi.CompanyName = *companyName
+	}
+	if taxNumber != nil {
+		bi.TaxNumber = *taxNumber
+	}
 
 	// upsert
 	_, err := hub.DB.ModelContext(ctx, bi).OnConflict("(billing_info_id) DO UPDATE").Insert()
@@ -169,4 +170,22 @@ func (bi *BillingInfo) GetDriverPayload() map[string]interface{} {
 // GetPaymentsDriver implements payments/driver.BillingInfo
 func (bi *BillingInfo) GetPaymentsDriver() string {
 	return string(bi.BillingMethod.PaymentsDriver)
+}
+
+// GetCountry implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetCountry() string {
+	return bi.Country
+}
+
+// GetRegion implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetRegion() string {
+	return bi.Region
+}
+
+// IsCompany implements payments/driver.BillingInfo
+func (bi *BillingInfo) IsCompany() bool {
+	if bi.CompanyName != "" {
+		return true
+	}
+	return false
 }

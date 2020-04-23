@@ -1,6 +1,8 @@
 package stripeutil
 
 import (
+	"time"
+
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
@@ -8,9 +10,11 @@ import (
 	"github.com/stripe/stripe-go/invoiceitem"
 	"github.com/stripe/stripe-go/paymentmethod"
 	"github.com/stripe/stripe-go/setupintent"
+	"github.com/stripe/stripe-go/taxrate"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/paymentsutil"
 )
 
 const (
@@ -176,19 +180,36 @@ func NewInvoiceItemOther(customerID string, amount int64, currency string, start
 	return invoiceItem
 }
 
+// CreateTaxRate creates a Stripe Tax Rate object
+func CreateTaxRate(taxPercentage int, description string) *stripe.TaxRate {
+	params := &stripe.TaxRateParams{
+		DisplayName: stripe.String(description),
+		Percentage:  stripe.Float64(float64(taxPercentage)),
+		Inclusive:   stripe.Bool(false),
+	}
+	tr, err := taxrate.New(params)
+	if err != nil {
+		panic("stripe error when creating tax rate object")
+	}
+
+	return tr
+}
+
 // CreateInvoice creates an invoice
 // there must exist invoice line items for the given customer before this function is called
-func CreateInvoice(customerID string, paymentsDriver string) *stripe.Invoice {
+func CreateInvoice(customerID string, paymentsDriver string, taxRate *stripe.TaxRate) *stripe.Invoice {
 	params := &stripe.InvoiceParams{}
 	if paymentsDriver == string(entity.StripeCardDriver) {
 		params = &stripe.InvoiceParams{
 			Customer:         stripe.String(customerID),
+			DefaultTaxRates:  stripe.StringSlice([]string{taxRate.ID}),
 			CollectionMethod: stripe.String(string(stripe.InvoiceCollectionMethodChargeAutomatically)),
 			AutoAdvance:      stripe.Bool(true), // this tells Stripe to re-try failed payments using their "Smart Retries" feature; it will retry up to 4 times
 		}
 	} else if paymentsDriver == string(entity.StripeWireDriver) {
 		params = &stripe.InvoiceParams{
 			Customer:         stripe.String(customerID),
+			DefaultTaxRates:  stripe.StringSlice([]string{taxRate.ID}),
 			DaysUntilDue:     stripe.Int64(daysUntilInvoiceDue),
 			CollectionMethod: stripe.String(string(stripe.InvoiceCollectionMethodSendInvoice)),
 		}
@@ -234,7 +255,11 @@ func CreateStripeInvoice(billingInfo driver.BillingInfo, billedResources []drive
 		NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, PrettyDescription(string(entity.SeatProduct), ""))
 	}
 
-	inv := CreateInvoice(billingInfo.GetDriverPayload()["customer_id"].(string), billingInfo.GetPaymentsDriver())
+	// add tax
+	taxPercentage, description := paymentsutil.ComputeTaxPercentage(billingInfo.GetCountry(), billingInfo.GetRegion(), billingInfo.IsCompany(), time.Now())
+	taxRate := CreateTaxRate(taxPercentage, description)
+
+	inv := CreateInvoice(billingInfo.GetDriverPayload()["customer_id"].(string), billingInfo.GetPaymentsDriver(), taxRate)
 
 	return inv
 }
