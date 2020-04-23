@@ -171,3 +171,21 @@ func (bi *BillingInfo) GetDriverPayload() map[string]interface{} {
 func (bi *BillingInfo) GetPaymentsDriver() string {
 	return string(bi.BillingMethod.PaymentsDriver)
 }
+
+// GetCountry implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetCountry() string {
+	return bi.Country
+}
+
+// GetRegion implements payments/driver.BillingInfo
+func (bi *BillingInfo) GetRegion() string {
+	return bi.Region
+}
+
+// IsCompany implements payments/driver.BillingInfo
+func (bi *BillingInfo) IsCompany() bool {
+	if bi.CompanyName != "" {
+		return true
+	}
+	return false
+}

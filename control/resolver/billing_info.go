@@ -7,8 +7,8 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/payments"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
+	"gitlab.com/beneath-hq/beneath/pkg/paymentsutil"
 )
 
 func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error) {
@@ -55,7 +55,7 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		}
 	}
 
-	if payments.IsBlacklisted(country) {
+	if paymentsutil.IsBlacklisted(country) {
 		return nil, gqlerror.Errorf("Beneath does not sell its services to %s, as it's sanctioned by the EU", country)
 	}
 
