@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(2),
   },
   selectField: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(1),
     minWidth: 250,
   },
   textField: {
@@ -204,10 +204,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 <Grid item xs={12} sm={6}>
                   <Autocomplete
                     id="country"
-                    style={{ width: 250 }} // fullWidth // doesn't exist on AutocompleteProps
+                    style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                     options={countries}
-                    classes={{option: classes.option,
-                    }}
+                    classes={{option: classes.option,}}
+                    className={classes.selectField}
                     autoHighlight
                     getOptionLabel={option => option.label}
                     renderOption={option => (
@@ -238,11 +238,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                   <Grid item xs={12} sm={6}>
                     <Autocomplete
                       id="region"
-                      style={{ width: 250 }} // fullWidth // doesn't exist on AutocompleteProps
+                      style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                       options={USStates}
-                      classes={{
-                        option: classes.option,
-                      }}
+                      classes={{option: classes.option,}}
+                      className={classes.selectField}
                       autoHighlight
                       getOptionLabel={option => option.label}
                       renderOption={option => (
@@ -272,11 +271,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     name="company"
                     label="Company Name"
                     fullWidth
-                    inputProps={{
-                      className: classes.textField
-                    }}
                     value={values.companyName}
-                    onChange={handleChange("company")}
+                    onChange={handleChange("companyName")}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -285,12 +281,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     name="taxID"
                     label="Tax ID"
                     fullWidth
-                    inputProps={{
-                      className: classes.textField
-                    }}
                     value={values.taxID}
                     onChange={handleChange("taxID")}
                   />
+                  
                 </Grid>
               </Grid>
             </Grid>
