@@ -77,6 +77,7 @@ interface Props {
 
 const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDialogue }) => { 
   const classes = useStyles()
+  const [successDialogue, setSuccessDialogue] = React.useState(false)
   const [errorDialogue, setErrorDialogue] = React.useState(false)
   const [error, setError] = React.useState("")
   const [values, setValues] = React.useState<CheckoutStateTypes>({
@@ -101,14 +102,18 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
 
   const { loading: loading3, error: queryError3, data: data3 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
 
-  const [updateBillingInfo] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
+  const [updateBillingInfo, {error: mutError}] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
     onCompleted: (data) => {
-      window.location.reload(true)
+      if (data) {
+        setSuccessDialogue(true)
+      }
     },
-    onError: (error) => {
-      setError(error.message.replace("GraphQL error:", ""))
-      setErrorDialogue(true)
-    },
+    // this doesn't seem to work, but it'd be nice if it did!
+    // onError: (error) => {
+    //   console.log(error)
+    //   setError(error.message.replace("GraphQL error:", ""))
+    //   setErrorDialogue(true)
+    // },
   })
 
   if (queryError1 || !data) {
@@ -347,7 +352,33 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Button>
             </DialogActions>
           </Dialog>
+          <Dialog
+            open={successDialogue}
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogContent>
+                <Typography variant="body1">
+                  Thank you for your purchase!
+                </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setSuccessDialogue(false)
+                  window.location.reload(true)
+                }}
+                color="primary"
+                autoFocus>
+                Ok
+              </Button>
+            </DialogActions>
+          </Dialog>
         </DialogActions>
+        {mutError && (
+          <DialogContent>
+            <Typography variant="body1" color="error">{mutError.message.replace("GraphQL error: ", "")}</Typography>
+          </DialogContent>
+        )}
       </Dialog>
 
       <Dialog
@@ -439,6 +470,27 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
           }}>
             Yes, I'm sure
           </Button>
+          <Dialog
+            open={successDialogue}
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogContent>
+              <Typography variant="body1">
+                Your plan has been canceled.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setSuccessDialogue(false)
+                  window.location.reload(true)
+                }}
+                color="primary"
+                autoFocus>
+                Ok
+              </Button>
+            </DialogActions>
+          </Dialog>
         </DialogActions>
       </Dialog>
     </>
