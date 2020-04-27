@@ -1,5 +1,5 @@
 ---
-title: Replay and Derive Streams
+title: Replay and derive streams
 description: How Beneath uses event logs to make it easy to derive streams and synchronize systems
 menu:
   docs:
@@ -38,7 +38,7 @@ Lets say you need to synchronize every sale you make to your accounting software
 
 ## Learn more
 
-Event logs are arguably the most useful primitive in production data systems. That's exactly why we put them at the center of Beneath! If you want to learn more about them, we really can't do better than to refer you to these fantastic articles:
+Event logs are arguably the most useful primitive in production data systems. That's exactly why we put them at the center of Beneath! If you want to try them out in action, use one of our [Quick starts](https://about.beneath.dev/docs/quick-starts/). If you would like to learn more about event logs in general, these are the best articles we've ever read on the topic:
 
 - [The Log: What every software engineer should know about real-time data's unifying abstraction](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying)
 - [Online Event Processing](https://queue.acm.org/detail.cfm?id=3321612)
