@@ -73,9 +73,10 @@ interface CardFormStateTypes {
 
 interface Props {
   stripe: ReactStripeElements.StripeProps | undefined
+  closeDialogue: () => void
 }
 
-const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
+const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
   const [values, setValues] = React.useState<CardFormStateTypes>({
     cardholder: "",
     line1: "",
@@ -353,16 +354,13 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe }) => {
           </Grid>
         </Grid>
         <Grid container className={classes.buttons} spacing={2}>
-          {/* <Grid item>
+          <Grid item>
             <Button
               variant="contained"
-              onClick={() => {
-                // refresh page, which should bring user back to either the BillingPlanMenu or the CardDetails
-                window.location.reload(true)
-              }}>
+              onClick={() => { closeDialogue() }}>
               Back
             </Button>
-          </Grid> */}
+          </Grid>
           <Grid item>
             <Button variant="contained" type="submit" color="primary">Submit</Button>
           </Grid>
@@ -664,14 +662,13 @@ const countries = [
 
 // * convert the CardFormWrappedFxn functional component to the CardFormWrappedCls class component, so that we can use the injectStripe HOC * //
 // HOCs are only for class components
-
-class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps> {
-  constructor(props: ReactStripeElements.InjectedStripeProps) {
+class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps & CardFormProps> {
+  constructor(props: ReactStripeElements.InjectedStripeProps & CardFormProps) {
     super(props);
   }
 
   render() {
-    return <CardFormWrappedFxn stripe={this.props.stripe} />
+    return <CardFormWrappedFxn stripe={this.props.stripe} closeDialogue={this.props.closeDialogue} />
   }
 }
 
@@ -682,6 +679,7 @@ const CardFormInjectedStripe = injectStripe(CardFormWrappedCls)
 
 // * set our Stripe key and return the CardForm * //
 interface CardFormProps {
+  closeDialogue: () => void
 }
 
 interface CardFormState {
@@ -704,7 +702,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
     return (
       <StripeProvider stripe={this.state.stripe}>
         <Elements>
-          <CardFormInjectedStripe />
+          <CardFormInjectedStripe closeDialogue={this.props.closeDialogue} />
         </Elements>
       </StripeProvider>
     );

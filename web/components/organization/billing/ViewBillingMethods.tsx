@@ -54,6 +54,11 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
   const cards = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
   const wire = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)[0]
 
+  const handleCloseDialogue = () => {
+    setAddCardDialogue(false)
+    return
+  }
+
   return (
     <React.Fragment>
       <Grid container direction="column">
@@ -119,7 +124,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <CardForm />
+              <CardForm closeDialogue={handleCloseDialogue}/>
             </DialogContent>
             <DialogActions />
           </Dialog>
