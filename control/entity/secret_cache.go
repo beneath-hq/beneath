@@ -128,7 +128,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func()
 		secret := &UserSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
 			Relation("User", func(q *orm.Query) (*orm.Query, error) {
-				return q.Column("user.read_quota", "user.write_quota"), nil
+				return q.Column("user.read_quota", "user.write_quota", "user.master"), nil
 			}).
 			Column("user_secret_id", "read_only", "public_only", "user_secret.user_id").
 			Where("hashed_token = ?", hashedToken).
@@ -140,6 +140,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func()
 		if secret.User != nil {
 			secret.ReadQuota = secret.User.ReadQuota
 			secret.WriteQuota = secret.User.WriteQuota
+			secret.Master = secret.User.Master
 			secret.User = nil
 		}
 
@@ -164,6 +165,7 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken string) fun
 		if secret.Service != nil {
 			secret.ReadQuota = secret.Service.ReadQuota
 			secret.WriteQuota = secret.Service.WriteQuota
+			secret.Master = false
 			secret.Service = nil
 		}
 

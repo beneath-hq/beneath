@@ -72,6 +72,7 @@ type BaseSecret struct {
 	Token      secrettoken.Token `sql:"-"`
 	ReadQuota  int64             `sql:"-"`
 	WriteQuota int64             `sql:"-"`
+	Master     bool              `sql:"-"`
 }
 
 // CheckReadQuota implements Secret

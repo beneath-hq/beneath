@@ -38,6 +38,7 @@ type User struct {
 	Secrets                []*UserSecret
 	ReadQuota              int64
 	WriteQuota             int64
+	Master                 bool `sql:",notnull,default: false"`
 }
 
 var (
@@ -184,6 +185,8 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	}
 
 	// we're creating a new user
+
+	user.Master = false
 
 	// prepare "personal" organization
 	org := &Organization{

@@ -54,9 +54,14 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
   const cards = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
   const wire = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)[0]
 
+  const handleCloseDialogue = () => {
+    setAddCardDialogue(false)
+    return
+  }
+
   return (
     <React.Fragment>
-      <Grid container direction="column" xs={12} sm={6}>
+      <Grid container direction="column">
         <Grid item>
           <Typography variant="h6" className={classes.title}>
             Billing methods on file
@@ -77,7 +82,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
                   {rows.map(rows => (
                     <React.Fragment key={rows.name}>
                       <Grid container>
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={6} sm={4} md={2}>
                           <Typography gutterBottom>{rows.name}</Typography>
                         </Grid>
                         <Grid item>
@@ -99,7 +104,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
 
           {cards.length == 0 && !wire && (
             <Grid item className={classes.billingMethod}>
-              <Typography>You have no billing methods on file.</Typography>
+              <Typography>None.</Typography>
             </Grid>
           )}
         </Grid>
@@ -119,7 +124,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <CardForm />
+              <CardForm closeDialogue={handleCloseDialogue}/>
             </DialogContent>
             <DialogActions />
           </Dialog>
