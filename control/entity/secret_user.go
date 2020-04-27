@@ -98,13 +98,7 @@ func (s *UserSecret) IsService() bool {
 
 // IsMaster implements the Secret interface
 func (s *UserSecret) IsMaster() bool {
-	// TODO: look up this information in the correct place && instead use UUIDs
-	user := FindUser(context.Background(), s.UserID)
-	if user.Username == "greenep12" || user.Username == "_bem" {
-		return true
-	}
-
-	return false
+	return s.Master
 }
 
 // StreamPermissions implements the Secret interface
