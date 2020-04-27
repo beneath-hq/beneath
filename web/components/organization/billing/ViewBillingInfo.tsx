@@ -132,7 +132,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           ))}
         </Grid>
         <Grid item xs={4}>
-          <Grid container alignItems="center">
+          <Grid container alignItems="center" spacing={1}>
             <Grid item>
               <Typography variant="h6" className={classes.title}>
                 Billing method
@@ -207,7 +207,6 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               open={upgradeDialogue}
               fullWidth={true}
               maxWidth={"sm"}
-              onBackdropClick={() => { setUpgradeDialogue(false) }}
             >
               <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
               <DialogContent>

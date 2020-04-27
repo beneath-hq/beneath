@@ -59,6 +59,9 @@ const useStyles = makeStyles((theme) => ({
     },
     color: theme.palette.text.secondary,
   },
+  errorMsg: {
+    marginTop: theme.spacing(3)
+  },
 }))
 
 interface CheckoutStateTypes {
@@ -137,7 +140,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
   })
   const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
 
-  const billingMethodOptions = cards.concat(wire)
+  const billingMethodOptions = cards.concat(wire[0])
 
   const freePlan = data3.billingPlans.filter(billingPlan => billingPlan.default)[0]
   const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
@@ -296,81 +299,89 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Typography>
             </Grid>
           </Grid>
-          <Button color="primary" autoFocus onClick={() => { closeDialogue() }}>
-            Cancel
-          </Button>
-          <Button color="primary" variant="contained" autoFocus onClick={() => {
-            if (!values.billingMethod) {
-              setError("Please select your billing method.")
-              setErrorDialogue(true)
-            } else if (!values.country) {
-              setError("Please select your country.")
-              setErrorDialogue(true)
-            } else if (values.country == "United States of America" && !values.region) {
-              setError("Please select your state.")
-              setErrorDialogue(true)
-            } else if (values.companyName != "" && !values.taxID) {
-              setError("Please provide your tax ID.")
-              setErrorDialogue(true)
-            } else {
-              updateBillingInfo({
-                variables: {
-                  organizationID: organizationID,
-                  billingMethodID: values.billingMethod,
-                  billingPlanID: proPlan.billingPlanID,
-                  country: values.country,
-                  region: values.region,
-                  companyName: values.companyName,
-                  taxNumber: values.taxID
+          <Grid container spacing={2} className={classes.button}>
+            <Grid item>
+              <Button color="primary" autoFocus onClick={() => { closeDialogue() }}>
+                Cancel
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button color="primary" variant="contained" autoFocus onClick={() => {
+                if (!values.billingMethod) {
+                  setError("Please select your billing method.")
+                  setErrorDialogue(true)
+                } else if (!values.country) {
+                  setError("Please select your country.")
+                  setErrorDialogue(true)
+                } else if (values.country == "United States of America" && !values.region) {
+                  setError("Please select your state.")
+                  setErrorDialogue(true)
+                } else if (values.companyName != "" && !values.taxID) {
+                  setError("Please provide your tax ID.")
+                  setErrorDialogue(true)
+                } else {
+                  updateBillingInfo({
+                    variables: {
+                      organizationID: organizationID,
+                      billingMethodID: values.billingMethod,
+                      billingPlanID: proPlan.billingPlanID,
+                      country: values.country,
+                      region: values.region,
+                      companyName: values.companyName,
+                      taxNumber: values.taxID
+                    }
+                  })
                 }
-              })
-            }
-          }}>
-            Purchase
-          </Button>
-          <Dialog
-            open={errorDialogue}
-            aria-describedby="alert-dialog-description"
-          >
-            <DialogContent>
-              {errorDialogue && (
-                <Typography variant="body1" color="error">
-                  {error}
-                </Typography>)}
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => setErrorDialogue(false)}
-                color="primary"
-                autoFocus>
-                Ok
+              }}>
+                Purchase
               </Button>
-            </DialogActions>
-          </Dialog>
-          <Dialog
-            open={successDialogue}
-            aria-describedby="alert-dialog-description"
-          >
-            <DialogContent>
-                <Typography variant="body1">
-                  Thank you for your purchase!
-                </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => {
-                  setSuccessDialogue(false)
-                  window.location.reload(true)
-                }}
-                color="primary"
-                autoFocus>
-                Ok
-              </Button>
-            </DialogActions>
-          </Dialog>
+              <Dialog
+                open={errorDialogue}
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogContent>
+                  {errorDialogue && (
+                    <Typography variant="body1" color="error">
+                      {error}
+                    </Typography>)}
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => setErrorDialogue(false)}
+                    color="primary"
+                    autoFocus>
+                    Ok
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              <Dialog
+                open={successDialogue}
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogContent>
+                    <Typography variant="body1">
+                      Thank you for your purchase!
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => {
+                      setSuccessDialogue(false)
+                      window.location.reload(true)
+                    }}
+                    color="primary"
+                    autoFocus>
+                    Ok
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </Grid>
+          </Grid>
           {mutError && (
             <DialogContent>
-              <Typography variant="body1" color="error">{mutError.message.replace("GraphQL error: ", "")}</Typography>
+              <Typography variant="body1" color="error" className={classes.errorMsg}>
+                {mutError.message.replace("GraphQL error: ", "")}
+              </Typography>
             </DialogContent>
           )}
         </>
@@ -390,45 +401,79 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               />
             </Grid>
           </Grid>
-          <Button color="primary" autoFocus onClick={() => {closeDialogue()}}>
-            Cancel
-          </Button>
-          <Button color="primary" variant="contained" autoFocus onClick={() => {
-            if (values.billingMethod) {
-              updateBillingInfo({
-                variables: {
-                  organizationID: organizationID,
-                  billingMethodID: values.billingMethod,
-                  billingPlanID: proPlan.billingPlanID,
-                  country: values.country
-                }
-              })
-            } else {
-              setError("Please select your billing method.")
-              setErrorDialogue(true)
-            }
-          }}>
-            Change Billing Method
-          </Button>
-          <Dialog
-            open={errorDialogue}
-            aria-describedby="alert-dialog-description"
-          >
-            <DialogContent>
-              {errorDialogue && (
-                <Typography variant="body1" color="error">
-                  {error}
-                </Typography>)}
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => setErrorDialogue(false)}
-                color="primary"
-                autoFocus>
-                Ok
+          <Grid container spacing={2} className={classes.button}>
+            <Grid item>
+              <Button color="primary" autoFocus onClick={() => {closeDialogue()}}>
+                Cancel
               </Button>
-            </DialogActions>
-          </Dialog>
+            </Grid>
+            <Grid item>
+              <Button color="primary" variant="contained" autoFocus onClick={() => {
+                if (values.billingMethod) {
+                  updateBillingInfo({
+                    variables: {
+                      organizationID: organizationID,
+                      billingMethodID: values.billingMethod,
+                      billingPlanID: proPlan.billingPlanID,
+                      country: data.billingInfo.country
+                    }
+                  })
+                } else {
+                  setError("Please select your billing method.")
+                  setErrorDialogue(true)
+                }
+              }}>
+                Change Billing Method
+              </Button>
+              {mutError && (
+                <DialogContent>
+                  <Typography variant="body1" color="error" className={classes.errorMsg}>
+                    {mutError.message.replace("GraphQL error: ", "")}
+                  </Typography>
+                </DialogContent>
+              )}
+              <Dialog
+                open={errorDialogue}
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogContent>
+                  {errorDialogue && (
+                    <Typography variant="body1" color="error">
+                      {error}
+                    </Typography>)}
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => setErrorDialogue(false)}
+                    color="primary"
+                    autoFocus>
+                    Ok
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              <Dialog
+                open={successDialogue}
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogContent>
+                  <Typography variant="body1">
+                    Success.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => {
+                      setSuccessDialogue(false)
+                      window.location.reload(true)
+                    }}
+                    color="primary"
+                    autoFocus>
+                    Ok
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </Grid>
+          </Grid>
         </>
       )}
           
@@ -437,35 +482,41 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
           <DialogContentText id="alert-dialog-description">
             Upon canceling your plan, your usage will be assessed and you will be charged for any applicable overage fees for the current billing period.
           </DialogContentText>
-          <Button color="primary" autoFocus onClick={() => closeDialogue()}>
-            No, go back
-          </Button>
-          <Button color="primary" autoFocus onClick={() => {
-            updateBillingInfo({ variables: { organizationID: organizationID, billingMethodID: anarchism.billingMethodID, billingPlanID: freePlan.billingPlanID, country: data.billingInfo.country } });
-          }}>
-            Yes, I'm sure
-          </Button>
-          <Dialog
-            open={successDialogue}
-            aria-describedby="alert-dialog-description"
-          >
-            <DialogContent>
-              <Typography variant="body1">
-                Your plan has been canceled.
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => {
-                  setSuccessDialogue(false)
-                  window.location.reload(true)
-                }}
-                color="primary"
-                autoFocus>
-                Ok
+          <Grid container spacing={2} className={classes.button}>
+            <Grid item>
+              <Button color="primary" autoFocus onClick={() => closeDialogue()}>
+                No, go back
               </Button>
-            </DialogActions>
-          </Dialog>
+            </Grid>
+            <Grid item>
+              <Button color="primary" autoFocus onClick={() => {
+                updateBillingInfo({ variables: { organizationID: organizationID, billingMethodID: anarchism.billingMethodID, billingPlanID: freePlan.billingPlanID, country: data.billingInfo.country } });
+              }}>
+                Yes, I'm sure
+              </Button>
+              <Dialog
+                open={successDialogue}
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogContent>
+                  <Typography variant="body1">
+                    Your plan has been canceled.
+                  </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => {
+                      setSuccessDialogue(false)
+                      window.location.reload(true)
+                    }}
+                    color="primary"
+                    autoFocus>
+                    Ok
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </Grid>
+          </Grid>
         </>
       )}
     </>
