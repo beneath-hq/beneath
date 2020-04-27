@@ -110,7 +110,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
   return (
     <React.Fragment>
       <Grid container spacing={3}>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <Grid container>
             <Grid item>
               <Typography variant="h6" className={classes.title}>
@@ -121,7 +121,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           {billingPlan.map(billingPlan => (
             <React.Fragment key={billingPlan.name}>
               <Grid container>
-                <Grid item xs={4}>
+                <Grid item xs={6} sm={4}>
                   <Typography>{billingPlan.name}</Typography>
                 </Grid>
                 <Grid item>
@@ -131,7 +131,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
             </React.Fragment>
           ))}
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <Grid container alignItems="center" spacing={1}>
             <Grid item>
               <Typography variant="h6" className={classes.title}>
@@ -166,7 +166,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
             {displayBillingMethod(data.billingInfo)}            
           </Typography>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <Grid container>
             <Grid item>
               <Typography variant="h6" className={classes.title}>
@@ -180,7 +180,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           {data.billingInfo.billingPlan.billingPlanID != freePlan.billingPlanID && taxInfo.map(taxInfo => (
             <React.Fragment key={taxInfo.name}>
               <Grid container>
-                <Grid item xs={4}>
+                <Grid item xs={6} sm={4}>
                   <Typography>{taxInfo.name}</Typography>
                 </Grid>
                 <Grid item>

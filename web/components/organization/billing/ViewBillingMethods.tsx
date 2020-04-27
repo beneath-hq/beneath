@@ -82,7 +82,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
                   {rows.map(rows => (
                     <React.Fragment key={rows.name}>
                       <Grid container>
-                        <Grid item xs={2}>
+                        <Grid item xs={6} sm={4} md={2}>
                           <Typography gutterBottom>{rows.name}</Typography>
                         </Grid>
                         <Grid item>
