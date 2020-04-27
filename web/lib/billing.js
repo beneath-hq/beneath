@@ -1,12 +1,3 @@
-module.exports = {
-  ANARCHISM_DRIVER,
-  STRIPECARD_DRIVER,
-  STRIPEWIRE_DRIVER,
-  STRIPE_KEY,
-  COUNTRIES,
-  US_STATES
-};
-
 const ANARCHISM_DRIVER = "anarchism"
 const STRIPECARD_DRIVER = "stripecard"
 const STRIPEWIRE_DRIVER = "stripewire"
@@ -319,3 +310,12 @@ const US_STATES = [
   { label: 'Wisconsin', name: 'Wisconsin' },
   { label: 'Wyoming', name: 'Wyoming' }
 ]
+
+module.exports = {
+  ANARCHISM_DRIVER,
+  STRIPECARD_DRIVER,
+  STRIPEWIRE_DRIVER,
+  STRIPE_KEY,
+  COUNTRIES,
+  US_STATES
+};
