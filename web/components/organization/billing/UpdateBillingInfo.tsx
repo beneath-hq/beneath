@@ -75,7 +75,7 @@ interface Props {
   closeDialogue: () => void
 }
 
-const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDialogue }) => { 
+const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDialogue }) => {
   const classes = useStyles()
   const [successDialogue, setSuccessDialogue] = React.useState(false)
   const [errorDialogue, setErrorDialogue] = React.useState(false)
@@ -128,9 +128,16 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     return <p>Error: {JSON.stringify(queryError3)}</p>;
   }
 
-  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
-  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)
+  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER).map((billingMethod) => {
+    const payload = JSON.parse(billingMethod.driverPayload)
+    return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
+  })
+  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER).map((billingMethod) => {
+    return { label: "Wire payment", value: billingMethod.billingMethodID }
+  })
   const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
+
+  const billingMethodOptions = cards.concat(wire)
 
   const freePlan = data3.billingPlans.filter(billingPlan => billingPlan.default)[0]
   const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
@@ -153,14 +160,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
 
   return (
     <>
-      <Dialog
-        open={route == "checkout"}
-        fullWidth={true}
-        maxWidth={"sm"}
-        onBackdropClick={() => { closeDialogue() }}
-      >
-        <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
-        <DialogContent>
+      {route=="checkout" && (
+        <>
           <Grid container direction="column">
             <Grid item>
               <Typography variant="h2" className={classes.firstTitle}>
@@ -183,20 +184,16 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               <Typography variant="h2" className={classes.title}>
                 Select your billing method
               </Typography>
+              {billingMethodOptions.length == 0 && (
+                <Typography variant="body1" color="error">
+                  You have no billing method on file. Please add a card on the previous screen.
+                </Typography>
+              )}
               <SelectField
                 id="billing_method"
                 label="Billing method"
                 value={values.billingMethod}
-                options={data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver != billing.ANARCHISM_DRIVER).map((billingMethod) => {
-                  if (billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
-                    const payload = JSON.parse(billingMethod.driverPayload)
-                    return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
-                  } else if (billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
-                    return { label: "Wire payment", value: billingMethod.billingMethodID }
-                  } else {
-                    return { label: "", value: "" }
-                  }
-                })}
+                options={billingMethodOptions}
                 onChange={({ target }) => setValues({ ...values, billingMethod: target.value as string })}
                 controlClass={classes.selectField}
               />
@@ -299,8 +296,6 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Typography>
             </Grid>
           </Grid>
-        </DialogContent>
-        <DialogActions>
           <Button color="primary" autoFocus onClick={() => { closeDialogue() }}>
             Cancel
           </Button>
@@ -373,45 +368,28 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Button>
             </DialogActions>
           </Dialog>
-        </DialogActions>
-        {mutError && (
-          <DialogContent>
-            <Typography variant="body1" color="error">{mutError.message.replace("GraphQL error: ", "")}</Typography>
-          </DialogContent>
-        )}
-      </Dialog>
+          {mutError && (
+            <DialogContent>
+              <Typography variant="body1" color="error">{mutError.message.replace("GraphQL error: ", "")}</Typography>
+            </DialogContent>
+          )}
+        </>
+      )}
 
-      <Dialog
-        open={route == "change_billing_method"}
-        fullWidth={true}
-        maxWidth={"sm"}
-        onBackdropClick={() => { closeDialogue() }}
-      >
-        <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
-        <DialogContent>
+      {route == "change_billing_method" && (
+        <>
           <Grid container direction="column">
             <Grid item>
               <SelectField
                 id="billing_method"
                 label="Billing method"
                 value={values.billingMethod}
-                options={data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver != billing.ANARCHISM_DRIVER).map((billingMethod) => {
-                  if (billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
-                    const payload = JSON.parse(billingMethod.driverPayload)
-                    return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
-                  } else if (billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER) {
-                    return { label: "Wire payment", value: billingMethod.billingMethodID }
-                  } else {
-                    return { label: "", value: "" }
-                  }
-                })}
+                options={billingMethodOptions}
                 onChange={({ target }) => setValues({ ...values, billingMethod: target.value as string })}
                 controlClass={classes.selectField}
               />
             </Grid>
           </Grid>
-        </DialogContent>
-        <DialogActions>
           <Button color="primary" autoFocus onClick={() => {closeDialogue()}}>
             Cancel
           </Button>
@@ -451,17 +429,14 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Button>
             </DialogActions>
           </Dialog>
-        </DialogActions>
-      </Dialog>
-        
-      <Dialog open={route=="cancel"}>
-        <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
-        <DialogContent>
+        </>
+      )}
+          
+      {route=="cancel" && (
+        <>
           <DialogContentText id="alert-dialog-description">
             Upon canceling your plan, your usage will be assessed and you will be charged for any applicable overage fees for the current billing period.
           </DialogContentText>
-        </DialogContent>
-        <DialogActions>
           <Button color="primary" autoFocus onClick={() => closeDialogue()}>
             No, go back
           </Button>
@@ -491,11 +466,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Button>
             </DialogActions>
           </Dialog>
-        </DialogActions>
-      </Dialog>
+        </>
+      )}
     </>
-  )
-}
+  )}
 
 export default UpdateBillingInfoDialogue;
 

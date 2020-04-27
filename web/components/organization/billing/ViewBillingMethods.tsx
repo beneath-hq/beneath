@@ -56,7 +56,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
 
   return (
     <React.Fragment>
-      <Grid container direction="column" xs={12} sm={6}>
+      <Grid container direction="column">
         <Grid item>
           <Typography variant="h6" className={classes.title}>
             Billing methods on file
@@ -77,7 +77,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
                   {rows.map(rows => (
                     <React.Fragment key={rows.name}>
                       <Grid container>
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={2}>
                           <Typography gutterBottom>{rows.name}</Typography>
                         </Grid>
                         <Grid item>
@@ -99,7 +99,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
 
           {cards.length == 0 && !wire && (
             <Grid item className={classes.billingMethod}>
-              <Typography>You have no billing methods on file.</Typography>
+              <Typography>None.</Typography>
             </Grid>
           )}
         </Grid>
