@@ -2,9 +2,11 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"time"
 
+	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -100,106 +102,78 @@ func FindAllOrganizations(ctx context.Context) []*Organization {
 	return organizations
 }
 
-// CreateOrganizationWithUser creates an organization with the given user as its first member
-func CreateOrganizationWithUser(ctx context.Context, userID uuid.UUID, billingPlanID uuid.UUID, paymentsDriver PaymentsDriver, driverPayload map[string]interface{}) (*Organization, error) {
-	user := FindUser(ctx, userID)
+// CreateWithUser creates an organization with the given user as its first member
+func (o *Organization) CreateWithUser(ctx context.Context, username string) error {
+	user := FindUserByUsername(ctx, username)
 	if user == nil {
-		panic("can't find the user to initialize the enterprise organization")
+		return fmt.Errorf("User %s not found", username)
 	}
 
-	org := &Organization{
-		Personal: false,
-	}
-
-	tx, err := hub.DB.Begin()
+	// validate
+	err := GetValidator().Struct(o)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer tx.Rollback() // defer rollback on error
 
-	// try out all possible names
-	organizationNameSeeds := org.organizationNameSeeds()
-	for _, name := range organizationNameSeeds {
-		// savepoint in case name is taken
-		_, err = tx.Exec("SAVEPOINT bi")
+	// create organization, billing method, billing info, permissions, update user in one transaction
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		// insert organization
+		_, err := tx.Model(o).Insert()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		org.Name = name
-
-		// insert org and user
-		err = tx.Insert(org)
-		if err == nil {
-			user.BillingOrganizationID = org.OrganizationID
-			err = tx.Insert(user)
+		// add to user-organization permissions table
+		err = tx.Insert(&PermissionsUsersOrganizations{
+			UserID:         user.UserID,
+			OrganizationID: o.OrganizationID,
+			View:           true,
+			Admin:          true,
+		})
+		if err != nil {
+			return err
 		}
 
-		// success
-		if err == nil {
-			break
+		// update user's billing organization
+		user.BillingOrganizationID = o.OrganizationID
+		user.UpdatedOn = time.Now()
+		err = tx.Update(user)
+		if err != nil {
+			return err
 		}
 
-		// rollback on name error
-		if isUniqueError(err) {
-			// rollback to before error, then try next name
-			_, err = tx.Exec("ROLLBACK TO SAVEPOINT bi")
-			if err != nil {
-				return nil, err
-			}
-			continue
+		// create billing method
+		bm := &BillingMethod{
+			OrganizationID: o.OrganizationID,
+			PaymentsDriver: AnarchismDriver,
+		}
+		_, err = tx.Model(bm).Insert()
+		if err != nil {
+			return err
 		}
 
-		// unexpected error
-		return nil, err
-	}
+		// get default billing plan
+		defaultBillingPlan := FindDefaultBillingPlan(ctx)
 
-	// add user to user-organization permissions table
-	err = tx.Insert(&PermissionsUsersOrganizations{
-		UserID:         user.UserID,
-		OrganizationID: org.OrganizationID,
-		View:           true,
-		Admin:          true,
+		// create billing info
+		bi := &BillingInfo{
+			OrganizationID:  o.OrganizationID,
+			BillingMethodID: bm.BillingMethodID,
+			BillingPlanID:   defaultBillingPlan.BillingPlanID,
+		}
+		_, err = tx.Model(bi).Insert()
+		if err != nil {
+			return err
+		}
+
+		// log new organization
+		log.S.Infow(
+			"control created enterprise organization",
+			"organization_id", o.OrganizationID,
+		)
+
+		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// create billing method
-	bm := &BillingMethod{
-		OrganizationID: org.OrganizationID,
-		PaymentsDriver: paymentsDriver,
-		DriverPayload:  driverPayload,
-	}
-	_, err = tx.Model(bm).Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	// create billing info
-	bi := &BillingInfo{
-		OrganizationID:  org.OrganizationID,
-		BillingMethodID: bm.BillingMethodID,
-		BillingPlanID:   billingPlanID,
-	}
-	_, err = tx.Model(bi).Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	// commit it all
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	// log new organization
-	log.S.Infow(
-		"control created enterprise organization",
-		"organization_id", org.OrganizationID,
-	)
-
-	return org, nil
 }
 
 // InviteUser gives a user permission to join the organization
