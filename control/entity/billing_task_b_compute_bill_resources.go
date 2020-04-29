@@ -99,11 +99,6 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 }
 
 func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, users []*User, billTimes *billTimes) error {
-	if len(users) == 0 {
-		log.S.Info("no users in this organization -- this organization must be getting deleted")
-		return nil
-	}
-
 	var billedResources []*BilledResource
 	for _, user := range users {
 		// only bill those organization users who have it as their billing org
@@ -122,6 +117,14 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 				Currency:        billingPlan.Currency,
 			})
 		}
+	}
+
+	if len(billedResources) == 0 {
+		if !billingPlan.Personal {
+			log.S.Info("The enterprise organization has no users and will be deleted.")
+		}
+
+		return nil
 	}
 
 	err := CreateOrUpdateBilledResources(ctx, billedResources)
