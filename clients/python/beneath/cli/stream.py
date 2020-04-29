@@ -5,14 +5,13 @@ from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 
 def add_subparser(root):
   stream = root.add_parser('stream').add_subparsers()
-  root_stream = root.add_parser('root-stream').add_subparsers()
-  root_stream_batch = root_stream.add_parser('batch').add_subparsers()
+  stream_batch = stream.add_parser('batch').add_subparsers()
 
   _list = stream.add_parser('list')
   _list.set_defaults(func=async_cmd(show_list))
   _list.add_argument('project_path', type=str)
 
-  _create = root_stream.add_parser('create')
+  _create = stream.add_parser('create')
   _create.set_defaults(func=async_cmd(create_root))
   _create.add_argument(
     '-f',
@@ -25,7 +24,7 @@ def add_subparser(root):
   _create.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
   _create.add_argument('--batch', type=str2bool, nargs='?', const=True, default=False)
 
-  _update = root_stream.add_parser('update')
+  _update = stream.add_parser('update')
   _update.set_defaults(func=async_cmd(update_root))
   _update.add_argument('stream_path', type=str)
   _update.add_argument(
@@ -38,19 +37,19 @@ def add_subparser(root):
   )
   _update.add_argument('--manual', type=str2bool, nargs='?', const=True, default=False)
 
-  _delete = root_stream.add_parser('delete')
+  _delete = stream.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete_root))
   _delete.add_argument('stream_path', type=str)
 
-  _batch_create = root_stream_batch.add_parser('create')
+  _batch_create = stream_batch.add_parser('create')
   _batch_create.set_defaults(func=async_cmd(batch_create))
   _batch_create.add_argument('stream_path', type=str)
 
-  _batch_commit = root_stream_batch.add_parser('commit')
+  _batch_commit = stream_batch.add_parser('commit')
   _batch_commit.set_defaults(func=async_cmd(batch_commit))
   _batch_commit.add_argument('instance', type=str)
 
-  _batches_clear = root_stream_batch.add_parser('clear')
+  _batches_clear = stream_batch.add_parser('clear')
   _batches_clear.set_defaults(func=async_cmd(batches_clear))
   _batches_clear.add_argument('stream_path', type=str)
 
