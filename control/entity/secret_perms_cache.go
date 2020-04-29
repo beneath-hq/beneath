@@ -56,7 +56,9 @@ var permsCacheConfig = struct {
 	cacheLRUTime: 1 * time.Minute,
 	cacheLRUSize: 20000,
 	redisKeyFn: func(ownerID uuid.UUID, resourceID uuid.UUID) string {
-		return string(append(ownerID.Bytes(), resourceID.Bytes()...))
+		res := append([]byte("perm:"), ownerID.Bytes()...)
+		res = append(res, resourceID.Bytes()...)
+		return string(res)
 	},
 }
 

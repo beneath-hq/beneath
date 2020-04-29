@@ -2,7 +2,6 @@ package entity
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -29,13 +28,13 @@ var (
 		cacheTime    time.Duration
 		cacheLRUTime time.Duration
 		cacheLRUSize int
-		redisKeyFn   func(hashedSecret string) string
+		redisKeyFn   func(hashedToken []byte) string
 	}{
 		cacheTime:    time.Hour,
 		cacheLRUTime: 1 * time.Minute,
 		cacheLRUSize: 10000,
-		redisKeyFn: func(hashedSecret string) string {
-			return fmt.Sprintf("secret:%s", hashedSecret)
+		redisKeyFn: func(hashedToken []byte) string {
+			return string(append([]byte("scrt:"), hashedToken...))
 		},
 	}
 )
@@ -116,14 +115,14 @@ func (c *SecretCache) serviceOnce(ctx context.Context, token secrettoken.Token) 
 }
 
 // Delete removes a key from the cache
-func (c *SecretCache) Delete(ctx context.Context, hashedToken string) {
+func (c *SecretCache) Delete(ctx context.Context, hashedToken []byte) {
 	err := c.codec.Delete(secretCacheConfig.redisKeyFn(hashedToken))
 	if err != nil && err != cache.ErrCacheMiss {
 		panic(err)
 	}
 }
 
-func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func() (interface{}, error) {
+func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		secret := &UserSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
@@ -148,7 +147,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken string) func()
 	}
 }
 
-func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken string) func() (interface{}, error) {
+func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		secret := &ServiceSecret{}
 		err := hub.DB.ModelContext(ctx, secret).

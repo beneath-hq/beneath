@@ -67,15 +67,12 @@ func (t Token) String() string {
 }
 
 // Hashed returns a safe hash representation of the token
-func (t Token) Hashed() string {
+func (t Token) Hashed() []byte {
 	// use sha256 digest
 	hashed := sha256.Sum256(t[:])
 
-	// encode hashed bytes as base62
-	encoded := base58.Encode(hashed[:])
-
 	// done
-	return encoded
+	return hashed[:]
 }
 
 // Prefix returns a prefix to use to distinguish tokens
