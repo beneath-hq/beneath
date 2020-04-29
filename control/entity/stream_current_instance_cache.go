@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // instanceCache is a Redis and LRU based cache mapping (projectName, streamName) pairs to
@@ -71,7 +71,7 @@ func (c instanceCache) cacheLRUTime() time.Duration {
 }
 
 func (c instanceCache) redisKey(organizationName string, projectName string, streamName string) string {
-	return fmt.Sprintf("instance_id:%s:%s:%s", organizationName, projectName, streamName)
+	return fmt.Sprintf("inst:%s:%s:%s", organizationName, projectName, streamName)
 }
 
 func (c instanceCache) marshal(v interface{}) ([]byte, error) {

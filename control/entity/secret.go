@@ -64,7 +64,7 @@ type Secret interface {
 type BaseSecret struct {
 	_msgpack    struct{}  `msgpack:",omitempty"`
 	Prefix      string    `sql:",notnull",validate:"required,len=4"`
-	HashedToken string    `sql:",unique,notnull",validate:"required,lte=64"`
+	HashedToken []byte    `sql:",unique,notnull",validate:"required,lte=64"`
 	Description string    `validate:"omitempty,lte=32"`
 	CreatedOn   time.Time `sql:",notnull,default:now()"`
 	UpdatedOn   time.Time `sql:",notnull,default:now()"`

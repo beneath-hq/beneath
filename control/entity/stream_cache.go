@@ -4,17 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
-	"fmt"
 	"sync"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"github.com/bluele/gcache"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
 )
 
 // CachedStream keeps key information about a stream for rapid lookup
@@ -355,7 +354,7 @@ func (c streamCache) cacheLRUTime() time.Duration {
 }
 
 func (c streamCache) redisKey(instanceID uuid.UUID) string {
-	return fmt.Sprintf("stream:%s", instanceID.String())
+	return string(append([]byte("strm:"), instanceID.Bytes()...))
 }
 
 func (c streamCache) marshal(v interface{}) ([]byte, error) {

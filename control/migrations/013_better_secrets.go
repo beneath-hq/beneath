@@ -21,7 +21,7 @@ func init() {
 			CREATE TABLE service_secrets (
 				service_secret_id uuid DEFAULT uuid_generate_v4(),
 				prefix text NOT NULL,
-				hashed_token text NOT NULL UNIQUE,
+				hashed_token bytea NOT NULL UNIQUE,
 				description text,
 				created_on timestamptz NOT NULL DEFAULT now(),
 				updated_on timestamptz NOT NULL DEFAULT now(),
@@ -39,7 +39,7 @@ func init() {
 			CREATE TABLE user_secrets (
 				user_secret_id uuid DEFAULT uuid_generate_v4(),
 				prefix text NOT NULL,
-				hashed_token text NOT NULL UNIQUE,
+				hashed_token bytea NOT NULL UNIQUE,
 				description text,
 				created_on timestamptz NOT NULL DEFAULT now(),
 				updated_on timestamptz NOT NULL DEFAULT now(),
