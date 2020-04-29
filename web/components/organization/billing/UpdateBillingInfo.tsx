@@ -1,20 +1,33 @@
-import React, { FC } from 'react'
-import { TextField, Typography, Button, Dialog, DialogActions, DialogContent, Grid, DialogContentText, ListItem, DialogTitle } from "@material-ui/core"
-import { Autocomplete } from "@material-ui/lab"
-import { makeStyles } from "@material-ui/core/styles"
-import _ from 'lodash'
+import _ from "lodash";
+import React, { FC } from "react";
 
-import { useQuery, useMutation } from "@apollo/react-hooks";
-import { QUERY_BILLING_INFO, UPDATE_BILLING_INFO } from '../../../apollo/queries/billinginfo';
-import { UpdateBillingInfo, UpdateBillingInfoVariables } from '../../../apollo/types/UpdateBillingInfo';
-import CheckIcon from '@material-ui/icons/Check';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  Grid,
+  ListItem,
+  TextField,
+  Typography,
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import { Autocomplete } from "@material-ui/lab";
+
+import CheckIcon from "@material-ui/icons/Check";
+
+import billing from "../../../lib/billing";
 import SelectField from "../../SelectField";
-import billing from "../../../lib/billing"
-import { BillingMethods, BillingMethodsVariables } from '../../../apollo/types/BillingMethods'
-import { QUERY_BILLING_METHODS } from '../../../apollo/queries/billingmethod'
-import { BillingPlans } from '../../../apollo/types/BillingPlans'
-import { QUERY_BILLING_PLANS } from '../../../apollo/queries/billingplan'
-import { BillingInfo, BillingInfoVariables } from '../../../apollo/types/BillingInfo'
+
+import { useMutation, useQuery } from "@apollo/react-hooks";
+import { QUERY_BILLING_INFO, UPDATE_BILLING_INFO } from "../../../apollo/queries/billinginfo";
+import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
+import { QUERY_BILLING_PLANS } from "../../../apollo/queries/billingplan";
+import { BillingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
+import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
+import { BillingPlans } from "../../../apollo/types/BillingPlans";
+import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../apollo/types/UpdateBillingInfo";
 
 const useStyles = makeStyles((theme) => ({
   firstTitle: {
@@ -46,7 +59,7 @@ const useStyles = makeStyles((theme) => ({
   },
   option: {
     fontSize: 15,
-    '& > span': {
+    "& > span": {
       marginRight: 10,
       fontSize: 18,
     },
@@ -62,53 +75,51 @@ const useStyles = makeStyles((theme) => ({
   errorMsg: {
     marginTop: theme.spacing(3)
   },
-}))
+}));
 
 interface CheckoutStateTypes {
-  billingMethod: string,
-  country: string,
-  region: string,
-  companyName: string,
-  taxID: string,
+  billingMethod: string;
+  country: string;
+  region: string;
+  companyName: string;
+  taxID: string;
 }
 
 interface Props {
-  organizationID: string
-  route: string
-  closeDialogue: () => void
+  organizationID: string;
+  route: string;
+  closeDialogue: () => void;
 }
 
 const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDialogue }) => {
-  const classes = useStyles()
-  const [successDialogue, setSuccessDialogue] = React.useState(false)
-  const [errorDialogue, setErrorDialogue] = React.useState(false)
-  const [error, setError] = React.useState("")
+  const classes = useStyles();
+  const [successDialogue, setSuccessDialogue] = React.useState(false);
+  const [errorDialogue, setErrorDialogue] = React.useState(false);
+  const [error, setError] = React.useState("");
   const [values, setValues] = React.useState<CheckoutStateTypes>({
     billingMethod: "",
     country: "",
     region: "",
     companyName: "",
     taxID: "",
-  })
-
-  const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
-    variables: {
-      organizationID: organizationID,
-    },
   });
 
-  const { loading: loading2, error: queryError2, data: data2 } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
-    variables: {
-      organizationID: organizationID,
-    },
+  const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+    variables: {organizationID},
+  });
+
+  const { loading: loading2, error: queryError2, data: data2 } =
+    useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
+    variables: {organizationID},
   });
 
   const { loading: loading3, error: queryError3, data: data3 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
 
-  const [updateBillingInfo, {error: mutError}] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
+  const [updateBillingInfo, {error: mutError}] =
+    useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
     onCompleted: (data) => {
       if (data) {
-        setSuccessDialogue(true)
+        setSuccessDialogue(true);
       }
     },
     // this doesn't seem to work, but it'd be nice if it did!
@@ -117,7 +128,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     //   setError(error.message.replace("GraphQL error:", ""))
     //   setErrorDialogue(true)
     // },
-  })
+  });
 
   if (queryError1 || !data) {
     return <p>Error: {JSON.stringify(queryError1)}</p>;
@@ -131,39 +142,49 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     return <p>Error: {JSON.stringify(queryError3)}</p>;
   }
 
-  const cards = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER).map((billingMethod) => {
-    const payload = JSON.parse(billingMethod.driverPayload)
-    return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
-  })
-  const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER).map((billingMethod) => {
-    return { label: "Wire payment", value: billingMethod.billingMethodID }
-  })
-  const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
+  // THURSDAY: FROM THIS
+  // const cards = (data2.billingMethods ? data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER).map((billingMethod) => {
+  //   const payload = JSON.parse(billingMethod.driverPayload)
+  //   return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
+  // }) : [])
+  // const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER).map((billingMethod) => {
+  //   return { label: "Wire payment", value: billingMethod.billingMethodID }
+  // })
+  // const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
+  // const billingMethodOptions = cards.concat(wire)
 
-  const billingMethodOptions = cards.concat(wire)
+  // TO THIS
+  // let cards;
+  // let wire;
+  // if (data2.billingMethods && data2.billingMethods.length > 0) {
+  //   cards = data2.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPECARD_DRIVER);
+  //   wire = data2.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPEWIRE_DRIVER)[0];
+  // }
 
-  const freePlan = data3.billingPlans.filter(billingPlan => billingPlan.default)[0]
-  const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
+  const billingMethodOptions = [{ label: "lala", value: "tlja"}];
+
+  const freePlan = data3.billingPlans.filter((billingPlan) => billingPlan.default)[0];
+  const proPlan = data3.billingPlans.filter((billingPlan) => !billingPlan.default)[0];
 
   const handleChange = (name: string) => (event: any) => {
-    setValues({ ...values, [name]: event.target.value })
-  }
+    setValues({ ...values, [name]: event.target.value });
+  };
 
   const onCountryChange = (object: any, value: any) => {
     if (value) {
-      setValues({ ...values, country: value.value })
+      setValues({ ...values, country: value.value });
     }
-  }
-  
+  };
+
   const onRegionChange = (object: any, value: any) => {
     if (value) {
-      setValues({ ...values, region: value.value })
+      setValues({ ...values, region: value.value });
     }
-  }
+  };
 
   return (
     <>
-      {route=="checkout" && (
+      {route === "checkout" && (
         <>
           <Grid container direction="column">
             <Grid item>
@@ -179,7 +200,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                         <Typography component="span">{feature}</Typography>
                       </ListItem>
                     </React.Fragment>
-                  )
+                  );
                 })}
               </Typography>
             </Grid>
@@ -187,7 +208,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               <Typography variant="h2" className={classes.title}>
                 Select your billing method
               </Typography>
-              {billingMethodOptions.length == 0 && (
+              {billingMethodOptions.length === 0 && (
                 <Typography variant="body1" color="error">
                   You have no billing method on file. Please add a card on the previous screen.
                 </Typography>
@@ -211,17 +232,17 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     id="country"
                     style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                     options={billing.COUNTRIES}
-                    classes={{option: classes.option,}}
+                    classes={{option: classes.option, }}
                     className={classes.selectField}
                     autoHighlight
-                    getOptionLabel={option => option.label}
-                    renderOption={option => (
+                    getOptionLabel={(option) => option.label}
+                    renderOption={(option) => (
                       <React.Fragment>
                         {option.label}
                       </React.Fragment>
                     )}
                     onChange={onCountryChange}
-                    renderInput={params => (
+                    renderInput={(params) => (
                       <TextField
                         {...params}
                         label="Choose a country"
@@ -229,33 +250,33 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                         fullWidth
                         inputProps={{
                           ...params.inputProps,
-                          autoComplete: 'new-password', // disable autocomplete and autofill
+                          autoComplete: "new-password", // disable autocomplete and autofill
                         }}
                       />
                     )}
                   />
                 </Grid>
-                {values.country != "United States of America" && (
+                {values.country !== "United States of America" && (
                   <Grid item xs={12} sm={6}>
                   </Grid>
                 )}
-                {values.country == "United States of America" && (
+                {values.country === "United States of America" && (
                   <Grid item xs={12} sm={6}>
                     <Autocomplete
                       id="region"
                       style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                       options={billing.US_STATES}
-                      classes={{option: classes.option,}}
+                      classes={{option: classes.option, }}
                       className={classes.selectField}
                       autoHighlight
-                      getOptionLabel={option => option.label}
-                      renderOption={option => (
+                      getOptionLabel={(option) => option.label}
+                      renderOption={(option) => (
                         <React.Fragment>
                           {option.label}
                         </React.Fragment>
                       )}
                       onChange={onRegionChange}
-                      renderInput={params => (
+                      renderInput={(params) => (
                         <TextField
                           {...params}
                           label="Choose a state"
@@ -263,7 +284,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                           fullWidth
                           inputProps={{
                             ...params.inputProps,
-                            autoComplete: 'new-password', // disable autocomplete and autofill
+                            autoComplete: "new-password", // disable autocomplete and autofill
                           }}
                         />
                       )}
@@ -289,40 +310,40 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     value={values.taxID}
                     onChange={handleChange("taxID")}
                   />
-                  
                 </Grid>
               </Grid>
             </Grid>
             <Grid item>
               <Typography className={classes.proratedDescription}>
-                You will be charged a pro-rated amount for the current month. Receipts will be sent to your email each month.
+                You will be charged a pro-rated amount for the current month.
+                Receipts will be sent to your email each month.
               </Typography>
             </Grid>
           </Grid>
           <Grid container spacing={2} className={classes.button}>
             <Grid item>
-              <Button color="primary" autoFocus onClick={() => { closeDialogue() }}>
+              <Button color="primary" autoFocus onClick={() => { closeDialogue(); }}>
                 Cancel
               </Button>
             </Grid>
             <Grid item>
               <Button color="primary" variant="contained" autoFocus onClick={() => {
                 if (!values.billingMethod) {
-                  setError("Please select your billing method.")
-                  setErrorDialogue(true)
+                  setError("Please select your billing method.");
+                  setErrorDialogue(true);
                 } else if (!values.country) {
-                  setError("Please select your country.")
-                  setErrorDialogue(true)
-                } else if (values.country == "United States of America" && !values.region) {
-                  setError("Please select your state.")
-                  setErrorDialogue(true)
-                } else if (values.companyName != "" && !values.taxID) {
-                  setError("Please provide your tax ID.")
-                  setErrorDialogue(true)
+                  setError("Please select your country.");
+                  setErrorDialogue(true);
+                } else if (values.country === "United States of America" && !values.region) {
+                  setError("Please select your state.");
+                  setErrorDialogue(true);
+                } else if (values.companyName !== "" && !values.taxID) {
+                  setError("Please provide your tax ID.");
+                  setErrorDialogue(true);
                 } else {
                   updateBillingInfo({
                     variables: {
-                      organizationID: organizationID,
+                      organizationID,
                       billingMethodID: values.billingMethod,
                       billingPlanID: proPlan.billingPlanID,
                       country: values.country,
@@ -330,7 +351,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                       companyName: values.companyName,
                       taxNumber: values.taxID
                     }
-                  })
+                  });
                 }
               }}>
                 Purchase
@@ -366,8 +387,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 <DialogActions>
                   <Button
                     onClick={() => {
-                      setSuccessDialogue(false)
-                      window.location.reload(true)
+                      setSuccessDialogue(false);
+                      window.location.reload(true);
                     }}
                     color="primary"
                     autoFocus>
@@ -387,7 +408,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
         </>
       )}
 
-      {route == "change_billing_method" && (
+      {route === "change_billing_method" && (
         <>
           <Grid container direction="column">
             <Grid item>
@@ -403,7 +424,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
           </Grid>
           <Grid container spacing={2} className={classes.button}>
             <Grid item>
-              <Button color="primary" autoFocus onClick={() => {closeDialogue()}}>
+              <Button color="primary" autoFocus onClick={() => {closeDialogue(); }}>
                 Cancel
               </Button>
             </Grid>
@@ -412,15 +433,15 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 if (values.billingMethod) {
                   updateBillingInfo({
                     variables: {
-                      organizationID: organizationID,
+                      organizationID,
                       billingMethodID: values.billingMethod,
                       billingPlanID: proPlan.billingPlanID,
                       country: data.billingInfo.country
                     }
-                  })
+                  });
                 } else {
-                  setError("Please select your billing method.")
-                  setErrorDialogue(true)
+                  setError("Please select your billing method.");
+                  setErrorDialogue(true);
                 }
               }}>
                 Change Billing Method
@@ -463,8 +484,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 <DialogActions>
                   <Button
                     onClick={() => {
-                      setSuccessDialogue(false)
-                      window.location.reload(true)
+                      setSuccessDialogue(false);
+                      window.location.reload(true);
                     }}
                     color="primary"
                     autoFocus>
@@ -476,11 +497,12 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
           </Grid>
         </>
       )}
-          
-      {route=="cancel" && (
+
+      {route === "cancel" && (
         <>
           <DialogContentText id="alert-dialog-description">
-            Upon canceling your plan, your usage will be assessed and you will be charged for any applicable overage fees for the current billing period.
+            Upon canceling your plan, your usage will be assessed and you will be charged for any applicable overage
+            fees for the current billing period.
           </DialogContentText>
           <Grid container spacing={2} className={classes.button}>
             <Grid item>
@@ -490,7 +512,11 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             </Grid>
             <Grid item>
               <Button color="primary" autoFocus onClick={() => {
-                updateBillingInfo({ variables: { organizationID: organizationID, billingMethodID: anarchism.billingMethodID, billingPlanID: freePlan.billingPlanID, country: data.billingInfo.country } });
+                updateBillingInfo({ variables:
+                  { organizationID,
+                    billingMethodID: "",
+                    billingPlanID: freePlan.billingPlanID,
+                    country: data.billingInfo.country } });
               }}>
                 Yes, I'm sure
               </Button>
@@ -506,8 +532,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 <DialogActions>
                   <Button
                     onClick={() => {
-                      setSuccessDialogue(false)
-                      window.location.reload(true)
+                      setSuccessDialogue(false);
+                      window.location.reload(true);
                     }}
                     color="primary"
                     autoFocus>
@@ -520,6 +546,6 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
         </>
       )}
     </>
-  )}
+  ); };
 
 export default UpdateBillingInfoDialogue;

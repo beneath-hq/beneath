@@ -37,18 +37,18 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 interface Props {
-  organizationID: string
+  organizationID: string;
 }
 
-const ViewBillingInfo: FC<Props> = ({ organizationID }) => {  
-  const classes = useStyles()
-  const [upgradeDialogue, setUpgradeDialogue] = React.useState(false)
-  const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false)
-  const [cancelDialogue, setCancelDialogue] = React.useState(false)
+const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
+  const classes = useStyles();
+  const [upgradeDialogue, setUpgradeDialogue] = React.useState(false);
+  const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false);
+  const [cancelDialogue, setCancelDialogue] = React.useState(false);
 
   const me = useMe();
   if (!me) {
-    return <p>Need to log in to see your current billing plan</p>
+    return <p>Need to log in to see your current billing plan</p>;
   }
 
   const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
@@ -71,7 +71,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
   const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
 
   const displayBillingMethod = (billingInfo: BillingInfo_billingInfo) => {
-    if (billingInfo.billingPlan.billingPlanID == freePlan.billingPlanID) {
+    if (!billingInfo.billingMethod) {
       return "N/A"
     } else if (billingInfo.billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER) {
       const payload = JSON.parse(billingInfo.billingMethod.driverPayload)
