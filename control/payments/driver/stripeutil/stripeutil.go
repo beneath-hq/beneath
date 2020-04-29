@@ -293,10 +293,10 @@ func PayInvoice(invoiceID string) {
 			case stripe.ErrorCodeExpiredCard:
 				log.S.Infof("card declined when attempting to pay invoice for stripe customer %s", stripeErr.PaymentIntent.Customer.ID)
 			case "invoice_payment_intent_requires_action":
-				// not sure how common this will be
-				// this will happen when a customer needs to manually authorize each payment
-				// TODO: need to send email to customer, bring them to checkout page, and get manual authorization
-				panic("stripe error when paying invoice")
+				// stripe will send the customer an email, bring them to a hosted checkout page, and get manual authorization
+				// https://stripe.com/docs/error-codes/invoice-payment-intent-requires-action
+				// https://stripe.com/docs/billing/subscriptions/payment#handling-action-required
+				log.S.Infof("card requires additional user action for stripe customer %s", stripeErr.PaymentIntent.Customer.ID)
 			default:
 				panic("stripe error when paying invoice")
 			}
