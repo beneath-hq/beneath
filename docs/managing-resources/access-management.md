@@ -8,19 +8,19 @@ menu:
 weight: 400
 ---
 
-The gist of access management in Beneath is as follows: [Users]{{< ref "/docs/managing-resources/resources.md#user" >}} and [services]({{< ref "/docs/managing-resources/resources.md#service" >}}) can be granted permissions to other resources, such as streams, projects and organizations. Different resources have different permissions, like `read` and `write` for streams.
+The gist of access management in Beneath is as follows: [Users]({{< ref "/docs/managing-resources/resources.md#users" >}}) and [services]({{< ref "/docs/managing-resources/resources.md#services" >}}) can be granted permissions to other resources, such as streams, projects and organizations. Different resources have different permissions, like `read` and `write` for streams.
 
-You issue and use [secrets]({{< ref "/docs/managing-resources/resources.md#secret" >}}) to authenticate as a *user* or a *service* from your code, notebook, command-line, or similar. *User* secrets are useful during development to connect to Beneath from your code. *Service* secrets should be used in production systems or publicly-exposed code to more strictly limit access permissions and monitor usage.
+You issue and use [secrets]({{< ref "/docs/managing-resources/resources.md#secrets" >}}) to authenticate as a *user* or a *service* from your code, notebook, command-line, or similar. *User* secrets are useful during development to connect to Beneath from your code. *Service* secrets should be used in production systems or publicly-exposed code to more strictly limit access permissions and monitor usage.
 
 ## Examples
 
 ### Authenticating in Beneath CLI
 
-See example in [the CLI installation guide]({{ rel "/docs/managing-resources/cli.md#Installation" }}).
+See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cli.md#Installation" >}}).
 
 ### Inviting a user to an organization
 
-> **Note:** When you *invite* a user to your organization, you take over the full billing responsibility for the user's activity. If you just want to grant the user access to view stuff in your organization (but not pay their bills), see "Granting a user access to an organization".
+> **Note:** When you *invite* a user to your organization, you take over the full billing responsibility for the user's activity. If you just want to grant the user access to view stuff in your organization (but not pay their bills), see [Granting a user access to an organization]({{< relref "#granting-a-user-access-to-an-organization" >}}).
 
 First, an organization admin should send an invitation to the user (the flags designate the invitees new permissions):
 
@@ -36,7 +36,7 @@ beneath organization accept-invite ORGANIZATION_NAME
 
 ### Granting a user access to an organization
 
-> **Note:** When you *grant* a user access to your organization, you allow them to view and optionally ediit your organization, but they remain responsible for paying for their bills. If you also want to pay for their usage on Beneath, see "Inviting a user to an organization".
+> **Note:** When you *grant* a user access to your organization, they remain responsible for paying the bills for their own usage on Beneath. If you also want to pay for their usage on Beneath, see [Inviting a user to an organization]({{< relref "#inviting-a-user-to-an-organization" >}}).
 
 Run the following command (change the `--create` or `--admin` flags to configure permissions):
 
@@ -70,7 +70,7 @@ There are two types of secrets:
 
 ### Creating a service and granting it access to a stream
 
-Services are useful when deploying or publishing code that reads or writes to Beneath. You can control their access permissions, and monitor and limit their usage. Read ["Services"]({{< ref "/docs/managing-resources/resources.md#service" >}}) for more details.
+Services are useful when deploying or publishing code that reads or writes to Beneath. You can control their access permissions, and monitor and limit their usage. Read ["Services"]({{< ref "/docs/managing-resources/resources.md#services" >}}) for more details.
 
 First, create a new service in your organization (customize their quotas to set monthly limits):
 
