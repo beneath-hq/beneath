@@ -1,5 +1,5 @@
 ---
-title: Command-Line Interface (CLI)
+title: Command-line interface (CLI)
 description: A guide to the Beneath CLI, which is the command-line interface to Beneath
 menu:
   docs:
@@ -29,6 +29,8 @@ Most features in the CLI require you to be authenticated. To authenticate, issue
 ```
 beneath auth COMMAND_LINE_SECRET
 ```
+
+The secret is stored in a hidden folder, `.beneath`, in your home directory. The CLI and most client libraries will automatically load and use it on your computer if you don't explicitly provide another secret.
 
 ## Documentation
 

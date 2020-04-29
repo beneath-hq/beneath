@@ -116,7 +116,9 @@ A `service` has the following properties:
 
 ## `secret`
 
-**Definition:** A `secret` is a token that you can use to authenticate to Beneath. It belongs to either a `user` or a `service`. When you authenticate with a secret, you get the same access permissions as the parent `user` or `service` (with the caveat that you can create special read-only secrets for a `user`).
+**Definition:** A `secret` is a token that you can use to authenticate to Beneath (some products call it an *API token*). It belongs to either a `user` or a `service`. When you authenticate with a secret, you get the same access permissions as the parent `user` or `service` (with the caveat that you can create special read-only secrets for a `user`).
+
+If you need to expose a secret publicly (e.g. in your front-end code), make sure it belongs to a service with sensible usage quotas and only read-only permissions.
 
 **Relations:**
 - A `secret` belongs to *either* a `user` or a `service`.
