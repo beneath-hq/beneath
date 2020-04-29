@@ -82,7 +82,7 @@ weight: 300
 
 ## `stream instance`
 
-**Definition:** A `stream instance` represents a single version of a `stream`. For more information, see [Streams]({{< ref "/docs/reading-writing-data/streams >}}).
+**Definition:** A `stream instance` represents a single version of a `stream`. For more information, see [Streams]({{< ref "/docs/reading-writing-data/streams" >}}).
 
 **Relations:**
 - A `stream instance` belongs to one `stream`.
