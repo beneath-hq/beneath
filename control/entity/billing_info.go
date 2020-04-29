@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -76,37 +78,6 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, bi
 			panic("could not get new billing plan")
 		}
 
-		// SCENARIO 1: Free->Pro
-		// TODO: trigger bill
-		// need to be charged the one prorated seat, nothing more
-		// probably, skip right to the IssueInvoice() task
-		// probably, the prorated seat needs to have a billing time of LAST period, so that we can IssueInvoice() and pretend we're at the beginning of last period, where there won't be product conflicts
-		// problem: when adding users to an organization, prorated seats have billing time of NEXT period
-		// err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
-		// 	OrganizationID: organizationID,
-		// 	BillingTime:    timeutil.Floor(time.Now(), newBillingPlan.Period), // simulate that the bill was sent at the beginning of this period
-		// })
-		// if err != nil {
-		// 	log.S.Errorw("Error creating task", err)
-		// }
-
-		// SCENARIO 2: Pro->Free
-		// LockOrganizationProjects()
-
-		// SCENARIO 3: upgrading to enterprise plan
-		// if prevBillingPlan.Personal && !newBillingPlan.Personal {
-		// 	CreateOrganizationWithUser()
-		// then user needs to:
-		// -- 1) change the name of their organization, so its the enterprise's name, not the original user's name
-		// -- 2) add teammates (which will call "InviteUser"; then the user will have to accept the invite, which will call "JoinOrganization")
-		// }
-
-		// SCENARIO 4: downgrading from enterprise plan
-		// if newBillingPlan.Personal && !prevBillingPlan.Personal {
-		// 	DeleteEnterpriseOrganization()
-		//  LockOrganizationProjects()
-		// }
-
 		var userIDs []uuid.UUID
 		var usernames []string
 		users := bi.Organization.Users
@@ -115,16 +86,23 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, bi
 			usernames = append(usernames, user.Username)
 		}
 
-		// give (previous) organization pro-rated credit for seats at old billing plan price
-		err := commitProratedSeatsToBill(ctx, bi.OrganizationID, prevBillingPlan, userIDs, usernames, true)
-		if err != nil {
-			panic("could not commit prorated seat credits to bill")
-		}
-
-		// charge (new) organization the pro-rated amount for seats at new billing plan price
-		err = commitProratedSeatsToBill(ctx, bi.OrganizationID, newBillingPlan, userIDs, usernames, false)
+		// charge organization the pro-rated amount for seats at new billing plan price
+		billingTime := time.Now()
+		err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, userIDs, usernames, false)
 		if err != nil {
 			panic("could not commit prorated seats to bill")
+		}
+
+		// SCENARIO 1: Free->Pro
+		// trigger bill
+		if prevBillingPlan.Default {
+			err = taskqueue.Submit(ctx, &SendInvoiceTask{
+				OrganizationID: bi.OrganizationID,
+				BillingTime:    billingTime,
+			})
+			if err != nil {
+				log.S.Errorw("Error creating task", err)
+			}
 		}
 
 		// update the organization's users' quotas
@@ -147,6 +125,9 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, bi
 		if err != nil {
 			return nil, err
 		}
+
+		// SCENARIO 2: Pro->Free
+		// LockOrganizationPrivateProjects()
 	}
 
 	return bi, nil

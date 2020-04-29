@@ -140,7 +140,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
   })
   const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
 
-  const billingMethodOptions = cards.concat(wire[0])
+  const billingMethodOptions = cards.concat(wire)
 
   const freePlan = data3.billingPlans.filter(billingPlan => billingPlan.default)[0]
   const proPlan = data3.billingPlans.filter(billingPlan => !billingPlan.default)[0]
