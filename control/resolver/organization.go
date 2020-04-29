@@ -224,3 +224,27 @@ func (r *mutationResolver) UpdateUserOrganizationQuotas(ctx context.Context, use
 
 	return user, nil
 }
+
+func (r *mutationResolver) CreateOrganizationWithUser(ctx context.Context, organizationName string, username string) (*entity.Organization, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsMaster() {
+		return nil, gqlerror.Errorf("Only Beneath Masters can create new organizations")
+	}
+
+	org := entity.FindOrganizationByName(ctx, organizationName)
+	if org != nil {
+		return nil, gqlerror.Errorf("An organization already exists with that name -- please try another name")
+	}
+
+	organization := &entity.Organization{
+		Name:     organizationName,
+		Personal: false,
+	}
+
+	err := organization.CreateWithUser(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	return organization, nil
+}
