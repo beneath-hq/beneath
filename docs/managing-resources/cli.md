@@ -1,5 +1,5 @@
 ---
-title: Command-Line Interface (CLI)
+title: Command-line interface (CLI)
 description: A guide to the Beneath CLI, which is the command-line interface to Beneath
 menu:
   docs:
@@ -14,33 +14,35 @@ The Beneath CLI allows you to interact with Beneath directly from the command-li
 
 You need to have Python 3 installed on your computer to install the Beneath CLI. Then simply install it with:
 
-```
+```bash
 pip3 install beneath
 ```
 
 You can verify that the Beneath CLI installed successfully by running:
 
-```
+```bash
 beneath --version
 ```
 
 Most features in the CLI require you to be authenticated. To authenticate, issue a "command-line secret" in the ["Secrets" tab of your profile page](https://beneath.dev/-/redirects/secrets), then run:
 
-```
+```bash
 beneath auth COMMAND_LINE_SECRET
 ```
+
+The secret is stored in a hidden folder, `.beneath`, in your home directory. The CLI and most client libraries will automatically load and use it on your computer if you don't explicitly provide another secret.
 
 ## Documentation
 
 You can get help and reference documentation for the Beneath CLI by running the command:
 
-```
+```bash
 beneath --help
 ```
 
 The `--help` parameter also works for subcommands, for example:
 
-```
+```bash
 beneath project create --help
 ```
 

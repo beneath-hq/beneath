@@ -96,6 +96,17 @@ app.prepare().then(() => {
     res.redirect("/");
   });
 
+  // Redirect to user's secrets
+  server.get("/-/redirects/secrets", (req, res) => {
+    let loggedIn = !!req.cookies.token;
+    if (loggedIn) {
+      // "me" gets replaced with billing org name in the organization page
+      res.redirect("/me/-/secrets");
+    } else {
+      res.redirect("/-/auth");
+    }
+  });
+
   // Redirect to billing
   server.get("/-/redirects/upgrade-pro", (req, res) => {
     let loggedIn = !!req.cookies.token;
