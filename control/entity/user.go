@@ -348,7 +348,8 @@ func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (
 	}
 
 	// add prorated seat to the new organization's next month's bill
-	err = commitProratedSeatsToBill(ctx, organizationID, bi.BillingPlan, []uuid.UUID{u.UserID}, []string{u.Username}, false)
+	billingTime := timeutil.Next(time.Now(), bi.BillingPlan.Period)
+	err = commitProratedSeatsToBill(ctx, organizationID, billingTime, bi.BillingPlan, []uuid.UUID{u.UserID}, []string{u.Username}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}

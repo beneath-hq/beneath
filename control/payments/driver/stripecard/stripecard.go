@@ -201,7 +201,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 
 			// Q: should we delete the faulty billing method? if so, move them to the anarchism billing method
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, nil, nil, nil) // only changing the billing plan
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -230,7 +230,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, nil, nil, nil) // only changing the billing plan
+			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
