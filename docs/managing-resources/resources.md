@@ -62,7 +62,7 @@ weight: 300
 
 ## `stream`
 
-**Definition:** A `stream` is the prototype of a collection of records with a common schema. For more information about `stream`s and the related `stream instance`s, see [Streams]({{< ref "/docs/reading-writing-data/streams >}}).
+**Definition:** A `stream` is the prototype of a collection of records with a common schema. For more information about `stream`s and the related `stream instance`s, see [Streams]({{< ref "/docs/reading-writing-data/streams" >}}).
 
 **Relations:**
 - A `stream` belongs to one `project`.
