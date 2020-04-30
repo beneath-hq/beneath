@@ -140,9 +140,6 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		}
 
 		billingMethods := entity.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
-		if billingMethods == nil {
-			panic("no existing billing methods found for the organization")
-		}
 
 		// if customer has already been registered with stripe, get customerID from driver_payload
 		customerID := ""
