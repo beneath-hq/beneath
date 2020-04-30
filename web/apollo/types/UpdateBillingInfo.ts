@@ -32,7 +32,7 @@ export interface UpdateBillingInfo_updateBillingInfo {
   __typename: "BillingInfo";
   organizationID: ControlUUID;
   billingPlan: UpdateBillingInfo_updateBillingInfo_billingPlan;
-  billingMethod: UpdateBillingInfo_updateBillingInfo_billingMethod;
+  billingMethod: UpdateBillingInfo_updateBillingInfo_billingMethod | null;
   country: string;
   region: string | null;
   companyName: string | null;

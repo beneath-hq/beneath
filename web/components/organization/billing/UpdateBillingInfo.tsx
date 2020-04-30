@@ -142,26 +142,27 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     return <p>Error: {JSON.stringify(queryError3)}</p>;
   }
 
-  // THURSDAY: FROM THIS
-  // const cards = (data2.billingMethods ? data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER).map((billingMethod) => {
-  //   const payload = JSON.parse(billingMethod.driverPayload)
-  //   return { label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4, value: billingMethod.billingMethodID }
-  // }) : [])
-  // const wire = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER).map((billingMethod) => {
-  //   return { label: "Wire payment", value: billingMethod.billingMethodID }
-  // })
-  // const anarchism = data2.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.ANARCHISM_DRIVER)[0]
-  // const billingMethodOptions = cards.concat(wire)
-
-  // TO THIS
-  // let cards;
-  // let wire;
-  // if (data2.billingMethods && data2.billingMethods.length > 0) {
-  //   cards = data2.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPECARD_DRIVER);
-  //   wire = data2.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPEWIRE_DRIVER)[0];
-  // }
-
-  const billingMethodOptions = [{ label: "lala", value: "tlja"}];
+  let billingMethodOptions: any[] = [];
+  if (data2.billingMethods && data2.billingMethods.length > 0) {
+    billingMethodOptions = data2.billingMethods.map((billingMethod) => {
+      if (billingMethod.paymentsDriver === billing.STRIPECARD_DRIVER ) {
+        const payload = JSON.parse(billingMethod.driverPayload);
+        return {
+          label: payload.brand.charAt(0).toUpperCase() + payload.brand.slice(1) + " xxxx-xxxx-xxxx-" + payload.last4,
+          value: billingMethod.billingMethodID };
+      } else if (billingMethod.paymentsDriver === billing.STRIPEWIRE_DRIVER ) {
+        return {
+        label: "Wire payment",
+        value: billingMethod.billingMethodID };
+      } else if (billingMethod.paymentsDriver === billing.ANARCHISM_DRIVER ) {
+        return {
+          label: "Anarchy!",
+          value: billingMethod.billingMethodID };
+      } else {
+        return { label: "Unrecognized payment driver.", value: "TODO" };
+      }
+    });
+  }
 
   const freePlan = data3.billingPlans.filter((billingPlan) => billingPlan.default)[0];
   const proPlan = data3.billingPlans.filter((billingPlan) => !billingPlan.default)[0];

@@ -35,6 +35,11 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		panic("didn't find organization's billing info")
 	}
 
+	if *billingInfo.BillingMethodID == uuid.Nil {
+		log.S.Infof("organization %s does not pay for its usage", t.OrganizationID.String())
+		return nil
+	}
+
 	paymentDriver := hub.PaymentDrivers[string(billingInfo.BillingMethod.PaymentsDriver)]
 	if paymentDriver == nil {
 		panic("couldn't get payments driver")

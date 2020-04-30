@@ -2415,7 +2415,7 @@ extend type Mutation {
 
 type BillingInfo {
   organizationID: UUID!
-  billingMethod: BillingMethod!
+  billingMethod: BillingMethod
   billingPlan: BillingPlan!
   country: String!
   region: String
@@ -4750,15 +4750,12 @@ func (ec *executionContext) _BillingInfo_billingMethod(ctx context.Context, fiel
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*entity.BillingMethod)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
+	return ec.marshalOBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingInfo_billingPlan(ctx context.Context, field graphql.CollectedField, obj *entity.BillingInfo) (ret graphql.Marshaler) {
@@ -14026,9 +14023,6 @@ func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionS
 			}
 		case "billingMethod":
 			out.Values[i] = ec._BillingInfo_billingMethod(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "billingPlan":
 			out.Values[i] = ec._BillingInfo_billingPlan(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -17244,6 +17238,17 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOBillingMethod2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v entity.BillingMethod) graphql.Marshaler {
+	return ec._BillingMethod(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOBillingMethod2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingMethod(ctx context.Context, sel ast.SelectionSet, v *entity.BillingMethod) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BillingMethod(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

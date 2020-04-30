@@ -158,7 +158,7 @@ func (o *Organization) CreateWithUser(ctx context.Context, username string) erro
 		// create billing info
 		bi := &BillingInfo{
 			OrganizationID:  o.OrganizationID,
-			BillingMethodID: bm.BillingMethodID,
+			BillingMethodID: &bm.BillingMethodID,
 			BillingPlanID:   defaultBillingPlan.BillingPlanID,
 		}
 		_, err = tx.Model(bi).Insert()

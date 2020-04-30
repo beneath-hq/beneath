@@ -247,22 +247,10 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		return nil, err
 	}
 
-	// create anarchism billing method
-	bm := &BillingMethod{
-		OrganizationID: org.OrganizationID,
-		PaymentsDriver: AnarchismDriver,
-		DriverPayload:  make(map[string]interface{}),
-	}
-	_, err = tx.Model(bm).Insert()
-	if err != nil {
-		return nil, err
-	}
-
-	// create billing info and setup with anarchism
+	// create billing info
 	bi := &BillingInfo{
-		OrganizationID:  org.OrganizationID,
-		BillingMethodID: bm.BillingMethodID,
-		BillingPlanID:   defaultBillingPlan.BillingPlanID,
+		OrganizationID: org.OrganizationID,
+		BillingPlanID:  defaultBillingPlan.BillingPlanID,
 	}
 	_, err = tx.Model(bi).Insert()
 	if err != nil {

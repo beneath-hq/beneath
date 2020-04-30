@@ -8,7 +8,7 @@ extend type Mutation {
 
 type BillingInfo {
   organizationID: UUID!
-  billingMethod: BillingMethod!
+  billingMethod: BillingMethod
   billingPlan: BillingPlan!
   country: String!
   region: String

@@ -189,6 +189,8 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			return err
 		}
 
+		log.S.Info("invoice payment failed!")
+
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
@@ -201,7 +203,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 
 			// Q: should we delete the faulty billing method? if so, move them to the anarchism billing method
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
+			billingInfo.Update(req.Context(), *billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
@@ -230,7 +232,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
+			billingInfo.Update(req.Context(), *billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.S.Errorf("Error updating Billing Info: %v\\n", err)
