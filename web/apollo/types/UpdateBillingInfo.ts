@@ -24,6 +24,7 @@ export interface UpdateBillingInfo_updateBillingInfo_billingPlan {
 
 export interface UpdateBillingInfo_updateBillingInfo_billingMethod {
   __typename: "BillingMethod";
+  billingMethodID: ControlUUID;
   paymentsDriver: string;
   driverPayload: string;
 }
@@ -45,7 +46,7 @@ export interface UpdateBillingInfo {
 
 export interface UpdateBillingInfoVariables {
   organizationID: ControlUUID;
-  billingMethodID: ControlUUID;
+  billingMethodID?: ControlUUID | null;
   billingPlanID: ControlUUID;
   country: string;
   region?: string | null;

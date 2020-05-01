@@ -173,7 +173,7 @@ type ComplexityRoot struct {
 		RemoveUserFromProject             func(childComplexity int, userID uuid.UUID, projectID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
+		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
@@ -369,7 +369,7 @@ type ModelResolver interface {
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
-	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error)
+	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error)
 	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
 	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
 	DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error)
@@ -1246,7 +1246,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string)), true
+		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(*uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string)), true
 
 	case "Mutation.updateExternalStream":
 		if e.complexity.Mutation.UpdateExternalStream == nil {
@@ -2410,7 +2410,7 @@ type BilledResource {
 }
 
 extend type Mutation {
-  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID!, billingPlanID: UUID!, country: String!, region: String, companyName: String, taxNumber: String): BillingInfo!
+  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID, billingPlanID: UUID!, country: String!, region: String, companyName: String, taxNumber: String): BillingInfo!
 }
 
 type BillingInfo {
@@ -3319,9 +3319,9 @@ func (ec *executionContext) field_Mutation_updateBillingInfo_args(ctx context.Co
 		}
 	}
 	args["organizationID"] = arg0
-	var arg1 uuid.UUID
+	var arg1 *uuid.UUID
 	if tmp, ok := rawArgs["billingMethodID"]; ok {
-		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		arg1, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6687,7 +6687,7 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateBillingInfo(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string))
+		return ec.resolvers.Mutation().UpdateBillingInfo(rctx, args["organizationID"].(uuid.UUID), args["billingMethodID"].(*uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -8,10 +8,10 @@ import {
   DialogContent,
   DialogContentText,
   Grid,
+  Link,
   ListItem,
   TextField,
   Typography,
-  Link,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { Autocomplete } from "@material-ui/lab";
@@ -79,7 +79,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 interface CheckoutStateTypes {
-  billingMethod: string;
+  billingMethodID: string;
   country: string;
   region: string;
   companyName: string;
@@ -98,7 +98,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
   const [errorDialogue, setErrorDialogue] = React.useState(false);
   const [error, setError] = React.useState("");
   const [values, setValues] = React.useState<CheckoutStateTypes>({
-    billingMethod: "",
+    billingMethodID: "",
     country: "",
     region: "",
     companyName: "",
@@ -223,9 +223,9 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               <SelectField
                 id="billing_method"
                 label="Billing method"
-                value={values.billingMethod}
+                value={values.billingMethodID}
                 options={billingMethodOptions}
-                onChange={({ target }) => setValues({ ...values, billingMethod: target.value as string })}
+                onChange={({ target }) => setValues({ ...values, billingMethodID: target.value as string })}
                 controlClass={classes.selectField}
               />
             </Grid>
@@ -339,7 +339,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 variant="contained"
                 autoFocus
                 onClick={() => {
-                  if (!values.billingMethod) {
+                  if (!values.billingMethodID) {
                     setError("Please select your billing method.");
                     setErrorDialogue(true);
                   } else if (!values.country) {
@@ -355,7 +355,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     updateBillingInfo({
                       variables: {
                         organizationID,
-                        billingMethodID: values.billingMethod,
+                        billingMethodID: values.billingMethodID,
                         billingPlanID: proPlan.billingPlanID,
                         country: values.country,
                         region: values.region,
@@ -418,9 +418,9 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               <SelectField
                 id="billing_method"
                 label="Billing method"
-                value={values.billingMethod}
+                value={values.billingMethodID}
                 options={billingMethodOptions}
-                onChange={({ target }) => setValues({ ...values, billingMethod: target.value as string })}
+                onChange={({ target }) => setValues({ ...values, billingMethodID: target.value as string })}
                 controlClass={classes.selectField}
               />
             </Grid>
@@ -443,11 +443,11 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 variant="contained"
                 autoFocus
                 onClick={() => {
-                  if (values.billingMethod) {
+                  if (values.billingMethodID) {
                     updateBillingInfo({
                       variables: {
                         organizationID,
-                        billingMethodID: values.billingMethod,
+                        billingMethodID: values.billingMethodID,
                         billingPlanID: proPlan.billingPlanID,
                         country: data.billingInfo.country,
                       },
@@ -523,7 +523,6 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                   updateBillingInfo({
                     variables: {
                       organizationID,
-                      billingMethodID: "",
                       billingPlanID: freePlan.billingPlanID,
                       country: data.billingInfo.country,
                     },
@@ -532,6 +531,13 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               >
                 Yes, I'm sure
               </Button>
+              {mutError && (
+                <DialogContent>
+                  <Typography variant="body1" color="error" className={classes.errorMsg}>
+                    {mutError.message.replace("GraphQL error: ", "")}
+                  </Typography>
+                </DialogContent>
+              )}
               <Dialog open={successDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
                   <Typography variant="body1">Your plan has been canceled.</Typography>
