@@ -198,7 +198,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			// Q: should we delete the faulty billing method? if so, move them to the anarchism billing method
+			// Q: should we take them off the faulty billing method? mark the billing method as faulty?
 
 			billingInfo.Update(req.Context(), *billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 			if err != nil {
@@ -222,19 +222,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		// when invoice goes "past_due", shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodSendInvoice) && (invoice.Status == "past_due") && (invoice.Paid == false) {
 			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
-
-			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
-			if billingInfo == nil {
-				panic("could not find organization's billing info")
-			}
-
-			billingInfo.Update(req.Context(), *billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.S.Errorf("Error updating Billing Info: %v\\n", err)
-				return err
-			}
+			log.S.Infof("Invoice is past due for organization %s", organizationID)
 		}
 
 	default:
