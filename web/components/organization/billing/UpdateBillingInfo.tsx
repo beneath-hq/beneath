@@ -11,6 +11,7 @@ import {
   ListItem,
   TextField,
   Typography,
+  Link,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { Autocomplete } from "@material-ui/lab";
@@ -191,9 +192,14 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             <Grid item>
               <Typography variant="h2" className={classes.firstTitle}>
                 Professional plan: $50/month base
-          </Typography>
+              </Typography>
               <Typography>
-                {["5 GB writes included in base. Then $2/GB.", "25 GB reads included in base. Then $1/GB.", "Private projects", "Role-based access controls"].map((feature) => {
+                {[
+                  "5 GB writes included in base. Then $2/GB.",
+                  "25 GB reads included in base. Then $1/GB.",
+                  "Private projects",
+                  "Role-based access controls",
+                ].map((feature) => {
                   return (
                     <React.Fragment key={feature}>
                       <ListItem dense>
@@ -233,15 +239,11 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     id="country"
                     style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                     options={billing.COUNTRIES}
-                    classes={{option: classes.option, }}
+                    classes={{ option: classes.option }}
                     className={classes.selectField}
                     autoHighlight
                     getOptionLabel={(option) => option.label}
-                    renderOption={(option) => (
-                      <React.Fragment>
-                        {option.label}
-                      </React.Fragment>
-                    )}
+                    renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
                     onChange={onCountryChange}
                     renderInput={(params) => (
                       <TextField
@@ -257,25 +259,18 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                     )}
                   />
                 </Grid>
-                {values.country !== "United States of America" && (
-                  <Grid item xs={12} sm={6}>
-                  </Grid>
-                )}
+                {values.country !== "United States of America" && <Grid item xs={12} sm={6}></Grid>}
                 {values.country === "United States of America" && (
                   <Grid item xs={12} sm={6}>
                     <Autocomplete
                       id="region"
                       style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
                       options={billing.US_STATES}
-                      classes={{option: classes.option, }}
+                      classes={{ option: classes.option }}
                       className={classes.selectField}
                       autoHighlight
                       getOptionLabel={(option) => option.label}
-                      renderOption={(option) => (
-                        <React.Fragment>
-                          {option.label}
-                        </React.Fragment>
-                      )}
+                      renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
                       onChange={onRegionChange}
                       renderInput={(params) => (
                         <TextField
@@ -316,74 +311,80 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             </Grid>
             <Grid item>
               <Typography className={classes.proratedDescription}>
-                You will be charged a pro-rated amount for the current month.
-                Receipts will be sent to your email each month.
+                You will be charged a pro-rated amount for the current month. Receipts will be sent to your email each
+                month.
+              </Typography>
+              <Typography className={classes.proratedDescription}>
+                In making this purchase, you authorise Beneath to send instructions to the financial institution that
+                issued your card to take payments from your card account in accordance with the
+                <Link href="https://about.beneath.dev/enterprise"> terms </Link> of your agreement with us.
               </Typography>
             </Grid>
           </Grid>
           <Grid container spacing={2} className={classes.button}>
             <Grid item>
-              <Button color="primary" autoFocus onClick={() => { closeDialogue(); }}>
+              <Button
+                color="primary"
+                autoFocus
+                onClick={() => {
+                  closeDialogue();
+                }}
+              >
                 Cancel
               </Button>
             </Grid>
             <Grid item>
-              <Button color="primary" variant="contained" autoFocus onClick={() => {
-                if (!values.billingMethod) {
-                  setError("Please select your billing method.");
-                  setErrorDialogue(true);
-                } else if (!values.country) {
-                  setError("Please select your country.");
-                  setErrorDialogue(true);
-                } else if (values.country === "United States of America" && !values.region) {
-                  setError("Please select your state.");
-                  setErrorDialogue(true);
-                } else if (values.companyName !== "" && !values.taxID) {
-                  setError("Please provide your tax ID.");
-                  setErrorDialogue(true);
-                } else {
-                  updateBillingInfo({
-                    variables: {
-                      organizationID,
-                      billingMethodID: values.billingMethod,
-                      billingPlanID: proPlan.billingPlanID,
-                      country: values.country,
-                      region: values.region,
-                      companyName: values.companyName,
-                      taxNumber: values.taxID
-                    }
-                  });
-                }
-              }}>
+              <Button
+                color="primary"
+                variant="contained"
+                autoFocus
+                onClick={() => {
+                  if (!values.billingMethod) {
+                    setError("Please select your billing method.");
+                    setErrorDialogue(true);
+                  } else if (!values.country) {
+                    setError("Please select your country.");
+                    setErrorDialogue(true);
+                  } else if (values.country === "United States of America" && !values.region) {
+                    setError("Please select your state.");
+                    setErrorDialogue(true);
+                  } else if (values.companyName !== "" && !values.taxID) {
+                    setError("Please provide your tax ID.");
+                    setErrorDialogue(true);
+                  } else {
+                    updateBillingInfo({
+                      variables: {
+                        organizationID,
+                        billingMethodID: values.billingMethod,
+                        billingPlanID: proPlan.billingPlanID,
+                        country: values.country,
+                        region: values.region,
+                        companyName: values.companyName,
+                        taxNumber: values.taxID,
+                      },
+                    });
+                  }
+                }}
+              >
                 Purchase
               </Button>
-              <Dialog
-                open={errorDialogue}
-                aria-describedby="alert-dialog-description"
-              >
+              <Dialog open={errorDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
                   {errorDialogue && (
                     <Typography variant="body1" color="error">
                       {error}
-                    </Typography>)}
+                    </Typography>
+                  )}
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    onClick={() => setErrorDialogue(false)}
-                    color="primary"
-                    autoFocus>
+                  <Button onClick={() => setErrorDialogue(false)} color="primary" autoFocus>
                     Ok
                   </Button>
                 </DialogActions>
               </Dialog>
-              <Dialog
-                open={successDialogue}
-                aria-describedby="alert-dialog-description"
-              >
+              <Dialog open={successDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
-                    <Typography variant="body1">
-                      Thank you for your purchase!
-                    </Typography>
+                  <Typography variant="body1">Thank you for your purchase!</Typography>
                 </DialogContent>
                 <DialogActions>
                   <Button
@@ -392,7 +393,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                       window.location.reload(true);
                     }}
                     color="primary"
-                    autoFocus>
+                    autoFocus
+                  >
                     Ok
                   </Button>
                 </DialogActions>
@@ -425,26 +427,37 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
           </Grid>
           <Grid container spacing={2} className={classes.button}>
             <Grid item>
-              <Button color="primary" autoFocus onClick={() => {closeDialogue(); }}>
+              <Button
+                color="primary"
+                autoFocus
+                onClick={() => {
+                  closeDialogue();
+                }}
+              >
                 Cancel
               </Button>
             </Grid>
             <Grid item>
-              <Button color="primary" variant="contained" autoFocus onClick={() => {
-                if (values.billingMethod) {
-                  updateBillingInfo({
-                    variables: {
-                      organizationID,
-                      billingMethodID: values.billingMethod,
-                      billingPlanID: proPlan.billingPlanID,
-                      country: data.billingInfo.country
-                    }
-                  });
-                } else {
-                  setError("Please select your billing method.");
-                  setErrorDialogue(true);
-                }
-              }}>
+              <Button
+                color="primary"
+                variant="contained"
+                autoFocus
+                onClick={() => {
+                  if (values.billingMethod) {
+                    updateBillingInfo({
+                      variables: {
+                        organizationID,
+                        billingMethodID: values.billingMethod,
+                        billingPlanID: proPlan.billingPlanID,
+                        country: data.billingInfo.country,
+                      },
+                    });
+                  } else {
+                    setError("Please select your billing method.");
+                    setErrorDialogue(true);
+                  }
+                }}
+              >
                 Change Billing Method
               </Button>
               {mutError && (
@@ -454,33 +467,23 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                   </Typography>
                 </DialogContent>
               )}
-              <Dialog
-                open={errorDialogue}
-                aria-describedby="alert-dialog-description"
-              >
+              <Dialog open={errorDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
                   {errorDialogue && (
                     <Typography variant="body1" color="error">
                       {error}
-                    </Typography>)}
+                    </Typography>
+                  )}
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    onClick={() => setErrorDialogue(false)}
-                    color="primary"
-                    autoFocus>
+                  <Button onClick={() => setErrorDialogue(false)} color="primary" autoFocus>
                     Ok
                   </Button>
                 </DialogActions>
               </Dialog>
-              <Dialog
-                open={successDialogue}
-                aria-describedby="alert-dialog-description"
-              >
+              <Dialog open={successDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
-                  <Typography variant="body1">
-                    Success.
-                    </Typography>
+                  <Typography variant="body1">Success.</Typography>
                 </DialogContent>
                 <DialogActions>
                   <Button
@@ -489,7 +492,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                       window.location.reload(true);
                     }}
                     color="primary"
-                    autoFocus>
+                    autoFocus
+                  >
                     Ok
                   </Button>
                 </DialogActions>
@@ -512,23 +516,25 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               </Button>
             </Grid>
             <Grid item>
-              <Button color="primary" autoFocus onClick={() => {
-                updateBillingInfo({ variables:
-                  { organizationID,
-                    billingMethodID: "",
-                    billingPlanID: freePlan.billingPlanID,
-                    country: data.billingInfo.country } });
-              }}>
+              <Button
+                color="primary"
+                autoFocus
+                onClick={() => {
+                  updateBillingInfo({
+                    variables: {
+                      organizationID,
+                      billingMethodID: "",
+                      billingPlanID: freePlan.billingPlanID,
+                      country: data.billingInfo.country,
+                    },
+                  });
+                }}
+              >
                 Yes, I'm sure
               </Button>
-              <Dialog
-                open={successDialogue}
-                aria-describedby="alert-dialog-description"
-              >
+              <Dialog open={successDialogue} aria-describedby="alert-dialog-description">
                 <DialogContent>
-                  <Typography variant="body1">
-                    Your plan has been canceled.
-                  </Typography>
+                  <Typography variant="body1">Your plan has been canceled.</Typography>
                 </DialogContent>
                 <DialogActions>
                   <Button
@@ -537,7 +543,8 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                       window.location.reload(true);
                     }}
                     color="primary"
-                    autoFocus>
+                    autoFocus
+                  >
                     Ok
                   </Button>
                 </DialogActions>
