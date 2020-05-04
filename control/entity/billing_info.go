@@ -49,9 +49,7 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 // Update updates an organization's billing method and billing plan
 func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
-	if billingMethodID != nil {
-		bi.BillingMethodID = billingMethodID
-	}
+	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID
 	bi.Country = country
 	if region != nil {
