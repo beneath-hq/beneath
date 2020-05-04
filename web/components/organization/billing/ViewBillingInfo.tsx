@@ -200,7 +200,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
         <Grid container>
           <Grid item>
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               className={classes.button}
               onClick={() => {setUpgradeDialogue(true); }}>
@@ -209,7 +209,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
             <Dialog
               open={upgradeDialogue}
               fullWidth={true}
-              maxWidth={"sm"}
+              maxWidth={"md"}
             >
               <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
               <DialogContent>
@@ -221,7 +221,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           </Grid>
           <Grid item>
             <Button
-              variant="contained"
+              variant="outlined"
               className={classes.button}
               href="https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link"
             >
@@ -255,7 +255,7 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
           </Grid>
           <Grid item>
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               className={classes.button}
               onClick={() => {

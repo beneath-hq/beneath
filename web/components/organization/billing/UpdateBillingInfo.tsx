@@ -3,22 +3,24 @@ import React, { FC } from "react";
 
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
+  FormControl,
+  FormControlLabel,
   Grid,
   Link,
   ListItem,
+  Radio,
+  RadioGroup,
   TextField,
   Typography,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { Autocomplete } from "@material-ui/lab";
-
 import CheckIcon from "@material-ui/icons/Check";
-
-import billing from "../../../lib/billing";
+import { Autocomplete } from "@material-ui/lab";
 import SelectField from "../../SelectField";
 
 import { useMutation, useQuery } from "@apollo/react-hooks";
@@ -29,6 +31,7 @@ import { BillingInfo, BillingInfoVariables } from "../../../apollo/types/Billing
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
 import { BillingPlans } from "../../../apollo/types/BillingPlans";
 import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../apollo/types/UpdateBillingInfo";
+import billing from "../../../lib/billing";
 
 const useStyles = makeStyles((theme) => ({
   firstTitle: {
@@ -49,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
   },
   selectField: {
     marginTop: theme.spacing(1),
-    minWidth: 250,
+    minWidth: 300,
   },
   textField: {
     marginTop: theme.spacing(2),
@@ -82,8 +85,10 @@ interface CheckoutStateTypes {
   billingMethodID: string;
   country: string;
   region: string;
+  taxEntity: string;
   companyName: string;
   taxID: string;
+  acceptedTerms: boolean;
 }
 
 interface Props {
@@ -101,8 +106,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     billingMethodID: "",
     country: "",
     region: "",
+    taxEntity: "business",
     companyName: "",
     taxID: "",
+    acceptedTerms: false,
   });
 
   const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
@@ -169,18 +176,28 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
   const proPlan = data3.billingPlans.filter((billingPlan) => !billingPlan.default)[0];
 
   const handleChange = (name: string) => (event: any) => {
+    if (name === "acceptedTerms") {
+      setValues({ ...values, [name]: event.target.checked });
+      return;
+    }
     setValues({ ...values, [name]: event.target.value });
   };
 
-  const onCountryChange = (object: any, value: any) => {
+  const handleAutocompleteChange = (name: string) => (object: any, value: any) => {
     if (value) {
-      setValues({ ...values, country: value.value });
+      setValues({ ...values, [name]: value.value });
     }
   };
 
-  const onRegionChange = (object: any, value: any) => {
-    if (value) {
-      setValues({ ...values, region: value.value });
+  const sanitize = (name: string, value: any) => {
+    if (name === "region") {
+      return (values.country === "United States of America") ? value : "";
+    }
+    if (name === "companyName") {
+      return (values.taxEntity === "business") ? value : "";
+    }
+    if (name === "taxID") {
+      return (values.taxEntity === "business") ? value : "";
     }
   };
 
@@ -213,6 +230,102 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             </Grid>
             <Grid item>
               <Typography variant="h2" className={classes.title}>
+                Tax information
+              </Typography>
+              <Grid container direction="column" spacing={3}>
+                <Grid item>
+                  <FormControl component="fieldset">
+                    <RadioGroup row value={values.taxEntity} onChange={handleChange("taxEntity")}>
+                      <FormControlLabel value="business" control={<Radio />} label="Business" />
+                      <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item container spacing={3}>
+                  <Grid item xs={12} lg={4}>
+                    <Autocomplete
+                      id="country"
+                      style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
+                      options={billing.COUNTRIES}
+                      classes={{ option: classes.option }}
+                      className={classes.selectField}
+                      autoHighlight
+                      getOptionLabel={(option) => option.label}
+                      renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
+                      onChange={handleAutocompleteChange("country")}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Choose a country"
+                          variant="outlined"
+                          fullWidth
+                          inputProps={{
+                            ...params.inputProps,
+                            autoComplete: "new-password", // disable autocomplete and autofill
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  {values.country !== "United States of America" && <Grid item xs={12} sm={4}></Grid>}
+                  {values.country === "United States of America" && (
+                    <Grid item xs={12} lg={4}>
+                      <Autocomplete
+                        id="region"
+                        style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
+                        options={billing.US_STATES}
+                        classes={{ option: classes.option }}
+                        className={classes.selectField}
+                        autoHighlight
+                        getOptionLabel={(option) => option.label}
+                        renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
+                        onChange={handleAutocompleteChange("region")}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Choose a state"
+                            variant="outlined"
+                            fullWidth
+                            inputProps={{
+                              ...params.inputProps,
+                              autoComplete: "new-password", // disable autocomplete and autofill
+                            }}
+                          />
+                        )}
+                      />
+                    </Grid>
+                  )}
+                </Grid>
+                <Grid item container spacing={3}>
+                  {values.taxEntity === "business" && (
+                    <>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <TextField
+                          id="company"
+                          name="company"
+                          label="Company Name"
+                          fullWidth
+                          value={values.companyName}
+                          onChange={handleChange("companyName")}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <TextField
+                          id="taxID"
+                          name="taxID"
+                          label="Tax ID"
+                          fullWidth
+                          value={values.taxID}
+                          onChange={handleChange("taxID")}
+                        />
+                      </Grid>
+                    </>
+                  )}
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item>
+              <Typography variant="h2" className={classes.title}>
                 Select your billing method
               </Typography>
               {billingMethodOptions.length === 0 && (
@@ -230,95 +343,28 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
               />
             </Grid>
             <Grid item>
-              <Typography variant="h2" className={classes.title}>
-                Tax information
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    id="country"
-                    style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
-                    options={billing.COUNTRIES}
-                    classes={{ option: classes.option }}
-                    className={classes.selectField}
-                    autoHighlight
-                    getOptionLabel={(option) => option.label}
-                    renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
-                    onChange={onCountryChange}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Choose a country"
-                        variant="outlined"
-                        fullWidth
-                        inputProps={{
-                          ...params.inputProps,
-                          autoComplete: "new-password", // disable autocomplete and autofill
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
-                {values.country !== "United States of America" && <Grid item xs={12} sm={6}></Grid>}
-                {values.country === "United States of America" && (
-                  <Grid item xs={12} sm={6}>
-                    <Autocomplete
-                      id="region"
-                      style={{ width: 260 }} // fullWidth // doesn't exist on AutocompleteProps
-                      options={billing.US_STATES}
-                      classes={{ option: classes.option }}
-                      className={classes.selectField}
-                      autoHighlight
-                      getOptionLabel={(option) => option.label}
-                      renderOption={(option) => <React.Fragment>{option.label}</React.Fragment>}
-                      onChange={onRegionChange}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Choose a state"
-                          variant="outlined"
-                          fullWidth
-                          inputProps={{
-                            ...params.inputProps,
-                            autoComplete: "new-password", // disable autocomplete and autofill
-                          }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                )}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    id="company"
-                    name="company"
-                    label="Company Name"
-                    fullWidth
-                    value={values.companyName}
-                    onChange={handleChange("companyName")}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    id="taxID"
-                    name="taxID"
-                    label="Tax ID"
-                    fullWidth
-                    value={values.taxID}
-                    onChange={handleChange("taxID")}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item>
               <Typography className={classes.proratedDescription}>
                 You will be charged a pro-rated amount for the current month. Receipts will be sent to your email each
                 month.
               </Typography>
-              <Typography className={classes.proratedDescription}>
-                In making this purchase, you authorise Beneath to send instructions to the financial institution that
-                issued your card to take payments from your card account in accordance with the
-                <Link href="https://about.beneath.dev/enterprise"> terms </Link> of your agreement with us.
-              </Typography>
+              <FormControlLabel
+                className={classes.proratedDescription}
+                control={
+                  <Checkbox
+                    color="secondary"
+                    name="terms"
+                    checked={values.acceptedTerms}
+                    onChange={handleChange("acceptedTerms")}
+                  />
+                }
+                label={
+                  <Typography>
+                    I authorise Beneath to send instructions to the financial institution that issued my card to take
+                    payments from my card account in accordance with the
+                    <Link href="https://about.beneath.dev/enterprise"> terms </Link> of my agreement with you.
+                  </Typography>
+                }
+              />
             </Grid>
           </Grid>
           <Grid container spacing={2} className={classes.button}>
@@ -336,34 +382,28 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
             <Grid item>
               <Button
                 color="primary"
-                variant="contained"
+                variant="outlined"
                 autoFocus
+                disabled={
+                  !values.country ||
+                  (values.country === "United States of America" && !values.region) ||
+                  (values.taxEntity === "business" && !values.companyName) ||
+                  (values.taxEntity === "business" && !values.taxID) ||
+                  !values.billingMethodID ||
+                  !values.acceptedTerms
+                }
                 onClick={() => {
-                  if (!values.billingMethodID) {
-                    setError("Please select your billing method.");
-                    setErrorDialogue(true);
-                  } else if (!values.country) {
-                    setError("Please select your country.");
-                    setErrorDialogue(true);
-                  } else if (values.country === "United States of America" && !values.region) {
-                    setError("Please select your state.");
-                    setErrorDialogue(true);
-                  } else if (values.companyName !== "" && !values.taxID) {
-                    setError("Please provide your tax ID.");
-                    setErrorDialogue(true);
-                  } else {
-                    updateBillingInfo({
-                      variables: {
-                        organizationID,
-                        billingMethodID: values.billingMethodID,
-                        billingPlanID: proPlan.billingPlanID,
-                        country: values.country,
-                        region: values.region,
-                        companyName: values.companyName,
-                        taxNumber: values.taxID,
-                      },
-                    });
-                  }
+                  updateBillingInfo({
+                    variables: {
+                      organizationID,
+                      billingMethodID: values.billingMethodID,
+                      billingPlanID: proPlan.billingPlanID,
+                      country: values.country,
+                      region: sanitize("region", values.region),
+                      companyName: sanitize("companyName", values.companyName),
+                      taxNumber: sanitize("taxID", values.taxID),
+                    },
+                  });
                 }}
               >
                 Purchase
