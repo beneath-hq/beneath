@@ -7,10 +7,7 @@ extend type Query {
 extend type Mutation {
   createProject(name: String!, displayName: String, organizationID: UUID!, public: Boolean!, site: String, description: String, photoURL: String): Project!
   updateProject(projectID: UUID!, displayName: String, public: Boolean, site: String, description: String, photoURL: String): Project!
-  updateProjectOrganization(projectID: UUID!, organizationID: UUID!): Project!
   deleteProject(projectID: UUID!): Boolean!
-  addUserToProject(username: String!, projectID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): User
-  removeUserFromProject(userID: UUID!, projectID: UUID!): Boolean!
 }
 
 type Project {

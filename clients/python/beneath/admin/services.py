@@ -72,30 +72,26 @@ class Services:
     )
     return result['updateService']
 
-
-  async def update_organization(self, service_id, organization_id):
+  async def update_permissions_for_stream(self, service_id, stream_id, read, write):
     result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
-        'organizationID': organization_id,
+        'streamID': stream_id,
+        'read': read,
+        'write': write,
       },
       query="""
-        mutation UpdateServiceOrganization($serviceID: UUID!, $organizationID: UUID!) {
-          updateServiceOrganization(serviceID: $serviceID, organizationID: $organizationID) {
+        mutation UpdateServicePermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean, $write: Boolean) {
+          updateServiceStreamPermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
             serviceID
-            name
-            kind
-            readQuota
-            writeQuota
-            organization {
-              name
-            }
+            streamID
+            read
+            write
           }
         }
       """
     )
-    return result['updateServiceOrganization']
-
+    return result['updateServiceStreamPermissions']
 
   async def delete(self, service_id):
     result = await self.conn.query_control(
@@ -109,28 +105,6 @@ class Services:
       """
     )
     return result['deleteService']
-
-
-  async def update_permissions_for_stream(self, service_id, stream_id, read, write):
-    result = await self.conn.query_control(
-      variables={
-        'serviceID': service_id,
-        'streamID': stream_id,
-        'read': read,
-        'write': write,
-      },
-      query="""
-        mutation UpdateServicePermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean, $write: Boolean) {
-          updateServicePermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
-            serviceID
-            streamID
-            read
-            write
-          }
-        }
-      """
-    )
-    return result['updateServicePermissions']
 
   async def issue_secret(self, service_id, description):
     result = await self.conn.query_control(

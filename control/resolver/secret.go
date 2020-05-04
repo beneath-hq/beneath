@@ -86,8 +86,8 @@ func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uui
 
 	authSecret := middleware.GetSecret(ctx)
 	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions in the organization")
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to perform create functions in the organization")
 	}
 
 	secret, err := entity.CreateServiceSecret(ctx, serviceID, description)
@@ -118,8 +118,8 @@ func (r *mutationResolver) RevokeServiceSecret(ctx context.Context, secretID uui
 	}
 
 	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !perms.Admin {
-		return false, gqlerror.Errorf("Not allowed to edit secret")
+	if !perms.Create {
+		return false, gqlerror.Errorf("Not allowed to edit service")
 	}
 
 	if service.Kind != entity.ServiceKindExternal {

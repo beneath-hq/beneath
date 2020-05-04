@@ -43,11 +43,16 @@ func FindBilledResources(ctx context.Context, organizationID uuid.UUID, billingT
 // CreateOrUpdateBilledResources writes the billed resources to Postgres
 func CreateOrUpdateBilledResources(ctx context.Context, billedResources []*BilledResource) error {
 	// specifically, do not overwrite the "created_on" field, so we can spot idempotency
-	_, err := hub.DB.ModelContext(ctx, &billedResources).
-		OnConflict(`(billing_time, organization_id, entity_id, product) DO UPDATE
-			SET (start_time, end_time, quantity, total_price_cents, currency, updated_on) = 
-			(EXCLUDED.start_time, EXCLUDED.end_time, EXCLUDED.quantity, EXCLUDED.total_price_cents, EXCLUDED.currency, EXCLUDED.updated_on)`).
-		Insert()
+	q := hub.DB.ModelContext(ctx, &billedResources).OnConflict("(billing_time, organization_id, entity_id, product) DO UPDATE")
+	q.Set("view = EXCLUDED.view")
+	q.Set("start_time = EXCLUDED.start_time")
+	q.Set("end_time = EXCLUDED.end_time")
+	q.Set("quantity = EXCLUDED.quantity")
+	q.Set("total_price_cents = EXCLUDED.total_price_cents")
+	q.Set("currency = EXCLUDED.currency")
+	q.Set("updated_on = EXCLUDED.updated_on")
+
+	_, err := q.Insert()
 	if err != nil {
 		return err
 	}

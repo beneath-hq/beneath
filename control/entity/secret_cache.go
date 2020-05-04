@@ -127,7 +127,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func()
 		secret := &UserSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
 			Relation("User", func(q *orm.Query) (*orm.Query, error) {
-				return q.Column("user.read_quota", "user.write_quota", "user.master"), nil
+				return q.Column("user.read_quota", "user.write_quota", "user.master", "user.billing_organization_id"), nil
 			}).
 			Column("user_secret_id", "read_only", "public_only", "user_secret.user_id").
 			Where("hashed_token = ?", hashedToken).
@@ -140,6 +140,7 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func()
 			secret.ReadQuota = secret.User.ReadQuota
 			secret.WriteQuota = secret.User.WriteQuota
 			secret.Master = secret.User.Master
+			secret.BillingOrganizationID = secret.User.BillingOrganizationID
 			secret.User = nil
 		}
 
@@ -152,7 +153,7 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 		secret := &ServiceSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
 			Relation("Service", func(q *orm.Query) (*orm.Query, error) {
-				return q.Column("service.read_quota", "service.write_quota"), nil
+				return q.Column("service.read_quota", "service.write_quota", "service.organization_id"), nil
 			}).
 			Column("service_secret_id", "service_secret.service_id").
 			Where("hashed_token = ?", hashedToken).
@@ -165,6 +166,7 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 			secret.ReadQuota = secret.Service.ReadQuota
 			secret.WriteQuota = secret.Service.WriteQuota
 			secret.Master = false
+			secret.BillingOrganizationID = secret.Service.OrganizationID
 			secret.Service = nil
 		}
 

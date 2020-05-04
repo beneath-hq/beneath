@@ -26,6 +26,9 @@ type Secret interface {
 	// GetOwnerID returns the ID of the secret's owner, i.e. a user or service (or uuid.Nil for anonymous)
 	GetOwnerID() uuid.UUID
 
+	// GetBillingOrganizationID returns the ID of the organizationb responsible for the secret's billing
+	GetBillingOrganizationID() uuid.UUID
+
 	// IsAnonymous is true iff the secret is anonymous
 	IsAnonymous() bool
 
@@ -69,10 +72,21 @@ type BaseSecret struct {
 	CreatedOn   time.Time `sql:",notnull,default:now()"`
 	UpdatedOn   time.Time `sql:",notnull,default:now()"`
 
-	Token      secrettoken.Token `sql:"-"`
-	ReadQuota  int64             `sql:"-"`
-	WriteQuota int64             `sql:"-"`
-	Master     bool              `sql:"-"`
+	Token                 secrettoken.Token `sql:"-"`
+	BillingOrganizationID uuid.UUID         `sql:"-"`
+	ReadQuota             int64             `sql:"-"`
+	WriteQuota            int64             `sql:"-"`
+	Master                bool              `sql:"-"`
+}
+
+// GetBillingOrganizationID implements Secret
+func (s *BaseSecret) GetBillingOrganizationID() uuid.UUID {
+	return s.BillingOrganizationID
+}
+
+// IsMaster implements Secret
+func (s *BaseSecret) IsMaster() bool {
+	return s.Master
 }
 
 // CheckReadQuota implements Secret

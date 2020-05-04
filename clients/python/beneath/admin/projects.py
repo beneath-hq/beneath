@@ -115,31 +115,6 @@ class Projects:
     )
     return result['updateProject']
 
-  async def update_organization(self, project_id, organization_id):
-    result = await self.conn.query_control(
-      variables={
-        'projectID': project_id,
-        'organizationID': organization_id,
-      },
-      query="""
-        mutation UpdateProjectOrganization($projectID: UUID!, $organizationID: UUID!) {
-          updateProjectOrganization(projectID: $projectID, organizationID: $organizationID) {
-            projectID
-            displayName
-            public
-            site
-            description
-            photoURL
-            updatedOn
-            organization {
-              name
-            }
-          }
-        }
-      """
-    )
-    return result['updateProjectOrganization']
-
   async def delete(self, project_id):
     result = await self.conn.query_control(
       variables={
@@ -152,44 +127,3 @@ class Projects:
       """
     )
     return result['deleteProject']
-
-  async def add_user(self, project_id, username, view, create, admin):
-    result = await self.conn.query_control(
-      variables={
-        'username': username,
-        'projectID': project_id,
-        'view': view,
-        'create': create,
-        'admin': admin,
-      },
-      query="""
-        mutation AddUserToProject($username: String!, $projectID: UUID!, $view: Boolean!, $create: Boolean!, $admin: Boolean!) {
-          addUserToProject(username: $username, projectID: $projectID, view: $view, create: $create, admin: $admin) {
-            userID
-            username
-            name
-            createdOn
-            projects {
-              name
-            }
-            readQuota
-            writeQuota
-          }
-        }
-      """
-    )
-    return result['addUserToProject']
-
-  async def remove_user(self, project_id, user_id):
-    result = await self.conn.query_control(
-      variables={
-        'userID': user_id,
-        'projectID': project_id,
-      },
-      query="""
-        mutation RemoveUserFromProject($userID: UUID!, $projectID: UUID!) {
-          removeUserFromProject(userID: $userID, projectID: $projectID)
-        }
-      """
-    )
-    return result['removeUserFromProject']

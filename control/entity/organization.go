@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // Organization represents the entity that manages billing on behalf of its users
@@ -71,25 +72,6 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	return organization
 }
 
-// TODO: is it better to do it in one query? or does it work to do in the resolver?
-// FindOrganizationByNameForUser finds a organization by name for a given user
-// func FindOrganizationByNameForUser(ctx context.Context, name string, userID uuid.UUID) *Organization {
-// 	//
-// 	organization := &Organization{}
-// 	err := hub.DB.ModelContext(ctx, organization).
-// 		Where("lower(name) = lower(?)", name).
-// 		Relation("Projects")
-// 	// get user_project_permissions, get project_ids
-// 	// get user_org_permissions, get view/admin
-// 	// where
-// 	Column("organization.*", "Projects", "Services", "Users").
-// 		Select()
-// 	if !AssertFoundOne(err) {
-// 		return nil
-// 	}
-// 	return organization
-// }
-
 // FindAllOrganizations returns all active organizations
 func FindAllOrganizations(ctx context.Context) []*Organization {
 	var organizations []*Organization
@@ -100,194 +82,6 @@ func FindAllOrganizations(ctx context.Context) []*Organization {
 		panic(err)
 	}
 	return organizations
-}
-
-// CreateWithUser creates an organization with the given user as its first member
-func (o *Organization) CreateWithUser(ctx context.Context, username string) error {
-	user := FindUserByUsername(ctx, username)
-	if user == nil {
-		return fmt.Errorf("User %s not found", username)
-	}
-
-	// validate
-	err := GetValidator().Struct(o)
-	if err != nil {
-		return err
-	}
-
-	// create organization, billing method, billing info, permissions, update user in one transaction
-	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert organization
-		_, err := tx.Model(o).Insert()
-		if err != nil {
-			return err
-		}
-
-		// add to user-organization permissions table
-		err = tx.Insert(&PermissionsUsersOrganizations{
-			UserID:         user.UserID,
-			OrganizationID: o.OrganizationID,
-			View:           true,
-			Admin:          true,
-		})
-		if err != nil {
-			return err
-		}
-
-		// update user's billing organization
-		user.BillingOrganizationID = o.OrganizationID
-		user.UpdatedOn = time.Now()
-		err = tx.Update(user)
-		if err != nil {
-			return err
-		}
-
-		// create billing method
-		bm := &BillingMethod{
-			OrganizationID: o.OrganizationID,
-			PaymentsDriver: AnarchismDriver,
-		}
-		_, err = tx.Model(bm).Insert()
-		if err != nil {
-			return err
-		}
-
-		// get default billing plan
-		defaultBillingPlan := FindDefaultBillingPlan(ctx)
-
-		// create billing info
-		bi := &BillingInfo{
-			OrganizationID:  o.OrganizationID,
-			BillingMethodID: bm.BillingMethodID,
-			BillingPlanID:   defaultBillingPlan.BillingPlanID,
-		}
-		_, err = tx.Model(bi).Insert()
-		if err != nil {
-			return err
-		}
-
-		// log new organization
-		log.S.Infow(
-			"control created enterprise organization",
-			"organization_id", o.OrganizationID,
-		)
-
-		return nil
-	})
-}
-
-// InviteUser gives a user permission to join the organization
-// the user must then "JoinOrganization" to officially change their membership
-func (o *Organization) InviteUser(ctx context.Context, userID uuid.UUID, view bool, admin bool) error {
-	// clear cache
-	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
-
-	perms := &PermissionsUsersOrganizations{
-		UserID:         userID,
-		OrganizationID: o.OrganizationID,
-		View:           view,
-		Admin:          admin,
-	}
-
-	_, err := hub.DB.ModelContext(ctx, perms).OnConflict("(user_id, organization_id) DO UPDATE").Insert()
-	if err != nil {
-		return err
-	}
-
-	// done
-	return nil
-}
-
-// RemoveUser removes a member from the organization
-func (o *Organization) RemoveUser(ctx context.Context, userID uuid.UUID) error {
-	// TODO: only if not last user (there's a check in resolver, but it should be part of db tx)
-
-	// clear cache
-	getUserOrganizationPermissionsCache().Clear(ctx, userID, o.OrganizationID)
-
-	// delete
-	return hub.DB.WithContext(ctx).Delete(&PermissionsUsersOrganizations{
-		UserID:         userID,
-		OrganizationID: o.OrganizationID,
-	})
-}
-
-// UpdateName updates an organization's name
-func (o *Organization) UpdateName(ctx context.Context, name string) (*Organization, error) {
-	o.Name = name
-	o.UpdatedOn = time.Now()
-
-	_, err := hub.DB.ModelContext(ctx, o).
-		Column("name").
-		WherePK().
-		Update()
-	if err != nil {
-		return nil, err
-	}
-
-	return o, nil
-}
-
-// ChangeUserPermissions changes a user's permissions within the organization
-// Q: this won't fuck up the object "p" that I have, right?
-// A: No, it just invalidates it from the cache so other processes won't be served it
-// A2: But, we should actually move it to after the DB update for consistency
-// Q: should this really be on the Organization struct (vs the Permissions struct)? it leads to a double "FindPermissions" call, as the resolver calls it right before calling this function
-func (o *Organization) ChangeUserPermissions(ctx context.Context, userID uuid.UUID, view *bool, admin *bool) (*PermissionsUsersOrganizations, error) {
-	permissions := FindPermissionsUsersOrganizations(ctx, userID, o.OrganizationID)
-
-	getUserOrganizationPermissionsCache().Clear(ctx, permissions.UserID, permissions.OrganizationID)
-
-	if view != nil {
-		permissions.View = *view
-	}
-	if admin != nil {
-		permissions.Admin = *admin
-	}
-
-	_, err := hub.DB.ModelContext(ctx, permissions).
-		Column("view", "admin").
-		WherePK().
-		Update()
-
-	return permissions, err
-}
-
-// ChangeUserQuotas allows an admin to configure a member's quotas
-// Q: do I have to invalidate the getSecretCache?
-// Q: should this really be on the Organization struct (vs the User struct)? it leads to a double "FindUser" call, as the resolver calls it right before calling this function
-func (o *Organization) ChangeUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*User, error) {
-	user := FindUser(ctx, userID)
-
-	if readQuota != nil {
-		user.ReadQuota = int64(*readQuota)
-	}
-	if writeQuota != nil {
-		user.WriteQuota = int64(*writeQuota)
-	}
-
-	user.UpdatedOn = time.Now()
-
-	_, err := hub.DB.ModelContext(ctx, user).
-		Column("read_quota", "write_quota", "updated_on").
-		WherePK().
-		Update()
-	if err != nil {
-		return nil, err
-	}
-
-	return user, err
-}
-
-// Delete deletes the organization
-// this will fail if there are any users, services, or projects that are still tied to the organization
-func (o *Organization) Delete(ctx context.Context) error {
-	err := hub.DB.WithContext(ctx).Delete(o)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // FindOrganizationPermissions retrieves all users' permissions for a given organization
@@ -301,13 +95,186 @@ func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) 
 	return permissions
 }
 
-func (o *Organization) organizationNameSeeds() []string {
-	var seeds []string
-
-	for i := 0; i <= 3; i++ {
-		organizationName := "enterprise-" + uuid.NewV4().String()[0:6]
-		seeds = append(seeds, organizationName)
+// CreateWithUser creates a project and makes user a member
+func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
+	// validate
+	err := GetValidator().Struct(o)
+	if err != nil {
+		return err
 	}
 
-	return seeds
+	// create project and PermissionsUsersProjects in one transaction
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		// insert org
+		_, err := tx.Model(o).Insert()
+		if err != nil {
+			return err
+		}
+
+		// connect org to userID
+		err = tx.Insert(&PermissionsUsersOrganizations{
+			UserID:         userID,
+			OrganizationID: o.OrganizationID,
+			View:           view,
+			Create:         create,
+			Admin:          admin,
+		})
+		if err != nil {
+			return err
+		}
+
+		// get default billing plan
+		defaultBillingPlan := FindDefaultBillingPlan(ctx)
+
+		// create billing info
+		bi := &BillingInfo{
+			OrganizationID: o.OrganizationID,
+			BillingPlanID:  defaultBillingPlan.BillingPlanID,
+		}
+		_, err = tx.Model(bi).Insert()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// log new organization
+	log.S.Infow(
+		"control created enterprise organization",
+		"organization_id", o.OrganizationID,
+	)
+
+	return nil
+}
+
+// UpdateName updates an organization's name
+func (o *Organization) UpdateName(ctx context.Context, name string) (*Organization, error) {
+	o.Name = name
+	o.UpdatedOn = time.Now()
+
+	_, err := hub.DB.ModelContext(ctx, o).
+		Column("name", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return nil, err
+	}
+
+	return o, nil
+}
+
+// Delete deletes the organization
+// this will fail if there are any users, services, or projects that are still tied to the organization
+func (o *Organization) Delete(ctx context.Context) error {
+	// NOTE: effectively, this resolver doesn't work, as there will always be one admin member
+	// TODO: check it's empty and has just one admin user, trigger bill, make the admin leave, delete org
+
+	err := hub.DB.WithContext(ctx).Delete(o)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TransferUser transfers a user in o to another organization
+func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *Organization) error {
+	// can be from personal to multi, multi to personal, multi to multi
+
+	// Ensure the last admin member isn't leaving
+	foundRemainingAdmin := false
+	members := FindOrganizationPermissions(ctx, o.OrganizationID)
+	for _, member := range members {
+		if member.Admin && member.UserID != user.UserID {
+			foundRemainingAdmin = true
+			break
+		}
+	}
+	if !foundRemainingAdmin {
+		return fmt.Errorf("Cannot transfer user because it would leave the organization without an admin")
+	}
+
+	// find new billing info
+	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
+	if targetBillingInfo == nil {
+		return fmt.Errorf("Couldn't find billing info for target organization")
+	}
+
+	// commit user's current usage to the old organization's bill
+	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, UserEntityKind, user.UserID, user.Username, false)
+	if err != nil {
+		return err
+	}
+
+	// update user
+	user.BillingOrganization = targetOrg
+	user.BillingOrganizationID = targetOrg.OrganizationID
+	user.ReadQuota = targetBillingInfo.BillingPlan.SeatReadQuota
+	user.WriteQuota = targetBillingInfo.BillingPlan.SeatWriteQuota
+	user.UpdatedOn = time.Now()
+	_, err = hub.DB.WithContext(ctx).Model(user).
+		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	// commit usage credit to the new organization's bill for the user's current month's usage
+	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, UserEntityKind, user.UserID, user.Username, true)
+	if err != nil {
+		panic("unable to commit usage credit to bill")
+	}
+
+	// add prorated seat to the new organization's next month's bill
+	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
+	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, []string{user.Username}, false)
+	if err != nil {
+		panic("unable to commit prorated seat to bill")
+	}
+
+	return nil
+}
+
+// TransferProject transfers a project in o to another organization
+func (o *Organization) TransferProject(ctx context.Context, project *Project, targetOrg *Organization) error {
+	project.Organization = targetOrg
+	project.OrganizationID = targetOrg.OrganizationID
+	project.UpdatedOn = time.Now()
+	_, err := hub.DB.ModelContext(ctx, project).Column("organization_id", "updated_on").WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TransferService transfers a service in o to another organization
+func (o *Organization) TransferService(ctx context.Context, service *Service, targetOrg *Organization) error {
+	// commit current usage to the old organization's bill
+	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, ServiceEntityKind, service.ServiceID, service.Name, false)
+	if err != nil {
+		return err
+	}
+
+	// update organization
+	service.Organization = targetOrg
+	service.OrganizationID = targetOrg.OrganizationID
+	service.UpdatedOn = time.Now()
+	_, err = hub.DB.ModelContext(ctx, service).Column("organization_id", "updated_on").WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	// commit usage credit to the new organization's bill for the service's current month's usage
+	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, ServiceEntityKind, service.ServiceID, service.Name, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -39,6 +39,51 @@ class Organizations:
     )
     return result['organizationByName']
 
+  async def get_member_permissions(self, organization_id):
+    result = await self.conn.query_control(
+      variables={
+        'organizationID': organization_id,
+      },
+      query="""
+        query UsersOrganizationPermissions($organizationID: UUID!) {
+          usersOrganizationPermissions(organizationID: $organizationID) {
+            user {
+              username
+              name
+            }
+            view
+            admin
+          }
+        }
+      """
+    )
+    return result['usersOrganizationPermissions']
+
+  async def create(self, name):
+    result = await self.conn.query_control(
+      variables={
+        'name': format_entity_name(name),
+      },
+      query="""
+        mutation CreateOrganization($name: String!) {
+          createOrganization(name: $name) {
+           	organizationID
+            name
+            createdOn
+            updatedOn
+            users {
+              userID
+              username
+              name
+              readQuota
+              writeQuota
+            }
+          }
+        }
+      """
+    )
+    return result['createOrganization']
+
   async def update_name(self, organization_id, name):
     result = await self.conn.query_control(
       variables={
@@ -72,125 +117,47 @@ class Organizations:
     )
     return result['updateOrganizationName']
 
-  async def get_member_permissions(self, organization_id):
+  async def invite_user(self, organization_id, user_id, view, create, admin):
     result = await self.conn.query_control(
       variables={
-        'organizationID': organization_id,
-      },
-      query="""
-        query UsersOrganizationPermissions($organizationID: UUID!) {
-          usersOrganizationPermissions(organizationID: $organizationID) {
-            user {
-              username
-              name
-            }
-            view
-            admin
-          }
-        }
-      """
-    )
-    return result['usersOrganizationPermissions']
-
-  async def add_user(self, organization_id, username, view, admin):
-    result = await self.conn.query_control(
-      variables={
-        'username': username,
+        'userID': userID,
         'organizationID': organization_id,
         'view': view,
+        'create': create,
         'admin': admin,
       },
       query="""
-        mutation InviteUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
-          inviteUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
-            userID
-            username
-            name
-            createdOn
-            projects {
-              name
-              public
-            }
-            readQuota
-            writeQuota
-          }
+        mutation InviteUserToOrganization($userID: UUID!, $organizationID: UUID!, $view: Boolean!, $create: Boolean!, $admin: Boolean!) {
+          inviteUserToOrganization(userID: $userID, organizationID: $organizationID, view: $view, create: $create, admin: $admin)
         }
       """
     )
     return result['inviteUserToOrganization']
 
-  async def join(self, name):
+  async def accept_invite(self, organization_id):
     result = await self.conn.query_control(
       variables={
-        'organizationName': format_entity_name(name),
-      },
-      query="""
-        mutation JoinOrganization($organizationName: String!) {
-          joinOrganization(organizationName: $organizationName) {
-            user {
-              username
-            }
-            organization {
-              name
-            }
-            readQuota
-            writeQuota
-          }
-        }
-      """
-    )
-    return result['joinOrganization']
-
-  async def remove_user(self, organization_id, user_id):
-    result = await self.conn.query_control(
-      variables={
-        'userID': user_id,
         'organizationID': organization_id,
       },
       query="""
-        mutation RemoveUserFromOrganization($userID: UUID!, $organizationID: UUID!) {
-          removeUserFromOrganization(userID: $userID, organizationID: $organizationID)
+        mutation AcceptOrganizationInvite($organizationID: UUID!) {
+          acceptOrganizationInvite(organizationID: $organizationID) 
         }
       """
     )
-    return result['removeUserFromOrganization']
+    return result['acceptOrganizationInvite']
 
-  async def update_permissions_for_user(self, organization_id, user_id, view, admin):
+  async def update_user_quota(self, user_id, read_quota_bytes, write_quota_bytes):
     result = await self.conn.query_control(
       variables={
         'userID': user_id,
-        'organizationID': organization_id,
-        'view': view,
-        'admin': admin,
-      },
-      query="""
-        mutation UpdateUserOrganizationPermissions($userID: UUID!, $organizationID: UUID!, $view: Boolean, $admin: Boolean) {
-          updateUserOrganizationPermissions(userID: $userID, organizationID: $organizationID, view: $view, admin: $admin) {
-            user {
-              username
-            }
-            organization {
-              name
-            }
-            view
-            admin
-          }
-        }
-      """
-    )
-    return result['updateUserOrganizationPermissions']
-
-  async def update_quotas_for_user(self, organization_id, user_id, read_quota_bytes, write_quota_bytes):
-    result = await self.conn.query_control(
-      variables={
-        'userID': user_id,
-        'organizationID': organization_id,
         'readQuota': read_quota_bytes,
         'writeQuota': write_quota_bytes,
       },
       query="""
-        mutation UpdateUserOrganizationQuotas($userID: UUID!, $organizationID: UUID!, $readQuota: Int, $writeQuota: Int) {
-          updateUserOrganizationQuotas(userID: $userID, organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota) {
+        mutation UpdateUserQuotas($userID: UUID!, $readQuota: Int, $writeQuota: Int) {
+          updateUserQuotas(userID: $userID, readQuota: $readQuota, writeQuota: $writeQuota) {
+            userID
             username
             readQuota
             writeQuota
@@ -198,4 +165,59 @@ class Organizations:
         }
       """
     )
-    return result['updateUserOrganizationQuotas']
+    return result['updateUserQuotas']
+
+  async def leave(self, user_id):
+    result = await self.conn.query_control(
+      variables={
+        'userID': user_id,
+      },
+      query="""
+        mutation LeaveBillingOrganization($userID: UUID!) {
+          leaveBillingOrganization(userID: $userID) {
+            userID
+          }
+        }
+      """
+    )
+    return result['leaveBillingOrganization']
+
+  async def transfer_project(self, project_id, new_organization_id):
+    result = await self.conn.query_control(
+      variables={
+        'projectID': project_id,
+        'organizationID': new_organization_id,
+      },
+      query="""
+        mutation TransferProjectToOrganization($projectID: UUID!, $organizationID: UUID!) {
+          transferProjectToOrganization(projectID: $projectID, organizationID: $organizationID) {
+            projectID
+            organization {
+              organizationID
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['transferProjectToOrganization']
+
+  async def transfer_service(self, service_id, new_organization_id):
+    result = await self.conn.query_control(
+      variables={
+        'serviceID': service_id,
+        'organizationID': new_organization_id,
+      },
+      query="""
+        mutation TransferServiceToOrganization($serviceID: UUID!, $organizationID: UUID!) {
+          transferServiceToOrganization(serviceID: $serviceID, organizationID: $organizationID) {
+            serviceID
+            organization {
+              organizationID
+              name
+            }
+          }
+        }
+      """
+    )
+    return result['transferServiceToOrganization']

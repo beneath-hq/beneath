@@ -96,11 +96,6 @@ func (s *UserSecret) IsService() bool {
 	return false
 }
 
-// IsMaster implements the Secret interface
-func (s *UserSecret) IsMaster() bool {
-	return s.Master
-}
-
 // StreamPermissions implements the Secret interface
 func (s *UserSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions {
 	projectPerms := CachedUserProjectPermissions(ctx, s.UserID, projectID)

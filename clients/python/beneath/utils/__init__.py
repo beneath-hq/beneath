@@ -4,7 +4,7 @@ import pandas as pd
 from beneath.utils.aiobuffer import AIOWindowedBuffer
 from beneath.utils.aiopoller import AIOPoller
 from beneath.utils.aioworkerpool import AIOWorkerPool
-from beneath.utils.qualifiers import StreamQualifier, ProjectQualifier
+from beneath.utils.qualifiers import ServiceQualifier, StreamQualifier, ProjectQualifier
 
 
 def format_entity_name(name):

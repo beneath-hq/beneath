@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
 	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -133,37 +133,6 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 	return s, err
 }
 
-// UpdateOrganization changes a service's organization
-func (s *Service) UpdateOrganization(ctx context.Context, organizationID uuid.UUID) (*Service, error) {
-	s.OrganizationID = organizationID
-	s.UpdatedOn = time.Now()
-
-	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = hub.DB.ModelContext(ctx, s).Column("organization_id", "updated_on").WherePK().Update()
-
-	// commit usage credit to the new organization's bill for the service's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, organizationID, ServiceEntityKind, s.ServiceID, s.Name, true)
-	if err != nil {
-		panic("unable to commit usage credit to bill")
-	}
-
-	// re-find service so we can return the name of the new organization
-	err = hub.DB.ModelContext(ctx, s).
-		WherePK().
-		Column("service.*", "Organization").
-		Select()
-	if !AssertFoundOne(err) {
-		return nil, err
-	}
-
-	return s, err
-}
-
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
 	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
@@ -172,45 +141,4 @@ func (s *Service) Delete(ctx context.Context) error {
 	}
 	_, err = hub.DB.ModelContext(ctx, s).WherePK().Delete()
 	return err
-}
-
-// UpdatePermissions updates a service's permissions for a given stream
-// UpdatePermissions sets permissions if they do not exist yet
-func (s *Service) UpdatePermissions(ctx context.Context, streamID uuid.UUID, read *bool, write *bool) (*PermissionsServicesStreams, error) {
-	// create perm
-	pss := &PermissionsServicesStreams{
-		ServiceID: s.ServiceID,
-		StreamID:  streamID,
-	}
-	if read != nil {
-		pss.Read = *read
-	}
-	if write != nil {
-		pss.Write = *write
-	}
-
-	// if neither read nor write, delete permission (if exists) -- else update
-	if !pss.Read && !pss.Write {
-		_, err := hub.DB.ModelContext(ctx, pss).WherePK().Delete()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// build upsert
-		q := hub.DB.ModelContext(ctx, pss).OnConflict("(service_id, stream_id) DO UPDATE")
-		if read != nil {
-			q = q.Set("read = EXCLUDED.read")
-		}
-		if write != nil {
-			q = q.Set("write = EXCLUDED.write")
-		}
-
-		// run upsert
-		_, err := q.Insert()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return pss, nil
 }

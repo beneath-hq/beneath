@@ -22,6 +22,11 @@ func (s *AnonymousSecret) GetOwnerID() uuid.UUID {
 	return uuid.Nil
 }
 
+// GetBillingOrganizationID implements the Secret interface
+func (s *AnonymousSecret) GetBillingOrganizationID() uuid.UUID {
+	return uuid.Nil
+}
+
 // IsAnonymous implements the Secret interface
 func (s *AnonymousSecret) IsAnonymous() bool {
 	return true

@@ -121,6 +121,52 @@ class Users:
     )
     return result['userByUsername']
 
+  async def update_permissions_for_project(self, user_id, project_id, view, create, admin):
+    result = await self.conn.query_control(
+      variables={
+        'userID': user_id,
+        'projectID': project_id,
+        'view': view,
+        'create': create,
+        'admin': admin,
+      },
+      query="""
+        mutation UpdateUserProjectPermissions($userID: UUID!, $projectID: UUID!, $view: Boolean, $create: Boolean, $admin: Boolean) {
+          updateUserProjectPermissions(userID: $userID, projectID: $projectID, view: $view, create: $create, admin: $admin) {
+            userID
+            projectID
+            view
+            create
+            admin
+          }
+        }
+      """
+    )
+    return result['updateUserProjectPermissions']
+
+  async def update_permissions_for_organization(self, user_id, organization_id, view, create, admin):
+    result = await self.conn.query_control(
+      variables={
+        'userID': user_id,
+        'organizationID': organization_id,
+        'view': view,
+        'create': create,
+        'admin': admin,
+      },
+      query="""
+        mutation UpdateUserOrganizationPermissions($userID: UUID!, $organizationID: UUID!, $view: Boolean, $create: Boolean, $admin: Boolean) {
+          updateUserOrganizationPermissions(userID: $userID, organizationID: $organizationID, view: $view, create: $create, admin: $admin) {
+            userID
+            organizationID
+            view
+            create
+            admin
+          }
+        }
+      """
+    )
+    return result['updateUserOrganizationPermissions']
+
   async def get_usage(self, user_id, period=None, from_time=None, until=None):
     today = datetime.today()
     if (period is None) or (period == 'M'):

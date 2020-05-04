@@ -6,9 +6,8 @@ extend type Query {
 extend type Mutation {
   createService(name: String!, organizationID: UUID!, readQuota: Int!, writeQuota: Int!): Service!
   updateService(serviceID: UUID!, name: String, readQuota: Int, writeQuota: Int): Service!
-  updateServiceOrganization(serviceID: UUID!, organizationID: UUID!): Service!
+  updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
-  updateServicePermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
 }
 
 type Service {

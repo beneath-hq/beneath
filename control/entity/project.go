@@ -7,9 +7,7 @@ import (
 
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
-	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
-	"github.com/vmihailenco/msgpack"
 	"gopkg.in/go-playground/validator.v9"
 
 	"gitlab.com/beneath-hq/beneath/internal/hub"
@@ -37,9 +35,6 @@ type Project struct {
 var (
 	// regex used in validation
 	projectNameRegex *regexp.Regexp
-
-	// redis cache for project data
-	projectCache *cache.Codec
 )
 
 func init() {
@@ -147,29 +142,6 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 	})
 }
 
-// AddUser makes user a member of project
-func (p *Project) AddUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
-	return hub.DB.WithContext(ctx).Insert(&PermissionsUsersProjects{
-		UserID:    userID,
-		ProjectID: p.ProjectID,
-		View:      view,
-		Create:    create,
-		Admin:     admin,
-	})
-}
-
-// RemoveUser removes a member from the project
-func (p *Project) RemoveUser(ctx context.Context, userID uuid.UUID) error {
-	// clear cache
-	getUserProjectPermissionsCache().Clear(ctx, userID, p.ProjectID)
-
-	// TODO only if not last user (there's a check in resolver, but it should be part of db tx)
-	return hub.DB.WithContext(ctx).Delete(&PermissionsUsersProjects{
-		UserID:    userID,
-		ProjectID: p.ProjectID,
-	})
-}
-
 // UpdateDetails updates projects user-facing details
 func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public *bool, site *string, description *string, photoURL *string) error {
 	// set fields
@@ -216,25 +188,6 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 	})
 }
 
-// UpdateOrganization changes a project's organization
-func (p *Project) UpdateOrganization(ctx context.Context, organizationID uuid.UUID) (*Project, error) {
-	p.OrganizationID = organizationID
-	p.UpdatedOn = time.Now()
-
-	_, err := hub.DB.ModelContext(ctx, p).Column("organization_id", "updated_on").WherePK().Update()
-
-	// re-find project so we can return the name of the new organization
-	err = hub.DB.ModelContext(ctx, p).
-		WherePK().
-		Column("project.*", "Organization").
-		Select()
-	if !AssertFoundOne(err) {
-		return nil, err
-	}
-
-	return p, err
-}
-
 // SetLock sets a project's "locked" status
 func (p *Project) SetLock(ctx context.Context, isLocked bool) error {
 	p.Locked = isLocked
@@ -266,15 +219,4 @@ func (p *Project) Delete(ctx context.Context) error {
 
 		return nil
 	})
-}
-
-func getProjectCache() *cache.Codec {
-	if projectCache == nil {
-		projectCache = &cache.Codec{
-			Redis:     hub.Redis,
-			Marshal:   msgpack.Marshal,
-			Unmarshal: msgpack.Unmarshal,
-		}
-	}
-	return projectCache
 }
