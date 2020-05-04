@@ -186,11 +186,12 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			return err
 		}
 
-		log.S.Info("invoice payment failed!")
+		customer := stripeutil.RetrieveCustomer(invoice.Customer.ID)
+		organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
+		log.S.Infof("Invoice payment failed on attempt #%d for organization %s", invoice.AttemptCount, organizationID.String())
 
 		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
-			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
 			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
 			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
@@ -208,8 +209,6 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			}
 		}
 
-	// using this as a hack for stripe wire failures for one-off invoices
-	// TODO: waiting on stripe to fix their bug; this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
 	case "invoice.updated":
 		var invoice stripe.Invoice
 		err := json.Unmarshal(event.Data.Raw, &invoice)
@@ -219,9 +218,12 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			return err
 		}
 
-		// when invoice goes "past_due", shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
+		// when invoice goes "past_due" for pay-by-wire customers, log it
+		// TODO: waiting on stripe to fix their bug: this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodSendInvoice) && (invoice.Status == "past_due") && (invoice.Paid == false) {
-			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
+			customer := stripeutil.RetrieveCustomer(invoice.Customer.ID)
+			organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
+
 			log.S.Infof("Invoice is past due for organization %s", organizationID)
 		}
 
