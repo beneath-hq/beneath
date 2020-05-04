@@ -31,9 +31,9 @@ type OrganizationInvite struct {
 func FindOrganizationInvite(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID) *OrganizationInvite {
 	invite := &OrganizationInvite{}
 	err := hub.DB.ModelContext(ctx, invite).
-		Column("invite.*", "Organization", "User", "User.BillingOrganization").
-		Where("organization_id = ?", organizationID).
-		Where("user_id = ?", userID).
+		Column("organization_invite.*", "Organization", "User", "User.BillingOrganization").
+		Where("organization_invite.organization_id = ?", organizationID).
+		Where("organization_invite.user_id = ?", userID).
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -52,7 +52,7 @@ func (i *OrganizationInvite) Save(ctx context.Context) error {
 	// build upsert
 	q := hub.DB.ModelContext(ctx, i).OnConflict("(organization_id, user_id) DO UPDATE")
 	q.Set("view = EXCLUDED.view")
-	q.Set("create = EXCLUDED.create")
+	q.Set(`"create" = EXCLUDED."create"`)
 	q.Set("admin = EXCLUDED.admin")
 
 	// run upsert

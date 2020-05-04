@@ -115,6 +115,15 @@ func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization not found")
+	}
+
+	if organization.Personal {
+		return nil, gqlerror.Errorf("Cannot edit permissions of personal organization")
+	}
+
 	puo := entity.FindPermissionsUsersOrganizations(ctx, userID, organizationID)
 	if puo == nil {
 		puo = &entity.PermissionsUsersOrganizations{

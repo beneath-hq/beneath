@@ -120,7 +120,7 @@ class Organizations:
   async def invite_user(self, organization_id, user_id, view, create, admin):
     result = await self.conn.query_control(
       variables={
-        'userID': userID,
+        'userID': user_id,
         'organizationID': organization_id,
         'view': view,
         'create': create,

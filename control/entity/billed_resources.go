@@ -44,7 +44,6 @@ func FindBilledResources(ctx context.Context, organizationID uuid.UUID, billingT
 func CreateOrUpdateBilledResources(ctx context.Context, billedResources []*BilledResource) error {
 	// specifically, do not overwrite the "created_on" field, so we can spot idempotency
 	q := hub.DB.ModelContext(ctx, &billedResources).OnConflict("(billing_time, organization_id, entity_id, product) DO UPDATE")
-	q.Set("view = EXCLUDED.view")
 	q.Set("start_time = EXCLUDED.start_time")
 	q.Set("end_time = EXCLUDED.end_time")
 	q.Set("quantity = EXCLUDED.quantity")

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -305,7 +306,7 @@ func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID,
 
 		err = CreateOrUpdateBilledResources(ctx, billedResources)
 		if err != nil {
-			panic("unable to write billed resources to table")
+			panic(fmt.Errorf("unable to write billed resources to table: %s", err.Error()))
 		}
 	} else if len(monthlyMetrics) > 1 {
 		panic("monthlyMetrics can't have more than one item")

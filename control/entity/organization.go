@@ -185,17 +185,19 @@ func (o *Organization) Delete(ctx context.Context) error {
 func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *Organization) error {
 	// can be from personal to multi, multi to personal, multi to multi
 
-	// Ensure the last admin member isn't leaving
-	foundRemainingAdmin := false
-	members := FindOrganizationPermissions(ctx, o.OrganizationID)
-	for _, member := range members {
-		if member.Admin && member.UserID != user.UserID {
-			foundRemainingAdmin = true
-			break
+	// Ensure the last admin member isn't leaving a multi-user org
+	if !o.Personal {
+		foundRemainingAdmin := false
+		members := FindOrganizationPermissions(ctx, o.OrganizationID)
+		for _, member := range members {
+			if member.Admin && member.UserID != user.UserID {
+				foundRemainingAdmin = true
+				break
+			}
 		}
-	}
-	if !foundRemainingAdmin {
-		return fmt.Errorf("Cannot transfer user because it would leave the organization without an admin")
+		if !foundRemainingAdmin {
+			return fmt.Errorf("Cannot transfer user because it would leave the organization without an admin")
+		}
 	}
 
 	// find new billing info
