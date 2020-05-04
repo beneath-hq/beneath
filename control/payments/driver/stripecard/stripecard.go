@@ -190,8 +190,8 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
 		log.S.Infof("Invoice payment failed on attempt #%d for organization %s", invoice.AttemptCount, organizationID.String())
 
-		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
-		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
+		// after X failed card retries, if the customer is not an Enterprise customer, downgrade the customer to a Free plan, which will update the users' quotas
+		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.AttemptCount == maxCardRetries) && (invoice.Paid == false) {
 			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
 			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
@@ -199,13 +199,14 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			// Q: should we take them off the faulty billing method? mark the billing method as faulty?
-
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.S.Errorf("Error updating Billing Info: %v\\n", err)
-				return err
+			if billingInfo.BillingPlan.Personal {
+				// Q: should we take them off the faulty billing method? mark the billing method as faulty?
+				billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.S.Errorf("Error updating Billing Info: %v\\n", err)
+					return err
+				}
 			}
 		}
 
