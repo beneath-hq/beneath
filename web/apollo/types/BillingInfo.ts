@@ -32,7 +32,7 @@ export interface BillingInfo_billingInfo {
   __typename: "BillingInfo";
   organizationID: ControlUUID;
   billingPlan: BillingInfo_billingInfo_billingPlan;
-  billingMethod: BillingInfo_billingInfo_billingMethod;
+  billingMethod: BillingInfo_billingInfo_billingMethod | null;
   country: string;
   region: string | null;
   companyName: string | null;

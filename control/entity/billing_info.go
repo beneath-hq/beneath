@@ -16,7 +16,7 @@ type BillingInfo struct {
 	BillingInfoID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	OrganizationID  uuid.UUID `sql:"on_delete:CASCADE,notnull,type:uuid"`
 	Organization    *Organization
-	BillingMethodID uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
+	BillingMethodID *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
 	BillingMethod   *BillingMethod
 	BillingPlanID   uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	BillingPlan     *BillingPlan
@@ -47,7 +47,7 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 }
 
 // Update updates an organization's billing method and billing plan
-func (bi *BillingInfo) Update(ctx context.Context, billingMethodID uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
+func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
 	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID

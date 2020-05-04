@@ -42,9 +42,7 @@ func (r *queryResolver) BillingMethods(ctx context.Context, organizationID uuid.
 	}
 
 	billingMethods := entity.FindBillingMethodsByOrganization(ctx, organizationID)
-	if billingMethods == nil {
-		return nil, gqlerror.Errorf("Billing methods for organization %s not found", organizationID.String())
-	}
 
+	// billingMethods may be empty
 	return billingMethods, nil
 }

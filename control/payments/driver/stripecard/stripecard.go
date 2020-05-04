@@ -140,9 +140,6 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		}
 
 		billingMethods := entity.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
-		if billingMethods == nil {
-			panic("no existing billing methods found for the organization")
-		}
 
 		// if customer has already been registered with stripe, get customerID from driver_payload
 		customerID := ""
@@ -189,9 +186,12 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			return err
 		}
 
-		// after X card retries, shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
-		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.Paid == false) && (invoice.AttemptCount == maxCardRetries) {
-			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
+		customer := stripeutil.RetrieveCustomer(invoice.Customer.ID)
+		organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
+		log.S.Infof("Invoice payment failed on attempt #%d for organization %s", invoice.AttemptCount, organizationID.String())
+
+		// after X failed card retries, if the customer is not an Enterprise customer, downgrade the customer to a Free plan, which will update the users' quotas
+		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.AttemptCount == maxCardRetries) && (invoice.Paid == false) {
 			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
 			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
@@ -199,18 +199,17 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			// Q: should we delete the faulty billing method? if so, move them to the anarchism billing method
-
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.S.Errorf("Error updating Billing Info: %v\\n", err)
-				return err
+			if billingInfo.BillingPlan.Personal {
+				// Q: should we take them off the faulty billing method? mark the billing method as faulty?
+				billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					log.S.Errorf("Error updating Billing Info: %v\\n", err)
+					return err
+				}
 			}
 		}
 
-	// using this as a hack for stripe wire failures for one-off invoices
-	// TODO: waiting on stripe to fix their bug; this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
 	case "invoice.updated":
 		var invoice stripe.Invoice
 		err := json.Unmarshal(event.Data.Raw, &invoice)
@@ -220,22 +219,13 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 			return err
 		}
 
-		// when invoice goes "past_due", shut off the customer's service (aka switch them to the Free billing plan, which will update their users' quotas)
+		// when invoice goes "past_due" for pay-by-wire customers, log it
+		// TODO: waiting on stripe to fix their bug: this "invoice.updated" (nor "invoice.payment_failed") webhook doesn't currently trigger for one-off invoices that are paid by wire when they go past_due
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodSendInvoice) && (invoice.Status == "past_due") && (invoice.Paid == false) {
-			organizationID := uuid.FromStringOrNil(invoice.Customer.Metadata["OrganizationID"])
-			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
+			customer := stripeutil.RetrieveCustomer(invoice.Customer.ID)
+			organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
 
-			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
-			if billingInfo == nil {
-				panic("could not find organization's billing info")
-			}
-
-			billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.S.Errorf("Error updating Billing Info: %v\\n", err)
-				return err
-			}
+			log.S.Infof("Invoice is past due for organization %s", organizationID)
 		}
 
 	default:

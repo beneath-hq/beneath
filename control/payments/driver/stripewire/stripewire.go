@@ -62,13 +62,10 @@ func (s *StripeWire) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 	// Beneath will call the function from an admin panel (after a customer discussion)
 	secret := middleware.GetSecret(req.Context())
 	if !secret.IsMaster() {
-		return httputil.NewError(403, fmt.Sprintf("Enterprise plans require a Beneath Payments Admin to activate"))
+		return httputil.NewError(403, fmt.Sprintf("enabling payment by wire requires a Beneath Payments Admin"))
 	}
 
 	billingMethods := entity.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
-	if billingMethods == nil {
-		panic("no existing billing methods found for the organization")
-	}
 
 	// if customer has already been registered with stripe, get customerID from driver_payload
 	customerID := ""

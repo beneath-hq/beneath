@@ -37,7 +37,7 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
               To create a secret for connecting to Beneath, just head over to your{" "}
               <LinkTypography
                 href={`/organization?organization_name=${me.user.username}&tab=secrets`}
-                as={`/${me.user.username}/secrets`}
+                as={`/${me.user.username}/-/secrets`}
               >
                 profile page
               </LinkTypography>

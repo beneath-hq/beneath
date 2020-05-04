@@ -1,15 +1,17 @@
-import React, { FC, useEffect } from 'react'
-import { StripeProvider, Elements, injectStripe, CardElement, ReactStripeElements } from 'react-stripe-elements'
-import { TextField, Typography, Button, Dialog, DialogActions, DialogContent, Grid } from "@material-ui/core"
-import { Autocomplete } from "@material-ui/lab"
-import { makeStyles } from "@material-ui/core/styles"
-import _ from 'lodash'
+import { Button, Dialog, DialogActions, DialogContent, Grid, TextField, Typography} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import { Autocomplete } from "@material-ui/lab";
+import _ from "lodash";
+import React, { FC, useEffect } from "react";
 
-import { useToken } from '../../../hooks/useToken'
+import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
 import useMe from "../../../hooks/useMe";
-import connection from "../../../lib/connection"
-import billing from "../../../lib/billing"
-import Loading from "../../Loading"
+import { useToken } from "../../../hooks/useToken";
+import billing from "../../../lib/billing";
+import connection from "../../../lib/connection";
+import Loading from "../../Loading";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -28,55 +30,37 @@ const useStyles = makeStyles((theme) => ({
   },
   option: {
     fontSize: 15,
-    '& > span': {
+    "& > span": {
       marginRight: 10,
       fontSize: 18,
     },
     color: "white"
   },
-}))
-
-interface PaymentMethodData {
-  payment_method_data: {
-    billing_details: {
-      address: {
-        city: string,
-        country: string,
-        line1: string,
-        line2: string,
-        postal_code: string,
-        state: string
-      },
-      email: string,
-      name: string,
-    }
-  }
-}
+}));
 
 interface CardFormStateTypes {
-  city: string,
-  country: string,
-  line1: string,
-  line2: string,
-  postalCode: string,
-  state: string,
-  email: string,
-  cardholder: string,
-  formSubmit: number,
-  dialog: boolean,
-  error: string | undefined,
-  stripeError: string | undefined,
-  loading: boolean,
-  intentLoading: boolean,
-  status: stripe.setupIntents.SetupIntentStatus | null,
+  city: string;
+  country: string;
+  line1: string;
+  line2: string;
+  postalCode: string;
+  state: string;
+  email: string;
+  cardholder: string;
+  formSubmit: number;
+  dialog: boolean;
+  error: string | undefined;
+  stripeError: string | undefined;
+  loading: boolean;
+  intentLoading: boolean;
+  status: stripe.setupIntents.SetupIntentStatus | null;
 }
 
 interface Props {
-  stripe: ReactStripeElements.StripeProps | undefined
-  closeDialogue: () => void
+  closeDialogue: () => void;
 }
 
-const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
+const CardFormElement: FC<Props> = ({ closeDialogue }) => {
   const [values, setValues] = React.useState<CardFormStateTypes>({
     cardholder: "",
     line1: "",
@@ -93,112 +77,136 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
     loading: false,
     intentLoading: false,
     status: null
-  })
-  const token = useToken()
-  const classes = useStyles()
-
-  // get me for email address and organizationID
+  });
+  const token = useToken();
+  const classes = useStyles();
   const me = useMe();
-  if (!me) {
-    return <p>Need to log in to proceed to payment</p>
-  }
+  const stripe = useStripe();
+  const elements = useElements();
 
   // When card form is submitted, initiate setupIntent
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     const fetchData = (async () => {
-      if (!stripe) {
-        return
-      }
       if (!values.country) {
-        setValues({ ...values, ...{ stripeError: "Missing country", intentLoading: false } })
-        return
+        setValues({ ...values, ...{ stripeError: "Missing country", intentLoading: false } });
+        return;
       }
 
-      const headers = { authorization: `Bearer ${token}` }
-      let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`
-      url += `?organizationID=${me.billingOrganization.organizationID}`
-      const res = await fetch(url, { headers })
+      if (!me) {
+        return <p>Need to log in to proceed to payment</p>;
+      }
 
-      if (isMounted && me) {
-        const intent: any = await res.json()
+      if (!elements) {
+        return <p>Unable to get Stripe elements</p>;
+      }
+
+      if (!stripe) {
+        return <p>Unable to get Stripe</p>;
+      }
+
+      const headers = { authorization: `Bearer ${token}` };
+      let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`;
+      url += `?organizationID=${me.billingOrganization.organizationID}`;
+      const res = await fetch(url, { headers });
+
+      if (isMounted) {
+        const intent: any = await res.json();
 
         if (!res.ok) {
-          setValues({ ...values, ...{ error: intent.error, intentLoading: false } })
-          return
-        }
-
-        const customerData: PaymentMethodData = {
-          payment_method_data: {
-            billing_details: {
-              address: {
-                city: values.city,
-                country: values.country,
-                line1: values.line1,
-                line2: values.line2,
-                postal_code: values.postalCode,
-                state: values.state,
-              },
-              email: me.email, // Stripe receipts will be sent to the user's Beneath email address
-              name: values.cardholder,
-            }
-          }
+          setValues({ ...values, ...{ error: intent.error, intentLoading: false } });
+          return;
         }
 
         // handleCardSetup automatically pulls credit card info from the Card element
-        // TODO from Stripe Docs: stripe.handleCardSetup may trigger a 3D Secure authentication challenge.This will be shown in a modal dialog and may be confusing for customers using assistive technologies like screen readers.You should make your form accessible by ensuring that success or error messages are clearly read out after this method completes
-        const result: stripe.SetupIntentResponse = await stripe.handleCardSetup(intent.client_secret, customerData)
-        if (result.error) {
-          setValues({ ...values, ...{ stripeError: result.error.message, intentLoading: false } })
+        // TODO from Stripe Docs: stripe.handleCardSetup may trigger a 3D Secure authentication challenge.
+        // This will be shown in a modal dialog and may be confusing for customers using
+        // assistive technologies like screen readers. You should make your form accessible by ensuring
+        // that success or error messages are clearly read out after this method completes
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) {
+          setValues({ ...values, ...{ error: intent.error, intentLoading: false } });
+          return;
         }
-        if (result.setupIntent) {
-          setValues({ ...values, ...{ status: result.setupIntent.status, intentLoading: false } })
+
+        const response: stripe.SetupIntentResponse | any =
+          await stripe.confirmCardSetup(intent.client_secret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                address: {
+                  city: values.city,
+                  country: values.country,
+                  line1: values.line1,
+                  line2: values.line2,
+                  postal_code: values.postalCode,
+                  state: values.state,
+                },
+                email: me.email, // Stripe receipts will be sent to the user's Beneath email address
+                name: values.cardholder,
+              }
+            }
+          });
+
+        if (response.error) {
+          setValues({ ...values, ...{ stripeError: response.error.message, intentLoading: false } });
+        }
+        if (response.setupIntent) {
+          setValues({ ...values, ...{ status: response.setupIntent.status, intentLoading: false } });
         }
       }
-    })
+    });
 
-    fetchData()
+    fetchData();
 
     // avoid memory leak when component unmounts
     return () => {
-      isMounted = false
-    }
-  }, [values.formSubmit]) // Q: check to see if this useEffect is getting triggered on load
+      isMounted = false;
+    };
+  }, [values.formSubmit]); // Q: check to see if this useEffect is getting triggered on load
 
   // Handle submission of Card Details Form
   const handleChange = (name: string) => (event: any) => {
-    setValues({ ...values, [name]: event.target.value })
-  }
+    setValues({ ...values, [name]: event.target.value });
+  };
 
   const onCountryChange = (object: any, value: any) => {
     if (value) {
-      setValues({ ...values, country: value.code })
+      setValues({ ...values, country: value.code });
     }
-  }
+  };
 
   const handleFormSubmit = (ev: any) => {
     // We don't want to let default form submission happen here, which would refresh the page.
-    ev.preventDefault()
-    setValues({ ...values, ...{ formSubmit: values.formSubmit + 1, stripeError: "", dialog: true, intentLoading: true } })
-    return
-  }
+    ev.preventDefault();
+
+    if (!stripe || !elements) {
+      // Stripe.js has not loaded yet. Make sure to disable
+      // form submission until Stripe.js has loaded.
+      return;
+    }
+
+    setValues({ ...values,
+      ...{ formSubmit: values.formSubmit + 1, stripeError: "", dialog: true, intentLoading: true } });
+    return;
+  };
 
   const handleDialogClose = async () => {
     if (values.stripeError || values.error) {
-      setValues({ ...values, ...{ dialog: false } })
+      setValues({ ...values, ...{ dialog: false } });
     }
     if (values.status !== null && values.status === "succeeded") {
       // wait a second so that we can process Stripe's response and show the user their new billing plan
-      await new Promise(r => setTimeout(r, 1000));
-      
+      await new Promise((r) => setTimeout(r, 1000));
+
       // reload the page to get new customer billing info from Stripe
-      window.location.reload(true)
+      window.location.reload(true);
     }
-  }
+  };
 
   if (values.loading) {
-    return <Loading justify="center" />
+    return <Loading justify="center" />;
   }
 
   return (
@@ -322,14 +330,14 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
                 option: classes.option,
               }}
               autoHighlight
-              getOptionLabel={option => option.label}
-              renderOption={option => (
+              getOptionLabel={(option) => option.label}
+              renderOption={(option) => (
                 <React.Fragment>
                   {option.label}
                 </React.Fragment>
               )}
               onChange={onCountryChange}
-              renderInput={params => (
+              renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Choose a country"
@@ -337,7 +345,7 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
                   fullWidth
                   inputProps={{
                     ...params.inputProps,
-                    autoComplete: 'new-password', // disable autocomplete and autofill
+                    autoComplete: "new-password", // disable autocomplete and autofill
                   }}
                 // autoComplete="billing country"
                 />
@@ -350,14 +358,19 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
         </Typography>
         <Grid container>
           <Grid item xs={12} md={6}>
-            <CardElement style={{ base: { fontSize: '18px', color: '#FFFFFF' } }} />
+            <CardElement
+              options={{
+                style: {
+                  base: { fontSize: "18px", color: "#FFFFFF" }
+                }
+              }} />
           </Grid>
         </Grid>
         <Grid container className={classes.buttons} spacing={2}>
           <Grid item>
             <Button
               variant="contained"
-              onClick={() => { closeDialogue() }}>
+              onClick={() => { closeDialogue(); }}>
               Back
             </Button>
           </Grid>
@@ -401,60 +414,17 @@ const CardFormWrappedFxn: FC<Props> = ({ stripe, closeDialogue }) => {
         </DialogActions>
       </Dialog>
     </React.Fragment>
-  )
-}
+  );
+};
 
-// The following uses the injectStripe higher-order component to inject the "stripe" object. This is necessary when doing server-side rendering.
-// see Stripe React docs: https://github.com/stripe/react-stripe-elements/blob/master/README.md
-// see React HOC docs: https://reactjs.org/docs/higher-order-components.html
+const stripePromise = loadStripe(billing.STRIPE_KEY);
 
-// * convert the CardFormWrappedFxn functional component to the CardFormWrappedCls class component, so that we can use the injectStripe HOC * //
-// HOCs are only for class components
-class CardFormWrappedCls extends React.Component<ReactStripeElements.InjectedStripeProps & CardFormProps> {
-  constructor(props: ReactStripeElements.InjectedStripeProps & CardFormProps) {
-    super(props);
-  }
-
-  render() {
-    return <CardFormWrappedFxn stripe={this.props.stripe} closeDialogue={this.props.closeDialogue} />
-  }
-}
-
-// * apply the injectStripe() HOC * //
-// the HOC (injectStripe) is a function that takes one component as an input (CardFormWrappedCls) and returns a new component (CardFormInjectedStripe)
-// injectStripe is a function that passes the wrapped component the "stripe" object
-const CardFormInjectedStripe = injectStripe(CardFormWrappedCls)
-
-// * set our Stripe key and return the CardForm * //
-interface CardFormProps {
-  closeDialogue: () => void
-}
-
-interface CardFormState {
-  stripe: stripe.Stripe | null;
-}
-
-class CardForm extends React.Component<CardFormProps, CardFormState> {
-  constructor(props: CardFormProps) {
-    super(props);
-    this.state = { stripe: null };
-  }
-
-  componentDidMount() {
-    // Create Stripe instance in componentDidMount (componentDidMount only fires in browser/DOM environment) 
-    // note that updating the state like this will cause the CardForm to fire/initially render twice
-    this.setState({ stripe: window.Stripe(billing.STRIPE_KEY) })
-  }
-
-  render() {
-    return (
-      <StripeProvider stripe={this.state.stripe}>
-        <Elements>
-          <CardFormInjectedStripe closeDialogue={this.props.closeDialogue} />
-        </Elements>
-      </StripeProvider>
-    );
-  }
-}
+const CardForm: FC<Props> = ({ closeDialogue }) => {
+  return (
+    <Elements stripe={stripePromise}>
+      <CardFormElement closeDialogue={closeDialogue} />
+    </Elements>
+  );
+};
 
 export default CardForm;

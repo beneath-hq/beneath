@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
-	uuid "github.com/satori/go.uuid"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // SendInvoiceTask sends the Stripe invoice to the customer
@@ -23,14 +24,20 @@ func init() {
 
 // Run triggers the task
 func (t *SendInvoiceTask) Run(ctx context.Context) error {
+	billedResources := FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
+	if billedResources == nil {
+		log.S.Infof("didn't find any billed resources for organization %s", t.OrganizationID.String())
+		return nil
+	}
+
 	billingInfo := FindBillingInfo(ctx, t.OrganizationID)
 	if billingInfo == nil {
 		panic("didn't find organization's billing info")
 	}
 
-	billedResources := FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
-	if billedResources == nil && len(billingInfo.Organization.Users) > 0 {
-		panic("didn't find any billed resources")
+	if *billingInfo.BillingMethodID == uuid.Nil {
+		log.S.Infof("organization %s does not pay for its usage", t.OrganizationID.String())
+		return nil
 	}
 
 	paymentDriver := hub.PaymentDrivers[string(billingInfo.BillingMethod.PaymentsDriver)]
@@ -49,15 +56,16 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		panic("couldn't issue invoice")
 	}
 
+	// Possibly use this in the process of downgrading someone from an Enterprise plan. Need to consider what happens to their outstanding projects.
 	// delete organization if no more users
-	organization := FindOrganization(ctx, t.OrganizationID)
-	if organization == nil {
-		panic("didn't find organization")
-	}
+	// organization := FindOrganization(ctx, t.OrganizationID)
+	// if organization == nil {
+	// 	panic("didn't find organization")
+	// }
 
-	if len(organization.Users) == 0 {
-		organization.Delete(ctx)
-	}
+	// if len(organization.Users) == 0 {
+	// 	organization.Delete(ctx)
+	// }
 
 	return nil
 }

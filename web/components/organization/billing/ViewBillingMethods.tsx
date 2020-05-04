@@ -1,16 +1,16 @@
-import React, { FC } from 'react'
 import { useQuery } from "@apollo/react-hooks";
+import _ from "lodash";
+import React, { FC } from "react";
 import useMe from "../../../hooks/useMe";
-import _ from 'lodash'
 
-import { QUERY_BILLING_METHODS } from '../../../apollo/queries/billingmethod';
-import { BillingMethods, BillingMethodsVariables } from '../../../apollo/types/BillingMethods';
+import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
+import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
 
-import { Button, Typography, Grid, Dialog, DialogActions, DialogTitle, DialogContent } from "@material-ui/core"
-import { makeStyles } from "@material-ui/core/styles"
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
 
-import CardForm from './CardForm';
-import billing from "../../../lib/billing"
+import billing from "../../../lib/billing";
+import CardForm from "./CardForm";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -25,39 +25,42 @@ const useStyles = makeStyles((theme) => ({
   billingMethod: {
     marginBottom: theme.spacing(1),
   },
-}))
+}));
 
 interface Props {
-  organizationID: string
+  organizationID: string;
 }
 
 const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
-  const classes = useStyles()
-  const [addCardDialogue, setAddCardDialogue] = React.useState(false)
+  const classes = useStyles();
+  const [addCardDialogue, setAddCardDialogue] = React.useState(false);
 
   const me = useMe();
   if (!me) {
-    return <p>Need to log in to see your current billing plan</p>
+    return <p>Need to log in to see your current billing plan</p>;
   }
 
   const { loading, error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
     variables: {
-      organizationID: organizationID,
+      organizationID,
     },
   });
-
 
   if (error || !data) {
     return <p>Error: {JSON.stringify(error)}</p>;
   }
 
-  const cards = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPECARD_DRIVER)
-  const wire = data.billingMethods.filter(billingMethod => billingMethod.paymentsDriver == billing.STRIPEWIRE_DRIVER)[0]
+  let cards;
+  let wire;
+  if (data.billingMethods && data.billingMethods.length > 0) {
+    cards = data.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPECARD_DRIVER);
+    wire = data.billingMethods.filter((billingMethod) => billingMethod.paymentsDriver === billing.STRIPEWIRE_DRIVER)[0];
+  }
 
   const handleCloseDialogue = () => {
-    setAddCardDialogue(false)
-    return
-  }
+    setAddCardDialogue(false);
+    return;
+  };
 
   return (
     <React.Fragment>
@@ -68,18 +71,19 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           </Typography>
         </Grid>
         <Grid item container direction="column">
-          {cards.map(({ billingMethodID, driverPayload }) => {
-            const payload = JSON.parse(driverPayload)
+          {cards && cards.map(({ billingMethodID, driverPayload }) => {
+            const payload = JSON.parse(driverPayload);
             const rows = [
-              { name: 'Card type', detail: _.startCase(_.toLower(payload.brand)) },
-              { name: 'Card number', detail: 'xxxx-xxxx-xxxx-' + payload.last4 },
-              { name: 'Expiration', detail: payload.expMonth.toString() + '/' + payload.expYear.toString().substring(2, 4) },
-            ]
+              { name: "Card type", detail: _.startCase(_.toLower(payload.brand)) },
+              { name: "Card number", detail: "xxxx-xxxx-xxxx-" + payload.last4 },
+              { name: "Expiration",
+              detail: payload.expMonth.toString() + "/" + payload.expYear.toString().substring(2, 4) },
+            ];
 
             return (
               <React.Fragment key={billingMethodID}>
                 <Grid item className={classes.billingMethod}>
-                  {rows.map(rows => (
+                  {rows.map((rows) => (
                     <React.Fragment key={rows.name}>
                       <Grid container>
                         <Grid item xs={6} sm={4} md={2}>
@@ -93,16 +97,18 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
                   ))}
                 </Grid>
               </React.Fragment>
-            )
+            );
           })}
 
           {wire && (
             <Grid item className={classes.billingMethod}>
-              <Typography gutterBottom>You're authorized to pay by wire. Wire payments must be received within 15 days of the invoice.</Typography>
+              <Typography gutterBottom>
+                You're authorized to pay by wire. Wire payments must be received within 15 days of the invoice.
+              </Typography>
             </Grid>
           )}
 
-          {cards.length == 0 && !wire && (
+          {!cards && !wire && (
             <Grid item className={classes.billingMethod}>
               <Typography>None.</Typography>
             </Grid>
@@ -112,7 +118,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           <Button
             className={classes.button}
             color="primary"
-            onClick={() => { setAddCardDialogue(true) }}
+            onClick={() => { setAddCardDialogue(true); }}
           >
             Add Credit Card
           </Button>
@@ -120,7 +126,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
             open={addCardDialogue}
             fullWidth={true}
             maxWidth={"md"}
-            onBackdropClick={() => { setAddCardDialogue(false) }}
+            onBackdropClick={() => { setAddCardDialogue(false); }}
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
@@ -131,7 +137,7 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
         </Grid>
       </Grid>
     </React.Fragment>
-  )
+  );
 };
 
 export default ViewBillingMethods;

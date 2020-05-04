@@ -30,7 +30,7 @@ export const QUERY_BILLING_INFO = gql`
 `;
 
 export const UPDATE_BILLING_INFO = gql`
-  mutation UpdateBillingInfo($organizationID: UUID!, $billingMethodID: UUID! $billingPlanID: UUID!, $country: String!, $region: String, $companyName: String, $taxNumber: String){
+  mutation UpdateBillingInfo($organizationID: UUID!, $billingMethodID: UUID, $billingPlanID: UUID!, $country: String!, $region: String, $companyName: String, $taxNumber: String){
   updateBillingInfo(organizationID: $organizationID, billingMethodID: $billingMethodID, billingPlanID: $billingPlanID, country: $country, region: $region, companyName: $companyName, taxNumber: $taxNumber ) {
     organizationID
     billingPlan {
@@ -47,6 +47,7 @@ export const UPDATE_BILLING_INFO = gql`
 	    baseWriteQuota
     }
     billingMethod {
+      billingMethodID
       paymentsDriver
       driverPayload
     }
