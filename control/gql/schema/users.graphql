@@ -6,7 +6,8 @@ extend type Query {
 
 extend type Mutation {
   updateMe(username: String, name: String, bio: String, photoURL: String): Me!
-  joinOrganization(organizationName: String!): Me!
+  updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
+  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
 
 type User {
@@ -32,4 +33,20 @@ type Me {
   writeUsage: Int!
   writeQuota: Int!
   updatedOn: Time!
+}
+
+type PermissionsUsersProjects {
+  userID: UUID!
+  projectID: UUID!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+}
+
+type PermissionsUsersOrganizations {
+  userID: UUID!
+  organizationID: UUID!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
 }

@@ -186,6 +186,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 
 	// we're creating a new user
 
+	// not a platform admin
 	user.Master = false
 
 	// prepare "personal" organization
@@ -241,6 +242,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		UserID:         user.UserID,
 		OrganizationID: org.OrganizationID,
 		View:           true,
+		Create:         true,
 		Admin:          true,
 	})
 	if err != nil {
@@ -268,79 +270,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		"control created user",
 		"user_id", user.UserID,
 	)
-
-	return user, nil
-}
-
-// JoinOrganization changes the user's Organization
-// if user is the last user in their organization-to-leave, resolver checks that there are no more services or projects still tied to that organization
-func (u *User) JoinOrganization(ctx context.Context, organizationID uuid.UUID) (*User, error) {
-	bi := FindBillingInfo(ctx, organizationID)
-	if bi == nil {
-		panic("could not find billing info for the organization-to-join")
-	}
-
-	prevOrganizationID := u.BillingOrganizationID
-
-	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, prevOrganizationID, UserEntityKind, u.UserID, u.Username, false)
-	if err != nil {
-		return nil, err
-	}
-
-	u.BillingOrganizationID = organizationID
-	u.ReadQuota = bi.BillingPlan.SeatReadQuota
-	u.WriteQuota = bi.BillingPlan.SeatWriteQuota
-	u.UpdatedOn = time.Now()
-
-	_, err = hub.DB.WithContext(ctx).Model(u).
-		Column("organization_id", "read_quota", "write_quota", "updated_on").
-		WherePK().
-		Update()
-	if err != nil {
-		return nil, err
-	}
-
-	prevOrg := FindOrganization(ctx, prevOrganizationID)
-	if prevOrg == nil {
-		panic("could not find previous organization")
-	}
-
-	// if the previous organization has no more members, trigger bill (which will also delete organization)
-	if len(prevOrg.Users) == 0 {
-		billingInfo := FindBillingInfo(ctx, prevOrg.OrganizationID)
-		if billingInfo == nil {
-			panic("could not find billing info for the user's previous organization")
-		}
-
-		err := taskqueue.Submit(context.Background(), &ComputeBillResourcesTask{
-			OrganizationID: prevOrg.OrganizationID,
-			Timestamp:      timeutil.Next(time.Now(), billingInfo.BillingPlan.Period), // simulate that we are at the beginning of the next billing cycle
-		})
-		if err != nil {
-			log.S.Errorw("Error creating task", err)
-		}
-	}
-
-	// after updating the organization_id, the new Organization object is not immediately available on the user object
-	// so we need to refetch the user in order to get the new Organization details
-	user := FindUser(ctx, u.UserID)
-	if user == nil {
-		panic("unable to get updated user")
-	}
-
-	// commit usage credit to the new organization's bill for the user's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, organizationID, UserEntityKind, u.UserID, u.Username, true)
-	if err != nil {
-		panic("unable to commit usage credit to bill")
-	}
-
-	// add prorated seat to the new organization's next month's bill
-	billingTime := timeutil.Next(time.Now(), bi.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, organizationID, billingTime, bi.BillingPlan, []uuid.UUID{u.UserID}, []string{u.Username}, false)
-	if err != nil {
-		panic("unable to commit prorated seat to bill")
-	}
 
 	return user, nil
 }
@@ -405,6 +334,26 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 
 	u.UpdatedOn = time.Now()
 	_, err = hub.DB.ModelContext(ctx, u).Column("username", "name", "bio", "photo_url", "updated_on").WherePK().Update()
+	return err
+}
+
+// UpdateQuotas change the user's quotas
+func (u *User) UpdateQuotas(ctx context.Context, readQuota *int, writeQuota *int) error {
+	if readQuota != nil {
+		u.ReadQuota = int64(*readQuota)
+	}
+	if writeQuota != nil {
+		u.WriteQuota = int64(*writeQuota)
+	}
+
+	// validate
+	err := GetValidator().Struct(u)
+	if err != nil {
+		return err
+	}
+
+	u.UpdatedOn = time.Now()
+	_, err = hub.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
 	return err
 }
 

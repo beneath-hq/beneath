@@ -4,12 +4,16 @@ extend type Query {
 }
 
 extend type Mutation {
-  inviteUserToOrganization(username: String!, organizationID: UUID!, view: Boolean!, admin: Boolean!): User
-  removeUserFromOrganization(userID: UUID!, organizationID: UUID!): Boolean!
+  createOrganization(name: String!): Organization!
   updateOrganizationName(organizationID: UUID!, name: String!): Organization!
-  updateUserOrganizationQuotas(userID: UUID!, organizationID: UUID!, readQuota: Int, writeQuota: Int): User!
-  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, admin: Boolean): PermissionsUsersOrganizations!
-  createOrganizationWithUser(organizationName: String!, username: String!): Organization!
+
+  inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
+  acceptOrganizationInvite(organizationID: UUID!): Boolean!
+  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): User!
+  leaveBillingOrganization(userID: UUID!): User!
+
+  transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
+  transferServiceToOrganization(serviceID: UUID!, organizationID: UUID!): Service!
 }
 
 type Organization {
@@ -21,11 +25,4 @@ type Organization {
   services: [Service!]!
   users: [User!]!
   projects: [Project!]!
-}
-
-type PermissionsUsersOrganizations {
-	user: User!
-  organization: Organization!
-	view: Boolean! 
-	admin: Boolean!
 }

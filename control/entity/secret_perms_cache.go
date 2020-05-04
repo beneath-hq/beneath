@@ -29,8 +29,9 @@ type StreamPermissions struct {
 
 // OrganizationPermissions represents permissions that a secret has for a given organization
 type OrganizationPermissions struct {
-	View  bool
-	Admin bool
+	View   bool
+	Create bool
+	Admin  bool
 }
 
 // PermissionsCache encapsulates the secret's permissions and how to access the permissions in short-term and long-term memory
@@ -65,7 +66,7 @@ var permsCacheConfig = struct {
 func getUserOrganizationPermissionsCache() *PermissionsCache {
 	if userOrganizationPermissions == nil {
 		userOrganizationPermissions = NewPermissionsCache(OrganizationPermissions{}, `
-			select p.view, p.admin
+			select p.view, p.create, p.admin
 			from permissions_users_organizations p
 			where p.user_id = ? and p.organization_id = ?
 		`)

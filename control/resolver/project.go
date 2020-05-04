@@ -64,7 +64,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 	}
 
 	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.Admin {
+	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
@@ -128,88 +128,6 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 	}
 
 	return project, nil
-}
-
-func (r *mutationResolver) UpdateProjectOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error) {
-	project := entity.FindProject(ctx, projectID)
-	if project == nil {
-		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
-	}
-
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-	}
-
-	if project.OrganizationID == organizationID {
-		return nil, gqlerror.Errorf("The %s project is already owned by the %s organization", project.Name, organization.Name)
-	}
-
-	secret := middleware.GetSecret(ctx)
-	projectPerms := secret.ProjectPermissions(ctx, projectID, false)
-	if !projectPerms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
-	}
-
-	organizationPerms := secret.OrganizationPermissions(ctx, organizationID)
-	if !organizationPerms.View {
-		return nil, gqlerror.Errorf("You are not authorized for organization %s", organizationID.String())
-	}
-
-	project, err := project.UpdateOrganization(ctx, organizationID)
-	if err != nil {
-		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	return project, nil
-}
-
-func (r *mutationResolver) AddUserToProject(ctx context.Context, username string, projectID uuid.UUID, view bool, create bool, admin bool) (*entity.User, error) {
-	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, projectID, false)
-	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
-	}
-
-	user := entity.FindUserByUsername(ctx, username)
-	if user == nil {
-		return nil, gqlerror.Errorf("No user found with that username")
-	}
-
-	project := &entity.Project{
-		ProjectID: projectID,
-	}
-
-	err := project.AddUser(ctx, user.UserID, view, create, admin)
-	if err != nil {
-		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	return user, nil
-}
-
-func (r *mutationResolver) RemoveUserFromProject(ctx context.Context, userID uuid.UUID, projectID uuid.UUID) (bool, error) {
-	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, projectID, false)
-	if !perms.Admin {
-		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", projectID.String())
-	}
-
-	project := entity.FindProject(ctx, projectID)
-	if project == nil {
-		return false, gqlerror.Errorf("Project %s not found", projectID.String())
-	}
-
-	if len(project.Users) < 2 {
-		return false, gqlerror.Errorf("Can't remove last member of project")
-	}
-
-	err := project.RemoveUser(ctx, userID)
-	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
-	}
-
-	return true, nil
 }
 
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error) {

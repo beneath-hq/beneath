@@ -31,23 +31,36 @@ def add_subparser(root):
   _delete.set_defaults(func=async_cmd(delete))
   _delete.add_argument('project_path', type=str)
 
-  _add_user = project.add_parser('add-member')
-  _add_user.set_defaults(func=async_cmd(add_member))
-  _add_user.add_argument('project_path', type=str)
-  _add_user.add_argument('username', type=str)
-  _add_user.add_argument('--view', type=str2bool, nargs='?', const=True, default=True)
-  _add_user.add_argument('--create', type=str2bool, nargs='?', const=True, default=True)
-  _add_user.add_argument('--admin', type=str2bool, nargs='?', const=True, default=False)
+  _transfer = project.add_parser('transfer')
+  _transfer.set_defaults(func=async_cmd(transfer_organization))
+  _transfer.add_argument('project_path', type=str)
+  _transfer.add_argument('new_organization', type=str)
 
-  _remove_user = project.add_parser('remove-member')
-  _remove_user.set_defaults(func=async_cmd(remove_member))
-  _remove_user.add_argument('project_path', type=str)
-  _remove_user.add_argument('username', type=str)
-
-  _migrate = project.add_parser('migrate-organization')
-  _migrate.set_defaults(func=async_cmd(migrate_organization))
-  _migrate.add_argument('project_path', type=str)
-  _migrate.add_argument('--new-organization', type=str, required=True)
+  _update_member_permissions = project.add_parser('update-permissions')
+  _update_member_permissions.set_defaults(func=async_cmd(update_member_permissions))
+  _update_member_permissions.add_argument('project_path', type=str)
+  _update_member_permissions.add_argument('username', type=str)
+  _update_member_permissions.add_argument(
+    '--view',
+    type=str2bool,
+    nargs='?',
+    const=True,
+    default=None,
+  )
+  _update_member_permissions.add_argument(
+    '--create',
+    type=str2bool,
+    nargs='?',
+    const=True,
+    default=None,
+  )
+  _update_member_permissions.add_argument(
+    '--admin',
+    type=str2bool,
+    nargs='?',
+    const=True,
+    default=None,
+  )
 
 
 async def show_list(args):
@@ -97,39 +110,28 @@ async def delete(args):
   pretty_print_graphql_result(result)
 
 
-async def add_member(args):
-  client = Client()
-  pq = ProjectQualifier.from_path(args.project_path)
-  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
-  result = await client.admin.projects.add_user(
-    project_id=project['projectID'],
-    username=args.username,
-    view=args.view,
-    create=args.create,
-    admin=args.admin,
-  )
-  pretty_print_graphql_result(result)
-
-
-async def remove_member(args):
-  client = Client()
-  pq = ProjectQualifier.from_path(args.project_path)
-  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
-  user = await client.admin.users.get_by_username(args.username)
-  result = await client.admin.projects.remove_user(
-    project_id=project['projectID'],
-    user_id=user['userID'],
-  )
-  pretty_print_graphql_result(result)
-
-
-async def migrate_organization(args):
+async def transfer_organization(args):
   client = Client()
   pq = ProjectQualifier.from_path(args.project_path)
   project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
   organization = await client.admin.organizations.find_by_name(args.new_organization)
-  result = await client.admin.projects.update_organization(
-    project_id=project['projectID'],
-    organization_id=organization['organizationID'],
+  result = await client.admin.organizations.transfer_project(
+    project_id=project["projectID"],
+    new_organization_id=organization["organizationID"],
+  )
+  pretty_print_graphql_result(result)
+
+
+async def update_member_permissions(args):
+  client = Client()
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
+  user = await client.admin.users.get_by_username(args.username)
+  result = await client.admin.users.update_permissions_for_project(
+    user_id=user["userID"],
+    project_id=project["projectID"],
+    view=args.view,
+    create=args.create,
+    admin=args.admin,
   )
   pretty_print_graphql_result(result)

@@ -1,14 +1,17 @@
 import asyncio
 import argparse
+from beneath.connection import GraphQLError
 import json
-
 
 def async_cmd(cmd):
 
   def wrapped(args):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(cmd(args))
+    try:
+      loop.run_until_complete(cmd(args))
+    except GraphQLError as e:
+      print(e)
 
   return wrapped
 
