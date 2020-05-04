@@ -95,7 +95,7 @@ func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) 
 	return permissions
 }
 
-// CreateWithUser creates a project and makes user a member
+// CreateWithUser creates an organization and makes user a member
 func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
 	// validate
 	err := GetValidator().Struct(o)
@@ -103,7 +103,7 @@ func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, vie
 		return err
 	}
 
-	// create project and PermissionsUsersProjects in one transaction
+	// create organization and PermissionsUsersOrganizations in one transaction
 	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// insert org
 		_, err := tx.Model(o).Insert()
