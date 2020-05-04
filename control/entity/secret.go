@@ -7,7 +7,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 
 	uuid "github.com/satori/go.uuid"
-	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
 
 const (
@@ -26,7 +25,7 @@ type Secret interface {
 	// GetOwnerID returns the ID of the secret's owner, i.e. a user or service (or uuid.Nil for anonymous)
 	GetOwnerID() uuid.UUID
 
-	// GetBillingOrganizationID returns the ID of the organizationb responsible for the secret's billing
+	// GetBillingOrganizationID returns the ID of the organization responsible for the secret's billing
 	GetBillingOrganizationID() uuid.UUID
 
 	// IsAnonymous is true iff the secret is anonymous
@@ -41,11 +40,17 @@ type Secret interface {
 	// IsMaster is true iff the secret is a master secret
 	IsMaster() bool
 
-	// Checks if the secret owner is within its read quota
-	CheckReadQuota(u pb.QuotaUsage) bool
+	// GetBillingReadQuota returns the billing organization's read quota (or nil if unlimited)
+	GetBillingReadQuota() *int64
 
-	// Checks if the secret owner is within its write quota
-	CheckWriteQuota(u pb.QuotaUsage) bool
+	// GetBillingWriteQuota returns the billing organization's write quota (or nil if unlimited)
+	GetBillingWriteQuota() *int64
+
+	// GetOwnerReadQuota returns the owner's read quota (or nil if unlimited)
+	GetOwnerReadQuota() *int64
+
+	// GetOwnerWriteQuota returns the owner's write quota (or nil if unlimited)
+	GetOwnerWriteQuota() *int64
 
 	// StreamPermissions returns the secret's permissions for a given stream
 	StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions
@@ -73,10 +78,12 @@ type BaseSecret struct {
 	UpdatedOn   time.Time `sql:",notnull,default:now()"`
 
 	Token                 secrettoken.Token `sql:"-"`
-	BillingOrganizationID uuid.UUID         `sql:"-"`
-	ReadQuota             int64             `sql:"-"`
-	WriteQuota            int64             `sql:"-"`
 	Master                bool              `sql:"-"`
+	BillingOrganizationID uuid.UUID         `sql:"-"`
+	BillingReadQuota      *int64            `sql:"-"`
+	BillingWriteQuota     *int64            `sql:"-"`
+	OwnerReadQuota        *int64            `sql:"-"`
+	OwnerWriteQuota       *int64            `sql:"-"`
 }
 
 // GetBillingOrganizationID implements Secret
@@ -89,12 +96,22 @@ func (s *BaseSecret) IsMaster() bool {
 	return s.Master
 }
 
-// CheckReadQuota implements Secret
-func (s *BaseSecret) CheckReadQuota(u pb.QuotaUsage) bool {
-	return u.ReadBytes < s.ReadQuota
+// GetBillingReadQuota implements Secret
+func (s *BaseSecret) GetBillingReadQuota() *int64 {
+	return s.BillingReadQuota
 }
 
-// CheckWriteQuota implements Secret
-func (s *BaseSecret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	return u.WriteBytes < s.WriteQuota
+// GetBillingWriteQuota implements Secret
+func (s *BaseSecret) GetBillingWriteQuota() *int64 {
+	return s.BillingWriteQuota
+}
+
+// GetOwnerReadQuota implements Secret
+func (s *BaseSecret) GetOwnerReadQuota() *int64 {
+	return s.OwnerReadQuota
+}
+
+// GetOwnerWriteQuota implements Secret
+func (s *BaseSecret) GetOwnerWriteQuota() *int64 {
+	return s.OwnerWriteQuota
 }

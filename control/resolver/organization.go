@@ -123,6 +123,27 @@ func (r *mutationResolver) UpdateOrganizationName(ctx context.Context, organizat
 	return organization, nil
 }
 
+func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Organization, error) {
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsMaster() {
+		return nil, gqlerror.Errorf("Only Beneath masters can update organization quotas directly")
+	}
+
+	// TODO: invalidate cached quotas
+
+	err := organization.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	if err != nil {
+		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
+	}
+
+	return organization, nil
+}
+
 func (r *mutationResolver) InviteUserToOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view bool, create bool, admin bool) (bool, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
@@ -190,30 +211,6 @@ func (r *mutationResolver) AcceptOrganizationInvite(ctx context.Context, organiz
 	}
 
 	return true, nil
-}
-
-func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
-	user := entity.FindUser(ctx, userID)
-	if user == nil {
-		return nil, gqlerror.Errorf("User %s not found", userID.String())
-	}
-
-	organizationID := user.BillingOrganizationID
-
-	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
-	}
-
-	// TODO: invalidate cached quotas
-
-	err := user.UpdateQuotas(ctx, readQuota, writeQuota)
-	if err != nil {
-		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
-	}
-
-	return user, nil
 }
 
 func (r *mutationResolver) LeaveBillingOrganization(ctx context.Context, userID uuid.UUID) (*entity.User, error) {

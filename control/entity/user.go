@@ -36,9 +36,9 @@ type User struct {
 	BillingOrganization    *Organization
 	Projects               []*Project `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
 	Secrets                []*UserSecret
-	ReadQuota              int64
-	WriteQuota             int64
-	Master                 bool `sql:",notnull,default: false"`
+	Master                 bool `sql:",notnull,default:false"`
+	ReadQuota              *int64
+	WriteQuota             *int64
 }
 
 var (
@@ -72,7 +72,7 @@ func FindUser(ctx context.Context, userID uuid.UUID) *User {
 	user := &User{
 		UserID: userID,
 	}
-	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Projects.Organization.name", "BillingOrganization").Select()
+	err := hub.DB.ModelContext(ctx, user).WherePK().Column("user.*", "Projects", "Projects.Organization.name", "BillingOrganization", "PersonalOrganization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -146,12 +146,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	}
 	if user.PhotoURL == "" {
 		user.PhotoURL = photoURL
-	}
-	if user.ReadQuota == 0 {
-		user.ReadQuota = defaultBillingPlan.SeatReadQuota
-	}
-	if user.WriteQuota == 0 {
-		user.WriteQuota = defaultBillingPlan.SeatWriteQuota
 	}
 
 	// if updating, finalize and return
@@ -338,13 +332,9 @@ func (u *User) UpdateDescription(ctx context.Context, username *string, name *st
 }
 
 // UpdateQuotas change the user's quotas
-func (u *User) UpdateQuotas(ctx context.Context, readQuota *int, writeQuota *int) error {
-	if readQuota != nil {
-		u.ReadQuota = int64(*readQuota)
-	}
-	if writeQuota != nil {
-		u.WriteQuota = int64(*writeQuota)
-	}
+func (u *User) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
+	u.ReadQuota = readQuota
+	u.WriteQuota = writeQuota
 
 	// validate
 	err := GetValidator().Struct(u)

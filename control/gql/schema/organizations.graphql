@@ -6,10 +6,10 @@ extend type Query {
 extend type Mutation {
   createOrganization(name: String!): Organization!
   updateOrganizationName(organizationID: UUID!, name: String!): Organization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): Organization!
 
   inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
   acceptOrganizationInvite(organizationID: UUID!): Boolean!
-  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): User!
   leaveBillingOrganization(userID: UUID!): User!
 
   transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
@@ -22,6 +22,8 @@ type Organization {
   personal: Boolean!
   createdOn: Time!
   updatedOn: Time!
+  readQuota: Int
+  writeQuota: Int
   services: [Service!]!
   users: [User!]!
   projects: [Project!]!

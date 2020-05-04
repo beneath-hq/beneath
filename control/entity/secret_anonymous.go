@@ -2,11 +2,11 @@ package entity
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	uuid "github.com/satori/go.uuid"
-	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
 
 // AnonymousSecret implements Secret for anonymous requests
@@ -47,16 +47,24 @@ func (s *AnonymousSecret) IsMaster() bool {
 	return false
 }
 
-// CheckReadQuota implements Secret
-func (s *AnonymousSecret) CheckReadQuota(u pb.QuotaUsage) bool {
-	log.S.Warnf("called CheckReadQuota on AnonymousSecret")
-	return true
+// GetBillingReadQuota implements Secret
+func (s *AnonymousSecret) GetBillingReadQuota() *int64 {
+	panic(fmt.Errorf("Called GetBillingReadQuota on an anonymous secret"))
 }
 
-// CheckWriteQuota implements Secret
-func (s *AnonymousSecret) CheckWriteQuota(u pb.QuotaUsage) bool {
-	log.S.Warnf("called CheckWriteQuota on AnonymousSecret")
-	return true
+// GetBillingWriteQuota implements Secret
+func (s *AnonymousSecret) GetBillingWriteQuota() *int64 {
+	panic(fmt.Errorf("Called GetBillingWriteQuota on an anonymous secret"))
+}
+
+// GetOwnerReadQuota implements Secret
+func (s *AnonymousSecret) GetOwnerReadQuota() *int64 {
+	panic(fmt.Errorf("Called GetOwnerReadQuota on an anonymous secret"))
+}
+
+// GetOwnerWriteQuota implements Secret
+func (s *AnonymousSecret) GetOwnerWriteQuota() *int64 {
+	panic(fmt.Errorf("Called GetOwnerWriteQuota on an anonymous secret"))
 }
 
 // StreamPermissions implements the Secret interface

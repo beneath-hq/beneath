@@ -160,8 +160,8 @@ func (m *Model) CompileAndCreate(ctx context.Context, inputStreamIDs []uuid.UUID
 			Name:           fmt.Sprintf("Model %s (%s)", m.ModelID.String(), m.Name),
 			Kind:           ServiceKindModel,
 			OrganizationID: m.Project.OrganizationID,
-			ReadQuota:      readQuota,
-			WriteQuota:     writeQuota,
+			ReadQuota:      &readQuota,
+			WriteQuota:     &writeQuota,
 		}
 		_, err := tx.Model(service).Insert()
 		if err != nil {
@@ -315,8 +315,8 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 		}
 
 		// update quotas
-		m.Service.ReadQuota = readQuota
-		m.Service.WriteQuota = writeQuota
+		m.Service.ReadQuota = &readQuota
+		m.Service.WriteQuota = &writeQuota
 		_, err = tx.Model(m.Service).Column("read_quota", "write_quota").WherePK().Update()
 		if err != nil {
 			return err

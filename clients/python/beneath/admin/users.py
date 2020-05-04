@@ -28,7 +28,12 @@ class Users:
               createdOn
             }
             email
-            organization {
+            billingOrganization {
+              organizationID
+              name
+              personal
+            }
+            personalOrganization {
               organizationID
               name
               personal
@@ -72,6 +77,9 @@ class Users:
               public
               createdOn
               updatedOn
+              organization {
+                name
+              }
               streams {
                 name
               }

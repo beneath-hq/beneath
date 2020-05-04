@@ -16,12 +16,16 @@ def add_subparser(root):
   _create.add_argument('--read-quota-mb', type=int, required=True)
   _create.add_argument('--write-quota-mb', type=int, required=True)
 
-  _update = service.add_parser('update')
+  _update = service.add_parser('rename')
   _update.set_defaults(func=async_cmd(update))
   _update.add_argument('service_path', type=str)
   _update.add_argument('--new-name', type=str)
-  _update.add_argument('--read-quota-mb', type=int)
-  _update.add_argument('--write-quota-mb', type=int)
+
+  _update_quota = service.add_parser('update-quota')
+  _update_quota.set_defaults(func=async_cmd(update_quota))
+  _update_quota.add_argument('service_path', type=str)
+  _update_quota.add_argument('--read-quota-mb', type=int, required=True)
+  _update_quota.add_argument('--write-quota-mb', type=int, required=True)
 
   _update_perms = service.add_parser('update-permissions')
   _update_perms.set_defaults(func=async_cmd(update_permissions))
@@ -84,6 +88,16 @@ async def update(args):
   result = await client.admin.services.update_details(
     service_id=service['serviceID'],
     name=args.new_name,
+  )
+  pretty_print_graphql_result(result)
+
+
+async def update_quota(args):
+  client = Client()
+  seq = ServiceQualifier.from_path(args.service_path)
+  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
+  result = await client.admin.services.update_quota(
+    service_id=service['serviceID'],
     read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
     write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )

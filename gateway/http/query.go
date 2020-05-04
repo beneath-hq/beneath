@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/gateway"
+	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
@@ -91,12 +91,9 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// check quota
-	if !secret.IsAnonymous() {
-		usage := gateway.Metrics.GetCurrentUsage(r.Context(), secret.GetOwnerID())
-		ok := secret.CheckReadQuota(usage)
-		if !ok {
-			return httputil.NewError(429, "you have exhausted your monthly quota")
-		}
+	err := util.CheckReadQuota(r.Context(), secret)
+	if err != nil {
+		return httputil.NewError(429, err.Error())
 	}
 
 	// read body
@@ -229,11 +226,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	}
 
 	// track read metrics
-	gateway.Metrics.TrackRead(stream.StreamID, int64(len(result)), int64(bytesRead))
-	gateway.Metrics.TrackRead(instanceID, int64(len(result)), int64(bytesRead))
-	if !secret.IsAnonymous() {
-		gateway.Metrics.TrackRead(secret.GetOwnerID(), int64(len(result)), int64(bytesRead))
-	}
+	util.TrackRead(r.Context(), secret, stream.StreamID, instanceID, int64(len(result)), int64(bytesRead))
 
 	// update payload
 	payload.BytesRead = bytesRead

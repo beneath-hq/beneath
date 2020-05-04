@@ -21,3 +21,21 @@ func MakeUnauthenticatedError(msg string) *gqlerror.Error {
 		},
 	}
 }
+
+// IntToInt64 converts an *int to an *int64
+func IntToInt64(x *int) *int64 {
+	if x == nil {
+		return nil
+	}
+	tmp := int64(*x)
+	return &tmp
+}
+
+// Int64ToInt converts an *int64 to an *int
+func Int64ToInt(x *int64) *int {
+	if x == nil {
+		return nil
+	}
+	tmp := int(*x)
+	return &tmp
+}

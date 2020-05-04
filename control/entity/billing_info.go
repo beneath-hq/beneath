@@ -107,8 +107,8 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 
 		// update the organization's users' quotas
 		for _, u := range users {
-			u.ReadQuota = newBillingPlan.SeatReadQuota
-			u.WriteQuota = newBillingPlan.SeatWriteQuota
+			u.ReadQuota = &newBillingPlan.SeatReadQuota
+			u.WriteQuota = &newBillingPlan.SeatWriteQuota
 
 			// clear cache for the user's secrets
 			secrets := FindUserSecrets(ctx, u.UserID)

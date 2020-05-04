@@ -50,17 +50,15 @@ class Services:
     return result['createService']
 
 
-  async def update_details(self, service_id, name, read_quota_bytes, write_quota_bytes):
+  async def update_details(self, service_id, name):
     result = await self.conn.query_control(
       variables={
         'serviceID': service_id,
         'name': format_entity_name(name) if name is not None else None,
-        'readQuota': read_quota_bytes,
-        'writeQuota': write_quota_bytes,
       },
       query="""
-        mutation UpdateService($serviceID: UUID!, $name: String, $readQuota: Int, $writeQuota: Int) {
-          updateService(serviceID: $serviceID, name: $name, readQuota: $readQuota, writeQuota: $writeQuota) {
+        mutation UpdateService($serviceID: UUID!, $name: String) {
+          updateService(serviceID: $serviceID, name: $name) {
             serviceID
             name
             kind
@@ -71,6 +69,27 @@ class Services:
       """
     )
     return result['updateService']
+
+  async def update_quota(self, service_id, read_quota_bytes, write_quota_bytes):
+    result = await self.conn.query_control(
+      variables={
+        'serviceID': service_id,
+        'readQuota': read_quota_bytes,
+        'writeQuota': write_quota_bytes,
+      },
+      query="""
+        mutation UpdateServiceQuotas($serviceID: UUID!, $readQuota: Int, $writeQuota: Int) {
+          updateServiceQuotas(serviceID: $serviceID, readQuota: $readQuota, writeQuota: $writeQuota) {
+            serviceID
+            name
+            kind
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['updateServiceQuotas']
 
   async def update_permissions_for_stream(self, service_id, stream_id, read, write):
     result = await self.conn.query_control(

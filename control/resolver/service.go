@@ -56,7 +56,7 @@ func (r *queryResolver) ServiceByNameAndOrganization(ctx context.Context, name s
 	return service, nil
 }
 
-func (r *mutationResolver) CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota int, writeQuota int) (*entity.Service, error) {
+func (r *mutationResolver) CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error) {
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.Create {
@@ -64,7 +64,7 @@ func (r *mutationResolver) CreateService(ctx context.Context, name string, organ
 	}
 
 	// note: you can only create External services (not Model services) via GraphQL
-	service, err := entity.CreateService(ctx, name, entity.ServiceKindExternal, organizationID, readQuota, writeQuota)
+	service, err := entity.CreateService(ctx, name, entity.ServiceKindExternal, organizationID, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (r *mutationResolver) CreateService(ctx context.Context, name string, organ
 	return service, nil
 }
 
-func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) (*entity.Service, error) {
+func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUID, name *string) (*entity.Service, error) {
 	service := entity.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
@@ -88,9 +88,35 @@ func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUI
 		return nil, gqlerror.Errorf("Can only directly edit external services")
 	}
 
-	service, err := service.UpdateDetails(ctx, name, readQuota, writeQuota)
+	service, err := service.UpdateDetails(ctx, name)
 	if err != nil {
 		return nil, err
+	}
+
+	return service, nil
+}
+
+func (r *mutationResolver) UpdateServiceQuotas(ctx context.Context, serviceID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error) {
+	service := entity.FindService(ctx, serviceID)
+	if service == nil {
+		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to edit organization resources")
+	}
+
+	if service.Kind != entity.ServiceKindExternal {
+		return nil, gqlerror.Errorf("Can only directly edit external services")
+	}
+
+	// TODO: invalidate cached quotas
+
+	err := service.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	if err != nil {
+		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
 	}
 
 	return service, nil

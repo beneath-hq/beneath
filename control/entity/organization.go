@@ -22,6 +22,8 @@ type Organization struct {
 	Personal       bool      `sql:",notnull"`
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
+	ReadQuota      *int64
+	WriteQuota     *int64
 	Projects       []*Project
 	Services       []*Service
 	Users          []*User `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
@@ -167,6 +169,24 @@ func (o *Organization) UpdateName(ctx context.Context, name string) (*Organizati
 	return o, nil
 }
 
+// UpdateQuotas updates the quotas enforced upon the organization
+func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
+	// set fields
+	o.ReadQuota = readQuota
+	o.WriteQuota = writeQuota
+
+	// validate
+	err := GetValidator().Struct(o)
+	if err != nil {
+		return err
+	}
+
+	// update
+	o.UpdatedOn = time.Now()
+	_, err = hub.DB.ModelContext(ctx, o).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+	return err
+}
+
 // Delete deletes the organization
 // this will fail if there are any users, services, or projects that are still tied to the organization
 func (o *Organization) Delete(ctx context.Context) error {
@@ -215,8 +235,8 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	// update user
 	user.BillingOrganization = targetOrg
 	user.BillingOrganizationID = targetOrg.OrganizationID
-	user.ReadQuota = targetBillingInfo.BillingPlan.SeatReadQuota
-	user.WriteQuota = targetBillingInfo.BillingPlan.SeatWriteQuota
+	user.ReadQuota = &targetBillingInfo.BillingPlan.SeatReadQuota
+	user.WriteQuota = &targetBillingInfo.BillingPlan.SeatWriteQuota
 	user.UpdatedOn = time.Now()
 	_, err = hub.DB.WithContext(ctx).Model(user).
 		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").

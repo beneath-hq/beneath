@@ -17,8 +17,8 @@ type Service struct {
 	Kind           ServiceKind `sql:",notnull"`
 	OrganizationID uuid.UUID   `sql:"on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
-	ReadQuota      int64
-	WriteQuota     int64
+	ReadQuota      *int64
+	WriteQuota     *int64
 	CreatedOn      time.Time `sql:",notnull,default:now()"`
 	UpdatedOn      time.Time `sql:",notnull,default:now()"`
 	Secrets        []*ServiceSecret
@@ -83,15 +83,15 @@ func FindServiceByNameAndOrganization(ctx context.Context, name, organizationNam
 }
 
 // CreateService consolidates and returns the service matching the args
-func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readQuota int, writeQuota int) (*Service, error) {
+func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readQuota *int64, writeQuota *int64) (*Service, error) {
 	s := &Service{}
 
 	// set service fields
 	s.Name = name
 	s.Kind = kind
 	s.OrganizationID = organizationID
-	s.ReadQuota = int64(readQuota)
-	s.WriteQuota = int64(writeQuota)
+	s.ReadQuota = readQuota
+	s.WriteQuota = writeQuota
 
 	// validate
 	err := GetValidator().Struct(s)
@@ -109,16 +109,10 @@ func CreateService(ctx context.Context, name string, kind ServiceKind, organizat
 }
 
 // UpdateDetails consolidates and returns the service matching the args
-func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *int, writeQuota *int) (*Service, error) {
+func (s *Service) UpdateDetails(ctx context.Context, name *string) (*Service, error) {
 	// set fields
 	if name != nil {
 		s.Name = *name
-	}
-	if readQuota != nil {
-		s.ReadQuota = int64(*readQuota)
-	}
-	if writeQuota != nil {
-		s.WriteQuota = int64(*writeQuota)
 	}
 
 	// validate
@@ -129,8 +123,26 @@ func (s *Service) UpdateDetails(ctx context.Context, name *string, readQuota *in
 
 	// update
 	s.UpdatedOn = time.Now()
-	_, err = hub.DB.ModelContext(ctx, s).Column("name", "read_quota", "write_quota", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, s).Column("name", "updated_on").WherePK().Update()
 	return s, err
+}
+
+// UpdateQuotas updates the quotas enforced upon the service
+func (s *Service) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
+	// set fields
+	s.ReadQuota = readQuota
+	s.WriteQuota = writeQuota
+
+	// validate
+	err := GetValidator().Struct(s)
+	if err != nil {
+		return err
+	}
+
+	// update
+	s.UpdatedOn = time.Now()
+	_, err = hub.DB.ModelContext(ctx, s).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+	return err
 }
 
 // Delete removes a service from the database

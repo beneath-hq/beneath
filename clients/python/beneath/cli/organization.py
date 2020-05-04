@@ -43,8 +43,8 @@ def add_subparser(root):
   _update_member_quota = organization.add_parser('update-member-quota')
   _update_member_quota.set_defaults(func=async_cmd(update_member_quota))
   _update_member_quota.add_argument('username', type=str)
-  _update_member_quota.add_argument('--read-quota-mb', type=int)
-  _update_member_quota.add_argument('--write-quota-mb', type=int)
+  _update_member_quota.add_argument('--read-quota-mb', type=int, required=True)
+  _update_member_quota.add_argument('--write-quota-mb', type=int, required=True)
 
   _leave = organization.add_parser('leave')
   _leave.set_defaults(func=async_cmd(leave))
@@ -79,6 +79,12 @@ def add_subparser(root):
     default=None,
   )
 
+  _update_org_quota = organization.add_parser('update-quota')
+  _update_org_quota.set_defaults(func=async_cmd(update_org_quota))
+  _update_org_quota.add_argument('organization', type=str)
+  _update_org_quota.add_argument('--read-quota-mb', type=int, required=True)
+  _update_org_quota.add_argument('--write-quota-mb', type=int, required=True)
+
 
 async def show(args):
   client = Client()
@@ -99,6 +105,17 @@ async def rename(args):
   result = await client.admin.organizations.update_name(
     organization_id=organization['organizationID'],
     name=args.new_name,
+  )
+  pretty_print_graphql_result(result)
+
+
+async def update_org_quota(args):
+  client = Client()
+  organization = await client.admin.organizations.find_by_name(args.organization)
+  result = await client.admin.organizations.update_quota(
+    organization_id=organization['organizationID'],
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )
   pretty_print_graphql_result(result)
 
@@ -164,7 +181,6 @@ async def remove_member(args):
   user = await client.admin.users.get_by_username(args.username)
   result = await client.admin.organizations.leave(user["userID"])
   pretty_print_graphql_result(result)
-
 
 
 async def update_member_permissions(args):

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"gitlab.com/beneath-hq/beneath/gateway/util"
+
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,7 +14,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/engine"
 	pb_engine "gitlab.com/beneath-hq/beneath/engine/proto"
-	"gitlab.com/beneath-hq/beneath/gateway"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
@@ -62,14 +63,13 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// check quota
-	usage := gateway.Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
-	ok := secret.CheckWriteQuota(usage)
-	if !ok {
-		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
+	err := util.CheckWriteQuota(ctx, secret)
+	if err != nil {
+		return nil, status.Error(codes.ResourceExhausted, err.Error())
 	}
 
 	// check the batch length is valid
-	err := hub.Engine.CheckBatchLength(len(req.Records))
+	err = hub.Engine.CheckBatchLength(len(req.Records))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -109,9 +109,7 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// track write metrics
-	gateway.Metrics.TrackWrite(stream.StreamID, int64(len(req.Records)), int64(bytesWritten))
-	gateway.Metrics.TrackWrite(instanceID, int64(len(req.Records)), int64(bytesWritten))
-	gateway.Metrics.TrackWrite(secret.GetOwnerID(), int64(len(req.Records)), int64(bytesWritten))
+	util.TrackWrite(ctx, secret, stream.StreamID, instanceID, int64(len(req.Records)), int64(bytesWritten))
 
 	// update log payload
 	payload.BytesWritten = bytesWritten

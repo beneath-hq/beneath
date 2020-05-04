@@ -13,7 +13,7 @@ from beneath.admin.secrets import Secrets
 from beneath.admin.services import Services
 from beneath.admin.streams import Streams
 from beneath.admin.users import Users
-from beneath.connection import Connection
+from beneath.connection import Connection, GraphQLError
 from beneath.config import (
   DEFAULT_READ_ALL_MAX_BYTES,
   DEFAULT_READ_BATCH_SIZE,
@@ -60,8 +60,8 @@ class Client:
     project = await self.admin.projects.find_by_organization_and_name(qualifier.organization, qualifier.project)
     try:
       await self.admin.streams.create(schema=schema, project_id=project["projectID"])
-    except beneath.GraphQLError:
-      await client.admin.streams.find_by_organization_project_and_name(
+    except GraphQLError:
+      await self.admin.streams.find_by_organization_project_and_name(
         organization_name=qualifier.organization,
         project_name=qualifier.project,
         stream_name=qualifier.stream,

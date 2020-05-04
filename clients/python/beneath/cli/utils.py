@@ -11,7 +11,9 @@ def async_cmd(cmd):
     try:
       loop.run_until_complete(cmd(args))
     except GraphQLError as e:
-      print(e)
+      print("Error:", e)
+      if e.errors:
+        print("Details:", e.errors)
 
   return wrapped
 

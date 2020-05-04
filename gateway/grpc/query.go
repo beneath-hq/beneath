@@ -3,13 +3,14 @@ package grpc
 import (
 	"context"
 
+	"gitlab.com/beneath-hq/beneath/gateway/util"
+
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/gateway"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
@@ -191,10 +192,9 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	}
 
 	// check quota
-	usage := gateway.Metrics.GetCurrentUsage(ctx, secret.GetOwnerID())
-	ok := secret.CheckReadQuota(usage)
-	if !ok {
-		return nil, status.Error(codes.ResourceExhausted, "you have exhausted your monthly quota")
+	err := util.CheckReadQuota(ctx, secret)
+	if err != nil {
+		return nil, status.Error(codes.ResourceExhausted, err.Error())
 	}
 
 	// get result iterator
@@ -223,9 +223,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	response.NextCursor = it.NextCursor()
 
 	// track read metrics
-	gateway.Metrics.TrackRead(stream.StreamID, int64(len(response.Records)), int64(bytesRead))
-	gateway.Metrics.TrackRead(instanceID, int64(len(response.Records)), int64(bytesRead))
-	gateway.Metrics.TrackRead(secret.GetOwnerID(), int64(len(response.Records)), int64(bytesRead))
+	util.TrackRead(ctx, secret, stream.StreamID, instanceID, int64(len(response.Records)), int64(bytesRead))
 
 	// update log message
 	payload.BytesRead = bytesRead

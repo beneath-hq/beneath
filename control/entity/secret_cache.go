@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/go-pg/pg/v9/orm"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
@@ -126,10 +125,18 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func()
 	return func() (interface{}, error) {
 		secret := &UserSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
-			Relation("User", func(q *orm.Query) (*orm.Query, error) {
-				return q.Column("user.read_quota", "user.write_quota", "user.master", "user.billing_organization_id"), nil
-			}).
-			Column("user_secret_id", "read_only", "public_only", "user_secret.user_id").
+			Column(
+				"user_secret.user_secret_id",
+				"user_secret.read_only",
+				"user_secret.public_only",
+				"User.user_id",
+				"User.read_quota",
+				"User.write_quota",
+				"User.master",
+				"User.BillingOrganization.organization_id",
+				"User.BillingOrganization.read_quota",
+				"User.BillingOrganization.write_quota",
+			).
 			Where("hashed_token = ?", hashedToken).
 			Select()
 		if err != nil && err != pg.ErrNoRows {
@@ -137,10 +144,13 @@ func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func()
 		}
 
 		if secret.User != nil {
-			secret.ReadQuota = secret.User.ReadQuota
-			secret.WriteQuota = secret.User.WriteQuota
+			secret.UserID = secret.User.UserID
 			secret.Master = secret.User.Master
-			secret.BillingOrganizationID = secret.User.BillingOrganizationID
+			secret.BillingOrganizationID = secret.User.BillingOrganization.OrganizationID
+			secret.BillingReadQuota = secret.User.BillingOrganization.ReadQuota
+			secret.BillingWriteQuota = secret.User.BillingOrganization.WriteQuota
+			secret.OwnerReadQuota = secret.User.ReadQuota
+			secret.OwnerWriteQuota = secret.User.WriteQuota
 			secret.User = nil
 		}
 
@@ -152,10 +162,15 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 	return func() (interface{}, error) {
 		secret := &ServiceSecret{}
 		err := hub.DB.ModelContext(ctx, secret).
-			Relation("Service", func(q *orm.Query) (*orm.Query, error) {
-				return q.Column("service.read_quota", "service.write_quota", "service.organization_id"), nil
-			}).
-			Column("service_secret_id", "service_secret.service_id").
+			Column(
+				"service_secret.service_secret_id",
+				"Service.service_id",
+				"Service.read_quota",
+				"Service.write_quota",
+				"Service.Organization.organization_id",
+				"Service.Organization.read_quota",
+				"Service.Organization.write_quota",
+			).
 			Where("hashed_token = ?", hashedToken).
 			Select()
 		if err != nil && err != pg.ErrNoRows {
@@ -163,10 +178,13 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 		}
 
 		if secret.Service != nil {
-			secret.ReadQuota = secret.Service.ReadQuota
-			secret.WriteQuota = secret.Service.WriteQuota
+			secret.ServiceID = secret.Service.ServiceID
 			secret.Master = false
-			secret.BillingOrganizationID = secret.Service.OrganizationID
+			secret.BillingOrganizationID = secret.Service.Organization.OrganizationID
+			secret.BillingReadQuota = secret.Service.Organization.ReadQuota
+			secret.BillingWriteQuota = secret.Service.Organization.WriteQuota
+			secret.OwnerReadQuota = secret.Service.ReadQuota
+			secret.OwnerWriteQuota = secret.Service.WriteQuota
 			secret.Service = nil
 		}
 

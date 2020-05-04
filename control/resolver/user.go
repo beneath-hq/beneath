@@ -76,13 +76,37 @@ func userToMe(ctx context.Context, u *entity.User) *gql.Me {
 		User:                 u,
 		Email:                u.Email,
 		ReadUsage:            int(usage.ReadBytes),
-		ReadQuota:            int(u.ReadQuota),
+		ReadQuota:            Int64ToInt(u.ReadQuota),
 		WriteUsage:           int(usage.WriteBytes),
-		WriteQuota:           int(u.WriteQuota),
+		WriteQuota:           Int64ToInt(u.WriteQuota),
 		UpdatedOn:            u.UpdatedOn,
 		PersonalOrganization: u.PersonalOrganization,
 		BillingOrganization:  u.BillingOrganization,
 	}
+}
+
+func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
+	user := entity.FindUser(ctx, userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("User %s not found", userID.String())
+	}
+
+	organizationID := user.BillingOrganizationID
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+	}
+
+	// TODO: invalidate cached quotas
+
+	err := user.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	if err != nil {
+		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
+	}
+
+	return user, nil
 }
 
 func (r *mutationResolver) UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error) {

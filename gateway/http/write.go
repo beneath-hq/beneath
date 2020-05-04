@@ -11,8 +11,8 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/engine"
 	pb_engine "gitlab.com/beneath-hq/beneath/engine/proto"
-	"gitlab.com/beneath-hq/beneath/gateway"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
@@ -60,10 +60,9 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check quota
-	usage := gateway.Metrics.GetCurrentUsage(r.Context(), secret.GetOwnerID())
-	ok := secret.CheckWriteQuota(usage)
-	if !ok {
-		return httputil.NewError(429, "you have exhausted your monthly quota")
+	err = util.CheckWriteQuota(r.Context(), secret)
+	if err != nil {
+		return httputil.NewError(429, err.Error())
 	}
 
 	// decode json body
@@ -158,11 +157,7 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// track write metrics
-	gateway.Metrics.TrackWrite(stream.StreamID, int64(len(records)), int64(bytesWritten))
-	gateway.Metrics.TrackWrite(instanceID, int64(len(records)), int64(bytesWritten))
-	if !secret.IsAnonymous() {
-		gateway.Metrics.TrackWrite(secret.GetOwnerID(), int64(len(records)), int64(bytesWritten))
-	}
+	util.TrackWrite(r.Context(), secret, stream.StreamID, instanceID, int64(len(records)), int64(bytesWritten))
 
 	// Done
 	return nil

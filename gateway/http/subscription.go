@@ -11,6 +11,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/gateway"
 	"gitlab.com/beneath-hq/beneath/gateway/subscriptions"
+	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 	"gitlab.com/beneath-hq/beneath/pkg/ws"
@@ -119,11 +120,9 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 	}
 
 	// check usage
-	if !secret.IsAnonymous() {
-		usage := gateway.Metrics.GetCurrentUsage(client.Context, secret.GetOwnerID())
-		if !secret.CheckReadQuota(usage) {
-			return fmt.Errorf("You have exhausted your quota")
-		}
+	err = util.CheckReadQuota(client.Context, secret)
+	if err != nil {
+		return fmt.Errorf(err.Error())
 	}
 
 	// get subscription channel

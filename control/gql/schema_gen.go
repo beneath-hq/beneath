@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"gitlab.com/beneath-hq/beneath/control/entity"
@@ -159,7 +159,7 @@ type ComplexityRoot struct {
 		CreateModelBatch                  func(childComplexity int, modelID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) int
-		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota int, writeQuota int) int
+		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
 		DeleteModel                       func(childComplexity int, modelID uuid.UUID) int
 		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
@@ -178,8 +178,10 @@ type ComplexityRoot struct {
 		UpdateMe                          func(childComplexity int, username *string, name *string, bio *string, photoURL *string) int
 		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateOrganizationName            func(childComplexity int, organizationID uuid.UUID, name string) int
+		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) int
-		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) int
+		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string) int
+		UpdateServiceQuotas               func(childComplexity int, serviceID uuid.UUID, readQuota *int, writeQuota *int) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserProjectPermissions      func(childComplexity int, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) int
@@ -202,9 +204,11 @@ type ComplexityRoot struct {
 		OrganizationID func(childComplexity int) int
 		Personal       func(childComplexity int) int
 		Projects       func(childComplexity int) int
+		ReadQuota      func(childComplexity int) int
 		Services       func(childComplexity int) int
 		UpdatedOn      func(childComplexity int) int
 		Users          func(childComplexity int) int
+		WriteQuota     func(childComplexity int) int
 	}
 
 	PermissionsServicesStreams struct {
@@ -386,9 +390,9 @@ type MutationResolver interface {
 	ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error)
 	CreateOrganization(ctx context.Context, name string) (*entity.Organization, error)
 	UpdateOrganizationName(ctx context.Context, organizationID uuid.UUID, name string) (*entity.Organization, error)
+	UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Organization, error)
 	InviteUserToOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view bool, create bool, admin bool) (bool, error)
 	AcceptOrganizationInvite(ctx context.Context, organizationID uuid.UUID) (bool, error)
-	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
 	LeaveBillingOrganization(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 	TransferProjectToOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error)
 	TransferServiceToOrganization(ctx context.Context, serviceID uuid.UUID, organizationID uuid.UUID) (*entity.Service, error)
@@ -399,8 +403,9 @@ type MutationResolver interface {
 	IssueUserSecret(ctx context.Context, description string, readOnly bool, publicOnly bool) (*NewUserSecret, error)
 	RevokeServiceSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
 	RevokeUserSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
-	CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota int, writeQuota int) (*entity.Service, error)
-	UpdateService(ctx context.Context, serviceID uuid.UUID, name *string, readQuota *int, writeQuota *int) (*entity.Service, error)
+	CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error)
+	UpdateService(ctx context.Context, serviceID uuid.UUID, name *string) (*entity.Service, error)
+	UpdateServiceQuotas(ctx context.Context, serviceID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
 	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error)
@@ -410,6 +415,7 @@ type MutationResolver interface {
 	CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error)
 	UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*Me, error)
+	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
 	UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error)
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
 }
@@ -1090,7 +1096,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateService(childComplexity, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(int), args["writeQuota"].(int)), true
+		return e.complexity.Mutation.CreateService(childComplexity, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
 
 	case "Mutation.deleteExternalStream":
 		if e.complexity.Mutation.DeleteExternalStream == nil {
@@ -1303,6 +1309,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateOrganizationName(childComplexity, args["organizationID"].(uuid.UUID), args["name"].(string)), true
 
+	case "Mutation.updateOrganizationQuotas":
+		if e.complexity.Mutation.UpdateOrganizationQuotas == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrganizationQuotas_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrganizationQuotas(childComplexity, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+
 	case "Mutation.updateProject":
 		if e.complexity.Mutation.UpdateProject == nil {
 			break
@@ -1325,7 +1343,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateService(childComplexity, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+		return e.complexity.Mutation.UpdateService(childComplexity, args["serviceID"].(uuid.UUID), args["name"].(*string)), true
+
+	case "Mutation.updateServiceQuotas":
+		if e.complexity.Mutation.UpdateServiceQuotas == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateServiceQuotas_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateServiceQuotas(childComplexity, args["serviceID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
 
 	case "Mutation.updateServiceStreamPermissions":
 		if e.complexity.Mutation.UpdateServiceStreamPermissions == nil {
@@ -1438,6 +1468,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Organization.Projects(childComplexity), true
 
+	case "Organization.readQuota":
+		if e.complexity.Organization.ReadQuota == nil {
+			break
+		}
+
+		return e.complexity.Organization.ReadQuota(childComplexity), true
+
 	case "Organization.services":
 		if e.complexity.Organization.Services == nil {
 			break
@@ -1458,6 +1495,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organization.Users(childComplexity), true
+
+	case "Organization.writeQuota":
+		if e.complexity.Organization.WriteQuota == nil {
+			break
+		}
+
+		return e.complexity.Organization.WriteQuota(childComplexity), true
 
 	case "PermissionsServicesStreams.read":
 		if e.complexity.PermissionsServicesStreams.Read == nil {
@@ -2567,10 +2611,10 @@ input UpdateModelInput {
 extend type Mutation {
   createOrganization(name: String!): Organization!
   updateOrganizationName(organizationID: UUID!, name: String!): Organization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): Organization!
 
   inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
   acceptOrganizationInvite(organizationID: UUID!): Boolean!
-  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): User!
   leaveBillingOrganization(userID: UUID!): User!
 
   transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
@@ -2583,6 +2627,8 @@ type Organization {
   personal: Boolean!
   createdOn: Time!
   updatedOn: Time!
+  readQuota: Int
+  writeQuota: Int
   services: [Service!]!
   users: [User!]!
   projects: [Project!]!
@@ -2668,8 +2714,9 @@ type NewUserSecret {
 }
 
 extend type Mutation {
-  createService(name: String!, organizationID: UUID!, readQuota: Int!, writeQuota: Int!): Service!
-  updateService(serviceID: UUID!, name: String, readQuota: Int, writeQuota: Int): Service!
+  createService(name: String!, organizationID: UUID!, readQuota: Int, writeQuota: Int): Service!
+  updateService(serviceID: UUID!, name: String): Service!
+  updateServiceQuotas(serviceID: UUID!, readQuota: Int, writeQuota: Int): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
 }
@@ -2679,8 +2726,8 @@ type Service {
   name: String!
   kind: String!
   organization: Organization!
-  readQuota: Int!
-  writeQuota: Int!
+  readQuota: Int
+  writeQuota: Int
 }
 
 type PermissionsServicesStreams {
@@ -2760,6 +2807,7 @@ type StreamIndex {
 
 extend type Mutation {
   updateMe(username: String, name: String, bio: String, photoURL: String): Me!
+  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): User!
   updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
   updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
@@ -2772,8 +2820,8 @@ type User {
   photoURL: String
   createdOn: Time!
   projects: [Project!]!
-  readQuota: Int!
-  writeQuota: Int!
+  readQuota: Int
+  writeQuota: Int
 }
 
 type Me {
@@ -2783,9 +2831,9 @@ type Me {
   personalOrganization: Organization!
   billingOrganization: Organization!
   readUsage: Int!
-  readQuota: Int!
+  readQuota: Int
   writeUsage: Int!
-  writeQuota: Int!
+  writeQuota: Int
   updatedOn: Time!
 }
 
@@ -3064,17 +3112,17 @@ func (ec *executionContext) field_Mutation_createService_args(ctx context.Contex
 		}
 	}
 	args["organizationID"] = arg1
-	var arg2 int
+	var arg2 *int
 	if tmp, ok := rawArgs["readQuota"]; ok {
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["readQuota"] = arg2
-	var arg3 int
+	var arg3 *int
 	if tmp, ok := rawArgs["writeQuota"]; ok {
-		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3489,6 +3537,36 @@ func (ec *executionContext) field_Mutation_updateOrganizationName_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateOrganizationQuotas_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["readQuota"]; ok {
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["readQuota"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["writeQuota"]; ok {
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["writeQuota"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3540,6 +3618,36 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 		}
 	}
 	args["photoURL"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateServiceQuotas_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["readQuota"]; ok {
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["readQuota"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["writeQuota"]; ok {
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["writeQuota"] = arg2
 	return args, nil
 }
 
@@ -3600,22 +3708,6 @@ func (ec *executionContext) field_Mutation_updateService_args(ctx context.Contex
 		}
 	}
 	args["name"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["readQuota"]; ok {
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["readQuota"] = arg2
-	var arg3 *int
-	if tmp, ok := rawArgs["writeQuota"]; ok {
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["writeQuota"] = arg3
 	return args, nil
 }
 
@@ -5788,15 +5880,12 @@ func (ec *executionContext) _Me_readQuota(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_writeUsage(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -5862,15 +5951,12 @@ func (ec *executionContext) _Me_writeQuota(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Me_updatedOn(ctx context.Context, field graphql.CollectedField, obj *Me) (ret graphql.Marshaler) {
@@ -7074,6 +7160,50 @@ func (ec *executionContext) _Mutation_updateOrganizationName(ctx context.Context
 	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updateOrganizationQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateOrganizationQuotas_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganizationQuotas(rctx, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_inviteUserToOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7160,50 +7290,6 @@ func (ec *executionContext) _Mutation_acceptOrganizationInvite(ctx context.Conte
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateUserQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateUserQuotas_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUserQuotas(rctx, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.User)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_leaveBillingOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7672,7 +7758,7 @@ func (ec *executionContext) _Mutation_createService(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateService(rctx, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(int), args["writeQuota"].(int))
+		return ec.resolvers.Mutation().CreateService(rctx, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7716,7 +7802,51 @@ func (ec *executionContext) _Mutation_updateService(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateService(rctx, args["serviceID"].(uuid.UUID), args["name"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int))
+		return ec.resolvers.Mutation().UpdateService(rctx, args["serviceID"].(uuid.UUID), args["name"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateServiceQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateServiceQuotas_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateServiceQuotas(rctx, args["serviceID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8128,6 +8258,50 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNMe2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateUserQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUserQuotas_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateUserQuotas(rctx, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUserProjectPermissions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8549,6 +8723,74 @@ func (ec *executionContext) _Organization_updatedOn(ctx context.Context, field g
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Organization_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Organization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Organization_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Organization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_services(ctx context.Context, field graphql.CollectedField, obj *entity.Organization) (ret graphql.Marshaler) {
@@ -10939,15 +11181,12 @@ func (ec *executionContext) _Service_readQuota(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Service_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
@@ -10976,15 +11215,12 @@ func (ec *executionContext) _Service_writeQuota(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ServiceSecret_serviceSecretID(ctx context.Context, field graphql.CollectedField, obj *entity.ServiceSecret) (ret graphql.Marshaler) {
@@ -12469,15 +12705,12 @@ func (ec *executionContext) _User_readQuota(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
@@ -12506,15 +12739,12 @@ func (ec *executionContext) _User_writeQuota(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserSecret_userSecretID(ctx context.Context, field graphql.CollectedField, obj *entity.UserSecret) (ret graphql.Marshaler) {
@@ -14451,9 +14681,6 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			}
 		case "readQuota":
 			out.Values[i] = ec._Me_readQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "writeUsage":
 			out.Values[i] = ec._Me_writeUsage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -14461,9 +14688,6 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			}
 		case "writeQuota":
 			out.Values[i] = ec._Me_writeQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "updatedOn":
 			out.Values[i] = ec._Me_updatedOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -14698,6 +14922,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateOrganizationQuotas":
+			out.Values[i] = ec._Mutation_updateOrganizationQuotas(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "inviteUserToOrganization":
 			out.Values[i] = ec._Mutation_inviteUserToOrganization(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -14705,11 +14934,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "acceptOrganizationInvite":
 			out.Values[i] = ec._Mutation_acceptOrganizationInvite(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updateUserQuotas":
-			out.Values[i] = ec._Mutation_updateUserQuotas(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -14773,6 +14997,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateServiceQuotas":
+			out.Values[i] = ec._Mutation_updateServiceQuotas(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateServiceStreamPermissions":
 			out.Values[i] = ec._Mutation_updateServiceStreamPermissions(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -14815,6 +15044,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateMe":
 			out.Values[i] = ec._Mutation_updateMe(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUserQuotas":
+			out.Values[i] = ec._Mutation_updateUserQuotas(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -14948,6 +15182,10 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "readQuota":
+			out.Values[i] = ec._Organization_readQuota(ctx, field, obj)
+		case "writeQuota":
+			out.Values[i] = ec._Organization_writeQuota(ctx, field, obj)
 		case "services":
 			out.Values[i] = ec._Organization_services(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15592,14 +15830,8 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "readQuota":
 			out.Values[i] = ec._Service_readQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "writeQuota":
 			out.Values[i] = ec._Service_writeQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15957,14 +16189,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "readQuota":
 			out.Values[i] = ec._User_readQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "writeQuota":
 			out.Values[i] = ec._User_writeQuota(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17550,6 +17776,14 @@ func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.Selecti
 	return graphql.MarshalInt(v)
 }
 
+func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	return graphql.UnmarshalInt64(v)
+}
+
+func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	return graphql.MarshalInt64(v)
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -17563,6 +17797,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 	return ec.marshalOInt2int(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint64(ctx context.Context, v interface{}) (*int64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOInt2int64(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOInt2int64(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalOMe2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMe(ctx context.Context, sel ast.SelectionSet, v Me) graphql.Marshaler {

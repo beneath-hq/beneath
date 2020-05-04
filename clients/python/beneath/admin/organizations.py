@@ -117,6 +117,26 @@ class Organizations:
     )
     return result['updateOrganizationName']
 
+  async def update_quota(self, organization_id, read_quota_bytes, write_quota_bytes):
+    result = await self.conn.query_control(
+      variables={
+        'organizationID': organization_id,
+        'readQuota': read_quota_bytes,
+        'writeQuota': write_quota_bytes,
+      },
+      query="""
+        mutation UpdateOrganizationQuotas($organizationID: UUID!, $readQuota: Int, $writeQuota: Int) {
+          updateOrganizationQuotas(organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota) {
+            organizationID
+            name
+            readQuota
+            writeQuota
+          }
+        }
+      """
+    )
+    return result['updateOrganizationQuotas']
+
   async def invite_user(self, organization_id, user_id, view, create, admin):
     result = await self.conn.query_control(
       variables={

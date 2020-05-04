@@ -28,9 +28,9 @@ type Me struct {
 	PersonalOrganization *entity.Organization `json:"personalOrganization"`
 	BillingOrganization  *entity.Organization `json:"billingOrganization"`
 	ReadUsage            int                  `json:"readUsage"`
-	ReadQuota            int                  `json:"readQuota"`
+	ReadQuota            *int                 `json:"readQuota"`
 	WriteUsage           int                  `json:"writeUsage"`
-	WriteQuota           int                  `json:"writeQuota"`
+	WriteQuota           *int                 `json:"writeQuota"`
 	UpdatedOn            time.Time            `json:"updatedOn"`
 }
 
