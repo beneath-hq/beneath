@@ -41,8 +41,8 @@ func FindOrganizationInvite(ctx context.Context, organizationID uuid.UUID, userI
 	return invite
 }
 
-// Save creates or updates the organization invite
-func (i *OrganizationInvite) Save(ctx context.Context) error {
+// Upsert creates or updates the organization invite
+func (i *OrganizationInvite) Upsert(ctx context.Context) error {
 	// validate
 	err := GetValidator().Struct(i)
 	if err != nil {
