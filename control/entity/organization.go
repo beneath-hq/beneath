@@ -184,6 +184,19 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 	// update
 	o.UpdatedOn = time.Now()
 	_, err = hub.DB.ModelContext(ctx, o).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+
+	// clear cache for the organization's users' secrets
+	for _, u := range o.Users {
+		secrets := FindUserSecrets(ctx, u.UserID)
+		if secrets == nil {
+			panic("could not find user secrets")
+		}
+
+		for _, s := range secrets {
+			getSecretCache().Delete(ctx, s.HashedToken)
+		}
+	}
+
 	return err
 }
 
@@ -226,30 +239,18 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		return fmt.Errorf("Couldn't find billing info for target organization")
 	}
 
-	// commit user's current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, UserEntityKind, user.UserID, user.Username, false)
-	if err != nil {
-		return err
-	}
-
 	// update user
 	user.BillingOrganization = targetOrg
 	user.BillingOrganizationID = targetOrg.OrganizationID
 	user.ReadQuota = &targetBillingInfo.BillingPlan.SeatReadQuota
 	user.WriteQuota = &targetBillingInfo.BillingPlan.SeatWriteQuota
 	user.UpdatedOn = time.Now()
-	_, err = hub.DB.WithContext(ctx).Model(user).
+	_, err := hub.DB.WithContext(ctx).Model(user).
 		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").
 		WherePK().
 		Update()
 	if err != nil {
 		return err
-	}
-
-	// commit usage credit to the new organization's bill for the user's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, UserEntityKind, user.UserID, user.Username, true)
-	if err != nil {
-		panic("unable to commit usage credit to bill")
 	}
 
 	// add prorated seat to the new organization's next month's bill
@@ -277,23 +278,11 @@ func (o *Organization) TransferProject(ctx context.Context, project *Project, ta
 
 // TransferService transfers a service in o to another organization
 func (o *Organization) TransferService(ctx context.Context, service *Service, targetOrg *Organization) error {
-	// commit current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, ServiceEntityKind, service.ServiceID, service.Name, false)
-	if err != nil {
-		return err
-	}
-
 	// update organization
 	service.Organization = targetOrg
 	service.OrganizationID = targetOrg.OrganizationID
 	service.UpdatedOn = time.Now()
-	_, err = hub.DB.ModelContext(ctx, service).Column("organization_id", "updated_on").WherePK().Update()
-	if err != nil {
-		return err
-	}
-
-	// commit usage credit to the new organization's bill for the service's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, ServiceEntityKind, service.ServiceID, service.Name, true)
+	_, err := hub.DB.ModelContext(ctx, service).Column("organization_id", "updated_on").WherePK().Update()
 	if err != nil {
 		return err
 	}

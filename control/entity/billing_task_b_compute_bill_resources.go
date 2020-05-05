@@ -2,15 +2,12 @@ package entity
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
-	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/metrics"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
@@ -44,46 +41,13 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	usageBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, false)
 
 	// add "seat" line items
-	err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Organization.Users, seatBillTimes)
+	numSeats, err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Organization.Users, seatBillTimes)
 	if err != nil {
 		return err
 	}
 
-	// add "usage" line items for users
-	var userIDs []uuid.UUID
-	var usernames []string
-	for _, user := range billingInfo.Organization.Users {
-		// only bill those organization users who have it as their billing org
-		if user.BillingOrganizationID == t.OrganizationID {
-			userIDs = append(userIDs, user.UserID)
-			usernames = append(usernames, user.Username)
-		}
-	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, UserEntityKind, userIDs, usernames, usageBillTimes)
-	if err != nil {
-		return err
-	}
-
-	// add "usage" line items for services
-	var serviceIDs []uuid.UUID
-	var servicenames []string
-	for _, service := range billingInfo.Organization.Services {
-		serviceIDs = append(serviceIDs, service.ServiceID)
-		servicenames = append(servicenames, service.Name)
-	}
-	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, ServiceEntityKind, serviceIDs, servicenames, usageBillTimes)
-	if err != nil {
-		return err
-	}
-
-	// if applicable, add "read overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, ReadProduct, billingInfo.Organization.Name, usageBillTimes)
-	if err != nil {
-		return err
-	}
-
-	// if applicable, add "write overage" to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, WriteProduct, billingInfo.Organization.Name, usageBillTimes)
+	// if applicable, add overages to bill
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, numSeats, billingInfo.Organization.Name, usageBillTimes)
 	if err != nil {
 		return err
 	}
@@ -99,8 +63,9 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, users []*User, billTimes *billTimes) error {
+func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, users []*User, billTimes *billTimes) (int, error) {
 	var billedResources []*BilledResource
+	var numSeats int
 	for _, user := range users {
 		// only bill those organization users who have it as their billing org
 		if user.BillingOrganizationID == organizationID {
@@ -117,15 +82,16 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 				TotalPriceCents: billingPlan.SeatPriceCents,
 				Currency:        billingPlan.Currency,
 			})
+			numSeats++
 		}
 	}
 
 	if len(billedResources) == 0 {
 		if !billingPlan.Personal {
-			log.S.Info("The enterprise organization has no users and will be deleted.")
+			log.S.Info("The multi organization has no users and will be deleted.")
 		}
 
-		return nil
+		return 0, nil
 	}
 
 	err := CreateOrUpdateBilledResources(ctx, billedResources)
@@ -134,7 +100,7 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 	}
 
 	// done
-	return nil
+	return numSeats, nil
 }
 
 func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, userIDs []uuid.UUID, usernames []string, credit bool) error {
@@ -185,190 +151,34 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	return nil
 }
 
-func commitUsagesToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, entityKind Kind, entityIDs []uuid.UUID, entityNames []string, billTimes *billTimes) error {
-	var billedResources []*BilledResource
-
-	for i, entityID := range entityIDs {
-		_, monthlyMetrics, err := metrics.GetHistoricalUsage(ctx, entityID, billingPlan.Period, billTimes.StartTime, billTimes.BillingTime) // when adding annual plans, remember this function only accepts hourly or monthly periods
-		if err != nil {
-			return err
-		}
-
-		if len(monthlyMetrics) == 1 {
-			// add reads
-			billedResources = append(billedResources, &BilledResource{
-				OrganizationID:  organizationID,
-				BillingTime:     billTimes.BillingTime,
-				EntityID:        entityID,
-				EntityName:      entityNames[i],
-				EntityKind:      entityKind,
-				StartTime:       billTimes.StartTime,
-				EndTime:         billTimes.EndTime,
-				Product:         ReadProduct,
-				Quantity:        monthlyMetrics[0].ReadBytes,
-				TotalPriceCents: 0,
-				Currency:        billingPlan.Currency,
-			})
-
-			// add writes
-			billedResources = append(billedResources, &BilledResource{
-				OrganizationID:  organizationID,
-				BillingTime:     billTimes.BillingTime,
-				EntityID:        entityID,
-				EntityName:      entityNames[i],
-				EntityKind:      entityKind,
-				StartTime:       billTimes.StartTime,
-				EndTime:         billTimes.EndTime,
-				Product:         WriteProduct,
-				Quantity:        monthlyMetrics[0].WriteBytes,
-				TotalPriceCents: 0,
-				Currency:        billingPlan.Currency,
-			})
-		} else if len(monthlyMetrics) > 1 {
-			panic("expected a maximum of one item in monthlyMetrics")
-		}
-	}
-
-	if len(billedResources) > 0 {
-		err := CreateOrUpdateBilledResources(ctx, billedResources)
-		if err != nil {
-			panic("unable to write billed resources to table")
-		}
-	}
-
-	// done
-	return nil
-}
-
-func commitCurrentUsageToNextBill(ctx context.Context, organizationID uuid.UUID, entityKind Kind, entityID uuid.UUID, entityName string, credit bool) error {
-	billingInfo := FindBillingInfo(ctx, organizationID)
-	if billingInfo == nil {
-		panic("organization not found")
-	}
-
-	now := time.Now()
-	p := billingInfo.BillingPlan.Period
-	billTimes := &billTimes{
-		BillingTime: timeutil.Next(now, p),
-		StartTime:   timeutil.Floor(now, p),
-		EndTime:     now,
-	}
-
-	var billedResources []*BilledResource
-
-	_, monthlyMetrics, err := metrics.GetHistoricalUsage(ctx, entityID, billingInfo.BillingPlan.Period, billTimes.StartTime, billTimes.BillingTime) // when adding annual plans, remember this function only accepts hourly or monthly periods
+func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, numSeats int, organizationName string, billTimes *billTimes) error {
+	_, usages, err := metrics.GetHistoricalUsage(ctx, organizationID, billingPlan.Period, billTimes.StartTime, billTimes.EndTime)
 	if err != nil {
-		return err
+		panic("unable to get historical usage for organization")
 	}
 
-	if len(monthlyMetrics) == 1 {
-		readQuantity := monthlyMetrics[0].ReadBytes
-		writeQuantity := monthlyMetrics[0].WriteBytes
-		readProduct := ReadProduct
-		writeProduct := WriteProduct
-
-		if credit {
-			readQuantity *= -1
-			writeQuantity *= -1
-			readProduct = ReadCreditProduct
-			writeProduct = WriteCreditProduct
-		}
-
-		// add reads
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        entityID,
-			EntityName:      entityName,
-			EntityKind:      entityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         readProduct,
-			Quantity:        readQuantity,
-			TotalPriceCents: 0,
-			Currency:        billingInfo.BillingPlan.Currency,
-		})
-
-		// add writes
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        entityID,
-			EntityName:      entityName,
-			EntityKind:      entityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         writeProduct,
-			Quantity:        writeQuantity,
-			TotalPriceCents: 0,
-			Currency:        billingInfo.BillingPlan.Currency,
-		})
-
-		err = CreateOrUpdateBilledResources(ctx, billedResources)
-		if err != nil {
-			panic(fmt.Errorf("unable to write billed resources to table: %s", err.Error()))
-		}
-	} else if len(monthlyMetrics) > 1 {
-		panic("monthlyMetrics can't have more than one item")
+	if len(usages) > 1 {
+		panic("GetHistoricalUsage returned more periods than expected")
+	} else if len(usages) == 0 {
+		log.S.Infof("organization %s had no usage in the billing period", organizationID.String())
+		return nil
 	}
 
-	// done
-	return nil
-}
+	readIncludedQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*int64(numSeats)
+	writeIncludedQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*int64(numSeats)
 
-func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, product Product, organizationName string, billTimes *billTimes) error {
-	var creditProduct Product
-	if product == ReadProduct {
-		creditProduct = ReadCreditProduct
-	} else if product == WriteProduct {
-		creditProduct = WriteCreditProduct
-	} else {
-		panic("overage only applies to read and write products")
-	}
+	readOverageBytes := usages[0].ReadBytes - readIncludedQuota
+	readOverageGB := readOverageBytes/10 ^ 6
+	readOveragePrice := int32(readOverageGB) * billingPlan.ReadOveragePriceCents // assuming unit of ReadOveragePriceCents is GB
 
-	// fetch the organization's billed resources for the period
-	var billedResources []*BilledResource
-	err := hub.DB.ModelContext(ctx, &billedResources).
-		Where("organization_id = ?", organizationID).
-		Where("billing_time = ?", billTimes.BillingTime).
-		WhereGroup(func(q *orm.Query) (*orm.Query, error) {
-			q = q.WhereOr("product = ?", product).
-				WhereOr("product = ?", creditProduct)
-			return q, nil
-		}).
-		Select()
-	if err != nil {
-		panic(err)
-	}
+	writeOverageBytes := usages[0].WriteBytes - writeIncludedQuota
+	writeOverageGB := writeOverageBytes/10 ^ 6
+	writeOveragePrice := int32(writeOverageGB) * billingPlan.WriteOveragePriceCents // assuming unit of WriteOveragePriceCents is GB
 
-	// calculate total usage across all the organization's users
-	usage := int64(0)
-	for _, billedResource := range billedResources {
-		usage += billedResource.Quantity
-	}
+	var newBilledResources []*BilledResource
 
-	// get product-specific variables
-	var billProduct Product
-	var overageBytes int64
-	var overageGB int64
-	var price int32
-
-	if product == ReadProduct {
-		billProduct = ReadOverageProduct
-		overageBytes := usage - billingPlan.BaseReadQuota
-		overageGB := overageBytes/10 ^ 6
-		price = int32(overageGB) * billingPlan.ReadOveragePriceCents // assuming unit of ReadOveragePriceCents is GB
-	} else if product == WriteProduct {
-		billProduct = WriteOverageProduct
-		overageBytes := usage - billingPlan.BaseWriteQuota
-		overageGB := overageBytes/10 ^ 6
-		price = int32(overageGB) * billingPlan.WriteOveragePriceCents // assuming unit of WriteOveragePriceCents is GB
-	} else {
-		panic("overage only applies to read and write products")
-	}
-
-	if overageBytes > 0 {
-		newBilledResource := []*BilledResource{&BilledResource{
+	if readOverageBytes > 0 {
+		newBilledResources = append(newBilledResources, &BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        organizationID,
@@ -376,13 +186,31 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 			EntityKind:      OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
-			Product:         billProduct,
-			Quantity:        overageGB,
-			TotalPriceCents: price,
+			Product:         ReadOverageProduct,
+			Quantity:        readOverageGB,
+			TotalPriceCents: readOveragePrice,
 			Currency:        billingPlan.Currency,
-		}}
+		})
+	}
 
-		err := CreateOrUpdateBilledResources(ctx, newBilledResource)
+	if writeOverageBytes > 0 {
+		newBilledResources = append(newBilledResources, &BilledResource{
+			OrganizationID:  organizationID,
+			BillingTime:     billTimes.BillingTime,
+			EntityID:        organizationID,
+			EntityName:      organizationName,
+			EntityKind:      OrganizationEntityKind,
+			StartTime:       billTimes.StartTime,
+			EndTime:         billTimes.EndTime,
+			Product:         WriteOverageProduct,
+			Quantity:        writeOverageGB,
+			TotalPriceCents: writeOveragePrice,
+			Currency:        billingPlan.Currency,
+		})
+	}
+
+	if len(newBilledResources) > 0 {
+		err := CreateOrUpdateBilledResources(ctx, newBilledResources)
 		if err != nil {
 			panic("unable to write billed resources to table")
 		}

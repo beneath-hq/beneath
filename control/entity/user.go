@@ -271,12 +271,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 // Delete removes the user from the database
 // if user is the last one in an organization, in resolver, need to check if there are any services or projects that are still tied to the organization
 func (u *User) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, u.BillingOrganizationID, UserEntityKind, u.UserID, u.Username, false)
-	if err != nil {
-		return err
-	}
-
-	err = hub.DB.WithContext(ctx).Delete(u)
+	err := hub.DB.WithContext(ctx).Delete(u)
 	if err != nil {
 		return err
 	}
