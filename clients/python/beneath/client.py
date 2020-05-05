@@ -57,15 +57,15 @@ class Client:
 
   async def stage_stream(self, path: str, schema: str) -> Stream:
     qualifier = StreamQualifier.from_path(path)
-    project = await self.admin.projects.find_by_organization_and_name(qualifier.organization, qualifier.project)
     try:
-      await self.admin.streams.create(schema=schema, project_id=project["projectID"])
-    except GraphQLError:
       await self.admin.streams.find_by_organization_project_and_name(
         organization_name=qualifier.organization,
         project_name=qualifier.project,
         stream_name=qualifier.stream,
       )
+    except GraphQLError:
+      project = await self.admin.projects.find_by_organization_and_name(qualifier.organization, qualifier.project)
+      await self.admin.streams.create(schema=schema, project_id=project["projectID"])
     stream = await self.find_stream(path)
     return stream
 

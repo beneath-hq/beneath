@@ -45,8 +45,8 @@ def add_subparser(root):
 
   _issue_secret = service.add_parser('issue-secret')
   _issue_secret.set_defaults(func=async_cmd(issue_secret))
-  _issue_secret.add_argument('service_name', type=str)
   _issue_secret.add_argument('service_path', type=str)
+  _issue_secret.add_argument('--description', type=str)
 
   _list_secrets = service.add_parser('list-secrets')
   _list_secrets.set_defaults(func=async_cmd(list_secrets))
@@ -151,8 +151,7 @@ async def issue_secret(args):
     service_id=service['serviceID'],
     description=args.description if args.description is not None else "Command-line issued secret",
   )
-  print("\n" + "Keep your secret string safe. You won't be shown it again." + "\n")
-  pretty_print_graphql_result(result)
+  print(f"Keep your secret string safe. You won't be able to see it again.\nSecret: {result['token']}")
 
 
 async def list_secrets(args):
