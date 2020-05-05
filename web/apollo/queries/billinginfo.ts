@@ -45,6 +45,8 @@ export const UPDATE_BILLING_INFO = gql`
 	    writeOveragePriceCents
 	    baseReadQuota
 	    baseWriteQuota
+      readQuotaCap
+      writeQuotaCap
     }
     billingMethod {
       billingMethodID

@@ -102,10 +102,12 @@ type ComplexityRoot struct {
 		Description            func(childComplexity int) int
 		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
+		ReadQuotaCap           func(childComplexity int) int
 		SeatPriceCents         func(childComplexity int) int
 		SeatReadQuota          func(childComplexity int) int
 		SeatWriteQuota         func(childComplexity int) int
 		WriteOveragePriceCents func(childComplexity int) int
+		WriteQuotaCap          func(childComplexity int) int
 	}
 
 	Me struct {
@@ -716,6 +718,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.ReadOveragePriceCents(childComplexity), true
 
+	case "BillingPlan.readQuotaCap":
+		if e.complexity.BillingPlan.ReadQuotaCap == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.ReadQuotaCap(childComplexity), true
+
 	case "BillingPlan.seatPriceCents":
 		if e.complexity.BillingPlan.SeatPriceCents == nil {
 			break
@@ -743,6 +752,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.WriteOveragePriceCents(childComplexity), true
+
+	case "BillingPlan.writeQuotaCap":
+		if e.complexity.BillingPlan.WriteQuotaCap == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.WriteQuotaCap(childComplexity), true
 
 	case "Me.billingOrganization":
 		if e.complexity.Me.BillingOrganization == nil {
@@ -2532,6 +2548,8 @@ type BillingPlan {
 	writeOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
+	readQuotaCap: Int!
+	writeQuotaCap: Int!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/metrics.graphql", Input: `extend type Query {
@@ -5615,6 +5633,80 @@ func (ec *executionContext) _BillingPlan_baseWriteQuota(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.BaseWriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_readQuotaCap(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadQuotaCap, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_writeQuotaCap(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteQuotaCap, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14624,6 +14716,16 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			}
 		case "baseWriteQuota":
 			out.Values[i] = ec._BillingPlan_baseWriteQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "readQuotaCap":
+			out.Values[i] = ec._BillingPlan_readQuotaCap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "writeQuotaCap":
+			out.Values[i] = ec._BillingPlan_writeQuotaCap(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
