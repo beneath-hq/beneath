@@ -22,15 +22,14 @@ func init() {
 
 		// migrate data
 		_, err = db.Exec(`
-			update organizations
+			update organizations o
 			set
 				user_id = u.user_id,
 				display_name = u.name,
 				description = u.bio,
 				photo_url = u.photo_url
-			from organizations o
-			join users u on o.organization_id = u.personal_organization_id
-			where organization_id = u.personal_organization_id
+			from users u 
+			where o.organization_id = u.personal_organization_id
 			;
 		`)
 		if err != nil {

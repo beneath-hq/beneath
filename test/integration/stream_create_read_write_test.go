@@ -32,14 +32,12 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 			createProject(name: "test", organizationID: $organizationID, public: true) {
 				projectID
 				name
-				users { userID }
 			}
 		}
-	`, map[string]interface{}{"organizationID": testUser.PersonalOrganizationID})
+	`, map[string]interface{}{"organizationID": testOrg.OrganizationID})
 	assert.Empty(t, res1.Errors)
 	project := res1.Result()["createProject"]
 	assert.Equal(t, "test", project["name"])
-	assert.NotEmpty(t, project["users"])
 
 	// create stream
 	schema := readTestdata("foobar.graphql")
@@ -309,7 +307,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// query change data with REST
 	changeCursor := base58.Encode(res10.ChangeCursors[0])
-	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?cursor=%s`, testUser.Username, changeCursor), nil)
+	code, res12 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?cursor=%s`, testOrg.Name, changeCursor), nil)
 	assert.Equal(t, 200, code)
 	assert.Len(t, res12["meta"], 2)
 	assert.Len(t, res12["data"], 50)
@@ -327,7 +325,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// query some filtered data with REST
 	// expecting four records (two from each subset)
-	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`, testUser.Username), nil)
+	code, res13 := queryGatewayHTTP(http.MethodGet, fmt.Sprintf(`v1/%s/test/streams/foo-bar?filter={"a":{"_prefix":"b"}}`, testOrg.Name), nil)
 	assert.Equal(t, 200, code)
 	assert.Len(t, res13["meta"], 2)
 	assert.Len(t, res13["data"], 4)
