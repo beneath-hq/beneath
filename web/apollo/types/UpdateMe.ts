@@ -20,9 +20,9 @@ export interface UpdateMe_updateMe {
   __typename: "Me";
   userID: string;
   readUsage: number;
-  readQuota: number;
+  readQuota: number | null;
   writeUsage: number;
-  writeQuota: number;
+  writeQuota: number | null;
   updatedOn: ControlTime;
   user: UpdateMe_updateMe_user;
 }

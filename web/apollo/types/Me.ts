@@ -45,9 +45,9 @@ export interface Me_me {
   userID: string;
   email: string;
   readUsage: number;
-  readQuota: number;
+  readQuota: number | null;
   writeUsage: number;
-  writeQuota: number;
+  writeQuota: number | null;
   updatedOn: ControlTime;
   user: Me_me_user;
   billingOrganization: Me_me_billingOrganization;
