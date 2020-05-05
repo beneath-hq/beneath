@@ -22,7 +22,7 @@ export const QUERY_ORGANIZATION = gql`
         kind
       }
       projects {
-        projectID 
+        projectID
         name
         displayName
         description
@@ -37,12 +37,8 @@ export const QUERY_ORGANIZATION = gql`
 export const QUERY_USERS_ORGANIZATION_PERMISSIONS = gql`
   query UsersOrganizationPermissions($organizationID: UUID!){
     usersOrganizationPermissions(organizationID: $organizationID) {
-    	user {
-        userID
-      }
-    	organization {
-        organizationID
-      }
+      userID
+      organizationID
     	view
     	admin
     }
@@ -50,9 +46,7 @@ export const QUERY_USERS_ORGANIZATION_PERMISSIONS = gql`
 `;
 
 export const ADD_USER_TO_ORGANIZATION = gql`
-  mutation InviteUserToOrganization($username: String!, $organizationID: UUID!, $view: Boolean!, $admin: Boolean!) {
-    inviteUserToOrganization(username: $username, organizationID: $organizationID, view: $view, admin: $admin) {
-      userID
-    }
+  mutation InviteUserToOrganization($userID: UUID!, $organizationID: UUID!, $view: Boolean!, $create: Boolean!, $admin: Boolean!) {
+    inviteUserToOrganization(userID: $userID, organizationID: $organizationID, view: $view, create: $create, admin: $admin)
   }
-`
+`;

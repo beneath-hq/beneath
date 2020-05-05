@@ -369,13 +369,13 @@ const CardFormElement: FC<Props> = ({ closeDialogue }) => {
         <Grid container className={classes.buttons} spacing={2}>
           <Grid item>
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={() => { closeDialogue(); }}>
               Back
             </Button>
           </Grid>
           <Grid item>
-            <Button variant="contained" type="submit" color="primary">Submit</Button>
+            <Button variant="outlined" type="submit" color="primary">Submit</Button>
           </Grid>
         </Grid>
       </form>

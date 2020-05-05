@@ -7,20 +7,10 @@
 // GraphQL query operation: UsersOrganizationPermissions
 // ====================================================
 
-export interface UsersOrganizationPermissions_usersOrganizationPermissions_user {
-  __typename: "User";
-  userID: string;
-}
-
-export interface UsersOrganizationPermissions_usersOrganizationPermissions_organization {
-  __typename: "Organization";
-  organizationID: string;
-}
-
 export interface UsersOrganizationPermissions_usersOrganizationPermissions {
   __typename: "PermissionsUsersOrganizations";
-  user: UsersOrganizationPermissions_usersOrganizationPermissions_user;
-  organization: UsersOrganizationPermissions_usersOrganizationPermissions_organization;
+  userID: ControlUUID;
+  organizationID: ControlUUID;
   view: boolean;
   admin: boolean;
 }

@@ -190,7 +190,7 @@ func (r *mutationResolver) InviteUserToOrganization(ctx context.Context, userID 
 		Create:         create,
 		Admin:          admin,
 	}
-	err := invite.Save(ctx)
+	err := invite.Upsert(ctx)
 	if err != nil {
 		return false, gqlerror.Errorf("Couldn't create invite: %s", err.Error())
 	}

@@ -147,10 +147,6 @@ func (s *Service) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota
 
 // Delete removes a service from the database
 func (s *Service) Delete(ctx context.Context) error {
-	err := commitCurrentUsageToNextBill(ctx, s.OrganizationID, ServiceEntityKind, s.ServiceID, s.Name, false)
-	if err != nil {
-		return err
-	}
-	_, err = hub.DB.ModelContext(ctx, s).WherePK().Delete()
+	_, err := hub.DB.ModelContext(ctx, s).WherePK().Delete()
 	return err
 }

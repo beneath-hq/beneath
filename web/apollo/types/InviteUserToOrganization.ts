@@ -7,18 +7,14 @@
 // GraphQL mutation operation: InviteUserToOrganization
 // ====================================================
 
-export interface InviteUserToOrganization_inviteUserToOrganization {
-  __typename: "User";
-  userID: string;
-}
-
 export interface InviteUserToOrganization {
-  inviteUserToOrganization: InviteUserToOrganization_inviteUserToOrganization | null;
+  inviteUserToOrganization: boolean;
 }
 
 export interface InviteUserToOrganizationVariables {
-  username: string;
+  userID: ControlUUID;
   organizationID: ControlUUID;
   view: boolean;
+  create: boolean;
   admin: boolean;
 }

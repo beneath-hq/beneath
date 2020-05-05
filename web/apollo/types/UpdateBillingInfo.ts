@@ -20,6 +20,8 @@ export interface UpdateBillingInfo_updateBillingInfo_billingPlan {
   writeOveragePriceCents: number;
   baseReadQuota: number;
   baseWriteQuota: number;
+  readQuotaCap: number;
+  writeQuotaCap: number;
 }
 
 export interface UpdateBillingInfo_updateBillingInfo_billingMethod {
