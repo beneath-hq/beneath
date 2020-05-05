@@ -8,81 +8,18 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/gql"
-	"gitlab.com/beneath-hq/beneath/internal/metrics"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
-// User returns the gql.UserResolver
-func (r *Resolver) User() gql.UserResolver {
-	return &userResolver{r}
+// PrivateUser returns the gql.UserResolver
+func (r *Resolver) PrivateUser() gql.PrivateUserResolver {
+	return &privateUserResolver{r}
 }
 
-type userResolver struct{ *Resolver }
+type privateUserResolver struct{ *Resolver }
 
-func (r *userResolver) UserID(ctx context.Context, obj *entity.User) (string, error) {
+func (r *privateUserResolver) UserID(ctx context.Context, obj *entity.User) (string, error) {
 	return obj.UserID.String(), nil
-}
-
-func (r *queryResolver) Me(ctx context.Context) (*gql.Me, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
-	}
-
-	user := entity.FindUser(ctx, secret.GetOwnerID())
-	return userToMe(ctx, user), nil
-}
-
-func (r *queryResolver) User(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
-	user := entity.FindUser(ctx, userID)
-	if user == nil {
-		return nil, gqlerror.Errorf("User %s not found", userID.String())
-	}
-	return user, nil
-}
-
-func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*entity.User, error) {
-	user := entity.FindUserByUsername(ctx, username)
-	if user == nil {
-		return nil, gqlerror.Errorf("User %s not found", username)
-	}
-	return user, nil
-}
-
-func (r *mutationResolver) UpdateMe(ctx context.Context, username *string, name *string, bio *string, photoURL *string) (*gql.Me, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'updateMe'")
-	}
-
-	user := entity.FindUser(ctx, secret.GetOwnerID())
-	err := user.UpdateDescription(ctx, username, name, bio, photoURL)
-	if err != nil {
-		return nil, err
-	}
-
-	return userToMe(ctx, user), nil
-}
-
-func userToMe(ctx context.Context, u *entity.User) *gql.Me {
-	if u == nil {
-		return nil
-	}
-
-	usage := metrics.GetCurrentUsage(ctx, u.UserID)
-
-	return &gql.Me{
-		UserID:               u.UserID.String(),
-		User:                 u,
-		Email:                u.Email,
-		ReadUsage:            int(usage.ReadBytes),
-		ReadQuota:            Int64ToInt(u.ReadQuota),
-		WriteUsage:           int(usage.WriteBytes),
-		WriteQuota:           Int64ToInt(u.WriteQuota),
-		UpdatedOn:            u.UpdatedOn,
-		PersonalOrganization: u.PersonalOrganization,
-		BillingOrganization:  u.BillingOrganization,
-	}
 }
 
 func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
@@ -91,12 +28,10 @@ func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUI
 		return nil, gqlerror.Errorf("User %s not found", userID.String())
 	}
 
-	organizationID := user.BillingOrganizationID
-
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organizationID)
+	perms := secret.OrganizationPermissions(ctx, user.BillingOrganizationID)
 	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", user.BillingOrganizationID.String())
 	}
 
 	// TODO: invalidate cached quotas
@@ -144,7 +79,7 @@ func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context
 		return nil, gqlerror.Errorf("Organization not found")
 	}
 
-	if organization.Personal {
+	if !organization.IsMulti() {
 		return nil, gqlerror.Errorf("Cannot edit permissions of personal organization")
 	}
 

@@ -9,6 +9,10 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 )
 
+type Organization interface {
+	IsOrganization()
+}
+
 type CreateModelInput struct {
 	ProjectID           uuid.UUID   `json:"projectID"`
 	Name                string      `json:"name"`
@@ -19,19 +23,6 @@ type CreateModelInput struct {
 	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
 	ReadQuota           int         `json:"readQuota"`
 	WriteQuota          int         `json:"writeQuota"`
-}
-
-type Me struct {
-	UserID               string               `json:"userID"`
-	User                 *entity.User         `json:"user"`
-	Email                string               `json:"email"`
-	PersonalOrganization *entity.Organization `json:"personalOrganization"`
-	BillingOrganization  *entity.Organization `json:"billingOrganization"`
-	ReadUsage            int                  `json:"readUsage"`
-	ReadQuota            *int                 `json:"readQuota"`
-	WriteUsage           int                  `json:"writeUsage"`
-	WriteQuota           *int                 `json:"writeQuota"`
-	UpdatedOn            time.Time            `json:"updatedOn"`
 }
 
 type Metrics struct {
@@ -55,6 +46,26 @@ type NewUserSecret struct {
 	Secret *entity.UserSecret `json:"secret"`
 	Token  string             `json:"token"`
 }
+
+type PrivateOrganization struct {
+	OrganizationID string            `json:"organizationID"`
+	Name           string            `json:"name"`
+	DisplayName    string            `json:"displayName"`
+	Description    *string           `json:"description"`
+	PhotoURL       *string           `json:"photoURL"`
+	CreatedOn      time.Time         `json:"createdOn"`
+	UpdatedOn      time.Time         `json:"updatedOn"`
+	ReadQuota      *int              `json:"readQuota"`
+	WriteQuota     *int              `json:"writeQuota"`
+	ReadUsage      int               `json:"readUsage"`
+	WriteUsage     int               `json:"writeUsage"`
+	Projects       []*entity.Project `json:"projects"`
+	Services       []*entity.Service `json:"services"`
+	PersonalUserID *uuid.UUID        `json:"personalUserID"`
+	PersonalUser   *entity.User      `json:"personalUser"`
+}
+
+func (PrivateOrganization) IsOrganization() {}
 
 type UpdateModelInput struct {
 	ModelID             uuid.UUID   `json:"modelID"`

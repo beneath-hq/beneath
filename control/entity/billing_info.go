@@ -83,7 +83,7 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		users := bi.Organization.Users
 		for _, user := range users {
 			userIDs = append(userIDs, user.UserID)
-			usernames = append(usernames, user.Username)
+			usernames = append(usernames, user.Email)
 		}
 
 		// charge organization the pro-rated amount for seats at new billing plan price

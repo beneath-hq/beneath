@@ -2,6 +2,7 @@ extend type Query {
   exploreProjects: [Project!]!
   projectByOrganizationAndName(organizationName: String!, projectName: String!): Project
   projectByID(projectID: UUID!): Project
+  projectMembers(projectID: UUID!): [ProjectMember!]!
 }
 
 extend type Mutation {
@@ -18,10 +19,18 @@ type Project {
   description: String
   photoURL: String
   public: Boolean!
-  organization: Organization!
+  organization: PublicOrganization!
   createdOn: Time!
   updatedOn: Time!
   streams: [Stream!]!
   models: [Model!]!
-  users: [User!]!
+}
+
+type ProjectMember {
+  userID: ID!
+  name: String!
+  displayName: String!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
 }

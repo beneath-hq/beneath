@@ -13,10 +13,13 @@ def add_subparser(root):
   _member_permissions.set_defaults(func=async_cmd(show_member_permissions))
   _member_permissions.add_argument('organization', type=str)
 
-  _rename = organization.add_parser('rename')
-  _rename.set_defaults(func=async_cmd(rename))
-  _rename.add_argument('organization', type=str)
-  _rename.add_argument('--new-name', type=str)
+  _update = organization.add_parser('update')
+  _update.set_defaults(func=async_cmd(update))
+  _update.add_argument('organization', type=str)
+  _update.add_argument('--new-name', type=str)
+  _update.add_argument('--display-name', type=str)
+  _update.add_argument('--description', type=str)
+  _update.add_argument('--photo-url', type=str)
 
   _create = organization.add_parser('create')
   _create.set_defaults(func=async_cmd(create))
@@ -99,12 +102,15 @@ async def show_member_permissions(args):
   pretty_print_graphql_result(result)
 
 
-async def rename(args):
+async def update(args):
   client = Client()
   organization = await client.admin.organizations.find_by_name(args.organization)
-  result = await client.admin.organizations.update_name(
+  result = await client.admin.organizations.update_details(
     organization_id=organization['organizationID'],
     name=args.new_name,
+    display_name=args.display_name,
+    description=args.description,
+    photo_url=args.photo_url,
   )
   pretty_print_graphql_result(result)
 
@@ -128,11 +134,11 @@ async def create(args):
 
 async def invite_user(args):
   client = Client()
-  user = await client.admin.users.get_by_username(args.username)
+  user = await client.admin.organizations.find_by_name(args.username)
   organization = await client.admin.organizations.find_by_name(args.organization)
   result = await client.admin.organizations.invite_user(
     organization_id=organization['organizationID'],
-    user_id=user["userID"],
+    user_id=user["personalUserID"],
     view=args.view,
     create=args.create,
     admin=args.admin,
@@ -149,9 +155,9 @@ async def accept_invite(args):
 
 async def update_member_quota(args):
   client = Client()
-  user = await client.admin.users.get_by_username(args.username)
+  user = await client.admin.organizations.find_by_name(args.username)
   result = await client.admin.organizations.update_user_quota(
-    user_id=user['userID'],
+    user_id=user['personalUserID'],
     read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
     write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )
@@ -160,36 +166,36 @@ async def update_member_quota(args):
 
 async def remove_user(args):
   client = Client()
-  user = await client.admin.users.get_by_username(args.username)
+  user = await client.admin.organizations.find_by_name(args.username)
   organization = await client.admin.organizations.find_by_name(args.organization)
   result = await client.admin.organizations.remove_user(
     organization_id=organization['organizationID'],
-    user_id=user['userID'],
+    user_id=user['personalUserID'],
   )
   pretty_print_graphql_result(result)
 
 
 async def leave(args):
   client = Client()
-  user = await client.admin.users.get_me()
-  result = await client.admin.organizations.leave(user["userID"])
+  user = await client.admin.organizations.find_me()
+  result = await client.admin.organizations.leave(user["personalUserID"])
   pretty_print_graphql_result(result)
 
 
 async def remove_member(args):
   client = Client()
-  user = await client.admin.users.get_by_username(args.username)
-  result = await client.admin.organizations.leave(user["userID"])
+  user = await client.admin.organizations.find_by_name(args.username)
+  result = await client.admin.organizations.leave(user["personalUserID"])
   pretty_print_graphql_result(result)
 
 
 async def update_member_permissions(args):
   client = Client()
-  user = await client.admin.users.get_by_username(args.username)
+  user = await client.admin.organizations.find_by_name(args.username)
   organization = await client.admin.organizations.find_by_name(args.organization)
   result = await client.admin.users.update_permissions_for_organization(
     organization_id=organization['organizationID'],
-    user_id=user['userID'],
+    user_id=user['personalUserID'],
     view=args.view,
     create=args.create,
     admin=args.admin,

@@ -3,127 +3,141 @@ package resolver
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/gql"
-	"gitlab.com/beneath-hq/beneath/internal/middleware"
-
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
+
+	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/internal/metrics"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
-// Organization returns the gql.OrganizationResolver
-func (r *Resolver) Organization() gql.OrganizationResolver {
-	return &organizationResolver{r}
+// PublicOrganization returns the gql.PublicOrganizationResolver
+func (r *Resolver) PublicOrganization() gql.PublicOrganizationResolver {
+	return &publicOrganizationResolver{r}
 }
 
-type organizationResolver struct{ *Resolver }
+type publicOrganizationResolver struct{ *Resolver }
 
-func (r *organizationResolver) OrganizationID(ctx context.Context, obj *entity.Organization) (string, error) {
+func (r *publicOrganizationResolver) OrganizationID(ctx context.Context, obj *entity.Organization) (string, error) {
 	return obj.OrganizationID.String(), nil
 }
 
-func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (*entity.Organization, error) {
-	organization := entity.FindOrganizationByName(ctx, name)
-	if organization == nil {
+func (r *publicOrganizationResolver) PersonalUserID(ctx context.Context, obj *entity.Organization) (*uuid.UUID, error) {
+	return obj.UserID, nil
+}
+
+func (r *queryResolver) Me(ctx context.Context) (*gql.PrivateOrganization, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsUser() {
+		return nil, MakeUnauthenticatedError("Must be authenticated with a personal key to call 'Me'")
+	}
+
+	org := entity.FindOrganizationByUserID(ctx, secret.GetOwnerID())
+	if org == nil {
+		return nil, gqlerror.Errorf("Couldn't find user! This is highly irregular.")
+	}
+
+	return organizationToPrivateOrganization(ctx, org), nil
+}
+
+func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (gql.Organization, error) {
+	org := entity.FindOrganizationByName(ctx, name)
+	if org == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", name)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
-	user := entity.FindUser(ctx, secret.GetOwnerID()) // get the user's projects
-
-	// if you're not a member of the organization, hide the services
+	perms := secret.OrganizationPermissions(ctx, org.OrganizationID)
 	if !perms.View {
-		organization.Services = nil
+		// remove private projects and return a PublicOrganization
+		org.StripPrivateProjects()
+		return org, nil
 	}
 
-	// if you don't have permission for a project, hide it
-	for i, orgProject := range organization.Projects {
-		if !orgProject.Public {
-			hide := true
-			if user != nil {
-				for _, userProject := range user.Projects {
-					if orgProject.ProjectID == userProject.ProjectID {
-						hide = false
-						break
-					}
-				}
-			}
-			if hide {
-				sliceLength := len(organization.Projects)
-				organization.Projects[sliceLength-1], organization.Projects[i] = organization.Projects[i], organization.Projects[sliceLength-1]
-				organization.Projects = organization.Projects[:sliceLength-1]
-			}
-		}
-	}
-
-	return organization, nil
+	return organizationToPrivateOrganization(ctx, org), nil
 }
 
-func (r *queryResolver) UsersOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) ([]*entity.PermissionsUsersOrganizations, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
+func (r *queryResolver) OrganizationByID(ctx context.Context, organizationID uuid.UUID) (gql.Organization, error) {
+	org := entity.FindOrganization(ctx, organizationID)
+	if org == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organizationID)
+	perms := secret.OrganizationPermissions(ctx, org.OrganizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("You are not allowed to view organization %s", organizationID.String())
+		// remove private projects and return a PublicOrganization
+		org.StripPrivateProjects()
+		return org, nil
 	}
 
-	permissions := entity.FindOrganizationPermissions(ctx, organizationID)
-	if permissions == nil {
-		return nil, gqlerror.Errorf("Permissions not found for organization %s", organizationID.String())
-	}
-
-	return permissions, nil
+	return organizationToPrivateOrganization(ctx, org), nil
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*entity.Organization, error) {
+func (r *queryResolver) OrganizationByUserID(ctx context.Context, userID uuid.UUID) (gql.Organization, error) {
+	org := entity.FindOrganizationByUserID(ctx, userID)
+	if org == nil {
+		return nil, gqlerror.Errorf("Organization not found for userID %s", userID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, org.OrganizationID)
+	if !perms.View {
+		// remove private projects and return a PublicOrganization
+		org.StripPrivateProjects()
+		return org, nil
+	}
+
+	return organizationToPrivateOrganization(ctx, org), nil
+}
+
+func (r *queryResolver) OrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]*entity.OrganizationMember, error) {
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("You're not allowed to see the members of organization %s", organizationID.String())
+	}
+
+	return entity.FindOrganizationMembers(ctx, organizationID)
+}
+
+func (r *mutationResolver) CreateOrganization(ctx context.Context, name string) (*gql.PrivateOrganization, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsMaster() {
 		return nil, gqlerror.Errorf("Only Beneath masters can create new organizations")
 	}
 
-	organization := &entity.Organization{
-		Name:     name,
-		Personal: false,
-	}
-
+	organization := &entity.Organization{Name: name}
 	err := organization.CreateWithUser(ctx, secret.GetOwnerID(), true, true, true)
 	if err != nil {
-		return nil, err
+		return nil, gqlerror.Errorf("Failed to create organization: %s", err.Error())
 	}
 
-	return organization, nil
+	return organizationToPrivateOrganization(ctx, organization), nil
 }
 
-func (r *mutationResolver) UpdateOrganizationName(ctx context.Context, organizationID uuid.UUID, name string) (*entity.Organization, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-	}
-
+func (r *mutationResolver) UpdateOrganization(ctx context.Context, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) (*gql.PrivateOrganization, error) {
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.Admin {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
-	if organization.Personal {
-		return nil, gqlerror.Errorf("Cannot change the name of a personal organization. Instead, to achieve the same effect, update your username.")
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
 	}
 
-	organization, err := organization.UpdateName(ctx, name)
+	err := organization.UpdateDetails(ctx, name, displayName, description, photoURL)
 	if err != nil {
 		return nil, gqlerror.Errorf("Failed to update organization name: %s", err.Error())
 	}
 
-	return organization, nil
+	return organizationToPrivateOrganization(ctx, organization), nil
 }
 
-func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Organization, error) {
+func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*gql.PrivateOrganization, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
@@ -141,7 +155,7 @@ func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organiz
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
 	}
 
-	return organization, nil
+	return organizationToPrivateOrganization(ctx, organization), nil
 }
 
 func (r *mutationResolver) InviteUserToOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view bool, create bool, admin bool) (bool, error) {
@@ -150,7 +164,7 @@ func (r *mutationResolver) InviteUserToOrganization(ctx context.Context, userID 
 		return false, gqlerror.Errorf("Organization %s not found", organizationID.String())
 	}
 
-	if organization.Personal {
+	if !organization.IsMulti() {
 		return false, gqlerror.Errorf("You cannot add other users to your personal account. Instead, create a new multi-user organization (you may have to upgrade to a new plan).")
 	}
 
@@ -214,26 +228,26 @@ func (r *mutationResolver) AcceptOrganizationInvite(ctx context.Context, organiz
 }
 
 func (r *mutationResolver) LeaveBillingOrganization(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
-	user := entity.FindUser(ctx, userID)
-	if user == nil {
+	personalOrg := entity.FindOrganizationByUserID(ctx, userID)
+	if personalOrg == nil {
 		return nil, gqlerror.Errorf("User not found")
+	}
+
+	if personalOrg.OrganizationID == personalOrg.User.BillingOrganizationID {
+		return nil, gqlerror.Errorf("User is not in a multi-person organization")
 	}
 
 	// organization admins or users themselves can trigger this
 	secret := middleware.GetSecret(ctx)
 	if !(secret.IsUser() && secret.GetOwnerID() == userID) {
-		perms := secret.OrganizationPermissions(ctx, user.BillingOrganizationID)
+		perms := secret.OrganizationPermissions(ctx, personalOrg.User.BillingOrganizationID)
 		if !perms.Admin {
 			return nil, gqlerror.Errorf("Must be authenticated as the user or an admin of its organization")
 		}
 	}
 
-	if user.BillingOrganizationID == user.PersonalOrganizationID {
-		return nil, gqlerror.Errorf("User is not in a multi-person organization")
-	}
-
-	leavingOrg := user.BillingOrganization
-	err := leavingOrg.TransferUser(ctx, user, user.PersonalOrganization)
+	leavingOrg := entity.FindOrganization(ctx, personalOrg.User.BillingOrganizationID)
+	err := leavingOrg.TransferUser(ctx, personalOrg.User, personalOrg)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +263,7 @@ func (r *mutationResolver) LeaveBillingOrganization(ctx context.Context, userID 
 		return nil, gqlerror.Errorf("Couldn't remove permissions: %s", err.Error())
 	}
 
-	return user, nil
+	return personalOrg.User, nil
 }
 
 func (r *mutationResolver) TransferProjectToOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*entity.Project, error) {
@@ -316,4 +330,31 @@ func (r *mutationResolver) TransferServiceToOrganization(ctx context.Context, se
 	}
 
 	return service, nil
+}
+
+func organizationToPrivateOrganization(ctx context.Context, o *entity.Organization) *gql.PrivateOrganization {
+	po := &gql.PrivateOrganization{
+		OrganizationID: o.OrganizationID.String(),
+		Name:           o.Name,
+		DisplayName:    o.DisplayName,
+		Description:    StrToPtr(o.Description),
+		PhotoURL:       StrToPtr(o.PhotoURL),
+		CreatedOn:      o.CreatedOn,
+		UpdatedOn:      o.UpdatedOn,
+		ReadQuota:      Int64ToInt(o.ReadQuota),
+		WriteQuota:     Int64ToInt(o.WriteQuota),
+		Projects:       o.Projects,
+		Services:       o.Services,
+	}
+
+	usage := metrics.GetCurrentUsage(ctx, o.OrganizationID)
+	po.ReadUsage = int(usage.ReadBytes)
+	po.WriteUsage = int(usage.WriteBytes)
+
+	if o.UserID != nil {
+		po.PersonalUserID = o.UserID
+		po.PersonalUser = o.User
+	}
+
+	return po
 }

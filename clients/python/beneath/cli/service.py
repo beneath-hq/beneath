@@ -164,5 +164,5 @@ async def list_secrets(args):
 
 async def revoke_secret(args):
   client = Client()
-  result = await client.admin.secrets.revoke(secret_id=args.secret_id)
+  result = await client.admin.secrets.revoke_service_secret(secret_id=args.secret_id)
   pretty_print_graphql_result(result)

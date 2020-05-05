@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -44,5 +44,4 @@ func TestSecretIntegration(t *testing.T) {
 	// cleanup
 	secretCache = nil
 	hub.Redis.FlushAll()
-	assert.Nil(t, user.Delete(ctx))
 }

@@ -39,3 +39,11 @@ func Int64ToInt(x *int64) *int {
 	tmp := int(*x)
 	return &tmp
 }
+
+// StrToPtr converts a normal string to a string pointer, making the empty string nil
+func StrToPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}

@@ -1,30 +1,72 @@
 extend type Query {
+  me: PrivateOrganization
   organizationByName(name: String!): Organization
-  usersOrganizationPermissions(organizationID: UUID!): [PermissionsUsersOrganizations!]!
+  organizationByID(organizationID: UUID!): Organization
+  organizationByUserID(userID: UUID!): Organization
+  organizationMembers(organizationID: UUID!): [OrganizationMember!]!
 }
 
 extend type Mutation {
-  createOrganization(name: String!): Organization!
-  updateOrganizationName(organizationID: UUID!, name: String!): Organization!
-  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): Organization!
+  createOrganization(name: String!): PrivateOrganization!
+  updateOrganization(organizationID: UUID!, name: String, displayName: String, description: String, photoURL: String): PrivateOrganization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): PrivateOrganization!
 
   inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
   acceptOrganizationInvite(organizationID: UUID!): Boolean!
-  leaveBillingOrganization(userID: UUID!): User!
+  leaveBillingOrganization(userID: UUID!): PrivateUser!
 
   transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
   transferServiceToOrganization(serviceID: UUID!, organizationID: UUID!): Service!
 }
 
-type Organization {
+interface Organization {
   organizationID: ID!
   name: String!
-  personal: Boolean!
+  displayName: String!
+  description: String
+  photoURL: String
+  createdOn: Time!
+  projects: [Project!]!
+  personalUserID: UUID
+}
+
+type PublicOrganization implements Organization {
+  organizationID: ID!
+  name: String!
+  displayName: String!
+  description: String
+  photoURL: String
+  createdOn: Time!
+  projects: [Project!]!
+  personalUserID: UUID
+}
+
+type PrivateOrganization implements Organization {
+  organizationID: ID!
+  name: String!
+  displayName: String!
+  description: String
+  photoURL: String
   createdOn: Time!
   updatedOn: Time!
   readQuota: Int
   writeQuota: Int
-  services: [Service!]!
-  users: [User!]!
+  readUsage: Int!
+  writeUsage: Int!
   projects: [Project!]!
+  services: [Service!]!
+  personalUserID: UUID
+  personalUser: PrivateUser
+}
+
+type OrganizationMember {
+  userID: ID!
+  billingOrganizationID: UUID!
+  name: String!
+  displayName: String!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+  readQuota: Int
+  writeQuota: Int
 }

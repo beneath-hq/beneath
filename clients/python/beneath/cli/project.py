@@ -6,9 +6,6 @@ from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 def add_subparser(root):
   project = root.add_parser('project').add_subparsers()
 
-  _list = project.add_parser('list')
-  _list.set_defaults(func=async_cmd(show_list))
-
   _create = project.add_parser('create')
   _create.set_defaults(func=async_cmd(create))
   _create.add_argument('project_path', type=str)
@@ -36,6 +33,10 @@ def add_subparser(root):
   _transfer.add_argument('project_path', type=str)
   _transfer.add_argument('new_organization', type=str)
 
+  _member_permissions = project.add_parser('show-members')
+  _member_permissions.set_defaults(func=async_cmd(show_member_permissions))
+  _member_permissions.add_argument('project_path', type=str)
+
   _update_member_permissions = project.add_parser('update-permissions')
   _update_member_permissions.set_defaults(func=async_cmd(update_member_permissions))
   _update_member_permissions.add_argument('project_path', type=str)
@@ -61,15 +62,6 @@ def add_subparser(root):
     const=True,
     default=None,
   )
-
-
-async def show_list(args):
-  client = Client()
-  me = await client.admin.users.get_me()
-  user = await client.admin.users.get_by_id(me['userID'])
-  for project in user['projects']:
-    print(f'{project["organization"]["name"]}/{project["name"]}')
-
 
 async def create(args):
   client = Client()
@@ -122,13 +114,21 @@ async def transfer_organization(args):
   pretty_print_graphql_result(result)
 
 
+async def show_member_permissions(args):
+  client = Client()
+  pq = ProjectQualifier.from_path(args.project_path)
+  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
+  result = await client.admin.projects.get_member_permissions(project_id=project['projectID'])
+  pretty_print_graphql_result(result)
+
+
 async def update_member_permissions(args):
   client = Client()
   pq = ProjectQualifier.from_path(args.project_path)
   project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
-  user = await client.admin.users.get_by_username(args.username)
+  user = await client.admin.organizations.find_by_name(args.username)
   result = await client.admin.users.update_permissions_for_project(
-    user_id=user["userID"],
+    user_id=user["personalUserID"],
     project_id=project["projectID"],
     view=args.view,
     create=args.create,

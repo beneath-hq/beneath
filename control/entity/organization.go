@@ -17,16 +17,20 @@ import (
 
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
-	OrganizationID uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string    `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
-	Personal       bool      `sql:",notnull"`
+	OrganizationID uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name           string     `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
+	DisplayName    string     `sql:",notnull",validate:"required,gte=1,lte=50"`
+	Description    string     `validate:"omitempty,lte=255"`
+	PhotoURL       string     `validate:"omitempty,url,lte=400"`
+	UserID         *uuid.UUID `sql:",on_delete:restrict,type:uuid"`
+	User           *User
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	ReadQuota      *int64
 	WriteQuota     *int64
 	Projects       []*Project
 	Services       []*Service
-	Users          []*User `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
+	Users          []*User `pg:"fk:billing_organization_id"`
 }
 
 var (
@@ -54,7 +58,13 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 	organization := &Organization{
 		OrganizationID: organizationID,
 	}
-	err := hub.DB.ModelContext(ctx, organization).WherePK().Column("organization.*", "Projects", "Services", "Users").Select()
+	err := hub.DB.ModelContext(ctx, organization).WherePK().
+		Column(
+			"organization.*",
+			"User",
+			"Services", // only necessary if has permissions
+			"Projects",
+		).Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -66,8 +76,29 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := hub.DB.ModelContext(ctx, organization).
 		Where("lower(name) = lower(?)", name).
-		Column("organization.*", "Projects", "Services", "Users"). // Q: unable to find Users
-		Select()
+		Column(
+			"organization.*",
+			"User",
+			"Services", // only necessary if has permissions
+			"Projects",
+		).Select()
+	if !AssertFoundOne(err) {
+		return nil
+	}
+	return organization
+}
+
+// FindOrganizationByUserID finds an organization by its personal user ID (if set)
+func FindOrganizationByUserID(ctx context.Context, userID uuid.UUID) *Organization {
+	organization := &Organization{}
+	err := hub.DB.ModelContext(ctx, organization).
+		Where("organization.user_id = ?", userID).
+		Column(
+			"organization.*",
+			"User",
+			"Services", // only necessary if has permissions
+			"Projects",
+		).Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -86,15 +117,23 @@ func FindAllOrganizations(ctx context.Context) []*Organization {
 	return organizations
 }
 
-// FindOrganizationPermissions retrieves all users' permissions for a given organization
-func FindOrganizationPermissions(ctx context.Context, organizationID uuid.UUID) []*PermissionsUsersOrganizations {
-	var permissions []*PermissionsUsersOrganizations
-	err := hub.DB.ModelContext(ctx, &permissions).Where("permissions_users_organizations.organization_id = ?", organizationID).Column("permissions_users_organizations.*", "User", "Organization").Select()
-	if err != nil {
-		panic(err)
-	}
+// IsOrganization implements gql.Organization
+func (o *Organization) IsOrganization() {}
 
-	return permissions
+// IsMulti returns true if o is a multi-user organization
+func (o *Organization) IsMulti() bool {
+	return o.UserID == nil
+}
+
+// StripPrivateProjects removes private projects from o.Projects (no changes in database, just the loaded object)
+func (o *Organization) StripPrivateProjects() {
+	for i, p := range o.Projects {
+		if !p.Public {
+			n := len(o.Projects)
+			o.Projects[n-1], o.Projects[i] = o.Projects[i], o.Projects[n-1]
+			o.Projects = o.Projects[:n-1]
+		}
+	}
 }
 
 // CreateWithUser creates an organization and makes user a member
@@ -146,27 +185,44 @@ func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, vie
 
 	// log new organization
 	log.S.Infow(
-		"control created enterprise organization",
+		"control created non-personal organization",
 		"organization_id", o.OrganizationID,
 	)
 
 	return nil
 }
 
-// UpdateName updates an organization's name
-func (o *Organization) UpdateName(ctx context.Context, name string) (*Organization, error) {
-	o.Name = name
-	o.UpdatedOn = time.Now()
-
-	_, err := hub.DB.ModelContext(ctx, o).
-		Column("name", "updated_on").
-		WherePK().
-		Update()
-	if err != nil {
-		return nil, err
+// UpdateDetails updates the organization's name, display name, description and/or photo
+func (o *Organization) UpdateDetails(ctx context.Context, name *string, displayName *string, description *string, photoURL *string) error {
+	if name != nil {
+		o.Name = *name
+	}
+	if displayName != nil {
+		o.DisplayName = *displayName
+	}
+	if description != nil {
+		o.Description = *description
+	}
+	if photoURL != nil {
+		o.PhotoURL = *photoURL
 	}
 
-	return o, nil
+	// validate
+	err := GetValidator().Struct(o)
+	if err != nil {
+		return err
+	}
+
+	o.UpdatedOn = time.Now()
+	_, err = hub.DB.ModelContext(ctx, o).
+		Column(
+			"name",
+			"display_name",
+			"description",
+			"photo_url",
+			"updated_on",
+		).WherePK().Update()
+	return err
 }
 
 // UpdateQuotas updates the quotas enforced upon the organization
@@ -206,9 +262,12 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	// can be from personal to multi, multi to personal, multi to multi
 
 	// Ensure the last admin member isn't leaving a multi-user org
-	if !o.Personal {
+	if o.IsMulti() {
 		foundRemainingAdmin := false
-		members := FindOrganizationPermissions(ctx, o.OrganizationID)
+		members, err := FindOrganizationMembers(ctx, o.OrganizationID)
+		if err != nil {
+			return err
+		}
 		for _, member := range members {
 			if member.Admin && member.UserID != user.UserID {
 				foundRemainingAdmin = true
@@ -227,7 +286,7 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	}
 
 	// commit user's current usage to the old organization's bill
-	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, UserEntityKind, user.UserID, user.Username, false)
+	err := commitCurrentUsageToNextBill(ctx, o.OrganizationID, UserEntityKind, user.UserID, user.Email, false)
 	if err != nil {
 		return err
 	}
@@ -247,14 +306,14 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	}
 
 	// commit usage credit to the new organization's bill for the user's current month's usage
-	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, UserEntityKind, user.UserID, user.Username, true)
+	err = commitCurrentUsageToNextBill(ctx, targetOrg.OrganizationID, UserEntityKind, user.UserID, user.Email, true)
 	if err != nil {
 		panic("unable to commit usage credit to bill")
 	}
 
 	// add prorated seat to the new organization's next month's bill
 	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, []string{user.Username}, false)
+	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, []string{user.Email}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}

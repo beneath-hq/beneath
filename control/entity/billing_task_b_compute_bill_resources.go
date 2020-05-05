@@ -56,7 +56,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 		// only bill those organization users who have it as their billing org
 		if user.BillingOrganizationID == t.OrganizationID {
 			userIDs = append(userIDs, user.UserID)
-			usernames = append(usernames, user.Username)
+			usernames = append(usernames, user.Email)
 		}
 	}
 	err = commitUsagesToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, UserEntityKind, userIDs, usernames, usageBillTimes)
@@ -108,7 +108,7 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 				OrganizationID:  organizationID,
 				BillingTime:     billTimes.BillingTime,
 				EntityID:        user.UserID,
-				EntityName:      user.Username,
+				EntityName:      user.Email,
 				EntityKind:      UserEntityKind,
 				StartTime:       billTimes.StartTime,
 				EndTime:         billTimes.EndTime,

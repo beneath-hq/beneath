@@ -7,6 +7,49 @@ class Organizations:
   def __init__(self, conn: Connection):
     self.conn = conn
 
+  async def find_me(self):
+    result = await self.conn.query_control(
+      variables={},
+      query="""
+        query Me() {
+          me {
+            organizationID
+            name
+            displayName
+            description
+            photoURL
+            createdOn
+            projects {
+              name
+            }
+            personalUserID
+            ... on PrivateOrganization {
+              updatedOn
+              readQuota
+              writeQuota
+              readUsage
+              writeUsage
+              services {
+                name
+              }
+              personalUser {
+                userID
+                email
+                createdOn
+                updatedOn
+                readQuota
+                writeQuota
+                billingOrganizationID 
+              }
+            }
+          }
+        }
+      """
+    )
+    if result is None:
+      raise Exception("Cannot call get_me when authenticated with a service key")
+    return result['me']
+
   async def find_by_name(self, name):
     result = await self.conn.query_control(
       variables={
@@ -17,21 +60,32 @@ class Organizations:
           organizationByName(name: $name) {
             organizationID
             name
+            displayName
+            description
+            photoURL
             createdOn
-            updatedOn
-            services {
-              serviceID
+            projects {
               name
-              kind
-              readQuota
-              writeQuota
             }
-            users {
-              userID
-              username
-              name
+            personalUserID
+            ... on PrivateOrganization {
+              updatedOn
               readQuota
               writeQuota
+              readUsage
+              writeUsage
+              services {
+                name
+              }
+              personalUser {
+                userID
+                email
+                createdOn
+                updatedOn
+                readQuota
+                writeQuota
+                billingOrganizationID 
+              }
             }
           }
         }
@@ -45,19 +99,22 @@ class Organizations:
         'organizationID': organization_id,
       },
       query="""
-        query UsersOrganizationPermissions($organizationID: UUID!) {
-          usersOrganizationPermissions(organizationID: $organizationID) {
-            user {
-              username
-              name
-            }
+        query OrganizationMembers($organizationID: UUID!) {
+          organizationMembers(organizationID: $organizationID) {
+            userID
+            billingOrganizationID
+            name
+            displayName
             view
+            create
             admin
+            readQuota
+            writeQuota
           }
         }
       """
     )
-    return result['usersOrganizationPermissions']
+    return result['organizationMembers']
 
   async def create(self, name):
     result = await self.conn.query_control(
@@ -69,14 +126,21 @@ class Organizations:
           createOrganization(name: $name) {
            	organizationID
             name
+            displayName
+            description
+            photoURL
             createdOn
             updatedOn
-            users {
-              userID
-              username
+            personalUserID
+            readQuota
+            writeQuota
+            readUsage
+            writeUsage
+            projects {
               name
-              readQuota
-              writeQuota
+            }
+            services {
+              name
             }
           }
         }
@@ -84,32 +148,35 @@ class Organizations:
     )
     return result['createOrganization']
 
-  async def update_name(self, organization_id, name):
+  async def update_details(self, organization_id, name, display_name, description, photo_url):
     result = await self.conn.query_control(
       variables={
         'organizationID': organization_id,
-        'name': format_entity_name(name),
+        'name': format_entity_name(name) if name else None,
+        'displayName': display_name,
+        'description': description,
+        'photoURL': photo_url,
       },
       query="""
-        mutation UpdateOrganizationName($organizationID: UUID!, $name: String!) {
-          updateOrganizationName(organizationID: $organizationID, name: $name) {
+        mutation UpdateOrganization($organizationID: UUID!, $name: String, $displayName: String, $description: String, $photoURL: String) {
+          updateOrganization(organizationID: $organizationID, name: $name, displayName: $displayName, description: $description, photoURL: $photoURL) {
            	organizationID
             name
+            displayName
+            description
+            photoURL
             createdOn
             updatedOn
-            services {
-              serviceID
+            personalUserID
+            readQuota
+            writeQuota
+            readUsage
+            writeUsage
+            projects {
               name
-              kind
-              readQuota
-              writeQuota
             }
-            users {
-              userID
-              username
+            services {
               name
-              readQuota
-              writeQuota
             }
           }
         }
@@ -178,9 +245,11 @@ class Organizations:
         mutation UpdateUserQuotas($userID: UUID!, $readQuota: Int, $writeQuota: Int) {
           updateUserQuotas(userID: $userID, readQuota: $readQuota, writeQuota: $writeQuota) {
             userID
-            username
+            email
             readQuota
             writeQuota
+            createdOn
+            updatedOn
           }
         }
       """
@@ -196,6 +265,9 @@ class Organizations:
         mutation LeaveBillingOrganization($userID: UUID!) {
           leaveBillingOrganization(userID: $userID) {
             userID
+            email
+            updatedOn
+            billingOrganizationID
           }
         }
       """
