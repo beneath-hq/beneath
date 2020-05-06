@@ -18,7 +18,7 @@ import (
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
 	OrganizationID uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string     `sql:",unique,notnull",validate:"required,gte=1,lte=40"`
+	Name           string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"`
 	DisplayName    string     `sql:",notnull",validate:"required,gte=1,lte=50"`
 	Description    string     `validate:"omitempty,lte=255"`
 	PhotoURL       string     `validate:"omitempty,url,lte=400"`
@@ -35,12 +35,36 @@ type Organization struct {
 
 var (
 	// used for validation
-	organizationNameRegex *regexp.Regexp
+	organizationNameRegex     = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
+	organizationNameBlacklist = []string{
+		"auth",
+		"billing",
+		"docs",
+		"documentation",
+		"explore",
+		"health",
+		"healthz",
+		"instance",
+		"instances",
+		"organization",
+		"organizations",
+		"permissions",
+		"project",
+		"projects",
+		"redirects",
+		"secret",
+		"secrets",
+		"stream",
+		"streams",
+		"terminal",
+		"user",
+		"username",
+		"users",
+	}
 )
 
 func init() {
 	// configure validation
-	organizationNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	GetValidator().RegisterStructValidation(organizationValidation, Organization{})
 }
 
@@ -50,6 +74,13 @@ func organizationValidation(sl validator.StructLevel) {
 
 	if !organizationNameRegex.MatchString(s.Name) {
 		sl.ReportError(s.Name, "Name", "", "alphanumericorunderscore", "")
+	}
+
+	for _, blacklisted := range organizationNameBlacklist {
+		if s.Name == blacklisted {
+			sl.ReportError(s.Name, "Name", "", "blacklisted", "")
+			break
+		}
 	}
 }
 

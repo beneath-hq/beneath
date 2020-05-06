@@ -162,18 +162,26 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	user.Master = false
 
 	// try out all possible usernames
+	created := false
 	usernameSeeds := usernameSeeds(email, name, nickname)
 	for _, username := range usernameSeeds {
-		// savepoint in case username is taken
+		// update org and user
+		org.Name = username
+		if org.DisplayName == "" {
+			org.DisplayName = username
+		}
+
+		// validate org
+		err = GetValidator().Struct(org)
+		if err != nil {
+			// continue (probably username is blacklisted)
+			continue
+		}
+
+		// savepoint in case name is taken
 		_, err = tx.Exec("SAVEPOINT bi")
 		if err != nil {
 			return nil, err
-		}
-
-		// update org and user
-		org.Name = username
-		if org.Name == "" {
-			org.DisplayName = username
 		}
 
 		// insert org
@@ -194,6 +202,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 			}
 
 			// success
+			created = true
 			break
 		}
 
@@ -211,6 +220,11 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 
 		// unexpected error
 		return nil, err
+	}
+
+	// if not created, error
+	if !created {
+		return nil, fmt.Errorf("couldn't create user for any username seeds")
 	}
 
 	// add user to user-organization permissions table
