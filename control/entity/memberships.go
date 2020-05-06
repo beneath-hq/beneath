@@ -3,14 +3,15 @@ package entity
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
-
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
+
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // ProjectMember is a convenience representation of project membership
 type ProjectMember struct {
+	ProjectID   uuid.UUID
 	UserID      uuid.UUID
 	Name        string
 	DisplayName string
@@ -21,6 +22,7 @@ type ProjectMember struct {
 
 // OrganizationMember is a convenience representation of organization membership
 type OrganizationMember struct {
+	OrganizationID        uuid.UUID
 	UserID                uuid.UUID
 	BillingOrganizationID uuid.UUID
 	Name                  string
@@ -38,6 +40,7 @@ func FindProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*ProjectMem
 	var result []*ProjectMember
 	_, err := hub.DB.QueryContext(ctx, &result, `
 		select
+			p.project_id,
 			p.user_id,
 			o.name,
 			o.display_name,
@@ -60,6 +63,7 @@ func FindOrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]*
 	var result []*OrganizationMember
 	_, err := hub.DB.QueryContext(ctx, &result, `
 		select
+			p.organization_id,
 			p.user_id,
 			u.billing_organization_id,
 			o.name,

@@ -23,25 +23,29 @@ func (r *privateUserResolver) UserID(ctx context.Context, obj *entity.User) (str
 }
 
 func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
-	user := entity.FindUser(ctx, userID)
-	if user == nil {
+	org := entity.FindOrganizationByUserID(ctx, userID)
+	if org == nil {
 		return nil, gqlerror.Errorf("User %s not found", userID.String())
 	}
 
+	if org.IsBillingOrganizationForUser() {
+		return nil, gqlerror.Errorf("You cannot set user quotas in single-user organizations")
+	}
+
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, user.BillingOrganizationID)
+	perms := secret.OrganizationPermissions(ctx, org.User.BillingOrganizationID)
 	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", user.BillingOrganizationID.String())
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", org.User.BillingOrganizationID.String())
 	}
 
 	// TODO: invalidate cached quotas
 
-	err := user.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	err := org.User.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
 	}
 
-	return user, nil
+	return org.User, nil
 }
 
 func (r *mutationResolver) UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error) {

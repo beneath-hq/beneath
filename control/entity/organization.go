@@ -37,12 +37,36 @@ type Organization struct {
 
 var (
 	// used for validation
-	organizationNameRegex *regexp.Regexp
+	organizationNameRegex     = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
+	organizationNameBlacklist = []string{
+		"auth",
+		"billing",
+		"docs",
+		"documentation",
+		"explore",
+		"health",
+		"healthz",
+		"instance",
+		"instances",
+		"organization",
+		"organizations",
+		"permissions",
+		"project",
+		"projects",
+		"redirects",
+		"secret",
+		"secrets",
+		"stream",
+		"streams",
+		"terminal",
+		"user",
+		"username",
+		"users",
+	}
 )
 
 func init() {
 	// configure validation
-	organizationNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 	GetValidator().RegisterStructValidation(organizationValidation, Organization{})
 }
 
@@ -52,6 +76,13 @@ func organizationValidation(sl validator.StructLevel) {
 
 	if !organizationNameRegex.MatchString(s.Name) {
 		sl.ReportError(s.Name, "Name", "", "alphanumericorunderscore", "")
+	}
+
+	for _, blacklisted := range organizationNameBlacklist {
+		if s.Name == blacklisted {
+			sl.ReportError(s.Name, "Name", "", "blacklisted", "")
+			break
+		}
 	}
 }
 
@@ -125,6 +156,15 @@ func (o *Organization) IsOrganization() {}
 // IsMulti returns true if o is a multi-user organization
 func (o *Organization) IsMulti() bool {
 	return o.UserID == nil
+}
+
+// IsBillingOrganizationForUser returns true if o is also the billing org for the user it represents.
+// It panics if called on a non-personal organization
+func (o *Organization) IsBillingOrganizationForUser() bool {
+	if o.UserID == nil {
+		panic(fmt.Errorf("Called IsBillingOrganizationForUser on non-personal organization"))
+	}
+	return o.User.BillingOrganizationID == o.OrganizationID
 }
 
 // StripPrivateProjects removes private projects from o.Projects (no changes in database, just the loaded object)
