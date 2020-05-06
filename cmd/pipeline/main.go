@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"gitlab.com/beneath-hq/beneath/gateway/pipeline"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
@@ -37,5 +38,9 @@ func main() {
 	// Run forever (until failure)
 	ctx := ctxutil.WithCancelOnTerminate(context.Background())
 	log.S.Info("pipeline started")
-	log.S.Fatal(pipeline.Run(ctx))
+	err := pipeline.Run(ctx)
+	if err != nil {
+		log.S.Fatal(err)
+	}
+	os.Exit(0)
 }

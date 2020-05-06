@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"gitlab.com/beneath-hq/beneath/control/payments"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue/worker"
@@ -39,5 +40,9 @@ func main() {
 	hub.SetPaymentDrivers(payments.InitDrivers(config.PaymentsDrivers))
 
 	ctx := ctxutil.WithCancelOnTerminate(context.Background())
-	log.S.Fatal(worker.Work(ctx))
+	err := worker.Work(ctx)
+	if err != nil {
+		log.S.Fatal(err)
+	}
+	os.Exit(0)
 }
