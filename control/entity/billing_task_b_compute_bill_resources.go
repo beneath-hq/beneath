@@ -16,8 +16,8 @@ import (
 
 // ComputeBillResourcesTask computes all items on an organization's bill
 type ComputeBillResourcesTask struct {
-	OrganizationID uuid.UUID
-	Timestamp      time.Time
+	BillingInfo *BillingInfo
+	Timestamp   time.Time
 }
 
 type billTimes struct {
@@ -33,36 +33,31 @@ func init() {
 
 // Run triggers the task
 func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
-	billingInfo := FindBillingInfo(ctx, t.OrganizationID)
-	if billingInfo == nil {
-		panic("organization's billing info not found")
-	}
-
-	seatBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, true)
-	usageBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, false)
+	seatBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, true)
+	usageBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, false)
 
 	// add "seat" line items
-	numSeats, err := commitSeatsToBill(ctx, billingInfo, seatBillTimes)
+	numSeats, err := commitSeatsToBill(ctx, t.BillingInfo, seatBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add overages to bill
-	err = commitOverageToBill(ctx, billingInfo, usageBillTimes)
+	err = commitOverageToBill(ctx, t.BillingInfo, usageBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// recompute organization's prepaid quotas
 	// necessary to account for a) a user leaving an organization mid-period b) a billing plan's parameters changing mid-period and
-	err = recomputeOrganizationPrepaidQuotas(ctx, billingInfo, numSeats)
+	err = recomputeOrganizationPrepaidQuotas(ctx, t.BillingInfo, numSeats)
 	if err != nil {
 		return err
 	}
 
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
-		OrganizationID: t.OrganizationID,
-		BillingTime:    seatBillTimes.BillingTime,
+		BillingInfo: t.BillingInfo,
+		BillingTime: seatBillTimes.BillingTime,
 	})
 	if err != nil {
 		log.S.Errorw("Error creating task", err)

@@ -36,7 +36,6 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	err := hub.DB.ModelContext(ctx, billingInfo).
 		Where("billing_info.organization_id = ?", organizationID).
 		Column("billing_info.*").
-		Relation("Organization.Users"). // TODO: this isn't needed for viewing an organization's billing page, but it's needed for computing the monthly bill
 		Relation("BillingPlan").
 		Relation("BillingMethod").
 		Select()
@@ -44,6 +43,22 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 		return nil
 	}
 	return billingInfo
+}
+
+// FindAllPayingBillingInfos returns all billing infos where the organization is on a paid plan
+func FindAllPayingBillingInfos(ctx context.Context) []*BillingInfo {
+	var billingInfos []*BillingInfo
+	err := hub.DB.ModelContext(ctx, &billingInfos).
+		Column("billing_info.*").
+		Relation("Organization.Users").
+		Relation("BillingPlan").
+		Relation("BillingMethod").
+		Where("billing_plan.default = false").
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return billingInfos
 }
 
 // Update updates an organization's billing method and billing plan
@@ -95,8 +110,8 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		// trigger bill
 		if prevBillingPlan.Default {
 			err = taskqueue.Submit(ctx, &SendInvoiceTask{
-				OrganizationID: bi.OrganizationID,
-				BillingTime:    billingTime,
+				BillingInfo: bi,
+				BillingTime: billingTime,
 			})
 			if err != nil {
 				log.S.Errorw("Error creating task", err)
@@ -124,6 +139,7 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		}
 
 		// SCENARIO 2: Pro->Free
+		// TODO: trigger bill to assess usage?
 		// LockOrganizationPrivateProjects()
 	}
 
