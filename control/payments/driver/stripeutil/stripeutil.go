@@ -252,7 +252,7 @@ func CreateStripeInvoice(billingInfo driver.BillingInfo, billedResources []drive
 
 	// batch seats
 	if seatCount > 0 {
-		NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, PrettyDescription(string(entity.SeatProduct), ""))
+		NewInvoiceItemSeats(billingInfo.GetDriverPayload()["customer_id"].(string), seatCount, seatPrice, string(billingInfo.GetBillingPlanCurrency()), seatStartTime, seatEndTime, PrettyDescription(string(entity.SeatProduct)))
 	}
 
 	// add tax
