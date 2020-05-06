@@ -13,7 +13,7 @@ const GATEWAY_HOST = IS_PRODUCTION ? "data.beneath.dev" : "localhost:5000";
 const GATEWAY_URL = `${HTTP_PROTOCOL}://${GATEWAY_HOST}`;
 const GATEWAY_URL_WS = `${WEBSOCKET_PROTOCOL}://${GATEWAY_HOST}`;
 
-module.exports = {
+export default {
   IS_PRODUCTION,
   HTTP_PROTOCOL,
   WEBSOCKET_PROTOCOL,
