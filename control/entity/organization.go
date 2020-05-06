@@ -301,12 +301,6 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		}
 	}
 
-	// find new billing info
-	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
-	if targetBillingInfo == nil {
-		return fmt.Errorf("Couldn't find billing info for target organization")
-	}
-
 	// update user
 	user.BillingOrganization = targetOrg
 	user.BillingOrganizationID = targetOrg.OrganizationID
@@ -321,9 +315,15 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		return err
 	}
 
+	// find new billing info
+	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
+	if targetBillingInfo == nil {
+		return fmt.Errorf("Couldn't find billing info for target organization")
+	}
+
 	// add prorated seat to the new organization's next month's bill
 	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, []string{user.Email}, false)
+	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}

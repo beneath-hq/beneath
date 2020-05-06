@@ -245,7 +245,7 @@ func CreateStripeInvoice(billingInfo driver.BillingInfo, billedResources []drive
 				seatStartTime = item.GetStartTime().Unix()
 				seatEndTime = item.GetEndTime().Unix()
 			} else { // itemize everything else
-				NewInvoiceItemOther(billingInfo.GetDriverPayload()["customer_id"].(string), int64(item.GetTotalPriceCents()), string(billingInfo.GetBillingPlanCurrency()), item.GetStartTime().Unix(), item.GetEndTime().Unix(), PrettyDescription(item.GetProduct(), item.GetEntityName()))
+				NewInvoiceItemOther(billingInfo.GetDriverPayload()["customer_id"].(string), int64(item.GetTotalPriceCents()), string(billingInfo.GetBillingPlanCurrency()), item.GetStartTime().Unix(), item.GetEndTime().Unix(), PrettyDescription(item.GetProduct()))
 			}
 		}
 	}
@@ -316,14 +316,14 @@ func SendInvoice(invoiceID string) {
 }
 
 // PrettyDescription makes the Stripe invoice more informative
-func PrettyDescription(product string, entityName string) string {
+func PrettyDescription(product string) string {
 	switch product {
 	case string(entity.SeatProduct):
 		return "Seats"
 	case string(entity.SeatProratedProduct):
-		return "Seat (prorated for " + entityName + ")"
+		return "Seat (prorated)"
 	case string(entity.SeatProratedCreditProduct):
-		return "Seat credit (prorated for " + entityName + ")"
+		return "Seat credit (prorated)"
 	case string(entity.ReadOverageProduct):
 		return "Organization read overage (GB)"
 	case string(entity.WriteOverageProduct):

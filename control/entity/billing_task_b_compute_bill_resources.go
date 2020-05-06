@@ -47,7 +47,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	}
 
 	// if applicable, add overages to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, numSeats, billingInfo.Organization.Name, usageBillTimes)
+	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, numSeats, usageBillTimes)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,6 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 				OrganizationID:  organizationID,
 				BillingTime:     billTimes.BillingTime,
 				EntityID:        user.UserID,
-				EntityName:      user.Email,
 				EntityKind:      UserEntityKind,
 				StartTime:       billTimes.StartTime,
 				EndTime:         billTimes.EndTime,
@@ -103,7 +102,7 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 	return numSeats, nil
 }
 
-func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, userIDs []uuid.UUID, usernames []string, credit bool) error {
+func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, userIDs []uuid.UUID, credit bool) error {
 	if billingPlan == nil {
 		panic("could not find the organization's billing plan")
 	}
@@ -126,12 +125,11 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	}
 
 	var billedResources []*BilledResource
-	for i, userID := range userIDs {
+	for _, userID := range userIDs {
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        userID,
-			EntityName:      usernames[i],
 			EntityKind:      UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -151,7 +149,7 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	return nil
 }
 
-func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, numSeats int, organizationName string, billTimes *billTimes) error {
+func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, numSeats int, billTimes *billTimes) error {
 	_, usages, err := metrics.GetHistoricalUsage(ctx, organizationID, billingPlan.Period, billTimes.StartTime, billTimes.EndTime)
 	if err != nil {
 		panic("unable to get historical usage for organization")
@@ -182,7 +180,6 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        organizationID,
-			EntityName:      organizationName,
 			EntityKind:      OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -198,7 +195,6 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
 			EntityID:        organizationID,
-			EntityName:      organizationName,
 			EntityKind:      OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
