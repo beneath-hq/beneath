@@ -161,6 +161,12 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	// not a platform admin
 	user.Master = false
 
+	// set the organization's default quotas
+	org.PrepaidReadQuota = &defaultBillingPlan.ReadQuota
+	org.PrepaidWriteQuota = &defaultBillingPlan.WriteQuota
+	org.ReadQuota = &defaultBillingPlan.ReadQuota
+	org.WriteQuota = &defaultBillingPlan.WriteQuota
+
 	// try out all possible usernames
 	usernameSeeds := usernameSeeds(email, name, nickname)
 	for _, username := range usernameSeeds {
