@@ -47,13 +47,13 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 }
 
 func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
-	user := entity.FindUser(ctx, userID)
-	if user == nil {
-		return nil, gqlerror.Errorf("user not found")
-	}
-
 	secret := middleware.GetSecret(ctx)
 	if secret.GetOwnerID() != userID {
+		user := entity.FindUser(ctx, userID)
+		if user == nil {
+			return nil, gqlerror.Errorf("user not found")
+		}
+
 		perms := secret.OrganizationPermissions(ctx, user.BillingOrganizationID)
 		if !perms.View {
 			return nil, gqlerror.Errorf("you do not have permission to view this user's metrics")

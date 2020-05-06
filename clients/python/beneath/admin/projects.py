@@ -28,9 +28,6 @@ class Projects:
             streams {
               name
             }
-            users {
-              username
-            }
           }
         }
       """
@@ -69,12 +66,6 @@ class Projects:
             photoURL
             createdOn
             updatedOn
-            users {
-              userID
-              name
-              username
-              photoURL
-            }
           }
         }
       """
@@ -114,6 +105,26 @@ class Projects:
       """
     )
     return result['updateProject']
+
+  async def get_member_permissions(self, project_id):
+    result = await self.conn.query_control(
+      variables={
+        'projectID': project_id,
+      },
+      query="""
+        query ProjectMembers($projectID: UUID!) {
+          projectMembers(projectID: $projectID) {
+            userID
+            name
+            displayName
+            view
+            create
+            admin
+          }
+        }
+      """
+    )
+    return result['projectMembers']
 
   async def delete(self, project_id):
     result = await self.conn.query_control(

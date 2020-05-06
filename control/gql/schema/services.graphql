@@ -15,7 +15,7 @@ type Service {
   serviceID: UUID!
   name: String!
   kind: String!
-  organization: Organization!
+  organization: PublicOrganization!
   readQuota: Int
   writeQuota: Int
 }

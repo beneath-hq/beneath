@@ -1,39 +1,19 @@
-extend type Query {
-  me: Me
-  user(userID: UUID!): User
-  userByUsername(username: String!): User
-}
+# extend type Query {}
 
 extend type Mutation {
-  updateMe(username: String, name: String, bio: String, photoURL: String): Me!
-  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): User!
+  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): PrivateUser!
   updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
   updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
 
-type User {
+type PrivateUser {
   userID: ID!
-  username: String!
-  name: String!
-  bio: String
-  photoURL: String
-  createdOn: Time!
-  projects: [Project!]!
-  readQuota: Int
-  writeQuota: Int
-}
-
-type Me {
-  userID: ID!
-  user: User!
   email: String!
-  personalOrganization: Organization!
-  billingOrganization: Organization!
-  readUsage: Int!
-  readQuota: Int
-  writeUsage: Int!
-  writeQuota: Int
+  createdOn: Time!
   updatedOn: Time!
+  readQuota: Int
+  writeQuota: Int
+  billingOrganizationID: UUID!
 }
 
 type PermissionsUsersProjects {

@@ -51,6 +51,7 @@ const (
 
 var (
 	testUser    *entity.User
+	testOrg     *entity.Organization
 	testSecret  *entity.UserSecret
 	controlHTTP *httptest.Server
 	gatewayHTTP *httptest.Server
@@ -136,6 +137,10 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 	testUser, err = entity.CreateOrUpdateUser(ctx, "google", "", "test@example.org", "test", "Test Testeson", "")
 	panicIf(err)
+	testOrg = entity.FindOrganizationByUserID(ctx, testUser.UserID)
+	if testOrg == nil {
+		panic(fmt.Errorf("testOrg is nil"))
+	}
 	testSecret, err = entity.CreateUserSecret(ctx, testUser.UserID, "", false, false)
 	panicIf(err)
 

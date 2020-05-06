@@ -57,6 +57,16 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 	return project, nil
 }
 
+func (r *queryResolver) ProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*entity.ProjectMember, error) {
+	secret := middleware.GetSecret(ctx)
+	perms := secret.ProjectPermissions(ctx, projectID, false)
+	if !perms.View {
+		return nil, gqlerror.Errorf("You're not allowed to see the members of project %s", projectID.String())
+	}
+
+	return entity.FindProjectMembers(ctx, projectID)
+}
+
 func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
 	secret := middleware.GetSecret(ctx)
 	if !secret.IsUser() {

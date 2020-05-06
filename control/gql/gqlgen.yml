@@ -29,10 +29,14 @@ models:
     model: gitlab.com/beneath-hq/beneath/control/entity.StreamInstance
   StreamIndex:
     model: gitlab.com/beneath-hq/beneath/control/entity.StreamIndex
-  User:
+  PrivateUser:
     model: gitlab.com/beneath-hq/beneath/control/entity.User
-  Organization:
+  PublicOrganization:
     model: gitlab.com/beneath-hq/beneath/control/entity.Organization
+  ProjectMember:
+    model: gitlab.com/beneath-hq/beneath/control/entity.ProjectMember
+  OrganizationMember:
+    model: gitlab.com/beneath-hq/beneath/control/entity.OrganizationMember
   Service:
     model: gitlab.com/beneath-hq/beneath/control/entity.Service
   PermissionsUsersProjects:

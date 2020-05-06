@@ -18,15 +18,6 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// BillingInfo.BillingMethodID
-		_, err = db.Exec(`
-			ALTER TABLE billing_infos
-			ALTER COLUMN billing_method_id SET NOT NULL;
-		`)
-		if err != nil {
-			return err
-		}
-
 		// Done
 		return nil
 	})

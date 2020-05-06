@@ -10,11 +10,18 @@ import (
 	"gitlab.com/beneath-hq/beneath/gateway"
 )
 
+const (
+	minimumBytesBilled = 1024
+)
+
 // TrackRead is a helper to track read usage for a secret from an instance
 func TrackRead(ctx context.Context, secret entity.Secret, streamID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
 	gateway.Metrics.TrackRead(streamID, nrecords, nbytes)
 	gateway.Metrics.TrackRead(instanceID, nrecords, nbytes)
 	if !secret.IsAnonymous() {
+		if nbytes < minimumBytesBilled {
+			nbytes = minimumBytesBilled
+		}
 		gateway.Metrics.TrackRead(secret.GetOwnerID(), nrecords, nbytes)
 		gateway.Metrics.TrackRead(secret.GetBillingOrganizationID(), nrecords, nbytes)
 	}
@@ -25,6 +32,9 @@ func TrackWrite(ctx context.Context, secret entity.Secret, streamID uuid.UUID, i
 	gateway.Metrics.TrackWrite(streamID, nrecords, nbytes)
 	gateway.Metrics.TrackWrite(instanceID, nrecords, nbytes)
 	if !secret.IsAnonymous() {
+		if nbytes < minimumBytesBilled {
+			nbytes = minimumBytesBilled
+		}
 		gateway.Metrics.TrackWrite(secret.GetOwnerID(), nrecords, nbytes)
 		gateway.Metrics.TrackWrite(secret.GetBillingOrganizationID(), nrecords, nbytes)
 	}
