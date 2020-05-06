@@ -292,17 +292,11 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		}
 	}
 
-	// find new billing info
-	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
-	if targetBillingInfo == nil {
-		return fmt.Errorf("Couldn't find billing info for target organization")
-	}
-
 	// update user
 	user.BillingOrganization = targetOrg
 	user.BillingOrganizationID = targetOrg.OrganizationID
-	user.ReadQuota = &targetBillingInfo.BillingPlan.SeatReadQuota
-	user.WriteQuota = &targetBillingInfo.BillingPlan.SeatWriteQuota
+	user.ReadQuota = nil
+	user.WriteQuota = nil
 	user.UpdatedOn = time.Now()
 	_, err := hub.DB.WithContext(ctx).Model(user).
 		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").
@@ -310,6 +304,12 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		Update()
 	if err != nil {
 		return err
+	}
+
+	// find new billing info
+	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
+	if targetBillingInfo == nil {
+		return fmt.Errorf("Couldn't find billing info for target organization")
 	}
 
 	// add prorated seat to the new organization's next month's bill
