@@ -255,7 +255,7 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 
 	// add prorated seat to the new organization's next month's bill
 	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, []string{user.Username}, false)
+	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}

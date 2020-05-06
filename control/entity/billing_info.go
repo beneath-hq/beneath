@@ -79,16 +79,14 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		}
 
 		var userIDs []uuid.UUID
-		var usernames []string
 		users := bi.Organization.Users
 		for _, user := range users {
 			userIDs = append(userIDs, user.UserID)
-			usernames = append(usernames, user.Username)
 		}
 
 		// charge organization the pro-rated amount for seats at new billing plan price
 		billingTime := time.Now()
-		err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, userIDs, usernames, false)
+		err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, userIDs, false)
 		if err != nil {
 			panic("could not commit prorated seats to bill")
 		}
