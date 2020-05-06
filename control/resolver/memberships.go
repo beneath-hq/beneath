@@ -14,6 +14,10 @@ func (r *Resolver) ProjectMember() gql.ProjectMemberResolver {
 
 type projectMemberResolver struct{ *Resolver }
 
+func (r *projectMemberResolver) ProjectID(ctx context.Context, obj *entity.ProjectMember) (string, error) {
+	return obj.ProjectID.String(), nil
+}
+
 func (r *projectMemberResolver) UserID(ctx context.Context, obj *entity.ProjectMember) (string, error) {
 	return obj.UserID.String(), nil
 }
@@ -24,6 +28,10 @@ func (r *Resolver) OrganizationMember() gql.OrganizationMemberResolver {
 }
 
 type organizationMemberResolver struct{ *Resolver }
+
+func (r *organizationMemberResolver) OrganizationID(ctx context.Context, obj *entity.OrganizationMember) (string, error) {
+	return obj.OrganizationID.String(), nil
+}
 
 func (r *organizationMemberResolver) UserID(ctx context.Context, obj *entity.OrganizationMember) (string, error) {
 	return obj.UserID.String(), nil

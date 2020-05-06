@@ -27,6 +27,7 @@ type Project {
 }
 
 type ProjectMember {
+  projectID: ID!
   userID: ID!
   name: String!
   displayName: String!

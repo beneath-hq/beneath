@@ -60,6 +60,7 @@ type PrivateOrganization implements Organization {
 }
 
 type OrganizationMember {
+  organizationID: ID!
   userID: ID!
   billingOrganizationID: UUID!
   name: String!

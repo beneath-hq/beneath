@@ -195,6 +195,7 @@ type ComplexityRoot struct {
 		Create                func(childComplexity int) int
 		DisplayName           func(childComplexity int) int
 		Name                  func(childComplexity int) int
+		OrganizationID        func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
 		UserID                func(childComplexity int) int
 		View                  func(childComplexity int) int
@@ -272,6 +273,7 @@ type ComplexityRoot struct {
 		Create      func(childComplexity int) int
 		DisplayName func(childComplexity int) int
 		Name        func(childComplexity int) int
+		ProjectID   func(childComplexity int) int
 		UserID      func(childComplexity int) int
 		View        func(childComplexity int) int
 	}
@@ -444,6 +446,7 @@ type MutationResolver interface {
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
 }
 type OrganizationMemberResolver interface {
+	OrganizationID(ctx context.Context, obj *entity.OrganizationMember) (string, error)
 	UserID(ctx context.Context, obj *entity.OrganizationMember) (string, error)
 }
 type PrivateUserResolver interface {
@@ -453,6 +456,7 @@ type ProjectResolver interface {
 	ProjectID(ctx context.Context, obj *entity.Project) (string, error)
 }
 type ProjectMemberResolver interface {
+	ProjectID(ctx context.Context, obj *entity.ProjectMember) (string, error)
 	UserID(ctx context.Context, obj *entity.ProjectMember) (string, error)
 }
 type PublicOrganizationResolver interface {
@@ -1433,6 +1437,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationMember.Name(childComplexity), true
 
+	case "OrganizationMember.organizationID":
+		if e.complexity.OrganizationMember.OrganizationID == nil {
+			break
+		}
+
+		return e.complexity.OrganizationMember.OrganizationID(childComplexity), true
+
 	case "OrganizationMember.readQuota":
 		if e.complexity.OrganizationMember.ReadQuota == nil {
 			break
@@ -1824,6 +1835,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectMember.Name(childComplexity), true
+
+	case "ProjectMember.projectID":
+		if e.complexity.ProjectMember.ProjectID == nil {
+			break
+		}
+
+		return e.complexity.ProjectMember.ProjectID(childComplexity), true
 
 	case "ProjectMember.userID":
 		if e.complexity.ProjectMember.UserID == nil {
@@ -2812,6 +2830,7 @@ type PrivateOrganization implements Organization {
 }
 
 type OrganizationMember {
+  organizationID: ID!
   userID: ID!
   billingOrganizationID: UUID!
   name: String!
@@ -2852,6 +2871,7 @@ type Project {
 }
 
 type ProjectMember {
+  projectID: ID!
   userID: ID!
   name: String!
   displayName: String!
@@ -8379,6 +8399,43 @@ func (ec *executionContext) _NewUserSecret_token(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _OrganizationMember_organizationID(ctx context.Context, field graphql.CollectedField, obj *entity.OrganizationMember) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationMember",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.OrganizationMember().OrganizationID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _OrganizationMember_userID(ctx context.Context, field graphql.CollectedField, obj *entity.OrganizationMember) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -10447,6 +10504,43 @@ func (ec *executionContext) _Project_models(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNModel2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectMember_projectID(ctx context.Context, field graphql.CollectedField, obj *entity.ProjectMember) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "ProjectMember",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ProjectMember().ProjectID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectMember_userID(ctx context.Context, field graphql.CollectedField, obj *entity.ProjectMember) (ret graphql.Marshaler) {
@@ -15852,6 +15946,20 @@ func (ec *executionContext) _OrganizationMember(ctx context.Context, sel ast.Sel
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("OrganizationMember")
+		case "organizationID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._OrganizationMember_organizationID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "userID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -16279,6 +16387,20 @@ func (ec *executionContext) _ProjectMember(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ProjectMember")
+		case "projectID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProjectMember_projectID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "userID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
