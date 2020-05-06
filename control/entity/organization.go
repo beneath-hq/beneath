@@ -125,6 +125,15 @@ func (o *Organization) IsMulti() bool {
 	return o.UserID == nil
 }
 
+// IsBillingOrganizationForUser returns true if o is also the billing org for the user it represents.
+// It panics if called on a non-personal organization
+func (o *Organization) IsBillingOrganizationForUser() bool {
+	if o.UserID == nil {
+		panic(fmt.Errorf("Called IsBillingOrganizationForUser on non-personal organization"))
+	}
+	return o.User.BillingOrganizationID == o.OrganizationID
+}
+
 // StripPrivateProjects removes private projects from o.Projects (no changes in database, just the loaded object)
 func (o *Organization) StripPrivateProjects() {
 	for i, p := range o.Projects {
@@ -301,8 +310,8 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	// update user
 	user.BillingOrganization = targetOrg
 	user.BillingOrganizationID = targetOrg.OrganizationID
-	user.ReadQuota = &targetBillingInfo.BillingPlan.SeatReadQuota
-	user.WriteQuota = &targetBillingInfo.BillingPlan.SeatWriteQuota
+	user.ReadQuota = nil
+	user.WriteQuota = nil
 	user.UpdatedOn = time.Now()
 	_, err := hub.DB.WithContext(ctx).Model(user).
 		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").
