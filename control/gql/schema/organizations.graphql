@@ -1,8 +1,8 @@
 extend type Query {
   me: PrivateOrganization
-  organizationByName(name: String!): Organization
-  organizationByID(organizationID: UUID!): Organization
-  organizationByUserID(userID: UUID!): Organization
+  organizationByName(name: String!): Organization!
+  organizationByID(organizationID: UUID!): Organization!
+  organizationByUserID(userID: UUID!): Organization!
   organizationMembers(organizationID: UUID!): [OrganizationMember!]!
 }
 
@@ -57,6 +57,7 @@ type PrivateOrganization implements Organization {
   services: [Service!]!
   personalUserID: UUID
   personalUser: PrivateUser
+  permissions: PermissionsUsersOrganizations!
 }
 
 type OrganizationMember {

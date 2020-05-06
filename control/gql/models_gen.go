@@ -48,21 +48,22 @@ type NewUserSecret struct {
 }
 
 type PrivateOrganization struct {
-	OrganizationID string            `json:"organizationID"`
-	Name           string            `json:"name"`
-	DisplayName    string            `json:"displayName"`
-	Description    *string           `json:"description"`
-	PhotoURL       *string           `json:"photoURL"`
-	CreatedOn      time.Time         `json:"createdOn"`
-	UpdatedOn      time.Time         `json:"updatedOn"`
-	ReadQuota      *int              `json:"readQuota"`
-	WriteQuota     *int              `json:"writeQuota"`
-	ReadUsage      int               `json:"readUsage"`
-	WriteUsage     int               `json:"writeUsage"`
-	Projects       []*entity.Project `json:"projects"`
-	Services       []*entity.Service `json:"services"`
-	PersonalUserID *uuid.UUID        `json:"personalUserID"`
-	PersonalUser   *entity.User      `json:"personalUser"`
+	OrganizationID string                                `json:"organizationID"`
+	Name           string                                `json:"name"`
+	DisplayName    string                                `json:"displayName"`
+	Description    *string                               `json:"description"`
+	PhotoURL       *string                               `json:"photoURL"`
+	CreatedOn      time.Time                             `json:"createdOn"`
+	UpdatedOn      time.Time                             `json:"updatedOn"`
+	ReadQuota      *int                                  `json:"readQuota"`
+	WriteQuota     *int                                  `json:"writeQuota"`
+	ReadUsage      int                                   `json:"readUsage"`
+	WriteUsage     int                                   `json:"writeUsage"`
+	Projects       []*entity.Project                     `json:"projects"`
+	Services       []*entity.Service                     `json:"services"`
+	PersonalUserID *uuid.UUID                            `json:"personalUserID"`
+	PersonalUser   *entity.User                          `json:"personalUser"`
+	Permissions    *entity.PermissionsUsersOrganizations `json:"permissions"`
 }
 
 func (PrivateOrganization) IsOrganization() {}

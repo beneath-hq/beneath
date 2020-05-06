@@ -1,6 +1,6 @@
 extend type Query {
-  service(serviceID: UUID!): Service
-  serviceByNameAndOrganization(name: String!, organizationName: String!): Service
+  service(serviceID: UUID!): Service!
+  serviceByNameAndOrganization(name: String!, organizationName: String!): Service!
 }
 
 extend type Mutation {

@@ -31,6 +31,9 @@ type Organization struct {
 	Projects       []*Project
 	Services       []*Service
 	Users          []*User `pg:"fk:billing_organization_id"`
+
+	// used to indicate requestor's permissions in resolvers
+	Permissions *PermissionsUsersOrganizations `sql:"-"`
 }
 
 var (

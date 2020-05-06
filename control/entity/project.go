@@ -30,6 +30,9 @@ type Project struct {
 	Streams        []*Stream
 	Models         []*Model
 	Users          []*User `pg:"many2many:permissions_users_projects,fk:project_id,joinFK:user_id"`
+
+	// used to indicate requestor's permissions in resolvers
+	Permissions *PermissionsUsersProjects `sql:"-"`
 }
 
 var (
@@ -105,7 +108,7 @@ func (p *Project) GetPublic() bool {
 }
 
 // CreateWithUser creates a project and makes user a member
-func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
+func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, perms ProjectPermissions) error {
 	// validate
 	err := GetValidator().Struct(p)
 	if err != nil {
@@ -124,9 +127,9 @@ func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, view boo
 		err = tx.Insert(&PermissionsUsersProjects{
 			UserID:    userID,
 			ProjectID: p.ProjectID,
-			View:      view,
-			Create:    create,
-			Admin:     admin,
+			View:      perms.View,
+			Create:    perms.Create,
+			Admin:     perms.Admin,
 		})
 		if err != nil {
 			return err

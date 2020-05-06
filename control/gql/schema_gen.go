@@ -231,6 +231,7 @@ type ComplexityRoot struct {
 		DisplayName    func(childComplexity int) int
 		Name           func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
+		Permissions    func(childComplexity int) int
 		PersonalUser   func(childComplexity int) int
 		PersonalUserID func(childComplexity int) int
 		PhotoURL       func(childComplexity int) int
@@ -260,6 +261,7 @@ type ComplexityRoot struct {
 		Models       func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permissions  func(childComplexity int) int
 		PhotoURL     func(childComplexity int) int
 		ProjectID    func(childComplexity int) int
 		Public       func(childComplexity int) int
@@ -1605,6 +1607,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PrivateOrganization.OrganizationID(childComplexity), true
 
+	case "PrivateOrganization.permissions":
+		if e.complexity.PrivateOrganization.Permissions == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.Permissions(childComplexity), true
+
 	case "PrivateOrganization.personalUser":
 		if e.complexity.PrivateOrganization.PersonalUser == nil {
 			break
@@ -1765,6 +1774,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.Organization(childComplexity), true
+
+	case "Project.permissions":
+		if e.complexity.Project.Permissions == nil {
+			break
+		}
+
+		return e.complexity.Project.Permissions(childComplexity), true
 
 	case "Project.photoURL":
 		if e.complexity.Project.PhotoURL == nil {
@@ -2770,9 +2786,9 @@ input UpdateModelInput {
 `},
 	&ast.Source{Name: "control/gql/schema/organizations.graphql", Input: `extend type Query {
   me: PrivateOrganization
-  organizationByName(name: String!): Organization
-  organizationByID(organizationID: UUID!): Organization
-  organizationByUserID(userID: UUID!): Organization
+  organizationByName(name: String!): Organization!
+  organizationByID(organizationID: UUID!): Organization!
+  organizationByUserID(userID: UUID!): Organization!
   organizationMembers(organizationID: UUID!): [OrganizationMember!]!
 }
 
@@ -2827,6 +2843,7 @@ type PrivateOrganization implements Organization {
   services: [Service!]!
   personalUserID: UUID
   personalUser: PrivateUser
+  permissions: PermissionsUsersOrganizations!
 }
 
 type OrganizationMember {
@@ -2844,8 +2861,8 @@ type OrganizationMember {
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
   exploreProjects: [Project!]!
-  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project
-  projectByID(projectID: UUID!): Project
+  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
+  projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
 }
 
@@ -2868,6 +2885,7 @@ type Project {
   updatedOn: Time!
   streams: [Stream!]!
   models: [Model!]!
+  permissions: PermissionsUsersProjects!
 }
 
 type ProjectMember {
@@ -2922,8 +2940,8 @@ type NewUserSecret {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/services.graphql", Input: `extend type Query {
-  service(serviceID: UUID!): Service
-  serviceByNameAndOrganization(name: String!, organizationName: String!): Service
+  service(serviceID: UUID!): Service!
+  serviceByNameAndOrganization(name: String!, organizationName: String!): Service!
 }
 
 extend type Mutation {
@@ -9818,6 +9836,43 @@ func (ec *executionContext) _PrivateOrganization_personalUser(ctx context.Contex
 	return ec.marshalOPrivateUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PrivateOrganization_permissions(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Permissions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.PermissionsUsersOrganizations)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPermissionsUsersOrganizations2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _PrivateUser_userID(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -10504,6 +10559,43 @@ func (ec *executionContext) _Project_models(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNModel2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Project_permissions(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Project",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Permissions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.PermissionsUsersProjects)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPermissionsUsersProjects2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐPermissionsUsersProjects(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectMember_projectID(ctx context.Context, field graphql.CollectedField, obj *entity.ProjectMember) (ret graphql.Marshaler) {
@@ -11579,12 +11671,15 @@ func (ec *executionContext) _Query_organizationByName(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_organizationByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11620,12 +11715,15 @@ func (ec *executionContext) _Query_organizationByID(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_organizationByUserID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11661,12 +11759,15 @@ func (ec *executionContext) _Query_organizationByUserID(ctx context.Context, fie
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_organizationMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11783,12 +11884,15 @@ func (ec *executionContext) _Query_projectByOrganizationAndName(ctx context.Cont
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11824,12 +11928,15 @@ func (ec *executionContext) _Query_projectByID(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11997,12 +12104,15 @@ func (ec *executionContext) _Query_service(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12038,12 +12148,15 @@ func (ec *executionContext) _Query_serviceByNameAndOrganization(ctx context.Cont
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*entity.Service)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_streamByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -16223,6 +16336,11 @@ func (ec *executionContext) _PrivateOrganization(ctx context.Context, sel ast.Se
 			out.Values[i] = ec._PrivateOrganization_personalUserID(ctx, field, obj)
 		case "personalUser":
 			out.Values[i] = ec._PrivateOrganization_personalUser(ctx, field, obj)
+		case "permissions":
+			out.Values[i] = ec._PrivateOrganization_permissions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16362,6 +16480,11 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "models":
 			out.Values[i] = ec._Project_models(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "permissions":
+			out.Values[i] = ec._Project_permissions(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -16708,6 +16831,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizationByName(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "organizationByID":
@@ -16719,6 +16845,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizationByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "organizationByUserID":
@@ -16730,6 +16859,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizationByUserID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "organizationMembers":
@@ -16769,6 +16901,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_projectByOrganizationAndName(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "projectByID":
@@ -16780,6 +16915,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_projectByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "projectMembers":
@@ -16833,6 +16971,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_service(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "serviceByNameAndOrganization":
@@ -16844,6 +16985,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_serviceByNameAndOrganization(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "streamByID":
@@ -17921,6 +18065,10 @@ func (ec *executionContext) marshalNNewUserSecret2ᚖgitlabᚗcomᚋbeneathᚑhq
 	return ec._NewUserSecret(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
+	return ec._Organization(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNOrganizationMember2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganizationMember(ctx context.Context, sel ast.SelectionSet, v entity.OrganizationMember) graphql.Marshaler {
 	return ec._OrganizationMember(ctx, sel, &v)
 }
@@ -18885,10 +19033,6 @@ func (ec *executionContext) marshalOModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbenea
 	return ec._Model(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
-	return ec._Organization(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalOPrivateOrganization2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐPrivateOrganization(ctx context.Context, sel ast.SelectionSet, v PrivateOrganization) graphql.Marshaler {
 	return ec._PrivateOrganization(ctx, sel, &v)
 }
@@ -18909,28 +19053,6 @@ func (ec *executionContext) marshalOPrivateUser2ᚖgitlabᚗcomᚋbeneathᚑhq�
 		return graphql.Null
 	}
 	return ec._PrivateUser(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOProject2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v entity.Project) graphql.Marshaler {
-	return ec._Project(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v *entity.Project) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Project(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOService2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v entity.Service) graphql.Marshaler {
-	return ec._Service(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐService(ctx context.Context, sel ast.SelectionSet, v *entity.Service) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Service(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

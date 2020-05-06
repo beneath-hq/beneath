@@ -39,7 +39,7 @@ func (r *queryResolver) ProjectByOrganizationAndName(ctx context.Context, organi
 		return nil, gqlerror.Errorf("Not allowed to read project %s/%s", organizationName, projectName)
 	}
 
-	return project, nil
+	return projectWithPermissions(project, perms), nil
 }
 
 func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error) {
@@ -54,7 +54,7 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 		return nil, gqlerror.Errorf("Not allowed to read project %s", projectID.String())
 	}
 
-	return project, nil
+	return projectWithPermissions(project, perms), nil
 }
 
 func (r *queryResolver) ProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*entity.ProjectMember, error) {
@@ -97,7 +97,13 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		Public:         public,
 	}
 
-	err := project.CreateWithUser(ctx, secret.GetOwnerID(), true, true, true)
+	projPerms := entity.ProjectPermissions{
+		View:   true,
+		Create: true,
+		Admin:  true,
+	}
+
+	err := project.CreateWithUser(ctx, secret.GetOwnerID(), projPerms)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +114,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		panic(fmt.Errorf("expected project with ID %s to exist", project.ProjectID.String()))
 	}
 
-	return project, nil
+	return projectWithPermissions(project, projPerms), nil
 }
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
@@ -137,7 +143,7 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUI
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	return project, nil
+	return projectWithPermissions(project, perms), nil
 }
 
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error) {
@@ -158,4 +164,15 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID uuid.UUI
 	}
 
 	return true, nil
+}
+
+func projectWithPermissions(p *entity.Project, perms entity.ProjectPermissions) *entity.Project {
+	if perms.View || perms.Create || perms.Admin {
+		p.Permissions = &entity.PermissionsUsersProjects{
+			View:   perms.View,
+			Create: perms.Create,
+			Admin:  perms.Admin,
+		}
+	}
+	return p
 }

@@ -1,7 +1,7 @@
 extend type Query {
   exploreProjects: [Project!]!
-  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project
-  projectByID(projectID: UUID!): Project
+  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
+  projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
 }
 
@@ -24,6 +24,7 @@ type Project {
   updatedOn: Time!
   streams: [Stream!]!
   models: [Model!]!
+  permissions: PermissionsUsersProjects!
 }
 
 type ProjectMember {
