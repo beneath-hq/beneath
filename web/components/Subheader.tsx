@@ -37,22 +37,23 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
   if (router.route === "/project") {
     crumbs = [
       <TerminalCrumb key={0} />,
-      <OrganizationCrumb
-        key={1}
-        organization={router.query.organization_name as string}
-      />,
+      <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
-        key={2} 
-        isCurrent 
+        key={2}
+        isCurrent
         organization={router.query.organization_name as string}
-        project={router.query.project_name as string} 
+        project={router.query.project_name as string}
       />,
     ];
   } else if (router.route === "/stream") {
     crumbs = [
       <TerminalCrumb key={0} />,
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
-      <ProjectCrumb key={2} organization={router.query.organization_name as string} project={router.query.project_name as string} />,
+      <ProjectCrumb
+        key={2}
+        organization={router.query.organization_name as string}
+        project={router.query.project_name as string}
+      />,
       <StreamCrumb
         key={3}
         isCurrent
@@ -62,34 +63,26 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
       />,
     ];
   } else if (router.route === "/user") {
-    crumbs = [
-      <TerminalCrumb key={0} />,
-      <UserCrumb
-        key={1} 
-        isCurrent 
-        username={router.query.name as string} 
-      />,
-    ];
+    crumbs = [<TerminalCrumb key={0} />, <UserCrumb key={1} isCurrent username={router.query.name as string} />];
   } else if (router.route === "/organization") {
     crumbs = [
       <TerminalCrumb key={0} />,
-      <OrganizationCrumb 
-        key={1} 
-        isCurrent 
-        organization={router.query.organization_name as string} 
-      />,
+      <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
     ];
   }
 
   const classes = useStyles();
   return (
     <div className={classes.content}>
-      <Breadcrumbs aria-label="Breadcrumb" className={classes.breadcrumbs}
+      <Breadcrumbs
+        aria-label="Breadcrumb"
+        className={classes.breadcrumbs}
         separator={<NavigateNextIcon fontSize="small" />}
       >
-        {crumbs && crumbs.map((crumb, idx) => {
-          return crumb;
-        })}
+        {crumbs &&
+          crumbs.map((crumb, idx) => {
+            return crumb;
+          })}
       </Breadcrumbs>
       <Divider className={classes.divider} />
     </div>
@@ -130,10 +123,11 @@ interface ProjectCrumbProps {
 
 const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent }) => (
   <Crumb
-    href={`/project?organization_name=${organization}&project_name=${project}`} 
+    href={`/project?organization_name=${organization}&project_name=${project}`}
     as={`/${organization}/${project}`}
     label={project}
-    isCurrent={isCurrent} />
+    isCurrent={isCurrent}
+  />
 );
 
 interface StreamCrumbProps {

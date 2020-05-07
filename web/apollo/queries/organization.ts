@@ -35,6 +35,10 @@ export const QUERY_ME = gql`
         readQuota
         writeQuota
         billingOrganizationID
+        billingOrganization {
+          name
+          displayName
+        }
       }
       permissions {
         view

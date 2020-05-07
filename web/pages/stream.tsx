@@ -13,7 +13,7 @@ import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
-import StreamMetrics from "../components/stream/StreamMetrics";
+import ViewMetrics from "../components/stream/ViewMetrics";
 import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
@@ -71,7 +71,7 @@ const StreamPage = () => {
     tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
   }
 
-  tabs.push({ value: "monitoring", label: "Monitoring", render: () => <StreamMetrics stream={stream} /> });
+  tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
   const defaultValue = stream.currentStreamInstanceID ? "explore" : "api";
   return (

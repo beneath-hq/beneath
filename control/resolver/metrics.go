@@ -16,6 +16,47 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
+func (r *queryResolver) GetMetrics(ctx context.Context, entityKind gql.EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+	switch entityKind {
+	case gql.EntityKindOrganization:
+		return r.GetOrganizationMetrics(ctx, entityID, period, from, until)
+	case gql.EntityKindService:
+		return r.GetServiceMetrics(ctx, entityID, period, from, until)
+	case gql.EntityKindStreamInstance:
+		return r.GetStreamInstanceMetrics(ctx, entityID, period, from, until)
+	case gql.EntityKindStream:
+		return r.GetStreamMetrics(ctx, entityID, period, from, until)
+	case gql.EntityKindUser:
+		return r.GetUserMetrics(ctx, entityID, period, from, until)
+	}
+	return nil, gqlerror.Errorf("Unrecognized entity kind %s", entityKind)
+}
+
+func (r *queryResolver) GetOrganizationMetrics(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("you do not have permission to view this organization's metrics")
+	}
+
+	return getUsage(ctx, organizationID, period, from, until)
+}
+
+func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+	service := entity.FindService(ctx, serviceID)
+	if service == nil {
+		return nil, gqlerror.Errorf("service not found")
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("you do not have permission to view this service's metrics")
+	}
+
+	return getUsage(ctx, serviceID, period, from, until)
+}
+
 func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, streamInstanceID)
 	if stream == nil {
@@ -61,21 +102,6 @@ func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, pe
 	}
 
 	return getUsage(ctx, userID, period, from, until)
-}
-
-func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
-	service := entity.FindService(ctx, serviceID)
-	if service == nil {
-		return nil, gqlerror.Errorf("service not found")
-	}
-
-	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !perms.View {
-		return nil, gqlerror.Errorf("you do not have permission to view this service's metrics")
-	}
-
-	return getUsage(ctx, serviceID, period, from, until)
 }
 
 func getUsage(ctx context.Context, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
