@@ -311,7 +311,7 @@ const US_STATES = [
   { label: "Wyoming", value: "Wyoming" },
 ];
 
-export default {
+module.exports = {
   ANARCHISM_DRIVER,
   STRIPECARD_DRIVER,
   STRIPEWIRE_DRIVER,
