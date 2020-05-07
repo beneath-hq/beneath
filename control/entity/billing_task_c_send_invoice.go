@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
@@ -13,8 +12,8 @@ import (
 
 // SendInvoiceTask sends the Stripe invoice to the customer
 type SendInvoiceTask struct {
-	OrganizationID uuid.UUID
-	BillingTime    time.Time
+	BillingInfo *BillingInfo
+	BillingTime time.Time
 }
 
 // register task
@@ -24,23 +23,18 @@ func init() {
 
 // Run triggers the task
 func (t *SendInvoiceTask) Run(ctx context.Context) error {
-	billedResources := FindBilledResources(ctx, t.OrganizationID, t.BillingTime)
+	billedResources := FindBilledResources(ctx, t.BillingInfo.OrganizationID, t.BillingTime)
 	if billedResources == nil {
-		log.S.Infof("didn't find any billed resources for organization %s", t.OrganizationID.String())
+		log.S.Infof("didn't find any billed resources for organization %s", t.BillingInfo.OrganizationID.String())
 		return nil
 	}
 
-	billingInfo := FindBillingInfo(ctx, t.OrganizationID)
-	if billingInfo == nil {
-		panic("didn't find organization's billing info")
-	}
-
-	if billingInfo.BillingMethodID == nil {
-		log.S.Infof("organization %s does not pay for its usage", t.OrganizationID.String())
+	if t.BillingInfo.BillingMethodID == nil {
+		log.S.Infof("organization %s does not pay for its usage", t.BillingInfo.OrganizationID.String())
 		return nil
 	}
 
-	paymentDriver := hub.PaymentDrivers[string(billingInfo.BillingMethod.PaymentsDriver)]
+	paymentDriver := hub.PaymentDrivers[string(t.BillingInfo.BillingMethod.PaymentsDriver)]
 	if paymentDriver == nil {
 		panic("couldn't get payments driver")
 	}
@@ -51,7 +45,7 @@ func (t *SendInvoiceTask) Run(ctx context.Context) error {
 		brs[i] = billedResources[i]
 	}
 
-	err := paymentDriver.IssueInvoiceForResources(billingInfo, brs)
+	err := paymentDriver.IssueInvoiceForResources(t.BillingInfo, brs)
 	if err != nil {
 		panic("couldn't issue invoice")
 	}

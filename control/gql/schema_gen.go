@@ -105,12 +105,12 @@ type ComplexityRoot struct {
 		Description            func(childComplexity int) int
 		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
-		ReadQuotaCap           func(childComplexity int) int
+		ReadQuota              func(childComplexity int) int
 		SeatPriceCents         func(childComplexity int) int
 		SeatReadQuota          func(childComplexity int) int
 		SeatWriteQuota         func(childComplexity int) int
 		WriteOveragePriceCents func(childComplexity int) int
-		WriteQuotaCap          func(childComplexity int) int
+		WriteQuota             func(childComplexity int) int
 	}
 
 	Metrics struct {
@@ -757,12 +757,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.ReadOveragePriceCents(childComplexity), true
 
-	case "BillingPlan.readQuotaCap":
-		if e.complexity.BillingPlan.ReadQuotaCap == nil {
+	case "BillingPlan.readQuota":
+		if e.complexity.BillingPlan.ReadQuota == nil {
 			break
 		}
 
-		return e.complexity.BillingPlan.ReadQuotaCap(childComplexity), true
+		return e.complexity.BillingPlan.ReadQuota(childComplexity), true
 
 	case "BillingPlan.seatPriceCents":
 		if e.complexity.BillingPlan.SeatPriceCents == nil {
@@ -792,12 +792,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.WriteOveragePriceCents(childComplexity), true
 
-	case "BillingPlan.writeQuotaCap":
-		if e.complexity.BillingPlan.WriteQuotaCap == nil {
+	case "BillingPlan.writeQuota":
+		if e.complexity.BillingPlan.WriteQuota == nil {
 			break
 		}
 
-		return e.complexity.BillingPlan.WriteQuotaCap(childComplexity), true
+		return e.complexity.BillingPlan.WriteQuota(childComplexity), true
 
 	case "Metrics.entityID":
 		if e.complexity.Metrics.EntityID == nil {
@@ -2727,8 +2727,8 @@ type BillingPlan {
 	writeOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
-	readQuotaCap: Int!
-	writeQuotaCap: Int!
+	readQuota: Int!
+	writeQuota: Int!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/metrics.graphql", Input: `extend type Query {
@@ -5861,7 +5861,7 @@ func (ec *executionContext) _BillingPlan_baseWriteQuota(ctx context.Context, fie
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingPlan_readQuotaCap(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingPlan_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5880,7 +5880,7 @@ func (ec *executionContext) _BillingPlan_readQuotaCap(ctx context.Context, field
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ReadQuotaCap, nil
+		return obj.ReadQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5898,7 +5898,7 @@ func (ec *executionContext) _BillingPlan_readQuotaCap(ctx context.Context, field
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingPlan_writeQuotaCap(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingPlan_writeQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5917,7 +5917,7 @@ func (ec *executionContext) _BillingPlan_writeQuotaCap(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.WriteQuotaCap, nil
+		return obj.WriteQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15685,13 +15685,13 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "readQuotaCap":
-			out.Values[i] = ec._BillingPlan_readQuotaCap(ctx, field, obj)
+		case "readQuota":
+			out.Values[i] = ec._BillingPlan_readQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "writeQuotaCap":
-			out.Values[i] = ec._BillingPlan_writeQuotaCap(ctx, field, obj)
+		case "writeQuota":
+			out.Values[i] = ec._BillingPlan_writeQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

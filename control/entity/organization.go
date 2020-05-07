@@ -17,20 +17,22 @@ import (
 
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
-	OrganizationID uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"`
-	DisplayName    string     `sql:",notnull",validate:"required,gte=1,lte=50"`
-	Description    string     `validate:"omitempty,lte=255"`
-	PhotoURL       string     `validate:"omitempty,url,lte=400"`
-	UserID         *uuid.UUID `sql:",on_delete:restrict,type:uuid"`
-	User           *User
-	CreatedOn      time.Time `sql:",default:now()"`
-	UpdatedOn      time.Time `sql:",default:now()"`
-	ReadQuota      *int64
-	WriteQuota     *int64
-	Projects       []*Project
-	Services       []*Service
-	Users          []*User `pg:"fk:billing_organization_id"`
+	OrganizationID    uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name              string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"`
+	DisplayName       string     `sql:",notnull",validate:"required,gte=1,lte=50"`
+	Description       string     `validate:"omitempty,lte=255"`
+	PhotoURL          string     `validate:"omitempty,url,lte=400"`
+	UserID            *uuid.UUID `sql:",on_delete:restrict,type:uuid"`
+	User              *User
+	CreatedOn         time.Time `sql:",default:now()"`
+	UpdatedOn         time.Time `sql:",default:now()"`
+	PrepaidReadQuota  *int64    // bytes
+	PrepaidWriteQuota *int64    // bytes
+	ReadQuota         *int64    // bytes
+	WriteQuota        *int64    // bytes
+	Projects          []*Project
+	Services          []*Service
+	Users             []*User `pg:"fk:billing_organization_id"`
 
 	// used to indicate requestor's permissions in resolvers
 	Permissions *PermissionsUsersOrganizations `sql:"-"`
@@ -181,6 +183,13 @@ func (o *Organization) StripPrivateProjects() {
 
 // CreateWithUser creates an organization and makes user a member
 func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, view bool, create bool, admin bool) error {
+	defaultBillingPlan := FindDefaultBillingPlan(ctx)
+
+	o.PrepaidReadQuota = &defaultBillingPlan.ReadQuota
+	o.PrepaidWriteQuota = &defaultBillingPlan.WriteQuota
+	o.ReadQuota = &defaultBillingPlan.ReadQuota
+	o.WriteQuota = &defaultBillingPlan.WriteQuota
+
 	// validate
 	err := GetValidator().Struct(o)
 	if err != nil {
@@ -206,9 +215,6 @@ func (o *Organization) CreateWithUser(ctx context.Context, userID uuid.UUID, vie
 		if err != nil {
 			return err
 		}
-
-		// get default billing plan
-		defaultBillingPlan := FindDefaultBillingPlan(ctx)
 
 		// create billing info
 		bi := &BillingInfo{
@@ -349,17 +355,38 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 		return err
 	}
 
-	// find new billing info
+	// find target billing info
 	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
 	if targetBillingInfo == nil {
 		return fmt.Errorf("Couldn't find billing info for target organization")
 	}
 
-	// add prorated seat to the new organization's next month's bill
+	// add prorated seat to the target organization's next month's bill
 	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []uuid.UUID{user.UserID}, false)
+	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []*User{user}, false)
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
+	}
+
+	// increment the target organization's prepaid quota by the seat quota
+	// we do this now because we want to show the new usage capacity in the UI as soon as possible
+	if targetOrg.PrepaidReadQuota != nil {
+		newPrepaidReadQuota := *targetOrg.PrepaidReadQuota + targetBillingInfo.BillingPlan.SeatReadQuota
+		targetOrg.PrepaidReadQuota = &newPrepaidReadQuota
+	}
+	if targetOrg.PrepaidWriteQuota != nil {
+		newPrepaidWriteQuota := *targetOrg.PrepaidWriteQuota + targetBillingInfo.BillingPlan.SeatWriteQuota
+		targetOrg.PrepaidWriteQuota = &newPrepaidWriteQuota
+	}
+	if targetOrg.PrepaidReadQuota != nil || targetOrg.PrepaidWriteQuota != nil {
+		targetOrg.UpdatedOn = time.Now()
+		_, err = hub.DB.WithContext(ctx).Model(targetOrg).
+			Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+			WherePK().
+			Update()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

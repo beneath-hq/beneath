@@ -15,6 +15,6 @@ type BillingPlan {
 	writeOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
-	readQuotaCap: Int!
-	writeQuotaCap: Int!
+	readQuota: Int!
+	writeQuota: Int!
 }

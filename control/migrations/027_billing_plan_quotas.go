@@ -9,8 +9,8 @@ func init() {
 		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
 			ALTER TABLE billing_plans
-			ADD read_quota_cap bigint NOT NULL default 0,
-			ADD write_quota_cap bigint NOT NULL default 0;
+			ADD read_quota bigint NOT NULL default 0,
+			ADD write_quota bigint NOT NULL default 0;
 		`)
 		if err != nil {
 			return err
@@ -19,8 +19,8 @@ func init() {
 		// migrate data
 		_, err = db.Exec(`
 			update billing_plans
-			set read_quota_cap = base_read_quota,
-					write_quota_cap = base_write_quota;
+			set read_quota = base_read_quota,
+					write_quota = base_write_quota;
 		`)
 		if err != nil {
 			return err
@@ -32,8 +32,8 @@ func init() {
 		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
 			ALTER TABLE billing_plans
-			DROP read_quota_cap,
-			DROP write_quota_cap;
+			DROP read_quota,
+			DROP write_quota;
 		`)
 		if err != nil {
 			return err

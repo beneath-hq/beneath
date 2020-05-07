@@ -12,8 +12,8 @@ import (
 
 // BillingPlan represents a Billing Plan that an Organization can subscribe to.
 // Here's how the quota arithmetic works:
-// "included" quota = base quota + (seats * seat quota)
-// potential overage = quota cap - included quota
+// prepaid quota = base quota + (seats * seat quota)
+// potential overage = quota - prepaid quota
 type BillingPlan struct {
 	BillingPlanID          uuid.UUID       `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Default                bool            `sql:",notnull,default:false"`
@@ -27,8 +27,8 @@ type BillingPlan struct {
 	SeatWriteQuota         int64           `sql:",notnull"` // bytes
 	BaseReadQuota          int64           `sql:",notnull"` // bytes
 	BaseWriteQuota         int64           `sql:",notnull"` // bytes
-	ReadQuotaCap           int64           `sql:",notnull"` // bytes
-	WriteQuotaCap          int64           `sql:",notnull"` // bytes
+	ReadQuota              int64           `sql:",notnull"` // bytes
+	WriteQuota             int64           `sql:",notnull"` // bytes
 	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
 	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
 	Personal               bool            `sql:",notnull"` // probably want to rename to "MultipleUsers" and flip the sign

@@ -36,7 +36,6 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	err := hub.DB.ModelContext(ctx, billingInfo).
 		Where("billing_info.organization_id = ?", organizationID).
 		Column("billing_info.*").
-		Relation("Organization.Users"). // TODO: this isn't needed for viewing an organization's billing page, but it's needed for computing the monthly bill
 		Relation("BillingPlan").
 		Relation("BillingMethod").
 		Select()
@@ -46,9 +45,53 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	return billingInfo
 }
 
+// FindAllPayingBillingInfos returns all billing infos where the organization is on a paid plan
+func FindAllPayingBillingInfos(ctx context.Context) []*BillingInfo {
+	var billingInfos []*BillingInfo
+	err := hub.DB.ModelContext(ctx, &billingInfos).
+		Column("billing_info.*").
+		Relation("Organization.Users").
+		Relation("BillingPlan").
+		Relation("BillingMethod").
+		Where("billing_plan.default = false").
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return billingInfos
+}
+
 // Update updates an organization's billing method and billing plan
+// if switching billing plans:
+// - trigger bill
+// - update all parameters related to the new billing plan's features
 func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*BillingInfo, error) {
 	// TODO: start a big postgres transaction that will encompass all the updates in this function
+	prevBillingPlan := bi.BillingPlan
+	var newBillingPlan *BillingPlan
+	// check for switching billing plans
+	if billingPlanID != prevBillingPlan.BillingPlanID {
+		newBillingPlan = FindBillingPlan(ctx, billingPlanID)
+		if newBillingPlan == nil {
+			panic("could not get new billing plan")
+		}
+
+		// downgrading to Free plan
+		if newBillingPlan.Default {
+			// trigger bill for overage assessment
+			err := taskqueue.Submit(ctx, &SendInvoiceTask{
+				BillingInfo: bi,
+				BillingTime: time.Now(),
+			})
+			if err != nil {
+				log.S.Errorw("Error creating task", err)
+			}
+
+			// TODO: LockOrganizationPrivateProjects()
+		}
+	}
+
+	// make billing info updates
 	bi.BillingMethodID = billingMethodID
 	bi.BillingPlanID = billingPlanID
 	bi.Country = country
@@ -68,49 +111,36 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		return nil, err
 	}
 
-	// if switching billing plans:
-	// - reconcile next month's bill
-	// - update all parameters related to the new billing plan's features
-	prevBillingPlan := bi.BillingPlan
 	if billingPlanID != prevBillingPlan.BillingPlanID {
-		newBillingPlan := FindBillingPlan(ctx, billingPlanID)
-		if newBillingPlan == nil {
-			panic("could not get new billing plan")
-		}
-
-		var userIDs []uuid.UUID
-		users := bi.Organization.Users
-		for _, user := range users {
-			userIDs = append(userIDs, user.UserID)
-		}
-
-		// charge organization the pro-rated amount for seats at new billing plan price
-		billingTime := time.Now()
-		err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, userIDs, false)
-		if err != nil {
-			panic("could not commit prorated seats to bill")
-		}
-
-		// SCENARIO 1: Free->Pro
-		// trigger bill
-		if prevBillingPlan.Default {
-			err = taskqueue.Submit(ctx, &SendInvoiceTask{
-				OrganizationID: bi.OrganizationID,
-				BillingTime:    billingTime,
-			})
+		// Upgrades
+		if !newBillingPlan.Default {
+			billingTime := time.Now()
+			err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, bi.Organization.Users, false)
 			if err != nil {
-				log.S.Errorw("Error creating task", err)
+				panic("could not commit prorated seats to bill")
+			}
+
+			// upgrading from Free plan
+			if prevBillingPlan.Default {
+				// trigger bill for prorated seat
+				err = taskqueue.Submit(ctx, &SendInvoiceTask{
+					BillingInfo: bi,
+					BillingTime: billingTime,
+				})
+				if err != nil {
+					log.S.Errorw("Error creating task", err)
+				}
 			}
 		}
 
 		// set all user quotas to nil
 		// if the new billing plan permits setting user-level quotas, then the admins should do that explicitly
-		for _, u := range users {
+		for _, u := range bi.Organization.Users {
 			u.ReadQuota = nil
 			u.WriteQuota = nil
 		}
 
-		_, err = hub.DB.ModelContext(ctx, &users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+		_, err = hub.DB.ModelContext(ctx, &bi.Organization.Users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
 		if err != nil {
 			return nil, err
 		}
@@ -118,13 +148,10 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		// update the organization's quotas
 		// additionally, the UpdateQuotas() function clears the cache for all the organization's users' secrets
 		organization := FindOrganization(ctx, bi.OrganizationID)
-		err = organization.UpdateQuotas(ctx, &newBillingPlan.ReadQuotaCap, &newBillingPlan.WriteQuotaCap)
+		err = organization.UpdateQuotas(ctx, &newBillingPlan.ReadQuota, &newBillingPlan.WriteQuota)
 		if err != nil {
 			return nil, err
 		}
-
-		// SCENARIO 2: Pro->Free
-		// LockOrganizationPrivateProjects()
 	}
 
 	return bi, nil

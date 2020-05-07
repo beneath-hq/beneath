@@ -8,6 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/metrics"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
@@ -15,8 +16,8 @@ import (
 
 // ComputeBillResourcesTask computes all items on an organization's bill
 type ComputeBillResourcesTask struct {
-	OrganizationID uuid.UUID
-	Timestamp      time.Time
+	BillingInfo *BillingInfo
+	Timestamp   time.Time
 }
 
 type billTimes struct {
@@ -32,29 +33,31 @@ func init() {
 
 // Run triggers the task
 func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
-	billingInfo := FindBillingInfo(ctx, t.OrganizationID)
-	if billingInfo == nil {
-		panic("organization's billing info not found")
-	}
-
-	seatBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, true)
-	usageBillTimes := calculateBillTimes(t.Timestamp, billingInfo.BillingPlan.Period, false)
+	seatBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, true)
+	usageBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, false)
 
 	// add "seat" line items
-	numSeats, err := commitSeatsToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, billingInfo.Organization.Users, seatBillTimes)
+	numSeats, err := commitSeatsToBill(ctx, t.BillingInfo, seatBillTimes)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add overages to bill
-	err = commitOverageToBill(ctx, t.OrganizationID, billingInfo.BillingPlan, numSeats, usageBillTimes)
+	err = commitOverageToBill(ctx, t.BillingInfo, usageBillTimes)
+	if err != nil {
+		return err
+	}
+
+	// recompute organization's prepaid quotas
+	// necessary to account for a) a user leaving an organization mid-period b) a billing plan's parameters changing mid-period and
+	err = recomputeOrganizationPrepaidQuotas(ctx, t.BillingInfo, numSeats)
 	if err != nil {
 		return err
 	}
 
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
-		OrganizationID: t.OrganizationID,
-		BillingTime:    seatBillTimes.BillingTime,
+		BillingInfo: t.BillingInfo,
+		BillingTime: seatBillTimes.BillingTime,
 	})
 	if err != nil {
 		log.S.Errorw("Error creating task", err)
@@ -63,14 +66,14 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, users []*User, billTimes *billTimes) (int, error) {
+func commitSeatsToBill(ctx context.Context, bi *BillingInfo, billTimes *billTimes) (int64, error) {
 	var billedResources []*BilledResource
-	var numSeats int
-	for _, user := range users {
+	var numSeats int64
+	for _, user := range bi.Organization.Users {
 		// only bill those organization users who have it as their billing org
-		if user.BillingOrganizationID == organizationID {
+		if user.BillingOrganizationID == bi.OrganizationID {
 			billedResources = append(billedResources, &BilledResource{
-				OrganizationID:  organizationID,
+				OrganizationID:  bi.OrganizationID,
 				BillingTime:     billTimes.BillingTime,
 				EntityID:        user.UserID,
 				EntityKind:      UserEntityKind,
@@ -78,19 +81,19 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 				EndTime:         billTimes.EndTime,
 				Product:         SeatProduct,
 				Quantity:        1,
-				TotalPriceCents: billingPlan.SeatPriceCents,
-				Currency:        billingPlan.Currency,
+				TotalPriceCents: bi.BillingPlan.SeatPriceCents,
+				Currency:        bi.BillingPlan.Currency,
 			})
 			numSeats++
 		}
 	}
 
 	if len(billedResources) == 0 {
-		if !billingPlan.Personal {
+		if !bi.BillingPlan.Personal {
 			log.S.Info("The multi organization has no users and will be deleted.")
 		}
 
-		return 0, nil
+		return numSeats, nil
 	}
 
 	err := CreateOrUpdateBilledResources(ctx, billedResources)
@@ -102,7 +105,7 @@ func commitSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingPla
 	return numSeats, nil
 }
 
-func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, userIDs []uuid.UUID, credit bool) error {
+func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, users []*User, credit bool) error {
 	if billingPlan == nil {
 		panic("could not find the organization's billing plan")
 	}
@@ -125,11 +128,11 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	}
 
 	var billedResources []*BilledResource
-	for _, userID := range userIDs {
+	for _, user := range users {
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
-			EntityID:        userID,
+			EntityID:        user.UserID,
 			EntityKind:      UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
@@ -149,8 +152,8 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	return nil
 }
 
-func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingPlan *BillingPlan, numSeats int, billTimes *billTimes) error {
-	_, usages, err := metrics.GetHistoricalUsage(ctx, organizationID, billingPlan.Period, billTimes.StartTime, billTimes.EndTime)
+func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTimes) error {
+	_, usages, err := metrics.GetHistoricalUsage(ctx, bi.OrganizationID, bi.BillingPlan.Period, billTimes.StartTime, billTimes.EndTime)
 	if err != nil {
 		panic("unable to get historical usage for organization")
 	}
@@ -158,50 +161,47 @@ func commitOverageToBill(ctx context.Context, organizationID uuid.UUID, billingP
 	if len(usages) > 1 {
 		panic("GetHistoricalUsage returned more periods than expected")
 	} else if len(usages) == 0 {
-		log.S.Infof("organization %s had no usage in the billing period", organizationID.String())
+		log.S.Infof("organization %s had no usage in the billing period", bi.OrganizationID.String())
 		return nil
 	}
 
-	readIncludedQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*int64(numSeats)
-	writeIncludedQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*int64(numSeats)
-
-	readOverageBytes := usages[0].ReadBytes - readIncludedQuota
+	readOverageBytes := usages[0].ReadBytes - *bi.Organization.PrepaidReadQuota
 	readOverageGB := readOverageBytes/10 ^ 6
-	readOveragePrice := int32(readOverageGB) * billingPlan.ReadOveragePriceCents // assuming unit of ReadOveragePriceCents is GB
+	readOveragePrice := int32(readOverageGB) * bi.BillingPlan.ReadOveragePriceCents // assuming unit of ReadOveragePriceCents is GB
 
-	writeOverageBytes := usages[0].WriteBytes - writeIncludedQuota
+	writeOverageBytes := usages[0].WriteBytes - *bi.Organization.PrepaidWriteQuota
 	writeOverageGB := writeOverageBytes/10 ^ 6
-	writeOveragePrice := int32(writeOverageGB) * billingPlan.WriteOveragePriceCents // assuming unit of WriteOveragePriceCents is GB
+	writeOveragePrice := int32(writeOverageGB) * bi.BillingPlan.WriteOveragePriceCents // assuming unit of WriteOveragePriceCents is GB
 
 	var newBilledResources []*BilledResource
 
 	if readOverageBytes > 0 {
 		newBilledResources = append(newBilledResources, &BilledResource{
-			OrganizationID:  organizationID,
+			OrganizationID:  bi.OrganizationID,
 			BillingTime:     billTimes.BillingTime,
-			EntityID:        organizationID,
+			EntityID:        bi.OrganizationID,
 			EntityKind:      OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
 			Product:         ReadOverageProduct,
 			Quantity:        readOverageGB,
 			TotalPriceCents: readOveragePrice,
-			Currency:        billingPlan.Currency,
+			Currency:        bi.BillingPlan.Currency,
 		})
 	}
 
 	if writeOverageBytes > 0 {
 		newBilledResources = append(newBilledResources, &BilledResource{
-			OrganizationID:  organizationID,
+			OrganizationID:  bi.OrganizationID,
 			BillingTime:     billTimes.BillingTime,
-			EntityID:        organizationID,
+			EntityID:        bi.OrganizationID,
 			EntityKind:      OrganizationEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
 			Product:         WriteOverageProduct,
 			Quantity:        writeOverageGB,
 			TotalPriceCents: writeOveragePrice,
-			Currency:        billingPlan.Currency,
+			Currency:        bi.BillingPlan.Currency,
 		})
 	}
 
@@ -239,4 +239,29 @@ func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *bi
 		StartTime:   startTime,
 		EndTime:     endTime,
 	}
+}
+
+func recomputeOrganizationPrepaidQuotas(ctx context.Context, bi *BillingInfo, numSeats int64) error {
+	org := bi.Organization
+
+	if org.PrepaidReadQuota != nil {
+		newPrepaidReadQuota := bi.BillingPlan.BaseReadQuota + bi.BillingPlan.SeatReadQuota*numSeats
+		org.PrepaidReadQuota = &newPrepaidReadQuota
+	}
+	if org.PrepaidReadQuota != nil {
+		newPrepaidWriteQuota := bi.BillingPlan.BaseWriteQuota + bi.BillingPlan.SeatWriteQuota*numSeats
+		org.PrepaidWriteQuota = &newPrepaidWriteQuota
+	}
+
+	if org.PrepaidReadQuota != nil || org.PrepaidWriteQuota != nil {
+		org.UpdatedOn = time.Now()
+		_, err := hub.DB.WithContext(ctx).Model(org).
+			Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+			WherePK().
+			Update()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
