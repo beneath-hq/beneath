@@ -3,6 +3,9 @@
 package gql
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -76,4 +79,51 @@ type UpdateModelInput struct {
 	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
 	ReadQuota           *int        `json:"readQuota"`
 	WriteQuota          *int        `json:"writeQuota"`
+}
+
+type EntityKind string
+
+const (
+	EntityKindOrganization   EntityKind = "Organization"
+	EntityKindService        EntityKind = "Service"
+	EntityKindStreamInstance EntityKind = "StreamInstance"
+	EntityKindStream         EntityKind = "Stream"
+	EntityKindUser           EntityKind = "User"
+)
+
+var AllEntityKind = []EntityKind{
+	EntityKindOrganization,
+	EntityKindService,
+	EntityKindStreamInstance,
+	EntityKindStream,
+	EntityKindUser,
+}
+
+func (e EntityKind) IsValid() bool {
+	switch e {
+	case EntityKindOrganization, EntityKindService, EntityKindStreamInstance, EntityKindStream, EntityKindUser:
+		return true
+	}
+	return false
+}
+
+func (e EntityKind) String() string {
+	return string(e)
+}
+
+func (e *EntityKind) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EntityKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EntityKind", str)
+	}
+	return nil
+}
+
+func (e EntityKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

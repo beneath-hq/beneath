@@ -246,6 +246,7 @@ type ComplexityRoot struct {
 	}
 
 	PrivateUser struct {
+		BillingOrganization   func(childComplexity int) int
 		BillingOrganizationID func(childComplexity int) int
 		CreatedOn             func(childComplexity int) int
 		Email                 func(childComplexity int) int
@@ -300,6 +301,8 @@ type ComplexityRoot struct {
 		BillingPlans                       func(childComplexity int) int
 		Empty                              func(childComplexity int) int
 		ExploreProjects                    func(childComplexity int) int
+		GetMetrics                         func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetOrganizationMetrics             func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetServiceMetrics                  func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetStreamInstanceMetrics           func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
 		GetStreamMetrics                   func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
@@ -475,10 +478,12 @@ type QueryResolver interface {
 	BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error)
 	BillingMethods(ctx context.Context, organizationID uuid.UUID) ([]*entity.BillingMethod, error)
 	BillingPlans(ctx context.Context) ([]*entity.BillingPlan, error)
-	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetMetrics(ctx context.Context, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetOrganizationMetrics(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
+	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	Model(ctx context.Context, organizationName string, projectName string, modelName string) (*entity.Model, error)
 	Me(ctx context.Context) (*PrivateOrganization, error)
 	OrganizationByName(ctx context.Context, name string) (Organization, error)
@@ -1693,6 +1698,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PrivateOrganization.WriteUsage(childComplexity), true
 
+	case "PrivateUser.billingOrganization":
+		if e.complexity.PrivateUser.BillingOrganization == nil {
+			break
+		}
+
+		return e.complexity.PrivateUser.BillingOrganization(childComplexity), true
+
 	case "PrivateUser.billingOrganizationID":
 		if e.complexity.PrivateUser.BillingOrganizationID == nil {
 			break
@@ -2001,6 +2013,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.ExploreProjects(childComplexity), true
+
+	case "Query.getMetrics":
+		if e.complexity.Query.GetMetrics == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getMetrics_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetMetrics(childComplexity, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+
+	case "Query.getOrganizationMetrics":
+		if e.complexity.Query.GetOrganizationMetrics == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getOrganizationMetrics_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetOrganizationMetrics(childComplexity, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
 	case "Query.getServiceMetrics":
 		if e.complexity.Query.GetServiceMetrics == nil {
@@ -2732,10 +2768,12 @@ type BillingPlan {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/metrics.graphql", Input: `extend type Query {
-  getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getMetrics(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getOrganizationMetrics(organizationID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getServiceMetrics(serviceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
 }
 
 type Metrics {
@@ -2749,7 +2787,14 @@ type Metrics {
   writeBytes: Int!
   writeRecords: Int!
 }
-`},
+
+enum EntityKind {
+  Organization
+  Service
+  StreamInstance
+  Stream
+  User
+}`},
 	&ast.Source{Name: "control/gql/schema/models.graphql", Input: `extend type Query {
   model(organizationName: String!, projectName: String!, modelName: String!): Model!
 }
@@ -3064,6 +3109,7 @@ type PrivateUser {
   readQuota: Int
   writeQuota: Int
   billingOrganizationID: UUID!
+  billingOrganization: PublicOrganization!
 }
 
 type PermissionsUsersProjects {
@@ -4109,6 +4155,90 @@ func (ec *executionContext) field_Query_billingMethods_args(ctx context.Context,
 		}
 	}
 	args["organizationID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 EntityKind
+	if tmp, ok := rawArgs["entityKind"]; ok {
+		arg0, err = ec.unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐEntityKind(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["entityKind"] = arg0
+	var arg1 uuid.UUID
+	if tmp, ok := rawArgs["entityID"]; ok {
+		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["entityID"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["period"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg2
+	var arg3 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		arg3, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg3
+	var arg4 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		arg4, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getOrganizationMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
 	return args, nil
 }
 
@@ -10178,6 +10308,43 @@ func (ec *executionContext) _PrivateUser_billingOrganizationID(ctx context.Conte
 	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PrivateUser_billingOrganization(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateUser",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BillingOrganization, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPublicOrganization2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐOrganization(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Project_projectID(ctx context.Context, field graphql.CollectedField, obj *entity.Project) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -11470,7 +11637,7 @@ func (ec *executionContext) _Query_billingPlans(ctx context.Context, field graph
 	return ec.marshalNBillingPlan2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingPlan(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -11487,7 +11654,7 @@ func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field g
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getStreamMetrics_args(ctx, rawArgs)
+	args, err := ec.field_Query_getMetrics_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -11496,7 +11663,95 @@ func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetStreamMetrics(rctx, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetMetrics(rctx, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Metrics)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getOrganizationMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getOrganizationMetrics_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetOrganizationMetrics(rctx, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Metrics)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getServiceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getServiceMetrics_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetServiceMetrics(rctx, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11558,6 +11813,50 @@ func (ec *executionContext) _Query_getStreamInstanceMetrics(ctx context.Context,
 	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getStreamMetrics_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetStreamMetrics(rctx, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Metrics)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -11585,50 +11884,6 @@ func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().GetUserMetrics(rctx, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐMetrics(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getServiceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getServiceMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetServiceMetrics(rctx, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16489,6 +16744,11 @@ func (ec *executionContext) _PrivateUser(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "billingOrganization":
+			out.Values[i] = ec._PrivateUser_billingOrganization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16831,7 +17091,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "getStreamMetrics":
+		case "getMetrics":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -16839,7 +17099,35 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getStreamMetrics(ctx, field)
+				res = ec._Query_getMetrics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getOrganizationMetrics":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getOrganizationMetrics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getServiceMetrics":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getServiceMetrics(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -16859,6 +17147,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getStreamMetrics":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getStreamMetrics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "getUserMetrics":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -16868,20 +17170,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getServiceMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getServiceMetrics(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -17967,6 +18255,15 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 
 func (ec *executionContext) unmarshalNCreateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐCreateModelInput(ctx context.Context, v interface{}) (CreateModelInput, error) {
 	return ec.unmarshalInputCreateModelInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, v interface{}) (EntityKind, error) {
+	var res EntityKind
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, sel ast.SelectionSet, v EntityKind) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

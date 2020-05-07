@@ -1,8 +1,10 @@
 extend type Query {
-  getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getMetrics(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getOrganizationMetrics(organizationID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
   getServiceMetrics(serviceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
+  getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
 }
 
 type Metrics {
@@ -15,4 +17,12 @@ type Metrics {
   writeOps: Int!
   writeBytes: Int!
   writeRecords: Int!
+}
+
+enum EntityKind {
+  Organization
+  Service
+  StreamInstance
+  Stream
+  User
 }

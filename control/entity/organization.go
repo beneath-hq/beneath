@@ -132,6 +132,7 @@ func FindOrganizationByUserID(ctx context.Context, userID uuid.UUID) *Organizati
 		Column(
 			"organization.*",
 			"User",
+			"User.BillingOrganization",
 			"Services", // only necessary if has permissions
 			"Projects",
 		).Select()
