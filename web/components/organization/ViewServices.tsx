@@ -25,9 +25,9 @@ const ViewProjects: FC<ViewProjectsProps> = ({ organization }) => {
         {organization.services.map(({ serviceID, name, kind }) => (
           <ListItem
             key={serviceID}
-            // component={NextMuiLinkList}
-            // href={`/-/service?organization_name=${toURLName(organization.name)}&service_name=${toURLName(name)}`}
-            // as={`/${toURLName(organization.name)}/-/services/${toURLName(name)}`}
+            component={NextMuiLinkList}
+            href={`/service?organization_name=${toURLName(organization.name)}&service_name=${toURLName(name)}`}
+            as={`/${toURLName(organization.name)}/-/services/${toURLName(name)}`}
             button
             disableGutters
           >
