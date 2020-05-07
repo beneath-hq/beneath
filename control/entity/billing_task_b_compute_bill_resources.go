@@ -105,7 +105,7 @@ func commitSeatsToBill(ctx context.Context, bi *BillingInfo, billTimes *billTime
 	return numSeats, nil
 }
 
-func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, userIDs []uuid.UUID, credit bool) error {
+func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, users []*User, credit bool) error {
 	if billingPlan == nil {
 		panic("could not find the organization's billing plan")
 	}
@@ -128,11 +128,11 @@ func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, bi
 	}
 
 	var billedResources []*BilledResource
-	for _, userID := range userIDs {
+	for _, user := range users {
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  organizationID,
 			BillingTime:     billTimes.BillingTime,
-			EntityID:        userID,
+			EntityID:        user.UserID,
 			EntityKind:      UserEntityKind,
 			StartTime:       billTimes.StartTime,
 			EndTime:         billTimes.EndTime,
