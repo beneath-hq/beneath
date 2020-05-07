@@ -6,6 +6,7 @@ export const QUERY_BILLING_PLANS = gql`
     billingPlanID
     default
     description
+    availableInUI
   }
 }
 `;

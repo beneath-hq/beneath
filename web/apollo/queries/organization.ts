@@ -64,6 +64,8 @@ export const QUERY_ORGANIZATION = gql`
       personalUserID
       ... on PrivateOrganization {
         updatedOn
+        prepaidReadQuota
+        prepaidWriteQuota
         readQuota
         writeQuota
         readUsage

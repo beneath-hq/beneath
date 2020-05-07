@@ -17,4 +17,5 @@ type BillingPlan {
 	baseWriteQuota: Int!
 	readQuota: Int!
 	writeQuota: Int!
+	availableInUI: Boolean!
 }

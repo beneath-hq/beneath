@@ -12,6 +12,7 @@ export interface BillingPlans_billingPlans {
   billingPlanID: ControlUUID;
   default: boolean;
   description: string | null;
+  availableInUI: boolean;
 }
 
 export interface BillingPlans {

@@ -24,12 +24,13 @@ import { Autocomplete } from "@material-ui/lab";
 import SelectField from "../../SelectField";
 
 import { useMutation, useQuery } from "@apollo/react-hooks";
-import { QUERY_BILLING_INFO, UPDATE_BILLING_INFO } from "../../../apollo/queries/billinginfo";
+import { UPDATE_BILLING_INFO } from "../../../apollo/queries/billinginfo";
 import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
 import { QUERY_BILLING_PLANS } from "../../../apollo/queries/billingplan";
-import { BillingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
+import { BillingInfo_billingInfo } from "../../../apollo/types/BillingInfo";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
 import { BillingPlans } from "../../../apollo/types/BillingPlans";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../apollo/types/UpdateBillingInfo";
 import billing from "../../../lib/billing";
 
@@ -92,12 +93,13 @@ interface CheckoutStateTypes {
 }
 
 interface Props {
-  organizationID: string;
+  organization: OrganizationByName_organizationByName_PrivateOrganization;
   route: string;
   closeDialogue: () => void;
+  billingInfo: BillingInfo_billingInfo;
 }
 
-const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDialogue }) => {
+const UpdateBillingInfoDialogue: FC<Props> = ({ organization, route, closeDialogue, billingInfo }) => {
   const classes = useStyles();
   const [successDialogue, setSuccessDialogue] = React.useState(false);
   const [errorDialogue, setErrorDialogue] = React.useState(false);
@@ -112,16 +114,12 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     acceptedTerms: false,
   });
 
-  const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
-    variables: {organizationID},
-  });
+  const { loading, error: queryError, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
 
   const { loading: loading2, error: queryError2, data: data2 } =
     useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
-    variables: {organizationID},
+      variables: { organizationID: organization.organizationID },
   });
-
-  const { loading: loading3, error: queryError3, data: data3 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
 
   const [updateBillingInfo, {error: mutError}] =
     useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
@@ -138,16 +136,15 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
     // },
   });
 
-  if (queryError1 || !data) {
-    return <p>Error: {JSON.stringify(queryError1)}</p>;
+  if (queryError || !data) {
+    return <p>Error: {JSON.stringify(queryError)}</p>;
   }
+
+  const freePlan = data.billingPlans.filter((billingPlan) => billingPlan.default)[0];
+  const proPlan = data.billingPlans.filter((billingPlan) => !billingPlan.default && billingPlan.availableInUI)[0];
 
   if (queryError2 || !data2) {
     return <p>Error: {JSON.stringify(queryError2)}</p>;
-  }
-
-  if (queryError3 || !data3) {
-    return <p>Error: {JSON.stringify(queryError3)}</p>;
   }
 
   let billingMethodOptions: any[] = [];
@@ -171,9 +168,6 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
       }
     });
   }
-
-  const freePlan = data3.billingPlans.filter((billingPlan) => billingPlan.default)[0];
-  const proPlan = data3.billingPlans.filter((billingPlan) => !billingPlan.default)[0];
 
   const handleChange = (name: string) => (event: any) => {
     if (name === "acceptedTerms") {
@@ -395,7 +389,7 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 onClick={() => {
                   updateBillingInfo({
                     variables: {
-                      organizationID,
+                      organizationID: organization.organizationID,
                       billingMethodID: values.billingMethodID,
                       billingPlanID: proPlan.billingPlanID,
                       country: values.country,
@@ -486,10 +480,10 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                   if (values.billingMethodID) {
                     updateBillingInfo({
                       variables: {
-                        organizationID,
+                        organizationID: organization.organizationID,
                         billingMethodID: values.billingMethodID,
-                        billingPlanID: proPlan.billingPlanID,
-                        country: data.billingInfo.country,
+                        billingPlanID: billingInfo.billingPlan.billingPlanID,
+                        country: billingInfo.country,
                       },
                     });
                   } else {
@@ -562,9 +556,9 @@ const UpdateBillingInfoDialogue: FC<Props> = ({ organizationID, route, closeDial
                 onClick={() => {
                   updateBillingInfo({
                     variables: {
-                      organizationID,
+                      organizationID: organization.organizationID,
                       billingPlanID: freePlan.billingPlanID,
-                      country: data.billingInfo.country,
+                      country: billingInfo.country,
                     },
                   });
                 }}

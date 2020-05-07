@@ -49,6 +49,8 @@ type PrivateOrganization implements Organization {
   photoURL: String
   createdOn: Time!
   updatedOn: Time!
+  prepaidReadQuota: Int
+  prepaidWriteQuota: Int
   readQuota: Int
   writeQuota: Int
   readUsage: Int!
