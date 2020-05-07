@@ -23,6 +23,12 @@ export interface Me_me_services {
   kind: string;
 }
 
+export interface Me_me_personalUser_billingOrganization {
+  __typename: "PublicOrganization";
+  name: string;
+  displayName: string;
+}
+
 export interface Me_me_personalUser {
   __typename: "PrivateUser";
   userID: string;
@@ -32,6 +38,7 @@ export interface Me_me_personalUser {
   readQuota: number | null;
   writeQuota: number | null;
   billingOrganizationID: ControlUUID;
+  billingOrganization: Me_me_personalUser_billingOrganization;
 }
 
 export interface Me_me_permissions {

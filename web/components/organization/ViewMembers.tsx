@@ -19,9 +19,6 @@ export interface ViewMembersProps {
   organization: OrganizationByName_organizationByName;
 }
 
-const useStyles = makeStyles((theme) => ({
-}));
-
 const ViewMembers: FC<ViewMembersProps> = ({ organization }) => {
   const { loading, error, data } = useQuery<OrganizationMembers, OrganizationMembersVariables>(
     QUERY_ORGANIZATION_MEMBERS,
@@ -38,7 +35,6 @@ const ViewMembers: FC<ViewMembersProps> = ({ organization }) => {
     return <p>Error: {JSON.stringify(error)}</p>;
   }
 
-  const classes = useStyles();
   return (
     <>
       <List>

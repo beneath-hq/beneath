@@ -15,9 +15,6 @@ interface ViewMembersProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
-const useStyles = makeStyles((theme) => ({
-}));
-
 const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
   const { loading, error, data } = useQuery<ProjectMembers, ProjectMembersVariables>(QUERY_PROJECT_MEMBERS, {
     variables: { projectID: project.projectID },
@@ -31,7 +28,6 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
     return <p>Error: {JSON.stringify(error)}</p>;
   }
 
-  const classes = useStyles();
   return (
     <>
       <List>

@@ -8,6 +8,7 @@ import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 import { UPDATE_ORGANIZATION } from "../../apollo/queries/organization";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../apollo/types/OrganizationByName";
 import { UpdateOrganization, UpdateOrganizationVariables } from "../../apollo/types/UpdateOrganization";
+import { toBackendName, toURLName } from "../../lib/names";
 import VSpace from "../VSpace";
 
 const useStyles = makeStyles((theme) => ({
@@ -34,7 +35,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
     UPDATE_ORGANIZATION, {
     onCompleted: (data) => {
       if (data.updateOrganization) {
-        const name = data.updateOrganization.name;
+        const name = toURLName(data.updateOrganization.name);
         if (name !== router.query.organization_name) {
           const href = `/organization?organization_name=${name}&tab=edit`;
           const as = `/${name}/-/edit`;
@@ -57,7 +58,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
           updateOrganization({
             variables: {
               organizationID: organization.organizationID,
-              name: values.name,
+              name: toBackendName(values.name),
               displayName: values.displayName,
               description: values.description,
               photoURL: values.photoURL,
@@ -68,7 +69,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
         <TextField
           id="name"
           label={organization.personalUser ? "Username" : "Name"}
-          value={values.name}
+          value={toURLName(values.name)}
           margin="normal"
           helperText={
             !validateName(values.name)
@@ -159,7 +160,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
 export default EditOrganization;
 
 const validateName = (val: string) => {
-  return val && val.length >= 3 && val.length <= 40 && val.match(/^[_a-z][_a-z0-9]+$/);
+  return val && val.length >= 3 && val.length <= 40 && val.match(/^[_\-a-z][_\-a-z0-9]+$/);
 };
 
 const validateDisplayName = (val: string) => {

@@ -124,37 +124,43 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
               >
                 <MenuItem disabled className={classes.menuItemHeader}>
                   <div>
-                    <Typography variant="h4">{me.user.name}</Typography>
+                    <Typography variant="h4">{me.name}</Typography>
                     <Typography variant="subtitle1" gutterBottom>
-                      @{me.user.username}
+                      @{me.name}
                     </Typography>
                   </div>
                 </MenuItem>
-                {makeMenuItem(
-                  <UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />,
-                  {
-                    onClick: closeMenu,
-                    as: `/${me.user.username}/-/monitoring`,
-                    href: `/organization?organization_name=${me.user.username}&tab=monitoring`,
-                    className: classes.menuItemUsage,
-                  }
-                )}
+                {me.readQuota &&
+                  me.personalUser?.billingOrganizationID === me.organizationID &&
+                  makeMenuItem(
+                    <UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />,
+                    {
+                      onClick: closeMenu,
+                      as: `/${me.name}/-/monitoring`,
+                      href: `/organization?organization_name=${me.name}&tab=monitoring`,
+                      className: classes.menuItemUsage,
+                    }
+                  )}
                 {makeMenuItem("Profile", {
                   onClick: closeMenu,
-                  as: `/${me.user.username}`,
-                  href: `/organization?organization_name=${me.user.username}`,
+                  as: `/${me.name}`,
+                  href: `/organization?organization_name=${me.name}`,
                 })}
                 {makeMenuItem("Secrets", {
                   onClick: closeMenu,
-                  as: `/${me.user.username}/-/secrets`,
-                  href: `/organization?organization_name=${me.user.username}&tab=secrets`,
+                  as: `/${me.name}/-/secrets`,
+                  href: `/organization?organization_name=${me.name}&tab=secrets`,
                 })}
-                {!me.billingOrganization.personal &&
-                  makeMenuItem("Organization", {
-                    onClick: closeMenu,
-                    as: `/${me.billingOrganization.name}`,
-                    href: `/organization?organization_name=${me.billingOrganization.name}`,
-                  })}
+                {me.personalUser &&
+                  me.personalUser.billingOrganizationID !== me.organizationID &&
+                  makeMenuItem(
+                    me.personalUser.billingOrganization.displayName || me.personalUser.billingOrganization.name,
+                    {
+                      onClick: closeMenu,
+                      as: `/${me.personalUser.billingOrganization.name}`,
+                      href: `/organization?organization_name=${me.personalUser.billingOrganization.name}`,
+                    }
+                  )}
                 {makeMenuItem("Logout", {
                   href: `/-/redirects/auth/logout`,
                 })}

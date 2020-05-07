@@ -70,10 +70,10 @@ const Springboard: FC = () => {
         description={me.description}
         avatarURL={me.photoURL}
       />
-      <Grid container justify="center" spacing={2} item xs={12}>
+      {/* <Grid container justify="center" spacing={2} item xs={12}>
         <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={me.readQuota} />
         <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={me.writeQuota} />
-      </Grid>
+      </Grid> */}
 
       <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">
         My projects

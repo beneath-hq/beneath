@@ -11,9 +11,9 @@ import { toBackendName, toURLName } from "../lib/names";
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import EditOrganization from "../components/organization/EditOrganization";
-import Monitoring from "../components/organization/personal/Monitoring";
 import ViewBilling from "../components/organization/ViewBilling";
 import ViewMembers from "../components/organization/ViewMembers";
+import ViewMetrics from "../components/organization/ViewMetrics";
 import ViewProjects from "../components/organization/ViewProjects";
 import ViewSecrets from "../components/organization/ViewSecrets";
 import ViewSecurity from "../components/organization/ViewSecurity";
@@ -71,17 +71,16 @@ const OrganizationPage = () => {
     render: () => <ViewProjects organization={organization} />,
   });
 
-  // if multi-user org
-  if (!organization.personalUserID) {
-    tabs.push({ value: "members", label: "Members", render: () => <ViewMembers organization={organization} /> });
-  }
-
-  // if admin priv
+  // if we got private info back
   if (organization.__typename === "PrivateOrganization") {
-    if (organization.permissions.view) {
-      tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={organization} /> });
-      tabs.push({ value: "monitoring", label: "Monitoring", render: () => <Monitoring organization={organization} /> });
+    if (!organization.personalUserID) {
+      // if multi-user org
+      tabs.push({ value: "members", label: "Members", render: () => <ViewMembers organization={organization} /> });
     }
+
+    tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={organization} /> });
+    tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics organization={organization} /> });
+
     if (organization.permissions.admin) {
       tabs.push({ value: "edit", label: "Edit", render: () => <EditOrganization organization={organization} /> });
       tabs.push({

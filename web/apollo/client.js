@@ -101,6 +101,12 @@ const dataIdFromObject = (object) => {
       return `${object.billingPlanID}`;
     case "StreamIndex":
       return `${object.indexID}`;
+    case "PermissionsUsersOrganizations":
+      return null;
+    case "PermissionsUsersProjects":
+      return null;
+    case "PermissionsServicesStreams":
+      return null;
     default: {
       console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
       return defaultDataIdFromObject(object);
