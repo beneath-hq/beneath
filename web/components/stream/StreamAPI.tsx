@@ -78,7 +78,7 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
       </Typography>
       <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${toURLName(
         stream.project.name
-      )}/streams/${toURLName(stream.name)}", {
+      )}/${toURLName(stream.name)}", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
@@ -113,7 +113,7 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
         from the command line:
       </Typography>
       <CodeBlock language={"bash"}>
-        {`curl -H "Authorization: SECRET" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/streams/${toURLName(
+        {`curl -H "Authorization: SECRET" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/${toURLName(
           stream.name
         )}`}
       </CodeBlock>

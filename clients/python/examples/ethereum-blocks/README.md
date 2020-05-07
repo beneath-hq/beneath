@@ -5,9 +5,9 @@
 
 The streams are deployed as root streams at
 
-  - [beneath.dev/projects/beneath-ethereum/streams/blocks-stable](https://beneath.dev/projects/beneath-ethereum/streams/blocks-stable): `beneath root-stream create -f blocks-stable.graphql --project beneath-ethereum`
+  - [beneath.dev/projects/beneath-ethereum/blocks-stable](https://beneath.dev/projects/beneath-ethereum/blocks-stable): `beneath root-stream create -f blocks-stable.graphql --project beneath-ethereum`
 
-  - [beneath.dev/projects/beneath-ethereum/streams/blocks-unstable](https://beneath.dev/projects/beneath-ethereum/streams/blocks-unstable): `beneath root-stream create -f blocks-unstable.graphql --project beneath-ethereum`
+  - [beneath.dev/projects/beneath-ethereum/blocks-unstable](https://beneath.dev/projects/beneath-ethereum/blocks-unstable): `beneath root-stream create -f blocks-unstable.graphql --project beneath-ethereum`
 
 ### Developing the stream
 
