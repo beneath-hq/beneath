@@ -18,6 +18,7 @@ export const QUERY_BILLING_INFO = gql`
 	    baseWriteQuota
     }
     billingMethod {
+      billingMethodID
       paymentsDriver
       driverPayload
     }

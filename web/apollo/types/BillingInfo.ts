@@ -24,6 +24,7 @@ export interface BillingInfo_billingInfo_billingPlan {
 
 export interface BillingInfo_billingInfo_billingMethod {
   __typename: "BillingMethod";
+  billingMethodID: ControlUUID;
   paymentsDriver: string;
   driverPayload: string;
 }

@@ -9,6 +9,7 @@
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_organization {
   __typename: "PublicOrganization";
+  organizationID: string;
   name: string;
 }
 

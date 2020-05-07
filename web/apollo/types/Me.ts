@@ -25,6 +25,7 @@ export interface Me_me_services {
 
 export interface Me_me_personalUser_billingOrganization {
   __typename: "PublicOrganization";
+  organizationID: string;
   name: string;
   displayName: string;
 }

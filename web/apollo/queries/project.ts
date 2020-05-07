@@ -11,6 +11,7 @@ export const EXPLORE_PROJECTS = gql`
       createdOn
       updatedOn
       organization {
+        organizationID
         name
       }
     }
@@ -30,6 +31,7 @@ export const QUERY_PROJECT = gql`
       createdOn
       updatedOn
       organization {
+        organizationID
         name
       }
       streams {

@@ -37,7 +37,7 @@ const Springboard: FC = () => {
 
   const me = useMe();
   if (!me || !me.personalUserID) {
-    return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>
+    return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>;
   }
 
   // GET METRICS
@@ -87,7 +87,7 @@ const Springboard: FC = () => {
             color="default"
             variant="outlined"
             className={clsx(classes.button, classes.secondaryButton)}
-            href={`https://about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
+            href={`//about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
             component={NextMuiLinkList}
           >
             Create Project
@@ -110,6 +110,6 @@ const Springboard: FC = () => {
       <TopProjects />
     </>
   );
-}
+};
 
 export default Springboard;
