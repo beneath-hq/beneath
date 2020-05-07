@@ -364,17 +364,19 @@ func organizationPermissions(ctx context.Context, secret entity.Secret, org *ent
 
 func organizationToPrivateOrganization(ctx context.Context, o *entity.Organization, p entity.OrganizationPermissions) *gql.PrivateOrganization {
 	po := &gql.PrivateOrganization{
-		OrganizationID: o.OrganizationID.String(),
-		Name:           o.Name,
-		DisplayName:    o.DisplayName,
-		Description:    StrToPtr(o.Description),
-		PhotoURL:       StrToPtr(o.PhotoURL),
-		CreatedOn:      o.CreatedOn,
-		UpdatedOn:      o.UpdatedOn,
-		ReadQuota:      Int64ToInt(o.ReadQuota),
-		WriteQuota:     Int64ToInt(o.WriteQuota),
-		Projects:       o.Projects,
-		Services:       o.Services,
+		OrganizationID:    o.OrganizationID.String(),
+		Name:              o.Name,
+		DisplayName:       o.DisplayName,
+		Description:       StrToPtr(o.Description),
+		PhotoURL:          StrToPtr(o.PhotoURL),
+		CreatedOn:         o.CreatedOn,
+		UpdatedOn:         o.UpdatedOn,
+		PrepaidReadQuota:  Int64ToInt(o.PrepaidReadQuota),
+		PrepaidWriteQuota: Int64ToInt(o.PrepaidWriteQuota),
+		ReadQuota:         Int64ToInt(o.ReadQuota),
+		WriteQuota:        Int64ToInt(o.WriteQuota),
+		Projects:          o.Projects,
+		Services:          o.Services,
 	}
 
 	usage := metrics.GetCurrentUsage(ctx, o.OrganizationID)

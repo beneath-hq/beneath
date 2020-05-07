@@ -60,6 +60,8 @@ export interface Me_me {
   projects: Me_me_projects[];
   personalUserID: ControlUUID | null;
   updatedOn: ControlTime;
+  prepaidReadQuota: number | null;
+  prepaidWriteQuota: number | null;
   readQuota: number | null;
   writeQuota: number | null;
   readUsage: number;

@@ -18,6 +18,8 @@ export const QUERY_ME = gql`
       }
       personalUserID
       updatedOn
+      prepaidReadQuota
+      prepaidWriteQuota
       readQuota
       writeQuota
       readUsage
