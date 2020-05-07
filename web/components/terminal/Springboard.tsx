@@ -1,22 +1,21 @@
-import React, { FC } from "react";
 import { useQuery } from "@apollo/react-hooks";
-import useMe from "../../hooks/useMe";
 import clsx from "clsx";
-
-import NextMuiLinkList from "../NextMuiLinkList";
-import ProfileHero from "../ProfileHero";
-import Loading from "../Loading";
-import UsageIndicator from "../metrics/user/UsageIndicator";
-import ViewUserProjects from "../organization/personal/ViewUserProjects";
-import { monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "../metrics/util";
-
-import { QUERY_USER_BY_USERNAME } from "../../apollo/queries/user";
-import { UserByUsername, UserByUsernameVariables } from "../../apollo/types/UserByUsername";
-import { GET_USER_METRICS } from "../../apollo/queries/metrics";
-import { GetUserMetrics, GetUserMetricsVariables } from "../../apollo/types/GetUserMetrics";
+import React, { FC } from "react";
 
 import { Button, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+
+import useMe from "../../hooks/useMe";
+import { toURLName } from "../../lib/names";
+import Loading from "../Loading";
+import UsageIndicator from "../metrics/user/UsageIndicator";
+import { monthFloor, normalizeMetrics, now, yearAgo } from "../metrics/util";
+import NextMuiLinkList from "../NextMuiLinkList";
+import ViewProjects from "../organization/ViewProjects";
+import ProfileHero from "../ProfileHero";
 import TopProjects from "./TopProjects";
+
+import { GET_USER_METRICS } from "../../apollo/queries/metrics";
+import { GetUserMetrics, GetUserMetricsVariables } from "../../apollo/types/GetUserMetrics";
 
 const useStyles = makeStyles((theme: Theme) => ({
   buttons: {
@@ -36,75 +35,59 @@ const useStyles = makeStyles((theme: Theme) => ({
 const Springboard: FC = () => {
   const classes = useStyles();
 
-  // GET PROFILE HERO
   const me = useMe();
-  if (!me) {
+  if (!me || !me.personalUserID) {
     return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>
   }
-  const username = me.user.username
-
-  const { loading, error, data } = useQuery<UserByUsername, UserByUsernameVariables>(QUERY_USER_BY_USERNAME, {
-    fetchPolicy: "cache-and-network",
-    variables: { username },
-  });
 
   // GET METRICS
   const from = monthFloor(yearAgo());
   const until = monthFloor(now());
 
-  const { loading: loading2, error: error2, data: data2 } = useQuery<GetUserMetrics, GetUserMetricsVariables>(GET_USER_METRICS, {
+  const { loading, error, data } = useQuery<GetUserMetrics, GetUserMetricsVariables>(GET_USER_METRICS, {
     variables: {
       from: from.toISOString(),
       period: "M",
-      userID: me.userID,
+      userID: me.personalUserID,
     },
   });
 
-  const { metrics, total, latest } = normalizeMetrics(from, until, "month", data2 ? data2.getUserMetrics : null);
-
-  if (loading || loading2) {
+  if (loading) {
     return <Loading justify="center" />;
   }
 
-  if (error || error2 || !data) {
-    return <p>Error: {JSON.stringify(error || error2)}</p>;
+  if (error || !data) {
+    return <p>Error: {JSON.stringify(error)}</p>;
   }
 
-  const user = data.userByUsername;
-  if (!user) {
-    return <p>Error: User not found</p>;
-  }
+  const { metrics, total, latest } = normalizeMetrics(from, until, "month", data.getUserMetrics);
 
   return (
     <>
-      <ProfileHero name={user.name} description={user.bio} avatarURL={user.photoURL} />
+      <ProfileHero
+        name={toURLName(me.name)}
+        displayName={me.displayName}
+        description={me.description}
+        avatarURL={me.photoURL}
+      />
       <Grid container justify="center" spacing={2} item xs={12}>
         <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={me.readQuota} />
         <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={me.writeQuota} />
       </Grid>
-      
-      <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">My projects</Typography>
-      <ViewUserProjects user={user} />
+
+      <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">
+        My projects
+      </Typography>
+      <ViewProjects organization={me} />
 
       <Grid className={classes.buttons} container spacing={2} justify="center">
-        {/* <Grid item>
-          <Button
-            size="medium"
-            color="default"
-            variant="outlined"
-            className={clsx(classes.button, classes.secondaryButton)}
-            href={`//about.beneath.dev/`}
-          >
-            Overview
-          </Button>
-        </Grid> */}
         <Grid item>
           <Button
             size="medium"
             color="default"
             variant="outlined"
             className={clsx(classes.button, classes.secondaryButton)}
-            href={`//about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
+            href={`https://about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
             component={NextMuiLinkList}
           >
             Create Project
@@ -116,17 +99,17 @@ const Springboard: FC = () => {
             color="default"
             variant="outlined"
             className={clsx(classes.button, classes.secondaryButton)}
-            as={`/${username}/-/monitoring`}
-            href={`/organization?organization_name=${username}&tab=monitoring`}
+            href={`/organization?organization_name=${toURLName(me.name)}&tab=monitoring`}
+            as={`/${toURLName(me.name)}/-/monitoring`}
             component={NextMuiLinkList}
           >
             Monitor
           </Button>
         </Grid>
       </Grid>
-      <TopProjects/>
+      <TopProjects />
     </>
-  )
+  );
 }
 
 export default Springboard;

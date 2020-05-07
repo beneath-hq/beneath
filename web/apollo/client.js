@@ -67,10 +67,16 @@ const createApolloClient = ({ req, res, initialState }) => {
 // returns ID for objects for caching/automatic state update
 const dataIdFromObject = (object) => {
   switch (object.__typename) {
-    case "User":
+    case "PrivateUser":
       return object.userID;
-    case "Me":
-      return `me:${object.userID}`;
+    case "PublicOrganization":
+      return `public:${object.organizationID}`;
+    case "PrivateOrganization":
+      return `private:${object.organizationID}`;
+    case "OrganizationMember":
+      return `org-member:${object.organizationID}:${object.userID}`;
+    case "ProjectMember":
+      return `proj-member:${object.projectID}:${object.userID}`;
     case "UserSecret":
       return `${object.userSecretID}`;
     case "NewUserSecret":
@@ -79,14 +85,10 @@ const dataIdFromObject = (object) => {
       return `${object.projectID}`;
     case "Stream":
       return `${object.streamID}`;
-    case "Record":
-      return `${object.recordID}`;
     case "Service":
       return `${object.serviceID}`;
     case "Organization":
       return `${object.organizationID}`;
-    case "RecordsResponse":
-      return defaultDataIdFromObject(object);
     case "CreateRecordsResponse":
       return defaultDataIdFromObject(object);
     case "Metrics":

@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
-import React, { FC } from "react";
+import React from "react";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "../apollo/types/StreamByOrganizationProjectAndName";
@@ -11,7 +11,6 @@ import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import ModelHero from "../components/ModelHero";
 import Page from "../components/Page";
-import PageTitle from "../components/PageTitle";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import StreamMetrics from "../components/stream/StreamMetrics";
@@ -21,21 +20,30 @@ import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 const StreamPage = () => {
   const router = useRouter();
 
-  if (typeof router.query.organization_name !== "string" || typeof router.query.project_name !== "string" || typeof router.query.stream_name !== "string") {
+  if (
+    typeof router.query.organization_name !== "string"
+    || typeof router.query.project_name !== "string"
+    || typeof router.query.stream_name !== "string"
+  ) {
     return <ErrorPage statusCode={404} />;
   }
 
-  const { loading, error, data } = useQuery<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>(QUERY_STREAM, {
-    variables: {
-      organizationName: toBackendName(router.query.organization_name as string),
-      projectName: toBackendName(router.query.project_name as string),
-      streamName: toBackendName(router.query.stream_name as string),
-    },
+  const organizationName = toBackendName(router.query.organization_name);
+  const projectName = toBackendName(router.query.project_name);
+  const streamName = toBackendName(router.query.stream_name);
+  const title = `${toURLName(organizationName)}/${toURLName(projectName)}/${toURLName(streamName)}`;
+
+  const {
+    loading,
+    error,
+    data,
+  } = useQuery<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>(QUERY_STREAM, {
+    variables: { organizationName, projectName, streamName },
   });
 
   if (loading) {
     return (
-      <Page title="Stream" subheader>
+      <Page title={title} subheader>
         <Loading justify="center" />
       </Page>
     );
@@ -67,8 +75,7 @@ const StreamPage = () => {
 
   const defaultValue = stream.currentStreamInstanceID ? "explore" : "api";
   return (
-    <Page title="Stream" subheader>
-      <PageTitle title={`${toURLName(stream.project.name)}/${toURLName(stream.name)}`} />
+    <Page title={title} subheader>
       <ModelHero name={toURLName(stream.name)} description={stream.description} />
       <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
     </Page>

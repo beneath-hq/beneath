@@ -1,5 +1,7 @@
-import { FC } from "react";
 import { useQuery } from "@apollo/react-hooks";
+import Link from "next/link";
+import { FC } from "react";
+
 import {
   Container,
   Grid,
@@ -8,11 +10,11 @@ import {
   Theme,
   Typography,
 } from "@material-ui/core";
-import Link from "next/link";
-import { toURLName } from "../../lib/names";
-import Avatar from "../Avatar";
+
 import { EXPLORE_PROJECTS } from "../../apollo/queries/project";
 import { ExploreProjects } from "../../apollo/types/ExploreProjects";
+import { toURLName } from "../../lib/names";
+import Avatar from "../Avatar";
 import Loading from "../Loading";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -54,14 +56,17 @@ const TopProjects: FC = () => {
       <Container maxWidth="lg">
         <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">
           Top projects
-                <Typography className={classes.sectionSubHeader} variant="body2" gutterBottom align="center">
-            Discover the top public data streams on Beneath.
-                </Typography>
+        </Typography>
+        <Typography className={classes.sectionSubHeader} variant="body2" gutterBottom align="center">
+          Discover the top public data streams on Beneath.
         </Typography>
         <Grid container spacing={3} justify="center">
           {data.exploreProjects.map(({ projectID, name, displayName, description, photoURL, organization }) => (
             <Grid key={projectID} item lg={4} md={6} xs={12}>
-              <Link href={`/${toURLName(organization.name)}/${toURLName(name)}`}>
+              <Link
+                href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
+                as={`/${toURLName(organization.name)}/${toURLName(name)}`}
+              >
                 <Paper className={classes.paper}>
                   <Grid container wrap="nowrap" spacing={0}>
                     <Grid item className={classes.avatar}>
@@ -82,7 +87,7 @@ const TopProjects: FC = () => {
         </Grid>
       </Container>
     </>
-  )
-}
+  );
+};
 
-export default TopProjects
+export default TopProjects;

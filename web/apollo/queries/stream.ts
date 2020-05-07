@@ -15,7 +15,6 @@ export const QUERY_STREAM = gql`
           name
         }
       }
-
       schema
       avroSchema
       streamIndexes {
@@ -24,12 +23,10 @@ export const QUERY_STREAM = gql`
         primary
         normalize
       }
-
       external
       batch
       manual
       retentionSeconds
-
       instancesCreatedCount
       instancesCommittedCount
       currentStreamInstanceID

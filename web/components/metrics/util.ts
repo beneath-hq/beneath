@@ -44,10 +44,10 @@ export interface NormalizeMetricsResult {
 }
 
 export const normalizeMetrics = (
-  from: Date, until: Date, period: "hour" | "month", metrics: MetricsWithTime[] | null
+  from: Date, until: Date, period: "hour" | "month", metrics: MetricsWithTime[] | undefined
 ): NormalizeMetricsResult => {
   // make sure metrics is well-formatted
-  if ((metrics === null) || (metrics.length === 0)) {
+  if ((metrics === undefined) || (metrics.length === 0)) {
     metrics = [{
       time: from,
       ...blankMetrics()

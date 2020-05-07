@@ -8,7 +8,7 @@
 // ====================================================
 
 export interface ExploreProjects_exploreProjects_organization {
-  __typename: "Organization";
+  __typename: "PublicOrganization";
   name: string;
 }
 

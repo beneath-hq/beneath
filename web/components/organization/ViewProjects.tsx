@@ -2,10 +2,10 @@ import React, { FC } from "react";
 
 import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
 
-import { User_user } from "../../../apollo/types/User";
-import { toURLName } from "../../../lib/names";
-import Avatar from "../../Avatar";
-import NextMuiLinkList from "../../NextMuiLinkList";
+import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
+import { toURLName } from "../../lib/names";
+import Avatar from "../Avatar";
+import NextMuiLinkList from "../NextMuiLinkList";
 
 const useStyles = makeStyles((theme) => ({
   noDataCaption: {
@@ -13,38 +13,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-interface Props {
-  user: User_user;
+export interface ViewProjectsProps {
+  organization: OrganizationByName_organizationByName;
 }
 
-const ViewUserProjects: FC<Props> = ({ user }) => {
+const ViewProjects: FC<ViewProjectsProps> = ({ organization }) => {
   const classes = useStyles();
   return (
     <>
       <List>
-        {user.projects.map(({ projectID, name, displayName, description, photoURL, organization }) => (
+        {organization.projects.map(({ projectID, name, displayName, description, photoURL }) => (
           <ListItem
+            key={projectID}
             component={NextMuiLinkList}
             href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
             as={`/${toURLName(organization.name)}/${toURLName(name)}`}
             button
             disableGutters
-            key={projectID}
           >
             <ListItemAvatar>
-              <Avatar size="list" label={displayName || name} src={photoURL || undefined} />
+              <Avatar size="list" label={displayName || name} src={photoURL} />
             </ListItemAvatar>
             <ListItemText primary={displayName || name} secondary={description} />
           </ListItem>
         ))}
       </List>
-      {user.projects.length === 0 && (
+      {organization.projects.length === 0 && (
         <Typography className={classes.noDataCaption} variant="body1" align="center">
-          @{user.username} isn't a member of any projects
+          {organization.displayName} doesn't have any projects to show
         </Typography>
       )}
     </>
   );
 };
 
-export default ViewUserProjects;
+export default ViewProjects;

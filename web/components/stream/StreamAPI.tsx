@@ -36,8 +36,8 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
             <>
               To create a secret for connecting to Beneath, just head over to your{" "}
               <LinkTypography
-                href={`/organization?organization_name=${me.user.username}&tab=secrets`}
-                as={`/${me.user.username}/-/secrets`}
+                href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
+                as={`/${toURLName(me.name)}/-/secrets`}
               >
                 profile page
               </LinkTypography>
@@ -60,7 +60,9 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
       </Typography>
       <CodeBlock language={"python"}>{`import beneath
 client = beneath.Client()
-df = await client.easy_read("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")`}</CodeBlock>
+df = await client.easy_read("${toURLName(stream.project.organization.name)}/${toURLName(
+        stream.project.name
+      )}/${toURLName(stream.name)}")`}</CodeBlock>
       <Typography variant="body2" paragraph>
         To run this code, you must first install our Python library with <code>pip install beneath</code> and
         authenticate by running <code>beneath auth SECRET</code> on the command-line.

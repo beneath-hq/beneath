@@ -8,7 +8,7 @@
 // ====================================================
 
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization {
-  __typename: "Organization";
+  __typename: "PublicOrganization";
   name: string;
 }
 

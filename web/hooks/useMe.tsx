@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/react-hooks";
 
-import { QUERY_ME } from "../apollo/queries/user";
+import { QUERY_ME } from "../apollo/queries/organization";
 import { Me } from "../apollo/types/Me";
 import { useToken } from "./useToken";
 

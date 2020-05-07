@@ -8,16 +8,8 @@
 // ====================================================
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_organization {
-  __typename: "Organization";
+  __typename: "PublicOrganization";
   name: string;
-}
-
-export interface ProjectByOrganizationAndName_projectByOrganizationAndName_users {
-  __typename: "User";
-  userID: string;
-  name: string;
-  username: string;
-  photoURL: string | null;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_streams {
@@ -28,6 +20,13 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   external: boolean;
 }
 
+export interface ProjectByOrganizationAndName_projectByOrganizationAndName_permissions {
+  __typename: "PermissionsUsersProjects";
+  view: boolean;
+  create: boolean;
+  admin: boolean;
+}
+
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName {
   __typename: "Project";
   projectID: string;
@@ -36,15 +35,16 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName {
   site: string | null;
   description: string | null;
   photoURL: string | null;
+  public: boolean;
   createdOn: ControlTime;
   updatedOn: ControlTime;
   organization: ProjectByOrganizationAndName_projectByOrganizationAndName_organization;
-  users: ProjectByOrganizationAndName_projectByOrganizationAndName_users[];
   streams: ProjectByOrganizationAndName_projectByOrganizationAndName_streams[];
+  permissions: ProjectByOrganizationAndName_projectByOrganizationAndName_permissions;
 }
 
 export interface ProjectByOrganizationAndName {
-  projectByOrganizationAndName: ProjectByOrganizationAndName_projectByOrganizationAndName | null;
+  projectByOrganizationAndName: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
 export interface ProjectByOrganizationAndNameVariables {

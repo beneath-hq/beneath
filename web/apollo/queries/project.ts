@@ -26,16 +26,11 @@ export const QUERY_PROJECT = gql`
       site
       description
       photoURL
+      public
       createdOn
       updatedOn
       organization {
         name
-      }
-      users {
-        userID
-        name
-        username
-        photoURL
       }
       streams {
         streamID
@@ -43,6 +38,25 @@ export const QUERY_PROJECT = gql`
         description
         external
       }
+      permissions {
+        view
+        create
+        admin
+      }
+    }
+  }
+`;
+
+export const QUERY_PROJECT_MEMBERS = gql`
+  query ProjectMembers($projectID: UUID!) {
+    projectMembers(projectID: $projectID) {
+      userID
+      name
+      displayName
+      photoURL
+      view
+      create
+      admin
     }
   }
 `;
@@ -56,9 +70,6 @@ export const UPDATE_PROJECT = gql`
       description
       photoURL
       updatedOn
-      organization {
-        name
-      }
     }
   }
 `;

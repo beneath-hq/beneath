@@ -7,48 +7,85 @@
 // GraphQL query operation: OrganizationByName
 // ====================================================
 
-export interface OrganizationByName_organizationByName_users {
-  __typename: "User";
-  userID: string;
-  name: string;
-  username: string;
-  bio: string | null;
-  photoURL: string | null;
-  readQuota: number | null;
-  writeQuota: number | null;
-}
-
-export interface OrganizationByName_organizationByName_services {
-  __typename: "Service";
-  serviceID: ControlUUID;
-  name: string;
-  kind: string;
-}
-
-export interface OrganizationByName_organizationByName_projects {
+export interface OrganizationByName_organizationByName_PublicOrganization_projects {
   __typename: "Project";
   projectID: string;
   name: string;
   displayName: string;
   description: string | null;
   photoURL: string | null;
-  public: boolean;
 }
 
-export interface OrganizationByName_organizationByName {
-  __typename: "Organization";
+export interface OrganizationByName_organizationByName_PublicOrganization {
+  __typename: "PublicOrganization";
   organizationID: string;
   name: string;
+  displayName: string;
+  description: string | null;
+  photoURL: string | null;
   createdOn: ControlTime;
-  updatedOn: ControlTime;
-  users: OrganizationByName_organizationByName_users[];
-  services: OrganizationByName_organizationByName_services[];
-  projects: OrganizationByName_organizationByName_projects[];
-  personal: boolean;
+  projects: OrganizationByName_organizationByName_PublicOrganization_projects[];
+  personalUserID: ControlUUID | null;
 }
 
+export interface OrganizationByName_organizationByName_PrivateOrganization_projects {
+  __typename: "Project";
+  projectID: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  photoURL: string | null;
+}
+
+export interface OrganizationByName_organizationByName_PrivateOrganization_services {
+  __typename: "Service";
+  serviceID: ControlUUID;
+  name: string;
+  kind: string;
+}
+
+export interface OrganizationByName_organizationByName_PrivateOrganization_personalUser {
+  __typename: "PrivateUser";
+  userID: string;
+  email: string;
+  createdOn: ControlTime;
+  updatedOn: ControlTime;
+  readQuota: number | null;
+  writeQuota: number | null;
+  billingOrganizationID: ControlUUID;
+}
+
+export interface OrganizationByName_organizationByName_PrivateOrganization_permissions {
+  __typename: "PermissionsUsersOrganizations";
+  view: boolean;
+  create: boolean;
+  admin: boolean;
+}
+
+export interface OrganizationByName_organizationByName_PrivateOrganization {
+  __typename: "PrivateOrganization";
+  organizationID: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  photoURL: string | null;
+  createdOn: ControlTime;
+  projects: OrganizationByName_organizationByName_PrivateOrganization_projects[];
+  personalUserID: ControlUUID | null;
+  updatedOn: ControlTime;
+  readQuota: number | null;
+  writeQuota: number | null;
+  readUsage: number;
+  writeUsage: number;
+  services: OrganizationByName_organizationByName_PrivateOrganization_services[];
+  personalUser: OrganizationByName_organizationByName_PrivateOrganization_personalUser | null;
+  permissions: OrganizationByName_organizationByName_PrivateOrganization_permissions;
+}
+
+export type OrganizationByName_organizationByName = OrganizationByName_organizationByName_PublicOrganization | OrganizationByName_organizationByName_PrivateOrganization;
+
 export interface OrganizationByName {
-  organizationByName: OrganizationByName_organizationByName | null;
+  organizationByName: OrganizationByName_organizationByName;
 }
 
 export interface OrganizationByNameVariables {

@@ -6,20 +6,19 @@ import { QUERY_ORGANIZATION } from "../apollo/queries/organization";
 import { OrganizationByName, OrganizationByNameVariables } from "../apollo/types/OrganizationByName";
 import { withApollo } from "../apollo/withApollo";
 import useMe from "../hooks/useMe";
-import { toBackendName } from "../lib/names";
+import { toBackendName, toURLName } from "../lib/names";
 
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
-import BillingTab from "../components/organization/billing/BillingTab";
-import EditMe from "../components/organization/personal/EditMe";
-import IssueSecret from "../components/organization/personal/IssueSecret";
+import EditOrganization from "../components/organization/EditOrganization";
 import Monitoring from "../components/organization/personal/Monitoring";
-import ViewBrowserSessions from "../components/organization/personal/ViewBrowserSessions";
-import ViewSecrets from "../components/organization/personal/ViewSecrets";
-import ViewOrganizationProjects from "../components/organization/ViewOrganizationProjects";
-import ViewUsers from "../components/organization/ViewUsers";
+import ViewBilling from "../components/organization/ViewBilling";
+import ViewMembers from "../components/organization/ViewMembers";
+import ViewProjects from "../components/organization/ViewProjects";
+import ViewSecrets from "../components/organization/ViewSecrets";
+import ViewSecurity from "../components/organization/ViewSecurity";
+import ViewServices from "../components/organization/ViewServices";
 import Page from "../components/Page";
-import PageTitle from "../components/PageTitle";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
 
@@ -34,95 +33,89 @@ const OrganizationPage = () => {
   const organizationName = toBackendName(router.query.organization_name);
 
   // little hack to replace organization name "me" with billing organization name if logged in
-  if (me) {
-    if (organizationName === "me") {
-      if (typeof window !== "undefined") {
-        const tab = router.query.tab;
-        const realName = me?.billingOrganization.name;
-        if (tab) {
-          router.replace(`/organization?organization_name=${realName}&tab=${tab}`, `/${realName}/-/${tab}`);
-        } else {
-          router.replace(`/organization?organization_name=${realName}`, `/${realName}`);
-        }
-        return;
-      }
+  if (me && organizationName === "me" && typeof window !== "undefined") {
+    const tab = router.query.tab;
+    const realName = me.name;
+    if (tab) {
+      router.replace(`/organization?organization_name=${realName}&tab=${tab}`, `/${realName}/-/${tab}`);
+    } else {
+      router.replace(`/organization?organization_name=${realName}`, `/${realName}`);
     }
+    return;
   }
 
   const { loading, error, data } = useQuery<OrganizationByName, OrganizationByNameVariables>(QUERY_ORGANIZATION, {
-    fetchPolicy: "cache-and-network",
     variables: { name: organizationName },
+    fetchPolicy: "cache-and-network",
   });
 
   if (loading) {
     return (
-      <Page title="Organization" subheader>
+      <Page title={organizationName} subheader>
         <Loading justify="center" />
       </Page>
     );
   }
 
-  if (error || !data || !data.organizationByName) {
+  if (error || !data) {
     return <ErrorPage apolloError={error} />;
   }
 
   const organization = data.organizationByName;
 
-  const tabs = [
-    { value: "projects", label: "Projects", render: () => <ViewOrganizationProjects organization={organization} /> },
-  ];
+  const tabs = [];
 
-  // logged in
-  if (me) {
-    if (me.billingOrganization.name === organizationName) {
-      // only for your user
-      if (organization.personal) {
-        const user = organization.users[0];
-        tabs.push({ value: "monitoring", label: "Monitoring", render: () => <Monitoring me={me} /> });
-        tabs.push({ value: "edit", label: "Edit", render: () => <EditMe /> });
-        tabs.push({
-          value: "secrets",
-          label: "Secrets",
-          render: () => (
-            <>
-              <IssueSecret userID={user.userID} />
-              <ViewSecrets userID={user.userID} />
-            </>
-          ),
-        });
-        tabs.push({ value: "security", label: "Security", render: () => <ViewBrowserSessions userID={user.userID} /> });
-      } else {
-        //  only for your enterprise
-        tabs.push({ value: "users", label: "Users", render: () => <ViewUsers organization={organization} /> });
-      }
-      // { value: "services", label: "Services", render: () => <ViewServices organization={organization} /> }
-      // TODO: billing tab should only be viewable to admins of the organization
+  tabs.push({
+    value: "projects",
+    label: "Projects",
+    render: () => <ViewProjects organization={organization} />,
+  });
+
+  // if multi-user org
+  if (!organization.personalUserID) {
+    tabs.push({ value: "members", label: "Members", render: () => <ViewMembers organization={organization} /> });
+  }
+
+  // if admin priv
+  if (organization.__typename === "PrivateOrganization") {
+    if (organization.permissions.view) {
+      tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={organization} /> });
+      tabs.push({ value: "monitoring", label: "Monitoring", render: () => <Monitoring organization={organization} /> });
+    }
+    if (organization.permissions.admin) {
+      tabs.push({ value: "edit", label: "Edit", render: () => <EditOrganization organization={organization} /> });
       tabs.push({
         value: "billing",
         label: "Billing",
-        render: () => <BillingTab organizationID={me.billingOrganization.organizationID} />,
+        render: () => <ViewBilling organization={organization} />,
       });
+      if (organization.personalUserID) {
+        const userID = organization.personalUserID;
+        tabs.push({
+          value: "secrets",
+          label: "Secrets",
+          render: () => <ViewSecrets userID={userID} />,
+        });
+        tabs.push({
+          value: "security",
+          label: "Security",
+          render: () => <ViewSecurity userID={userID} />,
+        });
+      }
     }
   }
 
-  if (organization.personal) {
-    const user = organization.users[0];
-    return (
-      <Page title="User" subheader>
-        <PageTitle title={user.name} />
-        <ProfileHero name={user.name} description={user.bio} avatarURL={user.photoURL} />
-        <SubrouteTabs defaultValue="projects" tabs={tabs} />
-      </Page>
-    );
-  } else {
-    return (
-      <Page title="Organization" subheader>
-        <PageTitle title={organizationName} />
-        <ProfileHero name={organizationName} />
-        <SubrouteTabs defaultValue="projects" tabs={tabs} />
-      </Page>
-    );
-  }
+  return (
+    <Page title={toURLName(organization.name)} subheader>
+      <ProfileHero
+        name={toURLName(organization.name)}
+        displayName={organization.displayName}
+        description={organization.description}
+        avatarURL={organization.photoURL}
+      />
+      <SubrouteTabs defaultValue="projects" tabs={tabs} />
+    </Page>
+  );
 };
 
 export default withApollo(OrganizationPage);

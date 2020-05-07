@@ -7,50 +7,58 @@
 // GraphQL query operation: Me
 // ====================================================
 
-export interface Me_me_user_projects_organization {
-  __typename: "Organization";
-  name: string;
-}
-
-export interface Me_me_user_projects {
+export interface Me_me_projects {
   __typename: "Project";
   projectID: string;
   name: string;
   displayName: string;
   description: string | null;
   photoURL: string | null;
-  organization: Me_me_user_projects_organization;
 }
 
-export interface Me_me_user {
-  __typename: "User";
+export interface Me_me_services {
+  __typename: "Service";
+  serviceID: ControlUUID;
+  name: string;
+  kind: string;
+}
+
+export interface Me_me_personalUser {
+  __typename: "PrivateUser";
   userID: string;
-  username: string;
-  name: string;
-  bio: string | null;
-  photoURL: string | null;
+  email: string;
   createdOn: ControlTime;
-  projects: Me_me_user_projects[];
+  updatedOn: ControlTime;
+  readQuota: number | null;
+  writeQuota: number | null;
+  billingOrganizationID: ControlUUID;
 }
 
-export interface Me_me_billingOrganization {
-  __typename: "Organization";
-  organizationID: string;
-  name: string;
-  personal: boolean;
+export interface Me_me_permissions {
+  __typename: "PermissionsUsersOrganizations";
+  view: boolean;
+  create: boolean;
+  admin: boolean;
 }
 
 export interface Me_me {
-  __typename: "Me";
-  userID: string;
-  email: string;
-  readUsage: number;
-  readQuota: number | null;
-  writeUsage: number;
-  writeQuota: number | null;
+  __typename: "PrivateOrganization";
+  organizationID: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  photoURL: string | null;
+  createdOn: ControlTime;
+  projects: Me_me_projects[];
+  personalUserID: ControlUUID | null;
   updatedOn: ControlTime;
-  user: Me_me_user;
-  billingOrganization: Me_me_billingOrganization;
+  readQuota: number | null;
+  writeQuota: number | null;
+  readUsage: number;
+  writeUsage: number;
+  services: Me_me_services[];
+  personalUser: Me_me_personalUser | null;
+  permissions: Me_me_permissions;
 }
 
 export interface Me {

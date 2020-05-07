@@ -5,6 +5,7 @@ import useMe from "../../../hooks/useMe";
 
 import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
+import { OrganizationByName_organizationByName } from "../../../apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -27,11 +28,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-interface Props {
-  organizationID: string;
+export interface BillingMethodsProps {
+  organization: OrganizationByName_organizationByName;
 }
 
-const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
+const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
+  const organizationID = organization.organizationID;
+
   const classes = useStyles();
   const [addCardDialogue, setAddCardDialogue] = React.useState(false);
 
@@ -71,34 +74,37 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           </Typography>
         </Grid>
         <Grid item container direction="column">
-          {cards && cards.map(({ billingMethodID, driverPayload }) => {
-            const payload = JSON.parse(driverPayload);
-            const rows = [
-              { name: "Card type", detail: _.startCase(_.toLower(payload.brand)) },
-              { name: "Card number", detail: "xxxx-xxxx-xxxx-" + payload.last4 },
-              { name: "Expiration",
-              detail: payload.expMonth.toString() + "/" + payload.expYear.toString().substring(2, 4) },
-            ];
+          {cards &&
+            cards.map(({ billingMethodID, driverPayload }) => {
+              const payload = JSON.parse(driverPayload);
+              const rows = [
+                { name: "Card type", detail: _.startCase(_.toLower(payload.brand)) },
+                { name: "Card number", detail: "xxxx-xxxx-xxxx-" + payload.last4 },
+                {
+                  name: "Expiration",
+                  detail: payload.expMonth.toString() + "/" + payload.expYear.toString().substring(2, 4),
+                },
+              ];
 
-            return (
-              <React.Fragment key={billingMethodID}>
-                <Grid item className={classes.billingMethod}>
-                  {rows.map((rows) => (
-                    <React.Fragment key={rows.name}>
-                      <Grid container>
-                        <Grid item xs={6} sm={4} md={2}>
-                          <Typography gutterBottom>{rows.name}</Typography>
+              return (
+                <React.Fragment key={billingMethodID}>
+                  <Grid item className={classes.billingMethod}>
+                    {rows.map((rows) => (
+                      <React.Fragment key={rows.name}>
+                        <Grid container>
+                          <Grid item xs={6} sm={4} md={2}>
+                            <Typography gutterBottom>{rows.name}</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography gutterBottom>{rows.detail}</Typography>
+                          </Grid>
                         </Grid>
-                        <Grid item>
-                          <Typography gutterBottom>{rows.detail}</Typography>
-                        </Grid>
-                      </Grid>
-                    </React.Fragment>
-                  ))}
-                </Grid>
-              </React.Fragment>
-            );
-          })}
+                      </React.Fragment>
+                    ))}
+                  </Grid>
+                </React.Fragment>
+              );
+            })}
 
           {wire && (
             <Grid item className={classes.billingMethod}>
@@ -118,7 +124,9 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
           <Button
             className={classes.button}
             color="primary"
-            onClick={() => { setAddCardDialogue(true); }}
+            onClick={() => {
+              setAddCardDialogue(true);
+            }}
           >
             Add Credit Card
           </Button>
@@ -126,11 +134,13 @@ const ViewBillingMethods: FC<Props> = ({ organizationID }) => {
             open={addCardDialogue}
             fullWidth={true}
             maxWidth={"md"}
-            onBackdropClick={() => { setAddCardDialogue(false); }}
+            onBackdropClick={() => {
+              setAddCardDialogue(false);
+            }}
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <CardForm closeDialogue={handleCloseDialogue}/>
+              <CardForm closeDialogue={handleCloseDialogue} />
             </DialogContent>
             <DialogActions />
           </Dialog>

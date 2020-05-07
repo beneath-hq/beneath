@@ -7,11 +7,6 @@
 // GraphQL mutation operation: UpdateProject
 // ====================================================
 
-export interface UpdateProject_updateProject_organization {
-  __typename: "Organization";
-  name: string;
-}
-
 export interface UpdateProject_updateProject {
   __typename: "Project";
   projectID: string;
@@ -20,7 +15,6 @@ export interface UpdateProject_updateProject {
   description: string | null;
   photoURL: string | null;
   updatedOn: ControlTime;
-  organization: UpdateProject_updateProject_organization;
 }
 
 export interface UpdateProject {

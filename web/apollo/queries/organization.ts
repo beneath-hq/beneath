@@ -1,52 +1,134 @@
 import gql from "graphql-tag";
 
-export const QUERY_ORGANIZATION = gql`
-  query OrganizationByName($name: String!) {
-    organizationByName(name: $name) {
+export const QUERY_ME = gql`
+  query Me {
+    me {
       organizationID
       name
+      displayName
+      description
+      photoURL
       createdOn
-      updatedOn
-      users {
-        userID
-        name
-        username
-        bio
-        photoURL
-        readQuota
-        writeQuota
-      }
-      services {
-        serviceID
-        name
-        kind
-      }
       projects {
         projectID
         name
         displayName
         description
         photoURL
-        public
       }
-      personal
+      personalUserID
+      updatedOn
+      readQuota
+      writeQuota
+      readUsage
+      writeUsage
+      services {
+        serviceID
+        name
+        kind
+      }
+      personalUser {
+        userID
+        email
+        createdOn
+        updatedOn
+        readQuota
+        writeQuota
+        billingOrganizationID
+      }
+      permissions {
+        view
+        create
+        admin
+      }
     }
   }
 `;
 
-export const QUERY_USERS_ORGANIZATION_PERMISSIONS = gql`
-  query UsersOrganizationPermissions($organizationID: UUID!){
-    usersOrganizationPermissions(organizationID: $organizationID) {
-      userID
+export const QUERY_ORGANIZATION = gql`
+  query OrganizationByName($name: String!) {
+    organizationByName(name: $name) {
       organizationID
-    	view
-    	admin
+      name
+      displayName
+      description
+      photoURL
+      createdOn
+      projects {
+        projectID
+        name
+        displayName
+        description
+        photoURL
+      }
+      personalUserID
+      ... on PrivateOrganization {
+        updatedOn
+        readQuota
+        writeQuota
+        readUsage
+        writeUsage
+        services {
+          serviceID
+          name
+          kind
+        }
+        personalUser {
+          userID
+          email
+          createdOn
+          updatedOn
+          readQuota
+          writeQuota
+          billingOrganizationID
+        }
+        permissions {
+          view
+          create
+          admin
+        }
+      }
     }
   }
 `;
 
-export const ADD_USER_TO_ORGANIZATION = gql`
-  mutation InviteUserToOrganization($userID: UUID!, $organizationID: UUID!, $view: Boolean!, $create: Boolean!, $admin: Boolean!) {
-    inviteUserToOrganization(userID: $userID, organizationID: $organizationID, view: $view, create: $create, admin: $admin)
+export const QUERY_ORGANIZATION_MEMBERS = gql`
+  query OrganizationMembers($organizationID: UUID!){
+    organizationMembers(organizationID: $organizationID) {
+      userID
+      billingOrganizationID
+      name
+      displayName
+      photoURL
+      view
+      create
+      admin
+      readQuota
+      writeQuota
+    }
+  }
+`;
+
+export const UPDATE_ORGANIZATION = gql`
+  mutation UpdateOrganization($organizationID: UUID!, $name: String, $displayName: String, $description: String, $photoURL: String) {
+    updateOrganization(organizationID: $organizationID, name: $name, displayName: $displayName, description: $description, photoURL: $photoURL) {
+      organizationID
+      name
+      displayName
+      description
+      photoURL
+      createdOn
+      updatedOn
+      personalUserID
+      personalUser {
+        userID
+        email
+        createdOn
+        updatedOn
+        readQuota
+        writeQuota
+        billingOrganizationID
+      }
+    }
   }
 `;

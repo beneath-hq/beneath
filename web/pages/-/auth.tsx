@@ -10,9 +10,9 @@ import { NextPage } from "next";
 
 import { withApollo } from "../../apollo/withApollo";
 import { GithubIcon, GoogleIcon } from "../../components/Icons";
+import LinkTypography from "../../components/LinkTypography";
 import Page from "../../components/Page";
 import VSpace from "../../components/VSpace";
-import LinkTypography from "../../components/LinkTypography";
 import connection from "../../lib/connection";
 
 const useStyles = makeStyles((theme: Theme) => ({

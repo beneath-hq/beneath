@@ -7,6 +7,7 @@ import { QUERY_BILLING_INFO } from "../../../apollo/queries/billinginfo";
 import { QUERY_BILLING_PLANS } from "../../../apollo/queries/billingplan";
 import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
 import { BillingPlans } from "../../../apollo/types/BillingPlans";
+import { OrganizationByName_organizationByName } from "../../../apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -36,11 +37,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-interface Props {
-  organizationID: string;
+export interface BillingInfoProps {
+  organization: OrganizationByName_organizationByName;
 }
 
-const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
+const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
+  const organizationID = organization.organizationID;
+
   const classes = useStyles();
   const [upgradeDialogue, setUpgradeDialogue] = React.useState(false);
   const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false);
@@ -142,7 +145,9 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               <Grid item>
                 <Button
                   color="primary"
-                  onClick={() => {setChangeBillingMethodDialogue(true); }}
+                  onClick={() => {
+                    setChangeBillingMethodDialogue(true);
+                  }}
                   className={classes.title}
                 >
                   Edit
@@ -151,23 +156,24 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
                   open={changeBillingMethodDialogue}
                   fullWidth={true}
                   maxWidth={"sm"}
-                  onBackdropClick={() => { setChangeBillingMethodDialogue(false); }}
+                  onBackdropClick={() => {
+                    setChangeBillingMethodDialogue(false);
+                  }}
                 >
                   <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
                   <DialogContent>
                     <UpdateBillingInfo
-                    organizationID={organizationID}
-                    route={"change_billing_method"}
-                    closeDialogue={handleCloseDialogue} />
+                      organizationID={organizationID}
+                      route={"change_billing_method"}
+                      closeDialogue={handleCloseDialogue}
+                    />
                   </DialogContent>
                   <DialogActions />
                 </Dialog>
               </Grid>
             )}
           </Grid>
-          <Typography>
-            {displayBillingMethod(data.billingInfo)}
-          </Typography>
+          <Typography>{displayBillingMethod(data.billingInfo)}</Typography>
         </Grid>
         <Grid item xs={12} md={4}>
           <Grid container>
@@ -177,21 +183,20 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               </Typography>
             </Grid>
           </Grid>
-          {data.billingInfo.billingPlan.billingPlanID === freePlan.billingPlanID && (
-            <Typography>N/A</Typography>
-          )}
-          {data.billingInfo.billingPlan.billingPlanID !== freePlan.billingPlanID && taxInfo.map((taxInfo) => (
-            <React.Fragment key={taxInfo.name}>
-              <Grid container>
-                <Grid item xs={6} sm={4}>
-                  <Typography>{taxInfo.name}</Typography>
+          {data.billingInfo.billingPlan.billingPlanID === freePlan.billingPlanID && <Typography>N/A</Typography>}
+          {data.billingInfo.billingPlan.billingPlanID !== freePlan.billingPlanID &&
+            taxInfo.map((taxInfo) => (
+              <React.Fragment key={taxInfo.name}>
+                <Grid container>
+                  <Grid item xs={6} sm={4}>
+                    <Typography>{taxInfo.name}</Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography>{taxInfo.detail}</Typography>
+                  </Grid>
                 </Grid>
-                <Grid item>
-                  <Typography>{taxInfo.detail}</Typography>
-                </Grid>
-              </Grid>
-            </React.Fragment>
-          ))}
+              </React.Fragment>
+            ))}
         </Grid>
       </Grid>
 
@@ -203,18 +208,20 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               variant="outlined"
               color="primary"
               className={classes.button}
-              onClick={() => {setUpgradeDialogue(true); }}>
+              onClick={() => {
+                setUpgradeDialogue(true);
+              }}
+            >
               Upgrade to Professional Plan
             </Button>
-            <Dialog
-              open={upgradeDialogue}
-              fullWidth={true}
-              maxWidth={"md"}
-            >
+            <Dialog open={upgradeDialogue} fullWidth={true} maxWidth={"md"}>
               <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
               <DialogContent>
                 <UpdateBillingInfo
-                organizationID={organizationID} route={"checkout"} closeDialogue={handleCloseDialogue} />
+                  organizationID={organizationID}
+                  route={"checkout"}
+                  closeDialogue={handleCloseDialogue}
+                />
               </DialogContent>
               <DialogActions />
             </Dialog>
@@ -236,19 +243,27 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
             <Button
               variant="outlined"
               className={classes.button}
-              onClick={() => {setCancelDialogue(true); }}>
+              onClick={() => {
+                setCancelDialogue(true);
+              }}
+            >
               Cancel plan
             </Button>
             <Dialog
               open={cancelDialogue}
               fullWidth={true}
               maxWidth={"sm"}
-              onBackdropClick={() => { setCancelDialogue(false); }}
+              onBackdropClick={() => {
+                setCancelDialogue(false);
+              }}
             >
               <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
               <DialogContent>
                 <UpdateBillingInfo
-                organizationID={organizationID} route={"cancel"} closeDialogue={handleCloseDialogue} />
+                  organizationID={organizationID}
+                  route={"cancel"}
+                  closeDialogue={handleCloseDialogue}
+                />
               </DialogContent>
               <DialogActions />
             </Dialog>
@@ -259,12 +274,15 @@ const ViewBillingInfo: FC<Props> = ({ organizationID }) => {
               color="primary"
               className={classes.button}
               onClick={() => {
-                window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link";
-              }}>
+                window.location.href =
+                  "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link";
+              }}
+            >
               Discuss Enterprise Plan
             </Button>
           </Grid>
-        </Grid>)}
+        </Grid>
+      )}
     </React.Fragment>
   );
 };

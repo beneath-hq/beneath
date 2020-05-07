@@ -129,7 +129,7 @@ interface ProjectCrumbProps {
 }
 
 const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent }) => (
-  <Crumb 
+  <Crumb
     href={`/project?organization_name=${organization}&project_name=${project}`} 
     as={`/${organization}/${project}`}
     label={project}

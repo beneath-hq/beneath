@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { FC } from "react";
 
 import Avatar, { AvatarProps } from "@material-ui/core/Avatar";
 import { makeStyles, Theme } from "@material-ui/core/styles";
@@ -22,13 +22,13 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-interface BetterAvatarProps extends AvatarProps {
+export interface BetterAvatarProps extends Omit<AvatarProps, "src"> {
   size: string;
   label: string;
-  src?: string;
+  src?: string | null;
 }
 
-const BetterAvatar: FunctionComponent<BetterAvatarProps> = ({ size, label, src, ...other }) => {
+const BetterAvatar: FC<BetterAvatarProps> = ({ size, label, src, ...other }) => {
   const classes = useStyles();
 
   let className;
@@ -41,7 +41,7 @@ const BetterAvatar: FunctionComponent<BetterAvatarProps> = ({ size, label, src, 
   }
 
   return (
-    <Avatar className={className} src={src} alt={label} {...other}>
+    <Avatar className={className} src={src || undefined} alt={label} {...other}>
       {!src && !!label && label.slice(0, 2)}
     </Avatar>
   );

@@ -1,9 +1,6 @@
-import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
+import { FC } from "react";
 
-import Grid from "@material-ui/core/Grid";
-import Link from "@material-ui/core/Link";
-import Typography from "@material-ui/core/Typography";
+import { Grid, Link, makeStyles, Typography } from "@material-ui/core";
 
 import Avatar from "./Avatar";
 
@@ -21,16 +18,24 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ProfileHero = ({ name, description, site, avatarURL }) => {
+export interface ProfileHeroProps {
+  name: string;
+  displayName?: string | null;
+  description?: string | null;
+  site?: string | null;
+  avatarURL?: string | null;
+}
+
+const ProfileHero: FC<ProfileHeroProps> = ({ name, displayName, description, site, avatarURL }) => {
   const classes = useStyles();
   return (
     <Grid container wrap="nowrap" spacing={0} className={classes.container}>
       <Grid className={classes.avatar} item>
-        <Avatar size="hero" label={name} src={avatarURL} />
+        <Avatar size="hero" label={displayName || name} src={avatarURL} />
       </Grid>
       <Grid item>
         <Typography component="h1" variant="h1" gutterBottom={!site}>
-          {name}
+          {displayName || name}
         </Typography>
         {site && (
           <Link href={site} variant="subtitle2" className={classes.site} gutterBottom>
@@ -41,13 +46,6 @@ const ProfileHero = ({ name, description, site, avatarURL }) => {
       </Grid>
     </Grid>
   );
-};
-
-ProfileHero.propTypes = {
-  name: PropTypes.string,
-  description: PropTypes.string,
-  site: PropTypes.string,
-  avatarURL: PropTypes.string,
 };
 
 export default ProfileHero;
