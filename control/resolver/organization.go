@@ -38,7 +38,11 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.PrivateOrganization, error
 		return nil, gqlerror.Errorf("Couldn't find user! This is highly irregular.")
 	}
 
-	return organizationToPrivateOrganization(ctx, org, entity.OrganizationPermissions{}), nil
+	return organizationToPrivateOrganization(ctx, org, entity.OrganizationPermissions{
+		View:   true,
+		Create: true,
+		Admin:  true,
+	}), nil
 }
 
 func (r *queryResolver) OrganizationByName(ctx context.Context, name string) (gql.Organization, error) {

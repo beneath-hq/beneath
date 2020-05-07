@@ -196,6 +196,7 @@ type ComplexityRoot struct {
 		DisplayName           func(childComplexity int) int
 		Name                  func(childComplexity int) int
 		OrganizationID        func(childComplexity int) int
+		PhotoURL              func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
 		UserID                func(childComplexity int) int
 		View                  func(childComplexity int) int
@@ -275,6 +276,7 @@ type ComplexityRoot struct {
 		Create      func(childComplexity int) int
 		DisplayName func(childComplexity int) int
 		Name        func(childComplexity int) int
+		PhotoURL    func(childComplexity int) int
 		ProjectID   func(childComplexity int) int
 		UserID      func(childComplexity int) int
 		View        func(childComplexity int) int
@@ -1446,6 +1448,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationMember.OrganizationID(childComplexity), true
 
+	case "OrganizationMember.photoURL":
+		if e.complexity.OrganizationMember.PhotoURL == nil {
+			break
+		}
+
+		return e.complexity.OrganizationMember.PhotoURL(childComplexity), true
+
 	case "OrganizationMember.readQuota":
 		if e.complexity.OrganizationMember.ReadQuota == nil {
 			break
@@ -1851,6 +1860,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectMember.Name(childComplexity), true
+
+	case "ProjectMember.photoURL":
+		if e.complexity.ProjectMember.PhotoURL == nil {
+			break
+		}
+
+		return e.complexity.ProjectMember.PhotoURL(childComplexity), true
 
 	case "ProjectMember.projectID":
 		if e.complexity.ProjectMember.ProjectID == nil {
@@ -2852,6 +2868,7 @@ type OrganizationMember {
   billingOrganizationID: UUID!
   name: String!
   displayName: String!
+  photoURL: String
   view: Boolean!
   create: Boolean!
   admin: Boolean!
@@ -2893,6 +2910,7 @@ type ProjectMember {
   userID: ID!
   name: String!
   displayName: String!
+  photoURL: String
   view: Boolean!
   create: Boolean!
   admin: Boolean!
@@ -8602,6 +8620,40 @@ func (ec *executionContext) _OrganizationMember_displayName(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _OrganizationMember_photoURL(ctx context.Context, field graphql.CollectedField, obj *entity.OrganizationMember) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationMember",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PhotoURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _OrganizationMember_view(ctx context.Context, field graphql.CollectedField, obj *entity.OrganizationMember) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -10744,6 +10796,40 @@ func (ec *executionContext) _ProjectMember_displayName(ctx context.Context, fiel
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectMember_photoURL(ctx context.Context, field graphql.CollectedField, obj *entity.ProjectMember) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "ProjectMember",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PhotoURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectMember_view(ctx context.Context, field graphql.CollectedField, obj *entity.ProjectMember) (ret graphql.Marshaler) {
@@ -16102,6 +16188,8 @@ func (ec *executionContext) _OrganizationMember(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "photoURL":
+			out.Values[i] = ec._OrganizationMember_photoURL(ctx, field, obj)
 		case "view":
 			out.Values[i] = ec._OrganizationMember_view(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -16548,6 +16636,8 @@ func (ec *executionContext) _ProjectMember(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "photoURL":
+			out.Values[i] = ec._ProjectMember_photoURL(ctx, field, obj)
 		case "view":
 			out.Values[i] = ec._ProjectMember_view(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

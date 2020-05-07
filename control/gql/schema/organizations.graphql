@@ -66,6 +66,7 @@ type OrganizationMember {
   billingOrganizationID: UUID!
   name: String!
   displayName: String!
+  photoURL: String
   view: Boolean!
   create: Boolean!
   admin: Boolean!

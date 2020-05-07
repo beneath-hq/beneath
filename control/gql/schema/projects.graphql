@@ -32,6 +32,7 @@ type ProjectMember {
   userID: ID!
   name: String!
   displayName: String!
+  photoURL: String
   view: Boolean!
   create: Boolean!
   admin: Boolean!

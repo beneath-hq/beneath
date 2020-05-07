@@ -15,6 +15,7 @@ type ProjectMember struct {
 	UserID      uuid.UUID
 	Name        string
 	DisplayName string
+	PhotoURL    string
 	View        bool
 	Create      bool
 	Admin       bool
@@ -27,6 +28,7 @@ type OrganizationMember struct {
 	BillingOrganizationID uuid.UUID
 	Name                  string
 	DisplayName           string
+	PhotoURL              string
 	View                  bool
 	Create                bool
 	Admin                 bool
@@ -44,6 +46,7 @@ func FindProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*ProjectMem
 			p.user_id,
 			o.name,
 			o.display_name,
+			o.photo_url,
 			p.view,
 			p."create",
 			p.admin
@@ -68,6 +71,7 @@ func FindOrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]*
 			u.billing_organization_id,
 			o.name,
 			o.display_name,
+			o.photo_url,
 			p.view,
 			p."create",
 			p.admin,
