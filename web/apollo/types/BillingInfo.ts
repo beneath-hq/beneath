@@ -9,6 +9,7 @@
 
 export interface BillingInfo_billingInfo_billingPlan {
   __typename: "BillingPlan";
+  default: boolean;
   billingPlanID: ControlUUID;
   description: string | null;
   currency: string;
@@ -20,6 +21,7 @@ export interface BillingInfo_billingInfo_billingPlan {
   writeOveragePriceCents: number;
   baseReadQuota: number;
   baseWriteQuota: number;
+  availableInUI: boolean;
 }
 
 export interface BillingInfo_billingInfo_billingMethod {

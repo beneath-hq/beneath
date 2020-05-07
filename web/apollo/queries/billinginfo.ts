@@ -5,6 +5,7 @@ export const QUERY_BILLING_INFO = gql`
   billingInfo(organizationID: $organizationID) {
     organizationID
     billingPlan {
+      default
       billingPlanID
 	    description
 	    currency
@@ -16,6 +17,7 @@ export const QUERY_BILLING_INFO = gql`
 	    writeOveragePriceCents
 	    baseReadQuota
 	    baseWriteQuota
+      availableInUI
     }
     billingMethod {
       billingMethodID

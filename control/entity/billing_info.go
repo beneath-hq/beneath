@@ -36,6 +36,7 @@ func FindBillingInfo(ctx context.Context, organizationID uuid.UUID) *BillingInfo
 	err := hub.DB.ModelContext(ctx, billingInfo).
 		Where("billing_info.organization_id = ?", organizationID).
 		Column("billing_info.*").
+		Relation("Organization.Users").
 		Relation("BillingPlan").
 		Relation("BillingMethod").
 		Select()
@@ -133,18 +134,6 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 			}
 		}
 
-		// set all user quotas to nil
-		// if the new billing plan permits setting user-level quotas, then the admins should do that explicitly
-		for _, u := range bi.Organization.Users {
-			u.ReadQuota = nil
-			u.WriteQuota = nil
-		}
-
-		_, err = hub.DB.ModelContext(ctx, &bi.Organization.Users).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-		if err != nil {
-			return nil, err
-		}
-
 		// update the organization's quotas
 		// additionally, the UpdateQuotas() function clears the cache for all the organization's users' secrets
 		organization := FindOrganization(ctx, bi.OrganizationID)
@@ -152,6 +141,11 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		if err != nil {
 			return nil, err
 		}
+
+		// err = organization.UpdatePrepaidQuotas(ctx, &newBillingPlan.ReadQuota, &newBillingPlan.WriteQuota)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	return bi, nil

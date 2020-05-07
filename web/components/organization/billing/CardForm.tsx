@@ -7,6 +7,7 @@ import React, { FC, useEffect } from "react";
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
+import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 import useMe from "../../../hooks/useMe";
 import { useToken } from "../../../hooks/useToken";
 import billing from "../../../lib/billing";
@@ -57,10 +58,11 @@ interface CardFormStateTypes {
 }
 
 interface Props {
+  organization: OrganizationByName_organizationByName_PrivateOrganization;
   closeDialogue: () => void;
 }
 
-const CardFormElement: FC<Props> = ({ closeDialogue }) => {
+const CardFormElement: FC<Props> = ({ organization, closeDialogue }) => {
   const [values, setValues] = React.useState<CardFormStateTypes>({
     cardholder: "",
     line1: "",
@@ -108,7 +110,7 @@ const CardFormElement: FC<Props> = ({ closeDialogue }) => {
 
       const headers = { authorization: `Bearer ${token}` };
       let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`;
-      url += `?organizationID=${me.billingOrganization.organizationID}`;
+      url += `?organizationID=${organization.organizationID}`;
       const res = await fetch(url, { headers });
 
       if (isMounted) {
@@ -143,7 +145,7 @@ const CardFormElement: FC<Props> = ({ closeDialogue }) => {
                   postal_code: values.postalCode,
                   state: values.state,
                 },
-                email: me.email, // Stripe receipts will be sent to the user's Beneath email address
+                email: me.personalUser?.email, // Stripe receipts will be sent to the user's Beneath email address
                 name: values.cardholder,
               }
             }
@@ -419,10 +421,10 @@ const CardFormElement: FC<Props> = ({ closeDialogue }) => {
 
 const stripePromise = loadStripe(billing.STRIPE_KEY);
 
-const CardForm: FC<Props> = ({ closeDialogue }) => {
+const CardForm: FC<Props> = ({ organization, closeDialogue }) => {
   return (
     <Elements stripe={stripePromise}>
-      <CardFormElement closeDialogue={closeDialogue} />
+      <CardFormElement organization={organization} closeDialogue={closeDialogue} />
     </Elements>
   );
 };

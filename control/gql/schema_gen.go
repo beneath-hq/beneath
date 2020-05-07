@@ -97,6 +97,7 @@ type ComplexityRoot struct {
 	}
 
 	BillingPlan struct {
+		AvailableInUI          func(childComplexity int) int
 		BaseReadQuota          func(childComplexity int) int
 		BaseWriteQuota         func(childComplexity int) int
 		BillingPlanID          func(childComplexity int) int
@@ -227,22 +228,24 @@ type ComplexityRoot struct {
 	}
 
 	PrivateOrganization struct {
-		CreatedOn      func(childComplexity int) int
-		Description    func(childComplexity int) int
-		DisplayName    func(childComplexity int) int
-		Name           func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		Permissions    func(childComplexity int) int
-		PersonalUser   func(childComplexity int) int
-		PersonalUserID func(childComplexity int) int
-		PhotoURL       func(childComplexity int) int
-		Projects       func(childComplexity int) int
-		ReadQuota      func(childComplexity int) int
-		ReadUsage      func(childComplexity int) int
-		Services       func(childComplexity int) int
-		UpdatedOn      func(childComplexity int) int
-		WriteQuota     func(childComplexity int) int
-		WriteUsage     func(childComplexity int) int
+		CreatedOn         func(childComplexity int) int
+		Description       func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
+		Name              func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		Permissions       func(childComplexity int) int
+		PersonalUser      func(childComplexity int) int
+		PersonalUserID    func(childComplexity int) int
+		PhotoURL          func(childComplexity int) int
+		PrepaidReadQuota  func(childComplexity int) int
+		PrepaidWriteQuota func(childComplexity int) int
+		Projects          func(childComplexity int) int
+		ReadQuota         func(childComplexity int) int
+		ReadUsage         func(childComplexity int) int
+		Services          func(childComplexity int) int
+		UpdatedOn         func(childComplexity int) int
+		WriteQuota        func(childComplexity int) int
+		WriteUsage        func(childComplexity int) int
 	}
 
 	PrivateUser struct {
@@ -705,6 +708,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingMethod.PaymentsDriver(childComplexity), true
+
+	case "BillingPlan.availableInUI":
+		if e.complexity.BillingPlan.AvailableInUI == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.AvailableInUI(childComplexity), true
 
 	case "BillingPlan.baseReadQuota":
 		if e.complexity.BillingPlan.BaseReadQuota == nil {
@@ -1648,6 +1658,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivateOrganization.PhotoURL(childComplexity), true
+
+	case "PrivateOrganization.prepaidReadQuota":
+		if e.complexity.PrivateOrganization.PrepaidReadQuota == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.PrepaidReadQuota(childComplexity), true
+
+	case "PrivateOrganization.prepaidWriteQuota":
+		if e.complexity.PrivateOrganization.PrepaidWriteQuota == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.PrepaidWriteQuota(childComplexity), true
 
 	case "PrivateOrganization.projects":
 		if e.complexity.PrivateOrganization.Projects == nil {
@@ -2765,6 +2789,7 @@ type BillingPlan {
 	baseWriteQuota: Int!
 	readQuota: Int!
 	writeQuota: Int!
+	availableInUI: Boolean!
 }
 `},
 	&ast.Source{Name: "control/gql/schema/metrics.graphql", Input: `extend type Query {
@@ -2896,6 +2921,8 @@ type PrivateOrganization implements Organization {
   photoURL: String
   createdOn: Time!
   updatedOn: Time!
+  prepaidReadQuota: Int
+  prepaidWriteQuota: Int
   readQuota: Int
   writeQuota: Int
   readUsage: Int!
@@ -6063,6 +6090,43 @@ func (ec *executionContext) _BillingPlan_writeQuota(ctx context.Context, field g
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_availableInUI(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvailableInUI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Metrics_entityID(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
@@ -9732,6 +9796,74 @@ func (ec *executionContext) _PrivateOrganization_updatedOn(ctx context.Context, 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_prepaidReadQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidReadQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_prepaidWriteQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidWriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PrivateOrganization_readQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
@@ -15950,6 +16082,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "availableInUI":
+			out.Values[i] = ec._BillingPlan_availableInUI(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16651,6 +16788,10 @@ func (ec *executionContext) _PrivateOrganization(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "prepaidReadQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidReadQuota(ctx, field, obj)
+		case "prepaidWriteQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidWriteQuota(ctx, field, obj)
 		case "readQuota":
 			out.Values[i] = ec._PrivateOrganization_readQuota(ctx, field, obj)
 		case "writeQuota":

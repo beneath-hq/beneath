@@ -1,12 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import _ from "lodash";
 import React, { FC } from "react";
-import useMe from "../../../hooks/useMe";
 
 import { QUERY_BILLING_INFO } from "../../../apollo/queries/billinginfo";
-import { QUERY_BILLING_PLANS } from "../../../apollo/queries/billingplan";
 import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
-import { BillingPlans } from "../../../apollo/types/BillingPlans";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
@@ -42,36 +39,22 @@ export interface BillingInfoProps {
 }
 
 const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
-  const organizationID = organization.organizationID;
-
   const classes = useStyles();
   const [upgradeDialogue, setUpgradeDialogue] = React.useState(false);
   const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false);
   const [cancelDialogue, setCancelDialogue] = React.useState(false);
 
-  const me = useMe();
-  if (!me) {
-    return <p>Need to log in to see your current billing plan</p>;
-  }
-
-  const { loading, error: queryError1, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+  const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     variables: {
-      organizationID,
+      organizationID: organization.organizationID,
     },
   });
 
-  const { loading: loading3, error: queryError3, data: data3 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
-
-  if (queryError1 || !data) {
-    return <p>Error: {JSON.stringify(queryError1)}</p>;
+  if (error || !data) {
+    return <p>Error: {JSON.stringify(error)}</p>;
   }
 
-  if (queryError3 || !data3) {
-    return <p>Error: {JSON.stringify(queryError3)}</p>;
-  }
-
-  const freePlan = data3.billingPlans.filter((billingPlan) => billingPlan.default)[0];
-  const proPlan = data3.billingPlans.filter((billingPlan) => !billingPlan.default)[0];
+  const billingInfo = data.billingInfo;
 
   const displayBillingMethod = (billingInfo: BillingInfo_billingInfo) => {
     if (!billingInfo.billingMethod) {
@@ -85,16 +68,20 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
   };
 
   const billingPlan = [
-    { name: "Plan name", detail: data.billingInfo.billingPlan.description },
-    { name: "Read quota", detail: (data.billingInfo.billingPlan.seatReadQuota / 10 ** 9).toString() + " GB" },
-    { name: "Write quota", detail: (data.billingInfo.billingPlan.seatWriteQuota / 10 ** 9).toString() + " GB" },
+    { name: "Plan name", detail: billingInfo.billingPlan.description },
+    { name: "Prepaid read quota", detail: (organization.prepaidReadQuota ?
+      (organization.prepaidReadQuota / 10 ** 9).toString() + " GB" : "none") },
+    { name: "Prepaid write quota", detail: (organization.prepaidWriteQuota ?
+      (organization.prepaidWriteQuota / 10 ** 9).toString() + " GB" : "none") },
+    { name: "Read quota", detail: (organization.readQuota ? (organization.readQuota / 10 ** 9).toString() + " GB" : "unlimited") },
+    { name: "Write quota", detail: (organization.writeQuota ? (organization.writeQuota / 10 ** 9).toString() + " GB" : "unlimited") },
   ];
 
   const taxInfo = [
-    { name: "Country", detail: data.billingInfo.country },
-    { name: "Region", detail: data.billingInfo.region },
-    { name: "Company", detail: data.billingInfo.companyName },
-    { name: "Tax ID", detail: data.billingInfo.taxNumber },
+    { name: "Country", detail: billingInfo.country },
+    { name: "Region", detail: billingInfo.region },
+    { name: "Company", detail: billingInfo.companyName },
+    { name: "Tax ID", detail: billingInfo.taxNumber },
   ];
 
   const handleCloseDialogue = () => {
@@ -116,7 +103,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
         <Grid item xs={12} md={4}>
           <Grid container>
             <Grid item>
-              <Typography variant="h6" className={classes.title}>
+              <Typography variant="h5" className={classes.title}>
                 Billing plan
               </Typography>
             </Grid>
@@ -124,7 +111,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
           {billingPlan.map((billingPlan) => (
             <React.Fragment key={billingPlan.name}>
               <Grid container>
-                <Grid item xs={6} sm={4}>
+                <Grid item xs={6}>
                   <Typography>{billingPlan.name}</Typography>
                 </Grid>
                 <Grid item>
@@ -135,13 +122,13 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
           ))}
         </Grid>
         <Grid item xs={12} md={4}>
-          <Grid container alignItems="center" spacing={1}>
+          <Grid container alignItems="center" >
             <Grid item>
-              <Typography variant="h6" className={classes.title}>
+              <Typography variant="h5" className={classes.title}>
                 Billing method
               </Typography>
             </Grid>
-            {data.billingInfo.billingPlan.billingPlanID === proPlan.billingPlanID && (
+            {!billingInfo.billingPlan.default && (
               <Grid item>
                 <Button
                   color="primary"
@@ -163,9 +150,10 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
                   <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
                   <DialogContent>
                     <UpdateBillingInfo
-                      organizationID={organizationID}
+                      organization={organization}
                       route={"change_billing_method"}
                       closeDialogue={handleCloseDialogue}
+                      billingInfo={billingInfo}
                     />
                   </DialogContent>
                   <DialogActions />
@@ -173,18 +161,18 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
               </Grid>
             )}
           </Grid>
-          <Typography>{displayBillingMethod(data.billingInfo)}</Typography>
+          <Typography>{displayBillingMethod(billingInfo)}</Typography>
         </Grid>
         <Grid item xs={12} md={4}>
           <Grid container>
             <Grid item>
-              <Typography variant="h6" className={classes.title}>
+              <Typography variant="h5" className={classes.title}>
                 Tax info
               </Typography>
             </Grid>
           </Grid>
-          {data.billingInfo.billingPlan.billingPlanID === freePlan.billingPlanID && <Typography>N/A</Typography>}
-          {data.billingInfo.billingPlan.billingPlanID !== freePlan.billingPlanID &&
+          {billingInfo.billingPlan.default && <Typography>N/A</Typography>}
+          {!billingInfo.billingPlan.default &&
             taxInfo.map((taxInfo) => (
               <React.Fragment key={taxInfo.name}>
                 <Grid container>
@@ -201,7 +189,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
       </Grid>
 
       {/* BUTTONS */}
-      {data.billingInfo.billingPlan.billingPlanID === freePlan.billingPlanID && (
+      {billingInfo.billingPlan.default && (
         <Grid container>
           <Grid item>
             <Button
@@ -218,9 +206,10 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
               <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
               <DialogContent>
                 <UpdateBillingInfo
-                  organizationID={organizationID}
+                  organization={organization}
                   route={"checkout"}
                   closeDialogue={handleCloseDialogue}
+                  billingInfo={billingInfo}
                 />
               </DialogContent>
               <DialogActions />
@@ -237,7 +226,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
           </Grid>
         </Grid>
       )}
-      {data.billingInfo.billingPlan.billingPlanID === proPlan.billingPlanID && (
+      {!billingInfo.billingPlan.default && billingInfo.billingPlan.availableInUI && (
         <Grid container>
           <Grid item>
             <Button
@@ -260,9 +249,10 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
               <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
               <DialogContent>
                 <UpdateBillingInfo
-                  organizationID={organizationID}
+                  organization={organization}
                   route={"cancel"}
                   closeDialogue={handleCloseDialogue}
+                  billingInfo={billingInfo}
                 />
               </DialogContent>
               <DialogActions />

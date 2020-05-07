@@ -1,7 +1,6 @@
 import { useQuery } from "@apollo/react-hooks";
 import _ from "lodash";
 import React, { FC } from "react";
-import useMe from "../../../hooks/useMe";
 
 import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
@@ -33,20 +32,11 @@ export interface BillingMethodsProps {
 }
 
 const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
-  const organizationID = organization.organizationID;
-
   const classes = useStyles();
   const [addCardDialogue, setAddCardDialogue] = React.useState(false);
 
-  const me = useMe();
-  if (!me) {
-    return <p>Need to log in to see your current billing plan</p>;
-  }
-
   const { loading, error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
-    variables: {
-      organizationID,
-    },
+    variables: { organizationID: organization.organizationID, },
   });
 
   if (error || !data) {
@@ -69,7 +59,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
     <React.Fragment>
       <Grid container direction="column">
         <Grid item>
-          <Typography variant="h6" className={classes.title}>
+          <Typography variant="h5" className={classes.title}>
             Billing methods on file
           </Typography>
         </Grid>
@@ -140,7 +130,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <CardForm closeDialogue={handleCloseDialogue} />
+              <CardForm organization={organization} closeDialogue={handleCloseDialogue} />
             </DialogContent>
             <DialogActions />
           </Dialog>
