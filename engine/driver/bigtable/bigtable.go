@@ -155,7 +155,7 @@ func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge 
 	// set garbage collection policy
 	policy := bigtable.MaxVersionsPolicy(maxVersions)
 	if maxAge != 0 {
-		policy = bigtable.UnionPolicy(policy, bigtable.MaxAgePolicy(time.Second))
+		policy = bigtable.UnionPolicy(policy, bigtable.MaxAgePolicy(maxAge))
 	}
 
 	err = b.Admin.SetGCPolicy(context.Background(), name, cfName, policy)
