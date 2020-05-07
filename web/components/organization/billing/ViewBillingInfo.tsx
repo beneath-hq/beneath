@@ -7,7 +7,7 @@ import { QUERY_BILLING_INFO } from "../../../apollo/queries/billinginfo";
 import { QUERY_BILLING_PLANS } from "../../../apollo/queries/billingplan";
 import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
 import { BillingPlans } from "../../../apollo/types/BillingPlans";
-import { OrganizationByName_organizationByName } from "../../../apollo/types/OrganizationByName";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export interface BillingInfoProps {
-  organization: OrganizationByName_organizationByName;
+  organization: OrganizationByName_organizationByName_PrivateOrganization;
 }
 
 const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {

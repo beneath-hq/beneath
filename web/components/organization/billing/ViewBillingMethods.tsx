@@ -5,7 +5,7 @@ import useMe from "../../../hooks/useMe";
 
 import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
-import { OrganizationByName_organizationByName } from "../../../apollo/types/OrganizationByName";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export interface BillingMethodsProps {
-  organization: OrganizationByName_organizationByName;
+  organization: OrganizationByName_organizationByName_PrivateOrganization;
 }
 
 const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
