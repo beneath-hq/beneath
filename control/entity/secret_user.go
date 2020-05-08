@@ -146,5 +146,5 @@ func (s *UserSecret) Revoke(ctx context.Context) {
 	}
 
 	// remove from redis (ignore error)
-	getSecretCache().Delete(ctx, s.HashedToken)
+	getSecretCache().Clear(ctx, s.HashedToken)
 }

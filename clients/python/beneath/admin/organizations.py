@@ -182,7 +182,7 @@ class Organizations:
         }
       """
     )
-    return result['updateOrganizationName']
+    return result['updateOrganization']
 
   async def update_quota(self, organization_id, read_quota_bytes, write_quota_bytes):
     result = await self.conn.query_control(

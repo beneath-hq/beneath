@@ -170,8 +170,10 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 		return err
 	}
 
+	// note: if we ever support renaming projects, must invalidate stream cache for all instances in project
+
 	// update in tx with call to bigquery
-	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		p.UpdatedOn = time.Now()
 		_, err = hub.DB.WithContext(ctx).Model(p).
 			Column("display_name", "public", "site", "description", "photo_url", "updated_on").
@@ -189,6 +191,10 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetLock sets a project's "locked" status

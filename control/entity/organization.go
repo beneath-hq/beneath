@@ -18,7 +18,7 @@ import (
 // Organization represents the entity that manages billing on behalf of its users
 type Organization struct {
 	OrganizationID    uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name              string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"`
+	Name              string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"` // NOTE: when updating, clear stream cache
 	DisplayName       string     `sql:",notnull",validate:"required,gte=1,lte=50"`
 	Description       string     `validate:"omitempty,lte=255"`
 	PhotoURL          string     `validate:"omitempty,url,lte=400"`
@@ -28,8 +28,8 @@ type Organization struct {
 	UpdatedOn         time.Time `sql:",default:now()"`
 	PrepaidReadQuota  *int64    // bytes
 	PrepaidWriteQuota *int64    // bytes
-	ReadQuota         *int64    // bytes
-	WriteQuota        *int64    // bytes
+	ReadQuota         *int64    // bytes // NOTE: when updating value, clear secret cache
+	WriteQuota        *int64    // bytes // NOTE: when updating value, clear secret cache
 	Projects          []*Project
 	Services          []*Service
 	Users             []*User `pg:"fk:billing_organization_id"`
@@ -272,7 +272,16 @@ func (o *Organization) UpdateDetails(ctx context.Context, name *string, displayN
 			"photo_url",
 			"updated_on",
 		).WherePK().Update()
-	return err
+	if err != nil {
+		return err
+	}
+
+	// flush all cached streams if name changed
+	if name != nil {
+		getStreamCache().ClearForOrganization(ctx, o.OrganizationID)
+	}
+
+	return nil
 }
 
 // UpdateQuotas updates the quotas enforced upon the organization
@@ -292,16 +301,7 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 	_, err = hub.DB.ModelContext(ctx, o).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
 
 	// clear cache for the organization's users' secrets
-	for _, u := range o.Users {
-		secrets := FindUserSecrets(ctx, u.UserID)
-		if secrets == nil {
-			panic("could not find user secrets")
-		}
-
-		for _, s := range secrets {
-			getSecretCache().Delete(ctx, s.HashedToken)
-		}
-	}
+	getSecretCache().ClearForOrganization(ctx, o.OrganizationID)
 
 	return err
 }
@@ -384,6 +384,7 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	if err != nil {
 		return err
 	}
+	getSecretCache().ClearForUser(ctx, user.UserID)
 
 	// find target billing info
 	targetBillingInfo := FindBillingInfo(ctx, targetOrg.OrganizationID)
@@ -432,6 +433,9 @@ func (o *Organization) TransferProject(ctx context.Context, project *Project, ta
 		return err
 	}
 
+	// stream cache includes organization name, so invalidate cache
+	getStreamCache().ClearForProject(ctx, project.ProjectID)
+
 	return nil
 }
 
@@ -445,6 +449,9 @@ func (o *Organization) TransferService(ctx context.Context, service *Service, ta
 	if err != nil {
 		return err
 	}
+
+	// secret cache includes organization's quotas
+	getSecretCache().ClearForService(ctx, service.ServiceID)
 
 	return nil
 }

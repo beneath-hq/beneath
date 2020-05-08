@@ -112,8 +112,6 @@ func (r *mutationResolver) UpdateServiceQuotas(ctx context.Context, serviceID uu
 		return nil, gqlerror.Errorf("Can only directly edit external services")
 	}
 
-	// TODO: invalidate cached quotas
-
 	err := service.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())

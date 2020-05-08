@@ -306,7 +306,7 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 	}
 
 	// update
-	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
 		// update model
 		m.UpdatedOn = time.Now()
 		_, err := tx.Model(m).WherePK().Update()
@@ -341,6 +341,9 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 			if err != nil {
 				return err
 			}
+
+			// clear cached permissions (despite inserts, service may have tried earlier and result cached)
+			getServiceStreamPermissionsCache().Clear(ctx, m.ServiceID, streamID)
 		}
 
 		// insert outputStreams
@@ -354,6 +357,14 @@ func (m *Model) CompileAndUpdate(ctx context.Context, inputStreamIDs []uuid.UUID
 		// done
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// invalidate caches (quotas changed)
+	getSecretCache().ClearForService(ctx, m.Service.ServiceID)
+
+	return nil
 }
 
 func (m *Model) compileSchema(ctx context.Context, schema string) (*Stream, error) {

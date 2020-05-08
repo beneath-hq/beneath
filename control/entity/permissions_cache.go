@@ -14,27 +14,27 @@ import (
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
-// ProjectPermissions represents permissions that a secret has for a given project
+// ProjectPermissions represents permissions that a user has for a given project
 type ProjectPermissions struct {
 	View   bool
 	Create bool
 	Admin  bool
 }
 
-// StreamPermissions represents permissions that a secret has for a given stream
+// StreamPermissions represents permissions that a service has for a given stream
 type StreamPermissions struct {
 	Read  bool
 	Write bool
 }
 
-// OrganizationPermissions represents permissions that a secret has for a given organization
+// OrganizationPermissions represents permissions that a user has for a given organization
 type OrganizationPermissions struct {
 	View   bool
 	Create bool
 	Admin  bool
 }
 
-// PermissionsCache encapsulates the secret's permissions and how to access the permissions in short-term and long-term memory
+// PermissionsCache caches an owner's permissions for a resource for fast access
 type PermissionsCache struct {
 	codec     *cache.Codec
 	prototype reflect.Type

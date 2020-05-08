@@ -23,10 +23,10 @@ type User struct {
 	GithubID              string    `sql:",unique",validate:"omitempty,lte=255"`
 	CreatedOn             time.Time `sql:",default:now()"`
 	UpdatedOn             time.Time `sql:",default:now()"`
-	Master                bool      `sql:",notnull,default:false"`
-	ReadQuota             *int64
-	WriteQuota            *int64
-	BillingOrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
+	Master                bool      `sql:",notnull,default:false"` // NOTE: when updating value, clear secret cache
+	ReadQuota             *int64    // NOTE: when updating value, clear secret cache
+	WriteQuota            *int64    // NOTE: when updating value, clear secret cache
+	BillingOrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"` // NOTE: when updating value, clear secret cache
 	BillingOrganization   *Organization
 	Projects              []*Project      `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
 	Organizations         []*Organization `pg:"many2many:permissions_users_organizations,fk:user_id,joinFK:organization_id"`
@@ -282,7 +282,12 @@ func (u *User) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *i
 		return err
 	}
 	_, err = hub.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-	return err
+	if err != nil {
+		return err
+	}
+
+	getSecretCache().ClearForUser(ctx, u.UserID)
+	return nil
 }
 
 func usernameSeeds(email string, name string, nickname string) []string {

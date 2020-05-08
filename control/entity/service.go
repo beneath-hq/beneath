@@ -17,8 +17,8 @@ type Service struct {
 	Kind           ServiceKind `sql:",notnull"`
 	OrganizationID uuid.UUID   `sql:"on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
-	ReadQuota      *int64
-	WriteQuota     *int64
+	ReadQuota      *int64    // NOTE: when updating value, clear secret cache
+	WriteQuota     *int64    // NOTE: when updating value, clear secret cache
 	CreatedOn      time.Time `sql:",notnull,default:now()"`
 	UpdatedOn      time.Time `sql:",notnull,default:now()"`
 	Secrets        []*ServiceSecret
@@ -142,7 +142,12 @@ func (s *Service) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota
 	// update
 	s.UpdatedOn = time.Now()
 	_, err = hub.DB.ModelContext(ctx, s).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-	return err
+	if err != nil {
+		return err
+	}
+
+	getSecretCache().ClearForService(ctx, s.ServiceID)
+	return nil
 }
 
 // Delete removes a service from the database
