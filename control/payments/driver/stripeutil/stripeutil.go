@@ -325,9 +325,9 @@ func PrettyDescription(product string) string {
 	case string(entity.SeatProratedCreditProduct):
 		return "Seat credit (prorated)"
 	case string(entity.ReadOverageProduct):
-		return "Organization read overage (GB)"
+		return "Read overage (GB)"
 	case string(entity.WriteOverageProduct):
-		return "Organization write overage (GB)"
+		return "Write overage (GB)"
 	default:
 		panic("unknown product")
 	}

@@ -19,7 +19,7 @@ type BilledResource struct {
 	StartTime        time.Time `sql:",notnull"`
 	EndTime          time.Time `sql:",notnull"`
 	Product          Product   `sql:",notnull"`
-	Quantity         int64     `sql:",notnull"`
+	Quantity         float32   `sql:",notnull"`
 	TotalPriceCents  int32     `sql:",notnull"`
 	Currency         Currency  `sql:",notnull"`
 	CreatedOn        time.Time `sql:",notnull,default:now()"`
