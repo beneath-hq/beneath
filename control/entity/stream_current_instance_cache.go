@@ -67,7 +67,7 @@ func (c instanceCache) cacheLRUSize() int {
 }
 
 func (c instanceCache) cacheLRUTime() time.Duration {
-	return 1 * time.Minute
+	return 10 * time.Second
 }
 
 func (c instanceCache) redisKey(organizationName string, projectName string, streamName string) string {

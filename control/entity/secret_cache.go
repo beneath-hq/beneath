@@ -30,7 +30,7 @@ var (
 		redisKeyFn   func(hashedToken []byte) string
 	}{
 		cacheTime:    time.Hour,
-		cacheLRUTime: 1 * time.Minute,
+		cacheLRUTime: 10 * time.Second,
 		cacheLRUSize: 10000,
 		redisKeyFn: func(hashedToken []byte) string {
 			return string(append([]byte("scrt:"), hashedToken...))
