@@ -166,12 +166,12 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTi
 	}
 
 	readOverageBytes := usages[0].ReadBytes - *bi.Organization.PrepaidReadQuota
-	readOverageGB := readOverageBytes/10 ^ 6
-	readOveragePrice := int32(readOverageGB) * bi.BillingPlan.ReadOveragePriceCents // assuming unit of ReadOveragePriceCents is GB
+	readOverageGB := float32(readOverageBytes) / float32(1e9)
+	readOveragePrice := int32(readOverageGB * float32(bi.BillingPlan.ReadOveragePriceCents)) // assuming unit of ReadOveragePriceCents is GB
 
 	writeOverageBytes := usages[0].WriteBytes - *bi.Organization.PrepaidWriteQuota
-	writeOverageGB := writeOverageBytes/10 ^ 6
-	writeOveragePrice := int32(writeOverageGB) * bi.BillingPlan.WriteOveragePriceCents // assuming unit of WriteOveragePriceCents is GB
+	writeOverageGB := float32(writeOverageBytes) / float32(1e9)
+	writeOveragePrice := int32(writeOverageGB * float32(bi.BillingPlan.WriteOveragePriceCents)) // assuming unit of WriteOveragePriceCents is GB
 
 	var newBilledResources []*BilledResource
 
