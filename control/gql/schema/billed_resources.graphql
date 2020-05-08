@@ -11,7 +11,7 @@ type BilledResource {
 	startTime: Time!
 	endTime: Time!
 	product: String!
-	quantity: Int!
+	quantity: Float!
 	totalPriceCents: Int!
 	currency: String!
 	createdOn: Time!
