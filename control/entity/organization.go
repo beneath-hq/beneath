@@ -306,6 +306,35 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 	return err
 }
 
+// UpdatePrepaidQuotas updates the organization's prepaid quotas
+func (o *Organization) UpdatePrepaidQuotas(ctx context.Context, billingPlan *BillingPlan) error {
+	var numSeats int64
+	for _, user := range o.Users {
+		if user.BillingOrganizationID == o.OrganizationID {
+			numSeats++
+		}
+	}
+
+	prepaidReadQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*numSeats
+	prepaidWriteQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*numSeats
+
+	// set fields
+	o.PrepaidReadQuota = &prepaidReadQuota
+	o.PrepaidWriteQuota = &prepaidWriteQuota
+	o.UpdatedOn = time.Now()
+
+	// update
+	_, err := hub.DB.WithContext(ctx).Model(o).
+		Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 // Delete deletes the organization
 // this will fail if there are any users, services, or projects that are still tied to the organization
 func (o *Organization) Delete(ctx context.Context) error {

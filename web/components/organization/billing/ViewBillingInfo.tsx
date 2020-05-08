@@ -67,14 +67,34 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
     }
   };
 
+  const displayPrepaidQuota = (prepaidQuota: any, isBillingPlanDefault: boolean) => {
+    if (isBillingPlanDefault) {
+      return "N/A";
+    } else if (!prepaidQuota) {
+      return "none";
+    } else {
+      return (prepaidQuota / 10 ** 9).toString() + " GB";
+    }
+  };
+
   const billingPlan = [
     { name: "Plan name", detail: billingInfo.billingPlan.description },
-    { name: "Prepaid read quota", detail: (organization.prepaidReadQuota ?
-      (organization.prepaidReadQuota / 10 ** 9).toString() + " GB" : "none") },
-    { name: "Prepaid write quota", detail: (organization.prepaidWriteQuota ?
-      (organization.prepaidWriteQuota / 10 ** 9).toString() + " GB" : "none") },
-    { name: "Read quota", detail: (organization.readQuota ? (organization.readQuota / 10 ** 9).toString() + " GB" : "unlimited") },
-    { name: "Write quota", detail: (organization.writeQuota ? (organization.writeQuota / 10 ** 9).toString() + " GB" : "unlimited") },
+    {
+      name: "Prepaid read quota",
+      detail: displayPrepaidQuota(organization.prepaidReadQuota, billingInfo.billingPlan.default),
+    },
+    {
+      name: "Prepaid write quota",
+      detail: displayPrepaidQuota(organization.prepaidWriteQuota, billingInfo.billingPlan.default),
+    },
+    {
+      name: "Read quota",
+      detail: organization.readQuota ? (organization.readQuota / 10 ** 9).toString() + " GB" : "unlimited",
+    },
+    {
+      name: "Write quota",
+      detail: organization.writeQuota ? (organization.writeQuota / 10 ** 9).toString() + " GB" : "unlimited",
+    },
   ];
 
   const taxInfo = [

@@ -142,10 +142,10 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 			return nil, err
 		}
 
-		// err = organization.UpdatePrepaidQuotas(ctx, &newBillingPlan.ReadQuota, &newBillingPlan.WriteQuota)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		err = organization.UpdatePrepaidQuotas(ctx, newBillingPlan)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return bi, nil
