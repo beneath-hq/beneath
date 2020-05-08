@@ -2,15 +2,14 @@ extend type Query {
   model(organizationName: String!, projectName: String!, modelName: String!): Model!
 }
 
-extend type Mutation {
-  createModel(input: CreateModelInput!): Model!
-  updateModel(input: UpdateModelInput!): Model!
-  deleteModel(modelID: UUID!): Boolean!
-
-  createModelBatch(modelID: UUID!): [StreamInstance!]!
-  commitModelBatch(modelID: UUID!, instanceIDs: [UUID!]!): Boolean!
-  clearPendingModelBatches(modelID: UUID!): Boolean!
-}
+# extend type Mutation {
+#   createModel(input: CreateModelInput!): Model!
+#   updateModel(input: UpdateModelInput!): Model!
+#   deleteModel(modelID: UUID!): Boolean!
+#   createModelBatch(modelID: UUID!): [StreamInstance!]!
+#   commitModelBatch(modelID: UUID!, instanceIDs: [UUID!]!): Boolean!
+#   clearPendingModelBatches(modelID: UUID!): Boolean!
+# }
 
 type Model {
   modelID: ID!
