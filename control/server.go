@@ -11,7 +11,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/resolver"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
-	"gitlab.com/beneath-hq/beneath/internal/segment"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 
@@ -35,7 +34,6 @@ func Handler(host string, frontendHost string) http.Handler {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Auth)
 	router.Use(middleware.IPRateLimit())
-	router.Use(segmentMiddleware)
 
 	// Add CORS
 	router.Use(cors.New(cors.Options{
@@ -144,23 +142,5 @@ func makeGraphQLErrorPresenter() handler.Option {
 		// Uncomment this line to print resolver error details in the console
 		// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
 		return graphql.DefaultErrorPresenter(ctx, err)
-	})
-}
-
-func segmentMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// run the request first, thus setting tags.Payload
-		next.ServeHTTP(w, r)
-
-		tags := middleware.GetTags(r.Context())
-		logs, ok := tags.Payload.([]gqlLog)
-		if !ok {
-			return
-		}
-
-		for _, l := range logs {
-			name := "GQL: " + l.Name
-			segment.TrackHTTP(r, name, l)
-		}
 	})
 }

@@ -31,11 +31,6 @@ env:
   value: "8080"
 - name: BENEATH_GATEWAY_PORT_GRPC
   value: "9090"
-- name: BENEATH_GATEWAY_SEGMENT_SECRET
-  valueFrom:
-    secretKeyRef:
-      name: control-secrets
-      key: segment-secret
 - name: BENEATH_CONTROL_HOST
   value: "https://control.beneath.dev"
 - name: BENEATH_FRONTEND_HOST

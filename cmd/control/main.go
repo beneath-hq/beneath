@@ -9,7 +9,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/migrations"
 	"gitlab.com/beneath-hq/beneath/control/payments"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
-	"gitlab.com/beneath-hq/beneath/internal/segment"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
@@ -30,7 +29,6 @@ type configSpecification struct {
 	WarehouseDriver string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
 
 	PaymentsDrivers  []string `envconfig:"CONTROL_PAYMENTS_DRIVERS" required:"true"`
-	SegmentSecret    string   `envconfig:"CONTROL_SEGMENT_SECRET" required:"true"`
 	StripeSecret     string   `envconfig:"CONTROL_STRIPE_SECRET" required:"true"`
 	SessionSecret    string   `envconfig:"CONTROL_SESSION_SECRET" required:"true"`
 	GithubAuthID     string   `envconfig:"CONTROL_GITHUB_AUTH_ID" required:"true"`
@@ -55,9 +53,6 @@ func main() {
 
 	// run migrations
 	migrations.MustRunUp(hub.DB)
-
-	// init segment
-	segment.InitClient(config.SegmentSecret)
 
 	// configure auth
 	auth.InitGoth(&auth.GothConfig{
