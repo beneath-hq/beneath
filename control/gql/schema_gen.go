@@ -15,7 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"gitlab.com/beneath-hq/beneath/control/entity"
@@ -143,18 +143,13 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
 		ClearPendingExternalStreamBatches func(childComplexity int, streamID uuid.UUID) int
-		ClearPendingModelBatches          func(childComplexity int, modelID uuid.UUID) int
 		CommitExternalStreamBatch         func(childComplexity int, instanceID uuid.UUID) int
-		CommitModelBatch                  func(childComplexity int, modelID uuid.UUID, instanceIDs []uuid.UUID) int
 		CreateExternalStream              func(childComplexity int, projectID uuid.UUID, schema string, batch bool, manual bool) int
 		CreateExternalStreamBatch         func(childComplexity int, streamID uuid.UUID) int
-		CreateModel                       func(childComplexity int, input CreateModelInput) int
-		CreateModelBatch                  func(childComplexity int, modelID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) int
 		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
-		DeleteModel                       func(childComplexity int, modelID uuid.UUID) int
 		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
 		Empty                             func(childComplexity int) int
@@ -168,7 +163,6 @@ type ComplexityRoot struct {
 		TransferServiceToOrganization     func(childComplexity int, serviceID uuid.UUID, organizationID uuid.UUID) int
 		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
 		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
-		UpdateModel                       func(childComplexity int, input UpdateModelInput) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) int
@@ -420,12 +414,6 @@ type ModelResolver interface {
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
 	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error)
-	CreateModel(ctx context.Context, input CreateModelInput) (*entity.Model, error)
-	UpdateModel(ctx context.Context, input UpdateModelInput) (*entity.Model, error)
-	DeleteModel(ctx context.Context, modelID uuid.UUID) (bool, error)
-	CreateModelBatch(ctx context.Context, modelID uuid.UUID) ([]*entity.StreamInstance, error)
-	CommitModelBatch(ctx context.Context, modelID uuid.UUID, instanceIDs []uuid.UUID) (bool, error)
-	ClearPendingModelBatches(ctx context.Context, modelID uuid.UUID) (bool, error)
 	CreateOrganization(ctx context.Context, name string) (*PrivateOrganization, error)
 	UpdateOrganization(ctx context.Context, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) (*PrivateOrganization, error)
 	UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*PrivateOrganization, error)
@@ -979,18 +967,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ClearPendingExternalStreamBatches(childComplexity, args["streamID"].(uuid.UUID)), true
 
-	case "Mutation.clearPendingModelBatches":
-		if e.complexity.Mutation.ClearPendingModelBatches == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_clearPendingModelBatches_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClearPendingModelBatches(childComplexity, args["modelID"].(uuid.UUID)), true
-
 	case "Mutation.commitExternalStreamBatch":
 		if e.complexity.Mutation.CommitExternalStreamBatch == nil {
 			break
@@ -1002,18 +978,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CommitExternalStreamBatch(childComplexity, args["instanceID"].(uuid.UUID)), true
-
-	case "Mutation.commitModelBatch":
-		if e.complexity.Mutation.CommitModelBatch == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_commitModelBatch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CommitModelBatch(childComplexity, args["modelID"].(uuid.UUID), args["instanceIDs"].([]uuid.UUID)), true
 
 	case "Mutation.createExternalStream":
 		if e.complexity.Mutation.CreateExternalStream == nil {
@@ -1038,30 +1002,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateExternalStreamBatch(childComplexity, args["streamID"].(uuid.UUID)), true
-
-	case "Mutation.createModel":
-		if e.complexity.Mutation.CreateModel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createModel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateModel(childComplexity, args["input"].(CreateModelInput)), true
-
-	case "Mutation.createModelBatch":
-		if e.complexity.Mutation.CreateModelBatch == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createModelBatch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateModelBatch(childComplexity, args["modelID"].(uuid.UUID)), true
 
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
@@ -1110,18 +1050,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteExternalStream(childComplexity, args["streamID"].(uuid.UUID)), true
-
-	case "Mutation.deleteModel":
-		if e.complexity.Mutation.DeleteModel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteModel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteModel(childComplexity, args["modelID"].(uuid.UUID)), true
 
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
@@ -1273,18 +1201,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateExternalStream(childComplexity, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool)), true
-
-	case "Mutation.updateModel":
-		if e.complexity.Mutation.UpdateModel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateModel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateModel(childComplexity, args["input"].(UpdateModelInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -2825,15 +2741,14 @@ enum EntityKind {
   model(organizationName: String!, projectName: String!, modelName: String!): Model!
 }
 
-extend type Mutation {
-  createModel(input: CreateModelInput!): Model!
-  updateModel(input: UpdateModelInput!): Model!
-  deleteModel(modelID: UUID!): Boolean!
-
-  createModelBatch(modelID: UUID!): [StreamInstance!]!
-  commitModelBatch(modelID: UUID!, instanceIDs: [UUID!]!): Boolean!
-  clearPendingModelBatches(modelID: UUID!): Boolean!
-}
+# extend type Mutation {
+#   createModel(input: CreateModelInput!): Model!
+#   updateModel(input: UpdateModelInput!): Model!
+#   deleteModel(modelID: UUID!): Boolean!
+#   createModelBatch(modelID: UUID!): [StreamInstance!]!
+#   commitModelBatch(modelID: UUID!, instanceIDs: [UUID!]!): Boolean!
+#   clearPendingModelBatches(modelID: UUID!): Boolean!
+# }
 
 type Model {
   modelID: ID!
@@ -3190,20 +3105,6 @@ func (ec *executionContext) field_Mutation_clearPendingExternalStreamBatches_arg
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_clearPendingModelBatches_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["modelID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["modelID"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_commitExternalStreamBatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3215,28 +3116,6 @@ func (ec *executionContext) field_Mutation_commitExternalStreamBatch_args(ctx co
 		}
 	}
 	args["instanceID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_commitModelBatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["modelID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["modelID"] = arg0
-	var arg1 []uuid.UUID
-	if tmp, ok := rawArgs["instanceIDs"]; ok {
-		arg1, err = ec.unmarshalNUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["instanceIDs"] = arg1
 	return args, nil
 }
 
@@ -3289,34 +3168,6 @@ func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context
 		}
 	}
 	args["manual"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createModelBatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["modelID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["modelID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createModel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 CreateModelInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐCreateModelInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -3445,20 +3296,6 @@ func (ec *executionContext) field_Mutation_deleteExternalStream_args(ctx context
 		}
 	}
 	args["streamID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteModel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["modelID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["modelID"] = arg0
 	return args, nil
 }
 
@@ -3763,20 +3600,6 @@ func (ec *executionContext) field_Mutation_updateExternalStream_args(ctx context
 		}
 	}
 	args["manual"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateModel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 UpdateModelInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐUpdateModelInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -6940,270 +6763,6 @@ func (ec *executionContext) _Mutation_updateBillingInfo(ctx context.Context, fie
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBillingInfo2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐBillingInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createModel_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateModel(rctx, args["input"].(CreateModelInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.Model)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateModel_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateModel(rctx, args["input"].(UpdateModelInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.Model)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_deleteModel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteModel_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteModel(rctx, args["modelID"].(uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createModelBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createModelBatch_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateModelBatch(rctx, args["modelID"].(uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*entity.StreamInstance)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_commitModelBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_commitModelBatch_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CommitModelBatch(rctx, args["modelID"].(uuid.UUID), args["instanceIDs"].([]uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_clearPendingModelBatches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_clearPendingModelBatches_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ClearPendingModelBatches(rctx, args["modelID"].(uuid.UUID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -16286,36 +15845,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createModel":
-			out.Values[i] = ec._Mutation_createModel(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updateModel":
-			out.Values[i] = ec._Mutation_updateModel(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "deleteModel":
-			out.Values[i] = ec._Mutation_deleteModel(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createModelBatch":
-			out.Values[i] = ec._Mutation_createModelBatch(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "commitModelBatch":
-			out.Values[i] = ec._Mutation_commitModelBatch(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "clearPendingModelBatches":
-			out.Values[i] = ec._Mutation_clearPendingModelBatches(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "createOrganization":
 			out.Values[i] = ec._Mutation_createOrganization(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -18404,10 +17933,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐCreateModelInput(ctx context.Context, v interface{}) (CreateModelInput, error) {
-	return ec.unmarshalInputCreateModelInput(ctx, v)
-}
-
 func (ec *executionContext) unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, v interface{}) (EntityKind, error) {
 	var res EntityKind
 	return res, res.UnmarshalGQL(v)
@@ -19066,43 +18591,6 @@ func (ec *executionContext) marshalNStreamInstance2gitlabᚗcomᚋbeneathᚑhq�
 	return ec._StreamInstance(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamInstance) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
 func (ec *executionContext) marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *entity.StreamInstance) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
@@ -19211,10 +18699,6 @@ func (ec *executionContext) marshalNUUID2ᚕgithubᚗcomᚋsatoriᚋgoᚗuuidᚐ
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalNUpdateModelInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐUpdateModelInput(ctx context.Context, v interface{}) (UpdateModelInput, error) {
-	return ec.unmarshalInputUpdateModelInput(ctx, v)
 }
 
 func (ec *executionContext) marshalNUserSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUserSecret(ctx context.Context, sel ast.SelectionSet, v entity.UserSecret) graphql.Marshaler {

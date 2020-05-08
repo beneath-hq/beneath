@@ -24,9 +24,9 @@ def create_argument_parser():
   parser.add_argument('-v', '--version', action='version', version=__version__)
   root = parser.add_subparsers()
   auth.add_subparser(root)
-  model.add_subparser(root)
   organization.add_subparser(root)
   project.add_subparser(root)
   service.add_subparser(root)
   stream.add_subparser(root)
+  # model.add_subparser(root)
   return parser

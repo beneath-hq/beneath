@@ -386,7 +386,7 @@ func (c *StreamCache) cacheLRUSize() int {
 }
 
 func (c *StreamCache) cacheLRUTime() time.Duration {
-	return time.Minute
+	return 10 * time.Second
 }
 
 func (c *StreamCache) redisKey(instanceID uuid.UUID) string {
