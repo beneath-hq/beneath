@@ -38,8 +38,6 @@ func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUI
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", org.User.BillingOrganizationID.String())
 	}
 
-	// TODO: invalidate cached quotas
-
 	err := org.User.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())

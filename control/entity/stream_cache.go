@@ -268,34 +268,36 @@ func (c *CachedStream) GetBigQuerySchema() string {
 	panic("GetBigQuerySchema called on unhacked CachedStream")
 }
 
-// streamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
-type streamCache struct {
+// StreamCache is a Redis and LRU based cache mapping an instance ID to a CachedStream
+type StreamCache struct {
 	codec *cache.Codec
 	lru   gcache.Cache
 }
 
 var (
 	_streamCacheLock sync.Mutex
-	_streamCache     streamCache
+	_streamCache     *StreamCache
 )
 
 // getStreamCache returns a global streamCache
-func getStreamCache() streamCache {
+func getStreamCache() *StreamCache {
 	_streamCacheLock.Lock()
-	if _streamCache.codec == nil {
-		_streamCache.codec = &cache.Codec{
-			Redis:     hub.Redis,
-			Marshal:   _streamCache.marshal,
-			Unmarshal: _streamCache.unmarshal,
+	if _streamCache == nil {
+		_streamCache = &StreamCache{
+			codec: &cache.Codec{
+				Redis:     hub.Redis,
+				Marshal:   _streamCache.marshal,
+				Unmarshal: _streamCache.unmarshal,
+			},
+			lru: gcache.New(_streamCache.cacheLRUSize()).LRU().Build(),
 		}
-		_streamCache.lru = gcache.New(_streamCache.cacheLRUSize()).LRU().Build()
 	}
 	_streamCacheLock.Unlock()
 	return _streamCache
 }
 
-// get returns the CachedStream for the given instanceID
-func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStream {
+// Get returns the CachedStream for the given instanceID
+func (c *StreamCache) Get(ctx context.Context, instanceID uuid.UUID) *CachedStream {
 	key := c.redisKey(instanceID)
 
 	// lookup in lru first
@@ -332,7 +334,8 @@ func (c streamCache) get(ctx context.Context, instanceID uuid.UUID) *CachedStrea
 	return cachedStream
 }
 
-func (c streamCache) clear(ctx context.Context, instanceID uuid.UUID) {
+// Clear removes any CachedStream cached for the given instanceID
+func (c *StreamCache) Clear(ctx context.Context, instanceID uuid.UUID) {
 	key := c.redisKey(instanceID)
 	c.lru.Remove(key)
 	err := c.codec.Delete(key)
@@ -341,33 +344,66 @@ func (c streamCache) clear(ctx context.Context, instanceID uuid.UUID) {
 	}
 }
 
-func (c streamCache) cacheTime() time.Duration {
+// ClearForOrganization clears all streams in the organization
+func (c *StreamCache) ClearForOrganization(ctx context.Context, organizationID uuid.UUID) {
+	c.clearQuery(ctx, `
+		select si.stream_instance_id
+		from stream_instances si
+		join streams s on si.stream_id = s.stream_id
+		join projects p on s.project_id = p.project_id
+		where p.organization_id = ?
+	`, organizationID)
+}
+
+// ClearForProject clears all streams in the project
+func (c *StreamCache) ClearForProject(ctx context.Context, projectID uuid.UUID) {
+	c.clearQuery(ctx, `
+		select si.stream_instance_id
+		from stream_instances si
+		join streams s on si.stream_id = s.stream_id
+		where s.project_id = ?
+	`, projectID)
+}
+
+// clearQuery clears instance IDs returned by the given query and params
+func (c *StreamCache) clearQuery(ctx context.Context, query string, params ...interface{}) {
+	var instanceIDs []uuid.UUID
+	_, err := hub.DB.QueryContext(ctx, &instanceIDs, query, params...)
+	if err != nil {
+		panic(err)
+	}
+	for _, instanceID := range instanceIDs {
+		c.Clear(ctx, instanceID)
+	}
+}
+
+func (c *StreamCache) cacheTime() time.Duration {
 	return time.Hour
 }
 
-func (c streamCache) cacheLRUSize() int {
+func (c *StreamCache) cacheLRUSize() int {
 	return 10000
 }
 
-func (c streamCache) cacheLRUTime() time.Duration {
+func (c *StreamCache) cacheLRUTime() time.Duration {
 	return time.Minute
 }
 
-func (c streamCache) redisKey(instanceID uuid.UUID) string {
+func (c *StreamCache) redisKey(instanceID uuid.UUID) string {
 	return string(append([]byte("strm:"), instanceID.Bytes()...))
 }
 
-func (c streamCache) marshal(v interface{}) ([]byte, error) {
+func (c *StreamCache) marshal(v interface{}) ([]byte, error) {
 	cachedStream := v.(*CachedStream)
 	return cachedStream.MarshalBinary()
 }
 
-func (c streamCache) unmarshal(b []byte, v interface{}) (err error) {
+func (c *StreamCache) unmarshal(b []byte, v interface{}) (err error) {
 	cachedStream := v.(*CachedStream)
 	return cachedStream.UnmarshalBinary(b)
 }
 
-func (c streamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func() (interface{}, error) {
+func (c *StreamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		internalResult := &internalCachedStream{}
 		_, err := hub.DB.QueryContext(ctx, internalResult, `

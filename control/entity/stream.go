@@ -22,7 +22,7 @@ import (
 type Stream struct {
 	// Descriptive fields
 	StreamID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name          string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, user_id) index
+	Name          string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, lower(name)) index // note: used in stream cache
 	Description   string    `validate:"omitempty,lte=255"`
 	CreatedOn     time.Time `sql:",default:now()"`
 	UpdatedOn     time.Time `sql:",default:now()"`
@@ -32,16 +32,16 @@ type Stream struct {
 	SourceModel   *Model
 	DerivedModels []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
 
-	// Schema-related fields
+	// Schema-related fields (note: used in stream cache)
 	Schema              string `sql:",notnull",validate:"required"`
 	AvroSchema          string `sql:",type:json,notnull",validate:"required"`
 	CanonicalAvroSchema string `sql:",type:json,notnull",validate:"required"`
 	BigQuerySchema      string `sql:"bigquery_schema,type:json,notnull",validate:"required"`
 
-	// Indexes
+	// Indexes (note: used in stream cache)
 	StreamIndexes []*StreamIndex
 
-	// Behaviour-related fields
+	// Behaviour-related fields (note: used in stream cache)
 	External         bool  `sql:",notnull"`
 	Batch            bool  `sql:",notnull"`
 	Manual           bool  `sql:",notnull"`
@@ -112,7 +112,7 @@ func FindInstanceIDByOrganizationProjectAndName(ctx context.Context, organizatio
 
 // FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
 func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UUID) *CachedStream {
-	return getStreamCache().get(ctx, instanceID)
+	return getStreamCache().Get(ctx, instanceID)
 }
 
 // GetStreamID implements engine/driver.Stream
@@ -346,7 +346,7 @@ func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
 
 	// Clear stream cache
 	for _, si := range s.StreamInstances {
-		getStreamCache().clear(tx.Context(), si.StreamInstanceID)
+		getStreamCache().Clear(tx.Context(), si.StreamInstanceID)
 	}
 
 	// update in bigquery
@@ -517,9 +517,9 @@ func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 
 	// clear instance cache in redis
 	getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
-	getStreamCache().clear(tx.Context(), instance.StreamInstanceID)
+	getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
 	if prevInstanceID != nil {
-		getStreamCache().clear(tx.Context(), *prevInstanceID)
+		getStreamCache().Clear(tx.Context(), *prevInstanceID)
 	}
 
 	// increment count
@@ -571,6 +571,7 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error
 		if err != nil {
 			return err
 		}
+		getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
 	}
 
 	// delete

@@ -158,8 +158,6 @@ func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organiz
 		return nil, gqlerror.Errorf("Only Beneath masters can update organization quotas directly")
 	}
 
-	// TODO: invalidate cached quotas
-
 	err := organization.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())

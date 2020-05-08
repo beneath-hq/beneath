@@ -69,7 +69,59 @@ func (c *SecretCache) Get(ctx context.Context, token secrettoken.Token) Secret {
 	}
 }
 
-//
+// Clear removes a key from the cache
+func (c *SecretCache) Clear(ctx context.Context, hashedToken []byte) {
+	err := c.codec.Delete(secretCacheConfig.redisKeyFn(hashedToken))
+	if err != nil && err != cache.ErrCacheMiss {
+		panic(err)
+	}
+}
+
+// ClearForOrganization clears all secrets for services and billing users in the org
+func (c *SecretCache) ClearForOrganization(ctx context.Context, organizationID uuid.UUID) {
+	c.clearQuery(ctx, `
+		select ss.hashed_token
+		from service_secrets ss
+		join services s on ss.service_id = s.service_id
+		where s.organization_id = ?
+		union
+		select us.hashed_token
+		from user_secrets us
+		join users u on us.user_id = u.user_id
+		where u.billing_organization_id = ?
+	`, organizationID, organizationID)
+}
+
+// ClearForUser clears all secrets for the user
+func (c *SecretCache) ClearForUser(ctx context.Context, userID uuid.UUID) {
+	c.clearQuery(ctx, `
+		select us.hashed_token
+		from user_secrets us
+		where us.user_id = ?
+	`, userID)
+}
+
+// ClearForService clears all secrets for the service
+func (c *SecretCache) ClearForService(ctx context.Context, serviceID uuid.UUID) {
+	c.clearQuery(ctx, `
+		select ss.hashed_token
+		from service_secrets ss
+		where ss.service_id = ?
+	`, serviceID)
+}
+
+// clearQuery clears hashed tokens returned by the given query and params
+func (c *SecretCache) clearQuery(ctx context.Context, query string, params ...interface{}) {
+	var hashedTokens [][]byte
+	_, err := hub.DB.QueryContext(ctx, &hashedTokens, query, params...)
+	if err != nil {
+		panic(err)
+	}
+	for _, hashedToken := range hashedTokens {
+		c.Clear(ctx, hashedToken)
+	}
+}
+
 func (c *SecretCache) userOnce(ctx context.Context, token secrettoken.Token) *UserSecret {
 	hashedToken := token.Hashed()
 	var res *UserSecret
@@ -91,7 +143,6 @@ func (c *SecretCache) userOnce(ctx context.Context, token secrettoken.Token) *Us
 	return res
 }
 
-//
 func (c *SecretCache) serviceOnce(ctx context.Context, token secrettoken.Token) *ServiceSecret {
 	hashedToken := token.Hashed()
 	var res *ServiceSecret
@@ -111,14 +162,6 @@ func (c *SecretCache) serviceOnce(ctx context.Context, token secrettoken.Token) 
 	// setting because it's not cached in redis
 	res.HashedToken = hashedToken
 	return res
-}
-
-// Delete removes a key from the cache
-func (c *SecretCache) Delete(ctx context.Context, hashedToken []byte) {
-	err := c.codec.Delete(secretCacheConfig.redisKeyFn(hashedToken))
-	if err != nil && err != cache.ErrCacheMiss {
-		panic(err)
-	}
 }
 
 func (c *SecretCache) userGetter(ctx context.Context, hashedToken []byte) func() (interface{}, error) {
