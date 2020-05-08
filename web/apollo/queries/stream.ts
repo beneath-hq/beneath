@@ -12,6 +12,7 @@ export const QUERY_STREAM = gql`
         projectID
         name
         organization {
+          organizationID
           name
         }
       }

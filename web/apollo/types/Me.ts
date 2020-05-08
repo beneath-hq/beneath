@@ -25,6 +25,7 @@ export interface Me_me_services {
 
 export interface Me_me_personalUser_billingOrganization {
   __typename: "PublicOrganization";
+  organizationID: string;
   name: string;
   displayName: string;
 }
@@ -59,6 +60,8 @@ export interface Me_me {
   projects: Me_me_projects[];
   personalUserID: ControlUUID | null;
   updatedOn: ControlTime;
+  prepaidReadQuota: number | null;
+  prepaidWriteQuota: number | null;
   readQuota: number | null;
   writeQuota: number | null;
   readUsage: number;

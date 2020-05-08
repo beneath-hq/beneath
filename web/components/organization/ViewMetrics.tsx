@@ -27,8 +27,8 @@ const ViewMetrics: FC<ViewMetricsProps> = ({ organization }) => {
     props = {
       entityKind: EntityKind.Organization,
       entityID: organization.organizationID,
-      readQuota: organization.readQuota,
-      writeQuota: organization.writeQuota,
+      readQuota: organization.prepaidReadQuota || organization.readQuota,
+      writeQuota: organization.prepaidWriteQuota || organization.writeQuota,
     };
   }
 

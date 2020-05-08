@@ -18,6 +18,8 @@ export const QUERY_ME = gql`
       }
       personalUserID
       updatedOn
+      prepaidReadQuota
+      prepaidWriteQuota
       readQuota
       writeQuota
       readUsage
@@ -36,6 +38,7 @@ export const QUERY_ME = gql`
         writeQuota
         billingOrganizationID
         billingOrganization {
+          organizationID
           name
           displayName
         }

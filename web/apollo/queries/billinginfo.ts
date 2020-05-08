@@ -20,6 +20,7 @@ export const QUERY_BILLING_INFO = gql`
       availableInUI
     }
     billingMethod {
+      billingMethodID
       paymentsDriver
       driverPayload
     }

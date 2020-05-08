@@ -14,7 +14,7 @@ import Page from "../components/Page";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
-import WriteStream from "../components/stream/WriteStream";
+// import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 
 const StreamPage = () => {
@@ -68,7 +68,9 @@ const StreamPage = () => {
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
 
   if (stream.manual && !stream.batch) {
-    tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
+    // disable for now
+    // must update js client to be able to write data (current local resolvers do not work anymore!)
+    // tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
   }
 
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });

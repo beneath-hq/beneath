@@ -9,6 +9,7 @@
 
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization {
   __typename: "PublicOrganization";
+  organizationID: string;
   name: string;
 }
 

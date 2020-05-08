@@ -56,7 +56,7 @@ func Handler() http.Handler {
 	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	// query endpoints
-	handler.Method("GET", "/v1/{organizationName}/{projectName}/streams/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
+	handler.Method("GET", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
 	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	return handler

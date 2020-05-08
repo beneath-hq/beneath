@@ -66,7 +66,7 @@ export class BrowserConnection {
   }
 
   public async write(instanceID: string, records: any[]) {
-    // const url = `${connection.GATEWAY_URL}/streams/instances/${instanceID}`;
+    // const url = `${connection.GATEWAY_URL}/-/instances/${instanceID}`;
     // TODO
   }
 
@@ -97,7 +97,7 @@ export class BrowserConnection {
     if ("instanceID" in sq && sq.instanceID) {
       return `v1/-/instances/${sq.instanceID}`;
     } else if ("project" in sq && "stream" in sq) {
-      return `v1/${sq.organization}/${sq.project}/streams/${sq.stream}`;
+      return `v1/${sq.organization}/${sq.project}/${sq.stream}`;
     }
     throw Error("invalid stream qualifier");
   }
@@ -109,18 +109,12 @@ export class BrowserConnection {
     if (parts.length > 0 && parts[0] === "/") { parts.shift(); }
     if (parts.length > 0 && parts[parts.length - 1] === "/") { parts.pop(); }
 
-    // handle org/proj/stream and org/proj/streams/stream
+    // handle org/proj/stream
     if (parts.length === 3) {
       return {
         organization: parts[0],
         project: parts[1],
         stream: parts[2],
-      };
-    } else if (parts.length === 4 && parts[2] === "streams") {
-      return {
-        organization: parts[0],
-        project: parts[1],
-        stream: parts[3],
       };
     }
 
