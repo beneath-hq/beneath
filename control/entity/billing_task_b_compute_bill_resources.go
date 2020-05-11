@@ -5,8 +5,6 @@ import (
 	"math"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
-
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/metrics"
@@ -20,12 +18,6 @@ type ComputeBillResourcesTask struct {
 	Timestamp   time.Time
 }
 
-type billTimes struct {
-	BillingTime time.Time
-	StartTime   time.Time
-	EndTime     time.Time
-}
-
 // register task
 func init() {
 	taskqueue.RegisterTask(&ComputeBillResourcesTask{})
@@ -33,24 +25,20 @@ func init() {
 
 // Run triggers the task
 func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
-	// prepaidUsageBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, true)
-	seatBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, true)
-	overageBillTimes := calculateBillTimes(t.Timestamp, t.BillingInfo.BillingPlan.Period, false)
+	// if applicable, add "prepaid usage" line item
+	err := commitPrepaidQuotaToBill(ctx, t.BillingInfo, t.Timestamp)
+	if err != nil {
+		return err
+	}
 
-	// add "prepaid usage" line item
-	// err := commitPrepaidUsageToBill(ctx, t.BillingInfo, prepaidUsageBillTimes)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// add "seat" line items
-	err := commitSeatsToBill(ctx, t.BillingInfo, seatBillTimes)
+	// if applicable, add "seat" line items
+	err = commitSeatsToBill(ctx, t.BillingInfo, t.Timestamp)
 	if err != nil {
 		return err
 	}
 
 	// if applicable, add overages to bill
-	err = commitOverageToBill(ctx, t.BillingInfo, overageBillTimes)
+	err = commitOverageToBill(ctx, t.BillingInfo, t.Timestamp)
 	if err != nil {
 		return err
 	}
@@ -64,7 +52,7 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 
 	err = taskqueue.Submit(context.Background(), &SendInvoiceTask{
 		BillingInfo: t.BillingInfo,
-		BillingTime: seatBillTimes.BillingTime,
+		BillingTime: timeutil.Floor(t.Timestamp, t.BillingInfo.BillingPlan.Period),
 	})
 	if err != nil {
 		log.S.Errorw("Error creating task", err)
@@ -73,16 +61,56 @@ func (t *ComputeBillResourcesTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func commitSeatsToBill(ctx context.Context, bi *BillingInfo, billTimes *billTimes) error {
+func commitPrepaidQuotaToBill(ctx context.Context, bi *BillingInfo, ts time.Time) error {
+	if bi.BillingPlan.BasePriceCents == 0 {
+		return nil
+	}
+
+	billingTime := timeutil.Floor(ts, bi.BillingPlan.Period)
+	startTime := timeutil.Floor(ts, bi.BillingPlan.Period)
+	endTime := timeutil.Next(ts, bi.BillingPlan.Period)
+
+	var billedResources []*BilledResource
+	billedResources = append(billedResources, &BilledResource{
+		OrganizationID:  bi.OrganizationID,
+		BillingTime:     billingTime,
+		EntityID:        bi.OrganizationID,
+		EntityKind:      OrganizationEntityKind,
+		StartTime:       startTime,
+		EndTime:         endTime,
+		Product:         PrepaidQuotaProduct,
+		Quantity:        1,
+		TotalPriceCents: bi.BillingPlan.BasePriceCents,
+		Currency:        bi.BillingPlan.Currency,
+	})
+
+	err := CreateOrUpdateBilledResources(ctx, billedResources)
+	if err != nil {
+		panic("unable to write billed resources to table")
+	}
+
+	// done
+	return nil
+}
+
+func commitSeatsToBill(ctx context.Context, bi *BillingInfo, ts time.Time) error {
+	if bi.BillingPlan.SeatPriceCents == 0 || len(bi.Organization.Users) == 0 {
+		return nil
+	}
+
+	billingTime := timeutil.Floor(ts, bi.BillingPlan.Period)
+	startTime := timeutil.Floor(ts, bi.BillingPlan.Period)
+	endTime := timeutil.Next(ts, bi.BillingPlan.Period)
+
 	var billedResources []*BilledResource
 	for _, user := range bi.Organization.Users {
 		billedResources = append(billedResources, &BilledResource{
 			OrganizationID:  bi.OrganizationID,
-			BillingTime:     billTimes.BillingTime,
+			BillingTime:     billingTime,
 			EntityID:        user.UserID,
 			EntityKind:      UserEntityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
+			StartTime:       startTime,
+			EndTime:         endTime,
 			Product:         SeatProduct,
 			Quantity:        1,
 			TotalPriceCents: bi.BillingPlan.SeatPriceCents,
@@ -90,14 +118,6 @@ func commitSeatsToBill(ctx context.Context, bi *BillingInfo, billTimes *billTime
 		})
 	}
 
-	if len(billedResources) == 0 {
-		if !bi.BillingPlan.Personal {
-			log.S.Info("The multi organization has no users and will be deleted.")
-		}
-
-		return nil
-	}
-
 	err := CreateOrUpdateBilledResources(ctx, billedResources)
 	if err != nil {
 		panic("unable to write billed resources to table")
@@ -107,55 +127,12 @@ func commitSeatsToBill(ctx context.Context, bi *BillingInfo, billTimes *billTime
 	return nil
 }
 
-func commitProratedSeatsToBill(ctx context.Context, organizationID uuid.UUID, billingTime time.Time, billingPlan *BillingPlan, users []*User, credit bool) error {
-	if billingPlan == nil {
-		panic("could not find the organization's billing plan")
-	}
+func commitOverageToBill(ctx context.Context, bi *BillingInfo, ts time.Time) error {
+	billingTime := timeutil.Floor(ts, bi.BillingPlan.Period)
+	startTime := timeutil.Last(ts, bi.BillingPlan.Period)
+	endTime := timeutil.Floor(ts, bi.BillingPlan.Period)
 
-	now := time.Now()
-	p := billingPlan.Period
-	billTimes := &billTimes{
-		BillingTime: billingTime,
-		StartTime:   now,
-		EndTime:     timeutil.Next(now, p),
-	}
-
-	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
-	proratedPrice := int32(math.Round(float64(billingPlan.SeatPriceCents) * proratedFraction))
-	product := SeatProratedProduct
-
-	if credit {
-		proratedPrice *= -1
-		product = SeatProratedCreditProduct
-	}
-
-	var billedResources []*BilledResource
-	for _, user := range users {
-		billedResources = append(billedResources, &BilledResource{
-			OrganizationID:  organizationID,
-			BillingTime:     billTimes.BillingTime,
-			EntityID:        user.UserID,
-			EntityKind:      UserEntityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
-			Product:         product,
-			Quantity:        1,
-			TotalPriceCents: proratedPrice,
-			Currency:        billingPlan.Currency,
-		})
-	}
-
-	err := CreateOrUpdateBilledResources(ctx, billedResources)
-	if err != nil {
-		panic("unable to write billed resources to table")
-	}
-
-	// done
-	return nil
-}
-
-func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTimes) error {
-	_, usages, err := metrics.GetHistoricalUsage(ctx, bi.OrganizationID, bi.BillingPlan.Period, billTimes.StartTime, billTimes.EndTime)
+	_, usages, err := metrics.GetHistoricalUsage(ctx, bi.OrganizationID, bi.BillingPlan.Period, startTime, endTime)
 	if err != nil {
 		panic("unable to get historical usage for organization")
 	}
@@ -171,6 +148,7 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTi
 	readOverageGB := float32(readOverageBytes) / float32(1e9)
 	readOveragePrice := int32(readOverageGB * float32(bi.BillingPlan.ReadOveragePriceCents)) // assuming unit of ReadOveragePriceCents is GB
 
+	log.S.Info()
 	writeOverageBytes := usages[0].WriteBytes - *bi.Organization.PrepaidWriteQuota
 	writeOverageGB := float32(writeOverageBytes) / float32(1e9)
 	writeOveragePrice := int32(writeOverageGB * float32(bi.BillingPlan.WriteOveragePriceCents)) // assuming unit of WriteOveragePriceCents is GB
@@ -180,11 +158,11 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTi
 	if readOverageBytes > 0 {
 		newBilledResources = append(newBilledResources, &BilledResource{
 			OrganizationID:  bi.OrganizationID,
-			BillingTime:     billTimes.BillingTime,
+			BillingTime:     billingTime,
 			EntityID:        bi.OrganizationID,
 			EntityKind:      OrganizationEntityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
+			StartTime:       startTime,
+			EndTime:         endTime,
 			Product:         ReadOverageProduct,
 			Quantity:        readOverageGB,
 			TotalPriceCents: readOveragePrice,
@@ -195,11 +173,11 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTi
 	if writeOverageBytes > 0 {
 		newBilledResources = append(newBilledResources, &BilledResource{
 			OrganizationID:  bi.OrganizationID,
-			BillingTime:     billTimes.BillingTime,
+			BillingTime:     billingTime,
 			EntityID:        bi.OrganizationID,
 			EntityKind:      OrganizationEntityKind,
-			StartTime:       billTimes.StartTime,
-			EndTime:         billTimes.EndTime,
+			StartTime:       startTime,
+			EndTime:         endTime,
 			Product:         WriteOverageProduct,
 			Quantity:        writeOverageGB,
 			TotalPriceCents: writeOveragePrice,
@@ -207,40 +185,17 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, billTimes *billTi
 		})
 	}
 
-	if len(newBilledResources) > 0 {
-		err := CreateOrUpdateBilledResources(ctx, newBilledResources)
-		if err != nil {
-			panic("unable to write billed resources to table")
-		}
+	if len(newBilledResources) == 0 {
+		return nil
+	}
+
+	err = CreateOrUpdateBilledResources(ctx, newBilledResources)
+	if err != nil {
+		panic("unable to write billed resources to table")
 	}
 
 	// done
 	return nil
-}
-
-// on the first of each month, we charge for: the upcoming month's seats; the previous month's overage
-func calculateBillTimes(ts time.Time, p timeutil.Period, isSeatProduct bool) *billTimes {
-	billingTime := timeutil.Floor(ts, p)
-	startTime := timeutil.Last(ts, p)
-	endTime := timeutil.Floor(ts, p)
-
-	if isSeatProduct {
-		if p == timeutil.PeriodMonth {
-			startTime = startTime.AddDate(0, 1, 0)
-			endTime = endTime.AddDate(0, 1, 0)
-		} else if p == timeutil.PeriodYear {
-			startTime = startTime.AddDate(1, 0, 0)
-			endTime = endTime.AddDate(1, 0, 0)
-		} else {
-			panic("billing period is not supported")
-		}
-	}
-
-	return &billTimes{
-		BillingTime: billingTime,
-		StartTime:   startTime,
-		EndTime:     endTime,
-	}
 }
 
 func recomputeOrganizationPrepaidQuotas(ctx context.Context, bi *BillingInfo) error {
@@ -266,5 +221,75 @@ func recomputeOrganizationPrepaidQuotas(ctx context.Context, bi *BillingInfo) er
 			return err
 		}
 	}
+	return nil
+}
+
+func commitProratedPrepaidQuotaToBill(ctx context.Context, bi *BillingInfo, billingTime time.Time) error {
+	if bi.BillingPlan.BasePriceCents == 0 {
+		return nil
+	}
+
+	now := time.Now()
+	p := bi.BillingPlan.Period
+
+	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
+	proratedPrice := int32(math.Round(float64(bi.BillingPlan.SeatPriceCents) * proratedFraction))
+
+	var billedResources []*BilledResource
+	billedResources = append(billedResources, &BilledResource{
+		OrganizationID:  bi.OrganizationID,
+		BillingTime:     billingTime,
+		EntityID:        bi.OrganizationID,
+		EntityKind:      OrganizationEntityKind,
+		StartTime:       now,
+		EndTime:         timeutil.Next(now, p),
+		Product:         PrepaidQuotaProratedProduct,
+		Quantity:        1,
+		TotalPriceCents: proratedPrice,
+		Currency:        bi.BillingPlan.Currency,
+	})
+
+	err := CreateOrUpdateBilledResources(ctx, billedResources)
+	if err != nil {
+		panic("unable to write billed resources to table")
+	}
+
+	// done
+	return nil
+}
+
+func commitProratedSeatsToBill(ctx context.Context, bi *BillingInfo, billingTime time.Time, users []*User) error {
+	if bi.BillingPlan.SeatPriceCents == 0 || len(users) == 0 {
+		return nil
+	}
+
+	now := time.Now()
+	p := bi.BillingPlan.Period
+
+	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
+	proratedPrice := int32(math.Round(float64(bi.BillingPlan.SeatPriceCents) * proratedFraction))
+
+	var billedResources []*BilledResource
+	for _, user := range users {
+		billedResources = append(billedResources, &BilledResource{
+			OrganizationID:  bi.OrganizationID,
+			BillingTime:     billingTime,
+			EntityID:        user.UserID,
+			EntityKind:      UserEntityKind,
+			StartTime:       now,
+			EndTime:         timeutil.Next(now, p),
+			Product:         SeatProratedProduct,
+			Quantity:        1,
+			TotalPriceCents: proratedPrice,
+			Currency:        bi.BillingPlan.Currency,
+		})
+	}
+
+	err := CreateOrUpdateBilledResources(ctx, billedResources)
+	if err != nil {
+		panic("unable to write billed resources to table")
+	}
+
+	// done
 	return nil
 }

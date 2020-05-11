@@ -318,12 +318,14 @@ func SendInvoice(invoiceID string) {
 // PrettyDescription makes the Stripe invoice more informative
 func PrettyDescription(product string) string {
 	switch product {
+	case string(entity.PrepaidQuotaProduct):
+		return "Prepaid read and write quotas"
+	case string(entity.PrepaidQuotaProratedProduct):
+		return "Prepaid read and write quotas (prorated)"
 	case string(entity.SeatProduct):
 		return "Seats"
 	case string(entity.SeatProratedProduct):
 		return "Seat (prorated)"
-	case string(entity.SeatProratedCreditProduct):
-		return "Seat credit (prorated)"
 	case string(entity.ReadOverageProduct):
 		return "Read overage (GB)"
 	case string(entity.WriteOverageProduct):

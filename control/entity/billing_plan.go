@@ -22,11 +22,12 @@ type BillingPlan struct {
 	UpdatedOn              time.Time       `sql:",notnull,default:now()"`
 	Currency               Currency        `sql:",notnull"`
 	Period                 timeutil.Period `sql:",notnull"`
+	BasePriceCents         int32           `sql:",notnull"`
 	SeatPriceCents         int32           `sql:",notnull"`
-	SeatReadQuota          int64           `sql:",notnull"` // bytes
-	SeatWriteQuota         int64           `sql:",notnull"` // bytes
 	BaseReadQuota          int64           `sql:",notnull"` // bytes
 	BaseWriteQuota         int64           `sql:",notnull"` // bytes
+	SeatReadQuota          int64           `sql:",notnull"` // bytes
+	SeatWriteQuota         int64           `sql:",notnull"` // bytes
 	ReadQuota              int64           `sql:",notnull"` // bytes
 	WriteQuota             int64           `sql:",notnull"` // bytes
 	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
