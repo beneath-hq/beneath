@@ -90,6 +90,11 @@ export const QUERY_ORGANIZATION = gql`
           readQuota
           writeQuota
           billingOrganizationID
+          billingOrganization {
+            organizationID
+            name
+            displayName
+          }
         }
         permissions {
           view

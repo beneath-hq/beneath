@@ -111,10 +111,11 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 func FindOrganizationByName(ctx context.Context, name string) *Organization {
 	organization := &Organization{}
 	err := hub.DB.ModelContext(ctx, organization).
-		Where("lower(name) = lower(?)", name).
+		Where("lower(organization.name) = lower(?)", name).
 		Column(
 			"organization.*",
 			"User",
+			"User.BillingOrganization",
 			"Services", // only necessary if has permissions
 			"Projects",
 		).Select()
