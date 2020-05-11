@@ -85,6 +85,8 @@ const dataIdFromObject = (object) => {
       return `${object.projectID}`;
     case "Stream":
       return `${object.streamID}`;
+    case "StreamInstance":
+      return `${object.streamInstanceID}`;
     case "Service":
       return `${object.serviceID}`;
     case "Organization":

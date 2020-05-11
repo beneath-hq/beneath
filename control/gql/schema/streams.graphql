@@ -1,24 +1,33 @@
 extend type Query {
   streamByID(streamID: UUID!): Stream!
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
+  streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
 }
 
 extend type Mutation {
-  createExternalStream(
-    projectID: UUID!,
+  stageStream(
+    organizationName: String!,
+    projectName: String!,
+    streamName: String!,
+    schemaKind: StreamSchemaKind!,
     schema: String!,
-    batch: Boolean!,
-    manual: Boolean!
+    retentionSeconds: Int,
+    enableManualWrites: Boolean,
+    createPrimaryStreamInstance: Boolean,
   ): Stream!
-  updateExternalStream(
-    streamID: UUID!,
-    schema: String,
-    manual: Boolean,
-  ): Stream!
-  deleteExternalStream(streamID: UUID!): Boolean!
-  createExternalStreamBatch(streamID: UUID!): StreamInstance!
-  commitExternalStreamBatch(instanceID: UUID!): Boolean!
-  clearPendingExternalStreamBatches(streamID: UUID!): Boolean!
+  deleteStream(streamID: UUID!): Boolean!
+  createStreamInstance(streamID: UUID!): StreamInstance!
+  updateStreamInstance(
+    instanceID: UUID!,
+    makeFinal: Boolean,
+    makePrimary: Boolean,
+    deletePreviousPrimary: Boolean,
+  ): StreamInstance!
+  deleteStreamInstance(instanceID: UUID!): Boolean!
+}
+
+enum StreamSchemaKind {
+  GraphQL
 }
 
 type Stream {
@@ -30,27 +39,29 @@ type Stream {
   project: Project!
   sourceModel: Model
 
+  schemaKind: StreamSchemaKind!
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
-
   streamIndexes: [StreamIndex!]!
 
-  external: Boolean!
-  batch: Boolean!
-  manual: Boolean!
   retentionSeconds: Int!
+  enableManualWrites: Boolean!
   
+  primaryStreamInstance: StreamInstance
+  primaryStreamInstanceID: UUID
   instancesCreatedCount: Int!
-  instancesCommittedCount: Int!
-  currentStreamInstanceID: UUID
+  instancesDeletedCount: Int!
+  instancesMadeFinalCount: Int!
+  instancesMadePrimaryCount: Int!
 }
 
 type StreamInstance {
-  instanceID: ID!
-  stream: Stream!
+  streamInstanceID: ID!
+  streamID: UUID!
   createdOn: Time!
-  committedOn: Time!
+  madePrimaryOn: Time
+  madeFinalOn: Time
 }
 
 type StreamIndex {

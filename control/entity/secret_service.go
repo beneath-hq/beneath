@@ -98,7 +98,7 @@ func (s *ServiceSecret) IsMaster() bool {
 }
 
 // StreamPermissions implements the Secret interface
-func (s *ServiceSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions {
+func (s *ServiceSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool) StreamPermissions {
 	return CachedServiceStreamPermissions(ctx, s.ServiceID, streamID)
 }
 

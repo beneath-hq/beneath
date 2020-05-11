@@ -79,11 +79,15 @@ class Stream:
 
   # LOADING STREAM CONTROL DATA
 
-  async def _ensure_loaded(self):
+  async def _ensure_loaded(self, prefetched=None, ensure_instance=False):
     if not self._loaded:
-      data = await self._load_from_admin()
-      self._set_admin_data(data)
+      if not prefetched:
+        prefetched = await self._load_from_admin()
+      self._set_admin_data(prefetched)
       self._loaded = True
+    if ensure_instance:
+      if not self.instance_id:
+        raise RuntimeError("Cannot query or write stream that doesn't have an instance")
 
   async def _load_from_admin(self):
     return await self.client.admin.streams.find_by_organization_project_and_name(
@@ -97,23 +101,21 @@ class Stream:
       "stream_id": data['streamID'],
       "stream_name": data['name'],
       "project_name": data['project']['name'],
+      "schema_kind": data['schemaKind'],
       "schema": data['schema'],
       "avro_schema": data['avroSchema'],
       "stream_indexes": data['streamIndexes'],
-      "external": data['external'],
-      "batch": data['batch'],
-      "manual": data['manual'],
       "retention_seconds": data['retentionSeconds'],
-      "current_instance_id": data['currentStreamInstanceID'],
+      "primary_instance_id": data['primaryStreamInstanceID'],
     }
-    self.instance_id = uuid.UUID(hex=self.info["current_instance_id"])
     self._avro_schema_parsed = parse_schema(json.loads(self.info['avro_schema']))
+    if self.info["primary_instance_id"]:
+      self.instance_id = uuid.UUID(hex=self.info["primary_instance_id"])
 
   # WRITING RECORDS
 
   async def write(self, records: Union[Iterable[Mapping], Mapping], immediate=False):
-    if not self._loaded:
-      await self._ensure_loaded()
+    await self._ensure_loaded(ensure_instance=True)
     if isinstance(records, Mapping):
       records = [records]
     batch = (self._record_to_pb(record) for record in records)
@@ -147,8 +149,7 @@ class Stream:
   # READING RECORDS
 
   async def query_log(self, peek: bool = False) -> Cursor:
-    if not self._loaded:
-      await self._ensure_loaded()
+    await self._ensure_loaded(ensure_instance=True)
     resp = await self.client.connection.query_log(instance_id=self.instance_id, peek=peek)
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
@@ -157,8 +158,7 @@ class Stream:
 
   # pylint: disable=redefined-builtin
   async def query_index(self, filter: str = None) -> Cursor:
-    if not self._loaded:
-      await self._ensure_loaded()
+    await self._ensure_loaded(ensure_instance=True)
     resp = await self.client.connection.query_index(instance_id=self.instance_id, filter=filter)
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None

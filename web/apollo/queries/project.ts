@@ -38,7 +38,6 @@ export const QUERY_PROJECT = gql`
         streamID
         name
         description
-        external
       }
       permissions {
         view

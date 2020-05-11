@@ -22,7 +22,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
   return (
     <>
       <List>
-        {project.streams.map(({ streamID, name, description, external }) => (
+        {project.streams.map(({ streamID, name, description }) => (
           <ListItem
             key={streamID}
             component={NextMuiLinkList}
@@ -32,7 +32,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
             disableGutters
           >
             <ListItemAvatar>
-              <Avatar size="list" label={external ? "Root" : "Derived"} />
+              <Avatar size="list" label={name} />
             </ListItemAvatar>
             <ListItemText primary={toURLName(name)} secondary={description} />
           </ListItem>

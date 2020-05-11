@@ -3,6 +3,8 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
+import { StreamSchemaKind } from "./globalTypes";
+
 // ====================================================
 // GraphQL query operation: StreamByOrganizationProjectAndName
 // ====================================================
@@ -28,6 +30,14 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   normalize: boolean;
 }
 
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance {
+  __typename: "StreamInstance";
+  streamInstanceID: string;
+  createdOn: ControlTime;
+  madePrimaryOn: ControlTime | null;
+  madeFinalOn: ControlTime | null;
+}
+
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName {
   __typename: "Stream";
   streamID: string;
@@ -36,16 +46,18 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   createdOn: ControlTime;
   updatedOn: ControlTime;
   project: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project;
+  schemaKind: StreamSchemaKind;
   schema: string;
   avroSchema: string;
   streamIndexes: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes[];
-  external: boolean;
-  batch: boolean;
-  manual: boolean;
   retentionSeconds: number;
+  enableManualWrites: boolean;
+  primaryStreamInstanceID: ControlUUID | null;
+  primaryStreamInstance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
   instancesCreatedCount: number;
-  instancesCommittedCount: number;
-  currentStreamInstanceID: ControlUUID | null;
+  instancesDeletedCount: number;
+  instancesMadeFinalCount: number;
+  instancesMadePrimaryCount: number;
 }
 
 export interface StreamByOrganizationProjectAndName {

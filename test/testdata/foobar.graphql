@@ -1,8 +1,7 @@
 " Schema comment "
 type FooBar
-  @stream(name: "foo-bar")
+  @stream
   @key(fields: ["a", "b"])
-  @index(fields: ["b"])
 {
   a: String!
   b: Int!

@@ -15,7 +15,7 @@ export interface ViewMetricsProps {
 }
 
 const ViewMetrics: FC<ViewMetricsProps> = ({ stream }) => {
-  if (stream.batch) {
+  if (stream.primaryStreamInstance?.madeFinalOn) {
     return (
       <Grid container spacing={2}>
         <BatchMetricsOverview stream={stream} />
@@ -63,7 +63,7 @@ const BatchMetricsOverview: FC<ViewMetricsProps> = ({ stream }) => {
         total={total}
         period="month"
         instancesCreated={stream.instancesCreatedCount}
-        instancesCommitted={stream.instancesCommittedCount}
+        instancesCommitted={stream.instancesMadeFinalCount}
       />
       {error && <ErrorNote error={error} />}
     </>

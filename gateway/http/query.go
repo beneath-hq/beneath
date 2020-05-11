@@ -85,7 +85,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	middleware.SetTagsPayload(r.Context(), payload)
 
 	// check allowed to read stream
-	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return httputil.NewError(403, "secret doesn't grant right to read this stream")
 	}

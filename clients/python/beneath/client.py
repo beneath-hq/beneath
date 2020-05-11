@@ -1,3 +1,4 @@
+from datetime import timedelta
 from collections.abc import Mapping
 import os
 from typing import Awaitable, Callable, Iterable
@@ -55,18 +56,26 @@ class Client:
     await stream._ensure_loaded()
     return stream
 
-  async def stage_stream(self, path: str, schema: str) -> Stream:
+  async def stage_stream(
+    self,
+    path: str,
+    schema: str,
+    retention: timedelta = None,
+    create_primary_instance: bool = True,
+  ) -> Stream:
     qualifier = StreamQualifier.from_path(path)
-    try:
-      await self.admin.streams.find_by_organization_project_and_name(
-        organization_name=qualifier.organization,
-        project_name=qualifier.project,
-        stream_name=qualifier.stream,
-      )
-    except GraphQLError:
-      project = await self.admin.projects.find_by_organization_and_name(qualifier.organization, qualifier.project)
-      await self.admin.streams.create(schema=schema, project_id=project["projectID"])
-    stream = await self.find_stream(path)
+    data = await self.admin.streams.stage(
+      organization_name=qualifier.organization,
+      project_name=qualifier.project,
+      stream_name=qualifier.stream,
+      schema_kind="GraphQL",
+      schema=schema,
+      retention_seconds=retention.seconds if retention else None,
+      create_primary_instance=create_primary_instance,
+    )
+    stream = Stream(client=self, qualifier=qualifier)
+    # pylint: disable=protected-access
+    await stream._ensure_loaded(prefetched=data)
     return stream
 
   # EASY HELPERS

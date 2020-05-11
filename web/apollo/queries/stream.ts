@@ -16,6 +16,7 @@ export const QUERY_STREAM = gql`
           name
         }
       }
+      schemaKind
       schema
       avroSchema
       streamIndexes {
@@ -24,13 +25,19 @@ export const QUERY_STREAM = gql`
         primary
         normalize
       }
-      external
-      batch
-      manual
       retentionSeconds
+      enableManualWrites
+      primaryStreamInstanceID
+      primaryStreamInstance {
+        streamInstanceID
+        createdOn
+        madePrimaryOn
+        madeFinalOn
+      }
       instancesCreatedCount
-      instancesCommittedCount
-      currentStreamInstanceID
+      instancesDeletedCount
+      instancesMadeFinalCount
+      instancesMadePrimaryCount
     }
   }
 `;

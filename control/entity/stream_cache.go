@@ -12,19 +12,23 @@ import (
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
+
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
 )
+
+// FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
+func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UUID) *CachedStream {
+	return getStreamCache().Get(ctx, instanceID)
+}
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
 	InstanceID       uuid.UUID
 	StreamID         uuid.UUID
 	Public           bool
-	External         bool
-	Batch            bool
-	Manual           bool
-	Committed        bool
+	Final            bool
+	Internal         bool
 	RetentionSeconds int32
 	OrganizationID   uuid.UUID
 	OrganizationName string
@@ -69,10 +73,8 @@ func (e EfficientStreamIndex) GetNormalize() bool {
 type internalCachedStream struct {
 	StreamID            uuid.UUID
 	Public              bool
-	External            bool
-	Batch               bool
-	Manual              bool
-	Committed           bool
+	Final               bool
+	Internal            bool
 	RetentionSeconds    int32
 	OrganizationID      uuid.UUID
 	OrganizationName    string
@@ -84,18 +86,13 @@ type internalCachedStream struct {
 }
 
 // NewCachedStream creates a CachedStream from a regular Stream object
-func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
+func NewCachedStream(s *Stream, instance *StreamInstance) *CachedStream {
 	if s.Project == nil {
 		panic("Stream project must be loaded")
 	}
 
 	if s.Project.Organization == nil {
 		panic("Stream organization must be loaded")
-	}
-
-	committed := false
-	if s.CurrentStreamInstanceID != nil {
-		committed = *s.CurrentStreamInstanceID == instanceID
 	}
 
 	indexes := make([]EfficientStreamIndex, len(s.StreamIndexes))
@@ -112,10 +109,8 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 	internal := &internalCachedStream{
 		StreamID:            s.StreamID,
 		Public:              s.Project.Public,
-		External:            s.External,
-		Batch:               s.Batch,
-		Manual:              s.Manual,
-		Committed:           committed,
+		Final:               instance.MadeFinalOn != nil,
+		Internal:            s.SourceModelID != nil,
 		RetentionSeconds:    s.RetentionSeconds,
 		OrganizationID:      s.Project.Organization.OrganizationID,
 		OrganizationName:    s.Project.Organization.Name,
@@ -127,7 +122,7 @@ func NewCachedStream(s *Stream, instanceID uuid.UUID) *CachedStream {
 	}
 
 	result := &CachedStream{
-		InstanceID: instanceID,
+		InstanceID: instance.StreamInstanceID,
 	}
 
 	err := unwrapInternalCachedStream(internal, result)
@@ -143,10 +138,8 @@ func (c CachedStream) MarshalBinary() ([]byte, error) {
 	wrapped := internalCachedStream{
 		StreamID:         c.StreamID,
 		Public:           c.Public,
-		External:         c.External,
-		Batch:            c.Batch,
-		Manual:           c.Manual,
-		Committed:        c.Committed,
+		Final:            c.Final,
+		Internal:         c.Internal,
 		RetentionSeconds: c.RetentionSeconds,
 		OrganizationID:   c.OrganizationID,
 		OrganizationName: c.OrganizationName,
@@ -251,8 +244,7 @@ func (c *CachedStream) GetStreamName() string {
 
 // GetRetention implements engine/driver.Stream
 func (c *CachedStream) GetRetention() time.Duration {
-	// TODO
-	return 0
+	return time.Duration(c.RetentionSeconds) * time.Second
 }
 
 // GetCodec implements engine/driver.Stream
@@ -410,10 +402,8 @@ func (c *StreamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func
 				select
 					s.stream_id,
 					p.public,
-					s.external,
-					s.batch,
-					s.manual,
-					si.committed_on is not null as committed,
+					si.made_final_on is not null as final,
+					s.source_model_id is not null as internal,
 					s.retention_seconds,
 					p.organization_id,
 					o.name as organization_name,
@@ -460,10 +450,8 @@ func (c *StreamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func
 func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStream) (err error) {
 	target.StreamID = source.StreamID
 	target.Public = source.Public
-	target.External = source.External
-	target.Batch = source.Batch
-	target.Manual = source.Manual
-	target.Committed = source.Committed
+	target.Final = source.Final
+	target.Internal = source.Internal
 	target.RetentionSeconds = source.RetentionSeconds
 	target.OrganizationID = source.OrganizationID
 	target.OrganizationName = source.OrganizationName

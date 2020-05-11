@@ -57,7 +57,7 @@ const StreamPage = () => {
 
   const tabs = [];
 
-  if (stream.currentStreamInstanceID) {
+  if (stream.primaryStreamInstanceID) {
     tabs.push({
       value: "explore",
       label: "Explore",
@@ -67,15 +67,16 @@ const StreamPage = () => {
 
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
 
-  if (stream.manual && !stream.batch) {
+  if (stream.enableManualWrites) {
     // disable for now
     // must update js client to be able to write data (current local resolvers do not work anymore!)
+    // and to allow both stream and batch writes
     // tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
   }
 
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
-  const defaultValue = stream.currentStreamInstanceID ? "explore" : "api";
+  const defaultValue = stream.primaryStreamInstanceID ? "explore" : "api";
   return (
     <Page title={title} subheader>
       <ModelHero name={toURLName(stream.name)} description={stream.description} />

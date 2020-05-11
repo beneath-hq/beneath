@@ -45,7 +45,7 @@ export const StreamingTopIndicators: FC<TopIndicatorsProps> = ({
       </Grid>
       <Grid item xs={6} md={4}>
         <Paper>
-          <SingleIndicator title={"Batches committed"} indicator={numbro(instancesCommitted).format(intFormat)} />
+          <SingleIndicator title={"Batches finalized"} indicator={numbro(instancesCommitted).format(intFormat)} />
         </Paper>
       </Grid>
       <Grid item xs={6} md={4}>

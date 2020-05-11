@@ -53,7 +53,7 @@ type Secret interface {
 	GetOwnerWriteQuota() *int64
 
 	// StreamPermissions returns the secret's permissions for a given stream
-	StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions
+	StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool) StreamPermissions
 
 	// ProjectPermissions returns the secret's permissions for a given project
 	ProjectPermissions(ctx context.Context, projectID uuid.UUID, public bool) ProjectPermissions

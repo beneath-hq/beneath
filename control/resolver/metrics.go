@@ -64,7 +64,7 @@ func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInst
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
 	}
@@ -79,7 +79,7 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.StreamPermissions(ctx, streamID, stream.ProjectID, stream.Project.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, streamID, stream.ProjectID, stream.Project.Public)
 	if !perms.Read {
 		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
 	}

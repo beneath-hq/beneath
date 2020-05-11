@@ -47,12 +47,12 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	}
 
 	// check not already a committed batch stream
-	if stream.Batch && stream.Committed {
-		return nil, status.Error(codes.FailedPrecondition, "batch has been committed and closed for further writes")
+	if stream.Final {
+		return nil, status.Error(codes.FailedPrecondition, "instance closed for further writes because it has been marked final")
 	}
 
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Write {
 		return nil, grpc.Errorf(codes.PermissionDenied, "secret doesn't grant right to write to this stream")
 	}

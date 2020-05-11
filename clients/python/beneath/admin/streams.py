@@ -24,6 +24,7 @@ class Streams:
               projectID
               name
             }
+            schemaKind
             schema
             avroSchema
             streamIndexes {
@@ -31,13 +32,13 @@ class Streams:
               primary
               normalize
             }
-            external
-            batch
-            manual
             retentionSeconds
+            enableManualWrites
+            primaryStreamInstanceID
             instancesCreatedCount
-            instancesCommittedCount
-            currentStreamInstanceID
+            instancesDeletedCount
+            instancesMadeFinalCount
+            instancesMadePrimaryCount
           }
         }
       """
@@ -67,6 +68,7 @@ class Streams:
               projectID
               name
             }
+            schemaKind
             schema
             avroSchema
             streamIndexes {
@@ -74,79 +76,80 @@ class Streams:
               primary
               normalize
             }
-            external
-            batch
-            manual
             retentionSeconds
+            enableManualWrites
+            primaryStreamInstanceID
             instancesCreatedCount
-            instancesCommittedCount
-            currentStreamInstanceID
+            instancesDeletedCount
+            instancesMadeFinalCount
+            instancesMadePrimaryCount
           }
         }
       """
     )
     return result['streamByOrganizationProjectAndName']
 
-  async def create(self, schema, project_id, manual=False, batch=False):
+  async def find_instances(self, stream_id):
     result = await self.conn.query_control(
       variables={
-        'projectID': project_id,
-        'schema': schema,
-        'batch': batch,
-        'manual': bool(manual),
+        'streamID': stream_id,
       },
       query="""
-        mutation CreateExternalStream($projectID: UUID!, $schema: String!, $batch: Boolean!, $manual: Boolean!) {
-          createExternalStream(
-            projectID: $projectID,
-            schema: $schema,
-            batch: $batch,
-            manual: $manual
-          ) {
+        query StreamInstancesForStream($streamID: UUID!) {
+          streamInstancesForStream(streamID: $streamID) {
+            streamInstanceID
             streamID
-            name
-            description
             createdOn
-            updatedOn
-            project {
-              projectID
-              name
-            }
-            schema
-            avroSchema
-            streamIndexes {
-              fields
-              primary
-              normalize
-            }
-            external
-            batch
-            manual
-            retentionSeconds
-            instancesCreatedCount
-            instancesCommittedCount
-            currentStreamInstanceID
+            madePrimaryOn
+            madeFinalOn
           }
         }
       """
     )
-    return result['createExternalStream']
+    return result['streamInstancesForStream']
 
-  async def update(self, stream_id, schema=None, manual=None):
-    variables = {'streamID': stream_id}
-    if schema:
-      variables['schema'] = schema
-    if manual:
-      variables['manual'] = bool(manual)
-
+  async def stage(
+    self,
+    organization_name,
+    project_name,
+    stream_name,
+    schema_kind,
+    schema,
+    retention_seconds=None,
+    enable_manual_writes=None,
+    create_primary_instance=None,
+  ):
     result = await self.conn.query_control(
-      variables=variables,
+      variables={
+        'organizationName': organization_name,
+        'projectName': project_name,
+        'streamName': stream_name,
+        'schemaKind': schema_kind,
+        'schema': schema,
+        'retentionSeconds': retention_seconds,
+        'enableManualWrites': enable_manual_writes,
+        'createPrimaryStreamInstance': create_primary_instance,
+      },
       query="""
-        mutation UpdateExternalStream($streamID: UUID!, $schema: String, $manual: Boolean) {
-          updateExternalStream(
-            streamID: $streamID,
+        mutation stageStream(
+          $organizationName: String!,
+          $projectName: String!,
+          $streamName: String!
+          $schemaKind: StreamSchemaKind!,
+          $schema: String!,
+          $retentionSeconds: Int,
+          $enableManualWrites: Boolean,
+          $createPrimaryStreamInstance: Boolean,
+        ) {
+          stageStream(
+            organizationName: $organizationName,
+            projectName: $projectName,
+            streamName: $streamName,
+            schemaKind: $schemaKind,
             schema: $schema,
-            manual: $manual
+            retentionSeconds: $retentionSeconds,
+            enableManualWrites: $enableManualWrites,
+            createPrimaryStreamInstance: $createPrimaryStreamInstance,
           ) {
             streamID
             name
@@ -157,6 +160,7 @@ class Streams:
               projectID
               name
             }
+            schemaKind
             schema
             avroSchema
             streamIndexes {
@@ -164,18 +168,18 @@ class Streams:
               primary
               normalize
             }
-            external
-            batch
-            manual
             retentionSeconds
+            enableManualWrites
+            primaryStreamInstanceID
             instancesCreatedCount
-            instancesCommittedCount
-            currentStreamInstanceID
+            instancesDeletedCount
+            instancesMadeFinalCount
+            instancesMadePrimaryCount
           }
         }
       """
     )
-    return result['updateExternalStream']
+    return result['stageStream']
 
   async def delete(self, stream_id):
     result = await self.conn.query_control(
@@ -183,50 +187,68 @@ class Streams:
         'streamID': stream_id,
       },
       query="""
-        mutation DeleteExternalStream($streamID: UUID!) {
-          deleteExternalStream(streamID: $streamID)
+        mutation DeleteStream($streamID: UUID!) {
+          deleteStream(streamID: $streamID)
         }
       """
     )
-    return result['deleteExternalStream']
+    return result['deleteStream']
 
-  async def create_batch(self, stream_id):
+  async def create_instance(self, stream_id):
     result = await self.conn.query_control(
       variables={
         'streamID': stream_id,
       },
       query="""
-        mutation CreateExternalStreamBatch($streamID: UUID!) {
-          createExternalStreamBatch(streamID: $streamID) {
-            instanceID
+        mutation createStreamInstance($streamID: UUID!) {
+          createStreamInstance(streamID: $streamID) {
+            streamInstanceID
+            streamID
+            createdOn
+            madePrimaryOn
+            madeFinalOn
           }
         }
-      """
+      """,
     )
-    return result['createExternalStreamBatch']
+    return result['createStreamInstance']
 
-  async def commit_batch(self, instance_id):
+  async def update_instance(self, instance_id, make_final=None, make_primary=None, delete_previous_primary=None):
+    result = await self.conn.query_control(
+      variables={
+        'instanceID': instance_id,
+        'makeFinal': make_final,
+        'makePrimary': make_primary,
+        'deletePreviousPrimary': delete_previous_primary,
+      },
+      query="""
+        mutation updateStreamInstance($instanceID: UUID!, $makeFinal: Boolean, $makePrimary: Boolean, $deletePreviousPrimary: Boolean) {
+          updateStreamInstance(
+            instanceID: $instanceID,
+            makeFinal: $makeFinal,
+            makePrimary: $makePrimary,
+            deletePreviousPrimary: $deletePreviousPrimary,
+          ) {
+            streamInstanceID
+            streamID
+            createdOn
+            madePrimaryOn
+            madeFinalOn
+          }
+        }
+      """,
+    )
+    return result['updateStreamInstance']
+
+  async def delete_instance(self, instance_id):
     result = await self.conn.query_control(
       variables={
         'instanceID': instance_id,
       },
       query="""
-        mutation CommitExternalStreamBatch($instanceID: UUID!) {
-          commitExternalStreamBatch(instanceID: $instanceID)
+        mutation deleteStreamInstance($instanceID: UUID!) {
+          deleteStreamInstance(instanceID: $instanceID)
         }
-      """
+      """,
     )
-    return result['commitExternalStreamBatch']
-
-  async def clear_pending_batches(self, stream_id):
-    result = await self.conn.query_control(
-      variables={
-        'streamID': stream_id,
-      },
-      query="""
-        mutation ClearPendingExternalStreamBatches($streamID: UUID!) {
-          clearPendingExternalStreamBatches(streamID: $streamID) 
-        }
-      """
-    )
-    return result['clearPendingExternalStreamBatches']
+    return result['deleteStreamInstance']

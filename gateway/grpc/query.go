@@ -45,13 +45,8 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
-	// if batch, check committed
-	if stream.Batch && !stream.Committed {
-		return nil, status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
-	}
-
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
@@ -116,13 +111,8 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
-	// if batch, check committed
-	if stream.Batch && !stream.Committed {
-		return nil, status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
-	}
-
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}
@@ -173,13 +163,8 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 		return nil, status.Error(codes.NotFound, "stream not found")
 	}
 
-	// if batch, check committed
-	if stream.Batch && !stream.Committed {
-		return nil, status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
-	}
-
 	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}

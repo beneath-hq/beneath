@@ -42,22 +42,29 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// create stream
 	schema := readTestdata("foobar.graphql")
 	res2 := queryGQL(`
-		mutation CreateExternalStream($projectID: UUID!, $schema: String!) {
-			createExternalStream(projectID: $projectID, schema: $schema, batch: false, manual: false) {
+		mutation StageStream($organization: String!, $schema: String!) {
+			stageStream(
+				organizationName: $organization,
+				projectName: "test",
+				streamName: "foo_bar",
+				schemaKind: GraphQL,
+				schema: $schema,
+				createPrimaryStreamInstance: true,
+			) {
 				streamID
 				avroSchema
-				currentStreamInstanceID
+				primaryStreamInstanceID
 				name
 				project { projectID }
 			}
 		}
 	`, map[string]interface{}{
-		"projectID": project["projectID"],
-		"schema":    schema,
+		"organization": testOrg.Name,
+		"schema":       schema,
 	})
 	assert.Empty(t, res2.Errors)
-	stream := res2.Result()["createExternalStream"]
-	instanceID := uuid.FromStringOrNil(stream["currentStreamInstanceID"].(string))
+	stream := res2.Result()["stageStream"]
+	instanceID := uuid.FromStringOrNil(stream["primaryStreamInstanceID"].(string))
 	assert.Equal(t, "foo_bar", stream["name"])
 	assert.Len(t, stream["project"], 1)
 	assert.False(t, instanceID == uuid.Nil)

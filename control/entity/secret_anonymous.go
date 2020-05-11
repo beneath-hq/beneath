@@ -68,7 +68,7 @@ func (s *AnonymousSecret) GetOwnerWriteQuota() *int64 {
 }
 
 // StreamPermissions implements the Secret interface
-func (s *AnonymousSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions {
+func (s *AnonymousSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool) StreamPermissions {
 	return StreamPermissions{
 		Read: public,
 	}

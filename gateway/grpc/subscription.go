@@ -7,10 +7,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/gateway"
-	"gitlab.com/beneath-hq/beneath/gateway/subscriptions"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/gateway/subscriptions"
+	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {
@@ -32,13 +32,8 @@ func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_Subscribe
 		return status.Error(codes.NotFound, "stream not found")
 	}
 
-	// if batch, check committed
-	if stream.Batch && !stream.Committed {
-		return status.Error(codes.FailedPrecondition, "batch has not yet been committed, and so can't be read")
-	}
-
 	// check permissions
-	perms := secret.StreamPermissions(ss.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(ss.Context(), stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
 		return grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
 	}

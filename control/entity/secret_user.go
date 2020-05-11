@@ -97,11 +97,11 @@ func (s *UserSecret) IsService() bool {
 }
 
 // StreamPermissions implements the Secret interface
-func (s *UserSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool, external bool) StreamPermissions {
+func (s *UserSecret) StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool) StreamPermissions {
 	projectPerms := CachedUserProjectPermissions(ctx, s.UserID, projectID)
 	return StreamPermissions{
 		Read:  (projectPerms.View && !s.PublicOnly) || public,
-		Write: projectPerms.Create && external && !s.ReadOnly && (!s.PublicOnly || public),
+		Write: projectPerms.Create && !s.ReadOnly && (!s.PublicOnly || public),
 	}
 }
 

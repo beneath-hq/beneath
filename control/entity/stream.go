@@ -1,13 +1,13 @@
 package entity
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"reflect"
 	"regexp"
 	"time"
-
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
@@ -15,6 +15,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"gitlab.com/beneath-hq/beneath/pkg/schema"
 )
 
@@ -32,28 +33,36 @@ type Stream struct {
 	SourceModel   *Model
 	DerivedModels []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
 
-	// Schema-related fields (note: used in stream cache)
-	Schema              string `sql:",notnull",validate:"required"`
-	AvroSchema          string `sql:",type:json,notnull",validate:"required"`
-	CanonicalAvroSchema string `sql:",type:json,notnull",validate:"required"`
-	BigQuerySchema      string `sql:"bigquery_schema,type:json,notnull",validate:"required"`
-
-	// Indexes (note: used in stream cache)
-	StreamIndexes []*StreamIndex
+	// Schema-related fields (note: some are used in stream cache)
+	SchemaKind          StreamSchemaKind `sql:",notnull",validate:"required"`
+	Schema              string           `sql:",notnull",validate:"required"`
+	SchemaMD5           []byte           `sql:"schema_md5,notnull",validate:"required"`
+	AvroSchema          string           `sql:",type:json,notnull",validate:"required"`
+	CanonicalAvroSchema string           `sql:",type:json,notnull",validate:"required"`
+	BigQuerySchema      string           `sql:"bigquery_schema,type:json,notnull",validate:"required"`
+	StreamIndexes       []*StreamIndex
 
 	// Behaviour-related fields (note: used in stream cache)
-	External         bool  `sql:",notnull"`
-	Batch            bool  `sql:",notnull"`
-	Manual           bool  `sql:",notnull"`
-	RetentionSeconds int32 `sql:",notnull,default:0"`
+	RetentionSeconds   int32 `sql:",notnull,default:0"`
+	EnableManualWrites bool  `sql:",notnull"`
 
 	// Instances-related fields
-	InstancesCreatedCount   int32 `sql:",notnull,default:0"`
-	InstancesCommittedCount int32 `sql:",notnull,default:0"`
-	StreamInstances         []*StreamInstance
-	CurrentStreamInstanceID *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
-	CurrentStreamInstance   *StreamInstance
+	StreamInstances           []*StreamInstance
+	PrimaryStreamInstanceID   *uuid.UUID `sql:"on_delete:SET NULL,type:uuid"`
+	PrimaryStreamInstance     *StreamInstance
+	InstancesCreatedCount     int32 `sql:",notnull,default:0"`
+	InstancesDeletedCount     int32 `sql:",notnull,default:0"`
+	InstancesMadeFinalCount   int32 `sql:",notnull,default:0"`
+	InstancesMadePrimaryCount int32 `sql:",notnull,default:0"`
 }
+
+// StreamSchemaKind indicates the SDL of a stream's schema
+type StreamSchemaKind string
+
+const (
+	// StreamSchemaKindGraphQl is the GraphQL SDL
+	StreamSchemaKindGraphQl StreamSchemaKind = "GraphQL"
+)
 
 var (
 	// used for validation
@@ -82,7 +91,14 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 	}
 	err := hub.DB.ModelContext(ctx, stream).
 		WherePK().
-		Column("stream.*", "Project", "Project.Organization", "CurrentStreamInstance", "SourceModel", "StreamIndexes").
+		Column(
+			"stream.*",
+			"Project",
+			"Project.Organization",
+			"PrimaryStreamInstance",
+			"SourceModel",
+			"StreamIndexes",
+		).
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -94,7 +110,14 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 func FindStreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) *Stream {
 	stream := &Stream{}
 	err := hub.DB.ModelContext(ctx, stream).
-		Column("stream.*", "Project", "Project.Organization", "CurrentStreamInstance", "SourceModel", "StreamIndexes"). // Q: should I not select the whole organization table? and instead just select the name?
+		Column(
+			"stream.*",
+			"Project",
+			"Project.Organization",
+			"PrimaryStreamInstance",
+			"SourceModel",
+			"StreamIndexes",
+		).
 		Where("lower(project__organization.name) = lower(?)", organizationName).
 		Where("lower(project.name) = lower(?)", projectName).
 		Where("lower(stream.name) = lower(?)", streamName).
@@ -103,16 +126,6 @@ func FindStreamByOrganizationProjectAndName(ctx context.Context, organizationNam
 		return nil
 	}
 	return stream
-}
-
-// FindInstanceIDByOrganizationProjectAndName returns the current instance ID of the stream
-func FindInstanceIDByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) uuid.UUID {
-	return getInstanceCache().get(ctx, organizationName, projectName, streamName)
-}
-
-// FindCachedStreamByCurrentInstanceID returns select info about the instance's stream
-func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UUID) *CachedStream {
-	return getStreamCache().Get(ctx, instanceID)
 }
 
 // GetStreamID implements engine/driver.Stream
@@ -159,10 +172,15 @@ func (s *Stream) GetBigQuerySchema() string {
 	return s.BigQuerySchema
 }
 
-// Compile compiles s.Schema and sets relevant fields
-func (s *Stream) Compile(ctx context.Context, update bool) error {
+// Compile compiles the given schema and sets relevant fields
+func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSchema string, update bool) error {
+	// checck schema kind is gql
+	if schemaKind != StreamSchemaKindGraphQl {
+		return fmt.Errorf("Unsupported stream schema definition language '%s'", schemaKind)
+	}
+
 	// compile schema
-	compiler := schema.NewCompiler(s.Schema)
+	compiler := schema.NewCompiler(newSchema)
 	err := compiler.Compile()
 	if err != nil {
 		return fmt.Errorf("Error compiling schema: %s", err.Error())
@@ -196,13 +214,14 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 
 	// check no critical changes on update
 	if update {
-		if s.Name != streamDef.Name {
-			return fmt.Errorf("Cannot change stream name in an update")
-		}
-
 		if !s.indexesEqual(streamDef) {
 			return fmt.Errorf("Cannot change stream key or indexes in an update")
 		}
+	}
+
+	// TEMPORARY: disable secondary indexes
+	if len(streamDef.SecondaryIndexes) != 0 {
+		return fmt.Errorf("Cannot add secondary indexes to stream (a stream must have exactly one @key index)")
 	}
 
 	// set indexes
@@ -211,7 +230,8 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 	}
 
 	// set missing stream fields
-	s.Name = streamDef.Name
+	s.SchemaKind = schemaKind
+	s.Schema = newSchema
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
 	s.BigQuerySchema = bqSchema
@@ -221,16 +241,6 @@ func (s *Stream) Compile(ctx context.Context, update bool) error {
 	err = GetValidator().Struct(s)
 	if err != nil {
 		return err
-	}
-
-	// populate s.Project if not set
-	if s.Project == nil {
-		s.Project = FindProject(ctx, s.ProjectID)
-	}
-
-	// populate s.Project.Organization if not set
-	if s.Project.Organization == nil {
-		s.Project.Organization = FindOrganization(ctx, s.Project.OrganizationID)
 	}
 
 	return nil
@@ -289,90 +299,110 @@ func (s *Stream) indexesEqual(def *schema.StreamDef) bool {
 	return equal
 }
 
-// CreateWithTx creates the stream and an associated instance (if streaming) using tx
-func (s *Stream) CreateWithTx(tx *pg.Tx) error {
-	// insert stream
-	_, err := tx.Model(s).Insert()
-	if err != nil {
-		return err
-	}
+// Stage creates or updates the stream so that it adheres to the params (or does nothing if everything already conforms).
+// If s is a new stream object, Name and ProjectID must be set before calling Stage.
+func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) error {
+	// determine whether to insert or update
+	update := (s.StreamID != uuid.Nil)
 
-	// create indexes
-	for _, index := range s.StreamIndexes {
-		index.StreamID = s.StreamID
-		_, err := tx.Model(index).Insert()
+	// tracks whether a save is necessary
+	save := !update
+
+	// compile if necessary
+	schemaMD5 := md5.Sum([]byte(schema))
+	if schemaKind != s.SchemaKind || !bytes.Equal(schemaMD5[:], s.SchemaMD5) {
+		err := s.Compile(ctx, schemaKind, schema, update)
 		if err != nil {
 			return err
 		}
+		s.SchemaMD5 = schemaMD5[:]
+		save = true
 	}
 
-	// create and set stream instance if not batch
-	if !s.Batch {
-		// create stream instance
-		si, err := s.CreateStreamInstanceWithTx(tx)
+	// update fields if necessary
+	if retentionSeconds != nil && int32(*retentionSeconds) != s.RetentionSeconds {
+		s.RetentionSeconds = int32(*retentionSeconds)
+		save = true
+	}
+	if enableManualWrites != nil && *enableManualWrites != s.EnableManualWrites {
+		s.EnableManualWrites = *enableManualWrites
+		save = true
+	}
+
+	// quit if no changes
+	if !save {
+		return nil
+	}
+
+	// populate s.Project and s.Project.Organization if not set (i.e. due to inserting new stream)
+	if s.Project == nil {
+		s.Project = FindProject(ctx, s.ProjectID)
+	}
+
+	// insert or update
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		if update {
+			// update
+			s.UpdatedOn = time.Now()
+			_, err := tx.Model(s).WherePK().Update()
+			if err != nil {
+				return err
+			}
+
+			// update instances in engine and clear cached instances
+			instances := FindStreamInstances(tx.Context(), s.StreamID)
+			for _, instance := range instances {
+				getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
+				err := hub.Engine.RegisterInstance(tx.Context(), s.Project, s, instance)
+				if err != nil {
+					return err
+				}
+			}
+
+			// done with updates
+			return nil
+		}
+
+		// IT'S AN INSERT (NOT UPDATE)
+
+		// insert
+		_, err := tx.Model(s).Insert()
 		if err != nil {
 			return err
 		}
 
-		// commit instance
-		err = s.CommitStreamInstanceWithTx(tx, si)
-		if err != nil {
-			return err
+		// create indexes
+		for _, index := range s.StreamIndexes {
+			index.StreamID = s.StreamID
+			_, err := tx.Model(index).Insert()
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	// done
-	return nil
-}
+		// create a primary instance if requested
+		if createPrimaryStreamInstance != nil && *createPrimaryStreamInstance {
+			// create stream instance
+			instance, err := s.CreateStreamInstanceWithTx(tx)
+			if err != nil {
+				return err
+			}
 
-// UpdateWithTx updates the stream (if streaming) using tx
-func (s *Stream) UpdateWithTx(tx *pg.Tx) error {
-	// update
-	s.UpdatedOn = time.Now()
-	_, err := tx.Model(s).WherePK().Update()
-	if err != nil {
-		return err
-	}
-
-	// get instances
-	if len(s.StreamInstances) == 0 {
-		err := tx.Model((*StreamInstance)(nil)).
-			Where("stream_id = ?", s.StreamID).
-			Select(&s.StreamInstances)
-		if err != nil {
-			return err
+			// commit instance
+			err = s.UpdateStreamInstanceWithTx(tx, instance, false, true, false)
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	// Clear stream cache
-	for _, si := range s.StreamInstances {
-		getStreamCache().Clear(tx.Context(), si.StreamInstanceID)
-	}
-
-	// update in bigquery
-	if s.CurrentStreamInstanceID != nil {
-		cs := FindCachedStreamByCurrentInstanceID(tx.Context(), *s.CurrentStreamInstanceID)
-		err = hub.Engine.RegisterInstance(tx.Context(), cs, cs, cs)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // Delete deletes a stream and all its related instances
 func (s *Stream) Delete(ctx context.Context) error {
-	// get instances
-	var instances []*StreamInstance
-	err := hub.DB.ModelContext(ctx, &instances).
-		Where("stream_id = ?", s.StreamID).
-		Select()
-	if err != nil {
-		return err
-	}
-
 	// delete instances
+	instances := FindStreamInstances(ctx, s.StreamID)
 	for _, inst := range instances {
 		err := s.DeleteStreamInstance(ctx, inst)
 		if err != nil {
@@ -381,7 +411,7 @@ func (s *Stream) Delete(ctx context.Context) error {
 	}
 
 	// delete stream
-	err = hub.DB.WithContext(ctx).Delete(s)
+	err := hub.DB.WithContext(ctx).Delete(s)
 	if err != nil {
 		return err
 	}
@@ -397,43 +427,6 @@ func (s *Stream) Delete(ctx context.Context) error {
 	return nil
 }
 
-// CompileAndCreate compiles the schema, derives name and avro schemas and inserts
-// the stream into the database
-func (s *Stream) CompileAndCreate(ctx context.Context) error {
-	// compile
-	err := s.Compile(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	// create stream (and a new stream instance ID if not batch)
-	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		return s.CreateWithTx(tx)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// CompileAndUpdate updates a stream.
-// We allow updating the schema with new docs/layout, but not semantic updates.
-func (s *Stream) CompileAndUpdate(ctx context.Context, newSchema *string, manual *bool) error {
-	if manual != nil {
-		s.Manual = *manual
-	}
-
-	if newSchema != nil {
-		s.Schema = *newSchema
-		s.Compile(ctx, true)
-	}
-
-	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		return s.UpdateWithTx(tx)
-	})
-}
-
 // CreateStreamInstance creates a new instance
 func (s *Stream) CreateStreamInstance(ctx context.Context) (res *StreamInstance, err error) {
 	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
@@ -445,28 +438,15 @@ func (s *Stream) CreateStreamInstance(ctx context.Context) (res *StreamInstance,
 
 // CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
 func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) {
-	// check uncommited instances count
-	var count int
-	_, err := tx.QueryOne(pg.Scan(&count), `
-		select count(*)
-		from streams s
-		join stream_instances si on s.stream_id = si.stream_id
-		where s.stream_id = ?
-		and s.current_stream_instance_id is distinct from si.stream_instance_id`, s.StreamID)
-	if err != nil {
-		return nil, err
-	}
-	if count > 0 {
-		return nil, fmt.Errorf("Another batch is already outstanding for stream '%s/%s/%s' – commit or clear it before continuing", s.Project.Organization.Name, s.Project.Name, s.Name)
-	}
-
 	// create new
-	si := &StreamInstance{StreamID: s.StreamID}
-	_, err = tx.Model(si).Insert()
+	si := &StreamInstance{
+		StreamID: s.StreamID,
+		Stream:   s,
+	}
+	_, err := tx.Model(si).Insert()
 	if err != nil {
 		return nil, err
 	}
-	si.Stream = s
 
 	// increment count
 	s.InstancesCreatedCount++
@@ -484,65 +464,101 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 	return si, nil
 }
 
-// CommitStreamInstance promotes an instance to current_instance_id and deletes the old instance
-func (s *Stream) CommitStreamInstance(ctx context.Context, instance *StreamInstance) error {
+// UpdateStreamInstance updates the state of a stream instance
+func (s *Stream) UpdateStreamInstance(ctx context.Context, instance *StreamInstance, makeFinal bool, makePrimary bool, deletePreviousPrimary bool) error {
 	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		return s.CommitStreamInstanceWithTx(tx, instance)
+		return s.UpdateStreamInstanceWithTx(tx, instance, makeFinal, makePrimary, deletePreviousPrimary)
 	})
 }
 
-// CommitStreamInstanceWithTx is the same as CommitStreamInstance, but in a database transaction
-// Note must support multiple calls (idempotence)
-func (s *Stream) CommitStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance) error {
-	// check
+// UpdateStreamInstanceWithTx is like UpdateStreamInstance, but runs in a transaction
+func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance, makeFinal bool, makePrimary bool, deletePreviousPrimary bool) error {
+	// check relationship
 	if instance.StreamID != s.StreamID {
-		return fmt.Errorf("Cannot commit instance '%s' because it doesn't belong to stream '%s'", instance.StreamInstanceID.String(), s.StreamID.String())
+		return fmt.Errorf("Cannot update instance '%s' because it doesn't belong to stream '%s'", instance.StreamInstanceID.String(), s.StreamID.String())
 	}
 
-	// update stream with stream instance ID
-	prevInstanceID := s.CurrentStreamInstanceID
-	s.CurrentStreamInstanceID = &instance.StreamInstanceID
-	s.UpdatedOn = time.Now()
-	_, err := tx.Model(s).Column("current_stream_instance_id", "updated_on").WherePK().Update()
+	// check makePrimary and deletePreviousPrimary connection
+	if !makePrimary && deletePreviousPrimary {
+		return fmt.Errorf("Cannot set deletePreviousPrimary if makePrimary isn't set")
+	}
+
+	// bail if there's nothing to do
+	if (!makeFinal || instance.MadeFinalOn != nil) && !makePrimary {
+		return nil
+	}
+
+	// we know there's something to do
+
+	// prepare models to update
+	sm := tx.Model(s)
+	im := tx.Model(instance)
+
+	// values needed later
+	now := time.Now()
+	previousPrimaryInstanceID := s.PrimaryStreamInstanceID
+
+	// handle makeFinal
+	if makeFinal && instance.MadeFinalOn == nil {
+		s.InstancesMadeFinalCount++
+		sm = sm.Set("instances_made_final_count = instances_made_final_count + 1")
+		instance.MadeFinalOn = &now
+		im = im.Set("made_final_on = now()")
+	}
+
+	// handle makePrimary
+	if makePrimary {
+		s.PrimaryStreamInstanceID = &instance.StreamInstanceID
+		sm = sm.Set("primary_stream_instance_id = ?", instance.StreamInstanceID)
+		if instance.MadePrimaryOn == nil {
+			s.InstancesMadePrimaryCount++
+			sm = sm.Set("instances_made_primary_count = instances_made_primary_count + 1")
+			instance.MadePrimaryOn = &now
+			im = im.Set("made_primary_on = now()")
+		}
+	}
+
+	// updated on timestamps
+	s.UpdatedOn = now
+	sm = sm.Set("updated_on = now()")
+	instance.UpdatedOn = now
+	im = im.Set("updated_on = now()")
+
+	// update
+	_, err := sm.WherePK().Update()
+	if err != nil {
+		return err
+	}
+	_, err = im.WherePK().Update()
 	if err != nil {
 		return err
 	}
 
-	// set committed_on
-	instance.CommittedOn = time.Now()
-	_, err = tx.Model(instance).Column("committed_on").WherePK().Update()
-	if err != nil {
-		return err
+	// update in warehouse
+	if makePrimary {
+		err = hub.Engine.PromoteInstance(tx.Context(), s.Project, s, instance)
+		if err != nil {
+			return err
+		}
 	}
 
-	// clear instance cache in redis
-	getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
-	getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
-	if prevInstanceID != nil {
-		getStreamCache().Clear(tx.Context(), *prevInstanceID)
-	}
-
-	// increment count
-	s.InstancesCommittedCount++
-	_, err = tx.Model(s).Set("instances_committed_count = instances_committed_count + 1").WherePK().Update()
-	if err != nil {
-		return err
-	}
-
-	// call on warehouse
-	err = hub.Engine.PromoteInstance(tx.Context(), s.Project, s, instance)
-	if err != nil {
-		return err
-	}
-
-	// delete old instance (unless idempotence)
-	if prevInstanceID != nil && *prevInstanceID != instance.StreamInstanceID {
+	// delete previous primary instance
+	if deletePreviousPrimary && previousPrimaryInstanceID != nil {
 		err := s.DeleteStreamInstanceWithTx(tx, &StreamInstance{
+			StreamInstanceID: *previousPrimaryInstanceID,
 			StreamID:         s.StreamID,
-			StreamInstanceID: *prevInstanceID,
 		})
 		if err != nil {
 			return err
+		}
+	}
+
+	// clear caches
+	getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
+	if makePrimary {
+		getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
+		if previousPrimaryInstanceID != nil {
+			getStreamCache().Clear(tx.Context(), *previousPrimaryInstanceID)
 		}
 	}
 
@@ -557,60 +573,46 @@ func (s *Stream) DeleteStreamInstance(ctx context.Context, si *StreamInstance) e
 }
 
 // DeleteStreamInstanceWithTx is like DeleteStreamInstance in a tx
-func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, si *StreamInstance) error {
-	// check
-	if si.StreamID != s.StreamID {
-		return fmt.Errorf("Cannot delete instance '%s' because it doesn't belong to stream '%s'", si.StreamInstanceID.String(), s.StreamID.String())
+func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance) error {
+	// check relationship
+	if instance.StreamID != s.StreamID {
+		return fmt.Errorf("Cannot delete instance '%s' because it doesn't belong to stream '%s'", instance.StreamInstanceID.String(), s.StreamID.String())
 	}
 
-	// remove as current stream instance (if necessary)
-	if s.CurrentStreamInstanceID != nil && *s.CurrentStreamInstanceID == si.StreamInstanceID {
-		s.CurrentStreamInstanceID = nil
-		s.UpdatedOn = time.Now()
-		_, err := tx.Model(s).Column("current_stream_instance_id", "updated_on").WherePK().Update()
-		if err != nil {
-			return err
-		}
+	// delete instance
+	err := tx.Delete(instance)
+	if err != nil {
+		return err
+	}
+
+	// clear cache
+	getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
+
+	// if we deleted the primary instance, clear it (not part of stream update because of SET NULL constraint)
+	if s.PrimaryStreamInstanceID != nil && *s.PrimaryStreamInstanceID == instance.StreamInstanceID {
+		s.PrimaryStreamInstanceID = nil
+		s.PrimaryStreamInstance = nil
 		getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
 	}
 
-	// delete
-	err := tx.Delete(si)
+	// update stream
+	s.UpdatedOn = time.Now()
+	s.InstancesDeletedCount++
+	_, err = tx.Model(s).
+		Set("updated_on = ?", s.UpdatedOn).
+		Set("instances_deleted_count = instances_deleted_count + 1").
+		WherePK().
+		Update()
 	if err != nil {
 		return err
 	}
 
-	// deregister
+	// deregister instance
 	err = taskqueue.Submit(tx.Context(), &CleanupInstanceTask{
-		CachedStream: NewCachedStream(s, si.StreamInstanceID),
+		CachedStream: NewCachedStream(s, instance),
 	})
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// ClearPendingBatches clears instance IDs that are not current
-func (s *Stream) ClearPendingBatches(ctx context.Context) error {
-	// get instances
-	if len(s.StreamInstances) == 0 {
-		err := hub.DB.ModelContext(ctx, (*StreamInstance)(nil)).
-			Where("stream_id = ?", s.StreamID).
-			Select(&s.StreamInstances)
-		if err != nil {
-			return err
-		}
-	}
-
-	// loop
-	for _, si := range s.StreamInstances {
-		if s.CurrentStreamInstanceID == nil || *s.CurrentStreamInstanceID != si.StreamInstanceID {
-			err := s.DeleteStreamInstance(ctx, si)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil

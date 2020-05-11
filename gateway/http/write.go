@@ -49,12 +49,12 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// check not already a committed batch stream
-	if stream.Batch && stream.Committed {
-		return httputil.NewError(400, "batch has been committed and closed for further writes")
+	if stream.Final {
+		return httputil.NewError(400, "instance closed for further writes because it has been marked final")
 	}
 
 	// check allowed to write stream
-	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public, stream.External)
+	perms := secret.StreamPermissions(r.Context(), stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Write {
 		return httputil.NewError(403, "secret doesn't grant right to write this stream")
 	}

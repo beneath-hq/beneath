@@ -14,6 +14,6 @@ func (r *Resolver) StreamInstance() gql.StreamInstanceResolver {
 
 type streamInstanceResolver struct{ *Resolver }
 
-func (r *streamInstanceResolver) InstanceID(ctx context.Context, obj *entity.StreamInstance) (string, error) {
+func (r *streamInstanceResolver) StreamInstanceID(ctx context.Context, obj *entity.StreamInstance) (string, error) {
 	return obj.StreamInstanceID.String(), nil
 }

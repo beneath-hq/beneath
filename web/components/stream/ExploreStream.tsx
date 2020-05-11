@@ -41,13 +41,16 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreStreamProps) => {
-  if (!stream.currentStreamInstanceID) {
-    throw Error("internal error: can't use ExploreStream for stream without a current instance ID");
+  if (!stream.primaryStreamInstanceID) {
+    throw Error("internal error: can't use ExploreStream for stream without a primary instance ID");
   }
 
+  // determine if stream may have more data incoming
+  const finalized = !!stream.primaryStreamInstance?.madeFinalOn;
+
   // state
-  const [queryType, setQueryType] = useState<"log" | "index">("log");
-  const [logPeek, setLogPeek] = useState(true);
+  const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
+  const [logPeek, setLogPeek] = useState(finalized ? false : true);
   const [pendingFilter, setPendingFilter] = useState(""); // the value in the text field
   const [filter, setFilter] = useState(""); // updated when text field is submitted (used in call to useRecords)
 
@@ -64,7 +67,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
   const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
     secret: token || undefined,
     stream: {
-      instanceID: stream.currentStreamInstanceID,
+      instanceID: stream.primaryStreamInstanceID,
     },
     query:
       queryType === "index"
@@ -73,6 +76,8 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
     pageSize: 25,
     subscribe:
       typeof window === "undefined"
+        ? false
+        : finalized
         ? false
         : {
             pageSize: 100,

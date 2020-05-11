@@ -15,6 +15,10 @@ export enum EntityKind {
   User = "User",
 }
 
+export enum StreamSchemaKind {
+  GraphQL = "GraphQL",
+}
+
 //==============================================================
 // END Enums and Input Objects
 //==============================================================

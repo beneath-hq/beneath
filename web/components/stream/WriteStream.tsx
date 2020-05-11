@@ -74,7 +74,7 @@ const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {
     createRecords({
       variables: {
         json,
-        instanceID: stream.currentStreamInstanceID as string,
+        instanceID: stream.primaryStreamInstanceID as string,
       },
     });
   };

@@ -18,7 +18,6 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   streamID: string;
   name: string;
   description: string | null;
-  external: boolean;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_permissions {

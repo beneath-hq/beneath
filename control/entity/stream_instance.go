@@ -19,7 +19,8 @@ type StreamInstance struct {
 	Stream           *Stream
 	CreatedOn        time.Time `sql:",default:now()"`
 	UpdatedOn        time.Time `sql:",default:now()"`
-	CommittedOn      time.Time
+	MadePrimaryOn    *time.Time
+	MadeFinalOn      *time.Time
 }
 
 // GetStreamInstanceID implements engine/beneath/driver.StreamInstance
@@ -27,18 +28,30 @@ func (si *StreamInstance) GetStreamInstanceID() uuid.UUID {
 	return si.StreamInstanceID
 }
 
+// FindStreamInstances finds the instances associated with the given stream
+func FindStreamInstances(ctx context.Context, streamID uuid.UUID) []*StreamInstance {
+	var res []*StreamInstance
+	err := hub.DB.ModelContext(ctx, &res).Where("stream_id = ?", streamID).Select()
+	if err != nil {
+		panic(fmt.Errorf("error fetching stream instances: %s", err.Error()))
+	}
+	return res
+}
+
 // FindStreamInstance finds an instance and related stream details
 func FindStreamInstance(ctx context.Context, instanceID uuid.UUID) *StreamInstance {
 	si := &StreamInstance{
 		StreamInstanceID: instanceID,
 	}
-	err := hub.DB.ModelContext(ctx, si).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, si).Column(
+		"stream_instance.*",
+		"Stream",
+		"Stream.StreamIndexes",
+		"Stream.Project",
+		"Stream.Project.Organization",
+	).WherePK().Select()
 	if !AssertFoundOne(err) {
 		return nil
-	}
-	si.Stream = FindStream(ctx, si.StreamID)
-	if si.Stream == nil {
-		panic(fmt.Errorf("stream for instance is nil"))
 	}
 	return si
 }

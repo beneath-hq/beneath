@@ -15,7 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"gitlab.com/beneath-hq/beneath/control/entity"
@@ -142,16 +142,14 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
-		ClearPendingExternalStreamBatches func(childComplexity int, streamID uuid.UUID) int
-		CommitExternalStreamBatch         func(childComplexity int, instanceID uuid.UUID) int
-		CreateExternalStream              func(childComplexity int, projectID uuid.UUID, schema string, batch bool, manual bool) int
-		CreateExternalStreamBatch         func(childComplexity int, streamID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) int
 		CreateService                     func(childComplexity int, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
-		DeleteExternalStream              func(childComplexity int, streamID uuid.UUID) int
+		CreateStreamInstance              func(childComplexity int, streamID uuid.UUID) int
 		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
+		DeleteStream                      func(childComplexity int, streamID uuid.UUID) int
+		DeleteStreamInstance              func(childComplexity int, instanceID uuid.UUID) int
 		Empty                             func(childComplexity int) int
 		InviteUserToOrganization          func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view bool, create bool, admin bool) int
 		IssueServiceSecret                func(childComplexity int, serviceID uuid.UUID, description string) int
@@ -159,16 +157,17 @@ type ComplexityRoot struct {
 		LeaveBillingOrganization          func(childComplexity int, userID uuid.UUID) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
+		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		TransferServiceToOrganization     func(childComplexity int, serviceID uuid.UUID, organizationID uuid.UUID) int
 		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
-		UpdateExternalStream              func(childComplexity int, streamID uuid.UUID, schema *string, manual *bool) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
 		UpdateProject                     func(childComplexity int, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) int
 		UpdateService                     func(childComplexity int, serviceID uuid.UUID, name *string) int
 		UpdateServiceQuotas               func(childComplexity int, serviceID uuid.UUID, readQuota *int, writeQuota *int) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
+		UpdateStreamInstance              func(childComplexity int, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool, deletePreviousPrimary *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserProjectPermissions      func(childComplexity int, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserQuotas                  func(childComplexity int, userID uuid.UUID, readQuota *int, writeQuota *int) int
@@ -320,6 +319,7 @@ type ComplexityRoot struct {
 		ServiceByNameAndOrganization       func(childComplexity int, name string, organizationName string) int
 		StreamByID                         func(childComplexity int, streamID uuid.UUID) int
 		StreamByOrganizationProjectAndName func(childComplexity int, organizationName string, projectName string, streamName string) int
+		StreamInstancesForStream           func(childComplexity int, streamID uuid.UUID) int
 	}
 
 	Service struct {
@@ -341,24 +341,26 @@ type ComplexityRoot struct {
 	}
 
 	Stream struct {
-		AvroSchema              func(childComplexity int) int
-		Batch                   func(childComplexity int) int
-		CanonicalAvroSchema     func(childComplexity int) int
-		CreatedOn               func(childComplexity int) int
-		CurrentStreamInstanceID func(childComplexity int) int
-		Description             func(childComplexity int) int
-		External                func(childComplexity int) int
-		InstancesCommittedCount func(childComplexity int) int
-		InstancesCreatedCount   func(childComplexity int) int
-		Manual                  func(childComplexity int) int
-		Name                    func(childComplexity int) int
-		Project                 func(childComplexity int) int
-		RetentionSeconds        func(childComplexity int) int
-		Schema                  func(childComplexity int) int
-		SourceModel             func(childComplexity int) int
-		StreamID                func(childComplexity int) int
-		StreamIndexes           func(childComplexity int) int
-		UpdatedOn               func(childComplexity int) int
+		AvroSchema                func(childComplexity int) int
+		CanonicalAvroSchema       func(childComplexity int) int
+		CreatedOn                 func(childComplexity int) int
+		Description               func(childComplexity int) int
+		EnableManualWrites        func(childComplexity int) int
+		InstancesCreatedCount     func(childComplexity int) int
+		InstancesDeletedCount     func(childComplexity int) int
+		InstancesMadeFinalCount   func(childComplexity int) int
+		InstancesMadePrimaryCount func(childComplexity int) int
+		Name                      func(childComplexity int) int
+		PrimaryStreamInstance     func(childComplexity int) int
+		PrimaryStreamInstanceID   func(childComplexity int) int
+		Project                   func(childComplexity int) int
+		RetentionSeconds          func(childComplexity int) int
+		Schema                    func(childComplexity int) int
+		SchemaKind                func(childComplexity int) int
+		SourceModel               func(childComplexity int) int
+		StreamID                  func(childComplexity int) int
+		StreamIndexes             func(childComplexity int) int
+		UpdatedOn                 func(childComplexity int) int
 	}
 
 	StreamIndex struct {
@@ -369,10 +371,11 @@ type ComplexityRoot struct {
 	}
 
 	StreamInstance struct {
-		CommittedOn func(childComplexity int) int
-		CreatedOn   func(childComplexity int) int
-		InstanceID  func(childComplexity int) int
-		Stream      func(childComplexity int) int
+		CreatedOn        func(childComplexity int) int
+		MadeFinalOn      func(childComplexity int) int
+		MadePrimaryOn    func(childComplexity int) int
+		StreamID         func(childComplexity int) int
+		StreamInstanceID func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -434,12 +437,11 @@ type MutationResolver interface {
 	UpdateServiceQuotas(ctx context.Context, serviceID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
-	CreateExternalStream(ctx context.Context, projectID uuid.UUID, schema string, batch bool, manual bool) (*entity.Stream, error)
-	UpdateExternalStream(ctx context.Context, streamID uuid.UUID, schema *string, manual *bool) (*entity.Stream, error)
-	DeleteExternalStream(ctx context.Context, streamID uuid.UUID) (bool, error)
-	CreateExternalStreamBatch(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error)
-	CommitExternalStreamBatch(ctx context.Context, instanceID uuid.UUID) (bool, error)
-	ClearPendingExternalStreamBatches(ctx context.Context, streamID uuid.UUID) (bool, error)
+	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) (*entity.Stream, error)
+	DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error)
+	CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error)
+	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool, deletePreviousPrimary *bool) (*entity.StreamInstance, error)
+	DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
 	UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error)
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
@@ -492,6 +494,7 @@ type QueryResolver interface {
 	ServiceByNameAndOrganization(ctx context.Context, name string, organizationName string) (*entity.Service, error)
 	StreamByID(ctx context.Context, streamID uuid.UUID) (*entity.Stream, error)
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*entity.Stream, error)
+	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*entity.StreamInstance, error)
 }
 type ServiceResolver interface {
 	Kind(ctx context.Context, obj *entity.Service) (string, error)
@@ -506,7 +509,7 @@ type StreamIndexResolver interface {
 	IndexID(ctx context.Context, obj *entity.StreamIndex) (string, error)
 }
 type StreamInstanceResolver interface {
-	InstanceID(ctx context.Context, obj *entity.StreamInstance) (string, error)
+	StreamInstanceID(ctx context.Context, obj *entity.StreamInstance) (string, error)
 }
 type SubscriptionResolver interface {
 	Empty(ctx context.Context) (<-chan *string, error)
@@ -955,54 +958,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AcceptOrganizationInvite(childComplexity, args["organizationID"].(uuid.UUID)), true
 
-	case "Mutation.clearPendingExternalStreamBatches":
-		if e.complexity.Mutation.ClearPendingExternalStreamBatches == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_clearPendingExternalStreamBatches_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClearPendingExternalStreamBatches(childComplexity, args["streamID"].(uuid.UUID)), true
-
-	case "Mutation.commitExternalStreamBatch":
-		if e.complexity.Mutation.CommitExternalStreamBatch == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_commitExternalStreamBatch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CommitExternalStreamBatch(childComplexity, args["instanceID"].(uuid.UUID)), true
-
-	case "Mutation.createExternalStream":
-		if e.complexity.Mutation.CreateExternalStream == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createExternalStream_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateExternalStream(childComplexity, args["projectID"].(uuid.UUID), args["schema"].(string), args["batch"].(bool), args["manual"].(bool)), true
-
-	case "Mutation.createExternalStreamBatch":
-		if e.complexity.Mutation.CreateExternalStreamBatch == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createExternalStreamBatch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateExternalStreamBatch(childComplexity, args["streamID"].(uuid.UUID)), true
-
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
 			break
@@ -1039,17 +994,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateService(childComplexity, args["name"].(string), args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
 
-	case "Mutation.deleteExternalStream":
-		if e.complexity.Mutation.DeleteExternalStream == nil {
+	case "Mutation.createStreamInstance":
+		if e.complexity.Mutation.CreateStreamInstance == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteExternalStream_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createStreamInstance_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteExternalStream(childComplexity, args["streamID"].(uuid.UUID)), true
+		return e.complexity.Mutation.CreateStreamInstance(childComplexity, args["streamID"].(uuid.UUID)), true
 
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
@@ -1074,6 +1029,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteService(childComplexity, args["serviceID"].(uuid.UUID)), true
+
+	case "Mutation.deleteStream":
+		if e.complexity.Mutation.DeleteStream == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteStream(childComplexity, args["streamID"].(uuid.UUID)), true
+
+	case "Mutation.deleteStreamInstance":
+		if e.complexity.Mutation.DeleteStreamInstance == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteStreamInstance_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteStreamInstance(childComplexity, args["instanceID"].(uuid.UUID)), true
 
 	case "Mutation.empty":
 		if e.complexity.Mutation.Empty == nil {
@@ -1154,6 +1133,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
+	case "Mutation.stageStream":
+		if e.complexity.Mutation.StageStream == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_stageStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["retentionSeconds"].(*int), args["enableManualWrites"].(*bool), args["createPrimaryStreamInstance"].(*bool)), true
+
 	case "Mutation.transferProjectToOrganization":
 		if e.complexity.Mutation.TransferProjectToOrganization == nil {
 			break
@@ -1189,18 +1180,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateBillingInfo(childComplexity, args["organizationID"].(uuid.UUID), args["billingMethodID"].(*uuid.UUID), args["billingPlanID"].(uuid.UUID), args["country"].(string), args["region"].(*string), args["companyName"].(*string), args["taxNumber"].(*string)), true
-
-	case "Mutation.updateExternalStream":
-		if e.complexity.Mutation.UpdateExternalStream == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateExternalStream_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateExternalStream(childComplexity, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -1273,6 +1252,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateServiceStreamPermissions(childComplexity, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(*bool), args["write"].(*bool)), true
+
+	case "Mutation.updateStreamInstance":
+		if e.complexity.Mutation.UpdateStreamInstance == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateStreamInstance_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateStreamInstance(childComplexity, args["instanceID"].(uuid.UUID), args["makeFinal"].(*bool), args["makePrimary"].(*bool), args["deletePreviousPrimary"].(*bool)), true
 
 	case "Mutation.updateUserOrganizationPermissions":
 		if e.complexity.Mutation.UpdateUserOrganizationPermissions == nil {
@@ -2209,6 +2200,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.StreamByOrganizationProjectAndName(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string)), true
 
+	case "Query.streamInstancesForStream":
+		if e.complexity.Query.StreamInstancesForStream == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamInstancesForStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamInstancesForStream(childComplexity, args["streamID"].(uuid.UUID)), true
+
 	case "Service.kind":
 		if e.complexity.Service.Kind == nil {
 			break
@@ -2300,13 +2303,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.AvroSchema(childComplexity), true
 
-	case "Stream.batch":
-		if e.complexity.Stream.Batch == nil {
-			break
-		}
-
-		return e.complexity.Stream.Batch(childComplexity), true
-
 	case "Stream.canonicalAvroSchema":
 		if e.complexity.Stream.CanonicalAvroSchema == nil {
 			break
@@ -2321,13 +2317,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.CreatedOn(childComplexity), true
 
-	case "Stream.currentStreamInstanceID":
-		if e.complexity.Stream.CurrentStreamInstanceID == nil {
-			break
-		}
-
-		return e.complexity.Stream.CurrentStreamInstanceID(childComplexity), true
-
 	case "Stream.description":
 		if e.complexity.Stream.Description == nil {
 			break
@@ -2335,19 +2324,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.Description(childComplexity), true
 
-	case "Stream.external":
-		if e.complexity.Stream.External == nil {
+	case "Stream.enableManualWrites":
+		if e.complexity.Stream.EnableManualWrites == nil {
 			break
 		}
 
-		return e.complexity.Stream.External(childComplexity), true
-
-	case "Stream.instancesCommittedCount":
-		if e.complexity.Stream.InstancesCommittedCount == nil {
-			break
-		}
-
-		return e.complexity.Stream.InstancesCommittedCount(childComplexity), true
+		return e.complexity.Stream.EnableManualWrites(childComplexity), true
 
 	case "Stream.instancesCreatedCount":
 		if e.complexity.Stream.InstancesCreatedCount == nil {
@@ -2356,12 +2338,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.InstancesCreatedCount(childComplexity), true
 
-	case "Stream.manual":
-		if e.complexity.Stream.Manual == nil {
+	case "Stream.instancesDeletedCount":
+		if e.complexity.Stream.InstancesDeletedCount == nil {
 			break
 		}
 
-		return e.complexity.Stream.Manual(childComplexity), true
+		return e.complexity.Stream.InstancesDeletedCount(childComplexity), true
+
+	case "Stream.instancesMadeFinalCount":
+		if e.complexity.Stream.InstancesMadeFinalCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesMadeFinalCount(childComplexity), true
+
+	case "Stream.instancesMadePrimaryCount":
+		if e.complexity.Stream.InstancesMadePrimaryCount == nil {
+			break
+		}
+
+		return e.complexity.Stream.InstancesMadePrimaryCount(childComplexity), true
 
 	case "Stream.name":
 		if e.complexity.Stream.Name == nil {
@@ -2369,6 +2365,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Stream.Name(childComplexity), true
+
+	case "Stream.primaryStreamInstance":
+		if e.complexity.Stream.PrimaryStreamInstance == nil {
+			break
+		}
+
+		return e.complexity.Stream.PrimaryStreamInstance(childComplexity), true
+
+	case "Stream.primaryStreamInstanceID":
+		if e.complexity.Stream.PrimaryStreamInstanceID == nil {
+			break
+		}
+
+		return e.complexity.Stream.PrimaryStreamInstanceID(childComplexity), true
 
 	case "Stream.project":
 		if e.complexity.Stream.Project == nil {
@@ -2390,6 +2400,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Stream.Schema(childComplexity), true
+
+	case "Stream.schemaKind":
+		if e.complexity.Stream.SchemaKind == nil {
+			break
+		}
+
+		return e.complexity.Stream.SchemaKind(childComplexity), true
 
 	case "Stream.sourceModel":
 		if e.complexity.Stream.SourceModel == nil {
@@ -2447,13 +2464,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StreamIndex.Primary(childComplexity), true
 
-	case "StreamInstance.committedOn":
-		if e.complexity.StreamInstance.CommittedOn == nil {
-			break
-		}
-
-		return e.complexity.StreamInstance.CommittedOn(childComplexity), true
-
 	case "StreamInstance.createdOn":
 		if e.complexity.StreamInstance.CreatedOn == nil {
 			break
@@ -2461,19 +2471,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StreamInstance.CreatedOn(childComplexity), true
 
-	case "StreamInstance.instanceID":
-		if e.complexity.StreamInstance.InstanceID == nil {
+	case "StreamInstance.madeFinalOn":
+		if e.complexity.StreamInstance.MadeFinalOn == nil {
 			break
 		}
 
-		return e.complexity.StreamInstance.InstanceID(childComplexity), true
+		return e.complexity.StreamInstance.MadeFinalOn(childComplexity), true
 
-	case "StreamInstance.stream":
-		if e.complexity.StreamInstance.Stream == nil {
+	case "StreamInstance.madePrimaryOn":
+		if e.complexity.StreamInstance.MadePrimaryOn == nil {
 			break
 		}
 
-		return e.complexity.StreamInstance.Stream(childComplexity), true
+		return e.complexity.StreamInstance.MadePrimaryOn(childComplexity), true
+
+	case "StreamInstance.streamID":
+		if e.complexity.StreamInstance.StreamID == nil {
+			break
+		}
+
+		return e.complexity.StreamInstance.StreamID(childComplexity), true
+
+	case "StreamInstance.streamInstanceID":
+		if e.complexity.StreamInstance.StreamInstanceID == nil {
+			break
+		}
+
+		return e.complexity.StreamInstance.StreamInstanceID(childComplexity), true
 
 	case "Subscription.empty":
 		if e.complexity.Subscription.Empty == nil {
@@ -2977,24 +3001,33 @@ type PermissionsServicesStreams {
 	&ast.Source{Name: "control/gql/schema/streams.graphql", Input: `extend type Query {
   streamByID(streamID: UUID!): Stream!
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
+  streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
 }
 
 extend type Mutation {
-  createExternalStream(
-    projectID: UUID!,
+  stageStream(
+    organizationName: String!,
+    projectName: String!,
+    streamName: String!,
+    schemaKind: StreamSchemaKind!,
     schema: String!,
-    batch: Boolean!,
-    manual: Boolean!
+    retentionSeconds: Int,
+    enableManualWrites: Boolean,
+    createPrimaryStreamInstance: Boolean,
   ): Stream!
-  updateExternalStream(
-    streamID: UUID!,
-    schema: String,
-    manual: Boolean,
-  ): Stream!
-  deleteExternalStream(streamID: UUID!): Boolean!
-  createExternalStreamBatch(streamID: UUID!): StreamInstance!
-  commitExternalStreamBatch(instanceID: UUID!): Boolean!
-  clearPendingExternalStreamBatches(streamID: UUID!): Boolean!
+  deleteStream(streamID: UUID!): Boolean!
+  createStreamInstance(streamID: UUID!): StreamInstance!
+  updateStreamInstance(
+    instanceID: UUID!,
+    makeFinal: Boolean,
+    makePrimary: Boolean,
+    deletePreviousPrimary: Boolean,
+  ): StreamInstance!
+  deleteStreamInstance(instanceID: UUID!): Boolean!
+}
+
+enum StreamSchemaKind {
+  GraphQL
 }
 
 type Stream {
@@ -3006,27 +3039,29 @@ type Stream {
   project: Project!
   sourceModel: Model
 
+  schemaKind: StreamSchemaKind!
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
-
   streamIndexes: [StreamIndex!]!
 
-  external: Boolean!
-  batch: Boolean!
-  manual: Boolean!
   retentionSeconds: Int!
+  enableManualWrites: Boolean!
   
+  primaryStreamInstance: StreamInstance
+  primaryStreamInstanceID: UUID
   instancesCreatedCount: Int!
-  instancesCommittedCount: Int!
-  currentStreamInstanceID: UUID
+  instancesDeletedCount: Int!
+  instancesMadeFinalCount: Int!
+  instancesMadePrimaryCount: Int!
 }
 
 type StreamInstance {
-  instanceID: ID!
-  stream: Stream!
+  streamInstanceID: ID!
+  streamID: UUID!
   createdOn: Time!
-  committedOn: Time!
+  madePrimaryOn: Time
+  madeFinalOn: Time
 }
 
 type StreamIndex {
@@ -3088,86 +3123,6 @@ func (ec *executionContext) field_Mutation_acceptOrganizationInvite_args(ctx con
 		}
 	}
 	args["organizationID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_clearPendingExternalStreamBatches_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_commitExternalStreamBatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["instanceID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["instanceID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createExternalStreamBatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createExternalStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["projectID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["schema"] = arg1
-	var arg2 bool
-	if tmp, ok := rawArgs["batch"]; ok {
-		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["batch"] = arg2
-	var arg3 bool
-	if tmp, ok := rawArgs["manual"]; ok {
-		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["manual"] = arg3
 	return args, nil
 }
 
@@ -3285,7 +3240,7 @@ func (ec *executionContext) field_Mutation_createService_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteExternalStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 uuid.UUID
@@ -3324,6 +3279,34 @@ func (ec *executionContext) field_Mutation_deleteService_args(ctx context.Contex
 		}
 	}
 	args["serviceID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["instanceID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["instanceID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
 	return args, nil
 }
 
@@ -3467,6 +3450,76 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_stageStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["organizationName"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["projectName"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["streamName"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamName"] = arg2
+	var arg3 entity.StreamSchemaKind
+	if tmp, ok := rawArgs["schemaKind"]; ok {
+		arg3, err = ec.unmarshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamSchemaKind(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schemaKind"] = arg3
+	var arg4 string
+	if tmp, ok := rawArgs["schema"]; ok {
+		arg4, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schema"] = arg4
+	var arg5 *int
+	if tmp, ok := rawArgs["retentionSeconds"]; ok {
+		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["retentionSeconds"] = arg5
+	var arg6 *bool
+	if tmp, ok := rawArgs["enableManualWrites"]; ok {
+		arg6, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["enableManualWrites"] = arg6
+	var arg7 *bool
+	if tmp, ok := rawArgs["createPrimaryStreamInstance"]; ok {
+		arg7, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["createPrimaryStreamInstance"] = arg7
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_transferProjectToOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3570,36 +3623,6 @@ func (ec *executionContext) field_Mutation_updateBillingInfo_args(ctx context.Co
 		}
 	}
 	args["taxNumber"] = arg6
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateExternalStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["schema"]; ok {
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["schema"] = arg1
-	var arg2 *bool
-	if tmp, ok := rawArgs["manual"]; ok {
-		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["manual"] = arg2
 	return args, nil
 }
 
@@ -3820,6 +3843,44 @@ func (ec *executionContext) field_Mutation_updateService_args(ctx context.Contex
 		}
 	}
 	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["instanceID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["instanceID"] = arg0
+	var arg1 *bool
+	if tmp, ok := rawArgs["makeFinal"]; ok {
+		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["makeFinal"] = arg1
+	var arg2 *bool
+	if tmp, ok := rawArgs["makePrimary"]; ok {
+		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["makePrimary"] = arg2
+	var arg3 *bool
+	if tmp, ok := rawArgs["deletePreviousPrimary"]; ok {
+		arg3, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deletePreviousPrimary"] = arg3
 	return args, nil
 }
 
@@ -4486,6 +4547,20 @@ func (ec *executionContext) field_Query_streamByOrganizationProjectAndName_args(
 		}
 	}
 	args["streamName"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamInstancesForStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
 	return args, nil
 }
 
@@ -7645,7 +7720,7 @@ func (ec *executionContext) _Mutation_deleteService(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7662,7 +7737,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createExternalStream_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_stageStream_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7671,7 +7746,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExternalStream(rctx, args["projectID"].(uuid.UUID), args["schema"].(string), args["batch"].(bool), args["manual"].(bool))
+		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["retentionSeconds"].(*int), args["enableManualWrites"].(*bool), args["createPrimaryStreamInstance"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7689,7 +7764,7 @@ func (ec *executionContext) _Mutation_createExternalStream(ctx context.Context, 
 	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7706,7 +7781,7 @@ func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, 
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateExternalStream_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_deleteStream_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7715,51 +7790,7 @@ func (ec *executionContext) _Mutation_updateExternalStream(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateExternalStream(rctx, args["streamID"].(uuid.UUID), args["schema"].(*string), args["manual"].(*bool))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entity.Stream)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_deleteExternalStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteExternalStream_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteExternalStream(rctx, args["streamID"].(uuid.UUID))
+		return ec.resolvers.Mutation().DeleteStream(rctx, args["streamID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7777,7 +7808,7 @@ func (ec *executionContext) _Mutation_deleteExternalStream(ctx context.Context, 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createExternalStreamBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createStreamInstance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7794,7 +7825,7 @@ func (ec *executionContext) _Mutation_createExternalStreamBatch(ctx context.Cont
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createExternalStreamBatch_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createStreamInstance_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7803,7 +7834,7 @@ func (ec *executionContext) _Mutation_createExternalStreamBatch(ctx context.Cont
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateExternalStreamBatch(rctx, args["streamID"].(uuid.UUID))
+		return ec.resolvers.Mutation().CreateStreamInstance(rctx, args["streamID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7821,7 +7852,7 @@ func (ec *executionContext) _Mutation_createExternalStreamBatch(ctx context.Cont
 	return ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_commitExternalStreamBatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateStreamInstance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7838,7 +7869,7 @@ func (ec *executionContext) _Mutation_commitExternalStreamBatch(ctx context.Cont
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_commitExternalStreamBatch_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateStreamInstance_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7847,7 +7878,7 @@ func (ec *executionContext) _Mutation_commitExternalStreamBatch(ctx context.Cont
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CommitExternalStreamBatch(rctx, args["instanceID"].(uuid.UUID))
+		return ec.resolvers.Mutation().UpdateStreamInstance(rctx, args["instanceID"].(uuid.UUID), args["makeFinal"].(*bool), args["makePrimary"].(*bool), args["deletePreviousPrimary"].(*bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7859,13 +7890,13 @@ func (ec *executionContext) _Mutation_commitExternalStreamBatch(ctx context.Cont
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*entity.StreamInstance)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_clearPendingExternalStreamBatches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteStreamInstance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7882,7 +7913,7 @@ func (ec *executionContext) _Mutation_clearPendingExternalStreamBatches(ctx cont
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_clearPendingExternalStreamBatches_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_deleteStreamInstance_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -7891,7 +7922,7 @@ func (ec *executionContext) _Mutation_clearPendingExternalStreamBatches(ctx cont
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ClearPendingExternalStreamBatches(rctx, args["streamID"].(uuid.UUID))
+		return ec.resolvers.Mutation().DeleteStreamInstance(rctx, args["instanceID"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12280,6 +12311,50 @@ func (ec *executionContext) _Query_streamByOrganizationProjectAndName(ctx contex
 	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_streamInstancesForStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamInstancesForStream_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamInstancesForStream(rctx, args["streamID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.StreamInstance)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -13046,6 +13121,43 @@ func (ec *executionContext) _Stream_sourceModel(ctx context.Context, field graph
 	return ec.marshalOModel2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐModel(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_schemaKind(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SchemaKind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(entity.StreamSchemaKind)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamSchemaKind(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_schema(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -13194,117 +13306,6 @@ func (ec *executionContext) _Stream_streamIndexes(ctx context.Context, field gra
 	return ec.marshalNStreamIndex2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamIndex(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_external(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.External, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Stream_batch(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Batch, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Stream_manual(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Stream",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Manual, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Stream_retentionSeconds(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -13340,6 +13341,111 @@ func (ec *executionContext) _Stream_retentionSeconds(ctx context.Context, field 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_enableManualWrites(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EnableManualWrites, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_primaryStreamInstance(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrimaryStreamInstance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entity.StreamInstance)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_primaryStreamInstanceID(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrimaryStreamInstanceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*uuid.UUID)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Stream_instancesCreatedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
@@ -13379,7 +13485,7 @@ func (ec *executionContext) _Stream_instancesCreatedCount(ctx context.Context, f
 	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_instancesDeletedCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -13398,7 +13504,7 @@ func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context,
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.InstancesCommittedCount, nil
+		return obj.InstancesDeletedCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13416,7 +13522,7 @@ func (ec *executionContext) _Stream_instancesCommittedCount(ctx context.Context,
 	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+func (ec *executionContext) _Stream_instancesMadeFinalCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -13435,19 +13541,59 @@ func (ec *executionContext) _Stream_currentStreamInstanceID(ctx context.Context,
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CurrentStreamInstanceID, nil
+		return obj.InstancesMadeFinalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*uuid.UUID)
+	res := resTmp.(int32)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stream_instancesMadePrimaryCount(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstancesMadePrimaryCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _StreamIndex_indexID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamIndex) (ret graphql.Marshaler) {
@@ -13598,7 +13744,7 @@ func (ec *executionContext) _StreamIndex_normalize(ctx context.Context, field gr
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _StreamInstance_instanceID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
+func (ec *executionContext) _StreamInstance_streamInstanceID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -13617,7 +13763,7 @@ func (ec *executionContext) _StreamInstance_instanceID(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.StreamInstance().InstanceID(rctx, obj)
+		return ec.resolvers.StreamInstance().StreamInstanceID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13635,7 +13781,7 @@ func (ec *executionContext) _StreamInstance_instanceID(ctx context.Context, fiel
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _StreamInstance_stream(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
+func (ec *executionContext) _StreamInstance_streamID(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -13654,7 +13800,7 @@ func (ec *executionContext) _StreamInstance_stream(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Stream, nil
+		return obj.StreamID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13666,10 +13812,10 @@ func (ec *executionContext) _StreamInstance_stream(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*entity.Stream)
+	res := resTmp.(uuid.UUID)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStream(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _StreamInstance_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
@@ -13709,7 +13855,7 @@ func (ec *executionContext) _StreamInstance_createdOn(ctx context.Context, field
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _StreamInstance_committedOn(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
+func (ec *executionContext) _StreamInstance_madePrimaryOn(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -13728,22 +13874,53 @@ func (ec *executionContext) _StreamInstance_committedOn(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CommittedOn, nil
+		return obj.MadePrimaryOn, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StreamInstance_madeFinalOn(ctx context.Context, field graphql.CollectedField, obj *entity.StreamInstance) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "StreamInstance",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MadeFinalOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Subscription_empty(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
@@ -15945,33 +16122,28 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createExternalStream":
-			out.Values[i] = ec._Mutation_createExternalStream(ctx, field)
+		case "stageStream":
+			out.Values[i] = ec._Mutation_stageStream(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "updateExternalStream":
-			out.Values[i] = ec._Mutation_updateExternalStream(ctx, field)
+		case "deleteStream":
+			out.Values[i] = ec._Mutation_deleteStream(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "deleteExternalStream":
-			out.Values[i] = ec._Mutation_deleteExternalStream(ctx, field)
+		case "createStreamInstance":
+			out.Values[i] = ec._Mutation_createStreamInstance(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createExternalStreamBatch":
-			out.Values[i] = ec._Mutation_createExternalStreamBatch(ctx, field)
+		case "updateStreamInstance":
+			out.Values[i] = ec._Mutation_updateStreamInstance(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "commitExternalStreamBatch":
-			out.Values[i] = ec._Mutation_commitExternalStreamBatch(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "clearPendingExternalStreamBatches":
-			out.Values[i] = ec._Mutation_clearPendingExternalStreamBatches(ctx, field)
+		case "deleteStreamInstance":
+			out.Values[i] = ec._Mutation_deleteStreamInstance(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -17076,6 +17248,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "streamInstancesForStream":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamInstancesForStream(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -17256,6 +17442,11 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "sourceModel":
 			out.Values[i] = ec._Stream_sourceModel(ctx, field, obj)
+		case "schemaKind":
+			out.Values[i] = ec._Stream_schemaKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "schema":
 			out.Values[i] = ec._Stream_schema(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -17276,38 +17467,40 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "external":
-			out.Values[i] = ec._Stream_external(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "batch":
-			out.Values[i] = ec._Stream_batch(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "manual":
-			out.Values[i] = ec._Stream_manual(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "retentionSeconds":
 			out.Values[i] = ec._Stream_retentionSeconds(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "enableManualWrites":
+			out.Values[i] = ec._Stream_enableManualWrites(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "primaryStreamInstance":
+			out.Values[i] = ec._Stream_primaryStreamInstance(ctx, field, obj)
+		case "primaryStreamInstanceID":
+			out.Values[i] = ec._Stream_primaryStreamInstanceID(ctx, field, obj)
 		case "instancesCreatedCount":
 			out.Values[i] = ec._Stream_instancesCreatedCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "instancesCommittedCount":
-			out.Values[i] = ec._Stream_instancesCommittedCount(ctx, field, obj)
+		case "instancesDeletedCount":
+			out.Values[i] = ec._Stream_instancesDeletedCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "currentStreamInstanceID":
-			out.Values[i] = ec._Stream_currentStreamInstanceID(ctx, field, obj)
+		case "instancesMadeFinalCount":
+			out.Values[i] = ec._Stream_instancesMadeFinalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "instancesMadePrimaryCount":
+			out.Values[i] = ec._Stream_instancesMadePrimaryCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17381,7 +17574,7 @@ func (ec *executionContext) _StreamInstance(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("StreamInstance")
-		case "instanceID":
+		case "streamInstanceID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -17389,14 +17582,14 @@ func (ec *executionContext) _StreamInstance(ctx context.Context, sel ast.Selecti
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._StreamInstance_instanceID(ctx, field, obj)
+				res = ec._StreamInstance_streamInstanceID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
-		case "stream":
-			out.Values[i] = ec._StreamInstance_stream(ctx, field, obj)
+		case "streamID":
+			out.Values[i] = ec._StreamInstance_streamID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -17405,11 +17598,10 @@ func (ec *executionContext) _StreamInstance(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "committedOn":
-			out.Values[i] = ec._StreamInstance_committedOn(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+		case "madePrimaryOn":
+			out.Values[i] = ec._StreamInstance_madePrimaryOn(ctx, field, obj)
+		case "madeFinalOn":
+			out.Values[i] = ec._StreamInstance_madeFinalOn(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18591,6 +18783,43 @@ func (ec *executionContext) marshalNStreamInstance2gitlabᚗcomᚋbeneathᚑhq�
 	return ec._StreamInstance(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v []*entity.StreamInstance) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *entity.StreamInstance) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
@@ -18599,6 +18828,21 @@ func (ec *executionContext) marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑh
 		return graphql.Null
 	}
 	return ec._StreamInstance(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamSchemaKind(ctx context.Context, v interface{}) (entity.StreamSchemaKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	return entity.StreamSchemaKind(tmp), err
+}
+
+func (ec *executionContext) marshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamSchemaKind(ctx context.Context, sel ast.SelectionSet, v entity.StreamSchemaKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -19089,6 +19333,17 @@ func (ec *executionContext) marshalOPrivateUser2ᚖgitlabᚗcomᚋbeneathᚑhq�
 		return graphql.Null
 	}
 	return ec._PrivateUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOStreamInstance2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v entity.StreamInstance) graphql.Marshaler {
+	return ec._StreamInstance(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *entity.StreamInstance) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._StreamInstance(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
