@@ -308,13 +308,7 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 
 // UpdatePrepaidQuotas updates the organization's prepaid quotas
 func (o *Organization) UpdatePrepaidQuotas(ctx context.Context, billingPlan *BillingPlan) error {
-	var numSeats int64
-	for _, user := range o.Users {
-		if user.BillingOrganizationID == o.OrganizationID {
-			numSeats++
-		}
-	}
-
+	numSeats := int64(len(o.Users))
 	prepaidReadQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*numSeats
 	prepaidWriteQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*numSeats
 
