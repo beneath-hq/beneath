@@ -115,10 +115,13 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 	if billingPlanID != prevBillingPlan.BillingPlanID {
 		// Upgrades
 		if !newBillingPlan.Default {
+			// refetch billing info to retrieve details of new billing plan
+			bi = FindBillingInfo(ctx, bi.OrganizationID)
+
 			billingTime := time.Now()
 			err = commitProratedPrepaidQuotaToBill(ctx, bi, billingTime)
 			if err != nil {
-				panic("could not commit prorated seats to bill")
+				panic("could not commit prorated prepaid quota to bill")
 			}
 			err = commitProratedSeatsToBill(ctx, bi, billingTime, bi.Organization.Users)
 			if err != nil {
@@ -127,7 +130,7 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 
 			// upgrading from Free plan
 			if prevBillingPlan.Default {
-				// trigger bill for prorated seat
+				// trigger bill for prorated items
 				err = taskqueue.Submit(ctx, &SendInvoiceTask{
 					BillingInfo: bi,
 					BillingTime: billingTime,

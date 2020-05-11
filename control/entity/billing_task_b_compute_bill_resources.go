@@ -233,7 +233,7 @@ func commitProratedPrepaidQuotaToBill(ctx context.Context, bi *BillingInfo, bill
 	p := bi.BillingPlan.Period
 
 	proratedFraction := float64(timeutil.DaysLeftInPeriod(now, p)) / float64(timeutil.TotalDaysInPeriod(now, p))
-	proratedPrice := int32(math.Round(float64(bi.BillingPlan.SeatPriceCents) * proratedFraction))
+	proratedPrice := int32(math.Round(float64(bi.BillingPlan.BasePriceCents) * proratedFraction))
 
 	var billedResources []*BilledResource
 	billedResources = append(billedResources, &BilledResource{

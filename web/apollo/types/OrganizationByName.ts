@@ -44,6 +44,13 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_servi
   kind: string;
 }
 
+export interface OrganizationByName_organizationByName_PrivateOrganization_personalUser_billingOrganization {
+  __typename: "PublicOrganization";
+  organizationID: string;
+  name: string;
+  displayName: string;
+}
+
 export interface OrganizationByName_organizationByName_PrivateOrganization_personalUser {
   __typename: "PrivateUser";
   userID: string;
@@ -53,6 +60,7 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_perso
   readQuota: number | null;
   writeQuota: number | null;
   billingOrganizationID: ControlUUID;
+  billingOrganization: OrganizationByName_organizationByName_PrivateOrganization_personalUser_billingOrganization;
 }
 
 export interface OrganizationByName_organizationByName_PrivateOrganization_permissions {
