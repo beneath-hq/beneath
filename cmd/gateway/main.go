@@ -14,7 +14,6 @@ import (
 	gwgrpc "gitlab.com/beneath-hq/beneath/gateway/grpc"
 	gwhttp "gitlab.com/beneath-hq/beneath/gateway/http"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
-	"gitlab.com/beneath-hq/beneath/internal/segment"
 	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
@@ -23,7 +22,6 @@ import (
 type configSpecification struct {
 	HTTPPort         int    `envconfig:"GATEWAY_PORT" default:"8080"`
 	GRPCPort         int    `envconfig:"GATEWAY_PORT_GRPC" default:"9090"`
-	SegmentSecret    string `envconfig:"GATEWAY_SEGMENT_SECRET" required:"true"`
 	MQDriver         string `envconfig:"ENGINE_MQ_DRIVER" required:"true"`
 	LookupDriver     string `envconfig:"ENGINE_LOOKUP_DRIVER" required:"true"`
 	WarehouseDriver  string `envconfig:"ENGINE_WAREHOUSE_DRIVER" required:"true"`
@@ -55,9 +53,6 @@ func main() {
 	// Init gateway globals
 	gw.InitMetrics(metricsCacheSize, metricsCommitInterval)
 	gw.InitSubscriptions(hub.Engine)
-
-	// Init segment
-	segment.InitClient(config.SegmentSecret)
 
 	// A ctx that we can cancel, and that also cancels on sigint, etc.
 	ctx, cancel := context.WithCancel(ctxutil.WithCancelOnTerminate(context.Background()))

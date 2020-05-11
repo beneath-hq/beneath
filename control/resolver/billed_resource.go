@@ -26,6 +26,10 @@ func (r *billedResourceResolver) Product(ctx context.Context, obj *entity.Billed
 	return string(obj.Product), nil
 }
 
+func (r *billedResourceResolver) Quantity(ctx context.Context, obj *entity.BilledResource) (float64, error) {
+	return float64(obj.Quantity), nil
+}
+
 func (r *billedResourceResolver) Currency(ctx context.Context, obj *entity.BilledResource) (string, error) {
 	return string(obj.Currency), nil
 }

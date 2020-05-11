@@ -15,7 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"gitlab.com/beneath-hq/beneath/control/entity"
@@ -394,7 +394,7 @@ type BilledResourceResolver interface {
 	EntityKind(ctx context.Context, obj *entity.BilledResource) (string, error)
 
 	Product(ctx context.Context, obj *entity.BilledResource) (string, error)
-	Quantity(ctx context.Context, obj *entity.BilledResource) (int, error)
+	Quantity(ctx context.Context, obj *entity.BilledResource) (float64, error)
 
 	Currency(ctx context.Context, obj *entity.BilledResource) (string, error)
 }
@@ -2651,7 +2651,7 @@ type BilledResource {
 	startTime: Time!
 	endTime: Time!
 	product: String!
-	quantity: Int!
+	quantity: Float!
 	totalPriceCents: Int!
 	currency: String!
 	createdOn: Time!
@@ -4852,10 +4852,10 @@ func (ec *executionContext) _BilledResource_quantity(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(float64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BilledResource_totalPriceCents(ctx context.Context, field graphql.CollectedField, obj *entity.BilledResource) (ret graphql.Marshaler) {
@@ -17940,6 +17940,20 @@ func (ec *executionContext) unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋb
 
 func (ec *executionContext) marshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, sel ast.SelectionSet, v EntityKind) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	return graphql.UnmarshalFloat(v)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloat(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

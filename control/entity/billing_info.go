@@ -116,7 +116,11 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		// Upgrades
 		if !newBillingPlan.Default {
 			billingTime := time.Now()
-			err = commitProratedSeatsToBill(ctx, bi.OrganizationID, billingTime, newBillingPlan, bi.Organization.Users, false)
+			err = commitProratedPrepaidQuotaToBill(ctx, bi, billingTime)
+			if err != nil {
+				panic("could not commit prorated seats to bill")
+			}
+			err = commitProratedSeatsToBill(ctx, bi, billingTime, bi.Organization.Users)
 			if err != nil {
 				panic("could not commit prorated seats to bill")
 			}

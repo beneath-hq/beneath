@@ -308,13 +308,7 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 
 // UpdatePrepaidQuotas updates the organization's prepaid quotas
 func (o *Organization) UpdatePrepaidQuotas(ctx context.Context, billingPlan *BillingPlan) error {
-	var numSeats int64
-	for _, user := range o.Users {
-		if user.BillingOrganizationID == o.OrganizationID {
-			numSeats++
-		}
-	}
-
+	numSeats := int64(len(o.Users))
 	prepaidReadQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*numSeats
 	prepaidWriteQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*numSeats
 
@@ -394,7 +388,7 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 
 	// add prorated seat to the target organization's next month's bill
 	billingTime := timeutil.Next(time.Now(), targetBillingInfo.BillingPlan.Period)
-	err = commitProratedSeatsToBill(ctx, targetOrg.OrganizationID, billingTime, targetBillingInfo.BillingPlan, []*User{user}, false)
+	err = commitProratedSeatsToBill(ctx, targetBillingInfo, billingTime, []*User{user})
 	if err != nil {
 		panic("unable to commit prorated seat to bill")
 	}
