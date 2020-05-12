@@ -32,7 +32,7 @@ type BillingPlan struct {
 	WriteQuota             int64           `sql:",notnull"` // bytes
 	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
 	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
-	Personal               bool            `sql:",notnull"` // probably want to rename to "MultipleUsers" and flip the sign
+	MultipleUsers          bool            `sql:",notnull"`
 	PrivateProjects        bool            `sql:",notnull"`
 	AvailableInUI          bool            `sql:",notnull,default:false"`
 }
@@ -92,11 +92,9 @@ func makeDefaultBillingPlan() *BillingPlan {
 		Description:     "Free",
 		Currency:        DollarCurrency,
 		Period:          timeutil.PeriodMonth,
-		ReadQuota:       2000000000,
-		WriteQuota:      1000000000,
-		BaseReadQuota:   2000000000,
-		BaseWriteQuota:  1000000000,
-		Personal:        true,
+		SeatReadQuota:   2000000000,
+		SeatWriteQuota:  1000000000,
+		MultipleUsers:   false,
 		PrivateProjects: false,
 		AvailableInUI:   true,
 	}

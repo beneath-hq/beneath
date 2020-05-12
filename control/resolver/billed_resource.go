@@ -35,11 +35,6 @@ func (r *billedResourceResolver) Currency(ctx context.Context, obj *entity.Bille
 }
 
 func (r *queryResolver) BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-	}
-
 	secret := middleware.GetSecret(ctx)
 	perms := secret.OrganizationPermissions(ctx, organizationID)
 	if !perms.Admin {

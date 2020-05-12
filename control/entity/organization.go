@@ -396,16 +396,13 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 
 	// increment the target organization's prepaid quota by the seat quota
 	// we do this now because we want to show the new usage capacity in the UI as soon as possible
-	if targetOrg.PrepaidReadQuota != nil {
+	if targetBillingInfo.BillingPlan.SeatReadQuota > 0 || targetBillingInfo.BillingPlan.SeatWriteQuota > 0 {
 		newPrepaidReadQuota := *targetOrg.PrepaidReadQuota + targetBillingInfo.BillingPlan.SeatReadQuota
-		targetOrg.PrepaidReadQuota = &newPrepaidReadQuota
-	}
-	if targetOrg.PrepaidWriteQuota != nil {
 		newPrepaidWriteQuota := *targetOrg.PrepaidWriteQuota + targetBillingInfo.BillingPlan.SeatWriteQuota
+		targetOrg.PrepaidReadQuota = &newPrepaidReadQuota
 		targetOrg.PrepaidWriteQuota = &newPrepaidWriteQuota
-	}
-	if targetOrg.PrepaidReadQuota != nil || targetOrg.PrepaidWriteQuota != nil {
 		targetOrg.UpdatedOn = time.Now()
+
 		_, err = hub.DB.WithContext(ctx).Model(targetOrg).
 			Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
 			WherePK().

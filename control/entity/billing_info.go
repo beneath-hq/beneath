@@ -82,8 +82,11 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		if newBillingPlan.Default {
 			// assess overage and trigger bill
 			billingTime := timeutil.Next(time.Now(), bi.BillingPlan.Period)
-			commitOverageToBill(ctx, bi, billingTime)
-			err := taskqueue.Submit(ctx, &SendInvoiceTask{
+			err := commitOverageToBill(ctx, bi, billingTime)
+			if err != nil {
+				panic("could not commit overage to bill")
+			}
+			err = taskqueue.Submit(ctx, &SendInvoiceTask{
 				BillingInfo: bi,
 				BillingTime: billingTime,
 			})
