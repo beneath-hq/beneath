@@ -199,7 +199,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 				panic("could not find organization's billing info")
 			}
 
-			if billingInfo.BillingPlan.Personal {
+			if !billingInfo.BillingPlan.MultipleUsers {
 				// Q: should we take them off the faulty billing method? mark the billing method as faulty?
 				billingInfo.Update(req.Context(), billingInfo.BillingMethodID, defaultBillingPlan.BillingPlanID, billingInfo.Country, &billingInfo.Region, &billingInfo.CompanyName, &billingInfo.TaxNumber) // only changing the billing plan
 				if err != nil {

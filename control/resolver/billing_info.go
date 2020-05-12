@@ -12,9 +12,11 @@ import (
 )
 
 func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	secret := middleware.GetSecret(ctx)
+
+	perms := secret.OrganizationPermissions(ctx, organizationID)
+	if !perms.View {
+		return nil, gqlerror.Errorf("Not allowed to view organization %s", organizationID.String())
 	}
 
 	billingInfo := entity.FindBillingInfo(ctx, organizationID)
@@ -33,29 +35,29 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
-	billingInfo := entity.FindBillingInfo(ctx, organizationID)
-	if billingInfo == nil {
+	prevBillingInfo := entity.FindBillingInfo(ctx, organizationID)
+	if prevBillingInfo == nil {
 		return nil, gqlerror.Errorf("Existing billing info not found")
 	}
 
-	var newBillingMethod *entity.BillingMethod
+	var billingMethod *entity.BillingMethod
 	if billingMethodID != nil {
-		newBillingMethod = entity.FindBillingMethod(ctx, *billingMethodID)
-		if newBillingMethod == nil {
+		billingMethod = entity.FindBillingMethod(ctx, *billingMethodID)
+		if billingMethod == nil {
 			return nil, gqlerror.Errorf("Billing method %s not found", billingMethodID)
 		}
 	}
 
-	newBillingPlan := entity.FindBillingPlan(ctx, billingPlanID)
-	if newBillingPlan == nil {
+	billingPlan := entity.FindBillingPlan(ctx, billingPlanID)
+	if billingPlan == nil {
 		return nil, gqlerror.Errorf("Billing plan %s not found", billingPlanID)
 	}
 
-	if billingMethodID == nil && !newBillingPlan.Default {
+	if billingMethodID == nil && !billingPlan.Default {
 		return nil, gqlerror.Errorf("A valid billing method is required for that billing plan")
 	}
 
-	if !billingInfo.BillingPlan.Personal && newBillingPlan.Personal {
+	if prevBillingInfo.BillingPlan.MultipleUsers && !billingPlan.MultipleUsers {
 		if !secret.IsMaster() {
 			return nil, gqlerror.Errorf("Enterprise plans require a Beneath Payments Admin to cancel")
 		}
@@ -65,14 +67,14 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		return nil, gqlerror.Errorf("Beneath does not sell its services to %s, as it's sanctioned by the EU", country)
 	}
 
-	if newBillingMethod != nil && newBillingMethod.PaymentsDriver == entity.StripeWireDriver && newBillingPlan.Personal {
+	if billingMethod != nil && billingMethod.PaymentsDriver == entity.StripeWireDriver && !billingPlan.MultipleUsers {
 		return nil, gqlerror.Errorf("Only Enterprise plans allow payment by wire")
 	}
 
-	newBillingInfo, err := billingInfo.Update(ctx, billingMethodID, billingPlanID, country, region, companyName, taxNumber)
+	billingInfo, err := prevBillingInfo.Update(ctx, billingMethodID, billingPlanID, country, region, companyName, taxNumber)
 	if err != nil {
 		return nil, gqlerror.Errorf("Unable to update the organization's billing plan")
 	}
 
-	return newBillingInfo, nil
+	return billingInfo, nil
 }
