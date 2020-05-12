@@ -65,7 +65,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
               <div className={classes.labelContainer}>
                 <span className={classes.label}>{tab.label}</span>
                 {tab.value === selectedValue && loading && (
-                  <CircularProgress className={classes.labelProgress} size={16} />
+                  <CircularProgress className={classes.labelProgress} size={16} disableShrink />
                 )}
               </div>
             }
