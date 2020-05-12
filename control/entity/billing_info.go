@@ -7,6 +7,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -79,11 +80,12 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 
 		// downgrading to Free plan
 		if newBillingPlan.Default {
-			// trigger bill for overage assessment
-			// TODO: first, need to compute bill resources to calculate overage; ensure billingTime is correct so bill can be sent
+			// assess overage and trigger bill
+			billingTime := timeutil.Next(time.Now(), bi.BillingPlan.Period)
+			commitOverageToBill(ctx, bi, billingTime)
 			err := taskqueue.Submit(ctx, &SendInvoiceTask{
 				BillingInfo: bi,
-				BillingTime: time.Now(),
+				BillingTime: billingTime,
 			})
 			if err != nil {
 				log.S.Errorw("Error creating task", err)
