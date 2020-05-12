@@ -15,8 +15,8 @@ func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUI
 	secret := middleware.GetSecret(ctx)
 
 	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.View {
-		return nil, gqlerror.Errorf("Not allowed to view organization %s", organizationID.String())
+	if !perms.Admin {
+		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
 	billingInfo := entity.FindBillingInfo(ctx, organizationID)

@@ -207,6 +207,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 					log.S.Errorf("Error updating Billing Info: %v\\n", err)
 					return err
 				}
+				log.S.Infof("Organization %s downgraded to the Free plan due to payment failure", organizationID.String())
 			}
 		}
 

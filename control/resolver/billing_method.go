@@ -29,11 +29,6 @@ func (r *billingMethodResolver) DriverPayload(ctx context.Context, obj *entity.B
 }
 
 func (r *queryResolver) BillingMethods(ctx context.Context, organizationID uuid.UUID) ([]*entity.BillingMethod, error) {
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-	}
-
 	secret := middleware.GetSecret(ctx)
 
 	perms := secret.OrganizationPermissions(ctx, organizationID)
