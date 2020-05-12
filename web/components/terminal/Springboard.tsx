@@ -1,35 +1,16 @@
-import { useQuery } from "@apollo/react-hooks";
-import clsx from "clsx";
+import { Grid, makeStyles, Theme } from "@material-ui/core";
 import React, { FC } from "react";
-
-import { Button, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 
 import useMe from "../../hooks/useMe";
 import { toURLName } from "../../lib/names";
-import Loading from "../Loading";
-import UsageIndicator from "../metrics/user/UsageIndicator";
-import { monthFloor, normalizeMetrics, now, yearAgo } from "../metrics/util";
-import NextMuiLinkList from "../NextMuiLinkList";
-import ViewProjects from "../organization/ViewProjects";
-import ProfileHero from "../ProfileHero";
-import TopProjects from "./TopProjects";
-
-import { GET_USER_METRICS } from "../../apollo/queries/metrics";
-import { GetUserMetrics, GetUserMetricsVariables } from "../../apollo/types/GetUserMetrics";
+import ExploreProjectsTiles from "./ExploreProjectsTiles";
+import MyProjectsTiles from "./MyProjectsTiles";
+import ActionTile from "./tiles/ActionTile";
+import HeroTile from "./tiles/HeroTile";
+import TitleTile from "./tiles/TitleTile";
+import UsageTile from "./tiles/UsageTile";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  buttons: {
-    marginTop: theme.spacing(3),
-    marginBottom: theme.spacing(6),
-  },
-  sectionHeader: {
-    fontSize: theme.typography.pxToRem(24),
-    marginTop: theme.spacing(6),
-    marginBottom: theme.spacing(1),
-  },
-  button: {},
-  primaryButton: {},
-  secondaryButton: {},
 }));
 
 const Springboard: FC = () => {
@@ -40,75 +21,50 @@ const Springboard: FC = () => {
     return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>;
   }
 
-  // GET METRICS
-  const from = monthFloor(yearAgo());
-  const until = monthFloor(now());
-
-  const { loading, error, data } = useQuery<GetUserMetrics, GetUserMetricsVariables>(GET_USER_METRICS, {
-    variables: {
-      from: from.toISOString(),
-      period: "M",
-      userID: me.personalUserID,
-    },
-  });
-
-  if (loading) {
-    return <Loading justify="center" />;
-  }
-
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
-  const { metrics, total, latest } = normalizeMetrics(from, until, "month", data.getUserMetrics);
-
   return (
-    <>
-      <ProfileHero
+    <Grid container spacing={2} alignItems="stretch" alignContent="stretch">
+      <HeroTile
+        shape="wide"
+        href={`/organization?organization_name=${toURLName(me.name)}`}
+        as={`/${toURLName(me.name)}`}
+        path={`@${toURLName(me.name)}`}
         name={toURLName(me.name)}
         displayName={me.displayName}
         description={me.description}
         avatarURL={me.photoURL}
       />
-      {/* <Grid container justify="center" spacing={2} item xs={12}>
-        <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={me.readQuota} />
-        <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={me.writeQuota} />
-      </Grid> */}
-
-      <Typography className={classes.sectionHeader} variant="h3" gutterBottom align="center">
-        My projects
-      </Typography>
-      <ViewProjects organization={me} />
-
-      <Grid className={classes.buttons} container spacing={2} justify="center">
-        <Grid item>
-          <Button
-            size="medium"
-            color="default"
-            variant="outlined"
-            className={clsx(classes.button, classes.secondaryButton)}
-            href={`//about.beneath.dev/docs/quick-starts/write-data-from-your-app/`}
-            component={NextMuiLinkList}
-          >
-            Create Project
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            size="medium"
-            color="default"
-            variant="outlined"
-            className={clsx(classes.button, classes.secondaryButton)}
-            href={`/organization?organization_name=${toURLName(me.name)}&tab=monitoring`}
-            as={`/${toURLName(me.name)}/-/monitoring`}
-            component={NextMuiLinkList}
-          >
-            Monitor
-          </Button>
-        </Grid>
-      </Grid>
-      <TopProjects />
-    </>
+      {me.organizationID === me.personalUser?.billingOrganizationID && (
+        <>
+          {me.readQuota && (
+            <UsageTile
+              href={`/organization?organization_name=${me.name}&tab=monitoring`}
+              as={`/${me.name}/-/monitoring`}
+              title="Read quota usage"
+              usage={me.readUsage}
+              quota={me.readQuota}
+            />
+          )}
+          {me.writeQuota && (
+            <UsageTile
+              href={`/organization?organization_name=${me.name}&tab=monitoring`}
+              as={`/${me.name}/-/monitoring`}
+              title="Write quota usage"
+              usage={me.writeUsage}
+              quota={me.writeQuota}
+            />
+          )}
+        </>
+      )}
+      <ActionTile title="Get Started" href="https://about.beneath.dev/docs/quick-starts/" />
+      <ActionTile
+        title="Create Secret"
+        href={`/organization?organization_name=${me.name}&tab=secrets`}
+        as={`/${me.name}/-/secrets`}
+      />
+      <MyProjectsTiles me={me} />
+      <TitleTile title="Featured projects: " />
+      <ExploreProjectsTiles />
+    </Grid>
   );
 };
 

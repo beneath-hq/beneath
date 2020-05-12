@@ -76,6 +76,22 @@ func FindProjects(ctx context.Context) []*Project {
 	return projects
 }
 
+// FindProjectsForUser finds the projects that the user has been granted access to
+func FindProjectsForUser(ctx context.Context, userID uuid.UUID) []*Project {
+	var projects []*Project
+	err := hub.DB.ModelContext(ctx, &projects).
+		Relation("Organization").
+		Join("JOIN permissions_users_projects AS pup ON pup.project_id = project.project_id").
+		Where("pup.user_id = ?", userID).
+		Order("project.name").
+		Limit(200).
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return projects
+}
+
 // FindProjectByOrganizationAndName finds a project by organization name and project name
 func FindProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) *Project {
 	project := &Project{}

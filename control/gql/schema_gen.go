@@ -313,6 +313,7 @@ type ComplexityRoot struct {
 		ProjectByID                        func(childComplexity int, projectID uuid.UUID) int
 		ProjectByOrganizationAndName       func(childComplexity int, organizationName string, projectName string) int
 		ProjectMembers                     func(childComplexity int, projectID uuid.UUID) int
+		ProjectsForUser                    func(childComplexity int, userID uuid.UUID) int
 		SecretsForService                  func(childComplexity int, serviceID uuid.UUID) int
 		SecretsForUser                     func(childComplexity int, userID uuid.UUID) int
 		Service                            func(childComplexity int, serviceID uuid.UUID) int
@@ -485,6 +486,7 @@ type QueryResolver interface {
 	OrganizationByUserID(ctx context.Context, userID uuid.UUID) (Organization, error)
 	OrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]*entity.OrganizationMember, error)
 	ExploreProjects(ctx context.Context) ([]*entity.Project, error)
+	ProjectsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Project, error)
 	ProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) (*entity.Project, error)
 	ProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error)
 	ProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*entity.ProjectMember, error)
@@ -2128,6 +2130,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProjectMembers(childComplexity, args["projectID"].(uuid.UUID)), true
 
+	case "Query.projectsForUser":
+		if e.complexity.Query.ProjectsForUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_projectsForUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ProjectsForUser(childComplexity, args["userID"].(uuid.UUID)), true
+
 	case "Query.secretsForService":
 		if e.complexity.Query.SecretsForService == nil {
 			break
@@ -2889,7 +2903,8 @@ type OrganizationMember {
 }
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
-  exploreProjects: [Project!]!
+  exploreProjects: [Project!]
+  projectsForUser(userID: UUID!): [Project!]
   projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
   projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
@@ -4439,6 +4454,20 @@ func (ec *executionContext) field_Query_projectMembers_args(ctx context.Context,
 		}
 	}
 	args["projectID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_projectsForUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
 	return args, nil
 }
 
@@ -11904,15 +11933,53 @@ func (ec *executionContext) _Query_exploreProjects(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*entity.Project)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_projectsForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_projectsForUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProjectsForUser(rctx, args["userID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.Project)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectByOrganizationAndName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -17117,9 +17184,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_exploreProjects(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
+				return res
+			})
+		case "projectsForUser":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_projectsForUser(ctx, field)
 				return res
 			})
 		case "projectByOrganizationAndName":
@@ -19333,6 +19408,46 @@ func (ec *executionContext) marshalOPrivateUser2ᚖgitlabᚗcomᚋbeneathᚑhq�
 		return graphql.Null
 	}
 	return ec._PrivateUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx context.Context, sel ast.SelectionSet, v []*entity.Project) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐProject(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOStreamInstance2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v entity.StreamInstance) graphql.Marshaler {
