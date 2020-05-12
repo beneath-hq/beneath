@@ -27,6 +27,14 @@ func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*entity.Project,
 	return entity.FindProjects(ctx), nil
 }
 
+func (r *queryResolver) ProjectsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Project, error) {
+	secret := middleware.GetSecret(ctx)
+	if !(secret.IsUser() && secret.GetOwnerID() == userID) {
+		return nil, gqlerror.Errorf("ProjectsForUser can only be called for the calling user")
+	}
+	return entity.FindProjectsForUser(ctx, userID), nil
+}
+
 func (r *queryResolver) ProjectByOrganizationAndName(ctx context.Context, organizationName string, projectName string) (*entity.Project, error) {
 	project := entity.FindProjectByOrganizationAndName(ctx, organizationName, projectName)
 	if project == nil {

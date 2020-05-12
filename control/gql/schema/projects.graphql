@@ -1,5 +1,6 @@
 extend type Query {
-  exploreProjects: [Project!]!
+  exploreProjects: [Project!]
+  projectsForUser(userID: UUID!): [Project!]
   projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
   projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
