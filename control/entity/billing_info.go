@@ -80,6 +80,7 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		// downgrading to Free plan
 		if newBillingPlan.Default {
 			// trigger bill for overage assessment
+			// TODO: first, need to compute bill resources to calculate overage; ensure billingTime is correct so bill can be sent
 			err := taskqueue.Submit(ctx, &SendInvoiceTask{
 				BillingInfo: bi,
 				BillingTime: time.Now(),
@@ -112,12 +113,12 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		return nil, err
 	}
 
+	// refetch billing info to retrieve details of new billing plan
+	bi = FindBillingInfo(ctx, bi.OrganizationID)
+
 	if billingPlanID != prevBillingPlan.BillingPlanID {
 		// Upgrades
 		if !newBillingPlan.Default {
-			// refetch billing info to retrieve details of new billing plan
-			bi = FindBillingInfo(ctx, bi.OrganizationID)
-
 			billingTime := time.Now()
 			err = commitProratedPrepaidQuotaToBill(ctx, bi, billingTime)
 			if err != nil {

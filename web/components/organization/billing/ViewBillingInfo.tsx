@@ -6,11 +6,14 @@ import { QUERY_BILLING_INFO } from "../../../apollo/queries/billinginfo";
 import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Paper, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 import billing from "../../../lib/billing";
-import UpdateBillingInfo from "./UpdateBillingInfo";
+import Loading from "../../Loading";
+import CancelPlan from "./update-billing-info/CancelPlan";
+import ChangeBillingMethod from "./update-billing-info/ChangeBillingMethod";
+import Checkout from "./update-billing-info/Checkout";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -22,15 +25,9 @@ const useStyles = makeStyles((theme) => ({
     marginBotton: theme.spacing(2),
     marginRight: theme.spacing(3),
   },
-  icon: {
-    marginRight: theme.spacing(2),
-  },
-  selectBillingMethodControl: {
-    marginTop: theme.spacing(2),
-    minWidth: 250,
-  },
-  proratedDescription: {
-    marginTop: theme.spacing(3)
+  banner: {
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(2),
   },
 }));
 
@@ -43,6 +40,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
   const [upgradeDialogue, setUpgradeDialogue] = React.useState(false);
   const [changeBillingMethodDialogue, setChangeBillingMethodDialogue] = React.useState(false);
   const [cancelDialogue, setCancelDialogue] = React.useState(false);
+  const [confirmationMessage, setConfirmationMessage] = React.useState("");
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     variables: {
@@ -104,21 +102,20 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
     { name: "Tax ID", detail: billingInfo.taxNumber },
   ];
 
-  const handleCloseDialogue = () => {
-    if (upgradeDialogue) {
-      setUpgradeDialogue(false);
-    }
-    if (changeBillingMethodDialogue) {
-      setChangeBillingMethodDialogue(false);
-    }
-    if (cancelDialogue) {
-      setCancelDialogue(false);
-    }
-    return;
+  const handleCloseDialogue = (confirmationMessage: string) => {
+    setConfirmationMessage(confirmationMessage);
+    setUpgradeDialogue(false);
+    setChangeBillingMethodDialogue(false);
+    setCancelDialogue(false);
   };
 
   return (
-    <React.Fragment>
+    <>
+      {confirmationMessage && (
+        <Paper elevation={1} square>
+          <Typography className={classes.banner}>{confirmationMessage}</Typography>
+        </Paper>
+      )}
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Grid container>
@@ -142,7 +139,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
           ))}
         </Grid>
         <Grid item xs={12} md={4}>
-          <Grid container alignItems="center" >
+          <Grid container alignItems="center">
             <Grid item>
               <Typography variant="h5" className={classes.title}>
                 Billing method
@@ -169,10 +166,9 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
                 >
                   <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
                   <DialogContent>
-                    <UpdateBillingInfo
+                    <ChangeBillingMethod
                       organization={organization}
-                      route={"change_billing_method"}
-                      closeDialogue={handleCloseDialogue}
+                      closeDialogue={(confirmationMessage) => handleCloseDialogue(confirmationMessage)}
                       billingInfo={billingInfo}
                     />
                   </DialogContent>
@@ -216,20 +212,16 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
               variant="outlined"
               color="primary"
               className={classes.button}
-              onClick={() => {
-                setUpgradeDialogue(true);
-              }}
+              onClick={() => { setUpgradeDialogue(true); }}
             >
               Upgrade to Professional Plan
             </Button>
             <Dialog open={upgradeDialogue} fullWidth={true} maxWidth={"md"}>
               <DialogTitle id="alert-dialog-title">{"Checkout"}</DialogTitle>
               <DialogContent>
-                <UpdateBillingInfo
+                <Checkout
                   organization={organization}
-                  route={"checkout"}
-                  closeDialogue={handleCloseDialogue}
-                  billingInfo={billingInfo}
+                  closeDialogue={(confirmationMessage) => handleCloseDialogue(confirmationMessage)}
                 />
               </DialogContent>
               <DialogActions />
@@ -266,12 +258,11 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
                 setCancelDialogue(false);
               }}
             >
-              <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
+              <DialogTitle id="alert-dialog-title">{"Are you sure you want to cancel?"}</DialogTitle>
               <DialogContent>
-                <UpdateBillingInfo
+                <CancelPlan
                   organization={organization}
-                  route={"cancel"}
-                  closeDialogue={handleCloseDialogue}
+                  closeDialogue={(confirmationMessage) => handleCloseDialogue(confirmationMessage)}
                   billingInfo={billingInfo}
                 />
               </DialogContent>
@@ -293,7 +284,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
           </Grid>
         </Grid>
       )}
-    </React.Fragment>
+    </>
   );
 };
 
