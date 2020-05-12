@@ -1,16 +1,15 @@
 import { useQuery } from "@apollo/react-hooks";
 import _ from "lodash";
+import dynamic from "next/dynamic";
 import React, { FC } from "react";
 
 import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
+import billing from "../../../lib/billing";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-
-import billing from "../../../lib/billing";
-import CardForm from "./CardForm";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -34,6 +33,7 @@ export interface BillingMethodsProps {
 const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
   const classes = useStyles();
   const [addCardDialogue, setAddCardDialogue] = React.useState(false);
+  const DynamicCardForm = dynamic(() => import("./CardForm"));
 
   const { loading, error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
     variables: { organizationID: organization.organizationID, },
@@ -130,7 +130,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <CardForm organization={organization} closeDialogue={handleCloseDialogue} />
+              <DynamicCardForm organization={organization} closeDialogue={handleCloseDialogue} />
             </DialogContent>
             <DialogActions />
           </Dialog>
