@@ -18,6 +18,24 @@ export const EXPLORE_PROJECTS = gql`
   }
 `;
 
+export const QUERY_PROJECTS_FOR_USER = gql`
+  query ProjectsForUser($userID: UUID!) {
+    projectsForUser(userID: $userID) {
+      projectID
+      name
+      displayName
+      description
+      photoURL
+      createdOn
+      updatedOn
+      organization {
+        organizationID
+        name
+      }
+    }
+  }
+`;
+
 export const QUERY_PROJECT = gql`
   query ProjectByOrganizationAndName($organizationName: String!, $projectName: String!) {
     projectByOrganizationAndName(organizationName: $organizationName, projectName: $projectName) {

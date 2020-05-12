@@ -4,16 +4,16 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: ExploreProjects
+// GraphQL query operation: ProjectsForUser
 // ====================================================
 
-export interface ExploreProjects_exploreProjects_organization {
+export interface ProjectsForUser_projectsForUser_organization {
   __typename: "PublicOrganization";
   organizationID: string;
   name: string;
 }
 
-export interface ExploreProjects_exploreProjects {
+export interface ProjectsForUser_projectsForUser {
   __typename: "Project";
   projectID: string;
   name: string;
@@ -22,9 +22,13 @@ export interface ExploreProjects_exploreProjects {
   photoURL: string | null;
   createdOn: ControlTime;
   updatedOn: ControlTime;
-  organization: ExploreProjects_exploreProjects_organization;
+  organization: ProjectsForUser_projectsForUser_organization;
 }
 
-export interface ExploreProjects {
-  exploreProjects: ExploreProjects_exploreProjects[] | null;
+export interface ProjectsForUser {
+  projectsForUser: ProjectsForUser_projectsForUser[] | null;
+}
+
+export interface ProjectsForUserVariables {
+  userID: ControlUUID;
 }
