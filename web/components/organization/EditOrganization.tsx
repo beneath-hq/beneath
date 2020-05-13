@@ -6,14 +6,17 @@ import Moment from "react-moment";
 import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 
 import { UPDATE_ORGANIZATION } from "../../apollo/queries/organization";
+import { REGISTER_USER_CONSENT } from "../../apollo/queries/user";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../apollo/types/OrganizationByName";
+import { RegisterUserConsent, RegisterUserConsentVariables } from "../../apollo/types/RegisterUserConsent";
 import { UpdateOrganization, UpdateOrganizationVariables } from "../../apollo/types/UpdateOrganization";
 import { toBackendName, toURLName } from "../../lib/names";
+import CheckboxField from "../CheckboxField";
 import VSpace from "../VSpace";
 
 const useStyles = makeStyles((theme) => ({
   submitButton: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(1.5),
   },
 }));
 
@@ -27,6 +30,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
     displayName: organization.displayName || "",
     description: organization.description || "",
     photoURL: organization.photoURL || "",
+    consentNewsletter: organization.personalUser?.consentNewsletter,
   });
 
   const router = useRouter();
@@ -44,6 +48,11 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
       }
     },
   });
+
+  const [registerUserConsent, { loading: loadingConsent, error: errorConsent }] = useMutation<
+    RegisterUserConsent,
+    RegisterUserConsentVariables
+  >(REGISTER_USER_CONSENT);
 
   const handleChange = (name: string) => (event: any) => {
     setValues({ ...values, [name]: event.target.value });
@@ -64,6 +73,16 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
               photoURL: values.photoURL,
             },
           });
+          if (organization.personalUser?.userID) {
+            if (values.consentNewsletter !== organization.personalUser.consentNewsletter) {
+              registerUserConsent({
+                variables: {
+                  userID: organization.personalUser.userID,
+                  newsletter: values.consentNewsletter,
+                },
+              });
+            }
+          }
         }}
       >
         <TextField
@@ -124,6 +143,17 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
             disabled
           />
         )}
+        {organization.personalUser && (
+          <CheckboxField
+            label="Subscribe to newsletter"
+            checked={values.consentNewsletter}
+            margin="normal"
+            fullWidth
+            onChange={(event, checked) => {
+              setValues({ ...values, consentNewsletter: checked });
+            }}
+          />
+        )}
         <Button
           type="submit"
           variant="outlined"
@@ -131,6 +161,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
           className={classes.submitButton}
           disabled={
             loading ||
+            loadingConsent ||
             !validateName(values.name) ||
             !validateDisplayName(values.displayName) ||
             !validateBio(values.description)
@@ -145,6 +176,11 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
                 ? "Username already taken"
                 : "Name already taken"
               : `An error occurred: ${JSON.stringify(error)}`}
+          </Typography>
+        )}
+        {errorConsent && (
+          <Typography variant="body1" color="error">
+            {`An error occurred: ${JSON.stringify(errorConsent)}`}
           </Typography>
         )}
       </form>

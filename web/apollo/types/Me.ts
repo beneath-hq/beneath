@@ -36,6 +36,8 @@ export interface Me_me_personalUser {
   email: string;
   createdOn: ControlTime;
   updatedOn: ControlTime;
+  consentTerms: boolean;
+  consentNewsletter: boolean;
   readQuota: number | null;
   writeQuota: number | null;
   billingOrganizationID: ControlUUID;

@@ -155,6 +155,7 @@ type ComplexityRoot struct {
 		IssueServiceSecret                func(childComplexity int, serviceID uuid.UUID, description string) int
 		IssueUserSecret                   func(childComplexity int, description string, readOnly bool, publicOnly bool) int
 		LeaveBillingOrganization          func(childComplexity int, userID uuid.UUID) int
+		RegisterUserConsent               func(childComplexity int, userID uuid.UUID, terms *bool, newsletter *bool) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
 		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) int
@@ -244,6 +245,8 @@ type ComplexityRoot struct {
 	PrivateUser struct {
 		BillingOrganization   func(childComplexity int) int
 		BillingOrganizationID func(childComplexity int) int
+		ConsentNewsletter     func(childComplexity int) int
+		ConsentTerms          func(childComplexity int) int
 		CreatedOn             func(childComplexity int) int
 		Email                 func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
@@ -443,6 +446,7 @@ type MutationResolver interface {
 	CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error)
 	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool, deletePreviousPrimary *bool) (*entity.StreamInstance, error)
 	DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error)
+	RegisterUserConsent(ctx context.Context, userID uuid.UUID, terms *bool, newsletter *bool) (*entity.User, error)
 	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
 	UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error)
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
@@ -1111,6 +1115,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.LeaveBillingOrganization(childComplexity, args["userID"].(uuid.UUID)), true
 
+	case "Mutation.registerUserConsent":
+		if e.complexity.Mutation.RegisterUserConsent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_registerUserConsent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RegisterUserConsent(childComplexity, args["userID"].(uuid.UUID), args["terms"].(*bool), args["newsletter"].(*bool)), true
+
 	case "Mutation.revokeServiceSecret":
 		if e.complexity.Mutation.RevokeServiceSecret == nil {
 			break
@@ -1645,6 +1661,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivateUser.BillingOrganizationID(childComplexity), true
+
+	case "PrivateUser.consentNewsletter":
+		if e.complexity.PrivateUser.ConsentNewsletter == nil {
+			break
+		}
+
+		return e.complexity.PrivateUser.ConsentNewsletter(childComplexity), true
+
+	case "PrivateUser.consentTerms":
+		if e.complexity.PrivateUser.ConsentTerms == nil {
+			break
+		}
+
+		return e.complexity.PrivateUser.ConsentTerms(childComplexity), true
 
 	case "PrivateUser.createdOn":
 		if e.complexity.PrivateUser.CreatedOn == nil {
@@ -3089,6 +3119,7 @@ type StreamIndex {
 	&ast.Source{Name: "control/gql/schema/users.graphql", Input: `# extend type Query {}
 
 extend type Mutation {
+  registerUserConsent(userID: UUID!, terms: Boolean, newsletter: Boolean): PrivateUser!
   updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): PrivateUser!
   updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
   updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
@@ -3099,6 +3130,8 @@ type PrivateUser {
   email: String!
   createdOn: Time!
   updatedOn: Time!
+  consentTerms: Boolean!
+  consentNewsletter: Boolean!
   readQuota: Int
   writeQuota: Int
   billingOrganizationID: UUID!
@@ -3434,6 +3467,36 @@ func (ec *executionContext) field_Mutation_leaveBillingOrganization_args(ctx con
 		}
 	}
 	args["userID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_registerUserConsent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
+	var arg1 *bool
+	if tmp, ok := rawArgs["terms"]; ok {
+		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["terms"] = arg1
+	var arg2 *bool
+	if tmp, ok := rawArgs["newsletter"]; ok {
+		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["newsletter"] = arg2
 	return args, nil
 }
 
@@ -7969,6 +8032,50 @@ func (ec *executionContext) _Mutation_deleteStreamInstance(ctx context.Context, 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_registerUserConsent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_registerUserConsent_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RegisterUserConsent(rctx, args["userID"].(uuid.UUID), args["terms"].(*bool), args["newsletter"].(*bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entity.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPrivateUser2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_updateUserQuotas(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -9953,6 +10060,80 @@ func (ec *executionContext) _PrivateUser_updatedOn(ctx context.Context, field gr
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateUser_consentTerms(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateUser",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConsentTerms, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateUser_consentNewsletter(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateUser",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConsentNewsletter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PrivateUser_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
@@ -16214,6 +16395,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "registerUserConsent":
+			out.Values[i] = ec._Mutation_registerUserConsent(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateUserQuotas":
 			out.Values[i] = ec._Mutation_updateUserQuotas(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -16651,6 +16837,16 @@ func (ec *executionContext) _PrivateUser(ctx context.Context, sel ast.SelectionS
 			}
 		case "updatedOn":
 			out.Values[i] = ec._PrivateUser_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "consentTerms":
+			out.Values[i] = ec._PrivateUser_consentTerms(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "consentNewsletter":
+			out.Values[i] = ec._PrivateUser_consentNewsletter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
