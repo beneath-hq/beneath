@@ -11,7 +11,7 @@ const Welcome: FC = () => {
   const classes = useStyles();
 
   return (
-    <Grid container spacing={2} alignItems="stretch" alignContent="stretch">
+    <Grid container spacing={3} alignItems="stretch" alignContent="stretch">
       <TitleTile title="Welcome to Beneath!" />
       <ActionTile title="Create Account" href={`/-/auth`} as={`/-/auth`} />
       <ActionTile title="Tutorials" href="https://about.beneath.dev/docs/quick-starts/" />

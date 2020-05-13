@@ -22,7 +22,7 @@ const Springboard: FC = () => {
   }
 
   return (
-    <Grid container spacing={2} alignItems="stretch" alignContent="stretch">
+    <Grid container spacing={3} alignItems="stretch" alignContent="stretch">
       <HeroTile
         shape="wide"
         href={`/organization?organization_name=${toURLName(me.name)}`}
