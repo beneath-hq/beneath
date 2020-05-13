@@ -41,9 +41,8 @@ func (b BigQuery) RegisterProject(ctx context.Context, p driver.Project) error {
 }
 
 func (b BigQuery) createProject(ctx context.Context, p driver.Project) error {
-	name := p.GetProjectName()
-	return b.Client.Dataset(externalDatasetName(name)).Create(ctx, &bigquery.DatasetMetadata{
-		Name: name,
+	return b.Client.Dataset(externalDatasetName(p)).Create(ctx, &bigquery.DatasetMetadata{
+		Name: p.GetProjectName(),
 		Labels: map[string]string{
 			ProjectIDLabel: p.GetProjectID().String(),
 		},
@@ -52,20 +51,19 @@ func (b BigQuery) createProject(ctx context.Context, p driver.Project) error {
 }
 
 func (b BigQuery) updateProject(ctx context.Context, p driver.Project) error {
-	name := p.GetProjectName()
-	dataset := b.Client.Dataset(externalDatasetName(name))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	md, err := dataset.Metadata(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting dataset to update '%s': %v", name, err)
+		return fmt.Errorf("error getting dataset to update '%s': %v", p.GetProjectName(), err)
 	}
 
 	_, err = dataset.Update(ctx, bigquery.DatasetMetadataToUpdate{
-		Name:   name,
+		Name:   p.GetProjectName(),
 		Access: makeAccess(p.GetPublic(), md.Access),
 	}, md.ETag)
 
 	if err != nil && !isExpiredETag(err) {
-		return fmt.Errorf("error updating dataset for project '%s': %v", name, err)
+		return fmt.Errorf("error updating dataset for project '%s': %v", p.GetProjectName(), err)
 	}
 
 	return nil
@@ -73,20 +71,19 @@ func (b BigQuery) updateProject(ctx context.Context, p driver.Project) error {
 
 // RemoveProject implements beneath.Service
 func (b BigQuery) RemoveProject(ctx context.Context, p driver.Project) error {
-	name := p.GetProjectName()
-	dataset := b.Client.Dataset(externalDatasetName(name))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	md, err := dataset.Metadata(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting dataset to delete '%s': %v", name, err)
+		return fmt.Errorf("error getting dataset to delete '%s': %v", p.GetProjectName(), err)
 	}
 
 	if md.Labels[ProjectIDLabel] != p.GetProjectID().String() {
-		return fmt.Errorf("project ID label doesn't match project to delete for name '%s' and id '%s'", name, p.GetProjectID().String())
+		return fmt.Errorf("project ID label doesn't match project to delete for name '%s' and id '%s'", p.GetProjectName(), p.GetProjectID().String())
 	}
 
 	err = dataset.DeleteWithContents(ctx)
 	if err != nil {
-		return fmt.Errorf("error deleting dataset for project '%s': %v", name, err)
+		return fmt.Errorf("error deleting dataset for project '%s': %v", p.GetProjectName(), err)
 	}
 
 	return nil
@@ -100,8 +97,14 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 		return err
 	}
 
+	// create time partitioning config
+	timePartitioning := &bigquery.TimePartitioning{
+		Field:      "__timestamp",
+		Expiration: s.GetRetention(),
+	}
+
 	// create external table
-	dataset := b.Client.Dataset(externalDatasetName(p.GetProjectName()))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
 	mdt, err := table.Metadata(ctx)
 	if err != nil {
@@ -113,10 +116,8 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 		// this is the expected scenario
 
 		err = table.Create(ctx, &bigquery.TableMetadata{
-			Schema: schema,
-			TimePartitioning: &bigquery.TimePartitioning{
-				Field: "__timestamp",
-			},
+			Schema:           schema,
+			TimePartitioning: timePartitioning,
 			Clustering: &bigquery.Clustering{
 				Fields: s.GetCodec().PrimaryIndex.GetFields(),
 			},
@@ -135,8 +136,9 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 
 	// update
 	_, err = table.Update(ctx, bigquery.TableMetadataToUpdate{
-		Name:   s.GetStreamName(),
-		Schema: schema,
+		Name:             s.GetStreamName(),
+		Schema:           schema,
+		TimePartitioning: timePartitioning,
 	}, mdt.ETag)
 	if err != nil {
 		if isExpiredETag(err) {
@@ -176,7 +178,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 // PromoteInstance implements beneath.Service
 func (b BigQuery) PromoteInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
 	// references
-	dataset := b.Client.Dataset(externalDatasetName(p.GetProjectName()))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	underlying := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
 	view := dataset.Table(externalStreamViewName(s.GetStreamName()))
 
@@ -236,8 +238,9 @@ func (b BigQuery) PromoteInstance(ctx context.Context, p driver.Project, s drive
 
 // RemoveInstance implements beneath.Service
 func (b BigQuery) RemoveInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
+
 	// delete external table
-	dataset := b.Client.Dataset(externalDatasetName(p.GetProjectName()))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
 	err := table.Delete(ctx)
 	if err != nil && !isNotFound(err) {

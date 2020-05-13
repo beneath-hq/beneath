@@ -59,7 +59,7 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 		}
 
 		// run query
-		replayCursor, changeCursor, err := hub.Engine.Lookup.Peek(ctx, stream, stream, stream)
+		replayCursor, changeCursor, err := hub.Engine.Lookup.Peek(ctx, stream, stream, entity.EfficientStreamInstance(instanceID))
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
 		}
@@ -72,7 +72,7 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 	}
 
 	// run normal query
-	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, nil, false, int(req.Partitions))
+	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, entity.EfficientStreamInstance(instanceID), nil, false, int(req.Partitions))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
 	}
@@ -124,7 +124,7 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 	}
 
 	// run query
-	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, stream, where, true, int(req.Partitions))
+	replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(ctx, stream, stream, entity.EfficientStreamInstance(instanceID), where, true, int(req.Partitions))
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing query: %s", err.Error())
 	}
@@ -183,7 +183,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 	}
 
 	// get result iterator
-	it, err := hub.Engine.Lookup.ReadCursor(ctx, stream, stream, stream, req.Cursor, int(req.Limit))
+	it, err := hub.Engine.Lookup.ReadCursor(ctx, stream, stream, entity.EfficientStreamInstance(instanceID), req.Cursor, int(req.Limit))
 	if err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}

@@ -95,10 +95,16 @@ func (r *mutationResolver) CreateProject(ctx context.Context, name string, displ
 		return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
 	}
 
+	organization := entity.FindOrganization(ctx, organizationID)
+	if organization == nil {
+		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
+	}
+
 	project := &entity.Project{
 		Name:           name,
 		DisplayName:    DereferenceString(displayName),
 		OrganizationID: organizationID,
+		Organization:   organization,
 		Site:           DereferenceString(site),
 		Description:    DereferenceString(description),
 		PhotoURL:       DereferenceString(photoURL),

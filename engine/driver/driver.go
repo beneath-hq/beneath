@@ -107,6 +107,9 @@ type Project interface {
 	// GetProjectID should return the project ID
 	GetProjectID() uuid.UUID
 
+	// GetOrganizationName should return the project's organization's name
+	GetOrganizationName() string
+
 	// GetProjectName should return the project's identifying name (not its display name)
 	GetProjectName() string
 

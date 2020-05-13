@@ -118,7 +118,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			}
 
 			// run query
-			replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, filter, true, 1)
+			replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, entity.EfficientStreamInstance(instanceID), filter, true, 1)
 			if err != nil {
 				return httputil.NewError(400, err.Error())
 			}
@@ -134,12 +134,12 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 			// depends on whether it's a peek
 			var replayCursor, changeCursor []byte
 			if body.Peek {
-				replayCursor, changeCursor, err = hub.Engine.Lookup.Peek(r.Context(), stream, stream, stream)
+				replayCursor, changeCursor, err = hub.Engine.Lookup.Peek(r.Context(), stream, stream, entity.EfficientStreamInstance(instanceID))
 				if err != nil {
 					return httputil.NewError(400, err.Error())
 				}
 			} else {
-				replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, stream, nil, false, 1)
+				replayCursors, changeCursors, err := hub.Engine.Lookup.ParseQuery(r.Context(), stream, stream, entity.EfficientStreamInstance(instanceID), nil, false, 1)
 				if err != nil {
 					return httputil.NewError(400, err.Error())
 				}
@@ -164,7 +164,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 	middleware.SetTagsPayload(r.Context(), payload)
 
 	// read rows from engine
-	it, err := hub.Engine.Lookup.ReadCursor(r.Context(), stream, stream, stream, body.CursorBytes, body.Limit)
+	it, err := hub.Engine.Lookup.ReadCursor(r.Context(), stream, stream, entity.EfficientStreamInstance(instanceID), body.CursorBytes, body.Limit)
 	if err != nil {
 		return httputil.NewError(400, err.Error())
 	}

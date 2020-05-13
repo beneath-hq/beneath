@@ -4,12 +4,15 @@ import (
 	"context"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
+
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // CleanupInstanceTask is a task that removes all data and tables related to an instance
 type CleanupInstanceTask struct {
+	InstanceID   uuid.UUID
 	CachedStream *CachedStream
 }
 
@@ -22,12 +25,12 @@ func init() {
 func (t *CleanupInstanceTask) Run(ctx context.Context) error {
 	time.Sleep(getStreamCache().cacheLRUTime())
 
-	err := hub.Engine.RemoveInstance(ctx, t.CachedStream, t.CachedStream, t.CachedStream)
+	err := hub.Engine.RemoveInstance(ctx, t.CachedStream, t.CachedStream, EfficientStreamInstance(t.InstanceID))
 	if err != nil {
 		return err
 	}
 
-	err = hub.Engine.ClearUsage(ctx, t.CachedStream.InstanceID)
+	err = hub.Engine.ClearUsage(ctx, t.InstanceID)
 	if err != nil {
 		return err
 	}

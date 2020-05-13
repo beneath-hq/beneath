@@ -9,6 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 func isAlreadyExists(err error) bool {
@@ -33,8 +35,8 @@ func isNotFound(err error) bool {
 	return strings.Contains(err.Error(), "Error 404: Not found")
 }
 
-func externalDatasetName(projectName string) string {
-	return strings.ReplaceAll(projectName, "-", "_")
+func externalDatasetName(p driver.Project) string {
+	return strings.ReplaceAll(p.GetOrganizationName()+"__"+p.GetProjectName(), "-", "_")
 }
 
 func externalTableName(streamName string, instanceID uuid.UUID) string {
