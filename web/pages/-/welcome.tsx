@@ -34,6 +34,12 @@ const WelcomePage: NextPage = () => {
     return <></>;
   }
 
+  if (me.personalUser.consentTerms) {
+    if (typeof window !== "undefined") {
+      router.push("/");
+    }
+  }
+
   const [values, setValues] = React.useState({
     name: me.name,
     consentTerms: me.personalUser.consentTerms,

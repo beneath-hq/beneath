@@ -24,8 +24,7 @@ const Terminal: NextPage<Props> = ({ writeHead, end }) => {
       router.push("/-/welcome");
     } else if (writeHead && end) {
       // server-side redirect
-      // console.log("")
-      writeHead(302, { Location: "/-/welcome" });
+      writeHead(307, { Location: "/-/welcome" });
       end();
     }
   }
