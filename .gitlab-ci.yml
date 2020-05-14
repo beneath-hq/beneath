@@ -11,12 +11,12 @@ stages:
   - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
   when: manual
   only:
-    - master
+    - stable
 
 build_frontend:
   extends: .build
   variables:
-    IMAGE: gcr.io/beneathcrypto/frontend
+    IMAGE: gcr.io/beneath/frontend
   script: 
     - docker pull ${IMAGE}:latest || true
     - docker build -f ./build/web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
@@ -38,7 +38,7 @@ build_control:
   - .build_go
   variables:
     CMD_NAME: control
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+    IMAGE: gcr.io/beneath/${CMD_NAME}
 
 build_gateway:
   extends:
@@ -46,7 +46,7 @@ build_gateway:
   - .build_go
   variables:
     CMD_NAME: gateway
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+    IMAGE: gcr.io/beneath/${CMD_NAME}
 
 build_pipeline:
   extends:
@@ -54,7 +54,7 @@ build_pipeline:
   - .build_go
   variables:
     CMD_NAME: pipeline
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+    IMAGE: gcr.io/beneath/${CMD_NAME}
 
 build_taskqueue:
   extends:
@@ -62,16 +62,15 @@ build_taskqueue:
   - .build_go
   variables:
     CMD_NAME: taskqueue
-    IMAGE: gcr.io/beneathcrypto/${CMD_NAME}
+    IMAGE: gcr.io/beneath/${CMD_NAME}
 
 .deploy:
   stage: deploy
-  image: dtzar/helm-kubectl:2.14.3
+  image: dtzar/helm-kubectl:3.2.1
   when: manual
   only:
-    - master
+    - stable
   script:
-    - helm init --client-only --service-account tiller
     - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
 
 .deploy_prod:
