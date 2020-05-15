@@ -82,7 +82,8 @@ func (c *StripeCard) handleGenerateSetupIntent(w http.ResponseWriter, req *http.
 	return nil
 }
 
-// Q: what's the right way to return errors for the webhook?
+// Q: What's the right way to return errors for the webhook?
+// TODO: Add check for Stripe's signature on each webhook event. See: https://stripe.com/docs/webhooks/signatures
 func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	const MaxBodyBytes = int64(65536)
 	req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
