@@ -9,7 +9,7 @@ serviceAccount:
 
 image:
   pullPolicy: IfNotPresent
-  repository: gcr.io/beneathcrypto/gateway
+  repository: gcr.io/beneath/gateway
   tag: latest
 
 ingress:
@@ -60,11 +60,11 @@ env:
 - name: BENEATH_ENGINE_BIGQUERY_PROJECT_ID
   value: "beneath"
 - name: BENEATH_ENGINE_BIGTABLE_PROJECT_ID
-  value: "beneathcrypto"
-- name: BENEATH_ENGINE_BIGTABLE_INSTANCE_ID
   value: "beneath"
+- name: BENEATH_ENGINE_BIGTABLE_INSTANCE_ID
+  value: "beneath-bigtable-1"
 - name: BENEATH_ENGINE_PUBSUB_PROJECT_ID
-  value: "beneathcrypto"
+  value: "beneath"
 - name: BENEATH_ENGINE_PUBSUB_SUBSCRIBER_ID
   valueFrom:
     fieldRef:
