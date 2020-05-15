@@ -1,10 +1,10 @@
-import { IS_PRODUCTION } from "./connection";
+const connection = require("./connection");
 
 const ANARCHISM_DRIVER = "anarchism";
 const STRIPECARD_DRIVER = "stripecard";
 const STRIPEWIRE_DRIVER = "stripewire";
 
-const STRIPE_KEY = IS_PRODUCTION
+const STRIPE_KEY = connection.IS_PRODUCTION
   ? "pk_live_fh1lh1v8DRZgX3zJ8IQKw2lu00ohe93Rdj"
   : "pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr";
 
