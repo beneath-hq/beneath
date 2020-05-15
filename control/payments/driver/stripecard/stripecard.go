@@ -23,28 +23,6 @@ type StripeCard struct {
 	config configSpecification
 }
 
-type card struct {
-	Brand    string
-	Last4    string
-	ExpMonth int
-	ExpYear  int
-}
-
-type address struct {
-	Line1      string
-	Line2      string
-	City       string
-	State      string
-	PostalCode string
-	Country    string
-}
-
-type billingDetails struct {
-	Name    string
-	Email   string
-	Address *address
-}
-
 const (
 	maxCardRetries = 4
 )
