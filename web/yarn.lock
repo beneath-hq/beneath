@@ -2288,18 +2288,18 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-beneath-react@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.0.5.tgz#583db693cec77e4cfca36b2a1256aaf22d4a88a4"
-  integrity sha512-shtyd/td7C9ja7U8awD1OBOfHFpr1x7Xf6NgQG3UDh/NuNX/lj2h8FL1nVgp+h3/nAU6/VZeGa5NrztCpYkE7Q==
+beneath-react@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.0.6.tgz#eac71b4a2104c7358a6ec6149806cd566515cc64"
+  integrity sha512-67ZYmP04JFFpxmoPWOQyVG9QVChWDogLBhIiBg3z0RnZMBEdhh498D4eo2yjZ7t0PnR7x3YIc68DTawhTTCUug==
   dependencies:
-    beneath "^1.0.3"
+    beneath "^1.0.4"
     lodash "^4.17.15"
 
-beneath@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.0.3.tgz#1c431deb6dbbe4e618bdde1f012b48a36dcabedb"
-  integrity sha512-cbcmzxgN5zDukXSizkObJWP0rSa9g1CTss4h6Mgc+bcurQo50ke2TikfdK6SNCWzqUqpCEPK0wPtFxCize/inA==
+beneath@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.0.4.tgz#f345c5613a7d6aa7cc333fe71179996b59ac1873"
+  integrity sha512-FZWqf+PYA7KtXlgspT0zNeI5Tl1+0wpDtoEvi8is/enfpsE1u+6oJJlQWkhN39R6POvJwkNV0KcO6Yz8RQM5qw==
   dependencies:
     graphql "^14.6.0"
     subscriptions-transport-ws "^0.9.16"

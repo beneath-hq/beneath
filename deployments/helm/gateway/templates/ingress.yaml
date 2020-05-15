@@ -9,7 +9,7 @@ metadata:
     helm.sh/chart: {{ include "gateway.chart" . }}
   annotations:
     kubernetes.io/ingress.class: nginx
-    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600" # for websockets
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600" # for websockets
 spec:

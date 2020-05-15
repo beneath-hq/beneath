@@ -71,7 +71,7 @@ build_taskqueue:
   only:
     - stable
   script:
-    - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
+    - helm upgrade --install --wait --force ${CMD_NAME} deployments/helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
 
 .deploy_prod:
   variables:

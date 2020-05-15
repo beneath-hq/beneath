@@ -39,6 +39,13 @@ env:
     secretKeyRef:
       name: beneath-secrets
       key: pg-password
+- name: BENEATH_CONTROL_STRIPE_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: beneath-secrets
+      key: stripe-secret-key      
+- name: BENEATH_CONTROL_PAYMENTS_DRIVERS
+  value: "anarchism,stripecard,stripewire"
 - name: BENEATH_ENGINE_MQ_DRIVER
   value: "pubsub"
 - name: BENEATH_ENGINE_LOOKUP_DRIVER
