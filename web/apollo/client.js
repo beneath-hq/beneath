@@ -1,8 +1,9 @@
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, defaultDataIdFromObject } from "apollo-boost";
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, IntrospectionFragmentMatcher, defaultDataIdFromObject } from "apollo-boost";
 import { ErrorLink } from "apollo-link-error";
 import fetch from "isomorphic-unfetch";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
+import introspectionQueryResultData from "./fragmentTypes.json";
 import { resolvers, typeDefs } from "./schema";
 import { GET_AID, GET_TOKEN } from "./queries/local/token";
 
@@ -23,7 +24,11 @@ export const getApolloClient = ({ req, res, initialState }) => {
 };
 
 const createApolloClient = ({ req, res, initialState }) => {
-  const cache = new InMemoryCache({ dataIdFromObject }).restore(initialState || {});
+  const fragmentMatcher = new IntrospectionFragmentMatcher({
+    introspectionQueryResultData,
+  });
+
+  const cache = new InMemoryCache({ dataIdFromObject, fragmentMatcher }).restore(initialState || {});
 
   const linkOptions = {
     credentials: "include",

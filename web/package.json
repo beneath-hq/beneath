@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=development node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
-    "apollo:generate": "yarn run apollo codegen:generate --target typescript --outputFlat apollo/types --passthroughCustomScalars --customScalarsPrefix Control"
+    "apollo:generate": "node ./apolloGenerateFragmentTypes.js && yarn run apollo codegen:generate --target typescript --outputFlat apollo/types --passthroughCustomScalars --customScalarsPrefix Control"
   },
   "dependencies": {
     "@apollo/react-hooks": "^3.1.3",
