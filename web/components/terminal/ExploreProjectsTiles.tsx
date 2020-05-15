@@ -23,7 +23,7 @@ const ExploreProjectsTiles: FC = () => {
   return (
     <>
       {loading && <LoadingTile />}
-      {(error || !data) && <ErrorTile error={error?.message || "Couldn't load projects to explore"} />}
+      {error && <ErrorTile error={error?.message || "Couldn't load projects to explore"} />}
       {data && data.exploreProjects &&
         data.exploreProjects.map(({ projectID, name, displayName, description, photoURL, organization }) => (
           <HeroTile

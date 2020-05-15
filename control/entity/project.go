@@ -113,6 +113,11 @@ func (p *Project) GetProjectID() uuid.UUID {
 	return p.ProjectID
 }
 
+// GetOrganizationName implements engine/driver.Project
+func (p *Project) GetOrganizationName() string {
+	return p.Organization.Name
+}
+
 // GetProjectName implements engine/driver.Project
 func (p *Project) GetProjectName() string {
 	return p.Name

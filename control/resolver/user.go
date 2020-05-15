@@ -22,6 +22,25 @@ func (r *privateUserResolver) UserID(ctx context.Context, obj *entity.User) (str
 	return obj.UserID.String(), nil
 }
 
+func (r *mutationResolver) RegisterUserConsent(ctx context.Context, userID uuid.UUID, terms *bool, newsletter *bool) (*entity.User, error) {
+	secret := middleware.GetSecret(ctx)
+	if !(secret.IsUser() && secret.GetOwnerID() == userID) {
+		return nil, gqlerror.Errorf("You can only register consent for yourself")
+	}
+
+	user := entity.FindUser(ctx, userID)
+	if user == nil {
+		return nil, gqlerror.Errorf("Couldn't find user with ID %s", userID.String())
+	}
+
+	err := user.RegisterConsent(ctx, terms, newsletter)
+	if err != nil {
+		return nil, gqlerror.Errorf("Error: %s", err.Error())
+	}
+
+	return user, nil
+}
+
 func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
 	org := entity.FindOrganizationByUserID(ctx, userID)
 	if org == nil {

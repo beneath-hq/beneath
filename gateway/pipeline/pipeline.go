@@ -87,11 +87,11 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 
 	// write to lookup and warehouse
 	group.Go(func() error {
-		return hub.Engine.Lookup.WriteRecords(cctx, stream, stream, stream, records)
+		return hub.Engine.Lookup.WriteRecords(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
 	})
 
 	group.Go(func() error {
-		return hub.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, stream, records)
+		return hub.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
 	})
 
 	err := group.Wait()

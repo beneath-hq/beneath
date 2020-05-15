@@ -609,6 +609,7 @@ func (s *Stream) DeleteStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance)
 
 	// deregister instance
 	err = taskqueue.Submit(tx.Context(), &CleanupInstanceTask{
+		InstanceID:   instance.StreamInstanceID,
 		CachedStream: NewCachedStream(s, instance),
 	})
 	if err != nil {

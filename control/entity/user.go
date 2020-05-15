@@ -24,6 +24,8 @@ type User struct {
 	CreatedOn             time.Time `sql:",default:now()"`
 	UpdatedOn             time.Time `sql:",default:now()"`
 	Master                bool      `sql:",notnull,default:false"` // NOTE: when updating value, clear secret cache
+	ConsentTerms          bool      `sql:",notnull,default:false"`
+	ConsentNewsletter     bool      `sql:",notnull,default:false"`
 	ReadQuota             *int64    // NOTE: when updating value, clear secret cache
 	WriteQuota            *int64    // NOTE: when updating value, clear secret cache
 	BillingOrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"` // NOTE: when updating value, clear secret cache
@@ -268,6 +270,37 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	)
 
 	return user, nil
+}
+
+// RegisterConsent updates the user's consent preferences
+func (u *User) RegisterConsent(ctx context.Context, terms *bool, newsletter *bool) error {
+	if !u.ConsentTerms && (terms == nil || !*terms) {
+		return fmt.Errorf("Cannot continue without consent to the terms of service")
+	}
+
+	if terms != nil {
+		if !*terms {
+			return fmt.Errorf("You cannot withdraw consent to the terms of service; instead, delete your user")
+		}
+		u.ConsentTerms = *terms
+	}
+
+	if newsletter != nil {
+		u.ConsentNewsletter = *newsletter
+	}
+
+	// validate and save
+	u.UpdatedOn = time.Now()
+	err := GetValidator().Struct(u)
+	if err != nil {
+		return err
+	}
+	_, err = hub.DB.ModelContext(ctx, u).Column("consent_terms", "consent_newsletter", "updated_on").WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdateQuotas change the user's quotas

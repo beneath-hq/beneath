@@ -24,7 +24,6 @@ func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UU
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
-	InstanceID       uuid.UUID
 	StreamID         uuid.UUID
 	Public           bool
 	Final            bool
@@ -121,9 +120,7 @@ func NewCachedStream(s *Stream, instance *StreamInstance) *CachedStream {
 		Indexes:             indexes,
 	}
 
-	result := &CachedStream{
-		InstanceID: instance.StreamInstanceID,
-	}
+	result := &CachedStream{}
 
 	err := unwrapInternalCachedStream(internal, result)
 	if err != nil {
@@ -207,7 +204,7 @@ func (c *CachedStream) GetOrganizationID() uuid.UUID {
 	return c.OrganizationID
 }
 
-// GetOrganizationName implements engine/driver.Organization
+// GetOrganizationName implements engine/driver.Project
 func (c *CachedStream) GetOrganizationName() string {
 	return c.OrganizationName
 }
@@ -225,11 +222,6 @@ func (c *CachedStream) GetProjectName() string {
 // GetPublic implements engine/driver.Project
 func (c *CachedStream) GetPublic() bool {
 	return c.Public
-}
-
-// GetStreamInstanceID implements engine/driver.StreamInstance
-func (c *CachedStream) GetStreamInstanceID() uuid.UUID {
-	return c.InstanceID
 }
 
 // GetStreamID implements engine/driver.Stream
@@ -314,10 +306,6 @@ func (c *StreamCache) Get(ctx context.Context, instanceID uuid.UUID) *CachedStre
 
 	if cachedStream.ProjectID == uuid.Nil {
 		cachedStream = nil
-	}
-
-	if cachedStream != nil {
-		cachedStream.InstanceID = instanceID
 	}
 
 	// set in lru

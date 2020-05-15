@@ -136,7 +136,7 @@ func (s wsServer) StartQuery(client *ws.Client, id ws.QueryID, payload map[strin
 	s.logWithSecret(secret, "ws start query",
 		"ip", client.GetRemoteAddr(),
 		"id", id,
-		"instance", stream.InstanceID.String(),
+		"instance", instanceID.String(),
 	)
 
 	return nil

@@ -23,7 +23,15 @@ type StreamInstance struct {
 	MadeFinalOn      *time.Time
 }
 
-// GetStreamInstanceID implements engine/beneath/driver.StreamInstance
+// EfficientStreamInstance can be used to efficiently make a UUID conform to engine/driver.StreamInstance
+type EfficientStreamInstance uuid.UUID
+
+// GetStreamInstanceID implements engine/driver.StreamInstance
+func (si EfficientStreamInstance) GetStreamInstanceID() uuid.UUID {
+	return uuid.UUID(si)
+}
+
+// GetStreamInstanceID implements engine/driver.StreamInstance
 func (si *StreamInstance) GetStreamInstanceID() uuid.UUID {
 	return si.StreamInstanceID
 }

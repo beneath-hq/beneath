@@ -76,7 +76,7 @@ weight: 300
   - The `read` permission grants the [service]({{< relref "#services" >}}) permission to read and query records.
   - The `write` permission grants the [service]({{< relref "#services" >}}) permission to write records.
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/streams/STREAM_NAME`
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/STREAM_NAME`
 
 **CLI:** Run `beneath stream --help` for details.
 
@@ -89,7 +89,7 @@ weight: 300
 
 **Access management:** A [stream instance]({{< relref "#stream-instances" >}}) inherits the permissions of its parent [stream]({{< relref "#streams" >}}).
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/streams/STREAM_NAME` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/STREAM_NAME` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
 
 **CLI:** Run `beneath stream instance --help` for details.
 

@@ -35,7 +35,7 @@ const MyProjectsTiles: FC<MyProjectsTilesProps> = ({ me }) => {
   return (
     <>
       {loading && <LoadingTile />}
-      {(error || !data) && <ErrorTile error={error?.message || "Couldn't load your projects"} />}
+      {error && <ErrorTile error={error?.message || "Couldn't load your projects"} />}
       {data && data.projectsForUser &&
         data.projectsForUser.map(({ projectID, name, displayName, description, photoURL, organization }) => (
           <HeroTile

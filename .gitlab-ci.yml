@@ -11,7 +11,7 @@ stages:
   - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
   when: manual
   only:
-    - master
+    - stable
 
 build_frontend:
   extends: .build
@@ -66,12 +66,11 @@ build_taskqueue:
 
 .deploy:
   stage: deploy
-  image: dtzar/helm-kubectl:2.14.3
+  image: dtzar/helm-kubectl:3.2.1
   when: manual
   only:
-    - master
+    - stable
   script:
-    - helm init --client-only --service-account tiller
     - helm upgrade --install --wait --force ${CMD_NAME} helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
 
 .deploy_prod:

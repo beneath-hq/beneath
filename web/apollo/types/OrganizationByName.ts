@@ -57,6 +57,8 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_perso
   email: string;
   createdOn: ControlTime;
   updatedOn: ControlTime;
+  consentTerms: boolean;
+  consentNewsletter: boolean;
   readQuota: number | null;
   writeQuota: number | null;
   billingOrganizationID: ControlUUID;

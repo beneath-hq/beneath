@@ -34,6 +34,8 @@ export const QUERY_ME = gql`
         email
         createdOn
         updatedOn
+        consentTerms
+        consentNewsletter
         readQuota
         writeQuota
         billingOrganizationID
@@ -87,6 +89,8 @@ export const QUERY_ORGANIZATION = gql`
           email
           createdOn
           updatedOn
+          consentTerms
+          consentNewsletter
           readQuota
           writeQuota
           billingOrganizationID

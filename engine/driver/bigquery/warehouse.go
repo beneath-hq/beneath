@@ -8,8 +8,8 @@ import (
 
 	"cloud.google.com/go/bigquery"
 
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // ExternalRow represents a record saved for external use (i.e. with columns matching schema)
@@ -85,7 +85,7 @@ func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driv
 	}
 
 	// save rows
-	dataset := b.Client.Dataset(externalDatasetName(p.GetProjectName()))
+	dataset := b.Client.Dataset(externalDatasetName(p))
 	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
 	err := table.Inserter().Put(ctx, rows)
 	if err != nil {
