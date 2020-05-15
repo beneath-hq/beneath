@@ -734,10 +734,10 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-beneath@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.0.3.tgz#1c431deb6dbbe4e618bdde1f012b48a36dcabedb"
-  integrity sha512-cbcmzxgN5zDukXSizkObJWP0rSa9g1CTss4h6Mgc+bcurQo50ke2TikfdK6SNCWzqUqpCEPK0wPtFxCize/inA==
+beneath@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.0.4.tgz#f345c5613a7d6aa7cc333fe71179996b59ac1873"
+  integrity sha512-FZWqf+PYA7KtXlgspT0zNeI5Tl1+0wpDtoEvi8is/enfpsE1u+6oJJlQWkhN39R6POvJwkNV0KcO6Yz8RQM5qw==
   dependencies:
     graphql "^14.6.0"
     subscriptions-transport-ws "^0.9.16"
