@@ -21,8 +21,10 @@ class GraphQLError(Exception):
     self.errors = errors
 
 
-class BeneathError(Exception):
-  pass
+class AuthenticationError(Exception):
+
+  def __init__(self, message):
+    super().__init__(message)
 
 
 class Connection:
@@ -53,7 +55,12 @@ class Connection:
     """
     if not self.connected:
       self._create_grpc_connection()
-      await self._check_grpc_connection()
+      try:
+        await self._check_grpc_connection()
+      except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
+          raise AuthenticationError(e.details()) from e
+        raise e
       self.connected = True
 
   def _create_grpc_connection(self):
@@ -80,7 +87,7 @@ class Connection:
     pong = await self._ping()
     self._check_pong_status(pong)
     if not pong.authenticated:
-      raise BeneathError("You must authenticate with 'beneath auth'")
+      raise AuthenticationError("You must authenticate with 'beneath auth'")
 
   @classmethod
   def _check_pong_status(cls, pong: gateway_pb2.PingResponse):
