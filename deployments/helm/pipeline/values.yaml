@@ -4,7 +4,7 @@ fullnameOverride: ""
 replicaCount: 1
 
 serviceAccount:
-  secretName: control-sa-key
+  secretName: beneath-sa-key
   fileName: key.json 
 
 image:
@@ -32,12 +32,12 @@ env:
 - name: BENEATH_CONTROL_POSTGRES_USER
   valueFrom:
     secretKeyRef:
-      name: control-secrets
+      name: beneath-secrets
       key: pg-user
 - name: BENEATH_CONTROL_POSTGRES_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: control-secrets
+      name: beneath-secrets
       key: pg-password
 - name: BENEATH_ENGINE_STREAMS_DRIVER
   value: "pubsub"
