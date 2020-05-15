@@ -25,7 +25,7 @@ Create nginx ingress in cluster. (Change `loadBalancerIP` to the external IP you
 ​
     helm upgrade --wait --install --namespace nginx ingress-nginx ingress-nginx/ingress-nginx --set controller.service.loadBalancerIP="35.231.110.138"
 
-NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want the world burn. We use the *former*, make sure always to refer to the correct documentation!
+NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want the world burn. We use the *former*, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
 ​
 ### cert-manager
 ​
@@ -61,6 +61,12 @@ Remember to delete it:
 
     kubectl delete -f test/test-resources.yaml
 
+### Create production namespace
+​
+Create the production namespace like this:
+​
+    kubectl create namespace production
+
 ### Kubernetes secrets
 
 The Helm charts rely on the existance of the `beneath-secrets` secret in the `production` namespace. It's initialized like this:
@@ -68,8 +74,9 @@ The Helm charts rely on the existance of the `beneath-secrets` secret in the `pr
     kubectl create secret generic beneath-secrets --namespace production --dry-run -o yaml \
       --from-literal pg-user=INSERT \
       --from-literal pg-password=INSERT \
-      --from-literal segment-secret=INSERT \
       --from-literal session-secret=INSERT \
+      --from-literal stripe-publishable-key=INSERT \
+      --from-literal stripe-secret-key=INSERT \
       --from-literal github-auth-id=INSERT \
       --from-literal github-auth-secret=INSERT \
       --from-literal google-auth-id=INSERT \
@@ -80,7 +87,7 @@ The Helm charts rely on the existance of the `beneath-secrets` secret in the `pr
 
 The Helm charts relies on the existance of a service account in `key.json` in the `beneath-sa-key` secret in the `production` namespace. It's created like this:
 
-    gcloud beta iam service-accounts create beneath-service --display-name "Beneath Service Account (used by services in Kubernetes)"
+    gcloud iam service-accounts create beneath-service --display-name "Beneath Service Account (used by services in Kubernetes)"
     gcloud iam service-accounts list
     gcloud iam service-accounts keys create key.json --iam-account beneath-service@beneath.iam.gserviceaccount.com
     kubectl create secret generic beneath-sa-key --from-file key.json --namespace production

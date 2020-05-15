@@ -24,9 +24,9 @@ env:
 - name: ENV
   value: production
 - name: BENEATH_CONTROL_REDIS_URL
-  value: "redis://10.0.0.3/"
+  value: "redis://10.255.145.163/"
 - name: BENEATH_CONTROL_POSTGRES_HOST
-  value: "10.76.112.3"
+  value: "10.38.208.3"
 - name: BENEATH_CONTROL_POSTGRES_DB
   value: "postgres"
 - name: BENEATH_CONTROL_POSTGRES_USER
@@ -39,9 +39,9 @@ env:
     secretKeyRef:
       name: beneath-secrets
       key: pg-password
-- name: BENEATH_ENGINE_STREAMS_DRIVER
+- name: BENEATH_ENGINE_MQ_DRIVER
   value: "pubsub"
-- name: BENEATH_ENGINE_TABLES_DRIVER
+- name: BENEATH_ENGINE_LOOKUP_DRIVER
   value: "bigtable"
 - name: BENEATH_ENGINE_WAREHOUSE_DRIVER
   value: "bigquery"
@@ -55,15 +55,7 @@ env:
   value: "beneath"
 - name: BENEATH_ENGINE_PUBSUB_SUBSCRIBER_ID
   value: "taskqueue"
-- name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_TOPIC
-  value: "beneath-write-requests"
-- name: BENEATH_ENGINE_PUBSUB_WRITE_REQUESTS_SUBSCRIPTION
-  value: "beneath-write-requests-sub"
-- name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_TOPIC
-  value: "beneath-write-reports"
-- name: BENEATH_ENGINE_PUBSUB_WRITE_REPORTS_SUBSCRIPTION_PREFIX
-  value: "beneath-write-reports-sub"
-- name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_TOPIC
-  value: "beneath-task-queue"
-- name: BENEATH_ENGINE_PUBSUB_TASK_QUEUE_SUBSCRIPTION
-  value: "beneath-task-queue-sub"
+- name: BENEATH_ENGINE_PUBSUB_TOPIC_PREFIX
+  value: "beneath"
+- name: BENEATH_ENGINE_PUBSUB_SUBSCRIPTION_PREFIX
+  value: "beneath"

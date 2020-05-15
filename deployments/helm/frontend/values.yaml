@@ -28,3 +28,8 @@ env:
   value: "production"
 - name: PORT
   value: "8080"
+- name: STRIPE_PUBLISHABLE_KEY
+  valueFrom:
+    secretKeyRef:
+      name: beneath-secrets
+      key: stripe-publishable-key
