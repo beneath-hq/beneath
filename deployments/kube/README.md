@@ -1,34 +1,99 @@
 # `deployments/kube/`
-
-Kubernetes is tricky. For everything not deployed completely through Gitlab, this file should contain a complete log of commands executed against the cluster.
-
-### Namespaces
-
-Create the production namespace like this:
-
-    kubectl create namespace production
-
-### tiller
-
-To use Helm to manage packages, we must run tiller. It runs in the kube-system namespace.
-
-    kubectl apply -f kube/tiller-service-account.yaml
-    helm init --upgrade --service-account tiller
-
+​
+This file should keep a complete log of configuration of the Kubernetes cluster. Our ambition is that after configuring the cluster, we should not have to directly modify Kubernetes from the command-line – everything should happen through helm deployments triggered from Gitlab.
+​​
 ### ingress
+​
+Nginx ingress handles load balancing and routing.
+​
+Create an external IP in Google Cloud:
+​
+    gcloud compute addresses create beneath-ip-1 --project=beneath --region=us-east1
 
-Nginx ingress handles load balancing and routing. It runs in the default namespace. We installed it using Helm:
+[Install Helm 3](https://helm.sh/docs/intro/install/) if you don't already have it installed. Make sure you are not using Helm 2!
+​
+Add ingress-nginx charts to Helm:
+​
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm repo update
+​
+Create namespace for ingress:
+​
+    kubectl create namespace nginx
 
-    helm upgrade --wait --install nginx-ingress stable/nginx-ingress --set rbac.create=true --set controller.service.loadBalancerIP="35.231.50.185" --set controller.service.externalTrafficPolicy=Local
+Create nginx ingress in cluster. (Change `loadBalancerIP` to the external IP you just provisioned.)
+​
+    helm upgrade --wait --install --namespace nginx ingress-nginx ingress-nginx/ingress-nginx --set controller.service.loadBalancerIP="35.231.110.138"
 
+NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want the world burn. We use the *former*, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
+​
 ### cert-manager
+​
+Cert-manager automatically handles TLS (HTTPS) for all public-facing ingresses. We run it in the `cert-manager` namespace, but it can issue certificates for ingresses in all namespaces.
 
-Cert-manager automatically handles TLS (HTTPS) for all public-facing ingresses. It runs in the cert-manager namespace, but can issue certificates for ingresses in all namespaces.
+Refer to https://cert-manager.io/docs/installation/kubernetes/ for up-to-date instructions.
+​
+Add helm repo:
 
-    kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.10/deploy/manifests/00-crds.yaml
-    kubectl create namespace cert-manager
-    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
     helm repo add jetstack https://charts.jetstack.io
     helm repo update
-    helm install --name cert-manager --namespace cert-manager --version v0.10.1 jetstack/cert-manager
-    kubectl apply -f kube/cert-manager-cluster-issuer-prod.yaml --namespace cert-manager
+​
+Create namespace:
+
+    kubectl create namespace cert-manager
+    
+Deploy cert-manager:
+
+    kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.crds.yaml
+    helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.0
+
+Create cluster-wide issuer:
+
+    kubectl apply -n cert-manager -f cert-manager/cluster-issuer-prod.yaml 
+
+### Optional: test progress
+
+You can apply the `test/test-resources.yaml` manifest to deploy a hello-world app to the cluster with HTTPS enabled.
+
+    kubectl apply -f test/test-resources.yaml
+
+Remember to delete it:
+
+    kubectl delete -f test/test-resources.yaml
+
+### Create production namespace
+​
+Create the production namespace like this:
+​
+    kubectl create namespace production
+
+### Kubernetes secrets
+
+The Helm charts rely on the existance of the `beneath-secrets` secret in the `production` namespace. It's initialized like this:
+
+    kubectl create secret generic beneath-secrets --namespace production --dry-run -o yaml \
+      --from-literal pg-user=INSERT \
+      --from-literal pg-password=INSERT \
+      --from-literal session-secret=INSERT \
+      --from-literal stripe-publishable-key=INSERT \
+      --from-literal stripe-secret-key=INSERT \
+      --from-literal github-auth-id=INSERT \
+      --from-literal github-auth-secret=INSERT \
+      --from-literal google-auth-id=INSERT \
+      --from-literal google-auth-secret=INSERT \
+      | kubectl apply -f -
+
+### Google Cloud service account for pods
+
+The Helm charts relies on the existance of a service account in `key.json` in the `beneath-sa-key` secret in the `production` namespace. It's created like this:
+
+    gcloud iam service-accounts create beneath-service --display-name "Beneath Service Account (used by services in Kubernetes)"
+    gcloud iam service-accounts list
+    gcloud iam service-accounts keys create key.json --iam-account beneath-service@beneath.iam.gserviceaccount.com
+    kubectl create secret generic beneath-sa-key --from-file key.json --namespace production
+    rm key.json
+
+    gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/pubsub.admin
+    gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/bigtable.admin
+    gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/redis.admin
+    gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/bigquery.admin
