@@ -66,8 +66,13 @@ func (r *queryResolver) ProjectByID(ctx context.Context, projectID uuid.UUID) (*
 }
 
 func (r *queryResolver) ProjectMembers(ctx context.Context, projectID uuid.UUID) ([]*entity.ProjectMember, error) {
+	project := entity.FindProject(ctx, projectID)
+	if project == nil {
+		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
+	}
+
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, projectID, false)
+	perms := secret.ProjectPermissions(ctx, projectID, project.Public)
 	if !perms.View {
 		return nil, gqlerror.Errorf("You're not allowed to see the members of project %s", projectID.String())
 	}
