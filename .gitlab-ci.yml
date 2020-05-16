@@ -13,17 +13,17 @@ stages:
   only:
     - stable
 
-build_frontend:
+build:web:
   extends: .build
   variables:
-    IMAGE: gcr.io/beneath/frontend
+    IMAGE: gcr.io/beneath/web
   script: 
     - docker pull ${IMAGE}:latest || true
     - docker build -f ./build/web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
 
-.build_go:
+.build:go:
   script: 
     - docker pull ${IMAGE}:builder || true
     - docker build -f ./build/${CMD_NAME}/Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
@@ -32,34 +32,34 @@ build_frontend:
     - docker push ${IMAGE}:latest
     - docker push ${IMAGE}:builder
 
-build_control:
+build:control:
   extends:
   - .build
-  - .build_go
+  - .build:go
   variables:
     CMD_NAME: control
     IMAGE: gcr.io/beneath/${CMD_NAME}
 
-build_gateway:
+build:gateway:
   extends:
   - .build
-  - .build_go
+  - .build:go
   variables:
     CMD_NAME: gateway
     IMAGE: gcr.io/beneath/${CMD_NAME}
 
-build_pipeline:
+build:pipeline:
   extends:
   - .build
-  - .build_go
+  - .build:go
   variables:
     CMD_NAME: pipeline
     IMAGE: gcr.io/beneath/${CMD_NAME}
 
-build_taskqueue:
+build:taskqueue:
   extends:
   - .build
-  - .build_go
+  - .build:go
   variables:
     CMD_NAME: taskqueue
     IMAGE: gcr.io/beneath/${CMD_NAME}
@@ -67,59 +67,63 @@ build_taskqueue:
 .deploy:
   stage: deploy
   image: dtzar/helm-kubectl:3.2.1
-  when: manual
   only:
     - stable
   script:
     - helm upgrade --install --wait --force ${CMD_NAME} deployments/helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
 
-.deploy_prod:
+.deploy:prod:
   variables:
     KUBE_NAMESPACE: production
   environment:
     name: production
     url: https://beneath.dev
 
-deploy_frontend:
+deploy:web:
   extends:
   - .deploy
-  - .deploy_prod
+  - .deploy:prod
+  needs: ["build:web"]
   variables:
-    CMD_NAME: frontend
-    REPLICAS: ${REPLICAS_FRONTEND}
-    REPLICAS_FRONTEND: 2
+    CMD_NAME: web
+    REPLICAS: ${REPLICAS_WEB}
+    REPLICAS_WEB: 2
 
-deploy_control:
+deploy:control:
   extends:
   - .deploy
-  - .deploy_prod
+  - .deploy:prod
+  needs: ["build:control"]
   variables:
     CMD_NAME: control
     REPLICAS: ${REPLICAS_CONTROL}
     REPLICAS_CONTROL: 2
 
-deploy_gateway:
+deploy:gateway:
   extends:
   - .deploy
-  - .deploy_prod
+  - .deploy:prod
+  needs: ["build:gateway"]
   variables:
     CMD_NAME: gateway
     REPLICAS: ${REPLICAS_GATEWAY}
     REPLICAS_GATEWAY: 2
 
-deploy_pipeline:
+deploy:pipeline:
   extends:
   - .deploy
-  - .deploy_prod
+  - .deploy:prod
+  needs: ["build:pipeline"]
   variables:
     CMD_NAME: pipeline
     REPLICAS: ${REPLICAS_PIPELINE}
     REPLICAS_PIPELINE: 1
 
-deploy_taskqueue:
+deploy:taskqueue:
   extends:
   - .deploy
-  - .deploy_prod
+  - .deploy:prod
+  needs: ["build:taskqueue"]
   variables:
     CMD_NAME: taskqueue
     REPLICAS: ${REPLICAS_TASKQUEUE}

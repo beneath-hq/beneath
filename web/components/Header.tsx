@@ -74,7 +74,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
 
   const makeMenuItem = (text: string | JSX.Element, props: any) => {
     return (
-      <MenuItem component={NextMuiLink} {...props}>
+      <MenuItem component={props.as ? NextMuiLink : "a"} {...props}>
         {text}
       </MenuItem>
     );
@@ -181,6 +181,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
               color: "inherit",
               size: "small",
               href: "/-/auth",
+              as: "/-/auth",
             })}
           {me && (
             <>

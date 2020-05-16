@@ -83,6 +83,14 @@ The Helm charts rely on the existance of the `beneath-secrets` secret in the `pr
       --from-literal google-auth-secret=INSERT \
       | kubectl apply -f -
 
+Below is an approximate list of places from which the secrets were sourced:
+
+- Postgres credentials: Cloud SQL admin console
+- Session secret: randomly generated
+- Stripe credentials: Stripe dashboard
+- Github credentials: The [OAuth apps section](https://github.com/organizations/beneath-hq/settings/applications) of the [Github project settings]
+- Google credentials: The [Google developer console](https://console.developers.google.com/apis/credentials?authuser=1&project=beneath&supportedpurview=project) (note that it's different from the Cloud console!)
+
 ### Google Cloud service account for pods
 
 The Helm charts relies on the existance of a service account in `key.json` in the `beneath-sa-key` secret in the `production` namespace. It's created like this:

@@ -47,7 +47,10 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
             )}
             <ListItemText
               primary={member.displayName || toURLName(member.name)}
-              secondary={makePermissionsDescription(member)}
+              secondary={
+                project.permissions.create || project.permissions.admin ?
+                makePermissionsDescription(member) : undefined
+              }
             />
           </ListItem>
         ))}

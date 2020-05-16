@@ -46,7 +46,7 @@ const HeroTile: FC<HeroTileProps> = ({ name, displayName, path, description, ava
           <Typography className={classes.path} variant="subtitle1" color="textSecondary">
             {path}
           </Typography>
-          {shape == "wide" && <Typography variant="body1">{description}</Typography>}
+          {shape === "wide" && <Typography variant="body1">{description}</Typography>}
         </Grid>
         {(!shape || shape !== "wide") && (
           <Grid item xs={12}>

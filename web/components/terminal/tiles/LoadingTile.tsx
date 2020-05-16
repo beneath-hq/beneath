@@ -16,7 +16,7 @@ export const LoadingTile: FC<TileProps> = ({ ...tileProps }) => {
   const classes = useStyles();
   return (
     <Tile {...tileProps}>
-      <Grid className={classes.container} container justify="center" alignContent="center">
+      <Grid className={classes.container} container justify="center" alignContent="center" alignItems="center">
         <Grid item>
           <CircularProgress />
         </Grid>
