@@ -26,9 +26,11 @@ export const UsageTile: FC<UsageTileProps> = ({ title, usage, quota, ...tileProp
   const classes = useStyles();
   return (
     <Tile {...tileProps}>
-      <Grid className={classes.container} container justify="center" alignContent="center">
+      <Grid className={classes.container} container justify="center" alignContent="center" alignItems="center">
         <Grid item xs>
-          <Typography variant="h3" gutterBottom>{title}</Typography>
+          <Typography variant="h3" gutterBottom>
+            {title}
+          </Typography>
           <ActualIndicator standalone={false} kind={"read"} usage={usage} quota={quota} />
         </Grid>
       </Grid>

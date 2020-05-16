@@ -23,7 +23,7 @@ export const ActionTile: FC<ActionTileProps> = ({ title, ...tileProps }) => {
   const classes = useStyles();
   return (
     <Tile {...tileProps}>
-      <Grid className={classes.container} container justify="center" alignContent="center">
+      <Grid className={classes.container} container justify="center" alignContent="center" alignItems="center">
         <Grid item>
           <Typography className={classes.title} component="h2" variant="h2" color="primary" align="center">
             {title}

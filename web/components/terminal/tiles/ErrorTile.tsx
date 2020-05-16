@@ -20,7 +20,7 @@ export const ErrorTile: FC<ErrorTileProps> = ({ error, ...tileProps }) => {
   const classes = useStyles();
   return (
     <Tile {...tileProps}>
-      <Grid className={classes.container} container justify="center" alignContent="center">
+      <Grid className={classes.container} container justify="center" alignContent="center" alignItems="center">
         <Grid item>
           <Typography variant="body1" color="error" align="center">
             {error}
