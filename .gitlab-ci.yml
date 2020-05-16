@@ -13,10 +13,10 @@ stages:
   only:
     - stable
 
-build:frontend:
+build:web:
   extends: .build
   variables:
-    IMAGE: gcr.io/beneath/frontend
+    IMAGE: gcr.io/beneath/web
   script: 
     - docker pull ${IMAGE}:latest || true
     - docker build -f ./build/web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
@@ -79,15 +79,15 @@ build:taskqueue:
     name: production
     url: https://beneath.dev
 
-deploy:frontend:
+deploy:web:
   extends:
   - .deploy
   - .deploy:prod
-  needs: ["build:frontend"]
+  needs: ["build:web"]
   variables:
-    CMD_NAME: frontend
-    REPLICAS: ${REPLICAS_FRONTEND}
-    REPLICAS_FRONTEND: 2
+    CMD_NAME: web
+    REPLICAS: ${REPLICAS_WEB}
+    REPLICAS_WEB: 2
 
 deploy:control:
   extends:
