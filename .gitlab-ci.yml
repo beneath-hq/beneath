@@ -84,6 +84,7 @@ deploy_frontend:
   extends:
   - .deploy
   - .deploy_prod
+  needs: ["build_frontend"]
   variables:
     CMD_NAME: frontend
     REPLICAS: ${REPLICAS_FRONTEND}
@@ -93,6 +94,7 @@ deploy_control:
   extends:
   - .deploy
   - .deploy_prod
+  needs: ["build_control"]
   variables:
     CMD_NAME: control
     REPLICAS: ${REPLICAS_CONTROL}
@@ -102,6 +104,7 @@ deploy_gateway:
   extends:
   - .deploy
   - .deploy_prod
+  needs: ["build_gateway"]
   variables:
     CMD_NAME: gateway
     REPLICAS: ${REPLICAS_GATEWAY}
@@ -111,6 +114,7 @@ deploy_pipeline:
   extends:
   - .deploy
   - .deploy_prod
+  needs: ["build_pipeline"]
   variables:
     CMD_NAME: pipeline
     REPLICAS: ${REPLICAS_PIPELINE}
@@ -120,6 +124,7 @@ deploy_taskqueue:
   extends:
   - .deploy
   - .deploy_prod
+  needs: ["build_taskqueue"]
   variables:
     CMD_NAME: taskqueue
     REPLICAS: ${REPLICAS_TASKQUEUE}
