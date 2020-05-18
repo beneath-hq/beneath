@@ -5,7 +5,7 @@ replicaCount: 1
 
 image:
   pullPolicy: IfNotPresent
-  repository: gcr.io/beneath/frontend
+  repository: gcr.io/beneath/web
   tag: latest
 
 ingress:
