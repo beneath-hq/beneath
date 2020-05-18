@@ -105,3 +105,15 @@ The Helm charts relies on the existance of a service account in `key.json` in th
     gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/bigtable.admin
     gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/redis.admin
     gcloud projects add-iam-policy-binding beneath --member serviceAccount:beneath-service@beneath.iam.gserviceaccount.com --role roles/bigquery.admin
+
+### Postgres
+
+For admin purposes, we sometimes need to connect to the postgres database. We do so as the `postgres` user with:
+
+  gcloud sql connect beneath-postgres-1 -u postgres
+
+All resources (tables, views, sequences, etc.) should be created and owned by the `control` user. For example, running `\dt TABLE_NAME` must always reveal `control` as the `owner`.
+
+The `postgres` user has all the same privileges as `control` (initially, we ran `GRANT control TO postgres;` from the `control` user).
+
+NOTE: Be very careful when administering the database! To minimize the chance of mistakes: Connect only with `psql` (not a GUI), write your queries in a text editor before running them, and don't keep the connection open for longer than necessary.
