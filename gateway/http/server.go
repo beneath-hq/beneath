@@ -27,7 +27,7 @@ const (
 func Handler() http.Handler {
 	handler := chi.NewRouter()
 
-	handler.Use(chimiddleware.RealIP)
+	handler.Use(middleware.RealIP)
 	handler.Use(chimiddleware.DefaultCompress)
 	handler.Use(middleware.InjectTags)
 	handler.Use(middleware.Logger)
