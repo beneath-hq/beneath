@@ -1,6 +1,7 @@
 import os
 
 DEV = os.environ.get('BENEATH_ENV') in ['dev', 'development']
+INTERNAL_NETWORK = bool(os.environ.get('BENEATH_INTERNAL_NETWORK'))
 
 BIGQUERY_PROJECT = "beneath"
 PYTHON_CLIENT_ID = "beneath-python"
