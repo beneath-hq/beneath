@@ -1,4 +1,4 @@
-beneath>=1.1.4
+beneath>=1.1.5
 structlog>=19.1.0
 tenacity>=5.1.1
 web3>=5.2.0
