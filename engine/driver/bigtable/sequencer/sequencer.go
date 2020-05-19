@@ -315,7 +315,7 @@ func (s Sequencer) compactKey(ctx context.Context, key string, dry bool) (State,
 			// where there's two commits that happen to have the same timestamp)
 			if len(oldStableNumberValue) == 0 {
 				// no previous value, write if nothing has been written in the mean time
-				cond := bigtable.ChainFilters(bigtable.FamilyFilter(stableColumnFamily))
+				cond := bigtable.FamilyFilter(stableColumnFamily)
 				mut = bigtable.NewCondMutation(cond, nil, mut)
 			} else {
 				// we read a previous value, write if stable number is still the same
