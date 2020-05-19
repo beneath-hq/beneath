@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: ethereum-blocks
-        image: gcr.io/beneathcrypto/ethereum-blocks:latest
+        image: gcr.io/beneath/ethereum-blocks:latest
         imagePullPolicy: Always
         env:
         - name: WEB3_PROVIDER_URL
