@@ -76,9 +76,9 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
         You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
         very important that you only use read-only secrets in your front-end.
       </Typography>
-      <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/projects/${toURLName(
-        stream.project.name
-      )}/${toURLName(stream.name)}", {
+      <CodeBlock language={"javascript"}>{`fetch("${GATEWAY_URL}/v1/${toURLName(
+        stream.project.organization.name
+      )}/${toURLName(stream.project.name)}/${toURLName(stream.name)}", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
@@ -113,9 +113,9 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
         from the command line:
       </Typography>
       <CodeBlock language={"bash"}>
-        {`curl -H "Authorization: SECRET" ${GATEWAY_URL}/projects/${toURLName(stream.project.name)}/${toURLName(
-          stream.name
-        )}`}
+        {`curl -H "Authorization: Bearer SECRET" ${GATEWAY_URL}/v1/${toURLName(stream.project.organization.name)}/${toURLName(
+          stream.project.name
+        )}/${toURLName(stream.name)}`}
       </CodeBlock>
       <Typography variant="body2" paragraph>
         Replace SECRET with a read-only secret, which you can obtain from the "Secrets" tab on your profile page.
@@ -128,9 +128,10 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
 export default StreamAPI;
 
 const bigQueryName = (stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName) => {
+  const organizationName = stream.project.organization.name.replace(/-/g, "_");
   const projectName = stream.project.name.replace(/-/g, "_");
   const streamName = stream.name.replace(/-/g, "_");
   // const idSlug = stream.currentStreamInstanceID ? stream.currentStreamInstanceID.slice(0, 8) : null;
   const idSlug = null;
-  return `beneath.${projectName}.${streamName}${idSlug ? "_" + idSlug : ""}`;
+  return `beneath.${organizationName}__${projectName}.${streamName}${idSlug ? "_" + idSlug : ""}`;
 };
