@@ -155,7 +155,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                     <>
                       You can query the stream on indexed fields, check out the{" "}
                       {/* tslint:disable-next-line: max-line-length */}
-                      <LinkTypography href="https://about.beneath.dev/docs/using-the-explore-tab/">
+                      <LinkTypography href="https://about.beneath.dev/docs/reading-from-beneath/using-the-data-terminal-ui/">
                         docs
                       </LinkTypography>{" "}
                       for more info.

@@ -12,24 +12,24 @@ Time required: 3 minutes.
 
 In this quick-start, we read an event stream from Beneath into a web application. You can read any public data stream or any of the private data streams that you have access to.
 
-##### 1. Log in to the Data Terminal
-Go to <a href="https://www.beneath.dev">https://www.beneath.dev</a>, and log in. If you don't yet have an account, create one.
+## Log in to the Data Terminal
+Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
 
-##### 2. Create a Read-Only secret
-a) Go to your user profile, by clicking on the profile icon in the top right-hand corner of the screen. <br>
-<img src="/media/profile-icon.png" width="90px"/>
-b) Click on the Secrets tab <br>
-c) Click "Create new read-only secret" and enter a description <br>
-d) Save your secret!
+## Create a Read-Only secret
 
-##### 3. Go to Project &rarr; Stream &rarr; API tab
-a) In the Data Terminal, navigate to your desired project<br>
-b) Navigate to your desired stream<br>
-c) Click on the API tab
+- Go to your user profile, by clicking on the profile icon in the top right-hand corner of the screen.
+- Click on the Secrets tab
+- Click "Create new read-only secret" and enter a description
+- Save your secret!
 
-##### 4. Copy-paste the Javascript snippet into your front-end code
+## Navigate to a data stream's API tab
+
+- The Beneath directory structure is USER/PROJECT/STREAM
+- In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+
+## Copy-paste the Javascript snippet into your front-end code
 ```javascript
-fetch("https://www.beneath.dev/projects/PROJECT_NAME/STREAM_NAME", {
+fetch("https://data.beneath.dev/v1/USER/PROJECT/STREAM", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
@@ -39,4 +39,3 @@ fetch("https://www.beneath.dev/projects/PROJECT_NAME/STREAM_NAME", {
   console.log(data)
 })
 ```
-

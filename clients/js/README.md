@@ -4,5 +4,6 @@
 
 ### Publishing to NPM
 
-1. Update the version number in `package.json`
-2. Run `npm publish`
+1. Run `yarn install` and `yarn build` to ensure your local copy of the library up-to-date with correct dependencies
+2. Update the version number in `package.json`
+3. Run `npm publish`

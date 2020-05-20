@@ -12,44 +12,43 @@ Time required: 5 minutes.
 
 In this quick-start, we read an event stream from Beneath into a Jupyter notebook. You can read any public data stream or any of the private data streams that you have access to.
 
-##### 1. Install the Beneath Python SDK
+## Install the Beneath Python SDK
 Install the Python SDK from your command line:
 ```bash
 pip install beneath
 ```
 
-##### 2. Log in to the Data Terminal
-Go to [https://www.beneath.dev](https://www.beneath.dev), and log in. If you don't yet have an account, create one.
+## Log in to the Terminal
+Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
 
-##### 3. Create a Read-Only secret
-a) Navigate to your user profile by clicking on the profile icon in the top right-hand corner of the screen. <br>
-<img src="/media/profile-icon.png" width="70px"/>
-b) Click on the Secrets tab <br>
-c) Click "Create new read-only secret" and enter a description <br>
-d) Save your secret!
+## Create a Read-Only secret
 
-##### 4. Authorize your local environment
-From your command line,
+- Navigate to your user profile by clicking on the profile icon in the top right-hand corner of the screen.
+- Click on the Secrets tab
+- Click "Create new read-only secret" and enter a description
+- Save your secret!
+
+## Authorize your local environment
+From your command line:
 ```bash
 beneath auth SECRET
 ``` 
-Now your secret has been placed in a hidden file on your Desktop called ".beneath"
+Now your secret has been stored in a hidden folder, `.beneath`, in your home directory
 
-##### 5. Go to desired Project &rarr; Stream &rarr; API tab
-a) In the Data Terminal, navigate to your desired project<br>
-b) Navigate to your desired stream<br>
-c) Click on the API tab
+## Navigate to a data stream's API tab
 
-##### 6. Copy-paste the Python snippet into a Jupyter notebook
+- The Beneath directory structure is USER/PROJECT/STREAM
+- In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+
+## Copy-paste the Python snippet into a Jupyter notebook
 Many data workers choose [Jupyter notebooks](https://jupyter.org/) for ad-hoc analyses. A few short lines of Python code are all you need to import Beneath data into your notebook environment.
 
+Here's the template for Python imports, but on the API tab, the stream's path is automatically populated for you.
+ 
 ```python
 from beneath import Client
 client = Client()
-stream = client.stream(project_name="PROJECT_NAME", stream_name="STREAM_NAME")
-df = stream.read()
+df = await client.easy_read(USER/PROJECT/STREAM)
 ```
 
-##### 7. Enjoy the easy-to-use API
-TODO: read-from-cursor
-
+And there's your data in a Pandas DataFrame!
