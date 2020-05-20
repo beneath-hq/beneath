@@ -36,6 +36,8 @@ func (s wsServer) InitClient(client *ws.Client, payload map[string]interface{}) 
 	secret := entity.Secret(&entity.AnonymousSecret{})
 	tokenStr, ok := payload["secret"].(string)
 	if ok {
+		log.S.Infow("OKOKOKOK", "secret", secret)
+
 		// parse token
 		token, err := secrettoken.FromString(tokenStr)
 		if err != nil {
@@ -47,7 +49,11 @@ func (s wsServer) InitClient(client *ws.Client, payload map[string]interface{}) 
 		if secret == nil {
 			return fmt.Errorf("couldn't authenticate secret")
 		}
+
+		log.S.Infow("AUTHEEED", "secret", secret)
 	}
+
+	log.S.Infow("PREPPED", "secret", secret)
 
 	// set secret as state
 	client.SetState(secret)
@@ -164,6 +170,7 @@ func (s wsServer) logWithSecret(sec entity.Secret, msg string, keysAndValues ...
 	l := log.S
 
 	if sec.IsUser() {
+		log.S.Infow("CHECK_OUT", "secret", sec)
 		l = l.With(
 			"secret", sec.GetSecretID().String(),
 			"user", sec.GetOwnerID().String(),
