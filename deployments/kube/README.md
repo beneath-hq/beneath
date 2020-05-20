@@ -117,3 +117,13 @@ All resources (tables, views, sequences, etc.) should be created and owned by th
 The `postgres` user has all the same privileges as `control` (initially, we ran `GRANT control TO postgres;` from the `control` user).
 
 NOTE: Be very careful when administering the database! To minimize the chance of mistakes: Connect only with `psql` (not a GUI), write your queries in a text editor before running them, and don't keep the connection open for longer than necessary.
+
+### Redis
+
+To connect to the Redis database (Cloud Memorystore) in productin, run:
+
+    kubectl run -i --tty redisbox --image=gcr.io/google_containers/redis:v1 -- sh
+
+Then within the container, run:
+
+    redis-cli -h 10.255.145.163
