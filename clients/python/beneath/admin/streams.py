@@ -121,9 +121,9 @@ class Streams:
   ):
     result = await self.conn.query_control(
       variables={
-        'organizationName': organization_name,
-        'projectName': project_name,
-        'streamName': stream_name,
+        'organizationName': format_entity_name(organization_name),
+        'projectName': format_entity_name(project_name),
+        'streamName': format_entity_name(stream_name),
         'schemaKind': schema_kind,
         'schema': schema,
         'retentionSeconds': retention_seconds,

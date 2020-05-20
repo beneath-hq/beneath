@@ -66,6 +66,7 @@ class Connection:
   def _create_grpc_connection(self):
     self.request_metadata = [('authorization', 'Bearer {}'.format(self.secret))]
     insecure = "localhost" in config.BENEATH_GATEWAY_HOST_GRPC
+    insecure = insecure or config.INTERNAL_NETWORK
     if insecure:
       self.channel = aiogrpc.insecure_channel(
         target=config.BENEATH_GATEWAY_HOST_GRPC,

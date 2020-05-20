@@ -29,7 +29,7 @@ c) Click on the API tab
 
 ##### 4. Copy-paste the Javascript snippet into your front-end code
 ```javascript
-fetch("https://www.beneath.dev/projects/PROJECT_NAME/streams/STREAM_NAME", {
+fetch("https://www.beneath.dev/projects/PROJECT_NAME/STREAM_NAME", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })

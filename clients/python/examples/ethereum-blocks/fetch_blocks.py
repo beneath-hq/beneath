@@ -1,18 +1,17 @@
 import beneath
 import os
 import pytz
+import asyncio
 from datetime import datetime
 from decimal import Decimal
 from hexbytes import HexBytes
 from structlog import get_logger
 from tenacity import before_sleep_log, retry, stop_after_attempt, wait_fixed, wait_random
-from time import sleep
 from web3 import Web3
 from web3.exceptions import BlockNotFound
 
-PROJECT = "beneath-ethereum"
-STABLE_STREAM = "blocks-stable"
-UNSTABLE_STREAM = "blocks-unstable"
+STABLE_STREAM = "beneath/ethereum/blocks-stable"
+UNSTABLE_STREAM = "beneath/ethereum/blocks-unstable"
 WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL", default=None)
 
 LATEST_COUNT = 25
@@ -20,13 +19,19 @@ STABLE_AFTER = 12
 POLL_SECONDS = 1
 
 log = get_logger()
-client = beneath.Client()
-stable = client.stream(project_name=PROJECT, stream_name=STABLE_STREAM)
-unstable = client.stream(project_name=PROJECT, stream_name=UNSTABLE_STREAM)
 w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
 
-def main():
-  latest = get_latest()
+async def main():
+  client = beneath.Client()
+
+  stable = await client.find_stream(STABLE_STREAM)
+  unstable = await client.find_stream(UNSTABLE_STREAM)
+
+  query = await stable.query_log(peek=True)
+  latest = await query.fetch_next(limit=LATEST_COUNT)
+  latest = sorted(latest, key=lambda block: block["number"])
+  if not validate_latest(latest):
+    raise Exception("Inconsistent latest blocks from stable")
   stable_idx = len(latest) - 1
 
   while True:
@@ -35,9 +40,9 @@ def main():
     next_number = latest_number + 1
     next_block = get_block(next_number)
     if not next_block:
-      sleep(POLL_SECONDS)
+      await asyncio.sleep(POLL_SECONDS)
       continue
-    
+
     # reprocess previous block if parent hash doesn't match
     if (len(latest) > 0) and (next_block["parent_hash"] != latest[-1]["hash"]):
       latest.pop()
@@ -54,26 +59,15 @@ def main():
       stable_idx -= 1
 
     # write unstable
-    unstable.write([next_block])
+    await unstable.write([next_block], immediate=True)
     log.info("write_unstable", number=next_block["number"], hash=next_block["hash"].hex())
 
     # write stable if necessary
     if (len(latest) - STABLE_AFTER) > stable_idx:
       stable_idx += 1
       stable_block = latest[stable_idx]
-      stable.write([stable_block])
+      await stable.write([stable_block], immediate=True)
       log.info("write_stable", number=stable_block["number"], hash=stable_block["hash"].hex())
-
-
-def get_latest():
-  # get most recently written value
-  latest = stable.latest(max_rows=LATEST_COUNT, to_dataframe=False, warn_max=False)
-  if len(latest) == 0:
-    return latest
-  latest = sorted(latest, key=lambda block: block["number"])
-  if not validate_latest(latest):
-    raise Exception("Inconsistent latest blocks from stable")
-  return latest
 
 
 def validate_latest(blocks):
@@ -131,4 +125,6 @@ def safe_to_utf8(val):
 
 
 if __name__ == "__main__":
-  main()
+  loop = asyncio.new_event_loop()
+  asyncio.set_event_loop(loop)
+  loop.run_until_complete(main())
