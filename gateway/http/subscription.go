@@ -33,11 +33,9 @@ func (s wsServer) KeepAlive(numClients int, elapsed time.Duration) {
 // InitClient implements ws.Server
 func (s wsServer) InitClient(client *ws.Client, payload map[string]interface{}) error {
 	// get secret
-	secret := entity.Secret(&entity.AnonymousSecret{})
+	var secret entity.Secret
 	tokenStr, ok := payload["secret"].(string)
 	if ok {
-		log.S.Infow("OKOKOKOK", "secret", secret)
-
 		// parse token
 		token, err := secrettoken.FromString(tokenStr)
 		if err != nil {
@@ -49,11 +47,11 @@ func (s wsServer) InitClient(client *ws.Client, payload map[string]interface{}) 
 		if secret == nil {
 			return fmt.Errorf("couldn't authenticate secret")
 		}
-
-		log.S.Infow("AUTHEEED", "secret", secret)
 	}
 
-	log.S.Infow("PREPPED", "secret", secret)
+	if secret == nil {
+		secret = &entity.AnonymousSecret{}
+	}
 
 	// set secret as state
 	client.SetState(secret)
