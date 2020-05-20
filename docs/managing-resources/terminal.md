@@ -19,11 +19,11 @@ The Terminal is currently focused on displaying streams, integrations and resour
 
 ## Browsing the Terminal
 
-You access the Beneath Terminal by visiting [https://beneath.dev](https://beneath.dev) or clicking the "Terminal" button on the top-right corner of this website. You don't have to be logged in to use parts of the Terminal.
+You access the Beneath Terminal by visiting [https://beneath.dev](https://beneath.dev?noredirect=1) or clicking the "Terminal" button on the top-right corner of this website. You don't have to be logged in to use most parts of the Terminal.
 
-Accessing the Terminal will take you to the *springboard*. If you are not logged in, it will show you interesting data to explore. If you are logged in, you will see an overview of your usage and your projects.
+Accessing the Terminal will take you to the *springboard*, the entry point to the terminal. If you are not logged in, it will show you interesting data to explore. If you are logged in, you will see an overview of your usage and your projects.
 
-Resources in the Terminal follow the `/organization/project/stream` hierarchy described in [Resources]({{< ref "/docs/managing-resources/resources" >}}). Note that if you're not part of an organization, your username is your organization name.
+Resources in the Terminal follow the `/organization/project/stream` hierarchy described in [Resources]({{< ref "/docs/managing-resources/resources" >}}). Note that if you're not part of an *organization*, your *username* is your organization name.
 
 ## Managing public information
 

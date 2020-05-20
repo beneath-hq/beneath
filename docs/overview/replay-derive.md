@@ -18,7 +18,7 @@ With event logs, it becomes really easy to create transformations that derive fr
 
 ### Applying a machine learning model to uploaded data
 
-Let's say you've created a machine learning model that can tell if an image has been manipulated. Now you want to turn it into a production service where users can upload their own images. Every time a user uploads an image, you write it to a stream called `images`. Separately, you run a small service that uses the `images` event log to get every new image, run the model on it to determine if the image is has been manipulated, then writes the result to a new stream `labeled-images`. Since Beneath automatically [provides indexed lookups]({{< ref "/docs/overview/unified-data-system" >}}), your UI can just ping the `labeled-images` index for the result, which will likely appear within milliseconds. 
+Let's say you've created a machine learning model that can tell if an image has been manipulated. Now you want to turn it into a production service where users can upload their own images. Every time a user uploads an image, you write it to a stream called `images`. Separately, you run a small service that uses the `images` event log to get every new image, run the model on it to determine if the image has been manipulated, then writes the result to a new stream `labeled-images`. Since Beneath automatically [provides indexed lookups]({{< ref "/docs/overview/unified-data-system" >}}), your UI can just ping the `labeled-images` index for the result, which will likely appear within milliseconds. 
 
 This workflow also makes it easy to improve your machine learning model and update your results. When you've trained an improved model, just update your service and reset its subscription to replay every past image into the model!
 
@@ -30,7 +30,7 @@ If, for example, you're writing live IoT sensor data into a stream in Beneath, y
 
 ### Testing data quality
 
-If you want to keep tabs on your data quality, you can write a service that subscribes to every new record in a stream and checks that its values are within the expected ranges. If a record fails your tests, you can write it to a special stream of flagged observations – or even have the code send you an email!
+If you want to keep tabs on your data quality, you can write a service that subscribes to every new record in a stream and checks that its values are within the expected ranges. If a record fails your tests, you can write it to a special stream of flagged observations – or even have the code send you an email.
 
 ### Synchronizing to an external system
 
@@ -38,7 +38,7 @@ Lets say you need to synchronize every sale you make to your accounting software
 
 ## Learn more
 
-Event logs are arguably the most useful primitive in production data systems. That's exactly why we put them at the center of Beneath! If you want to try them out in action, use one of our [Quick starts](https://about.beneath.dev/docs/quick-starts/). If you would like to learn more about event logs in general, these are the best articles we've ever read on the topic:
+Event logs are arguably the most useful primitive in production data systems. That's exactly why we put them at the center of Beneath! If you want to try them out in action, use one of our [quick starts](https://about.beneath.dev/docs/quick-starts/). If you would like to learn more about event logs in general, these are the best articles we've ever read on the topic:
 
 - [The Log: What every software engineer should know about real-time data's unifying abstraction](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying)
 - [Online Event Processing](https://queue.acm.org/detail.cfm?id=3321612)

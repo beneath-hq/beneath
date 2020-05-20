@@ -16,7 +16,7 @@ You issue and use [secrets]({{< ref "/docs/managing-resources/resources.md#secre
 
 ### Authenticating in Beneath CLI
 
-See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cli.md#Installation" >}}).
+See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cli.md#installation" >}}).
 
 ### Inviting a user to an organization
 
@@ -25,23 +25,23 @@ See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cl
 First, an organization admin should send an invitation to the user (the flags designate the invitees new permissions):
 
 ```bash
-beneath organization invite-member ORGANIZATION_NAME USERNAME --view --admin
+beneath organization invite-member ORGANIZATION USERNAME --view --create --admin
 ```
 
 Second, the invited user should accept the invitation:
 
 ```bash
-beneath organization accept-invite ORGANIZATION_NAME
+beneath organization accept-invite ORGANIZATION
 ```
 
 ### Granting a user access to an organization
 
 > **Note:** When you *grant* a user access to your organization, they remain responsible for paying the bills for their own usage on Beneath. If you also want to pay for their usage on Beneath, see [Inviting a user to an organization]({{< relref "#inviting-a-user-to-an-organization" >}}).
 
-Run the following command (change the `--create` or `--admin` flags to configure permissions):
+Run the following command (change the flags to configure permissions):
 
 ```bash
-beneath organization update-permissions ORGANIZATION_NAME USERNAME --view true --create true --admin true
+beneath organization update-permissions ORGANIZATION USERNAME --view --create --admin
 ```
 
 The user doesn't have to be a part of the organization in advance.
@@ -50,10 +50,10 @@ The user doesn't have to be a part of the organization in advance.
 
 In Beneath, *user* access to streams is managed at the project-level. You cannot grant a *user* access to only one stream (however, if you need a secret with permissions for just a single stream, use a *service*). 
 
-Run the following command (change the `--create` or `--admin` flags to configure permissions):
+Run the following command (change the flags to configure permissions):
 
 ```bash
-beneath project update-permissions ORGANIZATION_NAME/PROJECT_NAME USERNAME --view true --create true --admin true
+beneath project update-permissions ORGANIZATION/PROJECT USERNAME --view true --create true --admin true
 ```
 
 The user doesn't have to be a part of the same organization as you or the project to get access.
@@ -64,7 +64,7 @@ You can issue and copy a new secret from the ["Secrets" tab of your profile page
 
 There are two types of secrets:
 - **Command-line secrets:** These contain all your access permissions
-- **Read-only secrets:** These are limited to `view` permissions on the resources you has access to
+- **Read-only secrets:** These are limited to `view` permissions on the resources you have access to
 
 **Never share your user secrets!** You should not share or expose user secrets nor use them in production systems. Use a service secret if you need a secret in a production system or if you need to expose a secret (e.g. in a shared notebook or in your frontend code).
 
@@ -75,13 +75,13 @@ Services are useful when deploying or publishing code that reads or writes to Be
 First, create a new service in your organization (customize their quotas to set monthly limits):
 
 ```bash
-beneath service create ORGANIZATION_NAME/NEW_SERVICE_NAME --read-quota-mb 100 --write-quota-mb 100
+beneath service create ORGANIZATION/NEW_SERVICE --read-quota-mb 100 --write-quota-mb 100
 ```
 
 Second, give the service the permissions it needs (remove `--write` if it doesn't need write permissions):
 
 ```bash
-beneath service update-permission ORGANIZATION_NAME/SERVICE_NAME ORGANIZATION_NAME/PROJECT_NAME/STREAM_NAME --read --write 
+beneath service update-permissions ORGANIZATION/SERVICE ORGANIZATION/PROJECT/STREAM --read --write 
 ```
 
 > **Note:** Services do not automatically get read permissions for public streams (unlike users). You must set them manually.
@@ -95,9 +95,9 @@ If you haven't yet created a service, follow the example given above.
 Run the following command:
 
 ```bash
-beneath service issue-secret ORGANIZATION_NAME/SERVICE_NAME --description "YOUR SERVICE DESCRIPTION"
+beneath service issue-secret ORGANIZATION/SERVICE --description "YOUR SECRET DESCRIPTION"
 ```
 
 You can now use the secret to connect to Beneath from your code. Most client libraries will automatically use your secret if you set it in the `BENEATH_SECRET` environment variable (see the documentation for your client library for other ways of passing the secret).
 
-**Think carefully before sharing sharing service secrets!** If you need to expose a secret publicly (e.g. in your front-end code or in a notebook), make sure it belongs to a service with sensible usage quotas and only `read` permissions. In all other cases, keep your secret very safe and do not check it into Git.
+**Think carefully before sharing sharing service secrets!** If you need to expose a secret publicly (e.g. in your front-end code or in a notebook), make sure it belongs to a service with sensible usage quotas and only `read` permissions. In all other cases, keep your secret very safe and do not commit it into Git.

@@ -18,19 +18,19 @@ The three *kinds* of data technologies Beneath bundles are:
 
 - **Log-based publish/subscribe:** A system that receives and stores *messages* (also called *events*) and streams them in real-time to other systems (called *subscribers*). Examples include Apache Kafka, RabbitMQ, Google Pub/Sub and Amazon Kinesis. Also (depending on its properties) called an *event log*, *message queue* or *message broker*.
 - **Data warehouse:** A system that stores data with a focus on analytical processing, for example business intelligence. It's slow if you need to quickly find individual rows, but very fast when you need to analyze an entire dataset. Examples include BigQuery, Redshift, Hive and Snowflake. Also (with some variation) called a *data lake* or *OLAP database*.
-- **Operational data cache:** A system that stores data with a focus on fast indexed lookups of individual records. It allows you to fetch data in milliseconds, thousand of times per second, which is useful when rendering a website or serving an API. Examples include Bigtable, Cassandra, MongoDB and Postgres. Also (depending on its properties) called a *key-value store*, *relational database* or *OLTP database*.
+- **Operational data index:** A system that stores data with a focus on fast indexed lookups of individual records. It allows you to fetch data in milliseconds, thousand of times per second, which is useful when rendering a website or serving an API. Examples include Bigtable, Cassandra, MongoDB and Postgres. Also (depending on its properties) called a *key-value store*, *relational database* or *OLTP database*.
 
 When you write data to Beneath, it consistently becomes available in an instance of each of these three systems.
 
-By automatically configuring and integrating these different technologies, Beneath allows you to get started working on your data sourcing and transformations right away. Not only do you save months of wiring data technologies, you also get a stable data system that's constantly updated to with new best practices.
+By automatically configuring and integrating these different technologies, Beneath allows you to get started working on your data sourcing and transformations right away. Not only do you save months of wiring data technologies, you also get a stable data system that's continuously updated with new best practices.
 
 ## Example
 
-To illustrate how these systems work in tandem, imagine you're building a weather forecasting website. Every time you get new weather data, you write it to Beneath and it becomes available in every system. The *publish/subscribe system* instantly pushes the data to your weather prediction model, which uses it to compute an updated forecast that it writes back into Beneath. Every time someone visits your website, you serve them the most recent forecast from the *operational data cache*. Once a day, you re-train your weather prediction model with a complex query that runs in the *data warehouse*.
+To illustrate how these systems work in tandem, imagine you're building a weather forecasting website. Every time you get new weather data, you write it to Beneath and it becomes available in every system. The *publish/subscribe system* instantly pushes the data to your weather prediction model, which uses it to compute an updated forecast that it writes back into Beneath. Every time someone visits your website, you serve them the most recent forecast from the *operational data index*. Once a day, you re-train your weather prediction model with a complex query that runs in the *data warehouse*.
 
 ## Technologies Beneath uses under the hood
 
-Under the hood, the cloud version of Beneath uses Google Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as an operational data cache. If you self-host Beneath, we provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
+Under the hood, the cloud version of Beneath uses Google Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as an operational data index. If you self-host Beneath, we provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
 
 ## Other data technologies
 
