@@ -125,7 +125,7 @@ await stream.write(records)
 ```
 
 ##### 11. Check out the Data Terminal to see data arrive in realtime 
-Navigate to your stream in the Data Terminal and go to the Explore tab to see your data arrive in realtime. The url will look like: https://www.beneath.dev/USERNAME/PROJECTNAME/streams/STREAMNAME
+Navigate to your stream in the Data Terminal and go to the Explore tab to see your data arrive in realtime. The url will look like: https://www.beneath.dev/USERNAME/PROJECTNAME/STREAMNAME
 
 ##### Further examples
 More examples of the Python SDK in action can be found <a href="https://gitlab.com/_beneath/beneath-core/-/tree/master/clients%2Fpython%2Fexamples" class="link">here</a>.
