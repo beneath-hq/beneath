@@ -36,9 +36,10 @@ weight: 300
 **Access management:**
 - A [user]({{< relref "#users" >}}) can access an [organization]({{< relref "#organizations" >}}).
   - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the members and projects in the organization.
-  - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add and delete members, create new projects, create services and change billing information.
+  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and manipulate projects and services in the organization.
+  - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add and delete members, monitor members' usage, and to change billing information.
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME`
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION`
 
 **CLI:** Run `beneath organization --help` for details.
 
@@ -53,10 +54,10 @@ weight: 300
 **Access management:**
 - A [user]({{< relref "#users" >}}) can access a [project]({{< relref "#projects" >}}).
   - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the contents of the project, including viewing and querying records in its [streams]({{< relref "#streams" >}}).
-  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and delete [streams]({{< relref "#streams" >}}) in the project, including writing data directly to root [streams]({{< relref "#streams" >}}).
+  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and delete [streams]({{< relref "#streams" >}}) in the project, including writing data directly to (non-derived) [streams]({{< relref "#streams" >}}).
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add, remove and change permissions for other [users]({{< relref "#users" >}}).
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME`
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT`
 
 **CLI:** Run `beneath project --help` for details.
 
@@ -76,7 +77,7 @@ weight: 300
   - The `read` permission grants the [service]({{< relref "#services" >}}) permission to read and query records.
   - The `write` permission grants the [service]({{< relref "#services" >}}) permission to write records.
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/STREAM_NAME`
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM`
 
 **CLI:** Run `beneath stream --help` for details.
 
@@ -89,19 +90,20 @@ weight: 300
 
 **Access management:** A [stream instance]({{< relref "#stream-instances" >}}) inherits the permissions of its parent [stream]({{< relref "#streams" >}}).
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION_NAME/PROJECT_NAME/STREAM_NAME` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
+**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
 
 **CLI:** Run `beneath stream instance --help` for details.
 
 ## Services
 
-**Definition:** A [service]({{< relref "#services" >}}) represents a system with access to read or write data to Beneath. You can think of a [services]({{< relref "#services" >}}) as a [user]({{< relref "#users" >}}) for your code. They're especially useful for creating secrets that you can use in your code to read and write to Beneath in a safe way.
+**Definition:** A [service]({{< relref "#services" >}}) represents a system with access to read or write data to Beneath. You can think of a [service]({{< relref "#services" >}}) as a [user]({{< relref "#users" >}}) for your code. They're especially useful for creating secrets that you can use in your code to read and write to Beneath in a safe way.
 
 A [service]({{< relref "#services" >}}) has the following properties:
 - You grant it custom access permissions (on a stream level) that are not tied to the permissions of a specific user
 - You can create secrets for the service, which you embed in your code to use Beneath
 - You get usage metrics (reads and writes) for the service
 - You can set usage limits (reads and writes) for the service on a monthly basis
+- You have to explicitly grant permissions to access public streams (unlike [users]({{< relref "#users" >}}), which automatically have access to public streams)
 
 **Relations:**
 - A [service]({{< relref "#services" >}}) belongs to one [organization]({{< relref "#organizations" >}}), which handles billing for the [service]({{< relref "#services" >}}).
@@ -110,7 +112,7 @@ A [service]({{< relref "#services" >}}) has the following properties:
 **Access management:**
 - A [service]({{< relref "#services" >}}) can be granted access to a [stream]({{< relref "#streams" >}}).
 
-**Terminal:** (Not available)
+**Terminal:** Go to `https://beneath.dev/beneath/-/services/SERVICE`
 
 **CLI:** Run `beneath service --help` for details.
 

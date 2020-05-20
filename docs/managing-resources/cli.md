@@ -8,7 +8,7 @@ menu:
 weight: 200
 ---
 
-The Beneath CLI allows you to interact with Beneath directly from the command-line. While the Beneath Terminal is focused on providing a great overview of resources, the Beneath CLI is especially focused on creating and manipulating resources on Beneath. It's your go-to tool for things like creating projects, staging new streams, changing access permissions, creating a service, issuing service secrets, and more.
+The Beneath CLI allows you to interact with Beneath directly from the command-line. While the Beneath Terminal is focused on providing a great *overview* of resources, the Beneath CLI is especially made for *creating and manipulating* resources on Beneath. It's your go-to tool for things like creating projects, staging new streams, changing access permissions, creating a service, issuing service secrets, and more.
 
 ## Installation
 
@@ -46,4 +46,4 @@ The `--help` parameter also works for subcommands, for example:
 beneath project create --help
 ```
 
-In addition, many documentation pages contain examples of how to use the Beneath CLI (such as [Quick starts]({{< ref "/docs/quick-starts" >}})).
+In addition, many documentation pages contain examples of how to use the Beneath CLI (such as [quick starts]({{< ref "/docs/quick-starts" >}})).
