@@ -18,46 +18,6 @@ You issue and use [secrets]({{< ref "/docs/managing-resources/resources.md#secre
 
 See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cli.md#installation" >}}).
 
-### Inviting a user to an organization
-
-> **Note:** When you *invite* a user to your organization, you take over the full billing responsibility for the user's activity. If you just want to grant the user access to view stuff in your organization (but not pay their bills), see [Granting a user access to an organization]({{< relref "#granting-a-user-access-to-an-organization" >}}).
-
-First, an organization admin should send an invitation to the user (the flags designate the invitees new permissions):
-
-```bash
-beneath organization invite-member ORGANIZATION USERNAME --view --create --admin
-```
-
-Second, the invited user should accept the invitation:
-
-```bash
-beneath organization accept-invite ORGANIZATION
-```
-
-### Granting a user access to an organization
-
-> **Note:** When you *grant* a user access to your organization, they remain responsible for paying the bills for their own usage on Beneath. If you also want to pay for their usage on Beneath, see [Inviting a user to an organization]({{< relref "#inviting-a-user-to-an-organization" >}}).
-
-Run the following command (change the flags to configure permissions):
-
-```bash
-beneath organization update-permissions ORGANIZATION USERNAME --view --create --admin
-```
-
-The user doesn't have to be a part of the organization in advance.
-
-### Granting a user access to a project and its streams
-
-In Beneath, *user* access to streams is managed at the project-level. You cannot grant a *user* access to only one stream (however, if you need a secret with permissions for just a single stream, use a *service*). 
-
-Run the following command (change the flags to configure permissions):
-
-```bash
-beneath project update-permissions ORGANIZATION/PROJECT USERNAME --view true --create true --admin true
-```
-
-The user doesn't have to be a part of the same organization as you or the project to get access.
-
 ### Creating a secret for a user
 
 You can issue and copy a new secret from the ["Secrets" tab of your profile page](https://beneath.dev/-/redirects/secrets) in the Beneath Terminal.
@@ -101,3 +61,43 @@ beneath service issue-secret ORGANIZATION/SERVICE --description "YOUR SECRET DES
 You can now use the secret to connect to Beneath from your code. Most client libraries will automatically use your secret if you set it in the `BENEATH_SECRET` environment variable (see the documentation for your client library for other ways of passing the secret).
 
 **Think carefully before sharing sharing service secrets!** If you need to expose a secret publicly (e.g. in your front-end code or in a notebook), make sure it belongs to a service with sensible usage quotas and only `read` permissions. In all other cases, keep your secret very safe and do not commit it into Git.
+
+### Inviting a user to an organization
+
+> **Note:** When you *invite* a user to your organization, you take over the full billing responsibility for the user's activity. If you just want to grant the user access to view stuff in your organization (but not pay their bills), see [Granting a user access to an organization]({{< relref "#granting-a-user-access-to-an-organization" >}}).
+
+First, an organization admin should send an invitation to the user (the flags designate the invitees new permissions):
+
+```bash
+beneath organization invite-member ORGANIZATION USERNAME --view --create --admin
+```
+
+Second, the invited user should accept the invitation:
+
+```bash
+beneath organization accept-invite ORGANIZATION
+```
+
+### Granting a user access to an organization
+
+> **Note:** When you *grant* a user access to your organization, they remain responsible for paying the bills for their own usage on Beneath. If you also want to pay for their usage on Beneath, see [Inviting a user to an organization]({{< relref "#inviting-a-user-to-an-organization" >}}).
+
+Run the following command (change the flags to configure permissions):
+
+```bash
+beneath organization update-permissions ORGANIZATION USERNAME --view --create --admin
+```
+
+The user doesn't have to be a part of the organization in advance.
+
+### Granting a user access to a project and its streams
+
+In Beneath, *user* access to streams is managed at the project-level. You cannot grant a *user* access to only one stream (however, if you need a secret with permissions for just a single stream, use a *service*). 
+
+Run the following command (change the flags to configure permissions):
+
+```bash
+beneath project update-permissions ORGANIZATION/PROJECT USERNAME --view true --create true --admin true
+```
+
+The user doesn't have to be a part of the same organization as you or the project to get access.
