@@ -1,5 +1,5 @@
 ---
-title: Usage and Billing Model
+title: Usage and billing model
 description: A description of how Beneath calculates usage for billing purposes
 menu:
   docs:
@@ -8,7 +8,7 @@ menu:
 weight: 100
 ---
 
-TODO...
+TODO
 
 For the Professional and Enterprise plans, you are allotted monthly quotas for both Reads and Writes. At the beginning of each month, you are charged your plan's base price. At the end of the month, if your Read or Write usage exceeds your monthly quota, then you will be charged an "overage" fee. 
 
