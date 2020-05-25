@@ -1,11 +1,11 @@
 ---
 title: Write data from your app
-description:
+description: A guide to writing your data to the Beneath data system
 menu:
   docs:
     parent: quick-starts
-    weight: 300
-weight: 300
+    weight: 400
+weight: 400
 ---
 
 Time required: 5 minutes.

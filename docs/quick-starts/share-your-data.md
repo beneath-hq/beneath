@@ -1,11 +1,11 @@
 ---
 title: Share your data 
-description:
+description: A guide to updating project-level access controls
 menu:
   docs:
     parent: quick-starts
-    weight: 400
-weight: 400
+    weight: 500
+weight: 500
 ---
 
 Time required: 1 minute.

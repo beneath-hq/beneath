@@ -1,11 +1,11 @@
 ---
 title: Read data into Jupyter notebook
-description:
+description: A guide to reading your data into an interactive Python environment
 menu:
   docs:
     parent: quick-starts
-    weight: 100
-weight: 100
+    weight: 200
+weight: 200
 ---
 
 Time required: 5 minutes.

@@ -1,11 +1,11 @@
 ---
 title: Read data into your web app
-description:
+description: A guide to getting your data into your application's frontend
 menu:
   docs:
     parent: quick-starts
-    weight: 200
-weight: 200
+    weight: 300
+weight: 300
 ---
 
 Time required: 3 minutes.
