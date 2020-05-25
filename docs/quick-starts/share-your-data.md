@@ -15,7 +15,7 @@ This quick-start assumes you've already installed the Beneath SDK and assumes th
 ## Add a user to the project
 From your command line:
 ```bash
-beneath project update-permissions ORGANIZATION/PROJECT USER --view true --create true --admin false 
+beneath project update-permissions ORGANIZATION_NAME/PROJECT_NAME USERNAME --view true --create true --admin false 
 ```
 
 ## Notes

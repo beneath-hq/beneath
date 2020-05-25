@@ -12,7 +12,7 @@ Time required: 5 minutes.
 
 In this quick-start, we write a data stream to Beneath. The stream might originate from your application or from some external API that you would like to consume.
 
-You can follow this quick start, or check out [this Jupyter notebook](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/notebooks/covid19.ipynb) that scrapes COVID-19 data and writes it to Beneath.
+You can follow this quick start, or check out [this example notebook](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/notebooks/covid19.ipynb) that scrapes COVID-19 data and writes it to Beneath.
 
 ## Install the Beneath Python SDK
 If you haven't already, install the Python SDK from your command line:
@@ -46,11 +46,11 @@ Additionally, every project is assigned to an organization. This ensures that al
 
 On your command line, provide your username and the name you'd like for your project:
 ```bash
-beneath project create USER/PROJECT
+beneath project create USERNAME/NEW_PROJECT_NAME
 ```
 
 ## Initialize the Python client and stage your stream
-Either in your application code, or, to test, in a Jupyter notebook, connect to your stream with the following Python code. Use your command-line secret.
+Either in your application code, or, to test, in a [Jupyter notebook](https://jupyter.org/), connect to your stream with the following Python code. Use your command-line secret.
 providing your username, project name, and the name you'd like for your stream
 
 Every stream requires a schema. If needed, there is more information about the Beneath schema language [here](/docs/schema-language).
@@ -58,14 +58,13 @@ Every stream requires a schema. If needed, there is more information about the B
 ```python
 import beneath
 client = beneath.Client()
-stream = await client.stage_stream(USER/PROJECT/STREAM, """
+stream = await client.stage_stream("USERNAME/PROJECT_NAME/NEW_STREAM_NAME", """
 type SchemaTemplate @stream() @key(fields: ["my_integer_index"]) {
   "This is also the stream's index, as the key defines above."
   my_integer_index: Int!
 
   my_timestamp: Timestamp!
   my_bytes: Bytes32!
-  my_big_number: Numeric!
 
   "This field is not required, as denoted by the lack of exclamation point."
   my_optional_string: String
@@ -81,14 +80,12 @@ Generate or capture the data of interest and ensure it aligns with your stream's
 ```python
 from datetime import datetime
 import secrets
-import sys
 
 def generate_record(n):
   return {
     "my_integer_index": n,
     "my_timestamp": datetime.now(),
-    "my_bytes": secrets.token_bytes(4),
-    "my_big_number": secrets.randbelow(sys.maxsize),
+    "my_bytes": secrets.token_bytes(32),
     "my_optional_string": None
   }
 
@@ -104,7 +101,18 @@ await stream.write(records)
 ```
 
 ## Check out the Beneath Terminal to see data arrive in realtime 
-Navigate to your stream in the Terminal and go to the Explore tab to see your data arrive in realtime. The url will look like: https://beneath.dev/USER/PROJECT/STREAM
+Navigate to your stream in the Terminal and go to the Explore tab to see your data arrive in realtime. The url will look like: https://beneath.dev/USERNAME/PROJECT_NAME/STREAM_NAME
+
+## If you'd like to clean up, you can delete the resources you created
+To delete a stream:
+```bash
+beneath stream delete USERNAME/PROJECT_NAME/STREAM_NAME
+```
+
+If a project is empty, you can delete it:
+```bash
+beneath project delete USERNAME/PROJECT_NAME
+```
 
 ## Further examples
 More examples of the Python SDK in action can be found [here](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python/examples).

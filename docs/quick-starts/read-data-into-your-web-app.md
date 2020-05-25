@@ -24,12 +24,18 @@ Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don'
 
 ## Navigate to a data stream's API tab
 
-- The Beneath directory structure is USER/PROJECT/STREAM
-- In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+You can read any public data stream (for example, check out the [featured projects](https://beneath.dev/?noredirect=1)) or any of the private data streams that you have access to. 
 
-## Copy-paste the Javascript snippet into your front-end code
+The Beneath directory structure is USER/PROJECT/STREAM
+
+In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+
+## Copy-paste the Javascript snippet into your frontend code
+
+Here's the template for Javascript imports, but on the API tab, the stream's path is automatically populated for you.
+
 ```javascript
-fetch("https://data.beneath.dev/v1/USER/PROJECT/STREAM", {
+fetch("https://data.beneath.dev/v1/USERNAME/PROJECT_NAME/STREAM_NAME", {
   "Authorization": "Bearer SECRET",
   "Content-Type": "application/json",
 })
