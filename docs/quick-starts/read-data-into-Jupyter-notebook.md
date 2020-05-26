@@ -4,8 +4,8 @@ description: A guide to reading your data into an interactive Python environment
 menu:
   docs:
     parent: quick-starts
-    weight: 200
-weight: 200
+    weight: 400
+weight: 400
 ---
 
 Time required: 5 minutes.
