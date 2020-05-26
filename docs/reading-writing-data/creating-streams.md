@@ -12,17 +12,17 @@ weight: 200
 
 1. If you haven't already, [install and setup the Beneath CLI]({{< ref "/docs/managing-resources/cli.md" >}}).
 2. If you haven't already, create a project using the command-line:
-```
+```bash
 beneath project create USERNAME/NEW_PROJECT_NAME
 ```
 3. Define a schema for your stream (see the next section for details)
 4. You now have two options for creating a stream:
     1. Using the command line. Save your schema to a file (e.g. `schema.gql`) and run:
-    ```
+    ```bash
     beneath stream stage USERNAME/PROJECT/NEW_STREAM_NAME -f schema.gql
     ```
     2. Using Python. Copy and paste the following snippet:
-    ```
+    ```python
     import beneath
     client = beneath.Client()
     stream = await client.stage_stream('USERNAME/PROJECT/NEW_STREAM_NAME', """
@@ -35,7 +35,7 @@ beneath project create USERNAME/NEW_PROJECT_NAME
     ```
 
 To delete a stream, run the following command:
-```
+```bash
 beneath stream delete USERNAME/PROJECT/STREAM
 ```
 
@@ -44,7 +44,7 @@ To learn more about using the Python library, consult the ([reference documentat
 ## Defining stream schemas
 
 Every stream in Beneath has a schema defined with a variant of the [GraphQL schema definition language](https://graphql.org/learn/schema/). Here is an example:
-```
+```graphql
 type Example @stream @key(fields: ["foo"]) {
   foo: Int!
   bar: String!
@@ -71,7 +71,7 @@ Beneath enforces some special conventions on top of the normal GraphQL language:
 | `Timestamp` | A millisecond-precision UTC date and time (no time zone) |
 
 - You can define custom sub-types and enums, for example:
-```
+```graphql
 type Place @stream @key(fields: ["place_id"]) {
   place_id: Int!
   location: Point!

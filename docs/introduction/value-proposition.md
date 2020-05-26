@@ -3,7 +3,7 @@ title: Value proposition
 description: Who Beneath is for and what problems it solves
 menu:
   docs:
-    parent: overview
+    parent: introduction
     weight: 200
 weight: 200
 ---

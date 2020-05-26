@@ -3,7 +3,7 @@ title: Replay and derive streams
 description: How Beneath uses event logs to make it easy to derive streams and synchronize systems
 menu:
   docs:
-    parent: overview
+    parent: introduction
     weight: 400
 weight: 400
 ---

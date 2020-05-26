@@ -3,7 +3,7 @@ title: Unified data system
 description: How and why Beneath bundles several different data technologies
 menu:
   docs:
-    parent: overview
+    parent: introduction
     weight: 300
 weight: 300
 ---
