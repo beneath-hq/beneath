@@ -1,11 +1,11 @@
 ---
 title: Create a derived data stream
-description:
+description: A guide to stream processing with Beneath
 menu:
   docs:
     parent: quick-starts
-    weight: 500
-weight: 500
+    weight: 600
+weight: 600
 ---
 
 TODO
