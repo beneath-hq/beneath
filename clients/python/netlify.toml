@@ -1,4 +1,3 @@
 [build]
   command = "make docs"
   publish = "docs/_build"
-  ignore = "git diff --quiet HEAD^ HEAD ."
