@@ -4,8 +4,8 @@ description: A guide to writing your data to the Beneath data system
 menu:
   docs:
     parent: quick-starts
-    weight: 400
-weight: 400
+    weight: 200
+weight: 200
 ---
 
 Time required: 5 minutes.
