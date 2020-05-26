@@ -40,20 +40,19 @@ Now your secret has been stored in a hidden folder, `.beneath`, in your home dir
 ## Create a Beneath project
 On Beneath, every data stream lives in a project. Like on GitHub, every code file lives in a repository.
 
-Additionally, every project is assigned to an organization. This ensures that all project resources have someone assigned for billing purposes.
-
-**When you sign up for Beneath, you are automatically assigned an organization with the same name as your username.** The organization is automatically assigned to a Free billing plan.
+Additionally, every project is owned by either a user or organization.
 
 On your command line, provide your username and the name you'd like for your project:
 ```bash
 beneath project create USERNAME/NEW_PROJECT_NAME
 ```
 
-## Initialize the Python client and stage your stream
-Either in your application code, or, to test, in a [Jupyter notebook](https://jupyter.org/), connect to your stream with the following Python code. Use your command-line secret.
-providing your username, project name, and the name you'd like for your stream
+## Initialize the Python client, define your schema, and stage your stream
+Either in your application code, or, to test, in a [Jupyter notebook](https://jupyter.org/), stage your stream with the Python code below.
 
-Every stream requires a schema. If needed, there is more information about the Beneath schema language [here](/docs/schema-language).
+What you'll need to do:
+- Provide your username, project name, and the name you'd like for your stream
+- Define your stream's schema. You can either use the template below, or you can find more information about the Beneath schema language [here](/docs/reading-writing-data/creating-streams).
 
 ```python
 import beneath
@@ -64,6 +63,7 @@ type SchemaTemplate @stream() @key(fields: ["my_integer_index"]) {
   my_integer_index: Int!
 
   my_timestamp: Timestamp!
+
   my_bytes: Bytes32!
 
   "This field is not required, as denoted by the lack of exclamation point."
@@ -72,7 +72,7 @@ type SchemaTemplate @stream() @key(fields: ["my_integer_index"]) {
 """)
 ```
 
-Great! You just created a Beneath stream. The next step is to write data to the stream.
+Great! You just staged a Beneath stream. The next step is to write data to the stream.
 
 ## Generate your data
 Generate or capture the data of interest and ensure it aligns with your stream's schema that you defined above. If the data does not conform to the defined schema, Beneath will reject the write request.
