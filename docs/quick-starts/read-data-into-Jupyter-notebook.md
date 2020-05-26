@@ -47,7 +47,7 @@ The Beneath directory structure is USER/PROJECT/STREAM.
 
 In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
 
-## Open a Jupyter notebook and paste the snippet
+## Open a Jupyter notebook
 
 If you don't have Jupyter installed, here's a super quick [installation guide](https://jupyter.org/install.html) to get up-and-running. 
 
@@ -58,9 +58,11 @@ jupyter notebook
 
 In the notebook, you can run code interactively. Enter your code in a cell and run it with `shift` + `enter`. Now you're ready to load some data from Beneath. 
 
-## Copy the Python snippet
+## Copy and paste the Python snippet
 
-A few short lines of Python are all you need to import Beneath data into your notebook environment. Run the following snippet to get a [pandas](https://pandas.pydata.org/) dataframe of COVID-19 data.
+A few short lines of Python are all you need to import Beneath data into your notebook environment. On the "API" tab of every stream on Beneath, you'll find a Python snippet you can copy and paste to load records into your code.
+
+Here's a snippet taken from the [COVID-19 cases](https://beneath.dev/bem/covid19/cases) stream. Run it to load the data as a [pandas](https://pandas.pydata.org/) dataframe:
  
 ```python
 from beneath import Client
