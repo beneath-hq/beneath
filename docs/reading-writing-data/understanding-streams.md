@@ -40,6 +40,6 @@ Records written to Beneath are automatically made stored in several systems, whi
 - An operational data index, which stores data for low-latency (milliseconds) filtered lookups based on the unique key 
 - A data warehouse, for analytical SQL-based queries that process a large slice of the stream instance in one go
 
-To learn more about these systems, see [unified data system]({{< ref "/docs/overview/unified-data-system" >}}).
+To learn more about these systems, see [unified data system]({{< ref "/docs/introduction/unified-data-system" >}}).
 
 The following pages in this section explain more about how to use these systems in practice.

@@ -7,7 +7,7 @@
 
 This repository contains the source code for the [Beneath](https://beneath.dev) Python library. Learn more about it with these resources:
 
-- [Overview](https://about.beneath.dev/docs/overview/)
+- [Overview](https://about.beneath.dev/docs/introduction/)
 - [Reading data from Beneath](https://about.beneath.dev/docs/read-data-into-jupyter-notebook/)
 - [Writing data to Beneath](https://about.beneath.dev/docs/write-data-from-your-app/)
 

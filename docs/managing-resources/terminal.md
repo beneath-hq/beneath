@@ -39,7 +39,7 @@ Use the "Monitoring" tab on the page of any user, organization, service or strea
 
 ## Exploring streams
 
-You can browse the data in a stream in the Beneath Terminal. It provides different representations of the data, mirroring the [different underlying data systems]({{< ref "/docs/overview/unified-data-system" >}}) where the data is stored. In short:
+You can browse the data in a stream in the Beneath Terminal. It provides different representations of the data, mirroring the [different underlying data systems]({{< ref "/docs/introduction/unified-data-system" >}}) where the data is stored. In short:
 
 - **Log** representation lets you browse records in the order they were written. You can sort records by "oldest" or "newest".
 - **Index** representation lets you browse records sorted by their [key]({{< ref "/docs/reading-writing-data" >}}). It only contains the newest record for each key (unlike the log, which contains every version). You can provide a filter to quickly lookup records by their key. See the [Reading and Writing Data]({{< ref "/docs/reading-writing-data" >}}) section for details on the filter query syntax.
