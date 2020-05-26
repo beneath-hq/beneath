@@ -10,9 +10,9 @@ weight: 100
 
 To clear out any confusion: Beneath has a broad interpretation of the term "stream" that includes *bounded* data collections (also known as *batch data* or *static data*). This interpretation is based on the philosophy that even bounded collections comes into existance, and will in turn be consumed, in some kind of sequence.
 
-Streams in Beneath have a variety of unique properties, which you can learn more about below.
+Streams in Beneath have some unique properties that you can learn more about below.
 
-## All streams must have a schema and a unique key
+## Streams have a schema and a unique key
 
 All *streams* have an associated schema that defines the fields of its records. The schema must also define a *key* comprised of one or more columns (also known as a *primary key* or *unique key*). Beneath rejects records that do not adhere to the stream's schema. 
 
@@ -32,12 +32,14 @@ The following list gives some examples that clarify the usefulness of *stream in
 
 Every record in a *stream instance* has an associated timestamp. When you write a record, you can specify a custom timestamp or use the current timestamp of the Beneath server (the default). The timestamp comes in handy when several records with the same *key* are written to a stream instance. In these cases, the record with the highest timestamp is added in the operational data index.
 
-## Records written to an instance are stored in a log, a key-value store and a data warehouse
+## Streams are replicated in a streaming log, an operational data index and a data warehouse
 
 Records written to Beneath are automatically made stored in several systems, which are useful for different purposes. These are:
 
 - A persistant and streaming log, for replaying the history of a stream instance and staying subscribed to new changes
-- An operational data store, which indexes data for low-latency (milliseconds) filtered lookups based on the unique key 
+- An operational data index, which stores data for low-latency (milliseconds) filtered lookups based on the unique key 
 - A data warehouse, for analytical SQL-based queries that process a large slice of the stream instance in one go
 
-To learn more about these systems, see [unified data system]({{< ref "/docs/overview/unified-data-system" >}}). The following pages in this section explain more about how to use these systems in practice.
+To learn more about these systems, see [unified data system]({{< ref "/docs/overview/unified-data-system" >}}).
+
+The following pages in this section explain more about how to use these systems in practice.
