@@ -15,6 +15,7 @@ from beneath.proto import gateway_pb2_grpc
 
 
 class GraphQLError(Exception):
+  """ Error returned for control-plane (GraphQL) errors """
 
   def __init__(self, message, errors):
     super().__init__(message)
@@ -22,6 +23,7 @@ class GraphQLError(Exception):
 
 
 class AuthenticationError(Exception):
+  """ Error returned for failed authentication """
 
   def __init__(self, message):
     super().__init__(message)
