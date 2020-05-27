@@ -4,8 +4,8 @@ description: A guide to writing your data to the Beneath data system
 menu:
   docs:
     parent: quick-starts
-    weight: 200
-weight: 200
+    weight: 300
+weight: 300
 ---
 
 Time required: 5 minutes.
@@ -15,9 +15,10 @@ In this quick-start, we write a data stream to Beneath. The stream might origina
 You can follow this quick start, or check out [this example notebook](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/notebooks/covid19.ipynb) that scrapes COVID-19 data and writes it to Beneath.
 
 ## Install the Beneath Python SDK
-If you haven't already, install the Python SDK from your command line:
+
+Install the latest version of the Python SDK from your command line:
 ```bash
-pip install beneath
+pip3 install --upgrade beneath
 ```
 
 ## Log in to the Beneath Terminal

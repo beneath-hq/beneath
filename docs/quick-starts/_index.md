@@ -3,8 +3,8 @@ menu:
   docs:
     identifier: quick-starts
     name: Quick Starts
-    weight: 200
-weight: 200
+    weight: 100
+weight: 100
 
 title: Quick starts
 description: Pick a tutorial to learn how to interact with Beneath
@@ -12,6 +12,7 @@ description: Pick a tutorial to learn how to interact with Beneath
 
 Choose the relevant guide for reading, writing, processing, or sharing data:
 
+- [Install the Beneath SDK]({{< ref "/docs/quick-starts/install-the-sdk" >}}). Start here to quickly install the SDK on your machine.
 - [Write data from your app]({{< ref "/docs/quick-starts/write-data-from-your-app" >}}). This tutorial guides you through installing the Beneath Python SDK, authorizing your environment, creating a Beneath project, staging a Beneath stream, and writing data to Beneath.
 - [Read data into your web app]({{< ref "/docs/quick-starts/read-data-into-your-web-app" >}}). This tutorial goes through authorizing your environment and reading Beneath data into your Javascript frontend.
 - [Read data into a Jupyter notebook]({{< ref "/docs/quick-starts/read-data-into-jupyter-notebook" >}}). This tutorial guides you through installing the Beneath Python SDK, authorizing your environment, and reading Beneath data into a Jupyter notebook.
