@@ -38,7 +38,9 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	instanceID := uuid.FromBytesOrNil(req.InstanceId)
 	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
 	if stream == nil {
-		return fmt.Errorf("cached stream is null for instance id %s", instanceID.String())
+		// TODO: use dead letter queue that retries
+		log.S.Errorw("instance not found", "instance", instanceID.String(), "records", req.Records)
+		return nil
 	}
 
 	// compute sensible timestamp at which to not even attempt the write

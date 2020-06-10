@@ -4,8 +4,8 @@ description: A guide to getting your data into your application's frontend
 menu:
   docs:
     parent: quick-starts
-    weight: 300
-weight: 300
+    weight: 400
+weight: 400
 ---
 
 Time required: 3 minutes.

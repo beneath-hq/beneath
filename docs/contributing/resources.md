@@ -44,6 +44,11 @@ Use this document to track interesting resources (articles, videos, books, etc.)
 - (Documentation) [gRPC Basics - Python](https://grpc.io/docs/tutorials/basic/python/)
 - (Article) [gRPC Load Balancing](https://grpc.io/blog/loadbalancing/)
 
+## Log streaming
+
+- (Article) [Kafka Exactly Once Semantics](https://hevodata.com/blog/kafka-exactly-once/). Decent introduction to idempotency and atomic transactions in Kafka.
+- (Documentation) [Docs for `aiokafka`](https://aiokafka.readthedocs.io/en/stable/index.html). Good Python examples of stream processing with `await`s in Python
+
 ## Apache Beam
 
 - (Video) [Beam Summit Europe 2019 videos](https://www.youtube.com/playlist?list=PL4dEBWmGSIU_jJ82n0WK46agJy4ThegIQ)
@@ -51,4 +56,5 @@ Use this document to track interesting resources (articles, videos, books, etc.)
 - (Code) [Python Cookbook](https://github.com/apache/beam/tree/master/sdks/python/apache_beam/examples/cookbook)
 - (Documentation) [Overview: Developing a new I/O connector](https://beam.apache.org/documentation/io/developing-io-overview/)
 - (Documentation) [Developing I/O connectors for Python](https://beam.apache.org/documentation/io/developing-io-python/)
-- Code [Bigtable connector for Python](https://github.com/apache/beam/blob/master/sdks/python/apache_beam/io/gcp/bigtableio.py). This nicely showcases the internals of a DoFn, and implements `__getstate__` and `__setstate__`.
+- (Code) [Bigtable connector for Python](https://github.com/apache/beam/blob/master/sdks/python/apache_beam/io/gcp/bigtableio.py). This nicely showcases the internals of a DoFn, and implements `__getstate__` and `__setstate__`.
+- (Article) [Apache Beam: How Beam Runs on Top of Flink](https://flink.apache.org/ecosystem/2020/02/22/apache-beam-how-beam-runs-on-top-of-flink.html). Explains how Beam pipelines written in different languages all can run on Flink.

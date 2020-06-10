@@ -1,0 +1,26 @@
+" Reddit posts to the r/Coronavirus subreddit. Using a pre-trained NLP model to compute each submission's polarity and subjectivity. "
+type Post
+  @stream
+  @key(fields: ["subreddit", "author", "timestamp"])
+{
+  " Name of the subreddit "
+  subreddit: String!
+
+  " Author of the post "
+  author: String!
+
+  " Post timestamp "
+  timestamp: Timestamp!
+
+  " Submission title "
+  title: String!
+
+  " Submission url "
+  url: String
+
+  " Submission polarity on a scale from -1 (negative) to 0 (neutral) to 1 (positive). Computed with the textblob python package. "
+  polarity: Float!
+
+  " Submission subjectivity on a scale from 0 (objective) to 1 (subjective). Computed with the textblob python package. "
+  subjectivity: Float!
+}

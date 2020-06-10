@@ -4,8 +4,8 @@ description: A guide to reading your data into an interactive Python environment
 menu:
   docs:
     parent: quick-starts
-    weight: 400
-weight: 400
+    weight: 500
+weight: 500
 ---
 
 Time required: 5 minutes.
@@ -14,9 +14,9 @@ In this quick-start, we read a data stream from Beneath into a [Jupyter notebook
 
 ## Install the Beneath Python SDK
 
-Install the Python SDK from your command line:
+Install the latest version of the Python SDK from your command line:
 ```bash
-pip install --upgrade beneath
+pip3 install --upgrade beneath
 ```
 
 ## Log in to the Terminal
