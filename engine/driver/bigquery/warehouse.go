@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"math"
 	"math/big"
 
 	"cloud.google.com/go/bigquery"
@@ -39,6 +40,15 @@ func (r *ExternalRow) Save() (row map[string]bigquery.Value, insertID string, er
 // note: overrides in place
 func (r *ExternalRow) recursiveSerialize(valT interface{}) bigquery.Value {
 	switch val := valT.(type) {
+	case float64:
+		if math.IsNaN(val) {
+			return "NaN"
+		} else if math.IsInf(val, 1) {
+			return "Infinity"
+		} else if math.IsInf(val, -1) {
+			return "-Infinity"
+		}
+		return val
 	case *big.Int:
 		return val.String()
 	case *big.Rat:
