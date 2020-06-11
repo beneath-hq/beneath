@@ -30,6 +30,9 @@ func TestAvroJson1(t *testing.T) {
 		type TestB {
 			one: Int!
 			two: Bytes10
+			three: Float64
+			four: Float64
+			five: Float64
 		}
 	`)
 
@@ -51,7 +54,10 @@ func TestAvroJson1(t *testing.T) {
 			"six": null,
 			"seven": {
 				"one": 31,
-				"two": "0x99887766554433221100"
+				"two": "0x99887766554433221100",
+				"three": "NaN",
+				"four": "-Infinity",
+				"five": 3.141
 			}
 		}
 	}`

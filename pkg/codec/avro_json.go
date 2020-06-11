@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -95,6 +96,19 @@ func jsonNativeToAvroNative(schemaT interface{}, valT interface{}, definedTypes 
 			}
 			if val, ok := valT.(float64); ok {
 				return int64(val), nil
+			}
+		}
+
+		// handle Nan and +/- infinity (which are stored as strings)
+		if schema == "float" || schema == "double" {
+			if val, ok := valT.(string); ok {
+				if val == "NaN" {
+					return math.NaN(), nil
+				} else if val == "Infinity" {
+					return math.Inf(1), nil
+				} else if val == "-Infinity" {
+					return math.Inf(-1), nil
+				}
 			}
 		}
 
@@ -319,6 +333,19 @@ func avroNativeToJSONNative(schemaT interface{}, valT interface{}, definedTypes 
 						return strconv.FormatInt(val, 10), nil
 					}
 					return float64(val), nil
+				}
+			}
+		}
+
+		// handle Nan and +/- infinity (which should be stored as strings)
+		if schema == "float" || schema == "double" {
+			if val, ok := valT.(float64); ok {
+				if math.IsNaN(val) {
+					return "NaN", nil
+				} else if math.IsInf(val, 1) {
+					return "Infinity", nil
+				} else if math.IsInf(val, -1) {
+					return "-Infinity", nil
 				}
 			}
 		}
