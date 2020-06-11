@@ -1,0 +1,61 @@
+" Loans listed on the Lending Club platform. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). Historical loans include the borrower's payment outcome. This stream also includes predictions for whether or not the borrower will default on the loan. "
+type Loan @stream @key(fields: ["id"]) {
+  "A unique LC assigned ID for the loan listing."
+  id: Int!
+
+  "The date when the borrower's application was listed on the platform."
+  list_d: Timestamp
+
+  "The date when the borrower's loan was issued."
+  issue_d: Timestamp
+
+  "LC assigned loan grade"
+  grade: String!
+
+  "LC assigned loan subgrade"
+  sub_grade: String!
+
+  "The Number of payments on the loan. Values are in months and can be either 36 or 60."
+  term: Int!
+
+  "Interest Rate on the loan"
+  int_rate: Float!
+
+  "The listed amount of the loan applied for by the borrower. If at some point in time, the credit department reduces the loan amount, then it will be reflected in this value."
+  loan_amount: Float!
+
+  "A category provided by the borrower for the loan request. Values are: debt_consolidation, medical, home_improvement, renewable_energy, small_business, wedding, vacation, moving, house, car, major_purchase, credit_card, other"
+  purpose: String!
+
+  "The home ownership status provided by the borrower during registration or obtained from the credit report. Our values are: RENT, OWN, MORTGAGE, OTHER"
+  home_ownership: String
+
+  "The annual income provided by the borrower during registration."
+  annual_inc: Float
+
+  "The address state provided by the borrower during loan application"
+  addr_state: String
+
+  "The Number of accounts on which the borrower is now delinquent."
+  acc_now_delinq: Int
+
+  "The borrower's debt to income ratio, calculated using the monthly payments on the total debt obligations, excluding mortgage, divided by self-reported monthly income."
+  dti: Float
+
+  "The upper boundary of range the borrower's FICO belongs to."
+  fico_range_high: Int
+
+  "The Number of open credit lines in the borrower's credit file."
+  open_acc: Int
+
+  "Number of derogatory public records."
+  pub_rec: Int
+
+  "Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit."
+  revol_util: Float
+
+  loan_status: String
+
+  "Predicted loan status, computed using a logistic regression model"
+  loan_status_predicted: String!
+}
