@@ -30,9 +30,20 @@ To stage the Beneath streams:
 To connect to Lending Club's API for newly-listed loans:
 - Create a Lending Club account, register as an Investor, and request API access. Save the API key.
 
-Apply the Lending Club API key to Kubernetes with:
+Then apply the API key to Kubernetes:
 
     kubectl create secret generic lending-club-api-key -n models --from-literal secret=LENDING_CLUB_API_KEY
+
+To connect to Beneath, create a service and issue a service secret:
+
+    beneath service create epg/lending-club-service --read-quota-mb 100 --write-quota-mb 2000
+    beneath service update-permissions epg/lending-club-service epg/lending-club/loans --read --write 
+    beneath service update-permissions epg/lending-club-service epg/lending-club/loans-enriched --read --write 
+    beneath service issue-secret epg/lending-club-service --description kubernetes
+
+Then apply the service secret to Kubernetes:
+
+    kubectl create secret generic lending-club-service-secret -n models --from-literal secret=SECRET
 
 To rebuild the Docker images:
 
@@ -48,14 +59,3 @@ To deploy to Kubernetes:
     kubectl apply -f loans-enriched/kube.yaml -n models
 
 Important: There must ever only be one replica of the script running at a time. (Running multiple wouldn't hurt consistency, but would cause duplicates to appear in the streaming view and in the data warehouses.)
-
-The secret used to connect to Beneath was issued with:
-
-    beneath service create epg/lending-club --read-quota-mb 100 --write-quota-mb 2000
-    beneath service update-permissions epg/lending-club epg/lending-club/loans --read --write 
-    beneath service update-permissions epg/lending-club epg/lending-club/loans-enriched --read --write 
-    beneath service issue-secret epg/lending-club --description kubernetes
-
-And applied to Kubernetes with:
-
-    kubectl create secret generic lending-club-loans -n models --from-literal secret=SECRET
