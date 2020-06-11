@@ -1,0 +1,25 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: lending-club-loans
+spec:
+  schedule: "0 9,13,17,21 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: lending-club-loans
+            image: gcr.io/beneath/lending-club-loans:latest
+            env:
+              - name: BENEATH_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: lending-club-loans
+                    key: secret
+              - name: LENDING_CLUB_API_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: lending-club-api-key
+                    key: secret
+          restartPolicy: OnFailure
