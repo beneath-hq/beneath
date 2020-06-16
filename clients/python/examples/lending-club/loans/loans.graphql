@@ -57,5 +57,6 @@ type Loan
   "Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit."
   revol_util:	Float
 
+  "Current status of the loan."
   loan_status: String
 }
