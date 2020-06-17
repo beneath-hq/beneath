@@ -12,27 +12,28 @@ weight: 200
 
 1. If you haven't already, [install and setup the Beneath CLI]({{< ref "/docs/managing-resources/cli.md" >}}).
 2. If you haven't already, create a project using the command-line:
-```bash
-beneath project create USERNAME/NEW_PROJECT_NAME
-```
+    ```bash
+    beneath project create USERNAME/NEW_PROJECT_NAME
+    ```
+
 3. Define a schema for your stream (see the next section for details)
 4. You now have two options for creating a stream:
     1. Using the command line. Save your schema to a file (e.g. `schema.gql`) and run:
-    ```bash
-    beneath stream stage USERNAME/PROJECT/NEW_STREAM_NAME -f schema.gql
-    ```
+        ```bash
+        beneath stream stage USERNAME/PROJECT/NEW_STREAM_NAME -f schema.gql
+        ```
     2. Using Python. Copy and paste the following snippet:
-    ```python
-    import beneath
-    client = beneath.Client()
-    stream = await client.stage_stream('USERNAME/PROJECT/NEW_STREAM_NAME', """
-      type Example @stream @key(fields: ["foo"]) {
-        foo: Int!
-        bar: String!
-        foo_bar: Float
-      }
-    """)
-    ```
+        ```python
+        import beneath
+        client = beneath.Client()
+        stream = await client.stage_stream('USERNAME/PROJECT/NEW_STREAM_NAME', """
+          type Example @stream @key(fields: ["foo"]) {
+            foo: Int!
+            bar: String!
+            foo_bar: Float
+          }
+        """)
+        ```
 
 To delete a stream, run the following command:
 ```bash
