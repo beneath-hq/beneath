@@ -3,6 +3,6 @@ menu:
   docs:
     identifier: misc
     name: Miscellaneous
-    weight: 700
-weight: 700
+    weight: 900
+weight: 900
 ---
