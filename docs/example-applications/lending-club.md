@@ -31,8 +31,9 @@ For reference, here's all [the code](https://gitlab.com/beneath-hq/beneath/-/tre
 
 In the interest of getting-to-the-point and focusing on Beneath, we'll assume you can set yourself up with the following:
 - A [Kubernetes](https://kubernetes.io/docs/home/) cluster. There are [many ways to set up Kubernetes](https://kubernetes.io/docs/setup/). Personally, we use Google's managed Kubernetes offering, [GKE](https://cloud.google.com/kubernetes-engine).
+- [Docker Desktop](https://docs.docker.com/desktop/). So you can build and deploy your container images.
 - A [Metabase](https://www.metabase.com/) installation. There are quicker [ways to get up-and-running](https://www.metabase.com/docs/latest/operations-guide/installing-metabase.html), but for our production deployment, we’ve opted to run [Metabase on Kubernetes](https://www.metabase.com/docs/latest/operations-guide/running-metabase-on-kubernetes.html).
-- A [Beneath account](https://beneath.dev?noredirect=1). Also [install the SDK](docs/quick-starts/install-the-sdk/) to follow along.
+- A [Beneath account](https://beneath.dev?noredirect=1). Also [install the SDK](/docs/quick-starts/install-the-sdk/) to follow along.
 - A [Lending Club Developer account](https://www.lendingclub.com/developers/api-overview). Get yourself an API key in order to fetch loans from their servers.
 
 Alright, let's start!
@@ -43,7 +44,7 @@ The first thing I'd like to do is load historical loan data into Beneath. This h
 
 ### Create a Project
 
-The first thing to do before writing data to Beneath is decide on the Project that will hold the Stream. With the Beneath CLI, within my user account `epg`, I create a project named `lending-club`:
+The first thing to do before writing data to Beneath is decide on the Project directory that will hold the Stream. With the Beneath CLI, within my user account `epg`, I create a project named `lending-club`:
 ```bash
 beneath project create epg/lending-club
 ```
@@ -107,11 +108,22 @@ Now the data is stored on Beneath. In the Beneath Terminal, I can double check m
 
 ## Writing real-time data
 
-Now that we’ve loaded historical data into Beneath, we want to get all the real-time loan data. Lending Club releases these loans and their data four times each day. So, we write a little ETL script to ping the Lending Club API and write the resulting data to Beneath.
+Now that we’ve loaded historical data into Beneath, we want to continually fetch the real-time loan data. Lending Club releases these loans and their data four times each day. 
+
+### Write ETL script
+We write a little [ETL script](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans/fetch_new_loans.py) to ping the Lending Club API and write the resulting data to Beneath.
+
+These are the Beneath-relevant lines of Python code for writing data:
+```python
+import beneath
+client = beneath.Client()
+stream = await client.find_stream("epg/lending-club/loans")
+await stream.write(loans)
+```
 
 ### Create a Beneath Service
 
-Using Beneath, any piece of code that you deploy to run continuously or on a certain schedule is considered a Service. A Service runs ‘in the wild’ and, accordingly, should use its own secret, should leverage its own minimally-viable permissions, and should be granted its own quota. All this ensures that, if a bad actor finds your secret, they won’t be able to abuse it for their own purposes.
+In order to deploy our ETL code and authenticate it to Beneath, we need to create a Beneath [Service](/docs/managing-resources/resources/). A Service has its own secret, its own minimally-viable permissions, and its own quota. We'll create a Lending Club Service, which will solely have access to write to the `epg/lending-club/loans` stream.
 
 We create the service, grant it permissions, and issue its secret with these CLI commands:
 
@@ -121,9 +133,16 @@ beneath service update-permissions epg/lending-club-service epg/lending-club/loa
 beneath service issue-secret epg/lending-club-service --description kubernetes
 ```
 
-### Create a Kubernetes Cronjob
+Save the secret so that we can register it in the Kubernetes environment.
 
-My ETL script doesn’t have to run continuously, but only spin-up/spin-down at 6am, 12pm, 3pm, and 6pm PST every day. So this calls for a Cronjob, which we can deploy to our Kubernetes cluster with this yaml file and these commands:
+### Deploy a Kubernetes Cronjob
+Our ETL script looks at our Kubernetes environment for two secrets: the Lending Club Service Secret (which we just created), and the Lending Club API Key. We add these secrets to our Kubernetes environment like so:
+```bash
+kubectl create secret generic lending-club-service-secret -n models --from-literal secret=SECRET
+kubectl create secret generic lending-club-api-key -n models --from-literal secret=SECRET
+```
+
+Our ETL script only needs to spin-up/spin-down at 6am, 12pm, 3pm, and 6pm PST every day, so this calls for a Cronjob. We can deploy the Cronjob to our Kubernetes cluster with [this yaml file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans/kube.yaml) and these commands:
 
 ```bash
 docker build -t gcr.io/beneath/lending-club-loans:latest .
@@ -131,39 +150,39 @@ docker push gcr.io/beneath/lending-club-loans:latest
 kubectl apply -f loans/kube.yaml -n models
 ```
 
-Whenever the script spins up, it will look for our secrets in the Kubernetes environment, so we add them like so:
-```bash
-kubectl create secret generic lending-club-service-secret -n models --from-literal secret=SECRET
-kubectl create secret generic lending-club-api-key -n models --from-literal secret=SECRET
-```
+Now our ETL script is live! In order to check that everything is wired up correctly, you can run a one-off Cronjob. 
 
 ### Go to the Beneath Terminal to validate the writes
 
-Awesome. Now our script is running 4x a day, and writing data to Beneath. Again, we can check out the stream in the Terminal to validate that these writes are actually happening. By selecting the Log view (which is the default), we can see the time of each write in the “Time ago” column.
+Our script is now running 4x a day, and writing data to Beneath. But let's just check the Terminal at https://beneath.dev/epg/lending-club/loans to validate that these writes are actually happening. By selecting the `Log` view, we can see the time of each write in the `Time ago` column.
 
 ## Connect Metabase
 
-Once you have Metabase installed, you can connect it to your data stored on Beneath by connecting through BigQuery, which is one of the source destinations where Beneath stores your data under-the-hood.
+Now that we've uploaded both historical and real-time data to Beneath, let's connect a business intelligence tool so that anyone (inside or outside your organization) can play around with the data.
+
+Assuming you have Metabase installed, you can link it to Beneath by connecting through BigQuery, which is one of the source destinations where Beneath stores your data under-the-hood.
 
 ### Add Database
 
-In the admin panel, click “Add Database” and fill out the form with the following values:
+In the admin panel, click “Add Database” and fill out the form with the following values*:
 
 ![metabase config](/media/docs/metabase-config.png)
 
-*Currently, if you’d like to connect your own BI tool, you’ll have to reach out to us to provide you with authentication details so you can connect to the Beneath data warehouse. We know this isn’t ideal and are working on making this fully self-service.
+*Currently, if you’d like to connect your own BI tool, you’ll have to [reach out to us](/contact) to provide you with authentication details so you can connect to the Beneath data warehouse. We know this isn’t ideal and are working on making this fully self-service.
 
 ### Use Metabase to explore data, run analytics queries, or create a dashboard
 
-Voila! You’ve now connected Metabase to your Beneath data, and you can take advantage of Metabase’s easy-to-use data exploration and it’s friendly SQL interface. Play around with Metabase for 30 minutes and you’ll realize how easy it is. We’ve created this dashboard.
+Voila! You’ve now connected Metabase to your Beneath data, and you can take advantage of Metabase’s easy-to-use data exploration and it’s friendly SQL interface. Play around with Metabase for 30 minutes and you’ll realize how easy it is. We’ve created [this dashboard](https://metabase.demo.beneath.dev/dashboard/1).
 
-## Train a machine learning model on the Lending Club historical data
+## Train a machine learning model on historical data
 
 After exploring our data, our next step is to enrich the data stream with predictions.
 
 With Beneath, you can train a quick machine learning model by reading your data into a Jupyter notebook and training your model in-memory on your local computer. (This is the quick way to do it -- we’ll cover more robust ways in other tutorials).
 
-You can look at the full training script here. But here’s the outline of it:
+You can look at the full training script [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/train_model.ipynb). But here’s the outline of it:
+
+### Read data into a Jupyter notebook
 
 Read in your data to a Jupyter notebook. Your data will be ready-to-go in a Pandas dataframe.
 
@@ -172,6 +191,8 @@ import beneath
 client = beneath.Client()
 df = await client.easy_read(“epg/lending_club/loans”)
 ```
+
+### Define features and train your model
 
 Define your input features and your target variable. Split your data into a training set and test set. Train your model.
 
@@ -182,20 +203,27 @@ Y = df[['loan_status_binary']]
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=2020)
 clf = LogisticRegression(random_state=0).fit(X_train, y_train)
 ```
-Save the model
+
+### Save the model
+
+With the [joblib library](https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html), we can easily and efficiently save a ML model to a `pkl` file:
 
 ```python
 import joblib
 joblib.dump(clf, 'model.pkl')
 ```
 
-Now that we have our machine learning model (in the form of the model.pkl file), we can apply it to every new loan that’s issued on the Lending Club platform.
+Now that we have our machine learning model in the model.pkl file,  we can include it in our [Dockerfile](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/Dockerfile) and access it in our Kubernetes environment.
 
-## Apply the ML model to every new loan listing to predict which loans will default and should be avoided and which loans will not default and are safe to buy. We deploy the model to Kubernetes.
+## Enrich the data stream
 
-With Beneath, you create and deploy a Service for your stream processing needs. The Service, deployed to Kubernetes, will read from a Beneath stream, apply a function, then write to an output Beneath stream. The beauty of Services is that, with Beneath’s Python SDK, they are entirely stateless: you don’t have to worry about keeping in sync with your input data stream, even if your compute goes down.
+Next we'll apply our machine learning model to every new Lending Club loan in real-time. We'll get an instant assessment of whether or not the loan is an attractive loan to buy or not.
 
-First, we’ll prepare our output data stream by defining its schema. We’re using the same schema as the raw loans stream, but this time we’re adding a column for our predictions:
+In a Beneath Service, we'll read in the `epg/lending-club/loans` stream, apply our model, and output a new stream called `epg/lending-club/loans-enriched`.
+
+### Stage the output stream
+
+First, we’ll prepare our output data stream by defining its schema in [this file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/loans_enriched.graphql). We’re using the same schema as the raw loans stream, but this time we’re adding a column for our predictions:
 
 ```graphql
 " Loans listed on the Lending Club platform. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). Historical loans include the borrower's payment outcome. "
@@ -215,7 +243,7 @@ type Loan
   "LC assigned loan grade"
   grade:	String!
 
-  …
+  ... (omitted a few fields) ...
 
   "Current status of the loan."
   loan_status: String
@@ -231,22 +259,51 @@ Then we stage the stream:
 beneath stream stage epg/lending-club/loans-enriched -f loans_enriched.graphql
 ```
 
-Next, we’ll create our file that we’ll run in a Kubernetes container. It’s called enrich_loans.py and you can find it here. In particular, note these functions from the Beneath SDK:
+### Write stream processing script
+Next, we’ll create our stream processing script that we’ll run in a Kubernetes container. It’s called enrich_loans.py and you can find it [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/enrich_loans.py). In particular, note these functions from the Beneath SDK:
 ```python
-client.process_forever()
+TODO
 ```
+
+### Create a Beneath Service
 Even if the compute goes down, the Service will spin back up and continue right where it left off! Under the hood, your progress is stored in Beneath, so you don’t have to worry about it and your Kubernetes deployment needs no storage of its own.
 
-Like we did for the loans stream, we need to deploy it to Kubernetes. Again, we need to create a Beneath Service, issue its secret, and store it in the Kubernetes environment.
+We create the service, grant it permissions, and issue its secret with these CLI commands:
+
+```bash
+TODO
+```
+
+Save the secret so that we can register it in the Kubernetes environment.
 
 
-## REST API allows you to consume the results of each prediction
+### Deploy to Kubernetes
+Like we did for the loans stream, we need to deploy it to Kubernetes. We follow the same steps as before.
 
-In another application, we can consume the results of the loans_enriched stream. Or, within, our enrich_loans.py script we can issue buy orders based on the predictions. 
+We add our Service secret to our Kubernetes environment like so:
+```bash
+TODO
+```
+
+We create our Kubernetes deployment with [this yaml file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/kube.yaml) and these commands:
+```bash
+docker build -t gcr.io/beneath/lending-club-loans-enriched:latest .
+docker push gcr.io/beneath/lending-club-loans-enriched:latest
+kubectl apply -f loans-enriched/kube.yaml -n models
+```
+
+Now our stream processing script is live!
+
+### Go to the Beneath Terminal to validate the writes
+Again, to double-check our work, we can check out the stream at https://beneath.dev/epg/lending-club/loans-enriched to make sure it's writing data as we'd expect.
 
 
+## Consume predictions with the API options
 
-## Conclusion
+In the Terminal, head on over to the stream's API tab at https://beneath.dev/epg/lending-club/loans-enriched/-/api. You can consume your predictions with any of the available API options. Or, within, our enrich_loans.py script we can issue buy orders based on the predictions. 
 
-End-to-end application.
+## We're done!
 
+We've built an end-to-end analytics application. We leveraged Kubernetes for deploying our containers, we leveraged Metabase to allow other people to easily visualize and query the data, and we centered our application around Beneath for its data storage and stream processing.
+
+Head on over to the [Terminal](https://beneath.dev?noredirect=1) to explore some of the public projects or [reach out to us](/contact) if you'd like to talk through your next project. We're very happy to help you get going.
