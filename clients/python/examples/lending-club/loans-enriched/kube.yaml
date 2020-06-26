@@ -26,5 +26,5 @@ spec:
           - name: BENEATH_SECRET
             valueFrom:
               secretKeyRef:
-                name: lending-club-loans
+                name: lending-club-service-secret
                 key: secret

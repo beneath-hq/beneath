@@ -102,6 +102,10 @@ class Column {
       }
 
       if (avro.Type.isType(this.actualType, "float", "double")) {
+        // handle NaN, Infinity, and -Infinity
+        if (typeof(val) === "string") {
+          return val.toString();
+        }
         return numbro(val).format("0,0.000");
       }
 
