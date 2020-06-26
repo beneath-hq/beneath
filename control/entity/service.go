@@ -6,34 +6,25 @@ import (
 	"time"
 
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gopkg.in/go-playground/validator.v9"
+
+	"gitlab.com/beneath-hq/beneath/internal/hub"
 )
 
 // Service represents external service keys, models, and, in the future, charts, all of which need OrganizationIDs for billing
 type Service struct {
-	ServiceID      uuid.UUID   `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name           string      `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
-	Kind           ServiceKind `sql:",notnull"`
-	OrganizationID uuid.UUID   `sql:"on_delete:restrict,notnull,type:uuid"`
-	Organization   *Organization
-	ReadQuota      *int64    // NOTE: when updating value, clear secret cache
-	WriteQuota     *int64    // NOTE: when updating value, clear secret cache
-	CreatedOn      time.Time `sql:",notnull,default:now()"`
-	UpdatedOn      time.Time `sql:",notnull,default:now()"`
-	Secrets        []*ServiceSecret
+	ServiceID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name        string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
+	Description string    `validate:"omitempty,lte=255"`
+	SourceURL   string    `validate:"omitempty,url,lte=255"`
+	ProjectID   uuid.UUID `sql:"on_delete:restrict,notnull,type:uuid"`
+	Project     *Project
+	ReadQuota   *int64    // NOTE: when updating value, clear secret cache
+	WriteQuota  *int64    // NOTE: when updating value, clear secret cache
+	CreatedOn   time.Time `sql:",notnull,default:now()"`
+	UpdatedOn   time.Time `sql:",notnull,default:now()"`
+	Secrets     []*ServiceSecret
 }
-
-// ServiceKind represents a external, model, etc. services
-type ServiceKind string
-
-const (
-	// ServiceKindExternal is a service key that people can put on external facing products
-	ServiceKindExternal ServiceKind = "external"
-
-	// ServiceKindModel is a service key for models
-	ServiceKindModel ServiceKind = "model"
-)
 
 var (
 	// used for validation
@@ -60,7 +51,14 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 	service := &Service{
 		ServiceID: serviceID,
 	}
-	err := hub.DB.ModelContext(ctx, service).WherePK().Select()
+	err := hub.DB.ModelContext(ctx, service).
+		Column(
+			"service.*",
+			"Project",
+			"Project.Organization",
+		).
+		WherePK().
+		Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -68,13 +66,18 @@ func FindService(ctx context.Context, serviceID uuid.UUID) *Service {
 	return service
 }
 
-// FindServiceByNameAndOrganization returns the matching service or nil
-func FindServiceByNameAndOrganization(ctx context.Context, name, organizationName string) *Service {
+// FindServiceByOrganizationProjectAndName returns the matching service or nil
+func FindServiceByOrganizationProjectAndName(ctx context.Context, organizationName, projectName, serviceName string) *Service {
 	service := &Service{}
 	err := hub.DB.ModelContext(ctx, service).
-		Column("service.*", "Organization").
-		Where("lower(service.name) = lower(?)", name).
-		Where("lower(organization.name) = lower(?)", organizationName).
+		Column(
+			"service.*",
+			"Project",
+			"Project.Organization",
+		).
+		Where("lower(project__organization.name) = lower(?)", organizationName).
+		Where("lower(project.name) = lower(?)", projectName).
+		Where("lower(service.name) = lower(?)", serviceName).
 		Select()
 	if !AssertFoundOne(err) {
 		return nil
@@ -82,56 +85,50 @@ func FindServiceByNameAndOrganization(ctx context.Context, name, organizationNam
 	return service
 }
 
-// CreateService consolidates and returns the service matching the args
-func CreateService(ctx context.Context, name string, kind ServiceKind, organizationID uuid.UUID, readQuota *int64, writeQuota *int64) (*Service, error) {
-	s := &Service{}
+// Stage creates or updates the service
+func (s *Service) Stage(ctx context.Context, description *string, sourceURL *string, readQuota *int64, writeQuota *int64) error {
+	// determine whether to insert or update
+	update := (s.ServiceID != uuid.Nil)
 
-	// set service fields
-	s.Name = name
-	s.Kind = kind
-	s.OrganizationID = organizationID
-	s.ReadQuota = readQuota
-	s.WriteQuota = writeQuota
+	// tracks whether a save is necessary
+	save := !update
 
-	// validate
-	err := GetValidator().Struct(s)
-	if err != nil {
-		return nil, err
+	if description != nil {
+		if s.Description != *description {
+			s.Description = *description
+			save = true
+		}
 	}
 
-	// insert
-	err = hub.DB.Insert(s)
-	if err != nil {
-		return nil, err
+	if sourceURL != nil {
+		if s.SourceURL != *sourceURL {
+			s.SourceURL = *sourceURL
+			save = true
+		}
 	}
 
-	return s, nil
-}
-
-// UpdateDetails consolidates and returns the service matching the args
-func (s *Service) UpdateDetails(ctx context.Context, name *string) (*Service, error) {
-	// set fields
-	if name != nil {
-		s.Name = *name
+	if readQuota != nil {
+		if *readQuota == 0 {
+			s.ReadQuota = nil
+		} else {
+			s.ReadQuota = readQuota
+		}
+		save = true
 	}
 
-	// validate
-	err := GetValidator().Struct(s)
-	if err != nil {
-		return nil, err
+	if writeQuota != nil {
+		if *writeQuota == 0 {
+			s.WriteQuota = nil
+		} else {
+			s.WriteQuota = writeQuota
+		}
+		save = true
 	}
 
-	// update
-	s.UpdatedOn = time.Now()
-	_, err = hub.DB.ModelContext(ctx, s).Column("name", "updated_on").WherePK().Update()
-	return s, err
-}
-
-// UpdateQuotas updates the quotas enforced upon the service
-func (s *Service) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
-	// set fields
-	s.ReadQuota = readQuota
-	s.WriteQuota = writeQuota
+	// quit if no changes
+	if !save {
+		return nil
+	}
 
 	// validate
 	err := GetValidator().Struct(s)
@@ -139,14 +136,26 @@ func (s *Service) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota
 		return err
 	}
 
-	// update
-	s.UpdatedOn = time.Now()
-	_, err = hub.DB.ModelContext(ctx, s).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
-	if err != nil {
-		return err
+	// populate s.Project and s.Project.Organization if not set (i.e. due to inserting new stream)
+	if s.Project == nil {
+		s.Project = FindProject(ctx, s.ProjectID)
 	}
 
-	getSecretCache().ClearForService(ctx, s.ServiceID)
+	if update {
+		s.UpdatedOn = time.Now()
+		_, err := hub.DB.ModelContext(ctx, s).WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		getSecretCache().ClearForService(ctx, s.ServiceID)
+	} else {
+		_, err := hub.DB.ModelContext(ctx, s).Insert()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

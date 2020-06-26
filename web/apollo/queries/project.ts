@@ -57,6 +57,11 @@ export const QUERY_PROJECT = gql`
         name
         description
       }
+      services {
+        serviceID
+        name
+        description
+      }
       permissions {
         view
         create

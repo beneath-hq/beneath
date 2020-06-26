@@ -37,13 +37,6 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_proje
   photoURL: string | null;
 }
 
-export interface OrganizationByName_organizationByName_PrivateOrganization_services {
-  __typename: "Service";
-  serviceID: ControlUUID;
-  name: string;
-  kind: string;
-}
-
 export interface OrganizationByName_organizationByName_PrivateOrganization_personalUser_billingOrganization {
   __typename: "PublicOrganization";
   organizationID: string;
@@ -89,7 +82,6 @@ export interface OrganizationByName_organizationByName_PrivateOrganization {
   writeQuota: number | null;
   readUsage: number;
   writeUsage: number;
-  services: OrganizationByName_organizationByName_PrivateOrganization_services[];
   personalUser: OrganizationByName_organizationByName_PrivateOrganization_personalUser | null;
   permissions: OrganizationByName_organizationByName_PrivateOrganization_permissions;
 }

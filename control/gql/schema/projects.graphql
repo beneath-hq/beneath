@@ -24,7 +24,7 @@ type Project {
   createdOn: Time!
   updatedOn: Time!
   streams: [Stream!]!
-  models: [Model!]!
+  services: [Service!]!
   permissions: PermissionsUsersProjects!
 }
 

@@ -86,11 +86,6 @@ func (s *AnonymousSecret) OrganizationPermissions(ctx context.Context, organizat
 	return OrganizationPermissions{}
 }
 
-// ManagesModelBatches implements the Secret interface
-func (s *AnonymousSecret) ManagesModelBatches(model *Model) bool {
-	return false
-}
-
 // Revoke implements the Secret interface
 func (s *AnonymousSecret) Revoke(ctx context.Context) {
 	log.S.Warnf("called Revoke on AnonymousSecret")

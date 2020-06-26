@@ -6,11 +6,16 @@ import (
 	"encoding/hex"
 	"math"
 	"math/big"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 
 	"gitlab.com/beneath-hq/beneath/engine/driver"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+)
+
+const (
+	expirationBuffer = 5 * time.Minute
 )
 
 // ExternalRow represents a record saved for external use (i.e. with columns matching schema)
@@ -71,12 +76,23 @@ func (r *ExternalRow) recursiveSerialize(valT interface{}) bigquery.Value {
 func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, rs []driver.Record) error {
 	codec := s.GetCodec()
 
+	// compute sensible timestamp at which to not even attempt the write
+	expiration := time.Time{}
+	if s.GetWarehouseRetention() != time.Duration(0) {
+		expiration = time.Now().Add(-1 * s.GetWarehouseRetention()).Add(expirationBuffer)
+	}
+
 	// create a BigQuery Row out of each of the records
+	expired := 0
 	rows := make([]*ExternalRow, len(rs))
 	for i, r := range rs {
-		structured := r.GetStructured()
-
 		ts := r.GetTimestamp()
+		if !expiration.IsZero() && ts.Before(expiration) {
+			expired++
+			continue
+		}
+
+		structured := r.GetStructured()
 		structured["__timestamp"] = ts
 
 		key, err := codec.MarshalKey(codec.PrimaryIndex, structured)
@@ -88,9 +104,19 @@ func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driv
 		insertIDBytes := append(key, timeutil.ToBytes(ts)...)
 		insertID := base64.StdEncoding.EncodeToString(insertIDBytes)
 
-		rows[i] = &ExternalRow{
+		rows[i-expired] = &ExternalRow{
 			Data:     structured,
 			InsertID: insertID,
+		}
+	}
+
+	// remove expired slots from records
+	if expired != 0 {
+		rows = rows[:len(rows)-expired]
+
+		// there's a chance all records were expired, in which case we'll just stop here
+		if len(rows) == 0 {
+			return nil
 		}
 	}
 

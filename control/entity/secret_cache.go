@@ -83,7 +83,8 @@ func (c *SecretCache) ClearForOrganization(ctx context.Context, organizationID u
 		select ss.hashed_token
 		from service_secrets ss
 		join services s on ss.service_id = s.service_id
-		where s.organization_id = ?
+		join projects p on s.project_id = p.project_id
+		where p.organization_id = ?
 		union
 		select us.hashed_token
 		from user_secrets us
@@ -210,9 +211,9 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 				"Service.service_id",
 				"Service.read_quota",
 				"Service.write_quota",
-				"Service.Organization.organization_id",
-				"Service.Organization.read_quota",
-				"Service.Organization.write_quota",
+				"Service.Project.organization_id",
+				"Service.Project.Organization.read_quota",
+				"Service.Project.Organization.write_quota",
 			).
 			Where("hashed_token = ?", hashedToken).
 			Select()
@@ -223,9 +224,9 @@ func (c *SecretCache) serviceGetter(ctx context.Context, hashedToken []byte) fun
 		if secret.Service != nil {
 			secret.ServiceID = secret.Service.ServiceID
 			secret.Master = false
-			secret.BillingOrganizationID = secret.Service.Organization.OrganizationID
-			secret.BillingReadQuota = secret.Service.Organization.ReadQuota
-			secret.BillingWriteQuota = secret.Service.Organization.WriteQuota
+			secret.BillingOrganizationID = secret.Service.Project.OrganizationID
+			secret.BillingReadQuota = secret.Service.Project.Organization.ReadQuota
+			secret.BillingWriteQuota = secret.Service.Project.Organization.WriteQuota
 			secret.OwnerReadQuota = secret.Service.ReadQuota
 			secret.OwnerWriteQuota = secret.Service.WriteQuota
 			secret.Service = nil

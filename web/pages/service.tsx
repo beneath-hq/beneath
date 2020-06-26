@@ -10,9 +10,9 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import { QUERY_SERVICE } from "../apollo/queries/service";
 import {
-  ServiceByNameAndOrganization,
-  ServiceByNameAndOrganizationVariables,
-} from "../apollo/types/ServiceByNameAndOrganization";
+  ServiceByOrganizationProjectAndName,
+  ServiceByOrganizationProjectAndNameVariables,
+} from "../apollo/types/ServiceByOrganizationProjectAndName";
 import { withApollo } from "../apollo/withApollo";
 import ErrorPage from "../components/ErrorPage";
 import ViewMetrics from "../components/service/ViewMetrics";
@@ -23,21 +23,26 @@ const bytesFormat = { base: "decimal", mantissa: 1, output: "byte" };
 const ServicePage = () => {
   const router = useRouter();
 
-  if (typeof router.query.organization_name !== "string" || typeof router.query.service_name !== "string") {
+  if (
+    typeof router.query.organization_name !== "string" ||
+    typeof router.query.project_name !== "string" ||
+    typeof router.query.service_name !== "string"
+  ) {
     return <ErrorPage statusCode={404} />;
   }
 
   const organizationName = toBackendName(router.query.organization_name);
+  const projectName = toBackendName(router.query.project_name);
   const serviceName = toBackendName(router.query.service_name);
-  const title = `${toURLName(serviceName)} – Services – ${toURLName(organizationName)}`;
+  const title = `${toURLName(serviceName)} – Services – ${toURLName(organizationName)}/${toURLName(projectName)}`;
 
-  const { loading, error, data } = useQuery<ServiceByNameAndOrganization, ServiceByNameAndOrganizationVariables>(
-    QUERY_SERVICE,
-    {
-      fetchPolicy: "cache-and-network",
-      variables: { organizationName, serviceName },
-    }
-  );
+  const { loading, error, data } = useQuery<
+    ServiceByOrganizationProjectAndName,
+    ServiceByOrganizationProjectAndNameVariables
+  >(QUERY_SERVICE, {
+    fetchPolicy: "cache-and-network",
+    variables: { organizationName, projectName, serviceName },
+  });
 
   if (loading) {
     return (
@@ -51,7 +56,7 @@ const ServicePage = () => {
     return <ErrorPage apolloError={error} />;
   }
 
-  const service = data.serviceByNameAndOrganization;
+  const service = data.serviceByOrganizationProjectAndName;
 
   const tabs = [];
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics service={service} /> });
@@ -60,11 +65,10 @@ const ServicePage = () => {
     <Page title={title} subheader>
       <ProfileHero
         name={toURLName(service.name)}
-        displayName={service.name}
         description={
-          `Kind: ${service.kind}, ` +
-          `Read quota: ${numbro(service.readQuota).format(bytesFormat)}, ` +
-          `Write quota ${numbro(service.writeQuota).format(bytesFormat)}`
+          service.description ? service.description + " " : "" +
+          `(Read quota: ${numbro(service.readQuota).format(bytesFormat)}, ` +
+          `Write quota ${numbro(service.writeQuota).format(bytesFormat)})`
         }
       />
       <SubrouteTabs defaultValue="monitoring" tabs={tabs} />

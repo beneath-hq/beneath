@@ -7,33 +7,17 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/gql"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
-// Service returns the gql.ServiceResolver
-func (r *Resolver) Service() gql.ServiceResolver {
-	return &serviceResolver{r}
-}
-
-type serviceResolver struct{ *Resolver }
-
-func (r *serviceResolver) ServiceID(ctx context.Context, obj *entity.Service) (string, error) {
-	return obj.ServiceID.String(), nil
-}
-
-func (r *serviceResolver) Kind(ctx context.Context, obj *entity.Service) (string, error) {
-	return string(obj.Kind), nil
-}
-
-func (r *queryResolver) Service(ctx context.Context, serviceID uuid.UUID) (*entity.Service, error) {
+func (r *queryResolver) ServiceByID(ctx context.Context, serviceID uuid.UUID) (*entity.Service, error) {
 	service := entity.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, service.ProjectID, service.Project.Public)
 	if !perms.View {
 		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
 	}
@@ -41,14 +25,14 @@ func (r *queryResolver) Service(ctx context.Context, serviceID uuid.UUID) (*enti
 	return service, nil
 }
 
-func (r *queryResolver) ServiceByNameAndOrganization(ctx context.Context, name string, organizationName string) (*entity.Service, error) {
-	service := entity.FindServiceByNameAndOrganization(ctx, name, organizationName)
+func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, serviceName string) (*entity.Service, error) {
+	service := entity.FindServiceByOrganizationProjectAndName(ctx, organizationName, projectName, serviceName)
 	if service == nil {
-		return nil, gqlerror.Errorf("Service %s/%s not found", organizationName, name)
+		return nil, gqlerror.Errorf("Service %s/%s/%s not found", organizationName, projectName, serviceName)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, service.ProjectID, service.Project.Public)
 	if !perms.View {
 		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
 	}
@@ -56,65 +40,33 @@ func (r *queryResolver) ServiceByNameAndOrganization(ctx context.Context, name s
 	return service, nil
 }
 
-func (r *mutationResolver) CreateService(ctx context.Context, name string, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error) {
-	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create organization resources")
-	}
+func (r *mutationResolver) StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) (*entity.Service, error) {
+	var project *entity.Project
+	var service *entity.Service
 
-	// note: you can only create External services (not Model services) via GraphQL
-	service, err := entity.CreateService(ctx, name, entity.ServiceKindExternal, organizationID, IntToInt64(readQuota), IntToInt64(writeQuota))
-	if err != nil {
-		return nil, err
-	}
-
-	return service, nil
-}
-
-func (r *mutationResolver) UpdateService(ctx context.Context, serviceID uuid.UUID, name *string) (*entity.Service, error) {
-	service := entity.FindService(ctx, serviceID)
+	service = entity.FindServiceByOrganizationProjectAndName(ctx, organizationName, projectName, serviceName)
 	if service == nil {
-		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
+		project = entity.FindProjectByOrganizationAndName(ctx, organizationName, projectName)
+		if project == nil {
+			return nil, gqlerror.Errorf("Project %s/%s not found", organizationName, projectName)
+		}
+		service = &entity.Service{
+			Name:      serviceName,
+			ProjectID: project.ProjectID,
+		}
+	} else {
+		project = service.Project
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, project.ProjectID, project.Public)
 	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to edit organization resources")
+		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", organizationName, projectName)
 	}
 
-	if service.Kind != entity.ServiceKindExternal {
-		return nil, gqlerror.Errorf("Can only directly edit external services")
-	}
-
-	service, err := service.UpdateDetails(ctx, name)
+	err := service.Stage(ctx, description, sourceURL, IntToInt64(readQuota), IntToInt64(writeQuota))
 	if err != nil {
-		return nil, err
-	}
-
-	return service, nil
-}
-
-func (r *mutationResolver) UpdateServiceQuotas(ctx context.Context, serviceID uuid.UUID, readQuota *int, writeQuota *int) (*entity.Service, error) {
-	service := entity.FindService(ctx, serviceID)
-	if service == nil {
-		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
-	}
-
-	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to edit organization resources")
-	}
-
-	if service.Kind != entity.ServiceKindExternal {
-		return nil, gqlerror.Errorf("Can only directly edit external services")
-	}
-
-	err := service.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
-	if err != nil {
-		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
+		return nil, gqlerror.Errorf("Error staging service: %s", err.Error())
 	}
 
 	return service, nil
@@ -126,13 +78,9 @@ func (r *mutationResolver) UpdateServiceStreamPermissions(ctx context.Context, s
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
 	}
 
-	if service.Kind != entity.ServiceKindExternal {
-		return nil, gqlerror.Errorf("Can only directly edit external services")
-	}
-
 	secret := middleware.GetSecret(ctx)
-	orgPerms := secret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !orgPerms.Create {
+	projPerms := secret.ProjectPermissions(ctx, service.ProjectID, false)
+	if !projPerms.Create {
 		return nil, gqlerror.Errorf("Not allowed to edit the service")
 	}
 
@@ -169,13 +117,9 @@ func (r *mutationResolver) DeleteService(ctx context.Context, serviceID uuid.UUI
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, service.ProjectID, false)
 	if !perms.Create {
 		return false, gqlerror.Errorf("Not allowed to edit organization resources")
-	}
-
-	if service.Kind != entity.ServiceKindExternal {
-		return false, gqlerror.Errorf("Can only directly edit external services")
 	}
 
 	err := service.Delete(ctx)

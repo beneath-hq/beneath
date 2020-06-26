@@ -2,7 +2,6 @@ import argparse
 
 from beneath._version import __version__
 from beneath.cli import auth
-from beneath.cli import model
 from beneath.cli import organization
 from beneath.cli import project
 from beneath.cli import service
@@ -28,5 +27,4 @@ def create_argument_parser():
   project.add_subparser(root)
   service.add_subparser(root)
   stream.add_subparser(root)
-  # model.add_subparser(root)
   return parser

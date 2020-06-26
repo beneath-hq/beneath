@@ -25,9 +25,12 @@ def add_subparser(root):
     required=True,
     help="This file should contain the GraphQL schema for the stream you would like to create",
   )
-  _stage.add_argument('--retention', type=int, help="Retention in seconds or 0 for infinite retention")
-  _stage.add_argument('--enable-manual-writes', type=str2bool, nargs='?', const=True, default=None)
-  _stage.add_argument('--create-primary-instance', type=str2bool, nargs='?', const=True, default=True)
+  _stage.add_argument('--allow-manual-writes', type=str2bool, nargs='?', const=True, default=None)
+  _stage.add_argument('--use-index', type=str2bool, nargs='?', const=True, default=None)
+  _stage.add_argument('--use-warehouse', type=str2bool, nargs='?', const=True, default=None)
+  _stage.add_argument('--log-retention', type=int, help="Retention in seconds or 0 for infinite retention")
+  _stage.add_argument('--index-retention', type=int, help="Retention in seconds or 0 for infinite retention")
+  _stage.add_argument('--warehouse-retention', type=int, help="Retention in seconds or 0 for infinite retention")
 
   _delete = stream.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete))
@@ -37,16 +40,18 @@ def add_subparser(root):
   _instance_list.set_defaults(func=async_cmd(instance_list))
   _instance_list.add_argument('stream_path', type=str)
 
-  _instance_create = stream_instance.add_parser('create')
-  _instance_create.set_defaults(func=async_cmd(instance_create))
-  _instance_create.add_argument('stream_path', type=str)
+  _instance_stage = stream_instance.add_parser('stage')
+  _instance_stage.set_defaults(func=async_cmd(instance_stage))
+  _instance_stage.add_argument('stream_path', type=str)
+  _instance_stage.add_argument('--version', type=int, default=0)
+  _instance_stage.add_argument('--make-final', type=str2bool, nargs='?', const=True, default=None)
+  _instance_stage.add_argument('--make-primary', type=str2bool, nargs='?', const=True, default=None)
 
   _instance_update = stream_instance.add_parser('update')
   _instance_update.set_defaults(func=async_cmd(instance_update))
   _instance_update.add_argument('instance', type=str)
   _instance_update.add_argument('--make-final', type=str2bool, nargs='?', const=True, default=None)
   _instance_update.add_argument('--make-primary', type=str2bool, nargs='?', const=True, default=None)
-  _instance_update.add_argument('--delete-previous-primary', type=str2bool, nargs='?', const=True, default=None)
 
   _instance_clear = stream_instance.add_parser('delete')
   _instance_clear.set_defaults(func=async_cmd(instance_delete))
@@ -85,10 +90,23 @@ async def stage(args):
     stream_name=sq.stream,
     schema_kind="GraphQL",
     schema=schema,
-    retention_seconds=args.retention,
-    enable_manual_writes=args.enable_manual_writes,
-    create_primary_instance=args.create_primary_instance,
+    allow_manual_writes=args.allow_manual_writes,
+    use_index=args.use_index,
+    use_warehouse=args.use_warehouse,
+    log_retention_seconds=args.log_retention,
+    index_retention_seconds=args.index_retention,
+    warehouse_retention_seconds=args.warehouse_retention,
   )
+  if not stream.get("primaryStreamInstanceID"):
+    instance = await client.admin.streams.stage_instance(
+      stream_id=stream["streamID"],
+      version=0,
+      make_primary=True,
+    )
+    stream["primaryStreamInstanceID"] = instance["streamInstanceID"]
+    stream["primaryStreamInstance"] = instance
+    stream["instancesCreatedCount"] += 1
+    stream["instancesMadePrimaryCount"] += 1
   _pretty_print_stream(stream)
 
 
@@ -116,7 +134,7 @@ async def instance_list(args):
   pretty_print_graphql_result(result)
 
 
-async def instance_create(args):
+async def instance_stage(args):
   client = Client()
   sq = StreamQualifier.from_path(args.stream_path)
   stream = await client.admin.streams.find_by_organization_project_and_name(
@@ -124,7 +142,12 @@ async def instance_create(args):
     project_name=sq.project,
     stream_name=sq.stream,
   )
-  result = await client.admin.streams.create_instance(stream['streamID'])
+  result = await client.admin.streams.stage_instance(
+    stream_id=stream['streamID'],
+    version=args.version,
+    make_final=args.make_final,
+    make_primary=args.make_primary,
+  )
   pretty_print_graphql_result(result)
 
 
@@ -134,7 +157,6 @@ async def instance_update(args):
     instance_id=args.instance,
     make_final=args.make_final,
     make_primary=args.make_primary,
-    delete_previous_primary=args.delete_previous_primary,
   )
   pretty_print_graphql_result(result)
 
@@ -157,8 +179,13 @@ def _pretty_print_stream(stream):
       "schemaKind",
       "schema",
       "streamIndexes",
-      "retentionSeconds",
-      "enableManualWrites",
+      "allowManualWrites",
+      "useLog",
+      "useIndex",
+      "useWarehouse",
+      "logRetentionSeconds",
+      "indexRetentionSeconds",
+      "warehouseRetentionSeconds",
       "primaryStreamInstanceID",
       "instancesCreatedCount",
       "instancesDeletedCount",

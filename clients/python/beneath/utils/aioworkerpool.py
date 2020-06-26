@@ -25,7 +25,6 @@ class AIOWorkerPool:
     except asyncio.CancelledError:
       pass
 
-
   async def run(self, workers: int):
     tasks = (self._work() for _ in range(workers))
     self._run_task = asyncio.gather(*tasks)

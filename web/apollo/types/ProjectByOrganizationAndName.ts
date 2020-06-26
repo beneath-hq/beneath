@@ -20,6 +20,13 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   description: string | null;
 }
 
+export interface ProjectByOrganizationAndName_projectByOrganizationAndName_services {
+  __typename: "Service";
+  serviceID: ControlUUID;
+  name: string;
+  description: string | null;
+}
+
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_permissions {
   __typename: "PermissionsUsersProjects";
   view: boolean;
@@ -40,6 +47,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName {
   updatedOn: ControlTime;
   organization: ProjectByOrganizationAndName_projectByOrganizationAndName_organization;
   streams: ProjectByOrganizationAndName_projectByOrganizationAndName_streams[];
+  services: ProjectByOrganizationAndName_projectByOrganizationAndName_services[];
   permissions: ProjectByOrganizationAndName_projectByOrganizationAndName_permissions;
 }
 

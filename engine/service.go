@@ -46,9 +46,11 @@ func (e *Engine) RegisterInstance(ctx context.Context, p driver.Project, s drive
 		return e.Lookup.RegisterInstance(ctx, p, s, i)
 	})
 
-	group.Go(func() error {
-		return e.Warehouse.RegisterInstance(ctx, p, s, i)
-	})
+	if s.GetUseWarehouse() {
+		group.Go(func() error {
+			return e.Warehouse.RegisterInstance(ctx, p, s, i)
+		})
+	}
 
 	return group.Wait()
 }
@@ -61,9 +63,11 @@ func (e *Engine) PromoteInstance(ctx context.Context, p driver.Project, s driver
 		return e.Lookup.PromoteInstance(ctx, p, s, i)
 	})
 
-	group.Go(func() error {
-		return e.Warehouse.PromoteInstance(ctx, p, s, i)
-	})
+	if s.GetUseWarehouse() {
+		group.Go(func() error {
+			return e.Warehouse.PromoteInstance(ctx, p, s, i)
+		})
+	}
 
 	return group.Wait()
 }
@@ -76,9 +80,11 @@ func (e *Engine) RemoveInstance(ctx context.Context, p driver.Project, s driver.
 		return e.Lookup.RemoveInstance(ctx, p, s, i)
 	})
 
-	group.Go(func() error {
-		return e.Warehouse.RemoveInstance(ctx, p, s, i)
-	})
+	if s.GetUseWarehouse() {
+		group.Go(func() error {
+			return e.Warehouse.RemoveInstance(ctx, p, s, i)
+		})
+	}
 
 	return group.Wait()
 }

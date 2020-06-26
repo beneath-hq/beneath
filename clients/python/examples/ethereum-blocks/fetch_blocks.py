@@ -28,7 +28,7 @@ async def main():
   unstable = await client.find_stream(UNSTABLE_STREAM)
 
   query = await stable.query_log(peek=True)
-  latest = await query.fetch_next(limit=LATEST_COUNT)
+  latest = await query.read_next(limit=LATEST_COUNT)
   latest = sorted(latest, key=lambda block: block["number"])
   if not validate_latest(latest):
     raise Exception("Inconsistent latest blocks from stable")

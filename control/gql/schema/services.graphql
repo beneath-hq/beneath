@@ -1,12 +1,18 @@
 extend type Query {
-  service(serviceID: UUID!): Service!
-  serviceByNameAndOrganization(name: String!, organizationName: String!): Service!
+  serviceByID(serviceID: UUID!): Service!
+  serviceByOrganizationProjectAndName(organizationName: String!, projectName: String!, serviceName: String!): Service!
 }
 
 extend type Mutation {
-  createService(name: String!, organizationID: UUID!, readQuota: Int, writeQuota: Int): Service!
-  updateService(serviceID: UUID!, name: String): Service!
-  updateServiceQuotas(serviceID: UUID!, readQuota: Int, writeQuota: Int): Service!
+  stageService(
+    organizationName: String!,
+    projectName: String!,
+    serviceName: String!,
+    description: String,
+    sourceURL: String,
+    readQuota: Int,
+    writeQuota: Int,
+  ): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
 }
@@ -14,8 +20,9 @@ extend type Mutation {
 type Service {
   serviceID: UUID!
   name: String!
-  kind: String!
-  organization: PublicOrganization!
+  description: String
+  sourceURL: String
+  project: Project!
   readQuota: Int
   writeQuota: Int
 }

@@ -85,7 +85,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 	// if not normalized, read directly
 	if !normalized {
 		var result []Record
-		err := b.readIndexes(ctx, streamExpires(s), rs, limit, func(row bigtable.Row) bool {
+		err := b.readIndexes(ctx, indexExpires(s), rs, limit, func(row bigtable.Row) bool {
 			// parse key
 			_, primaryKey := parseIndexKey(row.Key())
 
@@ -119,7 +119,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 
 	// get offsets from primary index
 	var logRS bigtable.RowRangeList
-	err := b.readIndexes(ctx, streamExpires(s), rs, limit, func(row bigtable.Row) bool {
+	err := b.readIndexes(ctx, indexExpires(s), rs, limit, func(row bigtable.Row) bool {
 		// get offset
 		offsetCol := row[indexesColumnFamilyName][0]
 		if stripColumnFamily(offsetCol.Column, indexesColumnFamilyName) != indexesOffsetColumnName {
@@ -139,7 +139,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 	// read offsets from log
 	idx := 0
 	result := make([]Record, len(logRS))
-	err = b.readLog(ctx, streamExpires(s), logRS, 0, func(row bigtable.Row) bool {
+	err = b.readLog(ctx, logExpires(s), logRS, 0, func(row bigtable.Row) bool {
 		// parse key
 		_, offset, primaryKey := parseLogKey(row.Key())
 
@@ -219,7 +219,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 
 	// load from secondary index
 	var result map[string]Record
-	err := b.readIndexes(ctx, streamExpires(s), rs, limit, func(row bigtable.Row) bool {
+	err := b.readIndexes(ctx, indexExpires(s), rs, limit, func(row bigtable.Row) bool {
 		// parse key
 		_, secondaryKey := parseIndexKey(row.Key())
 
@@ -265,7 +265,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 	// load from primary index and consolidate
 	var garbage []Record
 	primaryNormalized := s.GetCodec().PrimaryIndex.GetNormalize()
-	err = b.readIndexes(ctx, streamExpires(s), rl, 0, func(row bigtable.Row) bool {
+	err = b.readIndexes(ctx, indexExpires(s), rl, 0, func(row bigtable.Row) bool {
 		// parse key
 		_, primaryKey := parseIndexKey(row.Key())
 		primaryKeyString := byteSliceToString(primaryKey)
@@ -340,7 +340,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 		}
 
 		// read and consolidate
-		err := b.readLog(ctx, streamExpires(s), rrl, 0, func(row bigtable.Row) bool {
+		err := b.readLog(ctx, logExpires(s), rrl, 0, func(row bigtable.Row) bool {
 			// parse key
 			_, offset, primaryKey := parseLogKey(row.Key())
 			primaryKeyString := byteSliceToString(primaryKey)
@@ -418,7 +418,7 @@ func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.St
 
 	// read and update records
 	var result []Record
-	err := b.readLog(ctx, streamExpires(s), rs, limit, func(row bigtable.Row) bool {
+	err := b.readLog(ctx, logExpires(s), rs, limit, func(row bigtable.Row) bool {
 		// parse key
 		_, offset, primaryKey := parseLogKey(row.Key())
 
@@ -476,7 +476,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 
 	// load from primary index and consolidate
 	var result map[string]Record
-	err := b.readIndexes(ctx, streamExpires(s), rl, 0, func(row bigtable.Row) bool {
+	err := b.readIndexes(ctx, indexExpires(s), rl, 0, func(row bigtable.Row) bool {
 		// parse key
 		_, primaryKey := parseIndexKey(row.Key())
 		primaryKeyString := byteSliceToString(primaryKey)
@@ -525,7 +525,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 	}
 
 	// read and consolidate
-	err = b.readLog(ctx, streamExpires(s), rl, 0, func(row bigtable.Row) bool {
+	err = b.readLog(ctx, logExpires(s), rl, 0, func(row bigtable.Row) bool {
 		// parse key
 		_, _, primaryKey := parseLogKey(row.Key())
 		primaryKeyString := byteSliceToString(primaryKey)

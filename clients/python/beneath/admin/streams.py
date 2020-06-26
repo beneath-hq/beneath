@@ -32,8 +32,13 @@ class Streams:
               primary
               normalize
             }
-            retentionSeconds
-            enableManualWrites
+            allowManualWrites
+            useLog
+            useIndex
+            useWarehouse
+            logRetentionSeconds
+            indexRetentionSeconds
+            warehouseRetentionSeconds
             primaryStreamInstanceID
             instancesCreatedCount
             instancesDeletedCount
@@ -76,9 +81,20 @@ class Streams:
               primary
               normalize
             }
-            retentionSeconds
-            enableManualWrites
-            primaryStreamInstanceID
+            allowManualWrites
+            useLog
+            useIndex
+            useWarehouse
+            logRetentionSeconds
+            indexRetentionSeconds
+            warehouseRetentionSeconds
+            primaryStreamInstance {
+              streamInstanceID
+              createdOn
+              version
+              madePrimaryOn
+              madeFinalOn
+            }
             instancesCreatedCount
             instancesDeletedCount
             instancesMadeFinalCount
@@ -100,6 +116,7 @@ class Streams:
             streamInstanceID
             streamID
             createdOn
+            version
             madePrimaryOn
             madeFinalOn
           }
@@ -115,9 +132,13 @@ class Streams:
     stream_name,
     schema_kind,
     schema,
-    retention_seconds=None,
-    enable_manual_writes=None,
-    create_primary_instance=None,
+    allow_manual_writes=None,
+    use_log=None,
+    use_index=None,
+    use_warehouse=None,
+    log_retention_seconds=None,
+    index_retention_seconds=None,
+    warehouse_retention_seconds=None,
   ):
     result = await self.conn.query_control(
       variables={
@@ -126,9 +147,13 @@ class Streams:
         'streamName': format_entity_name(stream_name),
         'schemaKind': schema_kind,
         'schema': schema,
-        'retentionSeconds': retention_seconds,
-        'enableManualWrites': enable_manual_writes,
-        'createPrimaryStreamInstance': create_primary_instance,
+        'allowManualWrites': allow_manual_writes,
+        'useLog': use_log,
+        'useIndex': use_index,
+        'useWarehouse': use_warehouse,
+        'logRetentionSeconds': log_retention_seconds,
+        'indexRetentionSeconds': index_retention_seconds,
+        'warehouseRetentionSeconds': warehouse_retention_seconds,
       },
       query="""
         mutation stageStream(
@@ -137,9 +162,13 @@ class Streams:
           $streamName: String!
           $schemaKind: StreamSchemaKind!,
           $schema: String!,
-          $retentionSeconds: Int,
-          $enableManualWrites: Boolean,
-          $createPrimaryStreamInstance: Boolean,
+          $allowManualWrites: Boolean,
+          $useLog: Boolean,
+          $useIndex: Boolean,
+          $useWarehouse: Boolean,
+          $logRetentionSeconds: Int,
+          $indexRetentionSeconds: Int,
+          $warehouseRetentionSeconds: Int,
         ) {
           stageStream(
             organizationName: $organizationName,
@@ -147,9 +176,13 @@ class Streams:
             streamName: $streamName,
             schemaKind: $schemaKind,
             schema: $schema,
-            retentionSeconds: $retentionSeconds,
-            enableManualWrites: $enableManualWrites,
-            createPrimaryStreamInstance: $createPrimaryStreamInstance,
+            allowManualWrites: $allowManualWrites,
+            useLog: $useLog,
+            useIndex: $useIndex,
+            useWarehouse: $useWarehouse,
+            logRetentionSeconds: $logRetentionSeconds,
+            indexRetentionSeconds: $indexRetentionSeconds,
+            warehouseRetentionSeconds: $warehouseRetentionSeconds,
           ) {
             streamID
             name
@@ -168,8 +201,13 @@ class Streams:
               primary
               normalize
             }
-            retentionSeconds
-            enableManualWrites
+            allowManualWrites
+            useLog
+            useIndex
+            useWarehouse
+            logRetentionSeconds
+            indexRetentionSeconds
+            warehouseRetentionSeconds
             primaryStreamInstanceID
             instancesCreatedCount
             instancesDeletedCount
@@ -194,44 +232,52 @@ class Streams:
     )
     return result['deleteStream']
 
-  async def create_instance(self, stream_id):
+  async def stage_instance(self, stream_id, version: int, make_final=None, make_primary=None):
     result = await self.conn.query_control(
       variables={
-        'streamID': stream_id,
+        "streamID": stream_id,
+        "version": version,
+        "makeFinal": make_final,
+        "makePrimary": make_primary,
       },
       query="""
-        mutation createStreamInstance($streamID: UUID!) {
-          createStreamInstance(streamID: $streamID) {
+        mutation stageStreamInstance($streamID: UUID!, $version: Int!, $makeFinal: Boolean, $makePrimary: Boolean) {
+          stageStreamInstance(
+            streamID: $streamID,
+            version: $version,
+            makeFinal: $makeFinal,
+            makePrimary: $makePrimary,
+          ) {
             streamInstanceID
             streamID
             createdOn
+            version
             madePrimaryOn
             madeFinalOn
           }
         }
       """,
     )
-    return result['createStreamInstance']
+    return result['stageStreamInstance']
 
-  async def update_instance(self, instance_id, make_final=None, make_primary=None, delete_previous_primary=None):
+  async def update_instance(self, instance_id, make_final=None, make_primary=None):
     result = await self.conn.query_control(
       variables={
         'instanceID': instance_id,
         'makeFinal': make_final,
         'makePrimary': make_primary,
-        'deletePreviousPrimary': delete_previous_primary,
       },
       query="""
-        mutation updateStreamInstance($instanceID: UUID!, $makeFinal: Boolean, $makePrimary: Boolean, $deletePreviousPrimary: Boolean) {
+        mutation updateStreamInstance($instanceID: UUID!, $makeFinal: Boolean, $makePrimary: Boolean) {
           updateStreamInstance(
             instanceID: $instanceID,
             makeFinal: $makeFinal,
             makePrimary: $makePrimary,
-            deletePreviousPrimary: $deletePreviousPrimary,
           ) {
             streamInstanceID
             streamID
             createdOn
+            version
             madePrimaryOn
             madeFinalOn
           }

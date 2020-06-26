@@ -2,7 +2,7 @@ import { Grid } from "@material-ui/core";
 import { FC } from "react";
 
 import { EntityKind } from "../../apollo/types/globalTypes";
-import { ServiceByNameAndOrganization_serviceByNameAndOrganization } from "../../apollo/types/ServiceByNameAndOrganization";
+import { ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName } from "../../apollo/types/ServiceByOrganizationProjectAndName";
 import ErrorNote from "../ErrorNote";
 import { useMonthlyMetrics, useWeeklyMetrics } from "../metrics/hooks";
 import TopIndicators from "../metrics/user/TopIndicators";
@@ -10,23 +10,10 @@ import UsageIndicator from "../metrics/user/UsageIndicator";
 import WeekChart from "../metrics/WeekChart";
 
 export interface ViewMetricsProps {
-  service: ServiceByNameAndOrganization_serviceByNameAndOrganization;
+  service: ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName;
 }
 
 const ViewMetrics: FC<ViewMetricsProps> = ({ service }) => {
-  const sharedProps = {
-    entityKind: EntityKind.Service,
-    entityID: service.serviceID,
-  };
-
-  const props = {
-    readQuota: service.readQuota,
-    writeQuota: service.writeQuota,
-  };
-
-  // readBytes
-  // ;
-
   return (
     <>
       <Grid container spacing={2}>

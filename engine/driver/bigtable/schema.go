@@ -7,9 +7,9 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 
 	"cloud.google.com/go/bigtable"
+	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
-	uuid "github.com/satori/go.uuid"
 )
 
 // IndexHash represents an index ID salted with an instance ID
@@ -152,6 +152,7 @@ func makeSecondaryIndexInsert(rowTime time.Time, normalize bool, offset int64, a
 	ts := bigtable.Time(rowTime)
 	mut := bigtable.NewMutation()
 	// We currently always normalize secondary indexes to ensure consistency (see lookup.go for details)
+	// TODO: This doesn't fly if log retention is less than index retention
 	mut.Set(indexesColumnFamilyName, indexesOffsetColumnName, ts, intToBytes(offset))
 	return mut
 }

@@ -25,12 +25,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
+	github.com/jackc/pgproto3/v2 v2.0.2 // indirect
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/linkedin/goavro/v2 v2.8.5
-	github.com/markbates/goth v1.54.1
+	github.com/markbates/goth v1.64.2
 	github.com/mr-tron/base58 v1.1.2
 	github.com/rs/cors v1.6.0
 	github.com/satori/go.uuid v1.2.0

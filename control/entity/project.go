@@ -28,7 +28,7 @@ type Project struct {
 	CreatedOn      time.Time `sql:",default:now()"`
 	UpdatedOn      time.Time `sql:",default:now()"`
 	Streams        []*Stream
-	Models         []*Model
+	Services       []*Service
 	Users          []*User `pg:"many2many:permissions_users_projects,fk:project_id,joinFK:user_id"`
 
 	// used to indicate requestor's permissions in resolvers
@@ -59,7 +59,7 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 	project := &Project{
 		ProjectID: projectID,
 	}
-	err := hub.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Organization").Select()
+	err := hub.DB.ModelContext(ctx, project).WherePK().Column("project.*", "Streams", "Services", "Organization").Select()
 	if !AssertFoundOne(err) {
 		return nil
 	}
@@ -100,7 +100,7 @@ func FindProjectByOrganizationAndName(ctx context.Context, organizationName stri
 			return q.Where("lower(organization.name) = lower(?)", organizationName), nil
 		}).
 		Where("lower(project.name) = lower(?)", projectName).
-		Column("project.*", "Streams").
+		Column("project.*", "Streams", "Services").
 		Select()
 	if !AssertFoundOne(err) {
 		return nil

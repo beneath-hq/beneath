@@ -24,17 +24,21 @@ func FindCachedStreamByCurrentInstanceID(ctx context.Context, instanceID uuid.UU
 
 // CachedStream keeps key information about a stream for rapid lookup
 type CachedStream struct {
-	StreamID         uuid.UUID
-	Public           bool
-	Final            bool
-	Internal         bool
-	RetentionSeconds int32
-	OrganizationID   uuid.UUID
-	OrganizationName string
-	ProjectID        uuid.UUID
-	ProjectName      string
-	StreamName       string
-	Codec            *codec.Codec
+	StreamID                  uuid.UUID
+	Public                    bool
+	Final                     bool
+	UseLog                    bool
+	UseIndex                  bool
+	UseWarehouse              bool
+	LogRetentionSeconds       int32
+	IndexRetentionSeconds     int32
+	WarehouseRetentionSeconds int32
+	OrganizationID            uuid.UUID
+	OrganizationName          string
+	ProjectID                 uuid.UUID
+	ProjectName               string
+	StreamName                string
+	Codec                     *codec.Codec
 
 	// temporary until GetBigQuerySchema hack is resolved
 	BigQuerySchema string
@@ -70,18 +74,22 @@ func (e EfficientStreamIndex) GetNormalize() bool {
 }
 
 type internalCachedStream struct {
-	StreamID            uuid.UUID
-	Public              bool
-	Final               bool
-	Internal            bool
-	RetentionSeconds    int32
-	OrganizationID      uuid.UUID
-	OrganizationName    string
-	ProjectID           uuid.UUID
-	ProjectName         string
-	StreamName          string
-	CanonicalAvroSchema string
-	Indexes             []EfficientStreamIndex
+	StreamID                  uuid.UUID
+	Public                    bool
+	Final                     bool
+	UseLog                    bool
+	UseIndex                  bool
+	UseWarehouse              bool
+	LogRetentionSeconds       int32
+	IndexRetentionSeconds     int32
+	WarehouseRetentionSeconds int32
+	OrganizationID            uuid.UUID
+	OrganizationName          string
+	ProjectID                 uuid.UUID
+	ProjectName               string
+	StreamName                string
+	CanonicalAvroSchema       string
+	Indexes                   []EfficientStreamIndex
 }
 
 // NewCachedStream creates a CachedStream from a regular Stream object
@@ -106,18 +114,22 @@ func NewCachedStream(s *Stream, instance *StreamInstance) *CachedStream {
 	}
 
 	internal := &internalCachedStream{
-		StreamID:            s.StreamID,
-		Public:              s.Project.Public,
-		Final:               instance.MadeFinalOn != nil,
-		Internal:            s.SourceModelID != nil,
-		RetentionSeconds:    s.RetentionSeconds,
-		OrganizationID:      s.Project.Organization.OrganizationID,
-		OrganizationName:    s.Project.Organization.Name,
-		ProjectID:           s.Project.ProjectID,
-		ProjectName:         s.Project.Name,
-		StreamName:          s.Name,
-		CanonicalAvroSchema: s.CanonicalAvroSchema,
-		Indexes:             indexes,
+		StreamID:                  s.StreamID,
+		Public:                    s.Project.Public,
+		Final:                     instance.MadeFinalOn != nil,
+		UseLog:                    s.UseLog,
+		UseIndex:                  s.UseIndex,
+		UseWarehouse:              s.UseWarehouse,
+		LogRetentionSeconds:       s.LogRetentionSeconds,
+		IndexRetentionSeconds:     s.IndexRetentionSeconds,
+		WarehouseRetentionSeconds: s.WarehouseRetentionSeconds,
+		OrganizationID:            s.Project.Organization.OrganizationID,
+		OrganizationName:          s.Project.Organization.Name,
+		ProjectID:                 s.Project.ProjectID,
+		ProjectName:               s.Project.Name,
+		StreamName:                s.Name,
+		CanonicalAvroSchema:       s.CanonicalAvroSchema,
+		Indexes:                   indexes,
 	}
 
 	result := &CachedStream{}
@@ -133,16 +145,20 @@ func NewCachedStream(s *Stream, instance *StreamInstance) *CachedStream {
 // MarshalBinary serializes for storage in cache
 func (c CachedStream) MarshalBinary() ([]byte, error) {
 	wrapped := internalCachedStream{
-		StreamID:         c.StreamID,
-		Public:           c.Public,
-		Final:            c.Final,
-		Internal:         c.Internal,
-		RetentionSeconds: c.RetentionSeconds,
-		OrganizationID:   c.OrganizationID,
-		OrganizationName: c.OrganizationName,
-		ProjectID:        c.ProjectID,
-		ProjectName:      c.ProjectName,
-		StreamName:       c.StreamName,
+		StreamID:                  c.StreamID,
+		Public:                    c.Public,
+		Final:                     c.Final,
+		UseLog:                    c.UseLog,
+		UseIndex:                  c.UseIndex,
+		UseWarehouse:              c.UseWarehouse,
+		LogRetentionSeconds:       c.LogRetentionSeconds,
+		IndexRetentionSeconds:     c.IndexRetentionSeconds,
+		WarehouseRetentionSeconds: c.WarehouseRetentionSeconds,
+		OrganizationID:            c.OrganizationID,
+		OrganizationName:          c.OrganizationName,
+		ProjectID:                 c.ProjectID,
+		ProjectName:               c.ProjectName,
+		StreamName:                c.StreamName,
 	}
 
 	// necessary because we allow empty CachedStream objects
@@ -234,9 +250,34 @@ func (c *CachedStream) GetStreamName() string {
 	return c.StreamName
 }
 
-// GetRetention implements engine/driver.Stream
-func (c *CachedStream) GetRetention() time.Duration {
-	return time.Duration(c.RetentionSeconds) * time.Second
+// GetUseLog implements engine/driver.Stream
+func (c *CachedStream) GetUseLog() bool {
+	return c.UseLog
+}
+
+// GetUseIndex implements engine/driver.Stream
+func (c *CachedStream) GetUseIndex() bool {
+	return c.UseIndex
+}
+
+// GetUseWarehouse implements engine/driver.Stream
+func (c *CachedStream) GetUseWarehouse() bool {
+	return c.UseWarehouse
+}
+
+// GetLogRetention implements engine/driver.Stream
+func (c *CachedStream) GetLogRetention() time.Duration {
+	return time.Duration(c.LogRetentionSeconds) * time.Second
+}
+
+// GetIndexRetention implements engine/driver.Stream
+func (c *CachedStream) GetIndexRetention() time.Duration {
+	return time.Duration(c.IndexRetentionSeconds) * time.Second
+}
+
+// GetWarehouseRetention implements engine/driver.Stream
+func (c *CachedStream) GetWarehouseRetention() time.Duration {
+	return time.Duration(c.WarehouseRetentionSeconds) * time.Second
 }
 
 // GetCodec implements engine/driver.Stream
@@ -391,8 +432,12 @@ func (c *StreamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func
 					s.stream_id,
 					p.public,
 					si.made_final_on is not null as final,
-					s.source_model_id is not null as internal,
-					s.retention_seconds,
+					s.use_log,
+					s.use_index,
+					s.use_warehouse,
+					s.log_retention_seconds,
+					s.index_retention_seconds,
+					s.warehouse_retention_seconds,
 					p.organization_id,
 					o.name as organization_name,
 					s.project_id,
@@ -439,8 +484,12 @@ func unwrapInternalCachedStream(source *internalCachedStream, target *CachedStre
 	target.StreamID = source.StreamID
 	target.Public = source.Public
 	target.Final = source.Final
-	target.Internal = source.Internal
-	target.RetentionSeconds = source.RetentionSeconds
+	target.UseLog = source.UseLog
+	target.UseIndex = source.UseIndex
+	target.UseWarehouse = source.UseWarehouse
+	target.LogRetentionSeconds = source.LogRetentionSeconds
+	target.IndexRetentionSeconds = source.IndexRetentionSeconds
+	target.WarehouseRetentionSeconds = source.WarehouseRetentionSeconds
 	target.OrganizationID = source.OrganizationID
 	target.OrganizationName = source.OrganizationName
 	target.ProjectID = source.ProjectID

@@ -28,6 +28,9 @@ class Projects:
             streams {
               name
             }
+            services {
+              name
+            }
           }
         }
       """

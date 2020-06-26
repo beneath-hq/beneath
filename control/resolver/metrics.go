@@ -49,7 +49,7 @@ func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UU
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, service.ProjectID, service.Project.Public)
 	if !perms.View {
 		return nil, gqlerror.Errorf("you do not have permission to view this service's metrics")
 	}

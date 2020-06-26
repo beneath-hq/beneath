@@ -6,7 +6,18 @@ import (
 
 func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// Model
+		_, err = db.Exec(`
+			ALTER TABLE streams DROP source_model_id;
+			DROP TABLE streams_into_models;
+			DROP TABLE models;
+		`)
+		if err != nil {
+			return err
+		}
+
+		// Done
+		return nil
+	}, func(db migrations.DB) (err error) {
 		_, err = db.Exec(`
 			CREATE TABLE models (
 				model_id uuid DEFAULT uuid_generate_v4(),
@@ -27,15 +38,6 @@ func init() {
 			return err
 		}
 
-		// (Project, name) unique index
-		_, err = db.Exec(`
-			CREATE UNIQUE INDEX models_project_id_name_key ON public.models USING btree (project_id, (lower(name)));
-		`)
-		if err != nil {
-			return err
-		}
-
-		// StreamIntoModel
 		_, err = db.Exec(`
 			CREATE TABLE streams_into_models (
 				stream_id uuid,
@@ -49,23 +51,10 @@ func init() {
 			return err
 		}
 
-		// Stream.ModelID
 		_, err = db.Exec(`
 			ALTER TABLE streams
 			ADD source_model_id UUID,
 			ADD FOREIGN KEY (source_model_id) REFERENCES models (model_id) ON DELETE RESTRICT;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
-		return nil
-	}, func(db migrations.DB) (err error) {
-		_, err = db.Exec(`
-			ALTER TABLE streams DROP source_model_id;
-			DROP TABLE streams_into_models;
-			DROP TABLE models;
 		`)
 		if err != nil {
 			return err

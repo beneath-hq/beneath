@@ -1,6 +1,6 @@
 from beneath.client import Client
-from beneath.utils import ServiceQualifier, StreamQualifier
-from beneath.cli.utils import async_cmd, mb_to_bytes, parse_names, pretty_print_graphql_result, str2bool
+from beneath.utils import ProjectQualifier, ServiceQualifier, StreamQualifier
+from beneath.cli.utils import async_cmd, mb_to_bytes, pretty_print_graphql_result, str2bool
 
 
 def add_subparser(root):
@@ -8,24 +8,15 @@ def add_subparser(root):
 
   _list = service.add_parser('list')
   _list.set_defaults(func=async_cmd(show_list))
-  _list.add_argument('organization', type=str)
+  _list.add_argument('project_path', type=str)
 
-  _create = service.add_parser('create')
-  _create.set_defaults(func=async_cmd(create))
-  _create.add_argument('service_path', type=str)
-  _create.add_argument('--read-quota-mb', type=int, required=True)
-  _create.add_argument('--write-quota-mb', type=int, required=True)
-
-  _update = service.add_parser('rename')
-  _update.set_defaults(func=async_cmd(update))
-  _update.add_argument('service_path', type=str)
-  _update.add_argument('--new-name', type=str)
-
-  _update_quota = service.add_parser('update-quota')
-  _update_quota.set_defaults(func=async_cmd(update_quota))
-  _update_quota.add_argument('service_path', type=str)
-  _update_quota.add_argument('--read-quota-mb', type=int, required=True)
-  _update_quota.add_argument('--write-quota-mb', type=int, required=True)
+  _stage = service.add_parser('stage')
+  _stage.set_defaults(func=async_cmd(stage))
+  _stage.add_argument('service_path', type=str)
+  _stage.add_argument('--description', type=str)
+  _stage.add_argument('--source-url', type=str)
+  _stage.add_argument('--read-quota-mb', type=int)
+  _stage.add_argument('--write-quota-mb', type=int)
 
   _update_perms = service.add_parser('update-permissions')
   _update_perms.set_defaults(func=async_cmd(update_permissions))
@@ -37,11 +28,6 @@ def add_subparser(root):
   _delete = service.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete))
   _delete.add_argument('service_path', type=str)
-
-  _transfer = service.add_parser('transfer')
-  _transfer.set_defaults(func=async_cmd(transfer_organization))
-  _transfer.add_argument('service_path', type=str)
-  _transfer.add_argument('new_organization', type=str)
 
   _issue_secret = service.add_parser('issue-secret')
   _issue_secret.set_defaults(func=async_cmd(issue_secret))
@@ -59,45 +45,25 @@ def add_subparser(root):
 
 async def show_list(args):
   client = Client()
-  org = await client.admin.organizations.find_by_name(name=args.organization)
-  services = org['services']
+  pq = ProjectQualifier.from_path(args.project_path)
+  proj = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
+  services = proj['services']
   if (services is None) or len(services) == 0:
-    print("No services found in organization")
+    print("No services found in project")
     return
   for service in services:
     pretty_print_graphql_result(service)
 
 
-async def create(args):
+async def stage(args):
   client = Client()
   seq = ServiceQualifier.from_path(args.service_path)
-  org = await client.admin.organizations.find_by_name(name=seq.organization)
-  result = await client.admin.services.create(
-    name=seq.service,
-    organization_id=org['organizationID'],
-    read_quota_bytes=mb_to_bytes(args.read_quota_mb),
-    write_quota_bytes=mb_to_bytes(args.write_quota_mb),
-  )
-  pretty_print_graphql_result(result)
-
-
-async def update(args):
-  client = Client()
-  seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
-  result = await client.admin.services.update_details(
-    service_id=service['serviceID'],
-    name=args.new_name,
-  )
-  pretty_print_graphql_result(result)
-
-
-async def update_quota(args):
-  client = Client()
-  seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
-  result = await client.admin.services.update_quota(
-    service_id=service['serviceID'],
+  result = await client.admin.services.stage(
+    organization_name=seq.organization,
+    project_name=seq.project,
+    service_name=seq.service,
+    description=args.description,
+    source_url=args.source_url,
     read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
     write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
   )
@@ -107,7 +73,11 @@ async def update_quota(args):
 async def update_permissions(args):
   client = Client()
   seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
+  service = await client.admin.services.find_by_organization_project_and_name(
+    organization_name=seq.organization,
+    project_name=seq.project,
+    service_name=seq.service,
+  )
   stq = StreamQualifier.from_path(args.stream_path)
   stream = await client.admin.streams.find_by_organization_project_and_name(
     organization_name=stq.organization,
@@ -126,27 +96,23 @@ async def update_permissions(args):
 async def delete(args):
   client = Client()
   seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
-  result = await client.admin.services.delete(service_id=service['serviceID'])
-  pretty_print_graphql_result(result)
-
-
-async def transfer_organization(args):
-  client = Client()
-  seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
-  new_org = await client.admin.organizations.find_by_name(args.new_organization)
-  result = await client.admin.organizations.transfer_service(
-    service_id=service['serviceID'],
-    new_organization_id=new_org['organizationID'],
+  service = await client.admin.services.find_by_organization_project_and_name(
+    organization_name=seq.organization,
+    project_name=seq.project,
+    service_name=seq.service,
   )
+  result = await client.admin.services.delete(service_id=service['serviceID'])
   pretty_print_graphql_result(result)
 
 
 async def issue_secret(args):
   client = Client()
   seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
+  service = await client.admin.services.find_by_organization_project_and_name(
+    organization_name=seq.organization,
+    project_name=seq.project,
+    service_name=seq.service,
+  )
   result = await client.admin.services.issue_secret(
     service_id=service['serviceID'],
     description=args.description if args.description is not None else "Command-line issued secret",
@@ -157,7 +123,11 @@ async def issue_secret(args):
 async def list_secrets(args):
   client = Client()
   seq = ServiceQualifier.from_path(args.service_path)
-  service = await client.admin.services.find_by_organization_and_name(seq.organization, seq.service)
+  service = await client.admin.services.find_by_organization_project_and_name(
+    organization_name=seq.organization,
+    project_name=seq.project,
+    service_name=seq.service,
+  )
   result = await client.admin.services.list_secrets(service_id=service['serviceID'])
   pretty_print_graphql_result(result)
 

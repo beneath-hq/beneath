@@ -33,7 +33,7 @@ func init() {
 			return err
 		}
 
-		// Project.DisplayName NOT NULL
+		// Service.Name NOT NULL
 		_, err = db.Exec(`
 			ALTER TABLE services ALTER COLUMN name DROP NOT NULL;
 		`)

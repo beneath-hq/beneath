@@ -29,9 +29,6 @@ class Organizations:
               writeQuota
               readUsage
               writeUsage
-              services {
-                name
-              }
               personalUser {
                 userID
                 email
@@ -74,9 +71,6 @@ class Organizations:
               writeQuota
               readUsage
               writeUsage
-              services {
-                name
-              }
               personalUser {
                 userID
                 email
@@ -139,9 +133,6 @@ class Organizations:
             projects {
               name
             }
-            services {
-              name
-            }
           }
         }
       """
@@ -173,9 +164,6 @@ class Organizations:
             readUsage
             writeUsage
             projects {
-              name
-            }
-            services {
               name
             }
           }
@@ -293,23 +281,3 @@ class Organizations:
       """
     )
     return result['transferProjectToOrganization']
-
-  async def transfer_service(self, service_id, new_organization_id):
-    result = await self.conn.query_control(
-      variables={
-        'serviceID': service_id,
-        'organizationID': new_organization_id,
-      },
-      query="""
-        mutation TransferServiceToOrganization($serviceID: UUID!, $organizationID: UUID!) {
-          transferServiceToOrganization(serviceID: $serviceID, organizationID: $organizationID) {
-            serviceID
-            organization {
-              organizationID
-              name
-            }
-          }
-        }
-      """
-    )
-    return result['transferServiceToOrganization']

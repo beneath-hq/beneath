@@ -71,16 +71,23 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
     crumbs = [
       <TerminalCrumb key={0} />,
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
-      <OrganizationCrumb
+      <ProjectCrumb
         key={2}
         organization={router.query.organization_name as string}
+        project={router.query.project_name as string}
+      />,
+      <ProjectCrumb
+        key={3}
+        organization={router.query.organization_name as string}
+        project={router.query.project_name as string}
         tab="services"
         tabLabel="Services"
       />,
       <ServiceCrumb
-        key={3}
+        key={4}
         isCurrent
         organization={router.query.organization_name as string}
+        project={router.query.project_name as string}
         service={router.query.service_name as string}
       />,
     ];
@@ -133,17 +140,20 @@ const TerminalCrumb: FC<TerminalCrumbProps> = ({ isCurrent }) => (
 interface ProjectCrumbProps {
   organization: string;
   project: string;
+  tab?: string;
+  tabLabel?: string;
   isCurrent?: boolean;
 }
 
-const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent }) => (
-  <Crumb
-    href={`/project?organization_name=${organization}&project_name=${project}`}
-    as={`/${organization}/${project}`}
-    label={project}
-    isCurrent={isCurrent}
-  />
-);
+const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent, tab, tabLabel }) => {
+  let href = `/project?organization_name=${organization}&project_name=${project}`;
+  let as = `/${organization}/${project}`;
+  if (tab) {
+    href += `&tab=${tab}`;
+    as += `/-/${tab}`;
+  }
+  return <Crumb isCurrent={isCurrent} href={href} as={as} label={tabLabel || project} />;
+};
 
 interface StreamCrumbProps {
   organization: string;
@@ -180,16 +190,17 @@ const OrganizationCrumb: FC<OrganizationCrumbProps> = ({ organization, isCurrent
 
 interface ServiceCrumbProps {
   organization: string;
+  project: string;
   service: string;
   isCurrent?: boolean;
 }
 
-const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, service, isCurrent }) => {
+const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, isCurrent }) => {
   return (
     <Crumb
       isCurrent={isCurrent}
-      href={`/service?organization_name=${organization}&service_name=${service}`}
-      as={`/${organization}/-/services/${service}`}
+      href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
+      as={`/${organization}/${project}/-/services/${service}`}
       label={service}
     />
   );

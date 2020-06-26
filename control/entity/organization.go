@@ -31,7 +31,6 @@ type Organization struct {
 	ReadQuota         *int64    // bytes // NOTE: when updating value, clear secret cache
 	WriteQuota        *int64    // bytes // NOTE: when updating value, clear secret cache
 	Projects          []*Project
-	Services          []*Service
 	Users             []*User `pg:"fk:billing_organization_id"`
 
 	// used to indicate requestor's permissions in resolvers
@@ -98,7 +97,6 @@ func FindOrganization(ctx context.Context, organizationID uuid.UUID) *Organizati
 		Column(
 			"organization.*",
 			"User",
-			"Services", // only necessary if has permissions
 			"Projects",
 		).Select()
 	if !AssertFoundOne(err) {
@@ -116,7 +114,6 @@ func FindOrganizationByName(ctx context.Context, name string) *Organization {
 			"organization.*",
 			"User",
 			"User.BillingOrganization",
-			"Services", // only necessary if has permissions
 			"Projects",
 		).Select()
 	if !AssertFoundOne(err) {
@@ -134,7 +131,6 @@ func FindOrganizationByUserID(ctx context.Context, userID uuid.UUID) *Organizati
 			"organization.*",
 			"User",
 			"User.BillingOrganization",
-			"Services", // only necessary if has permissions
 			"Projects",
 		).Select()
 	if !AssertFoundOne(err) {
@@ -427,23 +423,6 @@ func (o *Organization) TransferProject(ctx context.Context, project *Project, ta
 
 	// stream cache includes organization name, so invalidate cache
 	getStreamCache().ClearForProject(ctx, project.ProjectID)
-
-	return nil
-}
-
-// TransferService transfers a service in o to another organization
-func (o *Organization) TransferService(ctx context.Context, service *Service, targetOrg *Organization) error {
-	// update organization
-	service.Organization = targetOrg
-	service.OrganizationID = targetOrg.OrganizationID
-	service.UpdatedOn = time.Now()
-	_, err := hub.DB.ModelContext(ctx, service).Column("organization_id", "updated_on").WherePK().Update()
-	if err != nil {
-		return err
-	}
-
-	// secret cache includes organization's quotas
-	getSecretCache().ClearForService(ctx, service.ServiceID)
 
 	return nil
 }

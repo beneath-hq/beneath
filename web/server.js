@@ -50,18 +50,20 @@ app.prepare().then(() => {
     next();
   });
 
-  // Redirect "/" based on whether user logged in
-  server.get("/", (req, res, next) => {
-    let loggedIn = !!req.cookies.token;
-    if (!loggedIn) {
-      let noredirect = req.query.noredirect;
-      if (!noredirect) {
-        res.redirect("https://about.beneath.dev/");
-        return;
+  // Redirect "/" based on whether user logged in (only in production)
+  if (!dev) {
+    server.get("/", (req, res, next) => {
+      let loggedIn = !!req.cookies.token;
+      if (!loggedIn) {
+        let noredirect = req.query.noredirect;
+        if (!noredirect) {
+          res.redirect("https://about.beneath.dev/");
+          return;
+        }
       }
-    }
-    next();
-  });
+      next();
+    });
+  }
 
   // Redirect "/-/" to "/"
   server.get("/-/", (req, res) => {
@@ -138,10 +140,10 @@ app.prepare().then(() => {
   addStaticRoute("/favicon.ico");
   addDynamicRoute("/:organization_name", "/organization");
   addDynamicRoute("/:organization_name/-/:tab", "/organization");
-  addDynamicRoute("/:organization_name/-/services/:service_name", "/service");
-  addDynamicRoute("/:organization_name/-/services/:service_name/-/:tab", "/service");
   addDynamicRoute("/:organization_name/:project_name", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
+  addDynamicRoute("/:organization_name/:project_name/-/services/:service_name", "/service");
+  addDynamicRoute("/:organization_name/:project_name/-/services/:service_name/-/:tab", "/service");
   addDynamicRoute("/:organization_name/:project_name/:stream_name", "/stream");
   addDynamicRoute("/:organization_name/:project_name/:stream_name/-/:tab", "/stream");
   addStaticRoute("*"); // catchall

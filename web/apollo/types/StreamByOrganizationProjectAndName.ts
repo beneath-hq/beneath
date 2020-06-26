@@ -34,6 +34,7 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   __typename: "StreamInstance";
   streamInstanceID: string;
   createdOn: ControlTime;
+  version: number;
   madePrimaryOn: ControlTime | null;
   madeFinalOn: ControlTime | null;
 }
@@ -50,8 +51,13 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   schema: string;
   avroSchema: string;
   streamIndexes: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes[];
-  retentionSeconds: number;
-  enableManualWrites: boolean;
+  allowManualWrites: boolean;
+  useLog: boolean;
+  useIndex: boolean;
+  useWarehouse: boolean;
+  logRetentionSeconds: number;
+  indexRetentionSeconds: number;
+  warehouseRetentionSeconds: number;
   primaryStreamInstanceID: ControlUUID | null;
   primaryStreamInstance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
   instancesCreatedCount: number;

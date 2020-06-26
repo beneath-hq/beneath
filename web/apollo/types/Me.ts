@@ -16,13 +16,6 @@ export interface Me_me_projects {
   photoURL: string | null;
 }
 
-export interface Me_me_services {
-  __typename: "Service";
-  serviceID: ControlUUID;
-  name: string;
-  kind: string;
-}
-
 export interface Me_me_personalUser_billingOrganization {
   __typename: "PublicOrganization";
   organizationID: string;
@@ -68,7 +61,6 @@ export interface Me_me {
   writeQuota: number | null;
   readUsage: number;
   writeUsage: number;
-  services: Me_me_services[];
   personalUser: Me_me_personalUser | null;
   permissions: Me_me_permissions;
 }

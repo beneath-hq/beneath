@@ -112,11 +112,6 @@ func (s *ServiceSecret) OrganizationPermissions(ctx context.Context, organizatio
 	return OrganizationPermissions{}
 }
 
-// ManagesModelBatches implements the Secret interface
-func (s *ServiceSecret) ManagesModelBatches(model *Model) bool {
-	return s.ServiceID == model.ServiceID
-}
-
 // Revoke implements the Secret interface
 func (s *ServiceSecret) Revoke(ctx context.Context) {
 	// delete from db

@@ -24,11 +24,6 @@ export const QUERY_ME = gql`
       writeQuota
       readUsage
       writeUsage
-      services {
-        serviceID
-        name
-        kind
-      }
       personalUser {
         userID
         email
@@ -79,11 +74,6 @@ export const QUERY_ORGANIZATION = gql`
         writeQuota
         readUsage
         writeUsage
-        services {
-          serviceID
-          name
-          kind
-        }
         personalUser {
           userID
           email

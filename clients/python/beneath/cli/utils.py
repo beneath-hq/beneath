@@ -1,7 +1,7 @@
 import asyncio
 import argparse
-from beneath.connection import GraphQLError
 import json
+from beneath.connection import GraphQLError
 
 def async_cmd(cmd):
 
@@ -10,10 +10,10 @@ def async_cmd(cmd):
     asyncio.set_event_loop(loop)
     try:
       loop.run_until_complete(cmd(args))
-    except GraphQLError as e:
-      print("Error:", e)
-      if e.errors:
-        print("Details:", e.errors)
+    except GraphQLError as exc:
+      print("Error:", exc)
+      if exc.errors:
+        print("Details:", exc.errors)
 
   return wrapped
 

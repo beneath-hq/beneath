@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
+	"github.com/vektah/gqlparser/gqlerror"
 	"gopkg.in/go-playground/validator.v9"
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
@@ -22,16 +23,14 @@ import (
 // Stream represents a collection of data
 type Stream struct {
 	// Descriptive fields
-	StreamID      uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name          string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, lower(name)) index // note: used in stream cache
-	Description   string    `validate:"omitempty,lte=255"`
-	CreatedOn     time.Time `sql:",default:now()"`
-	UpdatedOn     time.Time `sql:",default:now()"`
-	ProjectID     uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
-	Project       *Project
-	SourceModelID *uuid.UUID `sql:"on_delete:RESTRICT,type:uuid"`
-	SourceModel   *Model
-	DerivedModels []*Model `pg:"many2many:streams_into_models,fk:stream_id,joinFK:model_id"`
+	StreamID          uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name              string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (project_id, lower(name)) index // note: used in stream cache
+	Description       string    `validate:"omitempty,lte=255"`
+	CreatedOn         time.Time `sql:",default:now()"`
+	UpdatedOn         time.Time `sql:",default:now()"`
+	ProjectID         uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
+	Project           *Project
+	AllowManualWrites bool `sql:",notnull"`
 
 	// Schema-related fields (note: some are used in stream cache)
 	SchemaKind          StreamSchemaKind `sql:",notnull",validate:"required"`
@@ -43,8 +42,12 @@ type Stream struct {
 	StreamIndexes       []*StreamIndex
 
 	// Behaviour-related fields (note: used in stream cache)
-	RetentionSeconds   int32 `sql:",notnull,default:0"`
-	EnableManualWrites bool  `sql:",notnull"`
+	UseLog                    bool  `sql:",notnull"`
+	UseIndex                  bool  `sql:",notnull"`
+	UseWarehouse              bool  `sql:",notnull"`
+	LogRetentionSeconds       int32 `sql:",notnull,default:0"`
+	IndexRetentionSeconds     int32 `sql:",notnull,default:0"`
+	WarehouseRetentionSeconds int32 `sql:",notnull,default:0"`
 
 	// Instances-related fields
 	StreamInstances           []*StreamInstance
@@ -62,6 +65,9 @@ type StreamSchemaKind string
 const (
 	// StreamSchemaKindGraphQl is the GraphQL SDL
 	StreamSchemaKindGraphQl StreamSchemaKind = "GraphQL"
+
+	// MaxInstancesPerStream sets a limit for the number of instances for a stream at any given time
+	MaxInstancesPerStream = 25
 )
 
 var (
@@ -96,7 +102,6 @@ func FindStream(ctx context.Context, streamID uuid.UUID) *Stream {
 			"Project",
 			"Project.Organization",
 			"PrimaryStreamInstance",
-			"SourceModel",
 			"StreamIndexes",
 		).
 		Select()
@@ -115,7 +120,6 @@ func FindStreamByOrganizationProjectAndName(ctx context.Context, organizationNam
 			"Project",
 			"Project.Organization",
 			"PrimaryStreamInstance",
-			"SourceModel",
 			"StreamIndexes",
 		).
 		Where("lower(project__organization.name) = lower(?)", organizationName).
@@ -138,9 +142,34 @@ func (s *Stream) GetStreamName() string {
 	return s.Name
 }
 
-// GetRetention implements engine/driver.Stream
-func (s *Stream) GetRetention() time.Duration {
-	return time.Duration(s.RetentionSeconds) * time.Second
+// GetUseLog implements engine/driver.Stream
+func (s *Stream) GetUseLog() bool {
+	return s.UseLog
+}
+
+// GetUseIndex implements engine/driver.Stream
+func (s *Stream) GetUseIndex() bool {
+	return s.UseIndex
+}
+
+// GetUseWarehouse implements engine/driver.Stream
+func (s *Stream) GetUseWarehouse() bool {
+	return s.UseWarehouse
+}
+
+// GetLogRetention implements engine/driver.Stream
+func (s *Stream) GetLogRetention() time.Duration {
+	return time.Duration(s.LogRetentionSeconds) * time.Second
+}
+
+// GetIndexRetention implements engine/driver.Stream
+func (s *Stream) GetIndexRetention() time.Duration {
+	return time.Duration(s.IndexRetentionSeconds) * time.Second
+}
+
+// GetWarehouseRetention implements engine/driver.Stream
+func (s *Stream) GetWarehouseRetention() time.Duration {
+	return time.Duration(s.WarehouseRetentionSeconds) * time.Second
 }
 
 // GetCodec implements engine/driver.Stream
@@ -237,12 +266,6 @@ func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSc
 	s.BigQuerySchema = bqSchema
 	s.Description = streamDef.Description
 
-	// validate
-	err = GetValidator().Struct(s)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -301,7 +324,7 @@ func (s *Stream) indexesEqual(def *schema.StreamDef) bool {
 
 // Stage creates or updates the stream so that it adheres to the params (or does nothing if everything already conforms).
 // If s is a new stream object, Name and ProjectID must be set before calling Stage.
-func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) error {
+func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) error {
 	// determine whether to insert or update
 	update := (s.StreamID != uuid.Nil)
 
@@ -320,18 +343,99 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 	}
 
 	// update fields if necessary
-	if retentionSeconds != nil && int32(*retentionSeconds) != s.RetentionSeconds {
-		s.RetentionSeconds = int32(*retentionSeconds)
+
+	if allowManualWrites != nil && *allowManualWrites != s.AllowManualWrites {
+		s.AllowManualWrites = *allowManualWrites
 		save = true
 	}
-	if enableManualWrites != nil && *enableManualWrites != s.EnableManualWrites {
-		s.EnableManualWrites = *enableManualWrites
+
+	if update {
+		// on updates, don't allow changes to used services and retention
+
+		if useLog != nil && *useLog != s.UseLog {
+			return fmt.Errorf("Cannot change useLog after a stream is created")
+		}
+
+		if useIndex != nil && *useIndex != s.UseIndex {
+			return fmt.Errorf("Cannot change useIndex after a stream is created")
+		}
+
+		if useWarehouse != nil && *useWarehouse != s.UseWarehouse {
+			return fmt.Errorf("Cannot change useWarehouse after a stream is created")
+		}
+
+		if logRetentionSeconds != nil && int32(*logRetentionSeconds) != s.LogRetentionSeconds {
+			return fmt.Errorf("Cannot change logRetentionSeconds after a stream is created")
+		}
+
+		if indexRetentionSeconds != nil && int32(*indexRetentionSeconds) != s.IndexRetentionSeconds {
+			return fmt.Errorf("Cannot change indexRetentionSeconds after a stream is created")
+		}
+
+		if warehouseRetentionSeconds != nil && int32(*warehouseRetentionSeconds) != s.WarehouseRetentionSeconds {
+			return fmt.Errorf("Cannot change warehouseRetentionSeconds after a stream is created")
+		}
+	} else {
 		save = true
+
+		s.UseLog = true
+		if useLog != nil {
+			s.UseLog = *useLog
+		}
+
+		s.UseIndex = true
+		if useIndex != nil {
+			s.UseIndex = *useIndex
+		}
+
+		s.UseWarehouse = true
+		if useWarehouse != nil {
+			s.UseWarehouse = *useWarehouse
+		}
+
+		if logRetentionSeconds != nil {
+			if !s.UseLog {
+				return fmt.Errorf("Cannot set logRetentionSeconds on stream that doesn't have useLog=true")
+			}
+			s.LogRetentionSeconds = int32(*logRetentionSeconds)
+		}
+
+		if indexRetentionSeconds != nil {
+			if !s.UseIndex {
+				return fmt.Errorf("Cannot set indexRetentionSeconds on stream that doesn't have useIndex=true")
+			}
+			s.IndexRetentionSeconds = int32(*indexRetentionSeconds)
+		}
+
+		if warehouseRetentionSeconds != nil {
+			if !s.UseWarehouse {
+				return fmt.Errorf("Cannot set warehouseRetentionSeconds on stream that doesn't have useWarehouse=true")
+			}
+			s.WarehouseRetentionSeconds = int32(*warehouseRetentionSeconds)
+		}
+
+		// if there's a normalized index, make sure we use a non-expiring log
+		for _, index := range s.StreamIndexes {
+			if index.Normalize && (!s.UseLog || s.LogRetentionSeconds != 0) {
+				return fmt.Errorf("Cannot use normalized indexes when useLog=false or logRetentionSeconds is set")
+			}
+		}
+	}
+
+	// temporarily, we're going to enforce UseLog
+	if !s.UseLog {
+		return fmt.Errorf("Currently doesn't support streams with useLog=false")
 	}
 
 	// quit if no changes
 	if !save {
 		return nil
+	}
+
+	// validate
+	err := GetValidator().Struct(s)
+	if err != nil {
+		return err
 	}
 
 	// populate s.Project and s.Project.Organization if not set (i.e. due to inserting new stream)
@@ -350,7 +454,7 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 			}
 
 			// update instances in engine and clear cached instances
-			instances := FindStreamInstances(tx.Context(), s.StreamID)
+			instances := FindStreamInstances(tx.Context(), s.StreamID, nil, nil)
 			for _, instance := range instances {
 				getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
 				err := hub.Engine.RegisterInstance(tx.Context(), s.Project, s, instance)
@@ -380,21 +484,6 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 			}
 		}
 
-		// create a primary instance if requested
-		if createPrimaryStreamInstance != nil && *createPrimaryStreamInstance {
-			// create stream instance
-			instance, err := s.CreateStreamInstanceWithTx(tx)
-			if err != nil {
-				return err
-			}
-
-			// commit instance
-			err = s.UpdateStreamInstanceWithTx(tx, instance, false, true, false)
-			if err != nil {
-				return err
-			}
-		}
-
 		return nil
 	})
 }
@@ -402,7 +491,7 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 // Delete deletes a stream and all its related instances
 func (s *Stream) Delete(ctx context.Context) error {
 	// delete instances
-	instances := FindStreamInstances(ctx, s.StreamID)
+	instances := FindStreamInstances(ctx, s.StreamID, nil, nil)
 	for _, inst := range instances {
 		err := s.DeleteStreamInstance(ctx, inst)
 		if err != nil {
@@ -427,36 +516,82 @@ func (s *Stream) Delete(ctx context.Context) error {
 	return nil
 }
 
-// CreateStreamInstance creates a new instance
-func (s *Stream) CreateStreamInstance(ctx context.Context) (res *StreamInstance, err error) {
-	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		res, err = s.CreateStreamInstanceWithTx(tx)
-		return err
-	})
-	return res, err
-}
+// StageStreamInstance creates or finds an instance with version in the stream
+func (s *Stream) StageStreamInstance(ctx context.Context, version int, makeFinal bool, makePrimary bool) (*StreamInstance, error) {
+	if version < 0 {
+		return nil, fmt.Errorf("Cannot create stream instance with negative version (got %d)", version)
+	}
 
-// CreateStreamInstanceWithTx is the same as CreateStreamInstance, but in a database transaction
-func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) {
-	// create new
+	// find existing instance
+	instances := FindStreamInstances(ctx, s.StreamID, &version, nil)
+	maxVersion := 0
+	for _, si := range instances {
+		// return if version matches
+		if si.Version == version {
+			// update if makeFinal or makePrimary
+			if (makeFinal && si.MadeFinalOn == nil) || (makePrimary && si.MadePrimaryOn == nil) {
+				err := s.UpdateStreamInstance(ctx, si, makeFinal, makePrimary)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			// return
+			return si, nil
+		}
+
+		// track for maxVersion
+		if si.Version > maxVersion {
+			maxVersion = si.Version
+		}
+	}
+
+	// don't create if there's an instance with a higher version
+	if len(instances) > 0 {
+		return nil, fmt.Errorf("One or more instances already exist with a higher version for stream (highest currently has version %d)", maxVersion)
+	}
+
+	// check not too many instances
+	if s.InstancesCreatedCount-s.InstancesDeletedCount >= MaxInstancesPerStream {
+		return nil, gqlerror.Errorf("You cannot have more than %d instances per stream. Delete an existing instance to make room for more.", MaxInstancesPerStream)
+	}
+
+	// create instance
 	si := &StreamInstance{
 		StreamID: s.StreamID,
 		Stream:   s,
-	}
-	_, err := tx.Model(si).Insert()
-	if err != nil {
-		return nil, err
+		Version:  version,
 	}
 
-	// increment count
-	s.InstancesCreatedCount++
-	_, err = tx.Model(s).Set("instances_created_count = instances_created_count + 1").WherePK().Update()
-	if err != nil {
-		return nil, err
-	}
+	err := hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		_, err := tx.Model(si).Insert()
+		if err != nil {
+			return err
+		}
 
-	// register instance
-	err = hub.Engine.RegisterInstance(tx.Context(), s.Project, s, si)
+		// increment count
+		s.InstancesCreatedCount++
+		_, err = tx.Model(s).Set("instances_created_count = instances_created_count + 1").WherePK().Update()
+		if err != nil {
+			return err
+		}
+
+		// register instance
+		err = hub.Engine.RegisterInstance(tx.Context(), s.Project, s, si)
+		if err != nil {
+			return err
+		}
+
+		// update if makeFinal or makePrimary
+		if makeFinal || makePrimary {
+			err = s.UpdateStreamInstanceWithTx(tx, si, makeFinal, makePrimary)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -465,22 +600,17 @@ func (s *Stream) CreateStreamInstanceWithTx(tx *pg.Tx) (*StreamInstance, error) 
 }
 
 // UpdateStreamInstance updates the state of a stream instance
-func (s *Stream) UpdateStreamInstance(ctx context.Context, instance *StreamInstance, makeFinal bool, makePrimary bool, deletePreviousPrimary bool) error {
+func (s *Stream) UpdateStreamInstance(ctx context.Context, instance *StreamInstance, makeFinal bool, makePrimary bool) error {
 	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		return s.UpdateStreamInstanceWithTx(tx, instance, makeFinal, makePrimary, deletePreviousPrimary)
+		return s.UpdateStreamInstanceWithTx(tx, instance, makeFinal, makePrimary)
 	})
 }
 
 // UpdateStreamInstanceWithTx is like UpdateStreamInstance, but runs in a transaction
-func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance, makeFinal bool, makePrimary bool, deletePreviousPrimary bool) error {
+func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance, makeFinal bool, makePrimary bool) error {
 	// check relationship
 	if instance.StreamID != s.StreamID {
 		return fmt.Errorf("Cannot update instance '%s' because it doesn't belong to stream '%s'", instance.StreamInstanceID.String(), s.StreamID.String())
-	}
-
-	// check makePrimary and deletePreviousPrimary connection
-	if !makePrimary && deletePreviousPrimary {
-		return fmt.Errorf("Cannot set deletePreviousPrimary if makePrimary isn't set")
 	}
 
 	// bail if there's nothing to do
@@ -496,7 +626,6 @@ func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance,
 
 	// values needed later
 	now := time.Now()
-	previousPrimaryInstanceID := s.PrimaryStreamInstanceID
 
 	// handle makeFinal
 	if makeFinal && instance.MadeFinalOn == nil {
@@ -542,14 +671,15 @@ func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance,
 		}
 	}
 
-	// delete previous primary instance
-	if deletePreviousPrimary && previousPrimaryInstanceID != nil {
-		err := s.DeleteStreamInstanceWithTx(tx, &StreamInstance{
-			StreamInstanceID: *previousPrimaryInstanceID,
-			StreamID:         s.StreamID,
-		})
-		if err != nil {
-			return err
+	// delete earlier versions
+	if makePrimary {
+		instances := FindStreamInstances(tx.Context(), s.StreamID, nil, &instance.Version)
+		for _, si := range instances {
+			err := s.DeleteStreamInstanceWithTx(tx, si)
+			if err != nil {
+				return err
+			}
+			getStreamCache().Clear(tx.Context(), si.StreamInstanceID)
 		}
 	}
 
@@ -557,9 +687,6 @@ func (s *Stream) UpdateStreamInstanceWithTx(tx *pg.Tx, instance *StreamInstance,
 	getStreamCache().Clear(tx.Context(), instance.StreamInstanceID)
 	if makePrimary {
 		getInstanceCache().clear(tx.Context(), s.Project.Organization.Name, s.Project.Name, s.Name)
-		if previousPrimaryInstanceID != nil {
-			getStreamCache().Clear(tx.Context(), *previousPrimaryInstanceID)
-		}
 	}
 
 	return nil

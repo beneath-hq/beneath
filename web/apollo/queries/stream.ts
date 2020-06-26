@@ -25,12 +25,18 @@ export const QUERY_STREAM = gql`
         primary
         normalize
       }
-      retentionSeconds
-      enableManualWrites
+      allowManualWrites
+      useLog
+      useIndex
+      useWarehouse
+      logRetentionSeconds
+      indexRetentionSeconds
+      warehouseRetentionSeconds
       primaryStreamInstanceID
       primaryStreamInstance {
         streamInstanceID
         createdOn
+        version
         madePrimaryOn
         madeFinalOn
       }

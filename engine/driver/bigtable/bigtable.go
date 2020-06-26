@@ -167,11 +167,20 @@ func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge 
 	return b.Client.Open(name)
 }
 
-func (b BigTable) tablesForStream(s driver.Stream) (*bigtable.Table, *bigtable.Table) {
-	if streamExpires(s) {
-		return b.LogExpiring, b.IndexesExpiring
+func (b BigTable) tablesForStream(s driver.Stream) (logTable *bigtable.Table, indexTable *bigtable.Table) {
+	if logExpires(s) {
+		logTable = b.LogExpiring
+	} else {
+		logTable = b.Log
 	}
-	return b.Log, b.Indexes
+
+	if indexExpires(s) {
+		indexTable = b.IndexesExpiring
+	} else {
+		indexTable = b.Indexes
+	}
+
+	return logTable, indexTable
 }
 
 func (b BigTable) logTable(expires bool) *bigtable.Table {

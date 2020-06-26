@@ -17,10 +17,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
-const (
-	expirationBuffer = 5 * time.Minute
-)
-
 // Run subscribes to new write requests and stores data in derived systems.
 // It runs forever unless an error occcurs.
 func Run(ctx context.Context) error {
@@ -43,38 +39,15 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 		return nil
 	}
 
-	// compute sensible timestamp at which to not even attempt the write
-	expirationTimestamp := int64(0)
-	if stream.RetentionSeconds != 0 {
-		ts := time.Now().Add(-1 * time.Duration(stream.RetentionSeconds) * time.Second).Add(expirationBuffer)
-		expirationTimestamp = timeutil.UnixMilli(ts)
-	}
-
 	// make records array
-	expired := 0
 	records := make([]driver.Record, len(req.Records))
 	for idx, proto := range req.Records {
-		if expirationTimestamp != 0 && proto.Timestamp < expirationTimestamp {
-			expired++
-			continue
-		}
-
 		r := newRecord(stream, proto)
 		bytesTotal += len(r.GetAvro())
 		records[idx] = r
 
 		if minTimestamp == 0 || proto.Timestamp < minTimestamp {
 			minTimestamp = proto.Timestamp
-		}
-	}
-
-	// remove expired slots from records
-	if expired != 0 {
-		records = records[:len(records)-expired]
-
-		// there's a chance all records were expired, in which case we'll just stop here
-		if len(records) == 0 {
-			return nil
 		}
 	}
 
@@ -92,9 +65,11 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 		return hub.Engine.Lookup.WriteRecords(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
 	})
 
-	group.Go(func() error {
-		return hub.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
-	})
+	if stream.UseWarehouse {
+		group.Go(func() error {
+			return hub.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
+		})
+	}
 
 	err := group.Wait()
 	if err != nil {

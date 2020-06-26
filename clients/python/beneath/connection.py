@@ -1,4 +1,4 @@
-from typing import AsyncIterator, List
+from typing import AsyncIterator
 import uuid
 import warnings
 
@@ -24,9 +24,6 @@ class GraphQLError(Exception):
 
 class AuthenticationError(Exception):
   """ Error returned for failed authentication """
-
-  def __init__(self, message):
-    super().__init__(message)
 
 
 class Connection:
@@ -59,16 +56,16 @@ class Connection:
       self._create_grpc_connection()
       try:
         await self._check_grpc_connection()
-      except grpc.RpcError as e:
-        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
-          raise AuthenticationError(e.details()) from e
-        raise e
+      except grpc.RpcError as exc:
+        # pylint: disable=no-member
+        if exc.code() == grpc.StatusCode.UNAUTHENTICATED:
+          raise AuthenticationError(exc.details()) from exc
+        raise exc
       self.connected = True
 
   def _create_grpc_connection(self):
     self.request_metadata = [('authorization', 'Bearer {}'.format(self.secret))]
     insecure = "localhost" in config.BENEATH_GATEWAY_HOST_GRPC
-    insecure = insecure or config.INTERNAL_NETWORK
     if insecure:
       self.channel = aiogrpc.insecure_channel(
         target=config.BENEATH_GATEWAY_HOST_GRPC,
@@ -140,13 +137,10 @@ class Connection:
 
   # DATA-PLANE
 
-  async def write(self, instance_id: uuid.UUID, records: List[gateway_pb2.Record]) -> gateway_pb2.WriteResponse:
+  async def write(self, instance_records: gateway_pb2.InstanceRecords) -> gateway_pb2.WriteResponse:
     await self.ensure_connected()
     return await self.stub.Write(
-      gateway_pb2.WriteRequest(
-        instance_id=instance_id.bytes,
-        records=records,
-      ),
+      gateway_pb2.WriteRequest(instance_records=instance_records),
       metadata=self.request_metadata,
     )
 

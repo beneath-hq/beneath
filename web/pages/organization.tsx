@@ -17,7 +17,6 @@ import ViewMetrics from "../components/organization/ViewMetrics";
 import ViewProjects from "../components/organization/ViewProjects";
 import ViewSecrets from "../components/organization/ViewSecrets";
 import ViewSecurity from "../components/organization/ViewSecurity";
-import ViewServices from "../components/organization/ViewServices";
 import Page from "../components/Page";
 import ProfileHero from "../components/ProfileHero";
 import SubrouteTabs from "../components/SubrouteTabs";
@@ -78,7 +77,6 @@ const OrganizationPage = () => {
       tabs.push({ value: "members", label: "Members", render: () => <ViewMembers organization={organization} /> });
     }
 
-    tabs.push({ value: "services", label: "Services", render: () => <ViewServices organization={organization} /> });
     tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics organization={organization} /> });
 
     if (organization.permissions.admin) {

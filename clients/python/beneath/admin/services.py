@@ -7,89 +7,82 @@ class Services:
   def __init__(self, conn: Connection):
     self.conn = conn
 
-  async def find_by_organization_and_name(self, organization_name, name):
+  async def find_by_organization_project_and_name(self, organization_name, project_name, service_name):
     result = await self.conn.query_control(
       variables={
-        'name': format_entity_name(name),
         'organizationName': format_entity_name(organization_name),
+        'projectName': format_entity_name(project_name),
+        'serviceName': format_entity_name(service_name),
       },
       query="""
-        query ServiceByNameAndOrganization($name: String!, $organizationName: String!) {
-          serviceByNameAndOrganization(name: $name, organizationName: $organizationName) {
+        query ServiceByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $serviceName: String!) {
+          serviceByOrganizationProjectAndName(
+            organizationName: $organizationName,
+            projectName: $projectName,
+            serviceName: $serviceName,
+          ) {
             serviceID
             name
-            kind
+            description
+            sourceURL
             readQuota
             writeQuota
           }
         }
       """
     )
-    return result['serviceByNameAndOrganization']
+    return result['serviceByOrganizationProjectAndName']
 
-  async def create(self, name, organization_id, read_quota_bytes, write_quota_bytes):
+  async def stage(
+    self,
+    organization_name,
+    project_name,
+    service_name,
+    description=None,
+    source_url=None,
+    read_quota_bytes=None,
+    write_quota_bytes=None,
+  ):
     result = await self.conn.query_control(
       variables={
-        'name': format_entity_name(name),
-        'organizationID': organization_id,
+        'organizationName': format_entity_name(organization_name),
+        'projectName': format_entity_name(project_name),
+        'serviceName': format_entity_name(service_name),
+        'description': description,
+        'sourceURL': source_url,
         'readQuota': read_quota_bytes,
         'writeQuota': write_quota_bytes,
       },
       query="""
-        mutation CreateService($name: String!, $organizationID: UUID!, $readQuota: Int!, $writeQuota: Int!) {
-          createService(name: $name, organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota) {
+        mutation StageService(
+          $organizationName: String!,
+          $projectName: String!,
+          $serviceName: String!,
+          $description: String,
+          $sourceURL: String,
+          $readQuota: Int,
+          $writeQuota: Int,
+        ) {
+          stageService(
+            organizationName: $organizationName,
+            projectName: $projectName,
+            serviceName: $serviceName,
+            description: $description,
+            sourceURL: $sourceURL,
+            readQuota: $readQuota,
+            writeQuota: $writeQuota,
+          ) {
             serviceID
             name
-            kind
+            description
+            sourceURL
             readQuota
             writeQuota
           }
         }
       """
     )
-    return result['createService']
-
-
-  async def update_details(self, service_id, name):
-    result = await self.conn.query_control(
-      variables={
-        'serviceID': service_id,
-        'name': format_entity_name(name) if name is not None else None,
-      },
-      query="""
-        mutation UpdateService($serviceID: UUID!, $name: String) {
-          updateService(serviceID: $serviceID, name: $name) {
-            serviceID
-            name
-            kind
-            readQuota
-            writeQuota
-          }
-        }
-      """
-    )
-    return result['updateService']
-
-  async def update_quota(self, service_id, read_quota_bytes, write_quota_bytes):
-    result = await self.conn.query_control(
-      variables={
-        'serviceID': service_id,
-        'readQuota': read_quota_bytes,
-        'writeQuota': write_quota_bytes,
-      },
-      query="""
-        mutation UpdateServiceQuotas($serviceID: UUID!, $readQuota: Int, $writeQuota: Int) {
-          updateServiceQuotas(serviceID: $serviceID, readQuota: $readQuota, writeQuota: $writeQuota) {
-            serviceID
-            name
-            kind
-            readQuota
-            writeQuota
-          }
-        }
-      """
-    )
-    return result['updateServiceQuotas']
+    return result['stageService']
 
   async def update_permissions_for_stream(self, service_id, stream_id, read, write):
     result = await self.conn.query_control(

@@ -1,11 +1,16 @@
 import gql from "graphql-tag";
 
 export const QUERY_SERVICE = gql`
-  query ServiceByNameAndOrganization($serviceName: String!, $organizationName: String!) {
-    serviceByNameAndOrganization(name: $serviceName, organizationName: $organizationName) {
+  query ServiceByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $serviceName: String!) {
+    serviceByOrganizationProjectAndName(
+      organizationName: $organizationName,
+      projectName: $projectName,
+      serviceName: $serviceName,
+    ) {
       serviceID
       name
-      kind
+      description
+      sourceURL
       readQuota
       writeQuota
     }

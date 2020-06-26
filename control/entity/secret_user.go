@@ -132,11 +132,6 @@ func (s *UserSecret) OrganizationPermissions(ctx context.Context, organizationID
 	return CachedUserOrganizationPermissions(ctx, s.UserID, organizationID)
 }
 
-// ManagesModelBatches implements the Secret interface
-func (s *UserSecret) ManagesModelBatches(model *Model) bool {
-	return false
-}
-
 // Revoke implements the Secret interface
 func (s *UserSecret) Revoke(ctx context.Context) {
 	// delete from db

@@ -5,17 +5,22 @@ import (
 	"encoding/binary"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 const (
 	int64ByteSize = 8
 )
 
-// returns true if data in stream expires; returns false if data should be persisted forever
-func streamExpires(s driver.Stream) bool {
-	return s.GetRetention() != time.Duration(0)
+// returns true if data in log for stream expires; returns false if data should be persisted forever
+func logExpires(s driver.Stream) bool {
+	return s.GetLogRetention() != time.Duration(0)
+}
+
+// returns true if data in indexes for stream expires; returns false if data should be persisted forever
+func indexExpires(s driver.Stream) bool {
+	return s.GetIndexRetention() != time.Duration(0)
 }
 
 // unsafely casts []byte to a string (saving memory)

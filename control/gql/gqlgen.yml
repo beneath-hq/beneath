@@ -21,8 +21,6 @@ models:
     model: gitlab.com/beneath-hq/beneath/control/entity.ServiceSecret
   Project:
     model: gitlab.com/beneath-hq/beneath/control/entity.Project
-  Model:
-    model: gitlab.com/beneath-hq/beneath/control/entity.Model
   Stream:
     model: gitlab.com/beneath-hq/beneath/control/entity.Stream
   StreamInstance:

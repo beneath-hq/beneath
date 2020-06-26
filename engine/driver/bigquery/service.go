@@ -100,7 +100,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 	// create time partitioning config
 	timePartitioning := &bigquery.TimePartitioning{
 		Field:      "__timestamp",
-		Expiration: s.GetRetention(),
+		Expiration: s.GetWarehouseRetention(),
 	}
 
 	// create external table

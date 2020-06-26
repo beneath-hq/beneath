@@ -11,17 +11,25 @@ extend type Mutation {
     streamName: String!,
     schemaKind: StreamSchemaKind!,
     schema: String!,
-    retentionSeconds: Int,
-    enableManualWrites: Boolean,
-    createPrimaryStreamInstance: Boolean,
+    allowManualWrites: Boolean,
+    useLog: Boolean,
+    useIndex: Boolean,
+    useWarehouse: Boolean,
+    logRetentionSeconds: Int,
+    indexRetentionSeconds: Int,
+    warehouseRetentionSeconds: Int,
   ): Stream!
   deleteStream(streamID: UUID!): Boolean!
-  createStreamInstance(streamID: UUID!): StreamInstance!
+  stageStreamInstance(
+    streamID: UUID!,
+    version: Int!,
+    makeFinal: Boolean,
+    makePrimary: Boolean,
+  ): StreamInstance!
   updateStreamInstance(
     instanceID: UUID!,
     makeFinal: Boolean,
     makePrimary: Boolean,
-    deletePreviousPrimary: Boolean,
   ): StreamInstance!
   deleteStreamInstance(instanceID: UUID!): Boolean!
 }
@@ -37,7 +45,7 @@ type Stream {
   createdOn: Time!
   updatedOn: Time!
   project: Project!
-  sourceModel: Model
+  allowManualWrites: Boolean!
 
   schemaKind: StreamSchemaKind!
   schema: String!
@@ -45,9 +53,13 @@ type Stream {
   canonicalAvroSchema: String!
   streamIndexes: [StreamIndex!]!
 
-  retentionSeconds: Int!
-  enableManualWrites: Boolean!
-  
+  useLog: Boolean!
+  useIndex: Boolean!
+  useWarehouse: Boolean!
+  logRetentionSeconds: Int!
+	indexRetentionSeconds: Int!
+	warehouseRetentionSeconds: Int!
+
   primaryStreamInstance: StreamInstance
   primaryStreamInstanceID: UUID
   instancesCreatedCount: Int!
@@ -59,6 +71,7 @@ type Stream {
 type StreamInstance {
   streamInstanceID: ID!
   streamID: UUID!
+  version: Int!
   createdOn: Time!
   madePrimaryOn: Time
   madeFinalOn: Time

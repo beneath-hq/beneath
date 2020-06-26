@@ -308,39 +308,6 @@ func (r *mutationResolver) TransferProjectToOrganization(ctx context.Context, pr
 	return project, nil
 }
 
-func (r *mutationResolver) TransferServiceToOrganization(ctx context.Context, serviceID uuid.UUID, organizationID uuid.UUID) (*entity.Service, error) {
-	service := entity.FindService(ctx, serviceID)
-	if service == nil {
-		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
-	}
-
-	if service.OrganizationID == organizationID {
-		return nil, gqlerror.Errorf("Service %s is already in organization %s", serviceID.String(), organizationID.String())
-	}
-
-	secret := middleware.GetSecret(ctx)
-	servicePerms := secret.OrganizationPermissions(ctx, service.OrganizationID)
-	if !servicePerms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to administrate the service's organization %s", service.OrganizationID.String())
-	}
-	orgPerms := secret.OrganizationPermissions(ctx, organizationID)
-	if !orgPerms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create resources in the target organization %s", organizationID.String())
-	}
-
-	targetOrganization := entity.FindOrganization(ctx, organizationID)
-	if targetOrganization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID)
-	}
-
-	err := service.Organization.TransferService(ctx, service, targetOrganization)
-	if err != nil {
-		return nil, err
-	}
-
-	return service, nil
-}
-
 func organizationPermissions(ctx context.Context, secret entity.Secret, org *entity.Organization) entity.OrganizationPermissions {
 	perms := secret.OrganizationPermissions(ctx, org.OrganizationID)
 
@@ -374,7 +341,6 @@ func organizationToPrivateOrganization(ctx context.Context, o *entity.Organizati
 		ReadQuota:         Int64ToInt(o.ReadQuota),
 		WriteQuota:        Int64ToInt(o.WriteQuota),
 		Projects:          o.Projects,
-		Services:          o.Services,
 	}
 
 	usage := metrics.GetCurrentUsage(ctx, o.OrganizationID)

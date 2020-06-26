@@ -9,6 +9,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/project/EditProject";
 import ViewMembers from "../components/project/ViewMembers";
+import ViewServices from "../components/project/ViewServices";
 import ViewStreams from "../components/project/ViewStreams";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
@@ -16,6 +17,7 @@ import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } f
 import { withApollo } from "../apollo/withApollo";
 import ErrorPage from "../components/ErrorPage";
 import { toBackendName, toURLName } from "../lib/names";
+
 
 const ProjectPage = () => {
   const router = useRouter();
@@ -55,6 +57,7 @@ const ProjectPage = () => {
   if (project.permissions.view) {
     tabs.push({ value: "members", label: "Members", render: () => <ViewMembers project={project} /> });
   }
+  tabs.push({ value: "services", label: "Services", render: () => <ViewServices project={project} /> });
   if (project.permissions.admin) {
     tabs.push({ value: "edit", label: "Edit", render: () => <EditProject project={project} /> });
   }

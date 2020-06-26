@@ -49,7 +49,7 @@ func (r *queryResolver) SecretsForService(ctx context.Context, serviceID uuid.UU
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := secret.ProjectPermissions(ctx, service.ProjectID, false)
 	if !perms.View {
 		return nil, gqlerror.Errorf("Not allowed to read service secrets")
 	}
@@ -80,12 +80,8 @@ func (r *mutationResolver) IssueServiceSecret(ctx context.Context, serviceID uui
 		return nil, gqlerror.Errorf("Service not found")
 	}
 
-	if service.Kind != entity.ServiceKindExternal {
-		return nil, gqlerror.Errorf("Can only create secrets for external services")
-	}
-
 	authSecret := middleware.GetSecret(ctx)
-	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := authSecret.ProjectPermissions(ctx, service.ProjectID, false)
 	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to perform create functions in the organization")
 	}
@@ -117,13 +113,9 @@ func (r *mutationResolver) RevokeServiceSecret(ctx context.Context, secretID uui
 		return false, gqlerror.Errorf("Service not found")
 	}
 
-	perms := authSecret.OrganizationPermissions(ctx, service.OrganizationID)
+	perms := authSecret.ProjectPermissions(ctx, service.ProjectID, false)
 	if !perms.Create {
 		return false, gqlerror.Errorf("Not allowed to edit service")
-	}
-
-	if service.Kind != entity.ServiceKindExternal {
-		return false, gqlerror.Errorf("Can only revoke secrets for external services")
 	}
 
 	secret.Revoke(ctx)

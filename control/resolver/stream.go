@@ -11,11 +11,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
-const (
-	// MaxInstancesPerStream sets a limit for the number of instances for a stream at any given time
-	MaxInstancesPerStream = 25
-)
-
 // Stream returns the gql.StreamResolver
 func (r *Resolver) Stream() gql.StreamResolver {
 	return &streamResolver{r}
@@ -69,11 +64,11 @@ func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID u
 		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", streamID.String())
 	}
 
-	instances := entity.FindStreamInstances(ctx, streamID)
+	instances := entity.FindStreamInstances(ctx, streamID, nil, nil)
 	return instances, nil
 }
 
-func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, retentionSeconds *int, enableManualWrites *bool, createPrimaryStreamInstance *bool) (*entity.Stream, error) {
+func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error) {
 	var project *entity.Project
 	var stream *entity.Stream
 
@@ -97,7 +92,7 @@ func (r *mutationResolver) StageStream(ctx context.Context, organizationName str
 		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", organizationName, projectName)
 	}
 
-	err := stream.Stage(ctx, schemaKind, schema, retentionSeconds, enableManualWrites, createPrimaryStreamInstance)
+	err := stream.Stage(ctx, schemaKind, schema, allowManualWrites, useLog, useIndex, useWarehouse, logRetentionSeconds, indexRetentionSeconds, warehouseRetentionSeconds)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error staging stream: %s", err.Error())
 	}
@@ -109,10 +104,6 @@ func (r *mutationResolver) DeleteStream(ctx context.Context, streamID uuid.UUID)
 	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
-	}
-
-	if stream.SourceModelID != nil {
-		return false, gqlerror.Errorf("Stream '%s' cannot be deleted directly because it is derived from a model (hint: delete the model)", streamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -129,14 +120,10 @@ func (r *mutationResolver) DeleteStream(ctx context.Context, streamID uuid.UUID)
 	return true, nil
 }
 
-func (r *mutationResolver) CreateStreamInstance(ctx context.Context, streamID uuid.UUID) (*entity.StreamInstance, error) {
+func (r *mutationResolver) StageStreamInstance(ctx context.Context, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error) {
 	stream := entity.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
-	}
-
-	if stream.SourceModelID != nil {
-		return nil, gqlerror.Errorf("Stream '%s' cannot be manipulated directly because it is derived from a model (hint: delete the model)", stream.StreamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -145,11 +132,15 @@ func (r *mutationResolver) CreateStreamInstance(ctx context.Context, streamID uu
 		return nil, gqlerror.Errorf("Not allowed to write to stream %s/%s", stream.Name, stream.Project.Name)
 	}
 
-	if stream.InstancesCreatedCount-stream.InstancesDeletedCount >= MaxInstancesPerStream {
-		return nil, gqlerror.Errorf("You cannot have more than %d instances per stream. Delete an existing instance to make room for more.", MaxInstancesPerStream)
+	falseVal := false
+	if makeFinal == nil {
+		makeFinal = &falseVal
+	}
+	if makePrimary == nil {
+		makePrimary = &falseVal
 	}
 
-	si, err := stream.CreateStreamInstance(ctx)
+	si, err := stream.StageStreamInstance(ctx, version, *makeFinal, *makePrimary)
 	if err != nil {
 		return nil, err
 	}
@@ -157,14 +148,10 @@ func (r *mutationResolver) CreateStreamInstance(ctx context.Context, streamID uu
 	return si, nil
 }
 
-func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool, deletePreviousPrimary *bool) (*entity.StreamInstance, error) {
+func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error) {
 	instance := entity.FindStreamInstance(ctx, instanceID)
 	if instance == nil {
 		return nil, gqlerror.Errorf("Stream instance '%s' not found", instanceID.String())
-	}
-
-	if instance.Stream.SourceModelID != nil {
-		return nil, gqlerror.Errorf("Stream '%s' cannot be updated directly because it is derived from a model (hint: delete the model)", instance.StreamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
@@ -180,11 +167,8 @@ func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, instanceID 
 	if makePrimary == nil {
 		makePrimary = &falseVal
 	}
-	if deletePreviousPrimary == nil {
-		deletePreviousPrimary = &falseVal
-	}
 
-	err := instance.Stream.UpdateStreamInstance(ctx, instance, *makeFinal, *makePrimary, *deletePreviousPrimary)
+	err := instance.Stream.UpdateStreamInstance(ctx, instance, *makeFinal, *makePrimary)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating stream instance: %s", err.Error())
 	}
@@ -196,10 +180,6 @@ func (r *mutationResolver) DeleteStreamInstance(ctx context.Context, instanceID 
 	instance := entity.FindStreamInstance(ctx, instanceID)
 	if instance == nil {
 		return false, gqlerror.Errorf("Stream instance '%s' not found", instanceID.String())
-	}
-
-	if instance.Stream.SourceModelID != nil {
-		return false, gqlerror.Errorf("Stream '%s' cannot be deleted directly because it is derived from a model (hint: delete the model)", instance.StreamID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)

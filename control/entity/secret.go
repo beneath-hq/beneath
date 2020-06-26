@@ -61,9 +61,6 @@ type Secret interface {
 	// OrganizationPermissions returns the secret's permissions for a given organization
 	OrganizationPermissions(ctx context.Context, organizationID uuid.UUID) OrganizationPermissions
 
-	// ManagesModelBatches is a hack for until we have ModelPermissions
-	ManagesModelBatches(model *Model) bool
-
 	// Revokes the secret
 	Revoke(ctx context.Context)
 }

@@ -7,11 +7,17 @@ message Record {
   int64 timestamp = 2;
 }
 
+message InstanceRecords {
+  bytes instance_id = 1;
+  repeated Record records = 2;
+}
+
 service Gateway {
   rpc Ping(PingRequest) returns (PingResponse) {}
   rpc Write(WriteRequest) returns (WriteResponse) {}
   rpc QueryLog(QueryLogRequest) returns (QueryLogResponse) {}
   rpc QueryIndex(QueryIndexRequest) returns (QueryIndexResponse) {}
+  rpc QueryWarehouse(QueryWarehouseRequest) returns (QueryWarehouseResponse) {}
   rpc Read(ReadRequest) returns (ReadResponse) {}
   rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
 }
@@ -28,8 +34,7 @@ message PingResponse {
 }
 
 message WriteRequest {
-  bytes instance_id = 1;
-  repeated Record records = 2;
+  repeated InstanceRecords instance_records = 1;
 }
 
 message WriteResponse {
@@ -56,6 +61,15 @@ message QueryIndexRequest {
 message QueryIndexResponse {
   repeated bytes replay_cursors = 1;
   repeated bytes change_cursors = 2;
+}
+
+message QueryWarehouseRequest {
+  string query       = 1;
+  int32  partitions  = 3;
+}
+
+message QueryWarehouseResponse {
+  repeated bytes replay_cursors = 1;
 }
 
 message ReadRequest {

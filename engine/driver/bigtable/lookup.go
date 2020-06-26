@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	maxPartitions   = 32
-	maxCursors      = 32
-	maxLimit        = 1000
-	maxLoadsPerRead = 5
+	maxPartitions    = 32
+	maxCursors       = 32
+	maxLimit         = 1000
+	maxLoadsPerRead  = 5
+	expirationBuffer = 5 * time.Minute
 )
 
 var (
@@ -39,6 +40,12 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 	// checks not too many partitions
 	if partitions > maxPartitions {
 		return nil, nil, fmt.Errorf("the requested number of partitions exceeds the maximum number of supported partitions (%d)", partitions)
+	}
+
+	if compacted {
+		if !s.GetUseIndex() {
+			return nil, nil, fmt.Errorf("cannot execute indexed queries on stream with useIndex=false")
+		}
 	}
 
 	// check not filtering on un-compacted
@@ -242,6 +249,13 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 	if first.Type != pb.Cursor_LOG {
 		if len(set.Cursors) != 1 {
 			return nil, ErrCorruptCursor
+		}
+	}
+
+	// check cursor type
+	if first.Type == pb.Cursor_INDEX {
+		if !s.GetUseIndex() {
+			return nil, fmt.Errorf("Can't read index cursor on stream with useIndex=false (unexpected error, how did you get this cursor?)")
 		}
 	}
 
@@ -555,15 +569,19 @@ func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver
 func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, records []driver.Record) error {
 	// Prepare
 	codec := s.GetCodec()
-	retention := s.GetRetention()
-	expires := streamExpires(s)
+	logRetention := s.GetLogRetention()
+	indexRetention := s.GetIndexRetention()
+	logExpires := logExpires(s)
+	indexExpires := indexExpires(s)
+	useIndex := s.GetUseIndex()
 	instanceID := i.GetStreamInstanceID()
 	normalizePrimary := codec.PrimaryIndex.GetNormalize()
 	primaryHash := makeIndexHash(instanceID, codec.PrimaryIndex.GetIndexID())
+	nowForExpirationChecks := time.Now().Add(expirationBuffer)
 
 	// get existing values (to delete secondary indexes)
 	var existingToReplace map[string]Record
-	if len(codec.SecondaryIndexes) > 0 {
+	if useIndex && len(codec.SecondaryIndexes) > 0 {
 		existing, err := b.LoadExistingRecords(ctx, s, i, records)
 		if err != nil {
 			return err
@@ -578,8 +596,8 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	}
 
 	// prepare mutations
-	writeLogKeys := make([]string, len(records))
-	writeLogMuts := make([]*bigtable.Mutation, len(records))
+	var writeLogKeys []string
+	var writeLogMuts []*bigtable.Mutation
 
 	var writePrimaryKeys []string
 	var writePrimaryMuts []*bigtable.Mutation
@@ -602,15 +620,34 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		// offset
 		offset := batch.NumberAtOffset(idx)
 
-		// timestamp (if retention is configured, set rowTime to expiration timestamp instead)
-		rowTime := record.GetTimestamp()
-		if expires {
-			rowTime = rowTime.Add(retention)
+		// log row timestamp (if retention is configured, set rowTime to expiration timestamp instead)
+		logRowTime := record.GetTimestamp()
+		if logExpires {
+			logRowTime = logRowTime.Add(logRetention)
 		}
 
-		// create log append mutation
-		writeLogMuts[idx] = makeLogInsert(rowTime, batch.BigtableTime, record.GetAvro())
-		writeLogKeys[idx] = makeLogKey(instanceID, offset, primaryKey)
+		// write unless row is already practically expired
+		if !logExpires || logRowTime.After(nowForExpirationChecks) {
+			// create log append mutation
+			writeLogMuts = append(writeLogMuts, makeLogInsert(logRowTime, batch.BigtableTime, record.GetAvro()))
+			writeLogKeys = append(writeLogKeys, makeLogKey(instanceID, offset, primaryKey))
+		}
+
+		// if not writing index, we can continue
+		if !useIndex {
+			continue
+		}
+
+		// index row timestamp (if retention is configured, rowTime is set to expiration timestamp instead)
+		indexRowTime := record.GetTimestamp()
+		if indexExpires {
+			indexRowTime = indexRowTime.Add(indexRetention)
+		}
+
+		// if row is practically already expired, don't write it
+		if indexExpires && indexRowTime.Before(nowForExpirationChecks) {
+			continue
+		}
 
 		// if earlier than existing record (with same primary key), no need to handle
 		existing := existingToReplace[byteSliceToString(primaryKey)]
@@ -622,7 +659,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		}
 
 		// create primary key write
-		writePrimaryMuts = append(writePrimaryMuts, makePrimaryIndexInsert(rowTime, normalizePrimary, offset, record.GetAvro()))
+		writePrimaryMuts = append(writePrimaryMuts, makePrimaryIndexInsert(indexRowTime, normalizePrimary, offset, record.GetAvro()))
 		writePrimaryKeys = append(writePrimaryKeys, makeIndexKey(primaryHash, primaryKey))
 
 		// create secondary indexes
@@ -638,7 +675,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 			secondaryHash := makeIndexHash(instanceID, secondaryIndex.GetIndexID())
 
 			// add secondary index write
-			writeSecondaryMuts = append(writeSecondaryMuts, makeSecondaryIndexInsert(rowTime, normalizeSecondary, offset, record.GetAvro()))
+			writeSecondaryMuts = append(writeSecondaryMuts, makeSecondaryIndexInsert(indexRowTime, normalizeSecondary, offset, record.GetAvro()))
 			writeSecondaryKeys = append(writeSecondaryKeys, makeIndexKey(secondaryHash, newSecondaryKey))
 
 			// if new secondary index key is different from the existing, delete the existing
@@ -651,7 +688,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 
 				// separately delete existing secondary index entry if the secondary index keys are different
 				if !bytes.Equal(newSecondaryKey, existingSecondaryKey) {
-					deleteSecondaryMuts = append(deleteSecondaryMuts, makeSecondaryIndexDelete(rowTime, normalizeSecondary))
+					deleteSecondaryMuts = append(deleteSecondaryMuts, makeSecondaryIndexDelete(indexRowTime, normalizeSecondary))
 					deleteSecondaryKeys = append(deleteSecondaryKeys, makeIndexKey(secondaryHash, existingSecondaryKey))
 				}
 			}

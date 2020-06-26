@@ -16,18 +16,6 @@ type Organization interface {
 	IsOrganization()
 }
 
-type CreateModelInput struct {
-	ProjectID           uuid.UUID   `json:"projectID"`
-	Name                string      `json:"name"`
-	Kind                string      `json:"kind"`
-	SourceURL           *string     `json:"sourceURL"`
-	Description         *string     `json:"description"`
-	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
-	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
-	ReadQuota           int         `json:"readQuota"`
-	WriteQuota          int         `json:"writeQuota"`
-}
-
 type Metrics struct {
 	EntityID     uuid.UUID `json:"entityID"`
 	Period       string    `json:"period"`
@@ -65,23 +53,12 @@ type PrivateOrganization struct {
 	ReadUsage         int                                   `json:"readUsage"`
 	WriteUsage        int                                   `json:"writeUsage"`
 	Projects          []*entity.Project                     `json:"projects"`
-	Services          []*entity.Service                     `json:"services"`
 	PersonalUserID    *uuid.UUID                            `json:"personalUserID"`
 	PersonalUser      *entity.User                          `json:"personalUser"`
 	Permissions       *entity.PermissionsUsersOrganizations `json:"permissions"`
 }
 
 func (PrivateOrganization) IsOrganization() {}
-
-type UpdateModelInput struct {
-	ModelID             uuid.UUID   `json:"modelID"`
-	SourceURL           *string     `json:"sourceURL"`
-	Description         *string     `json:"description"`
-	InputStreamIDs      []uuid.UUID `json:"inputStreamIDs"`
-	OutputStreamSchemas []string    `json:"outputStreamSchemas"`
-	ReadQuota           *int        `json:"readQuota"`
-	WriteQuota          *int        `json:"writeQuota"`
-}
 
 type EntityKind string
 

@@ -21,6 +21,7 @@ type StreamInstance struct {
 	UpdatedOn        time.Time `sql:",default:now()"`
 	MadePrimaryOn    *time.Time
 	MadeFinalOn      *time.Time
+	Version          int `sql:",notnull,default:0"`
 }
 
 // EfficientStreamInstance can be used to efficiently make a UUID conform to engine/driver.StreamInstance
@@ -37,12 +38,29 @@ func (si *StreamInstance) GetStreamInstanceID() uuid.UUID {
 }
 
 // FindStreamInstances finds the instances associated with the given stream
-func FindStreamInstances(ctx context.Context, streamID uuid.UUID) []*StreamInstance {
+func FindStreamInstances(ctx context.Context, streamID uuid.UUID, fromVersion *int, toVersion *int) []*StreamInstance {
 	var res []*StreamInstance
-	err := hub.DB.ModelContext(ctx, &res).Where("stream_id = ?", streamID).Select()
+
+	// optimization
+	if fromVersion != nil && toVersion != nil && *fromVersion == *toVersion {
+		return res
+	}
+
+	// build query
+	query := hub.DB.ModelContext(ctx, &res).Where("stream_id = ?", streamID)
+	if fromVersion != nil {
+		query = query.Where("version >= ?", *fromVersion)
+	}
+	if toVersion != nil {
+		query = query.Where("version < ?", *toVersion)
+	}
+
+	// select
+	err := query.Select()
 	if err != nil {
 		panic(fmt.Errorf("error fetching stream instances: %s", err.Error()))
 	}
+
 	return res
 }
 

@@ -16,7 +16,6 @@ extend type Mutation {
   leaveBillingOrganization(userID: UUID!): PrivateUser!
 
   transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
-  transferServiceToOrganization(serviceID: UUID!, organizationID: UUID!): Service!
 }
 
 interface Organization {
@@ -56,7 +55,6 @@ type PrivateOrganization implements Organization {
   readUsage: Int!
   writeUsage: Int!
   projects: [Project!]!
-  services: [Service!]!
   personalUserID: UUID
   personalUser: PrivateUser
   permissions: PermissionsUsersOrganizations!

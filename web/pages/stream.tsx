@@ -67,7 +67,7 @@ const StreamPage = () => {
 
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
 
-  if (stream.enableManualWrites) {
+  if (stream.allowManualWrites) {
     // disable for now
     // must update js client to be able to write data (current local resolvers do not work anymore!)
     // and to allow both stream and batch writes

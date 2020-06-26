@@ -51,37 +51,44 @@ func (b BigTable) RemoveInstance(ctx context.Context, p driver.Project, s driver
 
 	// get table names
 	logTable, indexesTable := logTableName, indexesTableName
-	if streamExpires(s) {
-		logTable, indexesTable = logExpiringTableName, indexesExpiringTableName
+	if logExpires(s) {
+		logTable = logExpiringTableName
+	}
+	if indexExpires(s) {
+		indexesTable = indexesExpiringTableName
 	}
 
-	// secondary indexes
-	for _, index := range codec.SecondaryIndexes {
-		indexID := index.GetIndexID()
+	if s.GetUseIndex() {
+		// secondary indexes
+		for _, index := range codec.SecondaryIndexes {
+			indexID := index.GetIndexID()
+			err := b.Admin.DropRowRange(ctx, indexesTable, string(indexID[:]))
+			if err != nil {
+				return err
+			}
+		}
+
+		// primary index
+		indexID := codec.PrimaryIndex.GetIndexID()
 		err := b.Admin.DropRowRange(ctx, indexesTable, string(indexID[:]))
 		if err != nil {
 			return err
 		}
 	}
 
-	// primary index
-	indexID := codec.PrimaryIndex.GetIndexID()
-	err := b.Admin.DropRowRange(ctx, indexesTable, string(indexID[:]))
-	if err != nil {
-		return err
-	}
-
 	// log
-	instanceID := i.GetStreamInstanceID()
-	err = b.Admin.DropRowRange(ctx, logTable, string(instanceID[:]))
-	if err != nil {
-		return err
-	}
+	if s.GetUseLog() {
+		instanceID := i.GetStreamInstanceID()
+		err := b.Admin.DropRowRange(ctx, logTable, string(instanceID[:]))
+		if err != nil {
+			return err
+		}
 
-	// sequencer
-	err = b.Sequencer.ClearState(ctx, makeSequencerKey(instanceID))
-	if err != nil {
-		return err
+		// sequencer
+		err = b.Sequencer.ClearState(ctx, makeSequencerKey(instanceID))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

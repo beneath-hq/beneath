@@ -125,8 +125,23 @@ type Stream interface {
 	// GetStreamName should return the stream's identifying name
 	GetStreamName() string
 
-	// GetRetention should return the amount of time data should be retained, or 0 for infinite retention
-	GetRetention() time.Duration
+	// GetUseLog should return true if records should be stored for log-based replay and change capture
+	GetUseLog() bool
+
+	// GetUseIndex should return true if records should be stored for indexed lookup
+	GetUseIndex() bool
+
+	// GetUseWarehouse should return true if records should be saved for data warehouse queries
+	GetUseWarehouse() bool
+
+	// GetLogRetention should return the duration data should be retained (use 0 for infinite retention)
+	GetLogRetention() time.Duration
+
+	// GetIndexRetention should return the duration data should be retained (use 0 for infinite retention)
+	GetIndexRetention() time.Duration
+
+	// GetWarehouseRetention should return the duration data should be retained (use 0 for infinite retention)
+	GetWarehouseRetention() time.Duration
 
 	// GetCodec should return a codec for serializing and deserializing stream data and keys
 	GetCodec() *codec.Codec
