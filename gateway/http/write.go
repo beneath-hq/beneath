@@ -147,10 +147,13 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 
 	// write request to engine
 	writeID := engine.GenerateWriteID()
-	err = hub.Engine.QueueWriteRequest(r.Context(), &pb_engine.WriteRequest{
-		WriteId:    writeID,
+	ir := &pb.InstanceRecords{
 		InstanceId: instanceID.Bytes(),
 		Records:    records,
+	}
+	err = hub.Engine.QueueWriteRequest(r.Context(), &pb_engine.WriteRequest{
+		WriteId:         writeID,
+		InstanceRecords: []*pb.InstanceRecords{ir},
 	})
 	if err != nil {
 		return httputil.NewError(400, err.Error())

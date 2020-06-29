@@ -33,7 +33,7 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 
 	// set payload
 	payload := queryLogTags{
-		InstanceID: instanceID.String(),
+		InstanceID: instanceID,
 		Partitions: req.Partitions,
 		Peek:       req.Peek,
 	}
@@ -99,7 +99,7 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 
 	// set payload
 	payload := queryIndexTags{
-		InstanceID: instanceID.String(),
+		InstanceID: instanceID,
 		Partitions: req.Partitions,
 		Filter:     req.Filter,
 	}
@@ -136,6 +136,10 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 	}, nil
 }
 
+func (s *gRPCServer) QueryWarehouse(ctx context.Context, req *pb.QueryWarehouseRequest) (*pb.QueryWarehouseResponse, error) {
+	return nil, grpc.Errorf(codes.Unimplemented, "QueryWarehouse is not yet implemented")
+}
+
 func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadResponse, error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
@@ -151,7 +155,7 @@ func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadRes
 
 	// set payload
 	payload := readTags{
-		InstanceID: instanceID.String(),
+		InstanceID: instanceID,
 		Cursor:     req.Cursor,
 		Limit:      req.Limit,
 	}

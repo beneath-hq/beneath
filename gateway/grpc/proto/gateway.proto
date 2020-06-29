@@ -89,6 +89,7 @@ message SubscribeRequest {
 }
 
 message SubscribeResponse {
+  bytes write_id = 1;
   // repeated Record records = 1;
   // bytes from_cursor = 2;
   // bytes next_cursor = 3;

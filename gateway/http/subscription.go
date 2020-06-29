@@ -168,7 +168,6 @@ func (s wsServer) logWithSecret(sec entity.Secret, msg string, keysAndValues ...
 	l := log.S
 
 	if sec.IsUser() {
-		log.S.Infow("CHECK_OUT", "secret", sec)
 		l = l.With(
 			"secret", sec.GetSecretID().String(),
 			"user", sec.GetOwnerID().String(),

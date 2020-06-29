@@ -3,6 +3,7 @@ package grpc
 import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
@@ -13,8 +14,9 @@ import (
 )
 
 const (
-	defaultReadLimit = 50
-	maxReadLimit     = 1000
+	defaultReadLimit     = 50
+	maxReadLimit         = 1000
+	maxInstancesPerWrite = 5
 )
 
 const (
@@ -53,26 +55,31 @@ type pingTags struct {
 }
 
 type writeTags struct {
-	InstanceID   string `json:"instance_id,omitempty"`
-	RecordsCount int    `json:"records,omitempty"`
-	BytesWritten int    `json:"bytes,omitempty"`
+	WriteID   []byte         `json:"write_id,omitempty"`
+	Instances []writeMetrics `json:"instances,omitempty"`
+}
+
+type writeMetrics struct {
+	InstanceID   uuid.UUID `json:"instance,omitempty"`
+	RecordsCount int       `json:"records,omitempty"`
+	BytesWritten int       `json:"bytes,omitempty"`
 }
 
 type queryLogTags struct {
-	InstanceID string `json:"instance_id,omitempty"`
-	Partitions int32  `json:"partitions,omitempty"`
-	Peek       bool   `json:"peek,omitempty"`
+	InstanceID uuid.UUID `json:"instance,omitempty"`
+	Partitions int32     `json:"partitions,omitempty"`
+	Peek       bool      `json:"peek,omitempty"`
 }
 
 type queryIndexTags struct {
-	InstanceID string `json:"instance_id,omitempty"`
-	Partitions int32  `json:"partitions,omitempty"`
-	Filter     string `json:"filter,omitempty"`
+	InstanceID uuid.UUID `json:"instance,omitempty"`
+	Partitions int32     `json:"partitions,omitempty"`
+	Filter     string    `json:"filter,omitempty"`
 }
 
 type readTags struct {
-	InstanceID string `json:"instance_id,omitempty"`
-	Cursor     []byte `json:"cursor,omitempty"`
-	Limit      int32  `json:"limit,omitempty"`
-	BytesRead  int    `json:"bytes,omitempty"`
+	InstanceID uuid.UUID `json:"instance,omitempty"`
+	Cursor     []byte    `json:"cursor,omitempty"`
+	Limit      int32     `json:"limit,omitempty"`
+	BytesRead  int       `json:"bytes,omitempty"`
 }

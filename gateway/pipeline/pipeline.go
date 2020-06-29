@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -27,29 +28,9 @@ func Run(ctx context.Context) error {
 func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	// metrics to track
 	start := time.Now()
-	var bytesTotal int
-	var minTimestamp int64
-
-	// lookup stream
-	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
-	if stream == nil {
-		// TODO: use dead letter queue that retries
-		log.S.Errorw("instance not found", "instance", instanceID.String(), "records", req.Records)
-		return nil
-	}
-
-	// make records array
-	records := make([]driver.Record, len(req.Records))
-	for idx, proto := range req.Records {
-		r := newRecord(stream, proto)
-		bytesTotal += len(r.GetAvro())
-		records[idx] = r
-
-		if minTimestamp == 0 || proto.Timestamp < minTimestamp {
-			minTimestamp = proto.Timestamp
-		}
-	}
+	bytesTotal := 0
+	recordsCount := 0
+	mu := sync.Mutex{}
 
 	// NOTE: Crashing after writing to the log (but before returning) will cause the write to be retried,
 	// hence ensuring eventual consistency. But the records will appear multiple times in the log. That
@@ -58,9 +39,70 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 	// overriding ctx to the background context in an attempt to push through with all the writes
 	// (a cancel is most likely due to receiving a SIGINT/SIGTERM, so we'll have a little leeway before being force killed)
 	ctx = context.Background()
+
+	// concurrently process each InstanceRecords
+	group, cctx := errgroup.WithContext(ctx)
+	for _, ir := range req.InstanceRecords {
+		group.Go(func() error {
+			// process
+			bytesWritten, err := processInstanceRecords(cctx, req.WriteId, ir)
+			if err != nil {
+				return err
+			}
+
+			// track metrics
+			mu.Lock()
+			bytesTotal += bytesWritten
+			recordsCount += len(ir.Records)
+			mu.Unlock()
+
+			// done
+			return nil
+		})
+	}
+
+	// wait for group
+	err := group.Wait()
+	if err != nil {
+		return err
+	}
+
+	// finalise metrics
+	elapsed := time.Since(start)
+	log.S.Infow(
+		"pipeline write",
+		"write_id", req.WriteId,
+		"records", recordsCount,
+		"bytes", bytesTotal,
+		"elapsed", elapsed,
+	)
+
+	// done
+	return nil
+}
+
+func processInstanceRecords(ctx context.Context, writeID []byte, ir *pbgw.InstanceRecords) (int, error) {
+	// lookup stream
+	instanceID := uuid.FromBytesOrNil(ir.InstanceId)
+	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+	if stream == nil {
+		// TODO: use dead letter queue that retries
+		log.S.Errorw("instance not found", "instance", instanceID.String(), "records", ir.Records)
+		return 0, nil
+	}
+
+	// make records array
+	var bytesWritten int
+	records := make([]driver.Record, len(ir.Records))
+	for idx, proto := range ir.Records {
+		r := newRecord(stream, proto)
+		bytesWritten += len(r.GetAvro())
+		records[idx] = r
+	}
+
+	// use errgroup for concurrently writing to lookup and warehouse
 	group, cctx := errgroup.WithContext(ctx)
 
-	// write to lookup and warehouse
 	group.Go(func() error {
 		return hub.Engine.Lookup.WriteRecords(cctx, stream, stream, entity.EfficientStreamInstance(instanceID), records)
 	})
@@ -73,35 +115,21 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 
 	err := group.Wait()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// publish write report (used for streaming updates)
 	err = hub.Engine.QueueWriteReport(ctx, &pb.WriteReport{
-		WriteId:      req.WriteId,
-		InstanceId:   instanceID.Bytes(),
-		RecordsCount: int32(len(req.Records)),
-		BytesTotal:   int32(bytesTotal),
+		WriteId:      writeID,
+		InstanceId:   ir.InstanceId,
+		RecordsCount: int32(len(ir.Records)),
+		BytesTotal:   int32(bytesWritten),
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	// finalise metrics
-	elapsed := time.Since(start)
-	log.S.Infow(
-		"pipeline write",
-		"organization", stream.OrganizationName,
-		"project", stream.ProjectName,
-		"stream", stream.StreamName,
-		"instance", instanceID.String(),
-		"records", len(req.Records),
-		"bytes", bytesTotal,
-		"elapsed", elapsed,
-	)
-
-	// done
-	return nil
+	return bytesWritten, nil
 }
 
 // record implements driver.Record
