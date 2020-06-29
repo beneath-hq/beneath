@@ -6,23 +6,14 @@ from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 def add_subparser(root):
   project = root.add_parser('project').add_subparsers()
 
-  _create = project.add_parser('create')
-  _create.set_defaults(func=async_cmd(create))
-  _create.add_argument('project_path', type=str)
-  _create.add_argument('--display-name', type=str)
-  _create.add_argument('--public', type=str2bool, nargs='?', const=True, default=True)
-  _create.add_argument('--description', type=str)
-  _create.add_argument('--site-url', type=str)
-  _create.add_argument('--photo-url', type=str)
-
-  _update = project.add_parser('update')
-  _update.set_defaults(func=async_cmd(update))
-  _update.add_argument('project_path', type=str)
-  _update.add_argument('--display-name', type=str)
-  _update.add_argument('--public', type=str2bool, nargs='?', const=True, default=None)
-  _update.add_argument('--description', type=str)
-  _update.add_argument('--site-url', type=str)
-  _update.add_argument('--photo-url', type=str)
+  _stage = project.add_parser('stage')
+  _stage.set_defaults(func=async_cmd(stage))
+  _stage.add_argument('project_path', type=str)
+  _stage.add_argument('--display-name', type=str)
+  _stage.add_argument('--public', type=str2bool, nargs='?', const=True, default=None)
+  _stage.add_argument('--description', type=str)
+  _stage.add_argument('--site-url', type=str)
+  _stage.add_argument('--photo-url', type=str)
 
   _delete = project.add_parser('delete')
   _delete.set_defaults(func=async_cmd(delete))
@@ -63,28 +54,12 @@ def add_subparser(root):
     default=None,
   )
 
-async def create(args):
+async def stage(args):
   client = Client()
   pq = ProjectQualifier.from_path(args.project_path)
-  organization = await client.admin.organizations.find_by_name(pq.organization)
-  result = await client.admin.projects.create(
-    name=pq.project,
-    display_name=args.display_name,
-    organization_id=organization['organizationID'],
-    public=args.public,
-    description=args.description,
-    site_url=args.site_url,
-    photo_url=args.photo_url,
-  )
-  pretty_print_graphql_result(result)
-
-
-async def update(args):
-  client = Client()
-  pq = ProjectQualifier.from_path(args.project_path)
-  project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
-  result = await client.admin.projects.update_details(
-    project_id=project['projectID'],
+  result = await client.admin.projects.stage(
+    organization_name=pq.organization,
+    project_name=pq.project,
     display_name=args.display_name,
     public=args.public,
     description=args.description,

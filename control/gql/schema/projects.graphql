@@ -7,8 +7,15 @@ extend type Query {
 }
 
 extend type Mutation {
-  createProject(name: String!, displayName: String, organizationID: UUID!, public: Boolean!, site: String, description: String, photoURL: String): Project!
-  updateProject(projectID: UUID!, displayName: String, public: Boolean, site: String, description: String, photoURL: String): Project!
+  stageProject(
+    organizationName: String!,
+    projectName: String!,
+    displayName: String,
+    public: Boolean,
+    description: String,
+    site: String, 
+    photoURL: String,
+  ): Project!
   deleteProject(projectID: UUID!): Boolean!
 }
 

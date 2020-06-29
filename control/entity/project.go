@@ -128,61 +128,42 @@ func (p *Project) GetPublic() bool {
 	return p.Public
 }
 
-// CreateWithUser creates a project and makes user a member
-func (p *Project) CreateWithUser(ctx context.Context, userID uuid.UUID, perms ProjectPermissions) error {
-	// validate
-	err := GetValidator().Struct(p)
-	if err != nil {
-		return err
-	}
+// StageWithUser updates the project if it already exists or creates it with the given user as a member
+func (p *Project) StageWithUser(ctx context.Context, displayName *string, public *bool, description *string, site *string, photoURL *string, userID uuid.UUID, perms ProjectPermissions) error {
+	// determine whether to insert or update
+	update := (p.ProjectID != uuid.Nil)
 
-	// create project and PermissionsUsersProjects in one transaction
-	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		// insert project
-		_, err := tx.Model(p).Insert()
-		if err != nil {
-			return err
-		}
+	// tracks whether a save is necessary
+	save := !update
 
-		// connect project to userID
-		err = tx.Insert(&PermissionsUsersProjects{
-			UserID:    userID,
-			ProjectID: p.ProjectID,
-			View:      perms.View,
-			Create:    perms.Create,
-			Admin:     perms.Admin,
-		})
-		if err != nil {
-			return err
-		}
-
-		// register in engine
-		err = hub.Engine.RegisterProject(ctx, p)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-// UpdateDetails updates projects user-facing details
-func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public *bool, site *string, description *string, photoURL *string) error {
-	// set fields
-	if displayName != nil {
+	if displayName != nil && p.DisplayName != *displayName {
 		p.DisplayName = *displayName
+		save = true
 	}
-	if public != nil {
+
+	if public != nil && p.Public != *public {
 		p.Public = *public
+		save = true
 	}
-	if site != nil {
-		p.Site = *site
-	}
-	if description != nil {
+
+	if description != nil && p.Description != *description {
 		p.Description = *description
+		save = true
 	}
-	if photoURL != nil {
+
+	if site != nil && p.Site != *site {
+		p.Site = *site
+		save = true
+	}
+
+	if photoURL != nil && p.PhotoURL != *photoURL {
 		p.PhotoURL = *photoURL
+		save = true
+	}
+
+	// quit if no changes
+	if !save {
+		return nil
 	}
 
 	// validate
@@ -193,15 +174,35 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 
 	// note: if we ever support renaming projects, must invalidate stream cache for all instances in project
 
-	// update in tx with call to bigquery
-	err = hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
-		p.UpdatedOn = time.Now()
-		_, err = hub.DB.WithContext(ctx).Model(p).
-			Column("display_name", "public", "site", "description", "photo_url", "updated_on").
-			WherePK().
-			Update()
-		if err != nil {
-			return err
+	return hub.DB.WithContext(ctx).RunInTransaction(func(tx *pg.Tx) error {
+		if update {
+			// update
+			p.UpdatedOn = time.Now()
+			_, err = tx.Model(p).
+				Column("display_name", "public", "description", "site", "photo_url", "updated_on").
+				WherePK().
+				Update()
+			if err != nil {
+				return err
+			}
+		} else {
+			// insert
+			_, err := tx.Model(p).Insert()
+			if err != nil {
+				return err
+			}
+
+			// connect project to userID
+			err = tx.Insert(&PermissionsUsersProjects{
+				UserID:    userID,
+				ProjectID: p.ProjectID,
+				View:      perms.View,
+				Create:    perms.Create,
+				Admin:     perms.Admin,
+			})
+			if err != nil {
+				return err
+			}
 		}
 
 		// update in warehouse
@@ -212,10 +213,6 @@ func (p *Project) UpdateDetails(ctx context.Context, displayName *string, public
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // SetLock sets a project's "locked" status

@@ -80,86 +80,78 @@ func (r *queryResolver) ProjectMembers(ctx context.Context, projectID uuid.UUID)
 	return entity.FindProjectMembers(ctx, projectID)
 }
 
-func (r *mutationResolver) CreateProject(ctx context.Context, name string, displayName *string, organizationID uuid.UUID, public bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
-	secret := middleware.GetSecret(ctx)
-	if !secret.IsUser() {
-		return nil, gqlerror.Errorf("Only users can create projects")
-	}
+func (r *mutationResolver) StageProject(ctx context.Context, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) (*entity.Project, error) {
+	var organization *entity.Organization
+	var project *entity.Project
 
-	perms := secret.OrganizationPermissions(ctx, organizationID)
-	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
-	}
-
-	bi := entity.FindBillingInfo(ctx, organizationID)
-	if bi == nil {
-		return nil, gqlerror.Errorf("Could not find billing info for organization %s", organizationID.String())
-	}
-
-	if !public && !bi.BillingPlan.PrivateProjects {
-		return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
-	}
-
-	organization := entity.FindOrganization(ctx, organizationID)
-	if organization == nil {
-		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
-	}
-
-	project := &entity.Project{
-		Name:           name,
-		DisplayName:    DereferenceString(displayName),
-		OrganizationID: organizationID,
-		Organization:   organization,
-		Site:           DereferenceString(site),
-		Description:    DereferenceString(description),
-		PhotoURL:       DereferenceString(photoURL),
-		Public:         public,
-	}
-
-	projPerms := entity.ProjectPermissions{
-		View:   true,
-		Create: true,
-		Admin:  true,
-	}
-
-	err := project.CreateWithUser(ctx, secret.GetOwnerID(), projPerms)
-	if err != nil {
-		return nil, err
-	}
-
-	// refetching project to include user
-	project = entity.FindProject(ctx, project.ProjectID)
+	// find or prepare for creating project
+	project = entity.FindProjectByOrganizationAndName(ctx, organizationName, projectName)
 	if project == nil {
-		panic(fmt.Errorf("expected project with ID %s to exist", project.ProjectID.String()))
+		organization = entity.FindOrganizationByName(ctx, organizationName)
+		if organization == nil {
+			return nil, gqlerror.Errorf("Organization %s not found", organizationName)
+		}
+		project = &entity.Project{
+			Name:           projectName,
+			OrganizationID: organization.OrganizationID,
+			Organization:   organization,
+		}
+	} else {
+		organization = project.Organization
 	}
 
-	return projectWithPermissions(project, projPerms), nil
-}
+	// determine if we're creating project
+	create := project.ProjectID == uuid.Nil
 
-func (r *mutationResolver) UpdateProject(ctx context.Context, projectID uuid.UUID, displayName *string, public *bool, site *string, description *string, photoURL *string) (*entity.Project, error) {
-	project := entity.FindProject(ctx, projectID)
-	if project == nil {
-		return nil, gqlerror.Errorf("Project %s not found", projectID.String())
-	}
-
+	// check permissions (on org if we're creating the project)
+	var perms entity.ProjectPermissions
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, projectID, false)
-	if !perms.Admin {
-		return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s", projectID.String())
+	if create {
+		orgPerms := secret.OrganizationPermissions(ctx, organization.OrganizationID)
+		if !orgPerms.Create {
+			return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationName)
+		}
+		perms = entity.ProjectPermissions{
+			View:   true,
+			Create: true,
+			Admin:  true,
+		}
+	} else {
+		perms = secret.ProjectPermissions(ctx, project.ProjectID, false)
+		if !perms.Admin {
+			return nil, gqlerror.Errorf("Not allowed to perform admin functions on project %s/%s", organizationName, projectName)
+		}
 	}
 
-	bi := entity.FindBillingInfo(ctx, project.OrganizationID)
-	if bi == nil {
-		return nil, gqlerror.Errorf("Could not find billing info for organization %s", project.OrganizationID.String())
+	// default public to true upon creation
+	if create && public == nil {
+		trueVal := true
+		public = &trueVal
 	}
 
-	if public != nil && !*public && !bi.BillingPlan.PrivateProjects {
-		return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
+	// check billing info if project is private
+	if public != nil && !*public {
+		bi := entity.FindBillingInfo(ctx, organization.OrganizationID)
+		if bi == nil {
+			return nil, gqlerror.Errorf("Could not find billing info for organization %s", organizationName)
+		}
+
+		if !bi.BillingPlan.PrivateProjects {
+			return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
+		}
 	}
 
-	err := project.UpdateDetails(ctx, displayName, public, site, description, photoURL)
+	err := project.StageWithUser(ctx, displayName, public, description, site, photoURL, secret.GetOwnerID(), perms)
 	if err != nil {
-		return nil, gqlerror.Errorf(err.Error())
+		return nil, gqlerror.Errorf("Error staging project: %s", err.Error())
+	}
+
+	// on create, refetching project to include user
+	if create {
+		project = entity.FindProject(ctx, project.ProjectID)
+		if project == nil {
+			panic(fmt.Errorf("expected project with ID %s to exist", project.ProjectID.String()))
+		}
 	}
 
 	return projectWithPermissions(project, perms), nil
