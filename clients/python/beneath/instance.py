@@ -3,12 +3,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-  from beneath.cursor import Cursor
   from beneath.stream import Stream
 
 import uuid
 
 from beneath import config
+from beneath.cursor import Cursor
 from beneath.writer import DryInstanceWriter, InstanceWriter
 
 

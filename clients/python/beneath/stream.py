@@ -42,6 +42,14 @@ class Stream:
 
   # INITIALIZATION
 
+  def __init__(self):
+    self.client: Client = None
+    self.qualifier: StreamQualifier = None
+    self.admin_data: dict = None
+    self.stream_id: uuid.UUID = None
+    self.avro_schema_parsed: dict = None
+    self.primary_instance: StreamInstance = None
+
   @classmethod
   async def make(cls, client: Client, qualifier: StreamQualifier, admin_data=None) -> Stream:
     stream = Stream()
@@ -67,7 +75,7 @@ class Stream:
     self.admin_data = admin_data
     self.stream_id = uuid.UUID(hex=self.admin_data["streamID"])
     self.avro_schema_parsed = parse_schema(json.loads(self.admin_data["avroSchema"]))
-    if self.admin_data["primaryStreamInstance"]:
+    if "primaryStreamInstance" in self.admin_data:
       self.primary_instance = StreamInstance(stream=self, admin_data=self.admin_data["primaryStreamInstance"])
 
   # INSTANCES

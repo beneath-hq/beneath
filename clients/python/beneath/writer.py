@@ -42,7 +42,7 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
 
   async def _flush(self):
     await self._connection.write([
-      gateway_pb2.InstanceRecords(instance_id=instance_id, records=record_pbs)
+      gateway_pb2.InstanceRecords(instance_id=instance_id.bytes, records=record_pbs)
       for (instance_id, record_pbs) in self._records.items()
     ])
 

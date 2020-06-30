@@ -123,43 +123,10 @@ class Cursor:
 
   async def subscribe_changes(
     self,
-    callback: Callable[[List[Mapping], Cursor], Awaitable[None]],
-    batch_size=config.DEFAULT_READ_BATCH_SIZE,
-    poll_at_most_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS,
-  ):
-    ticker = AIOTicker(
-      at_least_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_LEAST_EVERY_MS,
-      at_most_every_ms=poll_at_most_every_ms,
-    )
-
-    async def _poll():
-      while True:
-        batch = await self.read_next_changes(limit=batch_size)
-        if len(batch) != 0:
-          await callback(batch, self)
-        if len(batch) < batch_size:
-          break
-
-    async def _tick():
-      async for _ in ticker:
-        await _poll()
-
-    async def _subscribe():
-      subscription = await self.instance.stream.client.connection.subscribe(
-        instance_id=self.instance.instance_id,
-        cursor=self.changes_cursor,
-      )
-      async for _ in subscription:
-        ticker.trigger()
-
-    await asyncio.gather(_subscribe(), _tick())
-
-  async def iterate_changes(
-    self,
     batch_size=config.DEFAULT_READ_BATCH_SIZE,
     poll_at_most_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS,
   ) -> AsyncIterator[List[Mapping]]:
-    """ Wraps subscribe_changes as an async iterator. Note that yielded values are batches, not individual records. """
+    """ Wraps subscribe_changes_with_callback as an async iterator. Note that yielded values are batches, not individual records. """
     queue = asyncio.Queue()
     done = Exception("DONE")
 
@@ -188,3 +155,37 @@ class Cursor:
         raise item
       yield item
       queue.task_done()
+
+  async def subscribe_changes_with_callback(
+    self,
+    callback: Callable[[List[Mapping], Cursor], Awaitable[None]],
+    batch_size=config.DEFAULT_READ_BATCH_SIZE,
+    poll_at_most_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS,
+  ):
+    ticker = AIOTicker(
+      at_least_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_LEAST_EVERY_MS,
+      at_most_every_ms=poll_at_most_every_ms,
+    )
+
+    async def _poll():
+      while True:
+        batch = await self.read_next_changes(limit=batch_size)
+        batch = list(batch)
+        if len(batch) != 0:
+          await callback(batch, self)
+        if len(batch) < batch_size:
+          break
+
+    async def _tick():
+      async for _ in ticker:
+        await _poll()
+
+    async def _subscribe():
+      subscription = await self.instance.stream.client.connection.subscribe(
+        instance_id=self.instance.instance_id,
+        cursor=self.changes_cursor,
+      )
+      async for _ in subscription:
+        ticker.trigger()
+
+    await asyncio.gather(_subscribe(), _tick())

@@ -51,6 +51,7 @@ class AIODelayBuffer(Generic[BufferValue]):
 
   async def __aenter__(self):
     await self.start()
+    return self
 
   async def __aexit__(self, exc_type, exc, tb):
     if not exc_type:
@@ -126,4 +127,4 @@ class AIODelayBuffer(Generic[BufferValue]):
 
   def _delayed_flush_done(self, task: asyncio.Task):
     if task.exception():
-      log.error("Error in buffer flush background loop", exc_info=True)
+      log.error("Error in buffer flush background loop", exc_info=task.exception())
