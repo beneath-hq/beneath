@@ -139,7 +139,7 @@ class Cursor:
       else:
         queue.put_nowait(done)
 
-    coro = self.subscribe_changes(
+    coro = self.subscribe_changes_with_callback(
       callback,
       batch_size=batch_size,
       poll_at_most_every_ms=poll_at_most_every_ms,
