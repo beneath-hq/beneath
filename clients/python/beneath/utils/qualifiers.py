@@ -21,6 +21,9 @@ class ProjectQualifier:
   def __hash__(self):
     return hash(repr(self))
 
+  def __eq__(self, other):
+    return self.organization == other.organization and self.project == other.project
+
 
 class StreamQualifier:
 
@@ -42,6 +45,9 @@ class StreamQualifier:
   def __hash__(self):
     return hash(repr(self))
 
+  def __eq__(self, other):
+    return self.organization == other.organization and self.project == other.project and self.stream == other.stream
+
 
 class ServiceQualifier:
 
@@ -62,3 +68,6 @@ class ServiceQualifier:
 
   def __hash__(self):
     return hash(repr(self))
+
+  def __eq__(self, other):
+    return self.organization == other.organization and self.project == other.project and self.service == other.service

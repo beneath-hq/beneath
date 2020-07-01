@@ -55,6 +55,7 @@ class Client:
     schema: str,
     use_index: bool = None,
     use_warehouse: bool = None,
+    retention: timedelta = None,
     log_retention: timedelta = None,
     index_retention: timedelta = None,
     warehouse_retention: timedelta = None,
@@ -84,12 +85,21 @@ class Client:
       schema=schema,
       use_index=use_index,
       use_warehouse=use_warehouse,
-      log_retention_seconds=int(log_retention.total_seconds()) if log_retention else None,
-      index_retention_seconds=int(index_retention.total_seconds()) if index_retention else None,
-      warehouse_retention_seconds=int(warehouse_retention.total_seconds()) if warehouse_retention else None,
+      log_retention_seconds=self._timedelta_to_seconds(log_retention if log_retention else retention),
+      index_retention_seconds=self._timedelta_to_seconds(index_retention if index_retention else retention),
+      warehouse_retention_seconds=self._timedelta_to_seconds(warehouse_retention if warehouse_retention else retention),
     )
     stream = await Stream.make(client=self, qualifier=qualifier, admin_data=data)
     return stream
+
+  @staticmethod
+  def _timedelta_to_seconds(td: timedelta):
+    if not td:
+      return None
+    secs = int(td.total_seconds())
+    if secs == 0:
+      return None
+    return secs
 
   # WRITING
 

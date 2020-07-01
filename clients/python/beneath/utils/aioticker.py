@@ -36,7 +36,7 @@ class AIOTicker:
         assert self._triggered
 
     if self._stop:
-      raise StopAsyncIteration
+      raise StopAsyncIteration()
 
     delta = time.time() - self._last_tick
     if delta < self._at_most_every:

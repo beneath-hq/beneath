@@ -8,16 +8,13 @@ if TYPE_CHECKING:
 
 from collections import defaultdict
 from collections.abc import Mapping
-import json
-import logging
 from typing import Dict, Iterable, List, Union, Tuple
 import uuid
 
 from beneath import config
+from beneath.logging import logger
 from beneath.proto import gateway_pb2
 from beneath.utils import AIODelayBuffer
-
-log = logging.getLogger(__name__)
 
 InstanceIDAndRecordPB = Tuple[uuid.UUID, gateway_pb2.Record]
 InstanceRecordAndSize = Tuple['StreamInstance', Mapping, int]
@@ -28,10 +25,12 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
 
   _connection: Connection
   _records: Dict[uuid.UUID, List[gateway_pb2.Record]]
+  _total: int
 
   def __init__(self, connection: Connection, max_delay_ms: int):
     super().__init__(max_delay_ms=max_delay_ms, max_size=config.MAX_WRITE_SIZE_BYTES)
     self._connection = connection
+    self._total = 0
 
   def _reset(self):
     self._records = defaultdict(list)
@@ -45,6 +44,11 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
       gateway_pb2.InstanceRecords(instance_id=instance_id.bytes, records=record_pbs)
       for (instance_id, record_pbs) in self._records.items()
     ])
+    count = 0
+    for (_, record_pbs) in self._records.items():
+      count += len(record_pbs)
+    self._total += count
+    logger.info("Flushed %i records to %i instances (%i total during session)", count, len(self._records), self._total)
 
   # pylint: disable=arguments-differ
   async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):
@@ -72,18 +76,18 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
     self._records.append(value)
 
   async def _flush(self):
-    log.info("Flushing %i buffered records", len(self._records))
+    logger.info("Flushing %i buffered records", len(self._records))
     for value in self._records:
       (instance, record, size) = value
-      log.info(
-        "Record (stream=%s, version=%i, size=%i bytes): %s",
+      logger.info(
+        "Flushed record (stream=%s, version=%i, size=%i bytes): %s",
         str(instance.stream.qualifier),
         instance.version,
         size,
-        json.dumps(record),
+        record,
       )
       self._total += 1
-    log.info("Flushed %i records (%i total during session)", len(self._records), self._total)
+    logger.info("Flushed %i records (%i total during session)", len(self._records), self._total)
 
   # pylint: disable=arguments-differ
   async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):

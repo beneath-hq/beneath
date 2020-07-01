@@ -2,8 +2,6 @@ import asyncio
 import logging
 from typing import Generic, TypeVar
 
-log = logging.getLogger(__name__)
-
 BufferValue = TypeVar('BufferValue')
 
 
@@ -87,7 +85,7 @@ class AIODelayBuffer(Generic[BufferValue]):
       await self.force_flush()
       loops += 1
       if loops > 5:
-        log.warning("Unfortunate scheduling blocked write to buffer %i times (try to limit concurrent writes)", loops)
+        logging.warning("Unfortunate scheduling blocked write to buffer %i times (try to limit concurrent writes)", loops)
 
     # now we know we're not flushing and the value fits; and execution will not be "interrupted" until next "await"
 
@@ -127,4 +125,4 @@ class AIODelayBuffer(Generic[BufferValue]):
 
   def _delayed_flush_done(self, task: asyncio.Task):
     if task.exception():
-      log.error("Error in buffer flush background loop", exc_info=task.exception())
+      logging.error("Error in buffer flush background loop", exc_info=task.exception())
