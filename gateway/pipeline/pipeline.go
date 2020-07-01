@@ -42,7 +42,8 @@ func processWriteRequest(ctx context.Context, req *pb.WriteRequest) error {
 
 	// concurrently process each InstanceRecords
 	group, cctx := errgroup.WithContext(ctx)
-	for _, ir := range req.InstanceRecords {
+	for idx := range req.InstanceRecords {
+		ir := req.InstanceRecords[idx] // see https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
 		group.Go(func() error {
 			// process
 			bytesWritten, err := processInstanceRecords(cctx, req.WriteId, ir)

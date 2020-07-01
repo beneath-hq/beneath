@@ -45,7 +45,8 @@ func (s *gRPCServer) Write(ctx context.Context, req *pb.WriteRequest) (*pb.Write
 	mu := &sync.Mutex{}
 	instances := make(map[uuid.UUID]*entity.CachedStream, len(req.InstanceRecords))
 	group, cctx := errgroup.WithContext(ctx)
-	for _, ir := range req.InstanceRecords {
+	for idx := range req.InstanceRecords {
+		ir := req.InstanceRecords[idx] // see https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
 		group.Go(func() error {
 			// parse instance IID
 			instanceID := uuid.FromBytesOrNil(ir.InstanceId)
