@@ -35,7 +35,9 @@ const ViewMetrics: FC<ViewMetricsProps> = ({ stream }) => {
 export default ViewMetrics;
 
 const StreamingMetricsOverview: FC<ViewMetricsProps> = ({ stream }) => {
-  const { metrics, total, latest, error } = useMonthlyMetrics(EntityKind.Stream, stream.streamID);
+  const { metrics, total, latest, error } = stream.primaryStreamInstanceID
+    ? useMonthlyMetrics(EntityKind.StreamInstance, stream.primaryStreamInstanceID)
+    : useMonthlyMetrics(EntityKind.Stream, stream.streamID);
   return (
     <>
       <StreamingTopIndicators latest={latest} total={total} period="month" totalPeriod="all time" />
@@ -55,17 +57,25 @@ const StreamingMetricsWeek: FC<ViewMetricsProps> = ({ stream }) => {
 };
 
 const BatchMetricsOverview: FC<ViewMetricsProps> = ({ stream }) => {
-  const { metrics, total, latest, error } = useMonthlyMetrics(EntityKind.Stream, stream.streamID);
+  const streamMetrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID);
+  if (!streamMetrics.error && stream.primaryStreamInstanceID) {
+    const instanceMetrics = useMonthlyMetrics(EntityKind.StreamInstance, stream.primaryStreamInstanceID);
+    if (instanceMetrics.error) {
+      streamMetrics.error = instanceMetrics.error;
+    } else {
+      streamMetrics.latest = instanceMetrics.latest;
+    }
+  }
   return (
     <>
       <BatchTopIndicators
-        latest={latest}
-        total={total}
+        latest={streamMetrics.latest}
+        total={streamMetrics.total}
         period="month"
         instancesCreated={stream.instancesCreatedCount}
         instancesCommitted={stream.instancesMadeFinalCount}
       />
-      {error && <ErrorNote error={error} />}
+      {streamMetrics.error && <ErrorNote error={streamMetrics.error} />}
     </>
   );
 };

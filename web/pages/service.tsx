@@ -66,9 +66,11 @@ const ServicePage = () => {
       <ProfileHero
         name={toURLName(service.name)}
         description={
-          service.description ? service.description + " " : "" +
-          `(Read quota: ${numbro(service.readQuota).format(bytesFormat)}, ` +
-          `Write quota ${numbro(service.writeQuota).format(bytesFormat)})`
+          service.description
+            ? service.description + " "
+            : "" +
+              `(Read quota: ${service.readQuota ? numbro(service.readQuota).format(bytesFormat) : "not set"}, ` +
+              `Write quota ${service.writeQuota ? numbro(service.writeQuota).format(bytesFormat) : "not set"})`
         }
       />
       <SubrouteTabs defaultValue="monitoring" tabs={tabs} />

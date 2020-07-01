@@ -40,7 +40,7 @@ export const StreamingTopIndicators: FC<TopIndicatorsProps> = ({
       </Grid>
       <Grid item xs={6} md={4}>
         <Paper>
-          <SingleIndicator title={"Data in latest batch"} indicator={numbro(total.writeBytes).format(bytesFormat)} />
+          <SingleIndicator title={"Data in latest batch"} indicator={numbro(latest.writeBytes).format(bytesFormat)} />
         </Paper>
       </Grid>
       <Grid item xs={6} md={4}>
