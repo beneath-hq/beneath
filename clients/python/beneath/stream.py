@@ -78,6 +78,11 @@ class Stream:
     if "primaryStreamInstance" in self.admin_data:
       self.primary_instance = StreamInstance(stream=self, admin_data=self.admin_data["primaryStreamInstance"])
 
+  # MANAGEMENT
+
+  async def delete(self):
+    await self.client.admin.streams.delete(self.stream_id)
+
   # INSTANCES
 
   async def find_instances(self) -> Iterable[StreamInstance]:

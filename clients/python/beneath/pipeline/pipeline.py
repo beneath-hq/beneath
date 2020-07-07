@@ -19,17 +19,15 @@ from beneath.logging import logger
 from beneath.pipeline import BasePipeline, Strategy
 from beneath.utils import StreamQualifier
 
-AsyncConsumerFn = Callable[[Mapping], None]
-AsyncIteratorFn = Callable[[], AsyncIterator[Mapping]]
-AsyncMapFn = Callable[[Mapping], Awaitable[Union[Mapping, Iterable[Mapping]]]]
-ProcessTransformFn = Callable[[Iterable[Mapping]], Awaitable[Iterable[Mapping]]]
+AsyncGenerateFn = Callable[[BasePipeline], AsyncIterator[Mapping]]
+AsyncApplyFn = Callable[[Mapping], Awaitable[Union[Mapping, Iterable[Mapping]]]]
 
 PIPELINE_IDLE = "<PIPELINE_IDLE>"
 
 
 class Transform:
 
-  def __init__(self, pipeline: SimplePipeline):
+  def __init__(self, pipeline: Pipeline):
     self.pipeline = pipeline
 
   # pylint: disable=no-self-use
@@ -39,13 +37,13 @@ class Transform:
 
 class Generate(Transform):
 
-  def __init__(self, pipeline: SimplePipeline, iterator: AsyncIteratorFn):
+  def __init__(self, pipeline: Pipeline, fn: AsyncGenerateFn):
     super().__init__(pipeline)
-    self.iterator = iterator
+    self.fn = fn
 
   async def process(self, incoming_records: Iterable[Mapping]):
     assert incoming_records is None
-    async for records in self.iterator():
+    async for records in self.fn(self.pipeline):
       if isinstance(records, Mapping):
         records = [records]
       elif records == PIPELINE_IDLE:
@@ -63,7 +61,7 @@ class ReadStream(Transform):
   state_key: str
   cursor: Cursor
 
-  def __init__(self, pipeline: SimplePipeline, stream_path: str, batch_size: int = DEFAULT_READ_BATCH_SIZE):
+  def __init__(self, pipeline: Pipeline, stream_path: str, batch_size: int = DEFAULT_READ_BATCH_SIZE):
     super().__init__(pipeline)
     self.qualifier = self.pipeline._add_input_stream(stream_path)
     self.limit = batch_size
@@ -130,9 +128,9 @@ class ReadStream(Transform):
       yield batch
 
 
-class Map(Transform):
+class Apply(Transform):
 
-  def __init__(self, pipeline: SimplePipeline, fn: AsyncMapFn, max_concurrency: int = None):
+  def __init__(self, pipeline: Pipeline, fn: AsyncApplyFn, max_concurrency: int = None):
     super().__init__(pipeline)
     self.fn = fn
     self.max_concurrency = max_concurrency if max_concurrency else 1  # TODO: use max_concurrency :(
@@ -151,7 +149,7 @@ class Map(Transform):
 
 class WriteStream(Transform):
 
-  def __init__(self, pipeline: SimplePipeline, stream_path: str, schema: str = None, retention: timedelta = None):
+  def __init__(self, pipeline: Pipeline, stream_path: str, schema: str = None, retention: timedelta = None):
     super().__init__(pipeline)
     self.qualifier = self.pipeline._add_output_stream(stream_path, schema, retention=retention)
 
@@ -167,7 +165,7 @@ class WriteStream(Transform):
     yield
 
 
-class SimplePipeline(BasePipeline):
+class Pipeline(BasePipeline):
 
   _initial: List[Transform]
   _dag: Dict[Transform, List[Transform]]
@@ -180,8 +178,8 @@ class SimplePipeline(BasePipeline):
 
   # DAG
 
-  def generate(self, iterator: AsyncIteratorFn) -> Transform:
-    transform = Generate(self, iterator)
+  def generate(self, fn: AsyncGenerateFn) -> Transform:
+    transform = Generate(self, fn)
     self._initial.append(transform)
     return transform
 
@@ -190,8 +188,8 @@ class SimplePipeline(BasePipeline):
     self._initial.append(transform)
     return transform
 
-  def map(self, prev_transform: Transform, fn: AsyncMapFn, max_concurrency: int = None) -> Transform:
-    transform = Map(self, fn, max_concurrency)
+  def apply(self, prev_transform: Transform, fn: AsyncApplyFn, max_concurrency: int = None) -> Transform:
+    transform = Apply(self, fn, max_concurrency)
     self._dag[prev_transform].append(transform)
     return transform
 
@@ -212,19 +210,23 @@ class SimplePipeline(BasePipeline):
   async def _before_run(self):
     if self.strategy == Strategy.batch:
       return
+    if not self.state_instance.is_primary:
+      await self.state_instance.update(make_primary=True)
     for qualifier in self._output_qualifiers:
       instance = self.instances[qualifier]
       if not instance.is_primary:
         await instance.update(make_primary=True)
-        logger.info("Made instance %s for output stream '%s' primary", instance.instance_id, qualifier)
+        logger.info("Made version %s of output stream '%s' primary", instance.version, qualifier)
       else:
-        logger.info("Using existing primary instance %s for output stream '%s'", instance.instance_id, qualifier)
+        logger.info("Using existing primary version %s for output stream '%s'", instance.version, qualifier)
 
   async def _after_run(self):
     if self.strategy != Strategy.batch:
       return
+    if not self.state_instance.is_primary or not self.state_instance.is_final:
+      await self.state_instance.update(make_primary=True, make_final=True)
     for qualifier in self._output_qualifiers:
       instance = self.instances[qualifier]
       if not instance.is_primary or not instance.is_final:
         await instance.update(make_primary=True, make_final=True)
-        logger.info("Made instance %s for output stream '%s' final and primary", instance.instance_id, qualifier)
+        logger.info("Made version %s for output stream '%s' final and primary", instance.version, qualifier)

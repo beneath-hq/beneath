@@ -80,9 +80,8 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
     for value in self._records:
       (instance, record, size) = value
       logger.info(
-        "Flushed record (stream=%s, version=%i, size=%i bytes): %s",
+        "Flushed record (stream=%s, size=%i bytes): %s",
         str(instance.stream.qualifier),
-        instance.version,
         size,
         record,
       )

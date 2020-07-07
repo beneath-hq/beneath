@@ -29,7 +29,8 @@ from beneath.writer import Writer
 class Action(Enum):
   test = "test"
   stage = "stage"
-  launch = "launch"
+  run = "run"
+  teardown = "teardown"
 
 
 class Strategy(Enum):
@@ -38,12 +39,9 @@ class Strategy(Enum):
   batch = "batch"
 
 
-SERVICE_STATE_NAME = "services-state"
 SERVICE_STATE_LOG_RETENTION = timedelta(hours=6)
 SERVICE_STATE_SCHEMA = """
-  type ServiceState @stream @key(fields: ["service_id", "version", "key"]) {
-    service_id: Bytes16!
-    version: Int!
+  type ServiceState @stream @key(fields: ["key"]) {
     key: String!
     value: Bytes
   }
@@ -153,8 +151,12 @@ class BasePipeline:
     loop.run_until_complete(self.run())
 
   async def run(self):
-    await self.stage()
+    await self._stage()
     if self.action == Action.stage:
+      return
+
+    if self.action == Action.teardown:
+      await self._teardown()
       return
 
     dry = self.action == Action.test
@@ -195,8 +197,6 @@ class BasePipeline:
 
     async def _flush(self):
       records = ({
-        "service_id": self.pipeline.service_id.bytes,
-        "version": self.pipeline.version,
         "key": key,
         "value": msgpack.packb(state),
       } for (key, state) in self.state.items())
@@ -209,8 +209,6 @@ class BasePipeline:
   async def get_state(self, key: str, default: Any = None) -> Any:
     cursor = await self.state_instance.query_index(
       filter=json.dumps({
-        "service_id": "0x" + self.service_id.bytes.hex(), # not pretty
-        "version": self.version,
         "key": key,
       })
     )
@@ -230,7 +228,7 @@ class BasePipeline:
 
   # STAGING
 
-  async def stage(self):
+  async def _stage(self):
     logger.info("Staging service '%s'", self.service_qualifier)
     await self._stage_service()
     await asyncio.gather(self._stage_service_state(), *self._stage_tasks)
@@ -248,10 +246,11 @@ class BasePipeline:
     self.service_id = uuid.UUID(hex=admin_data["serviceID"])
 
   async def _stage_service_state(self):
+    stream_name = f"{self.service_qualifier.service}-state"
     qualifier = StreamQualifier(
       organization=self.service_qualifier.organization,
       project=self.service_qualifier.project,
-      stream=SERVICE_STATE_NAME,
+      stream=stream_name,
     )
     stream = await self.client.stage_stream(
       stream_path=str(qualifier),
@@ -260,11 +259,9 @@ class BasePipeline:
       use_warehouse=False,
     )
     await self._update_service_permissions(stream, read=True, write=True)
-    instance = await stream.stage_instance(version=0, make_primary=True)
+    instance = await stream.stage_instance(version=self.version)
     self.state_instance = instance
-    logger.info(
-      "Staged meta-stream for pipeline state '%s' (using primary instance %s)", qualifier, instance.instance_id
-    )
+    logger.info("Staged stream for pipeline state '%s' (using version %i)", qualifier, self.version)
 
   def _add_input_stream(self, stream_path: str) -> StreamQualifier:
     qualifier = StreamQualifier.from_path(stream_path)
@@ -282,7 +279,7 @@ class BasePipeline:
     assert stream.qualifier not in self.instances
     await self._update_service_permissions(stream, read=True)
     self.instances[stream.qualifier] = stream.primary_instance
-    logger.info("Staged input stream '%s' (using primary instance %s)", stream_path, instance.instance_id)
+    logger.info("Staged input stream '%s' (using version %i)", stream_path, stream.primary_instance.version)
 
   def _add_output_stream(
     self,
@@ -299,7 +296,7 @@ class BasePipeline:
     if qualifier in self._output_qualifiers:
       return qualifier
     if qualifier in self._input_qualifiers:
-      raise ValueError(f"Cannot use stream {qualifier} added as both input and output")
+      raise ValueError(f"Cannot use stream '{qualifier}' as both input and output")
     self._output_qualifiers.add(qualifier)
     self._stage_tasks.append(
       self._stage_output_stream(
@@ -343,7 +340,7 @@ class BasePipeline:
     instance = await stream.stage_instance(version=self.version)
     await self._update_service_permissions(stream, write=True)
     self.instances[stream.qualifier] = instance
-    logger.info("Staged output stream '%s' (using instance %s)", stream_path, instance.instance_id)
+    logger.info("Staged output stream '%s' (using version %s)", stream_path, self.version)
 
   async def _update_service_permissions(self, stream: Stream, read: bool = None, write: bool = None):
     await self.client.admin.services.update_permissions_for_stream(
@@ -352,3 +349,17 @@ class BasePipeline:
       read=read,
       write=write,
     )
+
+  # TEARDOWN
+
+  async def _teardown(self):
+    logger.info("Tearing down pipeline for service '%s'", self.service_qualifier)
+    for qualifier in self._output_qualifiers:
+      instance = self.instances[qualifier]
+      await instance.stream.delete()
+      logger.info("Deleted output stream '%s'", qualifier)
+    await self.state_instance.stream.delete()
+    logger.info("Deleted stream for pipeline state '%s'", self.state_instance.stream.qualifier)
+    await self.client.admin.services.delete(self.service_id)
+    logger.info("Deleted pipeline service '%s'", self.service_qualifier)
+    logger.info("Finished teardown of pipeline for service '%s'", self.service_qualifier)
