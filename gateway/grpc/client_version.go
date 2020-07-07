@@ -29,5 +29,5 @@ func newVersionOrPanic(str string) *version.Version {
 }
 
 var clientSpecs = map[string]clientVersionSpec{
-	"beneath-python": newClientVersionSpec("1.1.3", "1.1.2", "1.1.1"),
+	"beneath-python": newClientVersionSpec("1.2.0", "1.2.0", "1.1.3"),
 }
