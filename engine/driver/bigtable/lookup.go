@@ -577,7 +577,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	instanceID := i.GetStreamInstanceID()
 	normalizePrimary := codec.PrimaryIndex.GetNormalize()
 	primaryHash := makeIndexHash(instanceID, codec.PrimaryIndex.GetIndexID())
-	nowForExpirationChecks := time.Now().Add(expirationBuffer)
+	nowForExpirationChecks := toPersistedTime(time.Now(), expirationBuffer)
 
 	// get existing values (to delete secondary indexes)
 	var existingToReplace map[string]Record
@@ -623,7 +623,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		// log row timestamp (if retention is configured, set rowTime to expiration timestamp instead)
 		logRowTime := record.GetTimestamp()
 		if logExpires {
-			logRowTime = logRowTime.Add(logRetention)
+			logRowTime = toPersistedTime(logRowTime, logRetention)
 		}
 
 		// write unless row is already practically expired
@@ -641,7 +641,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 		// index row timestamp (if retention is configured, rowTime is set to expiration timestamp instead)
 		indexRowTime := record.GetTimestamp()
 		if indexExpires {
-			indexRowTime = indexRowTime.Add(indexRetention)
+			indexRowTime = toPersistedTime(indexRowTime, indexRetention)
 		}
 
 		// if row is practically already expired, don't write it

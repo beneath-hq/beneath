@@ -77,6 +77,8 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 	// prep
 	instanceID := i.GetStreamInstanceID()
 	normalized := s.GetCodec().PrimaryIndex.GetNormalize()
+	logRetention := s.GetLogRetention()
+	indexRetention := s.GetIndexRetention()
 	hash := makeIndexHash(instanceID, s.GetCodec().PrimaryIndex.GetIndexID())
 
 	// build rowset for primary index
@@ -99,7 +101,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 			record := Record{
 				AvroData:   avroCol.Value,
 				PrimaryKey: primaryKey,
-				Time:       avroCol.Timestamp.Time(),
+				Time:       fromPersistedTime(avroCol.Timestamp.Time(), indexRetention),
 				Stream:     s,
 			}
 
@@ -155,7 +157,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 			switch stripColumnFamily(column.Column, logColumnFamilyName) {
 			case logAvroColumnName:
 				record.AvroData = column.Value
-				record.Time = column.Timestamp.Time()
+				record.Time = fromPersistedTime(column.Timestamp.Time(), logRetention)
 			case logProcessTimeColumnName:
 				record.ProcessTime = bytesToTimeMs(column.Value)
 			}
@@ -211,6 +213,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 	// prep
 	c := s.GetCodec()
 	instanceID := i.GetStreamInstanceID()
+	indexRetention := s.GetIndexRetention()
 	primaryHash := makeIndexHash(instanceID, c.PrimaryIndex.GetIndexID())
 	secondaryHash := makeIndexHash(instanceID, index.GetIndexID())
 
@@ -244,7 +247,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 			Offset:       bytesToInt(offsetCol.Value),
 			PrimaryKey:   primaryKey,
 			SecondaryKey: secondaryKey,
-			Time:         offsetCol.Timestamp.Time(),
+			Time:         fromPersistedTime(offsetCol.Timestamp.Time(), indexRetention),
 			Stream:       s,
 		}
 
@@ -281,7 +284,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 			if stripColumnFamily(offsetCol.Column, indexesColumnFamilyName) != indexesOffsetColumnName {
 				panic(fmt.Errorf("unexpected column in loadFromPrimaryKeys: %v", offsetCol))
 			}
-			primaryTime = offsetCol.Timestamp.Time()
+			primaryTime = fromPersistedTime(offsetCol.Timestamp.Time(), indexRetention)
 			record.Offset = bytesToInt(offsetCol.Value)
 		} else {
 			// get avro
@@ -289,7 +292,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 			if stripColumnFamily(avroCol.Column, indexesColumnFamilyName) != indexesAvroColumnName {
 				panic(fmt.Errorf("unexpected column in loadFromPrimaryKeys: %v", avroCol))
 			}
-			primaryTime = avroCol.Timestamp.Time()
+			primaryTime = fromPersistedTime(avroCol.Timestamp.Time(), indexRetention)
 			record.AvroData = avroCol.Value
 		}
 
@@ -412,6 +415,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.StreamInstance, from int64, to int64, limit int) ([]Record, error) {
 	// prep
 	instanceID := i.GetStreamInstanceID()
+	logRetention := s.GetLogRetention()
 
 	// build rowset
 	rs := makeLogRowSetFromRange(instanceID, from, to)
@@ -433,7 +437,7 @@ func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.St
 		for _, column := range row[logColumnFamilyName] {
 			switch stripColumnFamily(column.Column, logColumnFamilyName) {
 			case logAvroColumnName:
-				record.Time = column.Timestamp.Time()
+				record.Time = fromPersistedTime(column.Timestamp.Time(), logRetention)
 				record.AvroData = column.Value
 			case logProcessTimeColumnName:
 				record.ProcessTime = bytesToTimeMs(column.Value)
@@ -462,6 +466,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 	c := s.GetCodec()
 	instanceID := i.GetStreamInstanceID()
 	normalized := c.PrimaryIndex.GetNormalize()
+	indexRetention := s.GetIndexRetention()
 	hash := makeIndexHash(instanceID, c.PrimaryIndex.GetIndexID())
 
 	// create rowset for lookup in primary index
@@ -491,10 +496,10 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 		for _, col := range row[indexesColumnFamilyName] {
 			switch stripColumnFamily(col.Column, indexesColumnFamilyName) {
 			case indexesOffsetColumnName:
-				record.Time = col.Timestamp.Time()
+				record.Time = fromPersistedTime(col.Timestamp.Time(), indexRetention)
 				record.Offset = bytesToInt(col.Value)
 			case indexesAvroColumnName:
-				record.Time = col.Timestamp.Time()
+				record.Time = fromPersistedTime(col.Timestamp.Time(), indexRetention)
 				record.AvroData = col.Value
 			default:
 				panic(fmt.Errorf("unexpected column in LoadExistingRecords: %v", col.Column))

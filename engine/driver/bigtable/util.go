@@ -23,6 +23,22 @@ func indexExpires(s driver.Stream) bool {
 	return s.GetIndexRetention() != time.Duration(0)
 }
 
+// turns t into an expiration time by adding retention to t
+func toPersistedTime(t time.Time, retention time.Duration) time.Time {
+	if retention == 0 {
+		return t
+	}
+	return t.Add(retention)
+}
+
+// reverses the effect of toPersistedTime
+func fromPersistedTime(t time.Time, retention time.Duration) time.Time {
+	if retention == 0 {
+		return t
+	}
+	return t.Add(-1 * retention)
+}
+
 // unsafely casts []byte to a string (saving memory)
 // do not mutate input after calling
 func byteSliceToString(bs []byte) string {
