@@ -64,8 +64,8 @@ async def stage(args):
     service_name=seq.service,
     description=args.description,
     source_url=args.source_url,
-    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
-    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb),
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb),
   )
   pretty_print_graphql_result(result)
 

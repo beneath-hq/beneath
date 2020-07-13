@@ -36,6 +36,8 @@ def str2bool(v) -> bool:
 
 
 def mb_to_bytes(v):
+  if v is None:
+    return None
   return v * 1000000
 
 

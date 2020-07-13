@@ -11,6 +11,7 @@ from datetime import timedelta
 from enum import Enum
 import json
 import os
+import signal
 import sys
 from typing import Any, Dict, List, Set, Tuple
 import uuid
@@ -21,6 +22,7 @@ from beneath import config
 from beneath.client import Client
 from beneath.instance import StreamInstance
 from beneath.logging import logger
+from beneath.pipeline.parse_args import parse_pipeline_args
 from beneath.stream import Stream
 from beneath.utils import AIODelayBuffer, ServiceQualifier, StreamQualifier
 from beneath.writer import Writer
@@ -71,10 +73,13 @@ class BasePipeline:
     service_path: str = None,
     service_read_quota: int = None,
     service_write_quota: int = None,
+    parse_args: bool = False,
     client: Client = None,
     write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
     write_state_delay_ms: int = config.DEFAULT_WRITE_PIPELINE_STATE_DELAY_MS,
   ):
+    if parse_args:
+      parse_pipeline_args()
     self.action = self._arg_or_env("action", action, "BENEATH_PIPELINE_ACTION", fn=Action)
     self.strategy = self._arg_or_env("strategy", strategy, "BENEATH_PIPELINE_STRATEGY", fn=Strategy)
     self.version = self._arg_or_env("version", version, "BENEATH_PIPELINE_VERSION", fn=int)
@@ -111,6 +116,8 @@ class BasePipeline:
     self._input_qualifiers = set()
     self._output_qualifiers = set()
     self.logger = logger
+    self.dry = self.action == Action.test
+    self._run_task: asyncio.Task = None
     self._init()
 
   @staticmethod
@@ -132,7 +139,7 @@ class BasePipeline:
 
   # OVERRIDES
 
-  def _init(self):
+  def _init(self):  # pylint: disable=no-self-use
     raise Exception("_init should be implemented in a subclass")
 
   async def _run(self):
@@ -148,7 +155,24 @@ class BasePipeline:
 
   def main(self):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(self.run())
+
+    async def _main():
+      try:
+        self._run_task = asyncio.create_task(self.run())
+        await self._run_task
+      except asyncio.CancelledError:
+        logger.info("Pipeline gracefully cancelled")
+
+    async def _kill(sig):
+      logger.info("Received %s, attempting graceful shutdown...", sig.name)
+      if self._run_task:
+        self._run_task.cancel()
+
+    signals = (signal.SIGTERM, signal.SIGINT)
+    for sig in signals:
+      loop.add_signal_handler(sig, lambda sig=sig: asyncio.create_task(_kill(sig)))
+
+    loop.run_until_complete(_main())
 
   async def run(self):
     await self._stage()
@@ -159,13 +183,12 @@ class BasePipeline:
       await self._teardown()
       return
 
-    dry = self.action == Action.test
-    if dry:
+    if self.dry:
       logger.info("Running in TEST mode: Records will be printed, but NOT saved to Beneath")
     else:
       logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
 
-    self.writer = self.client.writer(dry=dry, write_delay_ms=self.write_delay_ms)
+    self.writer = self.client.writer(dry=self.dry, write_delay_ms=self.write_delay_ms)
     self.state_writer = self._StateWriter(self)
 
     await self._before_run()
@@ -173,10 +196,16 @@ class BasePipeline:
     await self.state_writer.start()
     try:
       await self._run()
-      await self._after_run()
-    finally:
       await self.state_writer.stop()
       await self.writer.stop()
+      await self._after_run()
+    except asyncio.CancelledError:
+      logger.info("Pipeline cancelled, flushing buffered records...")
+      await self.state_writer.stop()
+      await self.writer.stop()
+      raise
+
+    logger.info("Pipeline completed successfully")
 
   # SERVICE STATE
 
@@ -207,6 +236,9 @@ class BasePipeline:
       await super().write(value=(key, state), size=0)
 
   async def get_state(self, key: str, default: Any = None) -> Any:
+    if self.dry:
+      return default
+
     cursor = await self.state_instance.query_index(
       filter=json.dumps({
         "key": key,
@@ -259,16 +291,22 @@ class BasePipeline:
       use_warehouse=False,
     )
     await self._update_service_permissions(stream, read=True, write=True)
-    instance = await stream.stage_instance(version=self.version)
+    instance = await stream.stage_instance(version=self.version, dry=self.dry)
     self.state_instance = instance
     logger.info("Staged stream for pipeline state '%s' (using version %i)", qualifier, self.version)
 
+  def _parse_stream_path(self, stream_path: str) -> StreamQualifier:
+    # use service organization and project if "stream_path" is just a name
+    if "/" not in stream_path:
+      stream_path = f"{self.service_qualifier.organization}/{self.service_qualifier.project}/{stream_path}"
+    return StreamQualifier.from_path(stream_path)
+
   def _add_input_stream(self, stream_path: str) -> StreamQualifier:
-    qualifier = StreamQualifier.from_path(stream_path)
+    qualifier = self._parse_stream_path(stream_path)
     if (qualifier in self._input_qualifiers) or (qualifier in self._output_qualifiers):
       raise ValueError(f"Stream {qualifier} already added as input or output")
     self._input_qualifiers.add(qualifier)
-    self._stage_tasks.append(self._stage_input_stream(stream_path))
+    self._stage_tasks.append(self._stage_input_stream(str(qualifier)))
     return qualifier
 
   async def _stage_input_stream(self, stream_path: str):
@@ -285,6 +323,7 @@ class BasePipeline:
     self,
     stream_path: str,
     schema: str = None,
+    description: str = None,
     use_index: bool = None,
     use_warehouse: bool = None,
     retention: timedelta = None,
@@ -292,7 +331,7 @@ class BasePipeline:
     index_retention: timedelta = None,
     warehouse_retention: timedelta = None,
   ) -> StreamQualifier:
-    qualifier = StreamQualifier.from_path(stream_path)
+    qualifier = self._parse_stream_path(stream_path)
     if qualifier in self._output_qualifiers:
       return qualifier
     if qualifier in self._input_qualifiers:
@@ -300,8 +339,9 @@ class BasePipeline:
     self._output_qualifiers.add(qualifier)
     self._stage_tasks.append(
       self._stage_output_stream(
-        stream_path=stream_path,
+        stream_path=str(qualifier),
         schema=schema,
+        description=description,
         use_index=use_index,
         use_warehouse=use_warehouse,
         retention=retention,
@@ -316,6 +356,7 @@ class BasePipeline:
     self,
     stream_path: str,
     schema: str = None,
+    description: str = None,
     use_index: bool = None,
     use_warehouse: bool = None,
     retention: timedelta = None,
@@ -324,11 +365,14 @@ class BasePipeline:
     warehouse_retention: timedelta = None,
   ):
     if not schema:
+      if description:
+        raise ValueError("you cannot set a stream 'description' without setting 'schema'")
       stream = await self.client.find_stream(stream_path)
     else:
       stream = await self.client.stage_stream(
         stream_path=stream_path,
         schema=schema,
+        description=description,
         use_index=use_index,
         use_warehouse=use_warehouse,
         retention=retention,
@@ -337,7 +381,7 @@ class BasePipeline:
         warehouse_retention=warehouse_retention,
       )
     assert stream.qualifier not in self.instances
-    instance = await stream.stage_instance(version=self.version)
+    instance = await stream.stage_instance(version=self.version, dry=self.dry)
     await self._update_service_permissions(stream, write=True)
     self.instances[stream.qualifier] = instance
     logger.info("Staged output stream '%s' (using version %s)", stream_path, self.version)

@@ -44,7 +44,7 @@ class Generate(Transform):
   async def process(self, incoming_records: Iterable[Mapping]):
     assert incoming_records is None
     async for records in self.fn(self.pipeline):
-      if isinstance(records, Mapping):
+      if not isinstance(records, list):
         records = [records]
       elif records == PIPELINE_IDLE:
         if self.pipeline.strategy != Strategy.continuous:
@@ -137,21 +137,32 @@ class Apply(Transform):
 
   async def process(self, incoming_records: Iterable[Mapping]):
     for record in incoming_records:
-      batch = await self.fn(record)
-      if batch is None:
-        continue
-      if isinstance(batch, Mapping):
-        yield batch
+      fut = self.fn(record)
+      if hasattr(fut, "__aiter__"):
+        async for record in fut:
+          yield [record]
       else:
-        for outgoing in batch:
-          yield outgoing
+        batch = await fut
+        if batch is None:
+          continue
+        if isinstance(batch, list):
+          yield batch
+        else:
+          yield [batch]
 
 
 class WriteStream(Transform):
 
-  def __init__(self, pipeline: Pipeline, stream_path: str, schema: str = None, retention: timedelta = None):
+  def __init__(
+    self,
+    pipeline: Pipeline,
+    stream_path: str,
+    schema: str = None,
+    description: str = None,
+    retention: timedelta = None,
+  ):
     super().__init__(pipeline)
-    self.qualifier = self.pipeline._add_output_stream(stream_path, schema, retention=retention)
+    self.qualifier = self.pipeline._add_output_stream(stream_path, schema, description=description, retention=retention)
 
   async def process(self, incoming_records: Iterable[Mapping]):
     instance = self.pipeline.instances[self.qualifier]
@@ -193,8 +204,15 @@ class Pipeline(BasePipeline):
     self._dag[prev_transform].append(transform)
     return transform
 
-  def write_stream(self, prev_transform: Transform, stream_path: str, schema: str = None, retention: timedelta = None):
-    transform = WriteStream(self, stream_path, schema, retention)
+  def write_stream(
+    self,
+    prev_transform: Transform,
+    stream_path: str,
+    schema: str = None,
+    description: str = None,
+    retention: timedelta = None,
+  ):
+    transform = WriteStream(self, stream_path, schema, description=description, retention=retention)
     self._dag[prev_transform].append(transform)
 
   # RUNNING

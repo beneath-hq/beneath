@@ -16,7 +16,7 @@ from fastavro import parse_schema
 from fastavro import schemaless_reader
 from fastavro import schemaless_writer
 
-from beneath.instance import StreamInstance
+from beneath.instance import DryStreamInstance, StreamInstance
 from beneath.proto import gateway_pb2
 from beneath.utils import (
   ms_to_datetime,
@@ -90,7 +90,9 @@ class Stream:
     instances = [StreamInstance(stream=self, admin_data=i) for i in instances]
     return instances
 
-  async def stage_instance(self, version: int, make_primary=None, make_final=None) -> StreamInstance:
+  async def stage_instance(self, version: int, make_primary=None, make_final=None, dry=False) -> StreamInstance:
+    if dry:
+      return DryStreamInstance(self, version=version, primary=make_primary, final=make_final)
     instance = await self.client.admin.streams.stage_instance(
       stream_id=self.admin_data["streamID"],
       version=version,

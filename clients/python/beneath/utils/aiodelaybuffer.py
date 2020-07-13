@@ -31,6 +31,12 @@ class AIODelayBuffer(Generic[BufferValue]):
     self._buffer_size = 0
     self._reset()
 
+  # PROPERTIES
+
+  @property
+  def running(self):
+    return self._started
+
   # OVERRIDES
 
   # pylint: disable=no-self-use

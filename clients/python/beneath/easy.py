@@ -42,7 +42,7 @@ async def easy_read(
 
 
 def easy_generate_stream(generate_fn: AsyncGenerateFn, output_stream_path: str, output_stream_schema: str):
-  p = Pipeline()
+  p = Pipeline(parse_args=True)
   t1 = p.generate(generate_fn)
   p.write_stream(t1, stream_path=output_stream_path, schema=output_stream_schema)
   p.main()
@@ -55,7 +55,7 @@ def easy_derive_stream(
   output_stream_schema: str,
   max_concurrency: int = None,
 ):
-  p = Pipeline()
+  p = Pipeline(parse_args=True)
   t1 = p.read_stream(input_stream_path)
   t2 = p.apply(t1, fn=apply_fn, max_concurrency=max_concurrency)
   p.write_stream(t2, stream_path=output_stream_path, schema=output_stream_schema)
@@ -63,7 +63,7 @@ def easy_derive_stream(
 
 
 def easy_consume_stream(input_stream_path: str, consume_fn: AsyncApplyFn, max_concurrency: int = None):
-  p = Pipeline()
+  p = Pipeline(parse_args=True)
   t1 = p.read_stream(input_stream_path)
   p.apply(t1, fn=consume_fn, max_concurrency=max_concurrency)
   p.main()

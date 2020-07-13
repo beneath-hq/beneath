@@ -120,8 +120,8 @@ async def update_org_quota(args):
   organization = await client.admin.organizations.find_by_name(args.organization)
   result = await client.admin.organizations.update_quota(
     organization_id=organization['organizationID'],
-    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb is not None else None,
-    write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb is not None else None,
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb),
+    write_quota_bytes=mb_to_bytes(args.write_quota_mb),
   )
   pretty_print_graphql_result(result)
 
@@ -158,7 +158,7 @@ async def update_member_quota(args):
   user = await client.admin.organizations.find_by_name(args.username)
   result = await client.admin.organizations.update_user_quota(
     user_id=user['personalUserID'],
-    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb >=0 else None,
+    read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb >= 0 else None,
     write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb >= 0 else None,
   )
   pretty_print_graphql_result(result)

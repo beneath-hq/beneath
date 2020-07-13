@@ -15,38 +15,34 @@ from beneath.writer import DryInstanceWriter, InstanceWriter
 class StreamInstance:
 
   stream: Stream
-  admin_data: dict
   instance_id: uuid.UUID
+  _admin_data: dict
 
   # INITIALIZATION
 
   def __init__(self, stream: Stream, admin_data: dict):
     self.stream = stream
-    self.admin_data = admin_data
     self.instance_id = uuid.UUID(hex=admin_data["streamInstanceID"])
+    self._admin_data = admin_data
 
   # PROPERTIES
 
   @property
-  def created_on(self):
-    return self.admin_data["createdOn"]
-
-  @property
   def is_final(self):
-    return self.admin_data["madeFinalOn"] is not None
+    return self._admin_data["madeFinalOn"] is not None
 
   @property
   def is_primary(self):
-    return self.admin_data["madePrimaryOn"] is not None
+    return self._admin_data["madePrimaryOn"] is not None
 
   @property
   def version(self):
-    return self.admin_data["version"]
+    return self._admin_data["version"]
 
   # CONTROL PLANE
 
   async def update(self, make_primary=None, make_final=None):
-    self.admin_data = await self.stream.client.admin.streams.update_instance(
+    self._admin_data = await self.stream.client.admin.streams.update_instance(
       instance_id=self.instance_id,
       make_primary=make_primary,
       make_final=make_final,
@@ -77,3 +73,61 @@ class StreamInstance:
     if dry:
       return DryInstanceWriter(instance=self, max_delay_ms=write_delay_ms)
     return InstanceWriter(instance=self, max_delay_ms=write_delay_ms)
+
+
+class DryStreamInstance:
+
+  stream: Stream
+  instance_id: uuid.UUID
+
+  _version: int
+  _primary: bool
+  _final: bool
+
+  # INITIALIZATION
+
+  def __init__(self, stream: Stream, version: int, primary: bool, final: bool):
+    self.stream = stream
+    self.instance_id = uuid.UUID(bytes=(b'\x00' * 16))
+    self._version = version
+    self._primary = primary
+    self._final = final
+
+  # PROPERTIES
+
+  @property
+  def is_final(self):
+    return self._final
+
+  @property
+  def is_primary(self):
+    return self._primary
+
+  @property
+  def version(self):
+    return self._version
+
+  # CONTROL PLANE
+
+  async def update(self, make_primary=None, make_final=None):
+    if make_primary:
+      self._primary = True
+    if make_final:
+      self._final = True
+    if make_primary:
+      self.stream.primary_instance = self
+
+  # READING RECORDS
+
+  async def query_log(self, peek: bool = False) -> Cursor:
+    raise Exception("DryStreamInstance doesn't support query_log")
+
+  # pylint: disable=redefined-builtin
+  async def query_index(self, filter: str = None) -> Cursor:
+    raise Exception("DryStreamInstance doesn't support query_index")
+
+  # WRITING RECORDS
+
+  # pylint: disable=unused-argument
+  def writer(self, dry=False, write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS):
+    return DryInstanceWriter(instance=self, max_delay_ms=write_delay_ms)
