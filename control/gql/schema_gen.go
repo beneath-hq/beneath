@@ -141,7 +141,7 @@ type ComplexityRoot struct {
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
 		StageProject                      func(childComplexity int, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) int
 		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) int
-		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
+		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
 		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
@@ -416,7 +416,7 @@ type MutationResolver interface {
 	StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) (*entity.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
-	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error)
+	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error)
 	DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error)
 	StageStreamInstance(ctx context.Context, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error)
 	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error)
@@ -1043,7 +1043,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int)), true
+		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int)), true
 
 	case "Mutation.stageStreamInstance":
 		if e.complexity.Mutation.StageStreamInstance == nil {
@@ -2888,6 +2888,7 @@ extend type Mutation {
     streamName: String!,
     schemaKind: StreamSchemaKind!,
     schema: String!,
+    description: String,
     allowManualWrites: Boolean,
     useLog: Boolean,
     useIndex: Boolean,
@@ -2934,8 +2935,8 @@ type Stream {
   useIndex: Boolean!
   useWarehouse: Boolean!
   logRetentionSeconds: Int!
-	indexRetentionSeconds: Int!
-	warehouseRetentionSeconds: Int!
+  indexRetentionSeconds: Int!
+  warehouseRetentionSeconds: Int!
 
   primaryStreamInstance: StreamInstance
   primaryStreamInstanceID: UUID
@@ -3464,62 +3465,70 @@ func (ec *executionContext) field_Mutation_stageStream_args(ctx context.Context,
 		}
 	}
 	args["schema"] = arg4
-	var arg5 *bool
-	if tmp, ok := rawArgs["allowManualWrites"]; ok {
-		arg5, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	var arg5 *string
+	if tmp, ok := rawArgs["description"]; ok {
+		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["allowManualWrites"] = arg5
+	args["description"] = arg5
 	var arg6 *bool
-	if tmp, ok := rawArgs["useLog"]; ok {
+	if tmp, ok := rawArgs["allowManualWrites"]; ok {
 		arg6, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useLog"] = arg6
+	args["allowManualWrites"] = arg6
 	var arg7 *bool
-	if tmp, ok := rawArgs["useIndex"]; ok {
+	if tmp, ok := rawArgs["useLog"]; ok {
 		arg7, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useIndex"] = arg7
+	args["useLog"] = arg7
 	var arg8 *bool
-	if tmp, ok := rawArgs["useWarehouse"]; ok {
+	if tmp, ok := rawArgs["useIndex"]; ok {
 		arg8, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useWarehouse"] = arg8
-	var arg9 *int
-	if tmp, ok := rawArgs["logRetentionSeconds"]; ok {
-		arg9, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	args["useIndex"] = arg8
+	var arg9 *bool
+	if tmp, ok := rawArgs["useWarehouse"]; ok {
+		arg9, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["logRetentionSeconds"] = arg9
+	args["useWarehouse"] = arg9
 	var arg10 *int
-	if tmp, ok := rawArgs["indexRetentionSeconds"]; ok {
+	if tmp, ok := rawArgs["logRetentionSeconds"]; ok {
 		arg10, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["indexRetentionSeconds"] = arg10
+	args["logRetentionSeconds"] = arg10
 	var arg11 *int
-	if tmp, ok := rawArgs["warehouseRetentionSeconds"]; ok {
+	if tmp, ok := rawArgs["indexRetentionSeconds"]; ok {
 		arg11, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["warehouseRetentionSeconds"] = arg11
+	args["indexRetentionSeconds"] = arg11
+	var arg12 *int
+	if tmp, ok := rawArgs["warehouseRetentionSeconds"]; ok {
+		arg12, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["warehouseRetentionSeconds"] = arg12
 	return args, nil
 }
 
@@ -7028,7 +7037,7 @@ func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int))
+		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

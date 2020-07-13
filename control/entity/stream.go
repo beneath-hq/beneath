@@ -202,7 +202,7 @@ func (s *Stream) GetBigQuerySchema() string {
 }
 
 // Compile compiles the given schema and sets relevant fields
-func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSchema string, update bool) error {
+func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSchema string, description *string, update bool) error {
 	// checck schema kind is gql
 	if schemaKind != StreamSchemaKindGraphQl {
 		return fmt.Errorf("Unsupported stream schema definition language '%s'", schemaKind)
@@ -264,7 +264,11 @@ func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSc
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
 	s.BigQuerySchema = bqSchema
-	s.Description = streamDef.Description
+	if description == nil {
+		s.Description = streamDef.Description
+	} else {
+		s.Description = *description
+	}
 
 	return nil
 }
@@ -324,7 +328,7 @@ func (s *Stream) indexesEqual(def *schema.StreamDef) bool {
 
 // Stage creates or updates the stream so that it adheres to the params (or does nothing if everything already conforms).
 // If s is a new stream object, Name and ProjectID must be set before calling Stage.
-func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) error {
+func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) error {
 	// determine whether to insert or update
 	update := (s.StreamID != uuid.Nil)
 
@@ -334,7 +338,7 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 	// compile if necessary
 	schemaMD5 := md5.Sum([]byte(schema))
 	if schemaKind != s.SchemaKind || !bytes.Equal(schemaMD5[:], s.SchemaMD5) {
-		err := s.Compile(ctx, schemaKind, schema, update)
+		err := s.Compile(ctx, schemaKind, schema, description, update)
 		if err != nil {
 			return err
 		}

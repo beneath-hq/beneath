@@ -11,6 +11,7 @@ extend type Mutation {
     streamName: String!,
     schemaKind: StreamSchemaKind!,
     schema: String!,
+    description: String,
     allowManualWrites: Boolean,
     useLog: Boolean,
     useIndex: Boolean,
