@@ -38,7 +38,7 @@ def str2bool(v) -> bool:
 def mb_to_bytes(v):
   if v is None:
     return None
-  return v * 1000000
+  return int(v) * 1000000
 
 
 def parse_names(name, explicit_group, group_type):
