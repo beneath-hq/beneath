@@ -25,6 +25,8 @@ spec:
         env:
         - name: WEB3_PROVIDER_URL
           value: https://cloudflare-eth.com
+        - name: BENEATH_PIPELINE_SERVICE_PATH
+          value: "beneath/ethereum/load-blocks"
         - name: BENEATH_SECRET
           valueFrom:
             secretKeyRef:

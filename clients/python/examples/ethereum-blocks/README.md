@@ -35,10 +35,8 @@ Important: There must ever only be one replica of the script running at a time. 
 
 The secret used to connect to Beneath was issued with:
 
-    beneath service create beneath/ethereum-blocks --read-quota-mb 100 --write-quota-mb 2000
-    beneath service update-permissions beneath/ethereum-blocks beneath/ethereum/blocks-stable --read --write 
-    beneath service update-permissions beneath/ethereum-blocks beneath/ethereum/blocks-unstable --read --write 
-    beneath service issue-secret beneath/ethereum-blocks --description kubernetes
+    python ./fetch-blocks.py stage beneath/ethereum/fetch-blocks --read-quota-mb 10000 --write-quota-mb 10000
+    beneath service issue-secret beneath/ethereum/fetch-blocks --description kubernetes
 
 And applied to Kubernetes with:
 

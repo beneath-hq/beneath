@@ -1,84 +1,97 @@
-import beneath
-import os
-import pytz
 import asyncio
 from datetime import datetime
 from decimal import Decimal
+import os
+
 from hexbytes import HexBytes
-from structlog import get_logger
-from tenacity import before_sleep_log, retry, stop_after_attempt, wait_fixed, wait_random
+import pytz
+from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 from web3 import Web3
 from web3.exceptions import BlockNotFound
 
-STABLE_STREAM = "beneath/ethereum/blocks-stable"
-UNSTABLE_STREAM = "beneath/ethereum/blocks-unstable"
-WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL", default=None)
+import beneath
 
-LATEST_COUNT = 25
+LATEST_COUNT = 24
 STABLE_AFTER = 12
 POLL_SECONDS = 1
 
-log = get_logger()
+WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL", default=None)
 w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER_URL))
 
-async def main():
-  client = beneath.Client()
+SCHEMA = """
+  type Block
+    @stream
+    @key(fields: ["number"])
+  {
+    " Block number "
+    number: Int!
 
-  stable = await client.find_stream(STABLE_STREAM)
-  unstable = await client.find_stream(UNSTABLE_STREAM)
+    " Block timestamp "
+    timestamp: Timestamp!
 
-  query = await stable.query_log(peek=True)
-  latest = await query.read_next(limit=LATEST_COUNT)
-  latest = sorted(latest, key=lambda block: block["number"])
-  if not validate_latest(latest):
-    raise Exception("Inconsistent latest blocks from stable")
-  stable_idx = len(latest) - 1
+    " Block hash "
+    hash: Bytes32!
 
-  while True:
-    # get next block
-    latest_number = -1 if len(latest) == 0 else latest[-1]["number"]
-    next_number = latest_number + 1
-    next_block = get_block(next_number)
-    if not next_block:
-      await asyncio.sleep(POLL_SECONDS)
-      continue
+    " Hash of parent block "
+    parent_hash: Bytes32!
 
-    # reprocess previous block if parent hash doesn't match
-    if (len(latest) > 0) and (next_block["parent_hash"] != latest[-1]["hash"]):
-      latest.pop()
-      log.info("fork", discard_number=latest_number)
-      if stable_idx >= len(latest):
-        stable_idx = len(latest) - 1
-        log.info("fork_before_stable", next_block=next_block, latest=latest)
-      continue
+    " Address of block miner "
+    miner: Bytes20!
 
-    # move latest forward (and keep latest trimmed)
-    latest.append(next_block)
-    if len(latest) >= LATEST_COUNT:
-      latest = latest[1:]
-      stable_idx -= 1
+    " Size of block in bytes "
+    size: Int!
 
-    # write unstable
-    await unstable.write([next_block], immediate=True)
-    log.info("write_unstable", number=next_block["number"], hash=next_block["hash"].hex())
+    " Number of transactions in block "
+    transactions: Int!
 
-    # write stable if necessary
-    if (len(latest) - STABLE_AFTER) > stable_idx:
-      stable_idx += 1
-      stable_block = latest[stable_idx]
-      await stable.write([stable_block], immediate=True)
-      log.info("write_stable", number=stable_block["number"], hash=stable_block["hash"].hex())
+    " Block difficulty "
+    difficulty: Numeric!
 
+    " Total difficulty of the chain until this block "
+    total_difficulty: Numeric!
 
-def validate_latest(blocks):
-  for b1, b2 in zip(blocks, blocks[1:]):
-    if b2["parent_hash"] != b1["hash"]:
-      return False
-  return True
+    " Limit on the amount of gas that can be consumed in a single block at the time of this block "
+    gas_limit: Int!
+
+    " Total amount of gas consumed by transactions in this block "
+    gas_used: Int!
+
+    " Extra data embedded in the block by its miner "
+    extra_data: Bytes!
+
+    " Extra data parsed as a UTF-8 encoded string, if possible "
+    extra_data_text: String
+
+    " Proof-of-work for this block "
+    nonce: Bytes!
+
+    " Root value of the receipts trie at this block "
+    receipts_root: Bytes32!
+
+    " Root value of the state trie at this block "
+    state_root: Bytes32!
+
+    " Root value of the transactions trie at this block "
+    transactions_root: Bytes32!
+
+    " Bloom filter of logs emitted in this block "
+    logs_bloom: Bytes256!
+
+    " SHA3 hash of the uncles in the block "
+    sha3_uncles: Bytes32!  
+  }
+"""
 
 
 def log_retry(retry_state):
-  log.info("get_block_retry", attempt=retry_state.attempt_number, outcome=retry_state.outcome)
+  beneath.logger.info("get_block_retry attempt=%d outcome=%s", retry_state.attempt_number, retry_state.outcome)
+
+
+def safe_to_utf8(val):
+  try:
+    return val.decode('utf-8')
+  except UnicodeDecodeError:
+    return None
 
 
 @retry(
@@ -117,14 +130,101 @@ def get_block(num):
   }
 
 
-def safe_to_utf8(val):
-  try:
-    return val.decode('utf-8')
-  except:
-    return None
+async def generate_blocks(p: beneath.Pipeline):  # pylint: disable=redefined-outer-name
+  state = await p.get_state("state", default={
+    "next_stable": 0,
+    "next_unstable": 0,
+    "latest_hashes": [],
+  })
+
+  cached_blocks = []
+
+  while True:
+    # get next block
+    unstable_block = get_block(state["next_unstable"])
+    if not unstable_block:
+      await asyncio.sleep(POLL_SECONDS)
+      continue
+
+    # reprocess previous block if parent hash doesn't match
+    if (len(state["latest_hashes"]) > 0) and (unstable_block["parent_hash"] != state["latest_hashes"][-1]):
+      state["latest_hashes"].pop()
+      p.logger.info("fork next_number=%d", state["next_unstable"])
+      state["next_unstable"] -= 1
+      if len(cached_blocks) > 0:
+        cached_blocks.pop()
+      if state["next_unstable"] < state["next_stable"]:
+        state["next_stable"] = state["next_unstable"]
+        p.logger.info("fork_before_stable next_number=%d", state["next_unstable"])
+      continue
+
+    # process unstable_block
+    yield ("unstable", unstable_block)
+    p.logger.info("write_unstable number=%d hash=%s", unstable_block["number"], unstable_block["hash"].hex())
+    state["next_unstable"] += 1
+    cached_blocks.append(unstable_block)
+
+    # track in latest hashes (and keep it trimmed)
+    state["latest_hashes"].append(unstable_block["hash"])
+    if len(state["latest_hashes"]) >= LATEST_COUNT:
+      state["latest_hashes"] = state["latest_hashes"][1:]
+
+    # get and write stable if necessary
+    while (state["next_stable"] + STABLE_AFTER) < state["next_unstable"]:
+      # get stable block from cached_blocks or using get_block
+      stable_block = None
+      if (len(cached_blocks) > 0) and cached_blocks[0]["number"] == state["next_stable"]:
+        stable_block = cached_blocks[0]
+        cached_blocks = cached_blocks[1:]
+        p.logger.info("get_stable_cache_hit number=%d", state["next_stable"])
+      else:
+        p.logger.info("get_stable_cache_miss number=%d", state["next_stable"])
+        stable_block = get_block(state["next_stable"])
+        if stable_block is None:
+          raise Exception("get_block should not return a null value for a stable block")
+
+      # write stable block
+      yield ("stable", stable_block)
+      p.logger.info("write_stable number=%d hash=%s", stable_block["number"], stable_block["hash"].hex())
+      state["next_stable"] += 1
+
+    # write updated state
+    await p.set_state("state", state)
+
+
+async def filter_stable(record):
+  (key, block) = record
+  if key == "stable":
+    return block
+
+
+async def filter_unstable(record):
+  (key, block) = record
+  if key == "unstable":
+    return block
 
 
 if __name__ == "__main__":
-  loop = asyncio.new_event_loop()
-  asyncio.set_event_loop(loop)
-  loop.run_until_complete(main())
+  p = beneath.Pipeline(parse_args=True)
+  blocks = p.generate(generate_blocks)
+  stable = p.apply(blocks, filter_stable)
+  unstable = p.apply(blocks, filter_unstable)
+  p.write_stream(
+    unstable,
+    "blocks-unstable",
+    schema=SCHEMA,
+    description=(
+      "Blocks loaded from the Ethereum mainnet. "
+      "Blocks are loaded without delay, so forks will frequently occur in this stream."
+    )
+  )
+  p.write_stream(
+    stable,
+    "blocks-stable",
+    schema=SCHEMA,
+    description=(
+      "Blocks loaded from the Ethereum mainnet. "
+      "Blocks are loaded with a 12-block delay to minimize the chance of forks."
+    )
+  )
+  p.main()
