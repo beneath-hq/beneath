@@ -39,6 +39,11 @@ class GatewayStub(object):
         request_serializer=beneath_dot_proto_dot_gateway__pb2.QueryWarehouseRequest.SerializeToString,
         response_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryWarehouseResponse.FromString,
         )
+    self.PollWarehouseJob = channel.unary_unary(
+        '/gateway.v1.Gateway/PollWarehouseJob',
+        request_serializer=beneath_dot_proto_dot_gateway__pb2.PollWarehouseJobRequest.SerializeToString,
+        response_deserializer=beneath_dot_proto_dot_gateway__pb2.PollWarehouseJobResponse.FromString,
+        )
     self.Read = channel.unary_unary(
         '/gateway.v1.Gateway/Read',
         request_serializer=beneath_dot_proto_dot_gateway__pb2.ReadRequest.SerializeToString,
@@ -90,6 +95,13 @@ class GatewayServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def PollWarehouseJob(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
   def Read(self, request, context):
     # missing associated documentation comment in .proto file
     pass
@@ -131,6 +143,11 @@ def add_GatewayServicer_to_server(servicer, server):
           servicer.QueryWarehouse,
           request_deserializer=beneath_dot_proto_dot_gateway__pb2.QueryWarehouseRequest.FromString,
           response_serializer=beneath_dot_proto_dot_gateway__pb2.QueryWarehouseResponse.SerializeToString,
+      ),
+      'PollWarehouseJob': grpc.unary_unary_rpc_method_handler(
+          servicer.PollWarehouseJob,
+          request_deserializer=beneath_dot_proto_dot_gateway__pb2.PollWarehouseJobRequest.FromString,
+          response_serializer=beneath_dot_proto_dot_gateway__pb2.PollWarehouseJobResponse.SerializeToString,
       ),
       'Read': grpc.unary_unary_rpc_method_handler(
           servicer.Read,

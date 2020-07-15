@@ -12,12 +12,17 @@ message InstanceRecords {
   repeated Record records = 2;
 }
 
+message WarehouseJob {
+  bytes job_id = 1;
+}
+
 service Gateway {
   rpc Ping(PingRequest) returns (PingResponse) {}
   rpc Write(WriteRequest) returns (WriteResponse) {}
   rpc QueryLog(QueryLogRequest) returns (QueryLogResponse) {}
   rpc QueryIndex(QueryIndexRequest) returns (QueryIndexResponse) {}
   rpc QueryWarehouse(QueryWarehouseRequest) returns (QueryWarehouseResponse) {}
+  rpc PollWarehouseJob(PollWarehouseJobRequest) returns (PollWarehouseJobResponse) {}
   rpc Read(ReadRequest) returns (ReadResponse) {}
   rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
 }
@@ -69,11 +74,18 @@ message QueryWarehouseRequest {
 }
 
 message QueryWarehouseResponse {
-  repeated bytes replay_cursors = 1;
+  WarehouseJob job = 1;
+}
+
+message PollWarehouseJobRequest {
+  bytes job_id = 1;
+}
+
+message PollWarehouseJobResponse {
+  WarehouseJob job = 1;
 }
 
 message ReadRequest {
-  bytes instance_id = 1;
   bytes cursor = 2;
   int32 limit  = 3;
 }
@@ -84,12 +96,9 @@ message ReadResponse {
 }
 
 message SubscribeRequest {
-  bytes instance_id = 1;
   bytes cursor = 2;
 }
 
 message SubscribeResponse {
-  // repeated Record records = 1;
-  // bytes from_cursor = 2;
-  // bytes next_cursor = 3;
+  bytes write_id = 1;
 }

@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -10,6 +9,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/gateway"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/gateway/subscriptions"
+	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 
@@ -20,11 +20,19 @@ func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_Subscribe
 		return grpc.Errorf(codes.PermissionDenied, "not authenticated")
 	}
 
-	// read instanceID
-	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	if instanceID == uuid.Nil {
-		return status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+	// parse cursor
+	cursor, err := util.CursorFromBytes(req.Cursor)
+	if err != nil {
+		return grpc.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
+
+	// ensure log cursor
+	if cursor.GetType() != util.LogCursorType {
+		return grpc.Errorf(codes.InvalidArgument, "cannot subscribe to non-log cursor")
+	}
+
+	// read instanceID
+	instanceID := cursor.GetID()
 
 	// get cached stream
 	stream := entity.FindCachedStreamByCurrentInstanceID(ss.Context(), instanceID)
@@ -40,7 +48,7 @@ func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_Subscribe
 
 	// get subscription channel
 	ch := make(chan subscriptions.Message)
-	cancel, err := gateway.Subscriptions.Subscribe(instanceID, req.Cursor, func(msg subscriptions.Message) {
+	cancel, err := gateway.Subscriptions.Subscribe(instanceID, cursor.GetPayload(), func(msg subscriptions.Message) {
 		ch <- msg
 	})
 	if err != nil {

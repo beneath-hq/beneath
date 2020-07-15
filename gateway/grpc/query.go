@@ -3,8 +3,6 @@ package grpc
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/gateway/util"
-
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,10 +10,10 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb.QueryLogResponse, error) {
@@ -66,8 +64,8 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 
 		// done
 		return &pb.QueryLogResponse{
-			ReplayCursors: [][]byte{replayCursor},
-			ChangeCursors: [][]byte{changeCursor},
+			ReplayCursors: [][]byte{wrapCursor(util.LogCursorType, instanceID, replayCursor)},
+			ChangeCursors: [][]byte{wrapCursor(util.LogCursorType, instanceID, changeCursor)},
 		}, nil
 	}
 
@@ -79,8 +77,8 @@ func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb
 
 	// done
 	return &pb.QueryLogResponse{
-		ReplayCursors: replayCursors,
-		ChangeCursors: changeCursors,
+		ReplayCursors: wrapCursors(util.LogCursorType, instanceID, replayCursors),
+		ChangeCursors: wrapCursors(util.LogCursorType, instanceID, changeCursors),
 	}, nil
 }
 
@@ -131,8 +129,8 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 
 	// done
 	return &pb.QueryIndexResponse{
-		ReplayCursors: replayCursors,
-		ChangeCursors: changeCursors,
+		ReplayCursors: wrapCursors(util.IndexCursorType, instanceID, replayCursors),
+		ChangeCursors: wrapCursors(util.LogCursorType, instanceID, changeCursors),
 	}, nil
 }
 
@@ -140,84 +138,21 @@ func (s *gRPCServer) QueryWarehouse(ctx context.Context, req *pb.QueryWarehouseR
 	return nil, grpc.Errorf(codes.Unimplemented, "QueryWarehouse is not yet implemented")
 }
 
-func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadResponse, error) {
-	// get auth
-	secret := middleware.GetSecret(ctx)
-	if secret == nil {
-		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+func (s *gRPCServer) PollWarehouseJob(ctx context.Context, req *pb.PollWarehouseJobRequest) (*pb.PollWarehouseJobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "PollWarehouseJob is not yet implemented")
+}
+
+func wrapCursor(cursorType util.CursorType, id uuid.UUID, engineCursor []byte) []byte {
+	if len(engineCursor) == 0 {
+		return engineCursor
 	}
+	return util.NewCursor(cursorType, id, engineCursor).GetBytes()
+}
 
-	// read instanceID
-	instanceID := uuid.FromBytesOrNil(req.InstanceId)
-	if instanceID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "instance_id not valid UUID")
+func wrapCursors(cursorType util.CursorType, id uuid.UUID, engineCursors [][]byte) [][]byte {
+	wrapped := make([][]byte, len(engineCursors))
+	for idx, engineCursor := range engineCursors {
+		wrapped[idx] = wrapCursor(cursorType, id, engineCursor)
 	}
-
-	// set payload
-	payload := readTags{
-		InstanceID: instanceID,
-		Cursor:     req.Cursor,
-		Limit:      req.Limit,
-	}
-	middleware.SetTagsPayload(ctx, payload)
-
-	// get cached stream
-	stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
-	if stream == nil {
-		return nil, status.Error(codes.NotFound, "stream not found")
-	}
-
-	// check permissions
-	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
-	if !perms.Read {
-		return nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read this stream")
-	}
-
-	// check limit
-	if req.Limit == 0 {
-		req.Limit = defaultReadLimit
-	} else if req.Limit > maxReadLimit {
-		return nil, grpc.Errorf(codes.InvalidArgument, "limit exceeds maximum (%d)", maxReadLimit)
-	}
-
-	// check quota
-	err := util.CheckReadQuota(ctx, secret)
-	if err != nil {
-		return nil, status.Error(codes.ResourceExhausted, err.Error())
-	}
-
-	// get result iterator
-	it, err := hub.Engine.Lookup.ReadCursor(ctx, stream, stream, entity.EfficientStreamInstance(instanceID), req.Cursor, int(req.Limit))
-	if err != nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "%s", err.Error())
-	}
-
-	// make response
-	response := &pb.ReadResponse{}
-	bytesRead := 0
-
-	for it.Next() {
-		record := it.Record()
-
-		recordProto := &pb.Record{
-			AvroData:  record.GetAvro(),
-			Timestamp: timeutil.UnixMilli(record.GetTimestamp()),
-		}
-
-		bytesRead += len(recordProto.AvroData)
-		response.Records = append(response.Records, recordProto)
-	}
-
-	// set next cursor
-	response.NextCursor = it.NextCursor()
-
-	// track read metrics
-	util.TrackRead(ctx, secret, stream.StreamID, instanceID, int64(len(response.Records)), int64(bytesRead))
-
-	// update log message
-	payload.BytesRead = bytesRead
-	middleware.SetTagsPayload(ctx, payload)
-
-	// done
-	return response, nil
+	return wrapped
 }

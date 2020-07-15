@@ -130,3 +130,8 @@ func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driv
 
 	return nil
 }
+
+// ReadWarehouseCursor implements beneath.WarehouseService
+func (b BigQuery) ReadWarehouseCursor(ctx context.Context, cursor []byte, limit int) (driver.RecordsIterator, error) {
+	panic("not implemented")
+}

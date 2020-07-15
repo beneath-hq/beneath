@@ -103,7 +103,6 @@ class Cursor:
     if not self.replay_cursor:
       return None
     resp = await self.instance.stream.client.connection.read(
-      instance_id=self.instance.instance_id,
       cursor=self.replay_cursor,
       limit=limit,
     )
@@ -114,7 +113,6 @@ class Cursor:
     if not self.changes_cursor:
       return None
     resp = await self.instance.stream.client.connection.read(
-      instance_id=self.instance.instance_id,
       cursor=self.changes_cursor,
       limit=limit,
     )
@@ -182,7 +180,6 @@ class Cursor:
 
     async def _subscribe():
       subscription = await self.instance.stream.client.connection.subscribe(
-        instance_id=self.instance.instance_id,
         cursor=self.changes_cursor,
       )
       async for _ in subscription:

@@ -167,20 +167,19 @@ class Connection:
       metadata=self.request_metadata,
     )
 
-  async def read(self, instance_id: uuid.UUID, cursor: bytes, limit: int) -> gateway_pb2.ReadResponse:
+  async def read(self, cursor: bytes, limit: int) -> gateway_pb2.ReadResponse:
     await self.ensure_connected()
     return await self.stub.Read(
       gateway_pb2.ReadRequest(
-        instance_id=instance_id.bytes,
         cursor=cursor,
         limit=limit,
       ),
       metadata=self.request_metadata,
     )
 
-  async def subscribe(self, instance_id: uuid.UUID, cursor: bytes) -> AsyncIterator[gateway_pb2.SubscribeResponse]:
+  async def subscribe(self, cursor: bytes) -> AsyncIterator[gateway_pb2.SubscribeResponse]:
     await self.ensure_connected()
     return self.stub.Subscribe(
-      gateway_pb2.SubscribeRequest(instance_id=instance_id.bytes, cursor=cursor),
+      gateway_pb2.SubscribeRequest(cursor=cursor),
       metadata=self.request_metadata,
     )

@@ -16,8 +16,12 @@ const (
 
 // TrackRead is a helper to track read usage for a secret from an instance
 func TrackRead(ctx context.Context, secret entity.Secret, streamID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
-	gateway.Metrics.TrackRead(streamID, nrecords, nbytes)
-	gateway.Metrics.TrackRead(instanceID, nrecords, nbytes)
+	if streamID != uuid.Nil {
+		gateway.Metrics.TrackRead(streamID, nrecords, nbytes)
+	}
+	if instanceID != uuid.Nil {
+		gateway.Metrics.TrackRead(instanceID, nrecords, nbytes)
+	}
 	if !secret.IsAnonymous() {
 		if nbytes < minimumBytesBilled {
 			nbytes = minimumBytesBilled

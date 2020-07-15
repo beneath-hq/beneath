@@ -109,6 +109,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 
 	// create cursor if not provided
 	// TODO: clean up this mess once we've refactored the engine interfaces
+	// TODO: use util.NewCursor and util.CursorFromBytes wrappers (to make cursors congruent to grpc gateway)
 	if body.CursorBytes == nil {
 		if body.Type == queryBodyTypeIndex {
 			// make filter

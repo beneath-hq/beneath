@@ -100,6 +100,9 @@ type WarehouseService interface {
 
 	// WriteToWarehouse should insert the records in r for querying on the given instance
 	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
+
+	// ReadWarehouseCursor returns records for the cursor
+	ReadWarehouseCursor(ctx context.Context, cursor []byte, limit int) (RecordsIterator, error)
 }
 
 // Project encapsulates metadata about a Beneath project

@@ -78,8 +78,9 @@ type queryIndexTags struct {
 }
 
 type readTags struct {
-	InstanceID uuid.UUID `json:"instance,omitempty"`
-	Cursor     []byte    `json:"cursor,omitempty"`
-	Limit      int32     `json:"limit,omitempty"`
-	BytesRead  int       `json:"bytes,omitempty"`
+	InstanceID *uuid.UUID `json:"instance,omitempty"`
+	JobID      *uuid.UUID `json:"job,omitempty"`
+	Cursor     []byte     `json:"cursor,omitempty"`
+	Limit      int32      `json:"limit,omitempty"`
+	BytesRead  int        `json:"bytes,omitempty"`
 }
