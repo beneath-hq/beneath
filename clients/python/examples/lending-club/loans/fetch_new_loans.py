@@ -1,24 +1,19 @@
-import beneath
-import requests
 import os
-import asyncio
+import requests
+import beneath
 from datetime import datetime
-from structlog import get_logger
 
 # config
-STREAM = "epg/lending-club/loans"
 LENDING_CLUB_API_KEY = os.getenv("LENDING_CLUB_API_KEY", default=None)
+STREAM = "epg/lending-club/loans"
+SCHEMA = open("loans.graphql", "r").read()
 
-log = get_logger()
-
-async def main():
-  # connect to Beneath
-  client = beneath.Client()
-  stream = await client.find_stream(STREAM)
-
+async def generate_loans(p: beneath.Pipeline):
+  latest_id = await p.get_state("latest_id", default=0)
+ 
   # call Lending Club
   headers = {"Authorization": LENDING_CLUB_API_KEY}
-  params = {"showAll": "false"}
+  params = {"showAll": "true"}
   req = requests.get("https://api.lendingclub.com/api/investor/v1/loans/listing", headers=headers, params=params)
   json = req.json()
 
@@ -44,11 +39,25 @@ async def main():
     } for loan in json["loans"]
   ]
 
-  # write to Beneath
-  await stream.write(loans, immediate=True)
-  log.info("write_loans", num_loans=len(loans))
+  # filter for loans I haven't seen
+  new_loans = []
+  max_id = latest_id
+  for loan in loans:
+    if loan['id'] > latest_id:
+      new_loans.append(loan)
+      max_id = loan['id']
+
+  # emit loans and update state
+  yield new_loans
+  p.logger.info("write loans n=%d", len(new_loans))
+  await p.set_state("latest_id", max_id)
 
 if __name__ == "__main__":
-  loop = asyncio.new_event_loop()
-  asyncio.set_event_loop(loop)
-  loop.run_until_complete(main())
+  p = beneath.Pipeline(parse_args=True)
+  loans = p.generate(generate_loans)
+  p.write_stream(
+    loans,
+    "loans",
+    schema=SCHEMA
+  )
+  p.main() 
