@@ -260,6 +260,10 @@ class BasePipeline:
 
   # STAGING
 
+  @property
+  def is_stage(self):
+    return (self.action == Action.stage) or (self.action == Action.teardown)
+
   async def _stage(self):
     logger.info("Staging service '%s'", self.service_qualifier)
     await self._stage_service()
@@ -267,14 +271,21 @@ class BasePipeline:
     logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
 
   async def _stage_service(self):
-    admin_data = await self.client.admin.services.stage(
-      organization_name=self.service_qualifier.organization,
-      project_name=self.service_qualifier.project,
-      service_name=self.service_qualifier.service,
-      description=self.description,
-      read_quota_bytes=self.service_read_quota,
-      write_quota_bytes=self.service_write_quota,
-    )
+    if self.is_stage:
+      admin_data = await self.client.admin.services.stage(
+        organization_name=self.service_qualifier.organization,
+        project_name=self.service_qualifier.project,
+        service_name=self.service_qualifier.service,
+        description=self.description,
+        read_quota_bytes=self.service_read_quota,
+        write_quota_bytes=self.service_write_quota,
+      )
+    else:
+      admin_data = await self.client.admin.services.find_by_organization_project_and_name(
+        organization_name=self.service_qualifier.organization,
+        project_name=self.service_qualifier.project,
+        service_name=self.service_qualifier.service,
+      )
     self.service_id = uuid.UUID(hex=admin_data["serviceID"])
 
   async def _stage_service_state(self):
@@ -284,13 +295,16 @@ class BasePipeline:
       project=self.service_qualifier.project,
       stream=stream_name,
     )
-    stream = await self.client.stage_stream(
-      stream_path=str(qualifier),
-      schema=SERVICE_STATE_SCHEMA,
-      log_retention=SERVICE_STATE_LOG_RETENTION,
-      use_warehouse=False,
-    )
-    await self._update_service_permissions(stream, read=True, write=True)
+    if self.is_stage:
+      stream = await self.client.stage_stream(
+        stream_path=str(qualifier),
+        schema=SERVICE_STATE_SCHEMA,
+        log_retention=SERVICE_STATE_LOG_RETENTION,
+        use_warehouse=False,
+      )
+      await self._update_service_permissions(stream, read=True, write=True)
+    else:
+      stream = await self.client.find_stream(stream_path=str(qualifier))
     instance = await stream.stage_instance(version=self.version, dry=self.dry)
     self.state_instance = instance
     logger.info("Staged stream for pipeline state '%s' (using version %i)", qualifier, self.version)
@@ -369,20 +383,24 @@ class BasePipeline:
         raise ValueError("you cannot set a stream 'description' without setting 'schema'")
       stream = await self.client.find_stream(stream_path)
     else:
-      stream = await self.client.stage_stream(
-        stream_path=stream_path,
-        schema=schema,
-        description=description,
-        use_index=use_index,
-        use_warehouse=use_warehouse,
-        retention=retention,
-        log_retention=log_retention,
-        index_retention=index_retention,
-        warehouse_retention=warehouse_retention,
-      )
+      if self.is_stage:
+        stream = await self.client.stage_stream(
+          stream_path=stream_path,
+          schema=schema,
+          description=description,
+          use_index=use_index,
+          use_warehouse=use_warehouse,
+          retention=retention,
+          log_retention=log_retention,
+          index_retention=index_retention,
+          warehouse_retention=warehouse_retention,
+        )
+      else:
+        stream = await self.client.find_stream(stream_path=stream_path)
     assert stream.qualifier not in self.instances
     instance = await stream.stage_instance(version=self.version, dry=self.dry)
-    await self._update_service_permissions(stream, write=True)
+    if self.is_stage:
+      await self._update_service_permissions(stream, write=True)
     self.instances[stream.qualifier] = instance
     logger.info("Staged output stream '%s' (using version %s)", stream_path, self.version)
 

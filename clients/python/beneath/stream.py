@@ -75,7 +75,7 @@ class Stream:
     self.admin_data = admin_data
     self.stream_id = uuid.UUID(hex=self.admin_data["streamID"])
     self.avro_schema_parsed = parse_schema(json.loads(self.admin_data["avroSchema"]))
-    if "primaryStreamInstance" in self.admin_data:
+    if self.admin_data["primaryStreamInstance"] is not None:
       self.primary_instance = StreamInstance(stream=self, admin_data=self.admin_data["primaryStreamInstance"])
 
   # MANAGEMENT
