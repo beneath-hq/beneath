@@ -45,8 +45,8 @@ func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, 
 
 	secret := middleware.GetSecret(ctx)
 	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public)
-	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s/%s", organizationName, projectName, streamName)
+	if !perms.Read && !perms.Write {
+		return nil, gqlerror.Errorf("Not allowed to find stream %s/%s/%s", organizationName, projectName, streamName)
 	}
 
 	return stream, nil

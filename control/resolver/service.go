@@ -32,9 +32,12 @@ func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context,
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := secret.ProjectPermissions(ctx, service.ProjectID, service.Project.Public)
-	if !perms.View {
-		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
+	selfFind := secret.IsService() && secret.GetOwnerID() == service.ServiceID
+	if !selfFind {
+		perms := secret.ProjectPermissions(ctx, service.ProjectID, service.Project.Public)
+		if !perms.View {
+			return nil, gqlerror.Errorf("You are not allowed to view organization resources")
+		}
 	}
 
 	return service, nil
