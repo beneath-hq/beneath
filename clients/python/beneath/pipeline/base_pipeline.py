@@ -329,7 +329,8 @@ class BasePipeline:
     if not instance:
       raise ValueError(f"Input stream {stream_path} doesn't have a primary instance")
     assert stream.qualifier not in self.instances
-    await self._update_service_permissions(stream, read=True)
+    if self.is_stage:
+      await self._update_service_permissions(stream, read=True)
     self.instances[stream.qualifier] = stream.primary_instance
     logger.info("Staged input stream '%s' (using version %i)", stream_path, stream.primary_instance.version)
 
