@@ -1,6 +1,6 @@
 # `web/`
 
-This directory contains the Beneath frontend (terminal) code. As always, refer to `docs/contributing/02-project-structure.md` for an introduction to the repository.
+This directory contains the Beneath frontend (console) code. As always, refer to `docs/contributing/02-project-structure.md` for an introduction to the repository.
 
 ## Stack
 
@@ -37,6 +37,6 @@ Regenerate types for Apollo queries (only covers queries in `web/apollo/queries/
 
 ## Using the `beneath` and `beneath-react` JS client libraries
 
-The stream data exploration page uses the JS and React clients (see `clients/js` and `clients/js-react` under the repository root) to fetch data. It does *not* locally link to these, but instead uses the versions stored on NPM. It's significantly simpler and less brittle to do it this way, but it does mean that changes made in the clients aren't immediately reflected when developing the terminal.
+The stream data exploration page uses the JS and React clients (see `clients/js` and `clients/js-react` under the repository root) to fetch data. It does *not* locally link to these, but instead uses the versions stored on NPM. It's significantly simpler and less brittle to do it this way, but it does mean that changes made in the clients aren't immediately reflected when developing the console.
 
 If you need to edit the two simultaneously, you have to short-circuit the imports (and remember to run `tsc` first in the client libraries). Before committing, you should revert the short-circuiting code, publish the client libraries as new versions to NPM, and update the dependent versions in `web/package.json`.

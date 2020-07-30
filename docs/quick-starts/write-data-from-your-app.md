@@ -21,8 +21,8 @@ Install the latest version of the Python SDK from your command line:
 pip3 install --upgrade beneath
 ```
 
-## Log in to the Beneath Terminal
-Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
+## Log in to the Beneath Console
+Go to the [Console](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
 
 ## Create a Command-Line secret
 
@@ -101,8 +101,8 @@ The write function accepts a list of data records. Here, we write a list of size
 await stream.write(records)
 ```
 
-## Check out the Beneath Terminal to see data arrive in realtime 
-Navigate to your stream in the Terminal and go to the Explore tab to see your data arrive in realtime. The url will look like: https://beneath.dev/USERNAME/PROJECT_NAME/STREAM_NAME
+## Check out the Beneath Console to see data arrive in realtime 
+Navigate to your stream in the Console and go to the Explore tab to see your data arrive in realtime. The url will look like: https://beneath.dev/USERNAME/PROJECT_NAME/STREAM_NAME
 
 ## If you'd like to clean up, you can delete the resources you created
 To delete a stream:

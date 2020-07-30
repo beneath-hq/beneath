@@ -43,6 +43,7 @@ var (
 	organizationNameBlacklist = []string{
 		"auth",
 		"billing",
+		"console",
 		"docs",
 		"documentation",
 		"explore",

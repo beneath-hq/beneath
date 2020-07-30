@@ -20,7 +20,7 @@ weight: 300
 - A [user]({{< relref "#users" >}}) can be granted access to an [organization]({{< relref "#organizations" >}}).
 - A [user]({{< relref "#users" >}}) can be granted access to a [project]({{< relref "#projects" >}}).
 
-**Terminal:** Go to `https://beneath.dev/USERNAME`
+**Console:** Go to `https://beneath.dev/USERNAME`
 
 **CLI:** (Not available)
 
@@ -39,7 +39,7 @@ weight: 300
   - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and manipulate projects and services in the organization.
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add and delete members, monitor members' usage, and to change billing information.
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION`
+**Console:** Go to `https://beneath.dev/ORGANIZATION`
 
 **CLI:** Run `beneath organization --help` for details.
 
@@ -57,7 +57,7 @@ weight: 300
   - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and delete [streams]({{< relref "#streams" >}}) in the project, including writing data directly to (non-derived) [streams]({{< relref "#streams" >}}).
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add, remove and change permissions for other [users]({{< relref "#users" >}}).
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT`
+**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT`
 
 **CLI:** Run `beneath project --help` for details.
 
@@ -77,7 +77,7 @@ weight: 300
   - The `read` permission grants the [service]({{< relref "#services" >}}) permission to read and query records.
   - The `write` permission grants the [service]({{< relref "#services" >}}) permission to write records.
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM`
+**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM`
 
 **CLI:** Run `beneath stream --help` for details.
 
@@ -90,7 +90,7 @@ weight: 300
 
 **Access management:** A [stream instance]({{< relref "#stream-instances" >}}) inherits the permissions of its parent [stream]({{< relref "#streams" >}}).
 
-**Terminal:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
+**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/STREAM` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
 
 **CLI:** Run `beneath stream instance --help` for details.
 
@@ -112,7 +112,7 @@ A [service]({{< relref "#services" >}}) has the following properties:
 **Access management:**
 - A [service]({{< relref "#services" >}}) can be granted access to a [stream]({{< relref "#streams" >}}).
 
-**Terminal:** Go to `https://beneath.dev/beneath/-/services/SERVICE`
+**Console:** Go to `https://beneath.dev/beneath/-/services/SERVICE`
 
 **CLI:** Run `beneath service --help` for details.
 
@@ -129,6 +129,6 @@ If you need to expose a secret publicly (e.g. in your front-end code), make sure
 - A [user]({{< relref "#users" >}}) can create [secrets]({{< relref "#secrets" >}}) for themself.
 - A [user]({{< relref "#users" >}}) can create [secrets]({{< relref "#secrets" >}}) for [services]({{< relref "#services" >}}) that belong to an organization that they have `admin` permissions on.
 
-**Terminal:** For user-owned [secrets]({{< relref "#secrets" >}}), go to `https://beneath.dev/USERNAME/-/secrets`. (Not available for service-owned [secrets]({{< relref "#secrets" >}}).)
+**Console:** For user-owned [secrets]({{< relref "#secrets" >}}), go to `https://beneath.dev/USERNAME/-/secrets`. (Not available for service-owned [secrets]({{< relref "#secrets" >}}).)
 
 **CLI:** For service-owned [secrets]({{< relref "#secrets" >}}), run `beneath service --help` for details. (Not available for user-owned [secrets]({{< relref "#secrets" >}}).)

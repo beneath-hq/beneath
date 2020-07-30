@@ -20,7 +20,7 @@ All *streams* have an associated schema that defines the fields of its records. 
 
 Records are not stored directly in a *stream*, but rather in a *stream instance*, which a stream can have many of. You can think of them as different versions of the stream.
 
-Every stream instance has two boolean flags: a) It can be marked as *finalized*, which indicates that no more records will be written to it, and b) it can be marked as *primary*, which makes it the default instance for the stream, causing it to be shown in the Terminal.
+Every stream instance has two boolean flags: a) It can be marked as *finalized*, which indicates that no more records will be written to it, and b) it can be marked as *primary*, which makes it the default instance for the stream, causing it to be shown in the Console.
 
 The following list gives some examples that clarify the usefulness of *stream instances*:
 

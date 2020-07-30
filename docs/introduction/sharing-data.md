@@ -12,7 +12,7 @@ In Beneath, it's a flip of a switch to give a person, an organization, a service
 
 ## Better than just an API
 
-When you give someone (or the public!) access to your streams, they don't just get access through one inadequate API. Instead, they get first-class access to all Beneath features for the stream. That means log replay and streaming, data warehouse queries, low-latency index lookups, access in the Beneath Terminal, etc.
+When you give someone (or the public!) access to your streams, they don't just get access through one inadequate API. Instead, they get first-class access to all Beneath features for the stream. That means log replay and streaming, data warehouse queries, low-latency index lookups, access in the Beneath Console, etc.
 
 ## Don't worry about scalability or costs
 

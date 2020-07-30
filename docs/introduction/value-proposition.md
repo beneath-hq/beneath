@@ -18,7 +18,7 @@ As data scientists and data engineers, we want to spend our time on the unique t
 
 Beneath bundles a variety of useful systems and features characteristic of modern data systems. These include systems for log streaming and replay, low-latency indexed lookups, and analytical data warehouse queries. And useful features for deriving new streams, running transformations, and sharing streams with partners or the public. Basically, it helps you to not reinvent the wheel every time you start a new data project.
 
-Your entry point to Beneath is the *Terminal*, a user interface that gives you a single overview of your streams and how they tie together. From the Terminal, you can monitor your data in real-time, see who has access, and get a long list of integrations, which span REST and Websocket APIs, Python and JavaScript libraries, and most modern business intelligence software (through BigQuery).
+Your entry point to Beneath is the *Console*, a user interface that gives you a single overview of your streams and how they tie together. From the Console, you can monitor your data in real-time, see who has access, and get a long list of integrations, which span REST and Websocket APIs, Python and JavaScript libraries, and most modern business intelligence software (through BigQuery).
 
 ## Who is Beneath for?
 
