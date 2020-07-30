@@ -1,16 +1,16 @@
 # Lending Club historical loan analysis and realtime assessment
 
-- The code in these folders produces two data streams: one is the raw loans from the Lending Club website, and another is an enriched stream that includes predictions for whether or not the loan borrower will default
-- The streams are deployed in the project at [beneath.dev/epg/lending-club](https://beneath.dev/epg/lending-club)
+The code in these folders produces the three data streams in the [Beneath Lending Club project](https://beneath.dev/epg/lending-club):
+- [historical loans with performance data](https://beneath.dev/epg/lending-club/loans-history)
+- [real-time loans listed on the Lending Club website 4x per day](https://beneath.dev/epg/lending-club/loans)
+- [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/loans-enriched)
 
 ### Developing the streams
 
-- The historical loan data is uploaded to Beneath via the Jupyter notebook `loans/load_historical_loans.ipynb`.
-- The new loan data is captured with the `loans/fetch_new_loans.py` script.
-- The (quick-and-dirty!) machine learning model is trained with the `loans-enriched/train_model.ipynb` notebook.
-- The enriched data stream is created with the `loans-enriched/enrich_loans.py` script.
-
-The `loans/fetch_new_loans.py` and `loans-enriched/enrich_loans.py` scripts are run in Kubernetes in a namespace called `models`.
+- The historical loan data is uploaded to Beneath via the Jupyter notebook `loans-history/load_historical_loans.ipynb`.
+- The real-time loan data is captured with the `loans/fetch_new_loans.py` script.
+- The real-time enriched loan data is created with the `loans-enriched/enrich_loans.py` script.
+- To make performance predictions, the enriched data stream utilizes the machine learning model that is trained with the `loans-enriched/train_model.ipynb` notebook.
 
 To set yourself up for development:
 
@@ -18,14 +18,24 @@ To set yourself up for development:
     source .venv/bin/activate
     pip install -r requirements.txt
 
-To create the Beneath project where the stream is stored:
+To create the Beneath project where the stream is stored (epg is my username - you'll have to use your own):
 
     beneath project create epg/lending-club
 
-To stage the Beneath streams:
+To stage the Beneath services:
 
-    beneath stream stage epg/lending-club/loans
-    beneath stream stage epg/lending-club/loans-enriched
+    python ./fetch-new-loans.py stage epg/lending-club/fetch-new-loans --read-quota-mb 10000 --write-quota-mb 10000
+    python ./fetch-blocks.py stage epg/lending-club/enrich-loans --read-quota-mb 10000 --write-quota-mb 10000
+    
+The secrets used to connect to Beneath were issued with:
+
+    beneath service issue-secret epg/lending-club/fetch-new-loans --description kubernetes
+    beneath service issue-secret epg/lending-club/enrich-loans --description kubernetes
+
+Then apply the service secrets to Kubernetes (we're using a namespace called `models`):
+
+    kubectl create secret generic lending-club-loans-service-secret -n models --from-literal secret=SECRET
+    kubectl create secret generic lending-club-loans-enriched-service-secret -n models --from-literal secret=SECRET
 
 To connect to Lending Club's API for newly-listed loans:
 - Create a Lending Club account, register as an Investor, and request API access. Save the API key.
@@ -33,17 +43,6 @@ To connect to Lending Club's API for newly-listed loans:
 Then apply the API key to Kubernetes:
 
     kubectl create secret generic lending-club-api-key -n models --from-literal secret=LENDING_CLUB_API_KEY
-
-To connect to Beneath, create a service and issue a service secret:
-
-    beneath service create epg/lending-club-service --read-quota-mb 100 --write-quota-mb 2000
-    beneath service update-permissions epg/lending-club-service epg/lending-club/loans --read --write 
-    beneath service update-permissions epg/lending-club-service epg/lending-club/loans-enriched --read --write 
-    beneath service issue-secret epg/lending-club-service --description kubernetes
-
-Then apply the service secret to Kubernetes:
-
-    kubectl create secret generic lending-club-service-secret -n models --from-literal secret=SECRET
 
 To rebuild the Docker images:
 
@@ -58,4 +57,4 @@ To deploy to Kubernetes:
     kubectl apply -f loans/kube.yaml -n models
     kubectl apply -f loans-enriched/kube.yaml -n models
 
-Important: There must ever only be one replica of the script running at a time. (Running multiple wouldn't hurt consistency, but would cause duplicates to appear in the streaming view and in the data warehouses.)
+Important: There must ever only be one replica of these scripts running at a time. (Running multiple wouldn't hurt consistency, but would cause duplicates to appear in the streaming view and in the data warehouses.)

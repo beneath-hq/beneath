@@ -1,4 +1,4 @@
-" Loans listed on the Lending Club platform. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). Historical loans include the borrower's payment outcome.
+" Loans listed on the Lending Club platform and available for investment. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST).
   This stream includes predictions for whether or not the borrower will default on the loan. "
 type Loan @stream @key(fields: ["id"]) {
   "A unique LC assigned ID for the loan listing."
@@ -6,9 +6,6 @@ type Loan @stream @key(fields: ["id"]) {
 
   "The date when the borrower's application was listed on the platform."
   list_d: Timestamp
-
-  "The date when the borrower's loan was issued."
-  issue_d: Timestamp
 
   "LC assigned loan grade"
   grade: String!
@@ -54,9 +51,6 @@ type Loan @stream @key(fields: ["id"]) {
 
   "Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit."
   revol_util: Float
-
-  "Current status of the loan."
-  loan_status: String
 
   "Predicted loan status, computed using a logistic regression model"
   loan_status_predicted: String!

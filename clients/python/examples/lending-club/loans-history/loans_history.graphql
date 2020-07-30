@@ -6,8 +6,8 @@ type Loan
   "A unique LC assigned ID for the loan listing."
   id:	Int!
 
-  "The date when the borrower's application was listed on the platform."
-  list_d:	Timestamp
+  "The date when the borrower's loan was issued."
+  issue_d: Timestamp
   
   "LC assigned loan grade"
   grade:	String!
@@ -53,4 +53,7 @@ type Loan
 
   "Revolving line utilization rate, or the amount of credit the borrower is using relative to all available revolving credit."
   revol_util:	Float
+
+  "Current status of the loan."
+  loan_status: String
 }
