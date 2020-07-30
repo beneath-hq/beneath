@@ -1,30 +1,20 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1beta1
+kind: CronJob
 metadata:
   name: lending-club-loans-enriched
-  labels:
-    app.kubernetes.io/name: lending-club-loans-enriched
-    app.kubernetes.io/instance: lending-club-loans-enriched
-    app.kubernetes.io/managed-by: Manual
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: lending-club-loans-enriched
-      app.kubernetes.io/instance: lending-club-loans-enriched
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: lending-club-loans-enriched
-        app.kubernetes.io/instance: lending-club-loans-enriched
+  schedule: "1 9,13,17,21 * * *"
+  jobTemplate:
     spec:
-      containers:
-      - name: lending-club-loans-enriched
-        image: gcr.io/beneath/lending-club-loans-enriched:latest
-        imagePullPolicy: Always
-        env:
-          - name: BENEATH_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: lending-club-service-secret
-                key: secret
+      template:
+        spec:
+          containers:
+          - name: lending-club-loans-enriched
+            image: gcr.io/beneath/lending-club-loans-enriched:latest
+            env:
+              - name: BENEATH_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: lending-club-loans-enriched-service-secret
+                    key: secret
+          restartPolicy: OnFailure

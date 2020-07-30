@@ -19,9 +19,9 @@ Install the latest version of the Python SDK from your command line:
 pip3 install --upgrade beneath
 ```
 
-## Log in to the Terminal
+## Log in to the Console
 
-Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
+Go to the [Console](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
 
 ## Create a command-line secret
 
@@ -45,7 +45,7 @@ You can read any public data stream (for example, check out the [featured projec
 
 The Beneath directory structure is USER/PROJECT/STREAM.
 
-In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+In the [Console](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
 
 ## Open a Jupyter notebook
 

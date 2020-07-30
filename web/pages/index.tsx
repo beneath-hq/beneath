@@ -4,8 +4,8 @@ import React from "react";
 
 import { withApollo } from "../apollo/withApollo";
 import Page from "../components/Page";
-import Springboard from "../components/terminal/Springboard";
-import Welcome from "../components/terminal/Welcome";
+import Springboard from "../components/console/Springboard";
+import Welcome from "../components/console/Welcome";
 import useMe from "../hooks/useMe";
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
   end?: any;
 }
 
-const Terminal: NextPage<Props> = ({ writeHead, end }) => {
+const Console: NextPage<Props> = ({ writeHead, end }) => {
   const me = useMe();
   const loggedIn = !!me;
 
@@ -30,14 +30,14 @@ const Terminal: NextPage<Props> = ({ writeHead, end }) => {
   }
 
   return (
-    <Page title="Terminal" contentMarginTop="normal">
+    <Page title="Console" contentMarginTop="normal">
       {loggedIn && <Springboard />}
       {!loggedIn && <Welcome />}
     </Page>
   );
 };
 
-Terminal.getInitialProps = (ctx) => {
+Console.getInitialProps = (ctx) => {
   // NOTE: This hack to redirect in the component is horrible, horrible! Fix it once withApollo
   // is changed to Typescript and we can access ctx.apolloClient and get me in getInitialProps.
 
@@ -45,4 +45,4 @@ Terminal.getInitialProps = (ctx) => {
   return { writeHead: ctx.res?.writeHead.bind(ctx.res), end: ctx.res?.end.bind(ctx.res) };
 };
 
-export default withApollo(Terminal);
+export default withApollo(Console);

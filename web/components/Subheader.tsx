@@ -36,7 +36,7 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
   let crumbs = null;
   if (router.route === "/project") {
     crumbs = [
-      <TerminalCrumb key={0} />,
+      <ConsoleCrumb key={0} />,
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -47,7 +47,7 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
     ];
   } else if (router.route === "/stream") {
     crumbs = [
-      <TerminalCrumb key={0} />,
+      <ConsoleCrumb key={0} />,
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -64,12 +64,12 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
     ];
   } else if (router.route === "/organization") {
     crumbs = [
-      <TerminalCrumb key={0} />,
+      <ConsoleCrumb key={0} />,
       <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
     ];
   } else if (router.route === "/service") {
     crumbs = [
-      <TerminalCrumb key={0} />,
+      <ConsoleCrumb key={0} />,
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -129,12 +129,12 @@ const Crumb: FC<CrumbProps> = ({ href, as, label, isCurrent }) => {
   );
 };
 
-interface TerminalCrumbProps {
+interface ConsoleCrumbProps {
   isCurrent?: boolean;
 }
 
-const TerminalCrumb: FC<TerminalCrumbProps> = ({ isCurrent }) => (
-  <Crumb href="/" as="/" label="Terminal" isCurrent={isCurrent} />
+const ConsoleCrumb: FC<ConsoleCrumbProps> = ({ isCurrent }) => (
+  <Crumb href="/" as="/" label="Console" isCurrent={isCurrent} />
 );
 
 interface ProjectCrumbProps {

@@ -23,7 +23,7 @@ import { Menu as MenuIcon, Person } from "@material-ui/icons";
 
 const tabs = [
   { label: "Docs", href: "https://about.beneath.dev/docs", selectRegex: "^$", external: true },
-  { label: "Terminal", href: "/", selectRegex: "^/.*$", external: false },
+  { label: "Console", href: "/", selectRegex: "^/.*$", external: false },
 ];
 
 const useStyles = makeStyles((theme) => ({

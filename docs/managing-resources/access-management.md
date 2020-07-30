@@ -20,7 +20,7 @@ See example in [the CLI installation guide]({{< ref "/docs/managing-resources/cl
 
 ### Creating a secret for a user
 
-You can issue and copy a new secret from the ["Secrets" tab of your profile page](https://beneath.dev/-/redirects/secrets) in the Beneath Terminal.
+You can issue and copy a new secret from the ["Secrets" tab of your profile page](https://beneath.dev/-/redirects/secrets) in the Beneath Console.
 
 There are two types of secrets:
 - **Command-line secrets:** These contain all your access permissions

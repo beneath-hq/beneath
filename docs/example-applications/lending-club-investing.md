@@ -99,9 +99,9 @@ stream = client.find_stream(“epg/lending-club/loans”)
 stream.write(data.to_dict(‘records’))
 ```
 
-### Look at the Beneath Terminal to validate the writes
+### Look at the Beneath Console to validate the writes
 
-Now the data is stored on Beneath. In the Beneath Terminal, I can double check my work by going to:
+Now the data is stored on Beneath. In the Beneath Console, I can double check my work by going to:
 - https://beneath.dev/epg/lending-club/loans to browse and query the data I just uploaded
 - https://beneath.dev/epg/lending-club/loans/-/monitoring to validate that the correct amount of data was just written
 
@@ -152,9 +152,9 @@ kubectl apply -f loans/kube.yaml -n models
 
 Now our ETL script is live! In order to check that everything is wired up correctly, you can run a one-off Cronjob. 
 
-### Go to the Beneath Terminal to validate the writes
+### Go to the Beneath Console to validate the writes
 
-Our script is now running 4x a day, and writing data to Beneath. But let's just check the Terminal at https://beneath.dev/epg/lending-club/loans to validate that these writes are actually happening. By selecting the `Log` view, we can see the time of each write in the `Time ago` column.
+Our script is now running 4x a day, and writing data to Beneath. But let's just check the Console at https://beneath.dev/epg/lending-club/loans to validate that these writes are actually happening. By selecting the `Log` view, we can see the time of each write in the `Time ago` column.
 
 ## Connect Metabase
 
@@ -294,16 +294,16 @@ kubectl apply -f loans-enriched/kube.yaml -n models
 
 Now our stream processing script is live!
 
-### Go to the Beneath Terminal to validate the writes
+### Go to the Beneath Console to validate the writes
 Again, to double-check our work, we can check out the stream at https://beneath.dev/epg/lending-club/loans-enriched to make sure it's writing data as we'd expect.
 
 
 ## Consume predictions with the API options
 
-In the Terminal, head on over to the stream's API tab at https://beneath.dev/epg/lending-club/loans-enriched/-/api. You can consume your predictions with any of the available API options. Or, within, our enrich_loans.py script we can issue buy orders based on the predictions. 
+In the Console, head on over to the stream's API tab at https://beneath.dev/epg/lending-club/loans-enriched/-/api. You can consume your predictions with any of the available API options. Or, within, our enrich_loans.py script we can issue buy orders based on the predictions. 
 
 ## We're done!
 
 We've built an end-to-end analytics application. We leveraged Kubernetes for deploying our containers, we leveraged Metabase to allow other people to easily visualize and query the data, and we centered our application around Beneath for its data storage and stream processing.
 
-Head on over to the [Terminal](https://beneath.dev?noredirect=1) to explore some of the public projects or [reach out to us](/contact) if you'd like to talk through your next project. We're very happy to help you get going.
+Head on over to the [Console](https://beneath.dev?noredirect=1) to explore some of the public projects or [reach out to us](/contact) if you'd like to talk through your next project. We're very happy to help you get going.

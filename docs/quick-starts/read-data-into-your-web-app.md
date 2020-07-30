@@ -12,8 +12,8 @@ Time required: 3 minutes.
 
 In this quick-start, we read an event stream from Beneath into a web application. You can read any public data stream or any of the private data streams that you have access to.
 
-## Log in to the Data Terminal
-Go to the [Terminal](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
+## Log in to the Data Console
+Go to the [Console](https://beneath.dev/?noredirect=1), and log in. If you don't yet have an account, create one.
 
 ## Create a Read-Only secret
 
@@ -28,7 +28,7 @@ You can read any public data stream (for example, check out the [featured projec
 
 The Beneath directory structure is USER/PROJECT/STREAM
 
-In the [Terminal](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
+In the [Console](https://beneath.dev/?noredirect=1), navigate to your desired stream, and click on the API tab
 
 ## Copy-paste the Javascript snippet into your frontend code
 

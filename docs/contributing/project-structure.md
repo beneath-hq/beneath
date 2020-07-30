@@ -43,7 +43,7 @@ Here's a rough guide to the project structure:
 - `pkg`: stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
 - `scripts`: contains helper scripts for code generation, etc.
 - `test`: contains end-to-end and integration tests
-- `web`: contains the frontend (data terminal) code
+- `web`: contains the frontend (data console) code
 
 ## Technologies
 
