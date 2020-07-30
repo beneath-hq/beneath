@@ -214,7 +214,7 @@ class BasePipeline:
     state: Dict[str, Any]
 
     def __init__(self, pipeline: BasePipeline):
-      super().__init__(max_delay_ms=pipeline.write_state_delay_ms, max_size=sys.maxsize)
+      super().__init__(max_delay_ms=pipeline.write_state_delay_ms, max_size=sys.maxsize, max_count=sys.maxsize)
       self.pipeline = pipeline
 
     def _reset(self):

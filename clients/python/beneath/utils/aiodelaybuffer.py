@@ -19,9 +19,10 @@ class AIODelayBuffer(Generic[BufferValue]):
   This class is NOT thread-safe.
   """
 
-  def __init__(self, max_delay_ms: int, max_size: int):
+  def __init__(self, max_delay_ms: int, max_size: int, max_count: int):
     self._max_delay = max_delay_ms / 1000
     self._max_size = max_size
+    self._max_count = max_count
 
     self._delay_task: asyncio.Task = None
     self._delayed_flush_task: asyncio.Task = None
@@ -29,6 +30,7 @@ class AIODelayBuffer(Generic[BufferValue]):
     self._started = False
     self._flushing = False
     self._buffer_size = 0
+    self._buffer_count = 0
     self._reset()
 
   # PROPERTIES
@@ -86,7 +88,7 @@ class AIODelayBuffer(Generic[BufferValue]):
 
     # trigger and/or wait for flush if a) a flush is in progress, or b) value would cause size overflow
     loops = 0
-    while self._flushing or (self._buffer_size + size > self._max_size):
+    while self._flushing or (self._buffer_size + size > self._max_size) or (self._buffer_count == self._max_count):
       assert self._delayed_flush_task is not None
       await self.force_flush()
       loops += 1
@@ -98,6 +100,7 @@ class AIODelayBuffer(Generic[BufferValue]):
     # add to buffer
     self._merge(value)
     self._buffer_size += size
+    self._buffer_count += 1
 
     # if a delayed flush isn't already scheduled for this batch, schedule it now
     if not self._delayed_flush_task:
@@ -126,6 +129,7 @@ class AIODelayBuffer(Generic[BufferValue]):
     self._reset()
     self._flushing = False
     self._buffer_size = 0
+    self._buffer_count = 0
     self._delay_task = None
     self._delayed_flush_task = None
 

@@ -28,7 +28,11 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
   _total: int
 
   def __init__(self, connection: Connection, max_delay_ms: int):
-    super().__init__(max_delay_ms=max_delay_ms, max_size=config.MAX_WRITE_SIZE_BYTES)
+    super().__init__(
+      max_delay_ms=max_delay_ms,
+      max_size=config.MAX_WRITE_SIZE_BYTES,
+      max_count=config.MAX_WRITE_SIZE_COUNT,
+    )
     self._connection = connection
     self._total = 0
 
@@ -66,7 +70,11 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
   _records: List[InstanceRecordAndSize]
 
   def __init__(self, max_delay_ms: int):
-    super().__init__(max_delay_ms=max_delay_ms, max_size=config.MAX_WRITE_SIZE_BYTES)
+    super().__init__(
+      max_delay_ms=max_delay_ms,
+      max_size=config.MAX_WRITE_SIZE_BYTES,
+      max_count=config.MAX_WRITE_SIZE_COUNT,
+    )
     self._total = 0
 
   def _reset(self):
