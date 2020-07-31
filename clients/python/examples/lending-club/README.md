@@ -24,8 +24,8 @@ To create the Beneath project where the stream is stored (epg is my username - y
 
 To stage the Beneath services:
 
-    python ./fetch-new-loans.py stage epg/lending-club/fetch-new-loans --read-quota-mb 10000 --write-quota-mb 10000
-    python ./fetch-blocks.py stage epg/lending-club/enrich-loans --read-quota-mb 10000 --write-quota-mb 10000
+    python ./loans/fetch-new-loans.py stage epg/lending-club/fetch-new-loans --read-quota-mb 10000 --write-quota-mb 10000
+    python ./loans-enriched/enrich-loans.py stage epg/lending-club/enrich-loans --read-quota-mb 10000 --write-quota-mb 10000
     
 The secrets used to connect to Beneath were issued with:
 

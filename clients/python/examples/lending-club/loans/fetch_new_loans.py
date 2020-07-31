@@ -62,7 +62,7 @@ if __name__ == "__main__":
     output_stream_schema=SCHEMA,
   )
   
-  # OPTION FOR MORE GRANULAR CONTROL
+  # DETAILED OPTION
   # p = beneath.Pipeline(parse_args=True)
   # loans = p.generate(generate_loans)
   # p.write_stream(

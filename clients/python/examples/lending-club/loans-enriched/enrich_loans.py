@@ -54,7 +54,7 @@ if __name__ == "__main__":
     output_stream_schema=OUTPUT_SCHEMA,
   )
 
-  # OPTION FOR MORE GRANULAR CONTROL
+  # DETAILED OPTION
   # p = beneath.Pipeline(parse_args=True)
   # loans = p.read_stream(INPUT_STREAM)
   # loans_enriched = p.apply(loans, process_loan)
