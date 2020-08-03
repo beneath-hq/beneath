@@ -1,4 +1,4 @@
-" Loans listed on the Lending Club platform and available for investment. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). "
+" Historical loans that were issued on the Lending Club platform. Loans include the borrower's current or final payment status. "
 type Loan
   @stream
   @key(fields: ["id"])
