@@ -150,7 +150,7 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 		// update the organization's quotas
 		// additionally, the UpdateQuotas() function clears the cache for all the organization's users' secrets
 		organization := FindOrganization(ctx, bi.OrganizationID)
-		err = organization.UpdateQuotas(ctx, &newBillingPlan.ReadQuota, &newBillingPlan.WriteQuota)
+		err = organization.UpdateQuotas(ctx, &newBillingPlan.ReadQuota, &newBillingPlan.WriteQuota, &newBillingPlan.ScanQuota)
 		if err != nil {
 			return nil, err
 		}

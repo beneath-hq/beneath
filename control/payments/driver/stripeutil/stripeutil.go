@@ -319,9 +319,9 @@ func SendInvoice(invoiceID string) {
 func PrettyDescription(product string) string {
 	switch product {
 	case string(entity.PrepaidQuotaProduct):
-		return "Prepaid read and write quotas"
+		return "Prepaid read, write, and scan quotas"
 	case string(entity.PrepaidQuotaProratedProduct):
-		return "Prepaid read and write quotas (prorated)"
+		return "Prepaid read, write, and scan quotas (prorated)"
 	case string(entity.SeatProduct):
 		return "Seats"
 	case string(entity.SeatProratedProduct):
@@ -330,6 +330,8 @@ func PrettyDescription(product string) string {
 		return "Read overage (GB)"
 	case string(entity.WriteOverageProduct):
 		return "Write overage (GB)"
+	case string(entity.ScanOverageProduct):
+		return "Scan overage (GB)"
 	default:
 		panic("unknown product")
 	}

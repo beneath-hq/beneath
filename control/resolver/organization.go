@@ -147,7 +147,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, organizationI
 	return organizationToPrivateOrganization(ctx, organization, perms), nil
 }
 
-func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*gql.PrivateOrganization, error) {
+func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*gql.PrivateOrganization, error) {
 	organization := entity.FindOrganization(ctx, organizationID)
 	if organization == nil {
 		return nil, gqlerror.Errorf("Organization %s not found", organizationID.String())
@@ -158,7 +158,7 @@ func (r *mutationResolver) UpdateOrganizationQuotas(ctx context.Context, organiz
 		return nil, gqlerror.Errorf("Only Beneath masters can update organization quotas directly")
 	}
 
-	err := organization.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	err := organization.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota), IntToInt64(scanQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
 	}
@@ -338,14 +338,17 @@ func organizationToPrivateOrganization(ctx context.Context, o *entity.Organizati
 		UpdatedOn:         o.UpdatedOn,
 		PrepaidReadQuota:  Int64ToInt(o.PrepaidReadQuota),
 		PrepaidWriteQuota: Int64ToInt(o.PrepaidWriteQuota),
+		PrepaidScanQuota:  Int64ToInt(o.PrepaidScanQuota),
 		ReadQuota:         Int64ToInt(o.ReadQuota),
 		WriteQuota:        Int64ToInt(o.WriteQuota),
+		ScanQuota:         Int64ToInt(o.ScanQuota),
 		Projects:          o.Projects,
 	}
 
 	usage := metrics.GetCurrentUsage(ctx, o.OrganizationID)
 	po.ReadUsage = int(usage.ReadBytes)
 	po.WriteUsage = int(usage.WriteBytes)
+	po.ScanUsage = int(usage.ScanBytes)
 
 	if o.UserID != nil {
 		po.PersonalUserID = o.UserID

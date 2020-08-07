@@ -97,6 +97,7 @@ type ComplexityRoot struct {
 	BillingPlan struct {
 		AvailableInUI          func(childComplexity int) int
 		BaseReadQuota          func(childComplexity int) int
+		BaseScanQuota          func(childComplexity int) int
 		BaseWriteQuota         func(childComplexity int) int
 		BillingPlanID          func(childComplexity int) int
 		Currency               func(childComplexity int) int
@@ -105,8 +106,11 @@ type ComplexityRoot struct {
 		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
 		ReadQuota              func(childComplexity int) int
+		ScanOveragePriceCents  func(childComplexity int) int
+		ScanQuota              func(childComplexity int) int
 		SeatPriceCents         func(childComplexity int) int
 		SeatReadQuota          func(childComplexity int) int
+		SeatScanQuota          func(childComplexity int) int
 		SeatWriteQuota         func(childComplexity int) int
 		WriteOveragePriceCents func(childComplexity int) int
 		WriteQuota             func(childComplexity int) int
@@ -140,18 +144,18 @@ type ComplexityRoot struct {
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
 		StageProject                      func(childComplexity int, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) int
-		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) int
+		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) int
 		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
 		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
-		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int) int
+		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 		UpdateStreamInstance              func(childComplexity int, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserProjectPermissions      func(childComplexity int, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) int
-		UpdateUserQuotas                  func(childComplexity int, userID uuid.UUID, readQuota *int, writeQuota *int) int
+		UpdateUserQuotas                  func(childComplexity int, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
 	}
 
 	NewServiceSecret struct {
@@ -173,6 +177,7 @@ type ComplexityRoot struct {
 		OrganizationID        func(childComplexity int) int
 		PhotoURL              func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
+		ScanQuota             func(childComplexity int) int
 		UserID                func(childComplexity int) int
 		View                  func(childComplexity int) int
 		WriteQuota            func(childComplexity int) int
@@ -212,10 +217,13 @@ type ComplexityRoot struct {
 		PersonalUserID    func(childComplexity int) int
 		PhotoURL          func(childComplexity int) int
 		PrepaidReadQuota  func(childComplexity int) int
+		PrepaidScanQuota  func(childComplexity int) int
 		PrepaidWriteQuota func(childComplexity int) int
 		Projects          func(childComplexity int) int
 		ReadQuota         func(childComplexity int) int
 		ReadUsage         func(childComplexity int) int
+		ScanQuota         func(childComplexity int) int
+		ScanUsage         func(childComplexity int) int
 		UpdatedOn         func(childComplexity int) int
 		WriteQuota        func(childComplexity int) int
 		WriteUsage        func(childComplexity int) int
@@ -229,6 +237,7 @@ type ComplexityRoot struct {
 		CreatedOn             func(childComplexity int) int
 		Email                 func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
+		ScanQuota             func(childComplexity int) int
 		UpdatedOn             func(childComplexity int) int
 		UserID                func(childComplexity int) int
 		WriteQuota            func(childComplexity int) int
@@ -309,6 +318,7 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Project     func(childComplexity int) int
 		ReadQuota   func(childComplexity int) int
+		ScanQuota   func(childComplexity int) int
 		ServiceID   func(childComplexity int) int
 		SourceURL   func(childComplexity int) int
 		WriteQuota  func(childComplexity int) int
@@ -402,7 +412,7 @@ type MutationResolver interface {
 	UpdateBillingInfo(ctx context.Context, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) (*entity.BillingInfo, error)
 	CreateOrganization(ctx context.Context, name string) (*PrivateOrganization, error)
 	UpdateOrganization(ctx context.Context, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) (*PrivateOrganization, error)
-	UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int) (*PrivateOrganization, error)
+	UpdateOrganizationQuotas(ctx context.Context, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*PrivateOrganization, error)
 	InviteUserToOrganization(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view bool, create bool, admin bool) (bool, error)
 	AcceptOrganizationInvite(ctx context.Context, organizationID uuid.UUID) (bool, error)
 	LeaveBillingOrganization(ctx context.Context, userID uuid.UUID) (*entity.User, error)
@@ -413,7 +423,7 @@ type MutationResolver interface {
 	IssueUserSecret(ctx context.Context, description string, readOnly bool, publicOnly bool) (*NewUserSecret, error)
 	RevokeServiceSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
 	RevokeUserSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
-	StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) (*entity.Service, error)
+	StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) (*entity.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
 	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error)
@@ -422,7 +432,7 @@ type MutationResolver interface {
 	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error)
 	DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	RegisterUserConsent(ctx context.Context, userID uuid.UUID, terms *bool, newsletter *bool) (*entity.User, error)
-	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error)
+	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*entity.User, error)
 	UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersProjects, error)
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*entity.PermissionsUsersOrganizations, error)
 }
@@ -692,6 +702,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.BaseReadQuota(childComplexity), true
 
+	case "BillingPlan.baseScanQuota":
+		if e.complexity.BillingPlan.BaseScanQuota == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.BaseScanQuota(childComplexity), true
+
 	case "BillingPlan.baseWriteQuota":
 		if e.complexity.BillingPlan.BaseWriteQuota == nil {
 			break
@@ -748,6 +765,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingPlan.ReadQuota(childComplexity), true
 
+	case "BillingPlan.scanOveragePriceCents":
+		if e.complexity.BillingPlan.ScanOveragePriceCents == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.ScanOveragePriceCents(childComplexity), true
+
+	case "BillingPlan.scanQuota":
+		if e.complexity.BillingPlan.ScanQuota == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.ScanQuota(childComplexity), true
+
 	case "BillingPlan.seatPriceCents":
 		if e.complexity.BillingPlan.SeatPriceCents == nil {
 			break
@@ -761,6 +792,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.SeatReadQuota(childComplexity), true
+
+	case "BillingPlan.seatScanQuota":
+		if e.complexity.BillingPlan.SeatScanQuota == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.SeatScanQuota(childComplexity), true
 
 	case "BillingPlan.seatWriteQuota":
 		if e.complexity.BillingPlan.SeatWriteQuota == nil {
@@ -1031,7 +1069,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.StageService(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+		return e.complexity.Mutation.StageService(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int)), true
 
 	case "Mutation.stageStream":
 		if e.complexity.Mutation.StageStream == nil {
@@ -1103,7 +1141,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateOrganizationQuotas(childComplexity, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+		return e.complexity.Mutation.UpdateOrganizationQuotas(childComplexity, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int)), true
 
 	case "Mutation.updateServiceStreamPermissions":
 		if e.complexity.Mutation.UpdateServiceStreamPermissions == nil {
@@ -1163,7 +1201,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateUserQuotas(childComplexity, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int)), true
+		return e.complexity.Mutation.UpdateUserQuotas(childComplexity, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int)), true
 
 	case "NewServiceSecret.secret":
 		if e.complexity.NewServiceSecret.Secret == nil {
@@ -1248,6 +1286,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.OrganizationMember.ReadQuota(childComplexity), true
+
+	case "OrganizationMember.scanQuota":
+		if e.complexity.OrganizationMember.ScanQuota == nil {
+			break
+		}
+
+		return e.complexity.OrganizationMember.ScanQuota(childComplexity), true
 
 	case "OrganizationMember.userID":
 		if e.complexity.OrganizationMember.UserID == nil {
@@ -1438,6 +1483,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PrivateOrganization.PrepaidReadQuota(childComplexity), true
 
+	case "PrivateOrganization.prepaidScanQuota":
+		if e.complexity.PrivateOrganization.PrepaidScanQuota == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.PrepaidScanQuota(childComplexity), true
+
 	case "PrivateOrganization.prepaidWriteQuota":
 		if e.complexity.PrivateOrganization.PrepaidWriteQuota == nil {
 			break
@@ -1465,6 +1517,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivateOrganization.ReadUsage(childComplexity), true
+
+	case "PrivateOrganization.scanQuota":
+		if e.complexity.PrivateOrganization.ScanQuota == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.ScanQuota(childComplexity), true
+
+	case "PrivateOrganization.scanUsage":
+		if e.complexity.PrivateOrganization.ScanUsage == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.ScanUsage(childComplexity), true
 
 	case "PrivateOrganization.updatedOn":
 		if e.complexity.PrivateOrganization.UpdatedOn == nil {
@@ -1535,6 +1601,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivateUser.ReadQuota(childComplexity), true
+
+	case "PrivateUser.scanQuota":
+		if e.complexity.PrivateUser.ScanQuota == nil {
+			break
+		}
+
+		return e.complexity.PrivateUser.ScanQuota(childComplexity), true
 
 	case "PrivateUser.updatedOn":
 		if e.complexity.PrivateUser.UpdatedOn == nil {
@@ -2111,6 +2184,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Service.ReadQuota(childComplexity), true
 
+	case "Service.scanQuota":
+		if e.complexity.Service.ScanQuota == nil {
+			break
+		}
+
+		return e.complexity.Service.ScanQuota(childComplexity), true
+
 	case "Service.serviceID":
 		if e.complexity.Service.ServiceID == nil {
 			break
@@ -2637,12 +2717,16 @@ type BillingPlan {
 	seatPriceCents: Int!
 	seatReadQuota: Int!
 	seatWriteQuota: Int!
+	seatScanQuota: Int!
 	readOveragePriceCents: Int! 
 	writeOveragePriceCents: Int!
+	scanOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
+	baseScanQuota: Int!
 	readQuota: Int!
 	writeQuota: Int!
+	scanQuota: Int!
 	availableInUI: Boolean!
 }
 `},
@@ -2685,7 +2769,7 @@ enum EntityKind {
 extend type Mutation {
   createOrganization(name: String!): PrivateOrganization!
   updateOrganization(organizationID: UUID!, name: String, displayName: String, description: String, photoURL: String): PrivateOrganization!
-  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): PrivateOrganization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateOrganization!
 
   inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
   acceptOrganizationInvite(organizationID: UUID!): Boolean!
@@ -2726,10 +2810,13 @@ type PrivateOrganization implements Organization {
   updatedOn: Time!
   prepaidReadQuota: Int
   prepaidWriteQuota: Int
+  prepaidScanQuota: Int
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
   readUsage: Int!
   writeUsage: Int!
+  scanUsage: Int!
   projects: [Project!]!
   personalUserID: UUID
   personalUser: PrivateUser
@@ -2748,6 +2835,7 @@ type OrganizationMember {
   admin: Boolean!
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
 }
 `},
 	&ast.Source{Name: "control/gql/schema/projects.graphql", Input: `extend type Query {
@@ -2853,6 +2941,7 @@ extend type Mutation {
     sourceURL: String,
     readQuota: Int,
     writeQuota: Int,
+    scanQuota: Int,
   ): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
@@ -2866,6 +2955,7 @@ type Service {
   project: Project!
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
 }
 
 type PermissionsServicesStreams {
@@ -2966,7 +3056,7 @@ type StreamIndex {
 
 extend type Mutation {
   registerUserConsent(userID: UUID!, terms: Boolean, newsletter: Boolean): PrivateUser!
-  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int): PrivateUser!
+  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateUser!
   updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
   updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
 }
@@ -2980,6 +3070,7 @@ type PrivateUser {
   consentNewsletter: Boolean!
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
   billingOrganizationID: UUID!
   billingOrganization: PublicOrganization!
 }
@@ -3381,6 +3472,14 @@ func (ec *executionContext) field_Mutation_stageService_args(ctx context.Context
 		}
 	}
 	args["writeQuota"] = arg6
+	var arg7 *int
+	if tmp, ok := rawArgs["scanQuota"]; ok {
+		arg7, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["scanQuota"] = arg7
 	return args, nil
 }
 
@@ -3643,6 +3742,14 @@ func (ec *executionContext) field_Mutation_updateOrganizationQuotas_args(ctx con
 		}
 	}
 	args["writeQuota"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["scanQuota"]; ok {
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["scanQuota"] = arg3
 	return args, nil
 }
 
@@ -3879,6 +3986,14 @@ func (ec *executionContext) field_Mutation_updateUserQuotas_args(ctx context.Con
 		}
 	}
 	args["writeQuota"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["scanQuota"]; ok {
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["scanQuota"] = arg3
 	return args, nil
 }
 
@@ -5637,6 +5752,43 @@ func (ec *executionContext) _BillingPlan_seatWriteQuota(ctx context.Context, fie
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _BillingPlan_seatScanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SeatScanQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _BillingPlan_readOveragePriceCents(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5694,6 +5846,43 @@ func (ec *executionContext) _BillingPlan_writeOveragePriceCents(ctx context.Cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteOveragePriceCents, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_scanOveragePriceCents(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanOveragePriceCents, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5785,6 +5974,43 @@ func (ec *executionContext) _BillingPlan_baseWriteQuota(ctx context.Context, fie
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _BillingPlan_baseScanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BaseScanQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _BillingPlan_readQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5842,6 +6068,43 @@ func (ec *executionContext) _BillingPlan_writeQuota(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BillingPlan_scanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.BillingPlan) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "BillingPlan",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6421,7 +6684,7 @@ func (ec *executionContext) _Mutation_updateOrganizationQuotas(ctx context.Conte
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateOrganizationQuotas(rctx, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
+		return ec.resolvers.Mutation().UpdateOrganizationQuotas(rctx, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6905,7 +7168,7 @@ func (ec *executionContext) _Mutation_stageService(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageService(rctx, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int))
+		return ec.resolvers.Mutation().StageService(rctx, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7301,7 +7564,7 @@ func (ec *executionContext) _Mutation_updateUserQuotas(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUserQuotas(rctx, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int))
+		return ec.resolvers.Mutation().UpdateUserQuotas(rctx, args["userID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7939,6 +8202,40 @@ func (ec *executionContext) _OrganizationMember_writeQuota(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationMember_scanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.OrganizationMember) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationMember",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8792,6 +9089,40 @@ func (ec *executionContext) _PrivateOrganization_prepaidWriteQuota(ctx context.C
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PrivateOrganization_prepaidScanQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidScanQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _PrivateOrganization_readQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8846,6 +9177,40 @@ func (ec *executionContext) _PrivateOrganization_writeQuota(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_scanQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8917,6 +9282,43 @@ func (ec *executionContext) _PrivateOrganization_writeUsage(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteUsage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_scanUsage(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateOrganization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanUsage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9352,6 +9754,40 @@ func (ec *executionContext) _PrivateUser_writeQuota(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateUser_scanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PrivateUser",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12029,6 +12465,40 @@ func (ec *executionContext) _Service_writeQuota(ctx context.Context, field graph
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.WriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_scanQuota(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15263,6 +15733,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "seatScanQuota":
+			out.Values[i] = ec._BillingPlan_seatScanQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "readOveragePriceCents":
 			out.Values[i] = ec._BillingPlan_readOveragePriceCents(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15270,6 +15745,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			}
 		case "writeOveragePriceCents":
 			out.Values[i] = ec._BillingPlan_writeOveragePriceCents(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "scanOveragePriceCents":
+			out.Values[i] = ec._BillingPlan_scanOveragePriceCents(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -15283,6 +15763,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "baseScanQuota":
+			out.Values[i] = ec._BillingPlan_baseScanQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "readQuota":
 			out.Values[i] = ec._BillingPlan_readQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15290,6 +15775,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			}
 		case "writeQuota":
 			out.Values[i] = ec._BillingPlan_writeQuota(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "scanQuota":
+			out.Values[i] = ec._BillingPlan_scanQuota(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
@@ -15673,6 +16163,8 @@ func (ec *executionContext) _OrganizationMember(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._OrganizationMember_readQuota(ctx, field, obj)
 		case "writeQuota":
 			out.Values[i] = ec._OrganizationMember_writeQuota(ctx, field, obj)
+		case "scanQuota":
+			out.Values[i] = ec._OrganizationMember_scanQuota(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15864,10 +16356,14 @@ func (ec *executionContext) _PrivateOrganization(ctx context.Context, sel ast.Se
 			out.Values[i] = ec._PrivateOrganization_prepaidReadQuota(ctx, field, obj)
 		case "prepaidWriteQuota":
 			out.Values[i] = ec._PrivateOrganization_prepaidWriteQuota(ctx, field, obj)
+		case "prepaidScanQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidScanQuota(ctx, field, obj)
 		case "readQuota":
 			out.Values[i] = ec._PrivateOrganization_readQuota(ctx, field, obj)
 		case "writeQuota":
 			out.Values[i] = ec._PrivateOrganization_writeQuota(ctx, field, obj)
+		case "scanQuota":
+			out.Values[i] = ec._PrivateOrganization_scanQuota(ctx, field, obj)
 		case "readUsage":
 			out.Values[i] = ec._PrivateOrganization_readUsage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15875,6 +16371,11 @@ func (ec *executionContext) _PrivateOrganization(ctx context.Context, sel ast.Se
 			}
 		case "writeUsage":
 			out.Values[i] = ec._PrivateOrganization_writeUsage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "scanUsage":
+			out.Values[i] = ec._PrivateOrganization_scanUsage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -15957,6 +16458,8 @@ func (ec *executionContext) _PrivateUser(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._PrivateUser_readQuota(ctx, field, obj)
 		case "writeQuota":
 			out.Values[i] = ec._PrivateUser_writeQuota(ctx, field, obj)
+		case "scanQuota":
+			out.Values[i] = ec._PrivateUser_scanQuota(ctx, field, obj)
 		case "billingOrganizationID":
 			out.Values[i] = ec._PrivateUser_billingOrganizationID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -16671,6 +17174,8 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Service_readQuota(ctx, field, obj)
 		case "writeQuota":
 			out.Values[i] = ec._Service_writeQuota(ctx, field, obj)
+		case "scanQuota":
+			out.Values[i] = ec._Service_scanQuota(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -148,10 +148,13 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, ts time.Time) err
 	readOverageGB := float32(readOverageBytes) / float32(1e9)
 	readOveragePrice := int32(readOverageGB * float32(bi.BillingPlan.ReadOveragePriceCents)) // assuming unit of ReadOveragePriceCents is GB
 
-	log.S.Info()
 	writeOverageBytes := usages[0].WriteBytes - *bi.Organization.PrepaidWriteQuota
 	writeOverageGB := float32(writeOverageBytes) / float32(1e9)
 	writeOveragePrice := int32(writeOverageGB * float32(bi.BillingPlan.WriteOveragePriceCents)) // assuming unit of WriteOveragePriceCents is GB
+
+	scanOverageBytes := usages[0].ScanBytes - *bi.Organization.PrepaidScanQuota
+	scanOverageGB := float32(scanOverageBytes) / float32(1e9)
+	scanOveragePrice := int32(scanOverageGB * float32(bi.BillingPlan.ScanOveragePriceCents)) // assuming unit of ScanOveragePriceCents is GB
 
 	var newBilledResources []*BilledResource
 
@@ -185,6 +188,21 @@ func commitOverageToBill(ctx context.Context, bi *BillingInfo, ts time.Time) err
 		})
 	}
 
+	if scanOverageBytes > 0 {
+		newBilledResources = append(newBilledResources, &BilledResource{
+			OrganizationID:  bi.OrganizationID,
+			BillingTime:     billingTime,
+			EntityID:        bi.OrganizationID,
+			EntityKind:      OrganizationEntityKind,
+			StartTime:       startTime,
+			EndTime:         endTime,
+			Product:         ScanOverageProduct,
+			Quantity:        scanOverageGB,
+			TotalPriceCents: scanOveragePrice,
+			Currency:        bi.BillingPlan.Currency,
+		})
+	}
+
 	if len(newBilledResources) == 0 {
 		return nil
 	}
@@ -206,15 +224,19 @@ func recomputeOrganizationPrepaidQuotas(ctx context.Context, bi *BillingInfo) er
 		newPrepaidReadQuota := bi.BillingPlan.BaseReadQuota + bi.BillingPlan.SeatReadQuota*numSeats
 		org.PrepaidReadQuota = &newPrepaidReadQuota
 	}
-	if org.PrepaidReadQuota != nil {
+	if org.PrepaidWriteQuota != nil {
 		newPrepaidWriteQuota := bi.BillingPlan.BaseWriteQuota + bi.BillingPlan.SeatWriteQuota*numSeats
 		org.PrepaidWriteQuota = &newPrepaidWriteQuota
 	}
+	if org.PrepaidScanQuota != nil {
+		newPrepaidScanQuota := bi.BillingPlan.BaseScanQuota + bi.BillingPlan.SeatScanQuota*numSeats
+		org.PrepaidScanQuota = &newPrepaidScanQuota
+	}
 
-	if org.PrepaidReadQuota != nil || org.PrepaidWriteQuota != nil {
+	if org.PrepaidReadQuota != nil || org.PrepaidWriteQuota != nil || org.PrepaidScanQuota != nil {
 		org.UpdatedOn = time.Now()
 		_, err := hub.DB.WithContext(ctx).Model(org).
-			Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+			Column("prepaid_read_quota", "prepaid_write_quota", "prepaid_scan_quota", "updated_on").
 			WherePK().
 			Update()
 		if err != nil {

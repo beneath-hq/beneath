@@ -28,8 +28,10 @@ type Organization struct {
 	UpdatedOn         time.Time `sql:",default:now()"`
 	PrepaidReadQuota  *int64    // bytes
 	PrepaidWriteQuota *int64    // bytes
+	PrepaidScanQuota  *int64    // bytes
 	ReadQuota         *int64    // bytes // NOTE: when updating value, clear secret cache
 	WriteQuota        *int64    // bytes // NOTE: when updating value, clear secret cache
+	ScanQuota         *int64    // bytes // NOTE: when updating value, clear secret cache
 	Projects          []*Project
 	Users             []*User `pg:"fk:billing_organization_id"`
 
@@ -283,10 +285,11 @@ func (o *Organization) UpdateDetails(ctx context.Context, name *string, displayN
 }
 
 // UpdateQuotas updates the quotas enforced upon the organization
-func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
+func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
 	// set fields
 	o.ReadQuota = readQuota
 	o.WriteQuota = writeQuota
+	o.ScanQuota = scanQuota
 
 	// validate
 	err := GetValidator().Struct(o)
@@ -296,7 +299,7 @@ func (o *Organization) UpdateQuotas(ctx context.Context, readQuota *int64, write
 
 	// update
 	o.UpdatedOn = time.Now()
-	_, err = hub.DB.ModelContext(ctx, o).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, o).Column("read_quota", "write_quota", "scan_quota", "updated_on").WherePK().Update()
 
 	// clear cache for the organization's users' secrets
 	getSecretCache().ClearForOrganization(ctx, o.OrganizationID)
@@ -309,15 +312,17 @@ func (o *Organization) UpdatePrepaidQuotas(ctx context.Context, billingPlan *Bil
 	numSeats := int64(len(o.Users))
 	prepaidReadQuota := billingPlan.BaseReadQuota + billingPlan.SeatReadQuota*numSeats
 	prepaidWriteQuota := billingPlan.BaseWriteQuota + billingPlan.SeatWriteQuota*numSeats
+	prepaidScanQuota := billingPlan.BaseScanQuota + billingPlan.SeatScanQuota*numSeats
 
 	// set fields
 	o.PrepaidReadQuota = &prepaidReadQuota
 	o.PrepaidWriteQuota = &prepaidWriteQuota
+	o.PrepaidScanQuota = &prepaidScanQuota
 	o.UpdatedOn = time.Now()
 
 	// update
 	_, err := hub.DB.WithContext(ctx).Model(o).
-		Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+		Column("prepaid_read_quota", "prepaid_write_quota", "prepaid_scan_quota", "updated_on").
 		WherePK().
 		Update()
 	if err != nil {
@@ -368,9 +373,10 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 	user.BillingOrganizationID = targetOrg.OrganizationID
 	user.ReadQuota = nil
 	user.WriteQuota = nil
+	user.ScanQuota = nil
 	user.UpdatedOn = time.Now()
 	_, err := hub.DB.WithContext(ctx).Model(user).
-		Column("billing_organization_id", "read_quota", "write_quota", "updated_on").
+		Column("billing_organization_id", "read_quota", "write_quota", "scan_quota", "updated_on").
 		WherePK().
 		Update()
 	if err != nil {
@@ -393,15 +399,19 @@ func (o *Organization) TransferUser(ctx context.Context, user *User, targetOrg *
 
 	// increment the target organization's prepaid quota by the seat quota
 	// we do this now because we want to show the new usage capacity in the UI as soon as possible
-	if targetBillingInfo.BillingPlan.SeatReadQuota > 0 || targetBillingInfo.BillingPlan.SeatWriteQuota > 0 {
+	if targetBillingInfo.BillingPlan.SeatReadQuota > 0 || targetBillingInfo.BillingPlan.SeatWriteQuota > 0 || targetBillingInfo.BillingPlan.SeatScanQuota > 0 {
 		newPrepaidReadQuota := *targetOrg.PrepaidReadQuota + targetBillingInfo.BillingPlan.SeatReadQuota
 		newPrepaidWriteQuota := *targetOrg.PrepaidWriteQuota + targetBillingInfo.BillingPlan.SeatWriteQuota
+		newPrepaidScanQuota := *targetOrg.PrepaidScanQuota + targetBillingInfo.BillingPlan.SeatScanQuota
+
 		targetOrg.PrepaidReadQuota = &newPrepaidReadQuota
 		targetOrg.PrepaidWriteQuota = &newPrepaidWriteQuota
+		targetOrg.PrepaidScanQuota = &newPrepaidScanQuota
+
 		targetOrg.UpdatedOn = time.Now()
 
 		_, err = hub.DB.WithContext(ctx).Model(targetOrg).
-			Column("prepaid_read_quota", "prepaid_write_quota", "updated_on").
+			Column("prepaid_read_quota", "prepaid_write_quota", "prepaid_scan_quota", "updated_on").
 			WherePK().
 			Update()
 		if err != nil {

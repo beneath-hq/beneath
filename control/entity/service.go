@@ -21,6 +21,7 @@ type Service struct {
 	Project     *Project
 	ReadQuota   *int64    // NOTE: when updating value, clear secret cache
 	WriteQuota  *int64    // NOTE: when updating value, clear secret cache
+	ScanQuota   *int64    // NOTE: when updating value, clear secret cache
 	CreatedOn   time.Time `sql:",notnull,default:now()"`
 	UpdatedOn   time.Time `sql:",notnull,default:now()"`
 	Secrets     []*ServiceSecret
@@ -86,7 +87,7 @@ func FindServiceByOrganizationProjectAndName(ctx context.Context, organizationNa
 }
 
 // Stage creates or updates the service
-func (s *Service) Stage(ctx context.Context, description *string, sourceURL *string, readQuota *int64, writeQuota *int64) error {
+func (s *Service) Stage(ctx context.Context, description *string, sourceURL *string, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
 	// determine whether to insert or update
 	update := (s.ServiceID != uuid.Nil)
 
@@ -121,6 +122,15 @@ func (s *Service) Stage(ctx context.Context, description *string, sourceURL *str
 			s.WriteQuota = nil
 		} else {
 			s.WriteQuota = writeQuota
+		}
+		save = true
+	}
+
+	if scanQuota != nil {
+		if *scanQuota == 0 {
+			s.ScanQuota = nil
+		} else {
+			s.ScanQuota = scanQuota
 		}
 		save = true
 	}

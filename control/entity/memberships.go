@@ -34,6 +34,7 @@ type OrganizationMember struct {
 	Admin                 bool
 	ReadQuota             *int
 	WriteQuota            *int
+	ScanQuota             *int
 }
 
 // FindProjectMembers finds useful information about the project's members, represented in
@@ -76,7 +77,8 @@ func FindOrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]*
 			p."create",
 			p.admin,
 			u.read_quota,
-			u.write_quota
+			u.write_quota,
+			u.scan_quota
 		from permissions_users_organizations p
 		join organizations o on p.user_id = o.user_id
 		join users u on p.user_id = u.user_id

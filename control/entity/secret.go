@@ -46,11 +46,17 @@ type Secret interface {
 	// GetBillingWriteQuota returns the billing organization's write quota (or nil if unlimited)
 	GetBillingWriteQuota() *int64
 
+	// GetBillingScanQuota returns the billing organization's scan quota (or nil if unlimited)
+	GetBillingScanQuota() *int64
+
 	// GetOwnerReadQuota returns the owner's read quota (or nil if unlimited)
 	GetOwnerReadQuota() *int64
 
 	// GetOwnerWriteQuota returns the owner's write quota (or nil if unlimited)
 	GetOwnerWriteQuota() *int64
+
+	// GetOwnerScanQuota returns the owner's scan quota (or nil if unlimited)
+	GetOwnerScanQuota() *int64
 
 	// StreamPermissions returns the secret's permissions for a given stream
 	StreamPermissions(ctx context.Context, streamID uuid.UUID, projectID uuid.UUID, public bool) StreamPermissions
@@ -79,8 +85,10 @@ type BaseSecret struct {
 	BillingOrganizationID uuid.UUID         `sql:"-"`
 	BillingReadQuota      *int64            `sql:"-"`
 	BillingWriteQuota     *int64            `sql:"-"`
+	BillingScanQuota      *int64            `sql:"-"`
 	OwnerReadQuota        *int64            `sql:"-"`
 	OwnerWriteQuota       *int64            `sql:"-"`
+	OwnerScanQuota        *int64            `sql:"-"`
 }
 
 // GetBillingOrganizationID implements Secret
@@ -103,6 +111,11 @@ func (s *BaseSecret) GetBillingWriteQuota() *int64 {
 	return s.BillingWriteQuota
 }
 
+// GetBillingScanQuota implements Secret
+func (s *BaseSecret) GetBillingScanQuota() *int64 {
+	return s.BillingScanQuota
+}
+
 // GetOwnerReadQuota implements Secret
 func (s *BaseSecret) GetOwnerReadQuota() *int64 {
 	return s.OwnerReadQuota
@@ -111,4 +124,9 @@ func (s *BaseSecret) GetOwnerReadQuota() *int64 {
 // GetOwnerWriteQuota implements Secret
 func (s *BaseSecret) GetOwnerWriteQuota() *int64 {
 	return s.OwnerWriteQuota
+}
+
+// GetOwnerScanQuota implements Secret
+func (s *BaseSecret) GetOwnerScanQuota() *int64 {
+	return s.OwnerScanQuota
 }

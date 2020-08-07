@@ -48,10 +48,13 @@ type PrivateOrganization struct {
 	UpdatedOn         time.Time                             `json:"updatedOn"`
 	PrepaidReadQuota  *int                                  `json:"prepaidReadQuota"`
 	PrepaidWriteQuota *int                                  `json:"prepaidWriteQuota"`
+	PrepaidScanQuota  *int                                  `json:"prepaidScanQuota"`
 	ReadQuota         *int                                  `json:"readQuota"`
 	WriteQuota        *int                                  `json:"writeQuota"`
+	ScanQuota         *int                                  `json:"scanQuota"`
 	ReadUsage         int                                   `json:"readUsage"`
 	WriteUsage        int                                   `json:"writeUsage"`
+	ScanUsage         int                                   `json:"scanUsage"`
 	Projects          []*entity.Project                     `json:"projects"`
 	PersonalUserID    *uuid.UUID                            `json:"personalUserID"`
 	PersonalUser      *entity.User                          `json:"personalUser"`

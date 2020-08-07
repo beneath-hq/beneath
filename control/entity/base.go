@@ -50,6 +50,9 @@ const (
 
 	// WriteOverageProduct represents the write_overage product
 	WriteOverageProduct Product = "write_overage"
+
+	// ScanOverageProduct represents the scan_overage product
+	ScanOverageProduct Product = "scan_overage"
 )
 
 // Currency represents the currency by which the organization is billed

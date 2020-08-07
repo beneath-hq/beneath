@@ -28,6 +28,7 @@ type User struct {
 	ConsentNewsletter     bool      `sql:",notnull,default:false"`
 	ReadQuota             *int64    // NOTE: when updating value, clear secret cache
 	WriteQuota            *int64    // NOTE: when updating value, clear secret cache
+	ScanQuota             *int64    // NOTE: when updating value, clear secret cache
 	BillingOrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"` // NOTE: when updating value, clear secret cache
 	BillingOrganization   *Organization
 	Projects              []*Project      `pg:"many2many:permissions_users_projects,fk:user_id,joinFK:project_id"`
@@ -166,8 +167,10 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	// set the organization's default quotas
 	org.PrepaidReadQuota = &defaultBillingPlan.ReadQuota
 	org.PrepaidWriteQuota = &defaultBillingPlan.WriteQuota
+	org.PrepaidScanQuota = &defaultBillingPlan.ScanQuota
 	org.ReadQuota = &defaultBillingPlan.ReadQuota
 	org.WriteQuota = &defaultBillingPlan.WriteQuota
+	org.ScanQuota = &defaultBillingPlan.ScanQuota
 
 	// try out all possible usernames
 	created := false
@@ -304,9 +307,10 @@ func (u *User) RegisterConsent(ctx context.Context, terms *bool, newsletter *boo
 }
 
 // UpdateQuotas change the user's quotas
-func (u *User) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64) error {
+func (u *User) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
 	u.ReadQuota = readQuota
 	u.WriteQuota = writeQuota
+	u.ScanQuota = scanQuota
 
 	// validate and save
 	u.UpdatedOn = time.Now()
@@ -314,7 +318,7 @@ func (u *User) UpdateQuotas(ctx context.Context, readQuota *int64, writeQuota *i
 	if err != nil {
 		return err
 	}
-	_, err = hub.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "updated_on").WherePK().Update()
+	_, err = hub.DB.ModelContext(ctx, u).Column("read_quota", "write_quota", "scan_quota", "updated_on").WherePK().Update()
 	if err != nil {
 		return err
 	}

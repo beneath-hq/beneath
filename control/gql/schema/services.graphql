@@ -12,6 +12,7 @@ extend type Mutation {
     sourceURL: String,
     readQuota: Int,
     writeQuota: Int,
+    scanQuota: Int,
   ): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
@@ -25,6 +26,7 @@ type Service {
   project: Project!
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
 }
 
 type PermissionsServicesStreams {

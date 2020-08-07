@@ -57,6 +57,11 @@ func (s *AnonymousSecret) GetBillingWriteQuota() *int64 {
 	panic(fmt.Errorf("Called GetBillingWriteQuota on an anonymous secret"))
 }
 
+// GetBillingScanQuota implements Secret
+func (s *AnonymousSecret) GetBillingScanQuota() *int64 {
+	panic(fmt.Errorf("Called GetBillingScanQuota on an anonymous secret"))
+}
+
 // GetOwnerReadQuota implements Secret
 func (s *AnonymousSecret) GetOwnerReadQuota() *int64 {
 	panic(fmt.Errorf("Called GetOwnerReadQuota on an anonymous secret"))
@@ -65,6 +70,11 @@ func (s *AnonymousSecret) GetOwnerReadQuota() *int64 {
 // GetOwnerWriteQuota implements Secret
 func (s *AnonymousSecret) GetOwnerWriteQuota() *int64 {
 	panic(fmt.Errorf("Called GetOwnerWriteQuota on an anonymous secret"))
+}
+
+// GetOwnerScanQuota implements Secret
+func (s *AnonymousSecret) GetOwnerScanQuota() *int64 {
+	panic(fmt.Errorf("Called GetOwnerScanQuota on an anonymous secret"))
 }
 
 // StreamPermissions implements the Secret interface

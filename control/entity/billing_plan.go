@@ -11,9 +11,20 @@ import (
 )
 
 // BillingPlan represents a Billing Plan that an Organization can subscribe to.
+//
+// Reads: The number of bytes that are queried from the {log, index, resulting table of a warehouse query} and sent over the network.
+// Writes: The number of bytes that are written to Beneath and sent over the network. We measure the size of the compressed Avro data.
+// 				 Though we store the data in multiple downstream formats, we don't multiply or split out the Write metric by the destinations.
+// Scans: The number of bytes that are scanned in a warehouse query.
+//
+// XQuotas (where X = Read, Write, Scan) are the absolute limits on an organization's usage.
+// The X service will get shut off once the XQuota is reached.
+//
 // Here's how the quota arithmetic works:
-// prepaid quota = base quota + (seats * seat quota)
-// potential overage = quota - prepaid quota
+// PrepaidXQuota = BaseXQuota + (numSeats * SeatXQuota)
+// maximum potential XOverageBytes = XQuota - PrepaidXQuota
+// The computed PrepaidXQuota is stored in the Organization object. See organization.go
+// XOverageBytes is computed in billing_task_b_compute_bill_resources.go
 type BillingPlan struct {
 	BillingPlanID          uuid.UUID       `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Default                bool            `sql:",notnull,default:false"`
@@ -26,12 +37,16 @@ type BillingPlan struct {
 	SeatPriceCents         int32           `sql:",notnull"`
 	BaseReadQuota          int64           `sql:",notnull"` // bytes
 	BaseWriteQuota         int64           `sql:",notnull"` // bytes
+	BaseScanQuota          int64           `sql:",notnull"` // bytes
 	SeatReadQuota          int64           `sql:",notnull"` // bytes
 	SeatWriteQuota         int64           `sql:",notnull"` // bytes
+	SeatScanQuota          int64           `sql:",notnull`  // bytes
 	ReadQuota              int64           `sql:",notnull"` // bytes
 	WriteQuota             int64           `sql:",notnull"` // bytes
+	ScanQuota              int64           `sql:",notnull"` // bytes
 	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
 	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
+	ScanOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
 	MultipleUsers          bool            `sql:",notnull"`
 	PrivateProjects        bool            `sql:",notnull"`
 	AvailableInUI          bool            `sql:",notnull,default:false"`
@@ -94,8 +109,10 @@ func makeDefaultBillingPlan() *BillingPlan {
 		Period:          timeutil.PeriodMonth,
 		BaseReadQuota:   2000000000,
 		BaseWriteQuota:  1000000000,
+		BaseScanQuota:   100000000000,
 		ReadQuota:       2000000000,
 		WriteQuota:      1000000000,
+		ScanQuota:       100000000000,
 		MultipleUsers:   false,
 		PrivateProjects: false,
 		AvailableInUI:   true,

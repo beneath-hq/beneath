@@ -11,11 +11,15 @@ type BillingPlan {
 	seatPriceCents: Int!
 	seatReadQuota: Int!
 	seatWriteQuota: Int!
+	seatScanQuota: Int!
 	readOveragePriceCents: Int! 
 	writeOveragePriceCents: Int!
+	scanOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
+	baseScanQuota: Int!
 	readQuota: Int!
 	writeQuota: Int!
+	scanQuota: Int!
 	availableInUI: Boolean!
 }

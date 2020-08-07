@@ -9,7 +9,7 @@ extend type Query {
 extend type Mutation {
   createOrganization(name: String!): PrivateOrganization!
   updateOrganization(organizationID: UUID!, name: String, displayName: String, description: String, photoURL: String): PrivateOrganization!
-  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int): PrivateOrganization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateOrganization!
 
   inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
   acceptOrganizationInvite(organizationID: UUID!): Boolean!
@@ -50,10 +50,13 @@ type PrivateOrganization implements Organization {
   updatedOn: Time!
   prepaidReadQuota: Int
   prepaidWriteQuota: Int
+  prepaidScanQuota: Int
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
   readUsage: Int!
   writeUsage: Int!
+  scanUsage: Int!
   projects: [Project!]!
   personalUserID: UUID
   personalUser: PrivateUser
@@ -72,4 +75,5 @@ type OrganizationMember {
   admin: Boolean!
   readQuota: Int
   writeQuota: Int
+  scanQuota: Int
 }
