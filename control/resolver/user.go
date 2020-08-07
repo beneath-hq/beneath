@@ -41,7 +41,7 @@ func (r *mutationResolver) RegisterUserConsent(ctx context.Context, userID uuid.
 	return user, nil
 }
 
-func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int) (*entity.User, error) {
+func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*entity.User, error) {
 	org := entity.FindOrganizationByUserID(ctx, userID)
 	if org == nil {
 		return nil, gqlerror.Errorf("User %s not found", userID.String())
@@ -57,7 +57,7 @@ func (r *mutationResolver) UpdateUserQuotas(ctx context.Context, userID uuid.UUI
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", org.User.BillingOrganizationID.String())
 	}
 
-	err := org.User.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota))
+	err := org.User.UpdateQuotas(ctx, IntToInt64(readQuota), IntToInt64(writeQuota), IntToInt64(scanQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating quotas: %s", err.Error())
 	}

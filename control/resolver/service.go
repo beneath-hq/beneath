@@ -43,7 +43,7 @@ func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context,
 	return service, nil
 }
 
-func (r *mutationResolver) StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int) (*entity.Service, error) {
+func (r *mutationResolver) StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) (*entity.Service, error) {
 	var project *entity.Project
 	var service *entity.Service
 
@@ -67,7 +67,7 @@ func (r *mutationResolver) StageService(ctx context.Context, organizationName st
 		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", organizationName, projectName)
 	}
 
-	err := service.Stage(ctx, description, sourceURL, IntToInt64(readQuota), IntToInt64(writeQuota))
+	err := service.Stage(ctx, description, sourceURL, IntToInt64(readQuota), IntToInt64(writeQuota), IntToInt64(scanQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error staging service: %s", err.Error())
 	}
