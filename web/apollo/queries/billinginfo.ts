@@ -13,10 +13,13 @@ export const QUERY_BILLING_INFO = gql`
 	    seatPriceCents
 	    seatReadQuota
 	    seatWriteQuota
+	    seatScanQuota
 	    readOveragePriceCents
 	    writeOveragePriceCents
+	    scanOveragePriceCents
 	    baseReadQuota
 	    baseWriteQuota
+	    baseScanQuota
       availableInUI
     }
     billingMethod {
@@ -44,12 +47,16 @@ export const UPDATE_BILLING_INFO = gql`
 	    seatPriceCents
 	    seatReadQuota
 	    seatWriteQuota
+	    seatScanQuota
 	    readOveragePriceCents
 	    writeOveragePriceCents
+	    scanOveragePriceCents
 	    baseReadQuota
 	    baseWriteQuota
+	    baseScanQuota
       readQuota
       writeQuota
+      scanQuota
     }
     billingMethod {
       billingMethodID

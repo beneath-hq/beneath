@@ -20,8 +20,10 @@ export const QUERY_ME = gql`
       updatedOn
       prepaidReadQuota
       prepaidWriteQuota
+      prepaidScanQuota
       readQuota
       writeQuota
+      scanQuota
       readUsage
       writeUsage
       personalUser {
@@ -33,6 +35,7 @@ export const QUERY_ME = gql`
         consentNewsletter
         readQuota
         writeQuota
+        scanQuota
         billingOrganizationID
         billingOrganization {
           organizationID
@@ -70,8 +73,10 @@ export const QUERY_ORGANIZATION = gql`
         updatedOn
         prepaidReadQuota
         prepaidWriteQuota
+        prepaidScanQuota
         readQuota
         writeQuota
+        scanQuota
         readUsage
         writeUsage
         personalUser {
@@ -83,6 +88,7 @@ export const QUERY_ORGANIZATION = gql`
           consentNewsletter
           readQuota
           writeQuota
+          scanQuota
           billingOrganizationID
           billingOrganization {
             organizationID
@@ -113,6 +119,7 @@ export const QUERY_ORGANIZATION_MEMBERS = gql`
       admin
       readQuota
       writeQuota
+      scanQuota
     }
   }
 `;
@@ -135,6 +142,7 @@ export const UPDATE_ORGANIZATION = gql`
         updatedOn
         readQuota
         writeQuota
+        scanQuota
         billingOrganizationID
       }
     }

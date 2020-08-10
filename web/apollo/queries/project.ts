@@ -85,13 +85,15 @@ export const QUERY_PROJECT_MEMBERS = gql`
   }
 `;
 
-export const UPDATE_PROJECT = gql`
-  mutation UpdateProject($projectID: UUID!, $displayName: String, $site: String, $description: String, $photoURL: String) {
-    updateProject(projectID: $projectID, displayName: $displayName, site: $site, description: $description, photoURL: $photoURL) {
+export const STAGE_PROJECT = gql`
+  mutation StageProject($organizationName: String!, $projectName: String!, $displayName: String, $public: Boolean, $description: String, $site: String, $photoURL: String) {
+    stageProject(organizationName: $organizationName, projectName: $projectName, displayName: $displayName, public: $public, description: $description, site: $site, photoURL: $photoURL) {
       projectID
+      name
       displayName
-      site
+      public
       description
+      site
       photoURL
       updatedOn
     }

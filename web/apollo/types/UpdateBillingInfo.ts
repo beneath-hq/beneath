@@ -16,12 +16,16 @@ export interface UpdateBillingInfo_updateBillingInfo_billingPlan {
   seatPriceCents: number;
   seatReadQuota: number;
   seatWriteQuota: number;
+  seatScanQuota: number;
   readOveragePriceCents: number;
   writeOveragePriceCents: number;
+  scanOveragePriceCents: number;
   baseReadQuota: number;
   baseWriteQuota: number;
+  baseScanQuota: number;
   readQuota: number;
   writeQuota: number;
+  scanQuota: number;
 }
 
 export interface UpdateBillingInfo_updateBillingInfo_billingMethod {

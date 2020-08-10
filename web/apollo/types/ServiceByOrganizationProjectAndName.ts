@@ -15,6 +15,7 @@ export interface ServiceByOrganizationProjectAndName_serviceByOrganizationProjec
   sourceURL: string | null;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
 }
 
 export interface ServiceByOrganizationProjectAndName {

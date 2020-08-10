@@ -13,6 +13,7 @@ export const QUERY_SERVICE = gql`
       sourceURL
       readQuota
       writeQuota
+      scanQuota
     }
   }
 `;

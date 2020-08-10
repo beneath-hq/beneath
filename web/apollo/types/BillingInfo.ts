@@ -17,10 +17,13 @@ export interface BillingInfo_billingInfo_billingPlan {
   seatPriceCents: number;
   seatReadQuota: number;
   seatWriteQuota: number;
+  seatScanQuota: number;
   readOveragePriceCents: number;
   writeOveragePriceCents: number;
+  scanOveragePriceCents: number;
   baseReadQuota: number;
   baseWriteQuota: number;
+  baseScanQuota: number;
   availableInUI: boolean;
 }
 

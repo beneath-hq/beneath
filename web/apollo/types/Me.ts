@@ -33,6 +33,7 @@ export interface Me_me_personalUser {
   consentNewsletter: boolean;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
   billingOrganizationID: ControlUUID;
   billingOrganization: Me_me_personalUser_billingOrganization;
 }
@@ -57,8 +58,10 @@ export interface Me_me {
   updatedOn: ControlTime;
   prepaidReadQuota: number | null;
   prepaidWriteQuota: number | null;
+  prepaidScanQuota: number | null;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
   readUsage: number;
   writeUsage: number;
   personalUser: Me_me_personalUser | null;

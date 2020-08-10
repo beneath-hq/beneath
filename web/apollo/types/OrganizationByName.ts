@@ -54,6 +54,7 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_perso
   consentNewsletter: boolean;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
   billingOrganizationID: ControlUUID;
   billingOrganization: OrganizationByName_organizationByName_PrivateOrganization_personalUser_billingOrganization;
 }
@@ -78,8 +79,10 @@ export interface OrganizationByName_organizationByName_PrivateOrganization {
   updatedOn: ControlTime;
   prepaidReadQuota: number | null;
   prepaidWriteQuota: number | null;
+  prepaidScanQuota: number | null;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
   readUsage: number;
   writeUsage: number;
   personalUser: OrganizationByName_organizationByName_PrivateOrganization_personalUser | null;

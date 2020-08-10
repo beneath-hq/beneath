@@ -53,6 +53,15 @@ const Springboard: FC = () => {
               quota={me.writeQuota}
             />
           )}
+          {/* {me.scanQuota && (
+            <UsageTile
+              href={`/organization?organization_name=${me.name}&tab=monitoring`}
+              as={`/${me.name}/-/monitoring`}
+              title="Scan quota usage"
+              usage={me.scanUsage}
+              quota={me.scanQuota}
+            />
+          )} */}
         </>
       )}
       <ActionTile title="Get Started" href="https://about.beneath.dev/docs/quick-starts/" />

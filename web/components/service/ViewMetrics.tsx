@@ -22,6 +22,7 @@ const ViewMetrics: FC<ViewMetricsProps> = ({ service }) => {
           entityID={service.serviceID}
           readQuota={service.readQuota}
           writeQuota={service.writeQuota}
+          scanQuota={service.scanQuota}
         />
         <MetricsWeek
           entityKind={EntityKind.Service}
@@ -35,6 +36,12 @@ const ViewMetrics: FC<ViewMetricsProps> = ({ service }) => {
           field="writeBytes"
           title="Data written in the last 7 days"
         />
+        <MetricsWeek
+          entityKind={EntityKind.Service}
+          entityID={service.serviceID}
+          field="scanBytes"
+          title="Data scanned in the last 7 days"
+        />
       </Grid>
     </>
   );
@@ -47,16 +54,18 @@ export interface MetricsOverviewProps {
   entityID: string;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
 }
 
-const MetricsOverview: FC<MetricsOverviewProps> = ({ entityKind, entityID, readQuota, writeQuota }) => {
+const MetricsOverview: FC<MetricsOverviewProps> = ({ entityKind, entityID, readQuota, writeQuota, scanQuota }) => {
   const { metrics, total, latest, error } = useMonthlyMetrics(entityKind, entityID);
   return (
     <>
-      {(readQuota || writeQuota) && (
+      {(readQuota || writeQuota || scanQuota) && (
         <Grid container spacing={2} item xs={12}>
           {readQuota && <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={readQuota} />}
           {writeQuota && <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={writeQuota} />}
+          {scanQuota && <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={scanQuota} />}
         </Grid>
       )}
       <TopIndicators latest={latest} total={total} />

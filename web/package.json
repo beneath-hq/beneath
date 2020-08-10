@@ -32,8 +32,8 @@
     "eslint-plugin-react-hooks": "^2.3.0",
     "express": "^4.17.1",
     "express-http-to-https": "^1.1.4",
-    "graphql": "^14.5.8",
-    "graphql-tag": "^2.10.1",
+    "graphql": "^14.3.1",
+    "graphql-tag": "^2.10.4",
     "helmet": "^3.21.2",
     "isomorphic-unfetch": "^3.0.0",
     "lodash": "^4.17.15",
@@ -68,5 +68,8 @@
     "eslint-plugin-react": "^7.17.0",
     "tslint": "^5.18.0",
     "typescript": "^3.5.3"
+  },
+  "resolutions": {
+    "graphql": "^0.14.0"
   }
 }

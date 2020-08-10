@@ -15,6 +15,7 @@ export interface UpdateOrganization_updateOrganization_personalUser {
   updatedOn: ControlTime;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
   billingOrganizationID: ControlUUID;
 }
 

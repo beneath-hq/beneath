@@ -86,12 +86,20 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
       detail: displayPrepaidQuota(organization.prepaidWriteQuota, billingInfo.billingPlan.default),
     },
     {
+      name: "Prepaid scan quota",
+      detail: displayPrepaidQuota(organization.prepaidScanQuota, billingInfo.billingPlan.default),
+    },
+    {
       name: "Read quota",
       detail: organization.readQuota ? (organization.readQuota / 10 ** 9).toString() + " GB" : "unlimited",
     },
     {
       name: "Write quota",
       detail: organization.writeQuota ? (organization.writeQuota / 10 ** 9).toString() + " GB" : "unlimited",
+    },
+    {
+      name: "Scan quota",
+      detail: organization.scanQuota ? (organization.scanQuota / 10 ** 9).toString() + " GB" : "unlimited",
     },
   ];
 

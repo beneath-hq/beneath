@@ -19,6 +19,7 @@ export interface OrganizationMembers_organizationMembers {
   admin: boolean;
   readQuota: number | null;
   writeQuota: number | null;
+  scanQuota: number | null;
 }
 
 export interface OrganizationMembers {
