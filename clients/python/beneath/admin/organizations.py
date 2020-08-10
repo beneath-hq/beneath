@@ -27,6 +27,7 @@ class Organizations:
               updatedOn
               readQuota
               writeQuota
+              scanQuota
               readUsage
               writeUsage
               personalUser {
@@ -36,6 +37,7 @@ class Organizations:
                 updatedOn
                 readQuota
                 writeQuota
+                scanQuota
                 billingOrganizationID 
               }
             }
@@ -69,6 +71,7 @@ class Organizations:
               updatedOn
               readQuota
               writeQuota
+              scanQuota
               readUsage
               writeUsage
               personalUser {
@@ -78,6 +81,7 @@ class Organizations:
                 updatedOn
                 readQuota
                 writeQuota
+                scanQuota
                 billingOrganizationID 
               }
             }
@@ -104,6 +108,7 @@ class Organizations:
             admin
             readQuota
             writeQuota
+            scanQuota
           }
         }
       """
@@ -128,6 +133,7 @@ class Organizations:
             personalUserID
             readQuota
             writeQuota
+            scanQuota
             readUsage
             writeUsage
             projects {
@@ -161,6 +167,7 @@ class Organizations:
             personalUserID
             readQuota
             writeQuota
+            scanQuota
             readUsage
             writeUsage
             projects {
@@ -172,20 +179,22 @@ class Organizations:
     )
     return result['updateOrganization']
 
-  async def update_quota(self, organization_id, read_quota_bytes, write_quota_bytes):
+  async def update_quota(self, organization_id, read_quota_bytes, write_quota_bytes, scan_quota_bytes):
     result = await self.conn.query_control(
       variables={
         'organizationID': organization_id,
         'readQuota': read_quota_bytes,
         'writeQuota': write_quota_bytes,
+        'scanQuota': scan_quota_bytes,
       },
       query="""
-        mutation UpdateOrganizationQuotas($organizationID: UUID!, $readQuota: Int, $writeQuota: Int) {
-          updateOrganizationQuotas(organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota) {
+        mutation UpdateOrganizationQuotas($organizationID: UUID!, $readQuota: Int, $writeQuota: Int, $scanQuota: Int) {
+          updateOrganizationQuotas(organizationID: $organizationID, readQuota: $readQuota, writeQuota: $writeQuota, scanQuota: $scanQuota) {
             organizationID
             name
             readQuota
             writeQuota
+            scanQuota
           }
         }
       """
@@ -222,20 +231,22 @@ class Organizations:
     )
     return result['acceptOrganizationInvite']
 
-  async def update_user_quota(self, user_id, read_quota_bytes, write_quota_bytes):
+  async def update_user_quota(self, user_id, read_quota_bytes, write_quota_bytes, scan_quota_bytes):
     result = await self.conn.query_control(
       variables={
         'userID': user_id,
         'readQuota': read_quota_bytes,
         'writeQuota': write_quota_bytes,
+        'scanQuota': scan_quota_bytes,
       },
       query="""
-        mutation UpdateUserQuotas($userID: UUID!, $readQuota: Int, $writeQuota: Int) {
-          updateUserQuotas(userID: $userID, readQuota: $readQuota, writeQuota: $writeQuota) {
+        mutation UpdateUserQuotas($userID: UUID!, $readQuota: Int, $writeQuota: Int, $scanQuota: Int) {
+          updateUserQuotas(userID: $userID, readQuota: $readQuota, writeQuota: $writeQuota, scanQuota: $scanQuota) {
             userID
             email
             readQuota
             writeQuota
+            scanQuota
             createdOn
             updatedOn
           }

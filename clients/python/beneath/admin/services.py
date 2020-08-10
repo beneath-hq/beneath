@@ -27,6 +27,7 @@ class Services:
             sourceURL
             readQuota
             writeQuota
+            scanQuota
           }
         }
       """
@@ -42,6 +43,7 @@ class Services:
     source_url=None,
     read_quota_bytes=None,
     write_quota_bytes=None,
+    scan_quota_bytes=None,
   ):
     result = await self.conn.query_control(
       variables={
@@ -52,6 +54,7 @@ class Services:
         'sourceURL': source_url,
         'readQuota': read_quota_bytes,
         'writeQuota': write_quota_bytes,
+        'scanQuota': scan_quota_bytes,
       },
       query="""
         mutation StageService(
@@ -62,6 +65,7 @@ class Services:
           $sourceURL: String,
           $readQuota: Int,
           $writeQuota: Int,
+          $scanQuota: Int,
         ) {
           stageService(
             organizationName: $organizationName,
@@ -71,6 +75,7 @@ class Services:
             sourceURL: $sourceURL,
             readQuota: $readQuota,
             writeQuota: $writeQuota,
+            scanQuota: $scanQuota,
           ) {
             serviceID
             name
@@ -78,6 +83,7 @@ class Services:
             sourceURL
             readQuota
             writeQuota
+            scanQuota
           }
         }
       """
