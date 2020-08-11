@@ -6,24 +6,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
   from beneath.client import Client
 
-from collections.abc import Mapping
-import io
-import json
-from typing import Iterable, Tuple
+from typing import Iterable
 import uuid
 
-from fastavro import parse_schema
-from fastavro import schemaless_reader
-from fastavro import schemaless_writer
-
 from beneath.instance import DryStreamInstance, StreamInstance
-from beneath.proto import gateway_pb2
-from beneath.utils import (
-  ms_to_datetime,
-  ms_to_pd_timestamp,
-  StreamQualifier,
-  timestamp_to_ms,
-)
+from beneath.schema import Schema
+from beneath.utils import StreamQualifier
 
 
 class Stream:
@@ -37,7 +25,7 @@ class Stream:
   qualifier: StreamQualifier
   admin_data: dict
   stream_id: uuid.UUID
-  avro_schema_parsed: dict
+  schema: Schema
   primary_instance: StreamInstance
 
   # INITIALIZATION
@@ -47,7 +35,7 @@ class Stream:
     self.qualifier: StreamQualifier = None
     self.admin_data: dict = None
     self.stream_id: uuid.UUID = None
-    self.avro_schema_parsed: dict = None
+    self.schema: Schema = None
     self.primary_instance: StreamInstance = None
 
   @classmethod
@@ -74,7 +62,7 @@ class Stream:
   def _set_admin_data(self, admin_data):
     self.admin_data = admin_data
     self.stream_id = uuid.UUID(hex=self.admin_data["streamID"])
-    self.avro_schema_parsed = parse_schema(json.loads(self.admin_data["avroSchema"]))
+    self.schema = Schema(self.admin_data["avroSchema"])
     if "primaryStreamInstance" in self.admin_data and self.admin_data["primaryStreamInstance"] is not None:
       self.primary_instance = StreamInstance(stream=self, admin_data=self.admin_data["primaryStreamInstance"])
 
@@ -101,37 +89,3 @@ class Stream:
     )
     instance = StreamInstance(stream=self, admin_data=instance)
     return instance
-
-  # ENCODING / DECODING RECORDS
-
-  def record_to_pb(self, record: Mapping) -> Tuple[gateway_pb2.Record, int]:
-    if not isinstance(record, Mapping):
-      raise TypeError("write error: record must be a mapping, got {}".format(record))
-    avro = self._encode_avro(record)
-    timestamp = self._extract_record_timestamp(record)
-    pb = gateway_pb2.Record(avro_data=avro, timestamp=timestamp)
-    return (pb, pb.ByteSize())
-
-  def pb_to_record(self, pb: gateway_pb2.Record, to_dataframe: bool) -> Mapping:
-    record = self._decode_avro(pb.avro_data)
-    record["@meta.timestamp"] = ms_to_pd_timestamp(pb.timestamp) if to_dataframe else ms_to_datetime(pb.timestamp)
-    return record
-
-  def _encode_avro(self, record: Mapping):
-    writer = io.BytesIO()
-    schemaless_writer(writer, self.avro_schema_parsed, record)
-    result = writer.getvalue()
-    writer.close()
-    return result
-
-  def _decode_avro(self, data):
-    reader = io.BytesIO(data)
-    record = schemaless_reader(reader, self.avro_schema_parsed)
-    reader.close()
-    return record
-
-  @staticmethod
-  def _extract_record_timestamp(record: Mapping) -> int:
-    if ("@meta" in record) and ("timestamp" in record["@meta"]):
-      return timestamp_to_ms(record["@meta"]["timestamp"])
-    return 0  # 0 tells the server to set timestamp to its current time

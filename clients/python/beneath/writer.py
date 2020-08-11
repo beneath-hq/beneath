@@ -59,7 +59,7 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
     if isinstance(records, Mapping):
       records = [records]
     for record in records:
-      (pb, size) = instance.stream.record_to_pb(record)
+      (pb, size) = instance.stream.schema.record_to_pb(record)
       await super().write(value=(instance.instance_id, pb), size=size)
 
 
@@ -101,7 +101,7 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
     if isinstance(records, Mapping):
       records = [records]
     for record in records:
-      (_, size) = instance.stream.record_to_pb(record)
+      (_, size) = instance.stream.schema.record_to_pb(record)
       value: InstanceRecordAndSize = (instance, record, size)
       await super().write(value=value, size=size)
 

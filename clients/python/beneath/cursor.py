@@ -1,9 +1,10 @@
-# Allows us to use StreamInstance as a type hint without an import cycle
+# Allows us to use classes as type hints without an import cycle
 # pylint: disable=wrong-import-position,ungrouped-imports
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-  from beneath.instance import StreamInstance
+  from beneath.connection import Connection
+  from beneath.schema import Schema
 
 import asyncio
 from collections.abc import Mapping
@@ -19,20 +20,21 @@ from beneath.utils import AIOTicker
 
 class Cursor:
 
-  def __init__(self, instance: StreamInstance, replay_cursor: bytes, changes_cursor: bytes):
-    self.instance = instance
+  def __init__(self, connection: Connection, schema: Schema, replay_cursor: bytes, changes_cursor: bytes):
+    self.connection = connection
+    self.schema = schema
     self.replay_cursor = replay_cursor
     self.changes_cursor = changes_cursor
 
   @property
   def _top_level_columns(self):
-    return [field["name"] for field in self.instance.stream.avro_schema_parsed["fields"]].append("@meta.timestamp")
+    return [field["name"] for field in self.schema.parsed_avro["fields"]].append("@meta.timestamp")
 
   async def read_next(self, limit: int = config.DEFAULT_READ_BATCH_SIZE, to_dataframe=False) -> Iterable[Mapping]:
     batch = await self._read_next_replay(limit=limit)
     if batch is None:
       return None
-    records = (self.instance.stream.pb_to_record(pb, to_dataframe) for pb in batch)
+    records = (self.schema.pb_to_record(pb, to_dataframe) for pb in batch)
     if to_dataframe:
       return pd.DataFrame(records, columns=self._top_level_columns)
     return records
@@ -45,7 +47,7 @@ class Cursor:
     batch = await self._read_next_changes(limit=limit)
     if batch is None:
       return None
-    records = (self.instance.stream.pb_to_record(pb, to_dataframe) for pb in batch)
+    records = (self.schema.pb_to_record(pb, to_dataframe) for pb in batch)
     if to_dataframe:
       return pd.DataFrame(records, columns=self._top_level_columns)
     return records
@@ -79,7 +81,7 @@ class Cursor:
 
       batch_len = 0
       for pb in batch:
-        record = self.instance.stream.pb_to_record(pb=pb, to_dataframe=False)
+        record = self.schema.pb_to_record(pb=pb, to_dataframe=False)
         records.append(record)
         batch_len += 1
         bytes_loaded += len(pb.avro_data)
@@ -102,7 +104,7 @@ class Cursor:
   async def _read_next_replay(self, limit: int):
     if not self.replay_cursor:
       return None
-    resp = await self.instance.stream.client.connection.read(
+    resp = await self.connection.read(
       cursor=self.replay_cursor,
       limit=limit,
     )
@@ -112,7 +114,7 @@ class Cursor:
   async def _read_next_changes(self, limit: int):
     if not self.changes_cursor:
       return None
-    resp = await self.instance.stream.client.connection.read(
+    resp = await self.connection.read(
       cursor=self.changes_cursor,
       limit=limit,
     )
@@ -179,7 +181,7 @@ class Cursor:
         await _poll()
 
     async def _subscribe():
-      subscription = await self.instance.stream.client.connection.subscribe(
+      subscription = await self.connection.subscribe(
         cursor=self.changes_cursor,
       )
       async for _ in subscription:

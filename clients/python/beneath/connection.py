@@ -167,6 +167,25 @@ class Connection:
       metadata=self.request_metadata,
     )
 
+  async def query_warehouse(self, query: str, dry_run: bool, max_bytes_scanned: int, timeout_ms: int) -> gateway_pb2.QueryWarehouseResponse:
+    await self.ensure_connected()
+    return await self.stub.QueryWarehouse(
+      gateway_pb2.QueryWarehouseRequest(
+        query=query,
+        dry_run=dry_run,
+        max_bytes_scanned=max_bytes_scanned,
+        timeout_ms=timeout_ms,
+      ),
+      metadata=self.request_metadata,
+    )
+
+  async def poll_warehouse_job(self, job_id: bytes) -> gateway_pb2.PollWarehouseJobResponse:
+    await self.ensure_connected()
+    return await self.stub.PollWarehouseJob(
+      gateway_pb2.PollWarehouseJobRequest(job_id=job_id),
+      metadata=self.request_metadata,
+    )
+
   async def read(self, cursor: bytes, limit: int) -> gateway_pb2.ReadResponse:
     await self.ensure_connected()
     return await self.stub.Read(

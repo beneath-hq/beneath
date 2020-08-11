@@ -85,7 +85,8 @@ class ReadStream(Transform):
     state = await self.pipeline.get_state(self.state_key)
     if state:
       self.cursor = Cursor(
-        instance=self.instance,
+        connection=self.instance.stream.client.connection,
+        schema=self.instance.stream.schema,
         replay_cursor=state.get("replay"),
         changes_cursor=state.get("changes"),
       )

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 import os
 
@@ -5,6 +6,7 @@ from beneath import __version__
 from beneath import config
 from beneath.admin.client import AdminClient
 from beneath.connection import Connection
+from beneath.job import Job
 from beneath.stream import Stream
 from beneath.utils import StreamQualifier
 from beneath.writer import DryWriter, Writer
@@ -109,3 +111,21 @@ class Client:
     if dry:
       return DryWriter(max_delay_ms=write_delay_ms)
     return Writer(connection=self.connection, max_delay_ms=write_delay_ms)
+
+  # WAREHOUSE QUERY
+
+  async def query_warehouse(
+    self,
+    query: str,
+    dry: bool = False,
+    max_bytes_scanned: int = config.DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED,
+    timeout_ms: int = config.DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS,
+  ):
+    resp = await self.connection.query_warehouse(
+      query=query,
+      dry_run=dry,
+      max_bytes_scanned=max_bytes_scanned,
+      timeout_ms=timeout_ms,
+    )
+    job_data = resp.job
+    return Job(client=self, job_id=job_data.job_id, job_data=job_data)

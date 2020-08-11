@@ -57,7 +57,12 @@ class StreamInstance:
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
     changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
-    return Cursor(instance=self, replay_cursor=replay, changes_cursor=changes)
+    return Cursor(
+      connection=self.stream.client.connection,
+      schema=self.stream.schema,
+      replay_cursor=replay,
+      changes_cursor=changes,
+    )
 
   # pylint: disable=redefined-builtin
   async def query_index(self, filter: str = None) -> Cursor:
@@ -65,7 +70,12 @@ class StreamInstance:
     assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
     replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
     changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
-    return Cursor(instance=self, replay_cursor=replay, changes_cursor=changes)
+    return Cursor(
+      connection=self.stream.client.connection,
+      schema=self.stream.schema,
+      replay_cursor=replay,
+      changes_cursor=changes,
+    )
 
   # WRITING RECORDS
 
