@@ -7,10 +7,11 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
 	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 var (
-	// ErrIndexMiss is returned by NewKeyRange when a query doesn't match the index fields
+	// ErrIndexMiss is returned by newKeyRange when a query doesn't match the index fields
 	ErrIndexMiss = errors.New("you can only query indexed fields (composite keys are indexed starting with the leftmost field)")
 )
 
@@ -56,8 +57,8 @@ func (r KeyRange) Contains(key []byte) bool {
 	return bytes.Compare(key, r.Base) >= 0 && bytes.Compare(key, r.RangeEnd) < 0
 }
 
-// NewKeyRange builds a new key range based on a where query and a key codec
-func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err error) {
+// newKeyRange builds a new key range based on a where query and a key codec
+func newKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err error) {
 	// handle empty
 	if q == nil || len(q) == 0 {
 		return KeyRange{}, nil
@@ -78,10 +79,10 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 		}
 
 		// get avro type
-		avroType := c.avroFieldTypes[field]
+		fieldType := c.getFieldTypes()[field].Type
 
 		// parse arg1 value
-		arg1, err := parseJSONValue(avroType, cond.Arg1)
+		arg1, err := parseJSONValue(fieldType, cond.Arg1)
 		if err != nil {
 			return KeyRange{}, err
 		}
@@ -130,7 +131,7 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 		switch cond.Op {
 		case queryparse.ConditionOpPrefix:
 			// prefix should only work on strings, bytes and fixed
-			if !canPrefixLookup(avroType) {
+			if !canPrefixLookup(fieldType) {
 				return KeyRange{}, fmt.Errorf("cannot use '_prefix' on field '%s' because it only works on string and byte types", field)
 			}
 			base := tuple.TruncateBytesTypeForPrefixSuccessor(packed)
@@ -161,7 +162,7 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 		}
 
 		// parse cond.Arg2
-		arg2, err := parseJSONValue(avroType, cond.Arg2)
+		arg2, err := parseJSONValue(fieldType, cond.Arg2)
 		if err != nil {
 			return KeyRange{}, err
 		}
@@ -203,18 +204,15 @@ func NewKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 }
 
 // converts a query arg to a native value
-func parseJSONValue(avroType interface{}, val interface{}) (interface{}, error) {
-	return jsonNativeToAvroNative(avroType, val, map[string]interface{}{})
+func parseJSONValue(schema schemalang.Schema, val interface{}) (interface{}, error) {
+	return jsonConverter{}.convert(schema, val, true)
 }
 
 // canPrefixLookup returns true iff type is string, bytes or fixed
-func canPrefixLookup(avroType interface{}) bool {
-	switch t := avroType.(type) {
-	case string:
-		return t == "string" || t == "bytes" || t == "fixed"
-	case map[string]interface{}:
-		return canPrefixLookup(t["type"])
-	default:
-		return false
+func canPrefixLookup(schema schemalang.Schema) bool {
+	t := schema.GetType()
+	if t == schemalang.StringType || t == schemalang.BytesType || t == schemalang.FixedType {
+		return true
 	}
+	return false
 }

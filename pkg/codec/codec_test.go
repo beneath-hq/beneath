@@ -4,21 +4,22 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
-
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
-
 	"github.com/go-test/deep"
+	"github.com/linkedin/goavro/v2"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
+	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/pkg/schema"
+	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // Index represents a set of fields to generate keys for
@@ -44,9 +45,21 @@ func (i testIndex) GetNormalize() bool {
 	return false
 }
 
+func transpileGraphQLToAvroString(gql string) string {
+	s, _, err := transpilers.FromGraphQL(gql)
+	if err != nil {
+		panic(err)
+	}
+	err = schemalang.Check(s)
+	if err != nil {
+		panic(err)
+	}
+	return transpilers.ToAvro(s, false)
+}
+
 func TestAvroSimple(t *testing.T) {
 	index := testIndex{fields: []string{"one"}}
-	avroSchema := schema.MustCompileToAvroString(`
+	avroSchema := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: "one") {
 			one: String!
 			two: String!
@@ -70,16 +83,16 @@ func TestAvroSimple(t *testing.T) {
 	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
-	avroNative, err := codec.ConvertToAvroNative(jsonNative, true)
+	native, err := codec.ConvertFromJSONTypes(jsonNative)
 	assert.Nil(t, err)
 
-	binary, err := codec.MarshalAvro(avroNative)
+	binary, err := codec.MarshalAvro(native)
 	assert.Nil(t, err)
 
-	avroNativeOut, err := codec.UnmarshalAvro(binary)
+	nativeOut, err := codec.UnmarshalAvro(binary)
 	assert.Nil(t, err)
 
-	jsonNativeOut, err := codec.ConvertFromAvroNative(avroNativeOut, true)
+	jsonNativeOut, err := codec.ConvertToJSONTypes(nativeOut)
 
 	if diff := deep.Equal(jsonNativeCopy, jsonNativeOut); diff != nil {
 		t.Error(diff)
@@ -88,7 +101,7 @@ func TestAvroSimple(t *testing.T) {
 
 func TestAvroComplex(t *testing.T) {
 	index := testIndex{fields: []string{"one"}}
-	avroSchema := schema.MustCompileToAvroString(`
+	avroSchema := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: "one") {
 			one: String!
 			two: Bytes20!
@@ -108,9 +121,11 @@ func TestAvroComplex(t *testing.T) {
 	codec, err := New(avroSchema, index, nil)
 	assert.Nil(t, err)
 
+	// 0xaabbccddeeaabbccddeeaabbccddeeaabbccddee = qrvM3e6qu8zd7qq7zN3uqrvM3e4=
+
 	valueJSON := `{
 		"one": "testing one two three",
-		"two": "0xaabbccddeeaabbccddeeaabbccddeeaabbccddee",
+		"two": "qrvM3e6qu8zd7qq7zN3uqrvM3e4=",
 		"three": 1234567890,
 		"four": "There was a bell beside the gate, and Dorothy pushed the button and heard a silvery tinkle sound within. Then the big gate swung slowly open, and they all passed through and found themselves in a high arched room, the walls of which glistened with countless emeralds. Before them stood a little man about the same size as the Munchkins. He was clothed all in green, from his head to his feet, and even his skin was of a greenish tint. At his side was a large green box.",
 		"five": "-77224998599806363752588771300231266558642741460645341489178111450841839741627",
@@ -128,25 +143,102 @@ func TestAvroComplex(t *testing.T) {
 	err = json.Unmarshal([]byte(valueJSON), &jsonNativeCopy)
 	assert.Nil(t, err)
 
-	avroNative, err := codec.ConvertToAvroNative(jsonNative, true)
+	native, err := codec.ConvertFromJSONTypes(jsonNative)
 	assert.Nil(t, err)
 
-	binary, err := codec.MarshalAvro(avroNative)
+	binary, err := codec.MarshalAvro(native)
 	assert.Nil(t, err)
 
-	avroNativeOut, err := codec.UnmarshalAvro(binary)
+	nativeOut, err := codec.UnmarshalAvro(binary)
 	assert.Nil(t, err)
 
-	jsonNativeOut, err := codec.ConvertFromAvroNative(avroNativeOut, true)
+	jsonNativeOut, err := codec.ConvertToJSONTypes(nativeOut)
 
 	if diff := deep.Equal(jsonNativeCopy, jsonNativeOut); diff != nil {
 		t.Error(diff)
 	}
 }
 
+func TestAvroVeryComplex(t *testing.T) {
+	avroSchema := transpileGraphQLToAvroString(`
+		" Docs, docs, docs, docs! "
+		type Test @stream @key(fields: ["a", "b"]) {
+			a: String!
+			b: Timestamp!
+			c: Bytes20
+			d: TestB
+			e: [TestB!]!
+		}
+		type TestB {
+			a: Boolean!
+			b: Bytes!
+			c: Bytes20
+			d: Float!
+			e: Float32!
+			f: Int!
+			g: Int64!
+			h: Numeric!
+			i: String!
+			j: Timestamp!
+			k: TestC
+			l: [TestC!]
+		}
+		enum TestC {
+			Aa
+			Bb
+			Cc
+		}
+	`)
+
+	codec, err := goavro.NewCodec(avroSchema)
+	assert.Nil(t, err)
+	assert.NotNil(t, codec)
+
+	json1 := `{
+		"a": "Example example",
+		"b": 1562270699000,
+		"c": { "bytes20": "aaaaaaaaaaaaaaaaaaaa" },
+		"d": null,
+		"e": [
+			{
+				"a": true,
+				"b": "sfjhewuiqbcu fjoidshfoew",
+				"c": null,
+				"d": 98765432450.34567890765432,
+				"e": 123.76432,
+				"f": 1844674000000000000,
+				"g": 1844674000000000001,
+				"h": "999999999999999999999999999999999999999999999999999999999999999999999999",
+				"i": "hello world",
+				"j": 1562270699000,
+				"k": {"TestC": "Bb"},
+				"l": {"array": ["Cc", "Aa"]}
+			}
+		]
+	}`
+
+	native1, _, err := codec.NativeFromTextual([]byte(json1))
+	assert.Nil(t, err)
+
+	// hack 1
+	n, _ := big.NewRat(1, 1).SetString("999999999999999999999999999999999999999999999999999999999999999999999999")
+	native1.(map[string]interface{})["e"].([]interface{})[0].(map[string]interface{})["h"] = n
+
+	binary, err := codec.BinaryFromNative(nil, native1)
+	assert.Nil(t, err)
+
+	native2, _, err := codec.NativeFromBinary(binary)
+	assert.Nil(t, err)
+
+	// hack 2
+	native2.(map[string]interface{})["e"].([]interface{})[0].(map[string]interface{})["h"] = n
+
+	assert.Equal(t, reflect.DeepEqual(native1, native2), true)
+}
+
 func TestKeySimple(t *testing.T) {
 	index := testIndex{fields: []string{"k1", "k2", "k3", "k4"}}
-	schemaString := schema.MustCompileToAvroString(`
+	schemaString := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: ["k1", "k2", "k3", "k4"]) {
 			k1: Bytes20!
 			k2: Int64!
@@ -230,7 +322,7 @@ func TestSecondaryKeys(t *testing.T) {
 	secondary := testIndex{
 		fields:  []string{"k2", "k3"},
 		shortID: 1}
-	schemaString := schema.MustCompileToAvroString(`
+	schemaString := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: ["k1", "k2"]) {
 			k1: Bytes20!
 			k2: Int64!
@@ -273,7 +365,7 @@ func TestQueryParse(t *testing.T) {
 	index1 := testIndex{fields: []string{"one"}}
 	index2 := testIndex{fields: []string{"two"}}
 	index3 := testIndex{fields: []string{"three", "two"}}
-	avroSchema := schema.MustCompileToAvroString(`
+	avroSchema := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: "one") @index(fields: "two") @index(fields: ["three", "two"]) {
 			one: String!
 			two: Bytes!
@@ -287,22 +379,24 @@ func TestQueryParse(t *testing.T) {
 
 	q1, err := queryparse.JSONStringToQuery("")
 	assert.Nil(t, err)
-	idx1, kr1, err := codec.ParseQuery(q1)
+	idx1, kr1, err := codec.ParseIndexQuery(q1)
 	assert.Nil(t, err)
 	assert.Equal(t, index1, idx1)
 	assert.True(t, bytes.Equal([]byte{}, kr1.Base))
 
-	q2, err := queryparse.JSONStringToQuery(`{"two":{"_prefix": "0xAAAA"}}`)
+	// 0xAAAA = qqo=
+
+	q2, err := queryparse.JSONStringToQuery(`{"two":{"_prefix": "qqo="}}`)
 	assert.Nil(t, err)
-	idx2, kr2, err := codec.ParseQuery(q2)
+	idx2, kr2, err := codec.ParseIndexQuery(q2)
 	assert.Nil(t, err)
 	assert.Equal(t, index2, idx2)
 	assert.True(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xAA, 0xBB}}.Pack()))
 	assert.False(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xBB}}.Pack()))
 
-	q3, err := queryparse.JSONStringToQuery(`{"three": 1000, "two": {"_prefix": "0xAAAA"}}`)
+	q3, err := queryparse.JSONStringToQuery(`{"three": 1000, "two": {"_prefix": "qqo="}}`)
 	assert.Nil(t, err)
-	idx3, kr3, err := codec.ParseQuery(q3)
+	idx3, kr3, err := codec.ParseIndexQuery(q3)
 	assert.Nil(t, err)
 	assert.Equal(t, index3, idx3)
 	assert.True(t, kr3.Contains(tuple.Tuple{1000, []byte{0xAA, 0xAA, 0xBB}}.Pack()))
@@ -310,7 +404,7 @@ func TestQueryParse(t *testing.T) {
 
 	q4, err := queryparse.JSONStringToQuery(`{"four": 1000}`)
 	assert.Nil(t, err)
-	_, _, err = codec.ParseQuery(q4)
+	_, _, err = codec.ParseIndexQuery(q4)
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrIndexMiss, err)
 }

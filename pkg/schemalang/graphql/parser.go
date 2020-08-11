@@ -1,4 +1,4 @@
-package schema
+package graphql
 
 import (
 	"github.com/alecthomas/participle"
@@ -8,16 +8,16 @@ import (
 
 var globalParser *participle.Parser
 
-// GetParser returns a concurrency-safe global SDL parser
-func GetParser() *participle.Parser {
+// getParser returns a concurrency-safe global SDL parser
+func getParser() *participle.Parser {
 	if globalParser == nil {
-		globalParser = NewParser()
+		globalParser = newParser()
 	}
 	return globalParser
 }
 
-// NewParser creates a new SDL parser
-func NewParser() *participle.Parser {
+// newParser creates a new SDL parser
+func newParser() *participle.Parser {
 	sdlLexer := lexer.Must(ebnf.New(`
 		Comment = ("#" | "//") { "\u0000"…"\uffff"-"\n"-"\r" } .
 		String = 

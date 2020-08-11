@@ -17,7 +17,7 @@ func TestKeyRange1(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	r, err := newKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
 	assert.True(t, r.IsPrefix())
@@ -33,7 +33,7 @@ func TestKeyRange2(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	r, err := newKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.IsPrefix())
@@ -51,7 +51,7 @@ func TestKeyRange3(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	r, err := newKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.IsPrefix())
@@ -70,7 +70,7 @@ func TestKeyRange4(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	r, err := newKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
 	assert.True(t, r.IsPrefix())
@@ -90,7 +90,7 @@ func TestKeyRange5(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	_, err = NewKeyRange(c, c.PrimaryIndex, q)
+	_, err = newKeyRange(c, c.PrimaryIndex, q)
 	assert.NotNil(t, err)
 	assert.Regexp(t, "cannot use '_prefix' on field 'a' because it only works on string and byte types", err.Error())
 }
@@ -103,7 +103,7 @@ func TestKeyRange5(t *testing.T) {
 // 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"},{"name": "b", "type": "string"}]}`, index, nil)
 // 	assert.Nil(t, err)
 
-// 	kr, err := NewKeyRange(c, where)
+// 	kr, err := newKeyRange(c, where)
 // 	assert.Nil(t, err)
 
 // 	after, err := queryparse.JSONStringToQuery(`{ "a": 100 }`)
@@ -135,7 +135,7 @@ func TestKeyRange7(t *testing.T) {
 	c, err := New(`{"name":"test","type":"record","fields":[{"name": "a", "type": "long"}, {"name": "b", "type": "long"}]}`, index, nil)
 	assert.Nil(t, err)
 
-	r, err := NewKeyRange(c, c.PrimaryIndex, q)
+	r, err := newKeyRange(c, c.PrimaryIndex, q)
 	assert.Nil(t, err)
 
 	assert.False(t, r.IsPrefix())

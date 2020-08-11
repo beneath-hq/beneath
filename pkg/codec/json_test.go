@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/pkg/schema"
-
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 )
 
 func TestAvroJson1(t *testing.T) {
-	avroSchema := schema.MustCompileToAvro(`
+	avroSchemaString := transpileGraphQLToAvroString(`
 		type Test @stream(name: "test") @key(fields: ["one", "two"]) {
 			one: String!
 			two: Timestamp!
@@ -36,11 +34,15 @@ func TestAvroJson1(t *testing.T) {
 		}
 	`)
 
+	// 0xbeef = vu8=
+	// 0x00112233445566778899 = ABEiM0RVZneImQ==
+	// 0x99887766554433221100 = mYh3ZlVEMyIRAA==
+
 	valueJSON := `{
 		"one": "aaa bbb ccc",
 		"two": 1561294281000,
 		"three": {
-			"one": "0xbeef",
+			"one": "vu8=",
 			"two": "12345678901234567890123456789012345678901234567890",
 			"three": null,
 			"four": [
@@ -48,13 +50,13 @@ func TestAvroJson1(t *testing.T) {
 				200
 			],
 			"five": [
-				"0x00112233445566778899",
-				"0x99887766554433221100"
+				"ABEiM0RVZneImQ==",
+				"mYh3ZlVEMyIRAA=="
 			],
 			"six": null,
 			"seven": {
 				"one": 31,
-				"two": "0x99887766554433221100",
+				"two": "mYh3ZlVEMyIRAA==",
 				"three": "NaN",
 				"four": "-Infinity",
 				"five": 3.141
@@ -62,7 +64,7 @@ func TestAvroJson1(t *testing.T) {
 		}
 	}`
 
-	var value, valueCopy interface{}
+	var value, valueCopy map[string]interface{}
 	err := jsonutil.UnmarshalBytes([]byte(valueJSON), &value)
 	assert.Nil(t, err)
 
@@ -70,9 +72,12 @@ func TestAvroJson1(t *testing.T) {
 	err = json.Unmarshal([]byte(valueJSON), &valueCopy)
 	assert.Nil(t, err)
 
-	avroNative, err := jsonNativeToAvroNative(avroSchema, value, map[string]interface{}{})
+	codec, err := New(avroSchemaString, nil, nil)
 	assert.Nil(t, err)
-	jsonNative, err := avroNativeToJSONNative(avroSchema, avroNative, map[string]interface{}{}, true)
+
+	avroNative, err := codec.ConvertFromJSONTypes(value)
+	assert.Nil(t, err)
+	jsonNative, err := codec.ConvertToJSONTypes(avroNative)
 	assert.Nil(t, err)
 
 	if diff := deep.Equal(jsonNative, valueCopy); diff != nil {
