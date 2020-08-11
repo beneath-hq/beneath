@@ -133,6 +133,8 @@ func getUsage(ctx context.Context, entityID uuid.UUID, period string, from time.
 			WriteOps:     int(usage.WriteOps),
 			WriteBytes:   int(usage.WriteBytes),
 			WriteRecords: int(usage.WriteRecords),
+			ScanOps:      int(usage.ScanOps),
+			ScanBytes:    int(usage.ScanBytes),
 		}
 	}
 
@@ -188,5 +190,7 @@ func addMetrics(target, other *gql.Metrics) *gql.Metrics {
 	target.WriteOps += other.WriteOps
 	target.WriteBytes += other.WriteBytes
 	target.WriteRecords += other.WriteRecords
+	target.ScanOps += other.ScanOps
+	target.ScanBytes += other.ScanBytes
 	return target
 }

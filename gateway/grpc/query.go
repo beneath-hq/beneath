@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
@@ -9,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
+	"gitlab.com/beneath-hq/beneath/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/gateway/util"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
@@ -135,11 +137,165 @@ func (s *gRPCServer) QueryIndex(ctx context.Context, req *pb.QueryIndexRequest) 
 }
 
 func (s *gRPCServer) QueryWarehouse(ctx context.Context, req *pb.QueryWarehouseRequest) (*pb.QueryWarehouseResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "QueryWarehouse is not yet implemented")
+	// get auth
+	secret := middleware.GetSecret(ctx)
+	if secret == nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "not authenticated")
+	}
+
+	// set payload
+	payload := queryWarehouseTags{
+		Partitions: req.Partitions,
+		Query:      req.Query,
+		DryRun:     req.DryRun,
+		Timeout:    req.TimeoutMs,
+		MaxScan:    req.MaxBytesScanned,
+	}
+	middleware.SetTagsPayload(ctx, payload)
+
+	// expand query
+	query, err := hub.Engine.ExpandWarehouseQuery(ctx, req.Query, func(ctx context.Context, organizationName, projectName, streamName string) (driver.Project, driver.Stream, driver.StreamInstance, error) {
+		// get instance ID
+		instanceID := entity.FindInstanceIDByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
+		if instanceID == uuid.Nil {
+			return nil, nil, nil, grpc.Errorf(codes.NotFound, "instance not found for stream '%s/%s/%s'", organizationName, projectName, streamName)
+		}
+
+		// get stream
+		stream := entity.FindCachedStreamByCurrentInstanceID(ctx, instanceID)
+		if stream == nil {
+			return nil, nil, nil, grpc.Errorf(codes.NotFound, "stream '%s/%s/%s' not found", organizationName, projectName, streamName)
+		}
+
+		// check permissions
+		perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Public)
+		if !perms.Read {
+			return nil, nil, nil, grpc.Errorf(codes.PermissionDenied, "token doesn't grant right to read stream '%s/%s/%s'", organizationName, projectName, streamName)
+		}
+
+		// success
+		return stream, stream, entity.EfficientStreamInstance(instanceID), nil
+	})
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	// analyze query
+	job, err := hub.Engine.Warehouse.AnalyzeWarehouseQuery(ctx, query)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "error during query analysis: %s", err.Error())
+	}
+
+	// stop if dry
+	if req.DryRun {
+		return &pb.QueryWarehouseResponse{
+			Job: makeWarehouseJobPB(job),
+		}, nil
+	}
+
+	// check bytes scanned
+	estimatedBytesScanned := job.GetBytesScanned()
+	if estimatedBytesScanned > req.MaxBytesScanned {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "query would scan %d bytes, which exceeds job limit of %d (limit the query or increase the limit)", job.GetBytesScanned(), req.MaxBytesScanned)
+	}
+
+	// check quota
+	err = util.CheckScanQuota(ctx, secret, estimatedBytesScanned)
+	if err != nil {
+		return nil, status.Error(codes.ResourceExhausted, err.Error())
+	}
+
+	// run real job
+	jobID := uuid.NewV4()
+	job, err = hub.Engine.Warehouse.RunWarehouseQuery(ctx, jobID, query, int(req.Partitions), int(req.TimeoutMs), int(req.MaxBytesScanned))
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "error running query: %s", err.Error())
+	}
+
+	// update payload
+	payload.JobID = &jobID
+	middleware.SetTagsPayload(ctx, payload)
+
+	// track read metrics
+	util.TrackScan(ctx, secret, estimatedBytesScanned)
+
+	return &pb.QueryWarehouseResponse{
+		Job: makeWarehouseJobPB(job),
+	}, nil
 }
 
 func (s *gRPCServer) PollWarehouseJob(ctx context.Context, req *pb.PollWarehouseJobRequest) (*pb.PollWarehouseJobResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "PollWarehouseJob is not yet implemented")
+	// read jobID
+	jobID := uuid.FromBytesOrNil(req.JobId)
+	if jobID == uuid.Nil {
+		return nil, status.Error(codes.InvalidArgument, "job_id not valid UUID")
+	}
+
+	// set payload
+	payload := pollWarehouseTags{
+		JobID: jobID,
+	}
+	middleware.SetTagsPayload(ctx, payload)
+
+	job, err := hub.Engine.Warehouse.PollWarehouseJob(ctx, jobID)
+	if err != nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "error polling job: %s", err.Error())
+	}
+
+	if job.GetError() != nil {
+		payload.Error = job.GetError().Error()
+	}
+	payload.Status = job.GetStatus().String()
+	payload.BytesScanned = job.GetBytesScanned()
+	middleware.SetTagsPayload(ctx, payload)
+
+	return &pb.PollWarehouseJobResponse{
+		Job: makeWarehouseJobPB(job),
+	}, nil
+}
+
+func makeWarehouseJobPB(job driver.WarehouseJob) *pb.WarehouseJob {
+	var status pb.WarehouseJob_Status
+	switch job.GetStatus() {
+	case driver.PendingWarehouseJobStatus:
+		status = pb.WarehouseJob_PENDING
+	case driver.RunningWarehouseJobStatus:
+		status = pb.WarehouseJob_RUNNING
+	case driver.DoneWarehouseJobStatus:
+		status = pb.WarehouseJob_DONE
+	default:
+		panic(fmt.Errorf("bad job status: %d", job.GetStatus()))
+	}
+
+	referencedInstanceIDs := make([][]byte, len(job.GetReferencedInstances()))
+	for idx, instanceID := range job.GetReferencedInstances() {
+		referencedInstanceIDs[idx] = instanceID.GetStreamInstanceID().Bytes()
+	}
+
+	errStr := ""
+	if job.GetError() != nil {
+		errStr = job.GetError().Error()
+	}
+
+	var cursors [][]byte
+	for _, engineCursor := range job.GetReplayCursors() {
+		cursors = append(cursors, wrapCursor(util.WarehouseCursorType, job.GetJobID(), engineCursor))
+	}
+
+	return &pb.WarehouseJob{
+		JobId:                 job.GetJobID().Bytes(),
+		Status:                status,
+		Error:                 errStr,
+		ResultAvroSchema:      job.GetResultAvroSchema(),
+		ReplayCursors:         cursors,
+		ReferencedInstanceIds: referencedInstanceIDs,
+		BytesScanned:          job.GetBytesScanned(),
+		ResultSizeBytes:       job.GetResultSizeBytes(),
+		ResultSizeRecords:     job.GetResultSizeRecords(),
+	}
 }
 
 func wrapCursor(cursorType util.CursorType, id uuid.UUID, engineCursor []byte) []byte {

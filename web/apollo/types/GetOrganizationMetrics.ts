@@ -18,6 +18,8 @@ export interface GetOrganizationMetrics_getOrganizationMetrics {
   writeOps: number;
   writeBytes: number;
   writeRecords: number;
+  scanOps: number;
+  scanBytes: number;
 }
 
 export interface GetOrganizationMetrics {

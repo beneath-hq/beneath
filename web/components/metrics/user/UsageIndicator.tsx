@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export interface UsageIndicatorProps {
   standalone: boolean;
-  kind: "read" | "write";
+  kind: "read" | "write" | "scan";
   usage: number;
   quota: number;
 }
@@ -31,7 +31,7 @@ export const UsageIndicator: FC<UsageIndicatorProps> = ({ standalone, kind, usag
       <Grid container item xs={12} md={6}>
         <Grid item xs={12}>
           <Paper className={classes.paper}>
-            <Typography variant="overline">{kind === "read" ? "Read quota usage" : "Write quota usage"}</Typography>
+            <Typography variant="overline">{kind === "read" ? "Read quota usage" : kind === "write" ? "Write quota usage" : "SQL scan quota usage"}</Typography>
             <ActualIndicator standalone={standalone} kind={kind} usage={usage} quota={quota} />
           </Paper>
         </Grid>

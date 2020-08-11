@@ -6,8 +6,8 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/engine/driver"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
 // configSpecification defines the config variables to load from ENV
@@ -17,7 +17,8 @@ type configSpecification struct {
 
 // BigQuery implements beneath.WarehouseService
 type BigQuery struct {
-	Client *bq.Client
+	Client    *bq.Client
+	ProjectID string
 }
 
 const (
@@ -51,7 +52,8 @@ func createGlobal() {
 
 	// create instance
 	global = BigQuery{
-		Client: client,
+		Client:    client,
+		ProjectID: config.ProjectID,
 	}
 }
 

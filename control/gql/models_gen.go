@@ -26,6 +26,8 @@ type Metrics struct {
 	WriteOps     int       `json:"writeOps"`
 	WriteBytes   int       `json:"writeBytes"`
 	WriteRecords int       `json:"writeRecords"`
+	ScanOps      int       `json:"scanOps"`
+	ScanBytes    int       `json:"scanBytes"`
 }
 
 type NewServiceSecret struct {

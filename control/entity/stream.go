@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 	"time"
 
@@ -17,7 +17,8 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	"gitlab.com/beneath-hq/beneath/internal/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
-	"gitlab.com/beneath-hq/beneath/pkg/schema"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // Stream represents a collection of data
@@ -38,7 +39,7 @@ type Stream struct {
 	SchemaMD5           []byte           `sql:"schema_md5,notnull",validate:"required"`
 	AvroSchema          string           `sql:",type:json,notnull",validate:"required"`
 	CanonicalAvroSchema string           `sql:",type:json,notnull",validate:"required"`
-	BigQuerySchema      string           `sql:"bigquery_schema,type:json,notnull",validate:"required"`
+	CanonicalIndexes    string           `sql:",type:json,notnull",validate:"required"`
 	StreamIndexes       []*StreamIndex
 
 	// Behaviour-related fields (note: used in stream cache)
@@ -62,13 +63,14 @@ type Stream struct {
 // StreamSchemaKind indicates the SDL of a stream's schema
 type StreamSchemaKind string
 
+// Constants for StreamSchemaKind
 const (
-	// StreamSchemaKindGraphQl is the GraphQL SDL
-	StreamSchemaKindGraphQl StreamSchemaKind = "GraphQL"
-
-	// MaxInstancesPerStream sets a limit for the number of instances for a stream at any given time
-	MaxInstancesPerStream = 25
+	StreamSchemaKindGraphQL StreamSchemaKind = "GraphQL"
+	StreamSchemaKindAvro    StreamSchemaKind = "Avro"
 )
+
+// MaxInstancesPerStream sets a limit for the number of instances for a stream at any given time
+const MaxInstancesPerStream = 25
 
 var (
 	// used for validation
@@ -175,7 +177,7 @@ func (s *Stream) GetWarehouseRetention() time.Duration {
 // GetCodec implements engine/driver.Stream
 func (s *Stream) GetCodec() *codec.Codec {
 	if len(s.StreamIndexes) == 0 {
-		panic(fmt.Errorf("GetCodec must not be called withut StreamIndexes loaded"))
+		panic(fmt.Errorf("GetCodec must not be called without StreamIndexes loaded"))
 	}
 
 	var primaryIndex codec.Index
@@ -196,66 +198,69 @@ func (s *Stream) GetCodec() *codec.Codec {
 	return c
 }
 
-// GetBigQuerySchema implements engine/driver.Stream
-func (s *Stream) GetBigQuerySchema() string {
-	return s.BigQuerySchema
-}
-
 // Compile compiles the given schema and sets relevant fields
-func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSchema string, description *string, update bool) error {
-	// checck schema kind is gql
-	if schemaKind != StreamSchemaKindGraphQl {
-		return fmt.Errorf("Unsupported stream schema definition language '%s'", schemaKind)
+func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSchema string, newIndexes *string, description *string, update bool) error {
+	// get schema
+	var schema schemalang.Schema
+	var indexes schemalang.Indexes
+	var err error
+	switch schemaKind {
+	case StreamSchemaKindAvro:
+		schema, err = transpilers.FromAvro(newSchema)
+	case StreamSchemaKindGraphQL:
+		schema, indexes, err = transpilers.FromGraphQL(newSchema)
+	default:
+		err = fmt.Errorf("Unsupported stream schema definition language '%s'", schemaKind)
+	}
+	if err != nil {
+		return err
 	}
 
-	// compile schema
-	compiler := schema.NewCompiler(newSchema)
-	err := compiler.Compile()
-	if err != nil {
-		return fmt.Errorf("Error compiling schema: %s", err.Error())
+	// parse newIndexes if set (overrides output from transpiler)
+	if newIndexes != nil {
+		err = json.Unmarshal([]byte(*newIndexes), &indexes)
+		if err != nil {
+			return fmt.Errorf("error parsing indexes: '%s'", err.Error())
+		}
 	}
-	streamDef := compiler.GetStream()
 
-	// get canonical avro schema
-	canonicalAvro, err := streamDef.BuildCanonicalAvroSchema()
+	// check schema
+	err = schemalang.Check(schema)
 	if err != nil {
-		return fmt.Errorf("Error compiling schema: %s", err.Error())
+		return err
 	}
+
+	// check indexes
+	err = indexes.Check(schema)
+	if err != nil {
+		return err
+	}
+
+	// normalize indexes
+	canonicalIndexes := indexes.CanonicalJSON()
+
+	// get avro schemas
+	canonicalAvro := transpilers.ToAvro(schema, false)
+	avro := transpilers.ToAvro(schema, true)
 
 	// if update, check canonical avro is the same
 	if update {
 		if canonicalAvro != s.CanonicalAvroSchema {
-			return fmt.Errorf("Unfortunately we do not currently support changing a stream's data structure; you can only edit its documentation")
+			return fmt.Errorf("Unfortunately we do not currently support updating a stream's data structure; you can only edit its documentation")
 		}
-	}
-
-	// get avro schemas
-	avro, err := streamDef.BuildAvroSchema()
-	if err != nil {
-		return fmt.Errorf("Error compiling schema: %s", err.Error())
-	}
-
-	// compute bigquery schema
-	bqSchema, err := streamDef.BuildBigQuerySchema()
-	if err != nil {
-		return fmt.Errorf("Error compiling schema: %s", err.Error())
-	}
-
-	// check no critical changes on update
-	if update {
-		if !s.indexesEqual(streamDef) {
-			return fmt.Errorf("Cannot change stream key or indexes in an update")
+		if canonicalIndexes != s.CanonicalIndexes {
+			return fmt.Errorf("Unfortunately we do not currently support updating a stream's indexes")
 		}
 	}
 
 	// TEMPORARY: disable secondary indexes
-	if len(streamDef.SecondaryIndexes) != 0 {
-		return fmt.Errorf("Cannot add secondary indexes to stream (a stream must have exactly one @key index)")
+	if len(indexes) != 1 {
+		return fmt.Errorf("Cannot add secondary indexes to stream (a stream must have exactly one key index)")
 	}
 
 	// set indexes
 	if !update {
-		s.assignIndexes(streamDef)
+		s.assignIndexes(indexes)
 	}
 
 	// set missing stream fields
@@ -263,9 +268,9 @@ func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSc
 	s.Schema = newSchema
 	s.AvroSchema = avro
 	s.CanonicalAvroSchema = canonicalAvro
-	s.BigQuerySchema = bqSchema
+	s.CanonicalIndexes = canonicalIndexes
 	if description == nil {
-		s.Description = streamDef.Description
+		s.Description = schema.(*schemalang.Record).Doc
 	} else {
 		s.Description = *description
 	}
@@ -275,60 +280,22 @@ func (s *Stream) Compile(ctx context.Context, schemaKind StreamSchemaKind, newSc
 
 // Sets StreamIndexes to new StreamIndex objects based on def.
 // Doesn't execute any DB actions, so doesn't set any IDs.
-func (s *Stream) assignIndexes(def *schema.StreamDef) {
-	primary := &StreamIndex{
-		ShortID:   0,
-		Fields:    def.KeyIndex.Fields,
-		Primary:   true,
-		Normalize: def.KeyIndex.Normalize,
-	}
-
-	s.StreamIndexes = []*StreamIndex{primary}
-
-	for idx, index := range def.SecondaryIndexes {
-		s.StreamIndexes = append(s.StreamIndexes, &StreamIndex{
-			ShortID:   idx + 1,
+func (s *Stream) assignIndexes(indexes schemalang.Indexes) {
+	indexes.Sort()
+	s.StreamIndexes = make([]*StreamIndex, len(indexes))
+	for idx, index := range indexes {
+		s.StreamIndexes[idx] = &StreamIndex{
+			ShortID:   idx,
 			Fields:    index.Fields,
-			Primary:   false,
+			Primary:   index.Key,
 			Normalize: index.Normalize,
-		})
-	}
-}
-
-// Returns true if the indexes defined in def match
-func (s *Stream) indexesEqual(def *schema.StreamDef) bool {
-	if len(s.StreamIndexes) != len(def.SecondaryIndexes)+1 {
-		return false
-	}
-
-	equal := true
-	for _, index := range s.StreamIndexes {
-		if index.Primary {
-			equal = equal && index.Normalize == def.KeyIndex.Normalize
-			equal = equal && reflect.DeepEqual(index.Fields, def.KeyIndex.Fields)
-		} else {
-			found := false
-			for _, secondary := range def.SecondaryIndexes {
-				if index.Normalize == secondary.Normalize {
-					if reflect.DeepEqual(index.Fields, secondary.Fields) {
-						found = true
-						break
-					}
-				}
-			}
-			equal = equal && found
-		}
-		if !equal {
-			break
 		}
 	}
-
-	return equal
 }
 
 // Stage creates or updates the stream so that it adheres to the params (or does nothing if everything already conforms).
 // If s is a new stream object, Name and ProjectID must be set before calling Stage.
-func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) error {
+func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) error {
 	// determine whether to insert or update
 	update := (s.StreamID != uuid.Nil)
 
@@ -336,9 +303,13 @@ func (s *Stream) Stage(ctx context.Context, schemaKind StreamSchemaKind, schema 
 	save := !update
 
 	// compile if necessary
-	schemaMD5 := md5.Sum([]byte(schema))
+	md5Input := []byte(schema)
+	if indexes != nil {
+		md5Input = append(md5Input, []byte(*indexes)...)
+	}
+	schemaMD5 := md5.Sum(md5Input)
 	if schemaKind != s.SchemaKind || !bytes.Equal(schemaMD5[:], s.SchemaMD5) {
-		err := s.Compile(ctx, schemaKind, schema, description, update)
+		err := s.Compile(ctx, schemaKind, schema, indexes, description, update)
 		if err != nil {
 			return err
 		}

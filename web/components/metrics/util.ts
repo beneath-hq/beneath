@@ -5,6 +5,8 @@ export interface Metrics {
   writeOps: number;
   writeBytes: number;
   writeRecords: number;
+  scanOps: number;
+  scanBytes: number;
 }
 
 export interface MetricsWithTime extends Metrics {
@@ -19,6 +21,8 @@ export const blankMetrics = (): Metrics => {
     writeOps: 0,
     writeBytes: 0,
     writeRecords: 0,
+    scanOps: 0,
+    scanBytes: 0,
   };
 };
 
@@ -32,6 +36,8 @@ export const aggregateMetrics = (metrics: Metrics[] | null): Metrics => {
       result.writeOps += m.writeOps;
       result.writeBytes += m.writeBytes;
       result.writeRecords += m.writeRecords;
+      result.scanOps += m.scanOps;
+      result.scanBytes += m.scanBytes;
     }
   }
   return result;

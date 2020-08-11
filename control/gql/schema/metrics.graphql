@@ -17,6 +17,8 @@ type Metrics {
   writeOps: Int!
   writeBytes: Int!
   writeRecords: Int!
+  scanOps: Int!
+  scanBytes: Int!
 }
 
 enum EntityKind {

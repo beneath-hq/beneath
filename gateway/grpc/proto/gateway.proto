@@ -13,7 +13,20 @@ message InstanceRecords {
 }
 
 message WarehouseJob {
+  enum Status {
+    PENDING = 0;
+    RUNNING = 1;
+    DONE = 2;
+  }
   bytes job_id = 1;
+  Status status = 2;
+  string error = 3;
+  string result_avro_schema = 4;
+  repeated bytes replay_cursors = 5;
+  repeated bytes referenced_instance_ids = 6;
+  int64 bytes_scanned = 7;
+  int64 result_size_bytes = 8;
+  int64 result_size_records = 9;
 }
 
 service Gateway {
@@ -69,8 +82,11 @@ message QueryIndexResponse {
 }
 
 message QueryWarehouseRequest {
-  string query       = 1;
-  int32  partitions  = 3;
+  string query = 1;
+  int32  partitions = 2;
+  bool   dry_run = 3;
+  int32  timeout_ms = 4;
+  int64  max_bytes_scanned = 5;
 }
 
 message QueryWarehouseResponse {

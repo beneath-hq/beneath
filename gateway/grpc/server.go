@@ -77,6 +77,22 @@ type queryIndexTags struct {
 	Filter     string    `json:"filter,omitempty"`
 }
 
+type queryWarehouseTags struct {
+	JobID      *uuid.UUID `json:"job,omitempty"`
+	Partitions int32      `json:"partitions,omitempty"`
+	Query      string     `json:"query,omitempty"`
+	DryRun     bool       `json:"dry,omitempty"`
+	Timeout    int32      `json:"timeout,omitempty"`
+	MaxScan    int64      `json:"max_scan,omitempty"`
+}
+
+type pollWarehouseTags struct {
+	JobID        uuid.UUID `json:"job,omitempty"`
+	Status       string    `json:"status,omitempty"`
+	Error        string    `json:"error,omitempty"`
+	BytesScanned int64     `json:"scan,omitempty"`
+}
+
 type readTags struct {
 	InstanceID *uuid.UUID `json:"instance,omitempty"`
 	JobID      *uuid.UUID `json:"job,omitempty"`

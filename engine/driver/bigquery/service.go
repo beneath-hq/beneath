@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/engine/driver"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // MaxKeySize implements beneath.Service
@@ -91,11 +92,24 @@ func (b BigQuery) RemoveProject(ctx context.Context, p driver.Project) error {
 
 // RegisterInstance implements beneath.Service
 func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
-	// build schema object
-	schema, err := bigquery.SchemaFromJSON([]byte(s.GetBigQuerySchema()))
+	// get bigquery schema
+	schema, err := transpilers.FromAvro(s.GetCodec().AvroSchema)
 	if err != nil {
-		return err
+		panic(err)
 	}
+	bqSchema := transpilers.ToBigQuery(schema, true)
+
+	// inject internal fields
+	bqSchema = append(bqSchema, &bigquery.FieldSchema{
+		Name:     "__key",
+		Type:     bigquery.BytesFieldType,
+		Required: true,
+	})
+	bqSchema = append(bqSchema, &bigquery.FieldSchema{
+		Name:     "__timestamp",
+		Type:     bigquery.TimestampFieldType,
+		Required: true,
+	})
 
 	// create time partitioning config
 	timePartitioning := &bigquery.TimePartitioning{
@@ -116,7 +130,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 		// this is the expected scenario
 
 		err = table.Create(ctx, &bigquery.TableMetadata{
-			Schema:           schema,
+			Schema:           bqSchema,
 			TimePartitioning: timePartitioning,
 			Clustering: &bigquery.Clustering{
 				Fields: s.GetCodec().PrimaryIndex.GetFields(),
@@ -137,7 +151,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 	// update
 	_, err = table.Update(ctx, bigquery.TableMetadataToUpdate{
 		Name:             s.GetStreamName(),
-		Schema:           schema,
+		Schema:           bqSchema,
 		TimePartitioning: timePartitioning,
 	}, mdt.ETag)
 	if err != nil {
@@ -162,7 +176,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 	if mdv.Labels[InstanceIDLabel] == i.GetStreamInstanceID().String() {
 		_, err = view.Update(ctx, bigquery.TableMetadataToUpdate{
 			Name:   s.GetStreamName(),
-			Schema: b.tableSchemaToViewSchema(schema),
+			Schema: b.tableSchemaToViewSchema(bqSchema),
 		}, mdv.ETag)
 		if err != nil {
 			if isExpiredETag(err) {

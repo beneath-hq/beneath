@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
-
 	uuid "github.com/satori/go.uuid"
 
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // MessageQueue encapsulates functionality necessary for message passing in Beneath
@@ -101,6 +100,19 @@ type WarehouseService interface {
 	// WriteToWarehouse should insert the records in r for querying on the given instance
 	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
 
+	// GetWarehouseTableName should return the table name that the driver wants stream references in queries expanded to
+	GetWarehouseTableName(p Project, s Stream, i StreamInstance) string
+
+	// AnalyzeWarehouseQuery should perform a dry-run of query
+	AnalyzeWarehouseQuery(ctx context.Context, query string) (WarehouseJob, error)
+
+	// RunWarehouseQuery should start a query and return a job. If the job is not completed outright, it should be
+	// possible to poll the job with PollWarehouseJob using the job ID.
+	RunWarehouseQuery(ctx context.Context, jobID uuid.UUID, query string, partitions int, timeoutMs int, maxBytesScanned int) (WarehouseJob, error)
+
+	// PollWarehouseJob should return the current state of the job identified by jobID
+	PollWarehouseJob(ctx context.Context, jobID uuid.UUID) (WarehouseJob, error)
+
 	// ReadWarehouseCursor returns records for the cursor
 	ReadWarehouseCursor(ctx context.Context, cursor []byte, limit int) (RecordsIterator, error)
 }
@@ -148,10 +160,6 @@ type Stream interface {
 
 	// GetCodec should return a codec for serializing and deserializing stream data and keys
 	GetCodec() *codec.Codec
-
-	// GetBigQuerySchema should return the stream's schema in BigQuery JSON representation
-	// TODO: Remove by creating an avro schema -> bigquery schema transpiler
-	GetBigQuerySchema() string
 }
 
 // StreamInstance encapsulates metadata about a Beneath stream instance
@@ -188,4 +196,65 @@ type Record interface {
 	// Only implemented on driver output, not necessary for input (where key is computed from schema and data)
 	// TODO: not beautiful/necessary; it's a convenience to avoid recomputing the primary key in the REST gateway
 	GetPrimaryKey() []byte
+}
+
+// WarehouseJobStatus represents the current status of a warehouse job
+type WarehouseJobStatus int
+
+const (
+	// UnspecifiedWarehouseJobStatus is the null value for WarehouseJobStatus
+	UnspecifiedWarehouseJobStatus WarehouseJobStatus = iota
+
+	// PendingWarehouseJobStatus represents a warehouse job that has not yet been started
+	PendingWarehouseJobStatus
+
+	// RunningWarehouseJobStatus represents a warehouse job that is currently running
+	RunningWarehouseJobStatus
+
+	// DoneWarehouseJobStatus represents a warehouse job that has completed; if the job failed, the job will have a non-nil error
+	DoneWarehouseJobStatus
+)
+
+func (s WarehouseJobStatus) String() string {
+	switch s {
+	case PendingWarehouseJobStatus:
+		return "pending"
+	case RunningWarehouseJobStatus:
+		return "running"
+	case DoneWarehouseJobStatus:
+		return "done"
+	default:
+		return "unspecified"
+	}
+}
+
+// WarehouseJob represents a query job submitted to a WarehouseService
+type WarehouseJob interface {
+	// GetJobID should return an identifier for the job
+	GetJobID() uuid.UUID
+
+	// GetStatus returns the current status of the job
+	GetStatus() WarehouseJobStatus
+
+	// GetError returns a non-nil error if the status is Done and the query failed
+	GetError() error
+
+	// GetResultAvroSchema returns an Avro schema for the query result. Only set for successful queries.
+	GetResultAvroSchema() string
+
+	// GetReplayCursors returns one or more cursors that can be submitted to the WarehouseService's ReadWarehouseCursor to
+	// retrieve query results.
+	GetReplayCursors() [][]byte
+
+	// GetReferencedInstances returns all the instances referenced in the query
+	GetReferencedInstances() []StreamInstance
+
+	// GetBytesScanned returns an estimate of the number of bytes scanned by the query
+	GetBytesScanned() int64
+
+	// GetResultSizeBytes returns an estimate of the number of bytes in the query result
+	GetResultSizeBytes() int64
+
+	// GetResultSizeRecords returns an estimate of the number of records in the query result
+	GetResultSizeRecords() int64
 }

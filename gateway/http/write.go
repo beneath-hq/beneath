@@ -113,19 +113,19 @@ func postToInstance(w http.ResponseWriter, r *http.Request) error {
 			}
 		}
 
-		// convert to avro native for encoding
-		avroNative, err := stream.Codec.ConvertToAvroNative(obj, true)
+		// convert from json types to native types for encoding
+		native, err := stream.Codec.ConvertFromJSONTypes(obj)
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
 
 		// encode as avro
-		avroData, err := stream.Codec.MarshalAvro(avroNative)
+		avroData, err := stream.Codec.MarshalAvro(native)
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}
 
-		err = hub.Engine.CheckRecordSize(stream, avroNative, len(avroData))
+		err = hub.Engine.CheckRecordSize(stream, native, len(avroData))
 		if err != nil {
 			return httputil.NewError(400, fmt.Sprintf("error encoding record at index %d: %v", idx, err.Error()))
 		}

@@ -3,7 +3,6 @@ package bigquery
 import (
 	"context"
 	"encoding/base64"
-	"encoding/hex"
 	"math"
 	"math/big"
 	"time"
@@ -29,13 +28,7 @@ type ExternalRow struct {
 func (r *ExternalRow) Save() (row map[string]bigquery.Value, insertID string, err error) {
 	data := make(map[string]bigquery.Value, len(r.Data))
 	for k, v := range r.Data {
-		// we map []byte to hex normally, but mustn't do that for __key
-		// (or else the hex encoding will be interpretted as base64 by BQ with terrible consequences)
-		if k == "__key" {
-			data[k] = base64.StdEncoding.EncodeToString(v.([]byte))
-		} else {
-			data[k] = r.recursiveSerialize(v)
-		}
+		data[k] = r.recursiveSerialize(v)
 	}
 	return data, r.InsertID, nil
 }
@@ -59,7 +52,7 @@ func (r *ExternalRow) recursiveSerialize(valT interface{}) bigquery.Value {
 	case *big.Rat:
 		return val.FloatString(0)
 	case []byte:
-		return "0x" + hex.EncodeToString(val)
+		return base64.StdEncoding.EncodeToString(val)
 	case map[string]interface{}:
 		for k, v := range val {
 			val[k] = r.recursiveSerialize(v)
@@ -129,9 +122,4 @@ func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driv
 	}
 
 	return nil
-}
-
-// ReadWarehouseCursor implements beneath.WarehouseService
-func (b BigQuery) ReadWarehouseCursor(ctx context.Context, cursor []byte, limit int) (driver.RecordsIterator, error) {
-	panic("not implemented")
 }

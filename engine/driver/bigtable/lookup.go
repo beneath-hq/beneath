@@ -67,7 +67,7 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 	}
 
 	// parse query
-	index, kr, err := s.GetCodec().ParseQuery(where)
+	index, kr, err := s.GetCodec().ParseIndexQuery(where)
 	if err != nil {
 		return nil, nil, err
 	}

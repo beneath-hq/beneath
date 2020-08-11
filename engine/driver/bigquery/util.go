@@ -41,7 +41,27 @@ func externalDatasetName(p driver.Project) string {
 
 func externalTableName(streamName string, instanceID uuid.UUID) string {
 	name := strings.ReplaceAll(streamName, "-", "_")
-	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[0:4]))
+	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[:]))
+}
+
+func parseExternalTableName(tableName string) (string, uuid.UUID, error) {
+	if len(tableName) < 2*uuid.Size+2 {
+		return "", uuid.Nil, fmt.Errorf("bad table name: %s", tableName)
+	}
+
+	idx := len(tableName) - 2*uuid.Size
+
+	idBytes, err := hex.DecodeString(tableName[idx:])
+	if err != nil {
+		return "", uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
+	}
+
+	instanceID, err := uuid.FromBytes(idBytes)
+	if err != nil {
+		return "", uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
+	}
+
+	return tableName[:(idx - 1)], instanceID, nil
 }
 
 func externalStreamViewName(streamName string) string {

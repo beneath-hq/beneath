@@ -122,6 +122,8 @@ type ComplexityRoot struct {
 		ReadBytes    func(childComplexity int) int
 		ReadOps      func(childComplexity int) int
 		ReadRecords  func(childComplexity int) int
+		ScanBytes    func(childComplexity int) int
+		ScanOps      func(childComplexity int) int
 		Time         func(childComplexity int) int
 		WriteBytes   func(childComplexity int) int
 		WriteOps     func(childComplexity int) int
@@ -145,7 +147,7 @@ type ComplexityRoot struct {
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
 		StageProject                      func(childComplexity int, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) int
 		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) int
-		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
+		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
 		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateBillingInfo                 func(childComplexity int, organizationID uuid.UUID, billingMethodID *uuid.UUID, billingPlanID uuid.UUID, country string, region *string, companyName *string, taxNumber *string) int
@@ -337,6 +339,7 @@ type ComplexityRoot struct {
 		AllowManualWrites         func(childComplexity int) int
 		AvroSchema                func(childComplexity int) int
 		CanonicalAvroSchema       func(childComplexity int) int
+		CanonicalIndexes          func(childComplexity int) int
 		CreatedOn                 func(childComplexity int) int
 		Description               func(childComplexity int) int
 		IndexRetentionSeconds     func(childComplexity int) int
@@ -426,7 +429,7 @@ type MutationResolver interface {
 	StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) (*entity.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*entity.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
-	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error)
+	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error)
 	DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error)
 	StageStreamInstance(ctx context.Context, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error)
 	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) (*entity.StreamInstance, error)
@@ -856,6 +859,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Metrics.ReadRecords(childComplexity), true
 
+	case "Metrics.scanBytes":
+		if e.complexity.Metrics.ScanBytes == nil {
+			break
+		}
+
+		return e.complexity.Metrics.ScanBytes(childComplexity), true
+
+	case "Metrics.scanOps":
+		if e.complexity.Metrics.ScanOps == nil {
+			break
+		}
+
+		return e.complexity.Metrics.ScanOps(childComplexity), true
+
 	case "Metrics.time":
 		if e.complexity.Metrics.Time == nil {
 			break
@@ -1081,7 +1098,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int)), true
+		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["indexes"].(*string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int)), true
 
 	case "Mutation.stageStreamInstance":
 		if e.complexity.Mutation.StageStreamInstance == nil {
@@ -2275,6 +2292,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.CanonicalAvroSchema(childComplexity), true
 
+	case "Stream.canonicalIndexes":
+		if e.complexity.Stream.CanonicalIndexes == nil {
+			break
+		}
+
+		return e.complexity.Stream.CanonicalIndexes(childComplexity), true
+
 	case "Stream.createdOn":
 		if e.complexity.Stream.CreatedOn == nil {
 			break
@@ -2749,6 +2773,8 @@ type Metrics {
   writeOps: Int!
   writeBytes: Int!
   writeRecords: Int!
+  scanOps: Int!
+  scanBytes: Int!
 }
 
 enum EntityKind {
@@ -2978,6 +3004,7 @@ extend type Mutation {
     streamName: String!,
     schemaKind: StreamSchemaKind!,
     schema: String!,
+    indexes: String,
     description: String,
     allowManualWrites: Boolean,
     useLog: Boolean,
@@ -3019,6 +3046,7 @@ type Stream {
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
+  canonicalIndexes: String!
   streamIndexes: [StreamIndex!]!
 
   useLog: Boolean!
@@ -3565,69 +3593,77 @@ func (ec *executionContext) field_Mutation_stageStream_args(ctx context.Context,
 	}
 	args["schema"] = arg4
 	var arg5 *string
-	if tmp, ok := rawArgs["description"]; ok {
+	if tmp, ok := rawArgs["indexes"]; ok {
 		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg5
-	var arg6 *bool
-	if tmp, ok := rawArgs["allowManualWrites"]; ok {
-		arg6, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	args["indexes"] = arg5
+	var arg6 *string
+	if tmp, ok := rawArgs["description"]; ok {
+		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["allowManualWrites"] = arg6
+	args["description"] = arg6
 	var arg7 *bool
-	if tmp, ok := rawArgs["useLog"]; ok {
+	if tmp, ok := rawArgs["allowManualWrites"]; ok {
 		arg7, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useLog"] = arg7
+	args["allowManualWrites"] = arg7
 	var arg8 *bool
-	if tmp, ok := rawArgs["useIndex"]; ok {
+	if tmp, ok := rawArgs["useLog"]; ok {
 		arg8, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useIndex"] = arg8
+	args["useLog"] = arg8
 	var arg9 *bool
-	if tmp, ok := rawArgs["useWarehouse"]; ok {
+	if tmp, ok := rawArgs["useIndex"]; ok {
 		arg9, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["useWarehouse"] = arg9
-	var arg10 *int
-	if tmp, ok := rawArgs["logRetentionSeconds"]; ok {
-		arg10, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+	args["useIndex"] = arg9
+	var arg10 *bool
+	if tmp, ok := rawArgs["useWarehouse"]; ok {
+		arg10, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["logRetentionSeconds"] = arg10
+	args["useWarehouse"] = arg10
 	var arg11 *int
-	if tmp, ok := rawArgs["indexRetentionSeconds"]; ok {
+	if tmp, ok := rawArgs["logRetentionSeconds"]; ok {
 		arg11, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["indexRetentionSeconds"] = arg11
+	args["logRetentionSeconds"] = arg11
 	var arg12 *int
-	if tmp, ok := rawArgs["warehouseRetentionSeconds"]; ok {
+	if tmp, ok := rawArgs["indexRetentionSeconds"]; ok {
 		arg12, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["warehouseRetentionSeconds"] = arg12
+	args["indexRetentionSeconds"] = arg12
+	var arg13 *int
+	if tmp, ok := rawArgs["warehouseRetentionSeconds"]; ok {
+		arg13, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["warehouseRetentionSeconds"] = arg13
 	return args, nil
 }
 
@@ -6492,6 +6528,80 @@ func (ec *executionContext) _Metrics_writeRecords(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Metrics_scanOps(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Metrics",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanOps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Metrics_scanBytes(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Metrics",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanBytes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7300,7 +7410,7 @@ func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int))
+		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(entity.StreamSchemaKind), args["schema"].(string), args["indexes"].(*string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13139,6 +13249,43 @@ func (ec *executionContext) _Stream_canonicalAvroSchema(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_canonicalIndexes(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Stream",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CanonicalIndexes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_streamIndexes(ctx context.Context, field graphql.CollectedField, obj *entity.Stream) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -15855,6 +16002,16 @@ func (ec *executionContext) _Metrics(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "scanOps":
+			out.Values[i] = ec._Metrics_scanOps(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "scanBytes":
+			out.Values[i] = ec._Metrics_scanBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17317,6 +17474,11 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "canonicalAvroSchema":
 			out.Values[i] = ec._Stream_canonicalAvroSchema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "canonicalIndexes":
+			out.Values[i] = ec._Stream_canonicalIndexes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

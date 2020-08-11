@@ -1,0 +1,10 @@
+syntax = "proto3";
+option go_package = "proto";
+package bigquery;
+
+message Cursor {
+	string dataset = 1;
+	string table = 2;
+	string token = 3;
+	string avro_schema = 4;
+}

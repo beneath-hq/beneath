@@ -192,7 +192,7 @@ func getFromInstanceID(w http.ResponseWriter, r *http.Request, instanceID uuid.U
 		}
 
 		// convert to json friendly
-		data, err = stream.Codec.ConvertFromAvroNative(data, true)
+		data, err = stream.Codec.ConvertToJSONTypes(data)
 		if err != nil {
 			return httputil.NewError(400, err.Error())
 		}

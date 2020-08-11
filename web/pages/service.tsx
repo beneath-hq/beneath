@@ -70,7 +70,7 @@ const ServicePage = () => {
             ? service.description + " "
             : "" +
               `(Read quota: ${service.readQuota ? numbro(service.readQuota).format(bytesFormat) : "not set"}, ` +
-              `Write quota ${service.writeQuota ? numbro(service.writeQuota).format(bytesFormat) : "not set"})` +
+              `Write quota ${service.writeQuota ? numbro(service.writeQuota).format(bytesFormat) : "not set"}, ` +
               `Scan quota ${service.scanQuota ? numbro(service.scanQuota).format(bytesFormat) : "not set"})`
         }
       />

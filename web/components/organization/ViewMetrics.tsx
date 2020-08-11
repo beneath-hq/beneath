@@ -60,7 +60,7 @@ const MetricsOverview: FC<MetricsProps> = ({ entityKind, entityID, readQuota, wr
         <Grid container spacing={2} item xs={12}>
           {readQuota && <UsageIndicator standalone={true} kind="read" usage={latest.readBytes} quota={readQuota} />}
           {writeQuota && <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={writeQuota} />}
-          {scanQuota && <UsageIndicator standalone={true} kind="write" usage={latest.writeBytes} quota={scanQuota} />}
+          {scanQuota && <UsageIndicator standalone={true} kind="scan" usage={latest.scanBytes} quota={scanQuota} />}
         </Grid>
       )}
       <TopIndicators latest={latest} total={total} />

@@ -9,4 +9,6 @@ message QuotaUsage {
   int64 write_ops = 4;
   int64 write_records = 5;
   int64 write_bytes = 6;
+  int64 scan_ops = 7;
+  int64 scan_bytes = 8;
 }

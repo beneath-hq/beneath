@@ -18,6 +18,8 @@ export interface GetServiceMetrics_getServiceMetrics {
   writeOps: number;
   writeBytes: number;
   writeRecords: number;
+  scanOps: number;
+  scanBytes: number;
 }
 
 export interface GetServiceMetrics {

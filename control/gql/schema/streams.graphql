@@ -11,6 +11,7 @@ extend type Mutation {
     streamName: String!,
     schemaKind: StreamSchemaKind!,
     schema: String!,
+    indexes: String,
     description: String,
     allowManualWrites: Boolean,
     useLog: Boolean,
@@ -52,6 +53,7 @@ type Stream {
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
+  canonicalIndexes: String!
   streamIndexes: [StreamIndex!]!
 
   useLog: Boolean!

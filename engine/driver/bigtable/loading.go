@@ -52,11 +52,6 @@ func (r Record) GetStructured() map[string]interface{} {
 		panic(err)
 	}
 
-	structured, err = r.Stream.GetCodec().ConvertFromAvroNative(structured, false)
-	if err != nil {
-		panic(err)
-	}
-
 	return structured
 }
 

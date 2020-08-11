@@ -34,6 +34,11 @@ func (b BigTable) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil
 		rmw.Increment(usageColumnFamilyName, usageWriteBytesColumnName, usage.WriteBytes)
 	}
 
+	if usage.ScanOps > 0 {
+		rmw.Increment(usageColumnFamilyName, usageScanOpsColumnName, usage.ScanOps)
+		rmw.Increment(usageColumnFamilyName, usageScanBytesColumnName, usage.ScanBytes)
+	}
+
 	key := makeUsageKey(id, period, ts, 0)
 	_, err := table.ApplyReadModifyWrite(ctx, key, rmw)
 	return err
@@ -140,6 +145,10 @@ func (b *BigTable) rowToUsage(row bigtable.Row) pb.QuotaUsage {
 			usage.WriteRecords = int64(binary.BigEndian.Uint64(cell.Value))
 		case usageWriteBytesColumnName:
 			usage.WriteBytes = int64(binary.BigEndian.Uint64(cell.Value))
+		case usageScanOpsColumnName:
+			usage.ScanOps = int64(binary.BigEndian.Uint64(cell.Value))
+		case usageScanBytesColumnName:
+			usage.ScanBytes = int64(binary.BigEndian.Uint64(cell.Value))
 		}
 	}
 	return usage

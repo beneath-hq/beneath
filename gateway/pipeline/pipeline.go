@@ -145,11 +145,6 @@ func newRecord(stream driver.Stream, proto *pbgw.Record) record {
 		panic(err)
 	}
 
-	structured, err = stream.GetCodec().ConvertFromAvroNative(structured, false)
-	if err != nil {
-		panic(err)
-	}
-
 	return record{
 		Proto:      proto,
 		Structured: structured,

@@ -68,7 +68,7 @@ func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID u
 	return instances, nil
 }
 
-func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error) {
+func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error) {
 	var project *entity.Project
 	var stream *entity.Stream
 
@@ -92,7 +92,7 @@ func (r *mutationResolver) StageStream(ctx context.Context, organizationName str
 		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", organizationName, projectName)
 	}
 
-	err := stream.Stage(ctx, schemaKind, schema, description, allowManualWrites, useLog, useIndex, useWarehouse, logRetentionSeconds, indexRetentionSeconds, warehouseRetentionSeconds)
+	err := stream.Stage(ctx, schemaKind, schema, indexes, description, allowManualWrites, useLog, useIndex, useWarehouse, logRetentionSeconds, indexRetentionSeconds, warehouseRetentionSeconds)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error staging stream: %s", err.Error())
 	}

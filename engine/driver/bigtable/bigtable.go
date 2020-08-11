@@ -77,6 +77,8 @@ const (
 	usageWriteOpsColumnName   = "wo"
 	usageWriteRowsColumnName  = "wr"
 	usageWriteBytesColumnName = "wb"
+	usageScanOpsColumnName    = "so"
+	usageScanBytesColumnName  = "sb"
 )
 
 // Global

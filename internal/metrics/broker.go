@@ -43,6 +43,7 @@ type OpType int
 const (
 	OpTypeRead OpType = iota
 	OpTypeWrite
+	OpTypeScan
 )
 
 // NewBroker initializes the Broker
@@ -155,6 +156,11 @@ func (b *Broker) TrackWrite(id uuid.UUID, nrecords int64, nbytes int64) {
 	b.trackOp(OpTypeWrite, id, nrecords, nbytes)
 }
 
+// TrackScan records metrics for query scans
+func (b *Broker) TrackScan(id uuid.UUID, nbytes int64) {
+	b.trackOp(OpTypeScan, id, 0, nbytes)
+}
+
 // trackOp records the metrics for a given ID (project, user, or secret)
 func (b *Broker) trackOp(op OpType, id uuid.UUID, nrecords int64, nbytes int64) {
 	b.mu.Lock()
@@ -167,6 +173,9 @@ func (b *Broker) trackOp(op OpType, id uuid.UUID, nrecords int64, nbytes int64) 
 		u.WriteOps++
 		u.WriteRecords += nrecords
 		u.WriteBytes += nbytes
+	} else if op == OpTypeScan {
+		u.ScanOps++
+		u.ScanBytes += nbytes
 	} else {
 		b.mu.Unlock()
 		panic(fmt.Errorf("unrecognized op type '%d'", op))
@@ -208,6 +217,8 @@ func (b *Broker) GetCurrentUsage(ctx context.Context, entityID uuid.UUID) pb.Quo
 	usage.WriteOps += usageBuf.WriteOps
 	usage.WriteRecords += usageBuf.WriteRecords
 	usage.WriteBytes += usageBuf.WriteBytes
+	usage.ScanOps += usageBuf.ScanOps
+	usage.ScanBytes += usageBuf.ScanBytes
 
 	return usage
 }

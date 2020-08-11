@@ -12,6 +12,8 @@ export const GET_METRICS = gql`
       writeOps
       writeBytes
       writeRecords
+      scanOps
+      scanBytes
     }
   }
 `;
@@ -28,6 +30,8 @@ export const GET_ORGANIZATION_METRICS = gql`
       writeOps
       writeBytes
       writeRecords
+      scanOps
+      scanBytes
     }
   }
 `;
@@ -44,6 +48,8 @@ export const GET_SERVICE_METRICS = gql`
       writeOps
       writeBytes
       writeRecords
+      scanOps
+      scanBytes
     }
   }
 `;
@@ -76,6 +82,8 @@ export const GET_USER_METRICS = gql`
       writeOps
       writeBytes
       writeRecords
+      scanOps
+      scanBytes
     }
   }
 `;

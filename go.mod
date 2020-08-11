@@ -16,6 +16,7 @@ require (
 	github.com/go-redis/redis/v7 v7.0.0-beta.4
 	github.com/go-redis/redis_rate/v8 v8.0.0-beta
 	github.com/go-test/deep v1.0.1
+	github.com/gogo/protobuf v1.0.0
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.3.2
 	github.com/google/btree v1.0.0 // indirect
@@ -40,6 +41,7 @@ require (
 	github.com/stripe/stripe-go v66.1.1+incompatible
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c
 	go.opencensus.io v0.22.0 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
