@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/segmentio/ksuid"
 
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 )
@@ -16,11 +15,6 @@ const (
 	writeReportsTopic         = "write-reports"
 	writeReportsSubscription  = "write-reports-reader"
 )
-
-// GenerateWriteID returns a new write ID for use in new WriteRequests
-func GenerateWriteID() []byte {
-	return ksuid.New().Bytes()
-}
 
 // QueueWriteRequest queues a write request -- concretely, it results in
 // the write request being written to Pubsub, then from there read by

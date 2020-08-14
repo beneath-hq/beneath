@@ -17,6 +17,10 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
+const (
+	maxMaxBytesScanned = 1000000000000 // 1 TB
+)
+
 // GetWarehouseTableName implements beneath.WarehouseService
 func (b BigQuery) GetWarehouseTableName(p driver.Project, s driver.Stream, i driver.StreamInstance) string {
 	return fmt.Sprintf("`%s.%s`", externalDatasetName(p), externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
@@ -38,10 +42,17 @@ func (b BigQuery) AnalyzeWarehouseQuery(ctx context.Context, query string) (driv
 
 // RunWarehouseQuery implements beneath.WarehouseService
 func (b BigQuery) RunWarehouseQuery(ctx context.Context, jobID uuid.UUID, query string, partitions int, timeoutMs int, maxBytesScanned int) (driver.WarehouseJob, error) {
+	if maxBytesScanned > maxMaxBytesScanned {
+		return nil, fmt.Errorf("max_bytes_scanned=%d exceeds maximum of %d", maxBytesScanned, maxMaxBytesScanned)
+	} else if maxBytesScanned <= 0 {
+		maxBytesScanned = maxMaxBytesScanned
+	}
+
 	q := b.Client.Query(query)
 	q.AllowLargeResults = false
 	q.MaxBytesBilled = int64(maxBytesScanned)
 	q.JobID = jobID.String()
+	// TODO: handle timeoutMs
 
 	job, err := q.Run(ctx)
 	if err != nil {
@@ -325,6 +336,14 @@ func (r resultRecord) GetAvro() []byte {
 
 func (r resultRecord) GetStructured() map[string]interface{} {
 	return bqValueToInterface(r.row).(map[string]interface{})
+}
+
+func (r resultRecord) GetJSON() map[string]interface{} {
+	data, err := r.coder.ConvertToJSONTypes(r.GetStructured())
+	if err != nil {
+		panic(err)
+	}
+	return data
 }
 
 func (r resultRecord) GetPrimaryKey() []byte {

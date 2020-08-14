@@ -55,6 +55,15 @@ func (r Record) GetStructured() map[string]interface{} {
 	return structured
 }
 
+// GetJSON implements driver.Record
+func (r Record) GetJSON() map[string]interface{} {
+	data, err := r.Stream.GetCodec().ConvertToJSONTypes(r.GetStructured())
+	if err != nil {
+		panic(err)
+	}
+	return data
+}
+
 // GetPrimaryKey implements driver.Record
 func (r Record) GetPrimaryKey() []byte {
 	return r.PrimaryKey

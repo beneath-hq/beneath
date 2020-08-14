@@ -1,19 +1,21 @@
-package grpc
+package clientversion
 
-import version "github.com/hashicorp/go-version"
+import "github.com/hashicorp/go-version"
 
-type clientVersionSpec struct {
+// Spec represents the deprecated, deprecating and recommended versions of a client
+type Spec struct {
 	RecommendedVersion *version.Version
 	WarningVersion     *version.Version
 	DeprecatedVersion  *version.Version
 }
 
-func (s clientVersionSpec) IsZero() bool {
+// IsZero returns true if the spec is uninitialized
+func (s Spec) IsZero() bool {
 	return s.DeprecatedVersion == nil && s.WarningVersion == nil && s.RecommendedVersion == nil
 }
 
-func newClientVersionSpec(recommended, warning, deprecated string) clientVersionSpec {
-	return clientVersionSpec{
+func newSpec(recommended, warning, deprecated string) Spec {
+	return Spec{
 		RecommendedVersion: newVersionOrPanic(recommended),
 		WarningVersion:     newVersionOrPanic(warning),
 		DeprecatedVersion:  newVersionOrPanic(deprecated),
@@ -28,6 +30,7 @@ func newVersionOrPanic(str string) *version.Version {
 	return v
 }
 
-var clientSpecs = map[string]clientVersionSpec{
-	"beneath-python": newClientVersionSpec("1.2.0", "1.2.0", "1.1.3"),
+// Specs contains a Spec for each supported client library
+var Specs = map[string]Spec{
+	"beneath-python": newSpec("1.2.0", "1.2.0", "1.1.3"),
 }

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,11 +15,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/ws"
-)
-
-const (
-	defaultReadLimit = 50
-	maxReadLimit     = 1000
 )
 
 // Handler serves the gateway HTTP API
@@ -48,16 +42,24 @@ func Handler() http.Handler {
 	handler.Get("/", healthCheck)
 	handler.Get("/healthz", healthCheck)
 
+	// index and log endpoints
+	handler.Method("GET", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
+	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))
+
+	// write endpoint
+	handler.Method("POST", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(postToOrganizationAndProjectAndStream))
+	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
+
+	// warehouse job endpoints
+	handler.Method("GET", "/v1/-/warehouse", httputil.AppHandler(getFromWarehouseJob))
+	handler.Method("POST", "/v1/-/warehouse", httputil.AppHandler(postToWarehouseJob))
+
+	// read endpoint
+	handler.Method("GET", "/v1/-/cursor", httputil.AppHandler(getFromCursor))
+
 	// create websocket broker and start accepting new connections on /ws
 	wss := ws.NewBroker(&wsServer{})
 	handler.Method("GET", "/v1/-/ws", httputil.AppHandler(wss.HTTPHandler))
-
-	// write endpoint
-	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
-
-	// query endpoints
-	handler.Method("GET", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
-	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))
 
 	return handler
 }
@@ -72,35 +74,29 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseLimit(val interface{}) (int, error) {
-	limit := defaultReadLimit
-	if val != nil {
-		switch num := val.(type) {
-		case string:
-			l, err := strconv.Atoi(num)
-			if err != nil {
-				return 0, fmt.Errorf("couldn't parse limit as integer")
-			}
-			limit = l
-		case json.Number:
-			l, err := num.Int64()
-			if err != nil {
-				return 0, fmt.Errorf("couldn't parse limit as integer")
-			}
-			limit = int(l)
-		default:
-			return 0, fmt.Errorf("couldn't parse limit as integer")
-		}
+func parseBoolParam(name string, val string) (bool, error) {
+	if val == "" {
+		return false, nil
+	} else if val == "true" {
+		return true, nil
+	} else if val == "false" {
+		return false, nil
 	}
 
-	// check limit is valid
-	if limit == 0 {
-		return 0, fmt.Errorf("limit cannot be 0")
-	} else if limit > maxReadLimit {
-		return 0, fmt.Errorf("limit exceeds maximum of %d", maxReadLimit)
+	return false, fmt.Errorf("expected '%s' parameter to be 'true' or 'false'", name)
+}
+
+func parseIntParam(name string, val string) (int, error) {
+	if val == "" {
+		return 0, nil
 	}
 
-	return limit, nil
+	res, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, fmt.Errorf("couldn't parse '%s' as integer", name)
+	}
+
+	return res, nil
 }
 
 func toBackendName(s string) string {

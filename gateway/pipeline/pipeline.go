@@ -163,6 +163,10 @@ func (r record) GetStructured() map[string]interface{} {
 	return r.Structured
 }
 
+func (r record) GetJSON() map[string]interface{} {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r record) GetPrimaryKey() []byte {
 	panic(fmt.Errorf("not implemented"))
 }
