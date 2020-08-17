@@ -1,4 +1,4 @@
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery } from "@apollo/client";
 
 import { QUERY_ME } from "../apollo/queries/organization";
 import { Me } from "../apollo/types/Me";

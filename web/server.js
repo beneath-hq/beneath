@@ -7,7 +7,7 @@ const fetch = require("isomorphic-unfetch");
 const helmet = require("helmet");
 const compression = require("compression");
 const redirectToHTTPS = require("express-http-to-https").redirectToHTTPS;
-const uuidv4 = require("uuid/v4");
+const uuid = require("uuid");
 
 global.fetch = require("isomorphic-unfetch"); // Polyfill fetch() on the server (used by apollo-client)
 
@@ -33,7 +33,17 @@ app.prepare().then(() => {
   server.use(compression());
 
   // Headers security
-  server.use(helmet());
+  // server.use(helmet.contentSecurityPolicy());
+  server.use(helmet.dnsPrefetchControl());
+  server.use(helmet.expectCt());
+  server.use(helmet.frameguard());
+  server.use(helmet.hidePoweredBy());
+  server.use(helmet.hsts());
+  server.use(helmet.ieNoOpen());
+  server.use(helmet.noSniff());
+  server.use(helmet.permittedCrossDomainPolicies());
+  server.use(helmet.referrerPolicy());
+  server.use(helmet.xssFilter());
 
   // CORS
   server.use(cors());
@@ -45,7 +55,7 @@ app.prepare().then(() => {
   server.use((req, res, next) => {
     const aid = req.cookies.aid;
     if (!aid) {
-      res.cookie("aid", uuidv4(), { maxAge: cookieAge, secure: !dev });
+      res.cookie("aid", uuid.v4(), { maxAge: cookieAge, secure: !dev });
     }
     next();
   });

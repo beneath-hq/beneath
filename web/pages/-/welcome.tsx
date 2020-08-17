@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/react-hooks";
+import { useMutation } from "@apollo/client";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";

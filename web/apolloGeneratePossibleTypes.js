@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
 const fs = require("fs");
 
 const API_HOST = connection.API_URL;
-const OUT_FILE = "./apollo/fragmentTypes.json";
+const OUT_FILE = "./apollo/possibleTypes.json";
 
 fetch(`${API_HOST}/graphql`, {
   method: "POST",
@@ -32,12 +32,16 @@ fetch(`${API_HOST}/graphql`, {
 })
   .then((result) => result.json())
   .then((result) => {
-    // here we're filtering out any type information unrelated to unions or interfaces
-    const filteredData = result.data.__schema.types.filter((type) => type.possibleTypes !== null);
-    result.data.__schema.types = filteredData;
-    fs.writeFile(OUT_FILE, JSON.stringify(result.data), (err) => {
+    const possibleTypes = {};
+    result.data.__schema.types.forEach((supertype) => {
+      if (supertype.possibleTypes) {
+        possibleTypes[supertype.name] = supertype.possibleTypes.map((subtype) => subtype.name);
+      }
+    });
+
+    fs.writeFile(OUT_FILE, JSON.stringify(possibleTypes), (err) => {
       if (err) {
-        console.error("Error writing fragmentTypes file", err);
+        console.error("Error writing possibleTypes.json", err);
       } else {
         console.log("Fragment types successfully extracted!");
       }

@@ -1,6 +1,6 @@
 import React from "react";
 import Head from "next/head";
-import { ApolloProvider } from "@apollo/react-hooks";
+import { ApolloProvider } from "@apollo/client";
 
 import { getApolloClient } from "./client";
 
@@ -53,7 +53,7 @@ export function withApollo(PageComponent, { ssr = true } = {}) {
       if (ssr) {
         try {
           // Run all GraphQL queries
-          const { getDataFromTree } = await import("@apollo/react-ssr");
+          const { getDataFromTree } = await import("@apollo/client/react/ssr");
           await getDataFromTree(
             <AppTree
               pageProps={{

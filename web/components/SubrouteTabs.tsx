@@ -1,6 +1,5 @@
 import { NextRouter, withRouter } from "next/router";
-import PropTypes from "prop-types";
-import React, { Component, FC } from "react";
+import React, { FC } from "react";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Divider from "@material-ui/core/Divider";
@@ -42,6 +41,13 @@ export interface SubrouteTabProps {
   setLoading: (loading: boolean) => void;
 }
 
+const buildHref = (path: string, query: NodeJS.Dict<string>) => {
+  const queryString = Object.keys(query)
+    .map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(query[key] || ""))
+    .join("&");
+  return `${path}?${queryString}`;
+};
+
 const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => {
   const selectedValue = router.query.tab || defaultValue || tabs[0].value;
   const asPathBase = router.query.tab ? router.asPath.substring(0, router.asPath.lastIndexOf("/-/")) : router.asPath;
@@ -50,13 +56,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
   const classes = useStyles();
   return (
     <React.Fragment>
-      <Tabs
-        indicatorColor="primary"
-        textColor="primary"
-        variant="scrollable"
-        scrollButtons="off"
-        value={selectedValue}
-      >
+      <Tabs indicatorColor="primary" textColor="primary" variant="scrollable" scrollButtons="off" value={selectedValue}>
         {tabs.map((tab) => (
           <Tab
             key={tab.value}
@@ -73,13 +73,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
             shallow
             replace
             as={`${asPathBase}/-/${tab.value}`}
-            href={{
-              pathname: router.pathname,
-              query: {
-                ...router.query,
-                tab: tab.value,
-              },
-            }}
+            href={buildHref(router.pathname, {...router.query, tab: tab.value})}
           />
         ))}
       </Tabs>

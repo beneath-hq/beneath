@@ -1,5 +1,4 @@
 import PropTypes from "prop-types";
-import pure from "recompose/pure";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -16,7 +15,6 @@ let VSpace = (props) => {
 };
 
 VSpace.displayName = "VSpace";
-VSpace = pure(VSpace);
 VSpace.muiName = "VSpace";
 
 VSpace.propTypes = {

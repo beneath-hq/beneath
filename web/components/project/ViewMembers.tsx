@@ -1,4 +1,4 @@
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery } from "@apollo/client";
 import React, { FC } from "react";
 
 import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";

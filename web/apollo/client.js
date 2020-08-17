@@ -1,9 +1,10 @@
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, IntrospectionFragmentMatcher, defaultDataIdFromObject } from "apollo-boost";
-import { ErrorLink } from "apollo-link-error";
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, defaultDataIdFromObject } from "@apollo/client";
+import { onError } from "@apollo/client/link/error";
+
 import fetch from "isomorphic-unfetch";
 
 import { API_URL, IS_PRODUCTION } from "../lib/connection";
-import introspectionQueryResultData from "./fragmentTypes.json";
+import possibleTypes from "./possibleTypes.json";
 import { resolvers, typeDefs } from "./schema";
 import { GET_AID, GET_TOKEN } from "./queries/local/token";
 
@@ -24,11 +25,32 @@ export const getApolloClient = ({ req, res, initialState }) => {
 };
 
 const createApolloClient = ({ req, res, initialState }) => {
-  const fragmentMatcher = new IntrospectionFragmentMatcher({
-    introspectionQueryResultData,
-  });
+  const typePolicies = {
+    // Data normalization config. See https://www.apollographql.com/docs/react/caching/cache-configuration/#data-normalization
+    // NOTE: setting keyFields to false causes objects to be embedded in the entry of their parent object, see: https://www.apollographql.com/docs/react/caching/cache-configuration/#disabling-normalization
+    BillingInfo: { keyFields: ["organizationID"] },
+    BillingMethod: { keyFields: ["billingMethodID"] },
+    BillingPlan: { keyFields: ["billingPlanID"] },
+    Metrics: { keyFields: ["entityID", "period", "time"] },
+    NewUserSecret: { keyFields: ["secretString"] },
+    Organization: { keyFields: ["organizationID"] },
+    OrganizationMember: { keyFields: ["organizationID", "userID"] },
+    PermissionsServicesStreams: { keyFields: false },
+    PermissionsUsersOrganizations: { keyFields: false },
+    PermissionsUsersProjects: { keyFields: false },
+    PrivateOrganization: { keyFields: ["organizationID"] },
+    PrivateUser: { keyFields: ["userID"] },
+    Project: { keyFields: ["projectID"] },
+    ProjectMember: { keyFields: ["projectID", "userID"] },
+    PublicOrganization: { keyFields: ["organizationID"] },
+    Service: { keyFields: ["serviceID"] },
+    Stream: { keyFields: ["streamID"] },
+    StreamIndex: { keyFields: ["indexID"] },
+    StreamInstance: { keyFields: ["streamInstanceID"] },
+    UserSecret: { keyFields: ["userSecretID"] },
+  };
 
-  const cache = new InMemoryCache({ dataIdFromObject, fragmentMatcher }).restore(initialState || {});
+  const cache = new InMemoryCache({ possibleTypes, typePolicies }).restore(initialState || {});
 
   const linkOptions = {
     credentials: "include",
@@ -54,7 +76,7 @@ const createApolloClient = ({ req, res, initialState }) => {
   return new ApolloClient({
     connectToDevTools: typeof window === "undefined" && !IS_PRODUCTION,
     ssrMode: typeof window === "undefined",
-    link: ApolloLink.from([new ErrorLink(makeErrorHook({ token, res })), new HttpLink(linkOptions)]),
+    link: ApolloLink.from([onError(makeErrorHook({ token, res })), new HttpLink(linkOptions)]),
     cache,
     typeDefs,
     resolvers,
@@ -67,58 +89,6 @@ const createApolloClient = ({ req, res, initialState }) => {
       },
     },
   });
-};
-
-// returns ID for objects for caching/automatic state update
-const dataIdFromObject = (object) => {
-  switch (object.__typename) {
-    case "PrivateUser":
-      return object.userID;
-    case "PublicOrganization":
-      return `public:${object.organizationID}`;
-    case "PrivateOrganization":
-      return `private:${object.organizationID}`;
-    case "OrganizationMember":
-      return `org-member:${object.organizationID}:${object.userID}`;
-    case "ProjectMember":
-      return `proj-member:${object.projectID}:${object.userID}`;
-    case "UserSecret":
-      return `${object.userSecretID}`;
-    case "NewUserSecret":
-      return `${object.secretString}`;
-    case "Project":
-      return `${object.projectID}`;
-    case "Stream":
-      return `${object.streamID}`;
-    case "StreamInstance":
-      return `${object.streamInstanceID}`;
-    case "Service":
-      return `${object.serviceID}`;
-    case "Organization":
-      return `${object.organizationID}`;
-    case "CreateRecordsResponse":
-      return defaultDataIdFromObject(object);
-    case "Metrics":
-      return `metrics:${object.entityID}:${object.period}:${object.time}`;
-    case "BillingInfo":
-      return `${object.organizationID}`;
-    case "BillingMethod":
-      return `${object.billingMethodID}`;
-    case "BillingPlan":
-      return `${object.billingPlanID}`;
-    case "StreamIndex":
-      return `${object.indexID}`;
-    case "PermissionsUsersOrganizations":
-      return defaultDataIdFromObject(object);
-    case "PermissionsUsersProjects":
-      return defaultDataIdFromObject(object);
-    case "PermissionsServicesStreams":
-      return defaultDataIdFromObject(object);
-    default: {
-      console.warn(`Unknown typename in dataIdFromObject: ${object.__typename}`);
-      return defaultDataIdFromObject(object);
-    }
-  }
 };
 
 const makeErrorHook = ({ token, res }) => {
