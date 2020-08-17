@@ -5,7 +5,7 @@ import validator from "validator";
 
 import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 
-import { UPDATE_PROJECT } from "../../apollo/queries/project";
+import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { UpdateProject, UpdateProjectVariables } from "../../apollo/types/UpdateProject";
 import VSpace from "../VSpace";
@@ -28,7 +28,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
     photoURL: project.photoURL || "",
   });
 
-  const [updateProject, {loading, error}] = useMutation<UpdateProject, UpdateProjectVariables>(UPDATE_PROJECT);
+  const [updateProject, { loading, error }] = useMutation<UpdateProject, UpdateProjectVariables>(STAGE_PROJECT);
 
   const handleChange = (name: string) => (event: any) => {
     setValues({ ...values, [name]: event.target.value });
