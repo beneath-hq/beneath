@@ -51,7 +51,7 @@ func Handler() http.Handler {
 	handler.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(postToInstance))
 
 	// warehouse job endpoints
-	handler.Method("GET", "/v1/-/warehouse", httputil.AppHandler(getFromWarehouseJob))
+	handler.Method("GET", "/v1/-/warehouse/{jobID}", httputil.AppHandler(getFromWarehouseJob))
 	handler.Method("POST", "/v1/-/warehouse", httputil.AppHandler(postToWarehouseJob))
 
 	// read endpoint

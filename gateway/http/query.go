@@ -28,7 +28,7 @@ type queryArgs struct {
 
 func getFromOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Request) error {
 	// if cursor is set, go straight to fetching from cursor (the instance ID is backed into the cursor)
-	if chi.URLParam(r, "cursor") != "" {
+	if r.URL.Query().Get("cursor") != "" {
 		return getFromCursor(w, r)
 	}
 
@@ -49,7 +49,7 @@ func getFromOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Reque
 
 func getFromInstance(w http.ResponseWriter, r *http.Request) error {
 	// if cursor is set, go straight to fetching from cursor (the instance ID is backed into the cursor)
-	if chi.URLParam(r, "cursor") != "" {
+	if r.URL.Query().Get("cursor") != "" {
 		return getFromCursor(w, r)
 	}
 
@@ -114,14 +114,14 @@ func parseQueryArgs(r *http.Request) (queryArgs, error) {
 	args := queryArgs{}
 
 	// read limit
-	limit, err := parseIntParam("limit", chi.URLParam(r, "limit"))
+	limit, err := parseIntParam("limit", r.URL.Query().Get("limit"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}
 	args.Limit = limit
 
 	// read type
-	t := chi.URLParam(r, "type")
+	t := r.URL.Query().Get("type")
 	if t == "" || t == string(queryArgsTypeIndex) {
 		args.Type = queryArgsTypeIndex
 	} else if t == string(queryArgsTypeLog) {
@@ -131,10 +131,10 @@ func parseQueryArgs(r *http.Request) (queryArgs, error) {
 	}
 
 	// read filter
-	args.Filter = chi.URLParam(r, "filter")
+	args.Filter = r.URL.Query().Get("filter")
 
 	// read peek
-	args.Peek, err = parseBoolParam("peek", chi.URLParam(r, "peek"))
+	args.Peek, err = parseBoolParam("peek", r.URL.Query().Get("peek"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}

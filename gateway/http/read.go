@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
@@ -69,13 +68,13 @@ func handleRead(w http.ResponseWriter, r *http.Request, cursor []byte, limit int
 func parseReadArgs(r *http.Request) (readArgs, error) {
 	args := readArgs{}
 
-	limit, err := parseIntParam("limit", chi.URLParam(r, "limit"))
+	limit, err := parseIntParam("limit", r.URL.Query().Get("limit"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}
 	args.Limit = limit
 
-	cursor := chi.URLParam(r, "cursor")
+	cursor := r.URL.Query().Get("cursor")
 	if cursor != "" {
 		args.Cursor, err = base58.Decode(cursor)
 		if err != nil {
@@ -87,7 +86,7 @@ func parseReadArgs(r *http.Request) (readArgs, error) {
 		return args, httputil.NewError(http.StatusBadRequest, "expected url argument 'cursor'")
 	}
 
-	if chi.URLParam(r, "type") != "" || chi.URLParam(r, "filter") != "" || chi.URLParam(r, "peek") != "" {
+	if r.URL.Query().Get("type") != "" || r.URL.Query().Get("filter") != "" || r.URL.Query().Get("peek") != "" {
 		return args, httputil.NewError(400, "you cannot provide query parameters ('type', 'filter' or 'peek') along with a 'cursor'")
 	}
 

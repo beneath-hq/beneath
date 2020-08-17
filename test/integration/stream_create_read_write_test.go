@@ -3,7 +3,7 @@ package integration
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,12 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mr-tron/base58"
-
 	"github.com/gorilla/websocket"
 	"github.com/linkedin/goavro/v2"
+	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
-	"github.com/stretchr/testify/assert"
+	assert "github.com/stretchr/testify/require"
 
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
@@ -28,15 +27,15 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// create project
 	res1 := queryGQL(`
-		mutation CreateProject($organizationID: UUID!) {
-			createProject(name: "test", organizationID: $organizationID, public: true) {
+		mutation StageProject($organizationName: String!) {
+			stageProject(organizationName: $organizationName, projectName: "test", public: true) {
 				projectID
 				name
 			}
 		}
-	`, map[string]interface{}{"organizationID": testOrg.OrganizationID})
+	`, map[string]interface{}{"organizationName": testOrg.Name})
 	assert.Empty(t, res1.Errors)
-	project := res1.Result()["createProject"]
+	project := res1.Result()["stageProject"]
 	assert.Equal(t, "test", project["name"])
 
 	// create stream
@@ -112,11 +111,15 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// write grpc records
 	res3, err := gatewayGRPC.Write(grpcContext(), &pb.WriteRequest{
-		InstanceId: instanceID.Bytes(),
-		Records:    recordsPB,
+		InstanceRecords: []*pb.InstanceRecords{
+			&pb.InstanceRecords{
+				InstanceId: instanceID.Bytes(),
+				Records:    recordsPB,
+			},
+		},
 	})
 	assert.Nil(t, err)
-	assert.Len(t, res3.GetWriteId(), 20)
+	assert.Len(t, res3.GetWriteId(), 16)
 
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
@@ -133,9 +136,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// read data page 1
 	n := 30
 	res5, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res4.ReplayCursors[0],
-		Limit:      int32(n),
+		Cursor: res4.ReplayCursors[0],
+		Limit:  int32(n),
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res5.Records, n)
@@ -146,9 +148,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read data page 2 (ends here)
 	res6, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res5.NextCursor,
-		Limit:      int32(n),
+		Cursor: res5.NextCursor,
+		Limit:  int32(n),
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res6.Records, 20)
@@ -177,9 +178,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// read data page 1
 	n = 30
 	res5a, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res4a.ReplayCursors[0],
-		Limit:      int32(n),
+		Cursor: res4a.ReplayCursors[0],
+		Limit:  int32(n),
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res5a.Records, n)
@@ -190,9 +190,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read data page 2 (ends here)
 	res6a, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res5a.NextCursor,
-		Limit:      int32(n),
+		Cursor: res5a.NextCursor,
+		Limit:  int32(n),
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res6a.Records, 20)
@@ -215,9 +214,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read data page 1 (should return exactly the two rows)
 	res8, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res7.ReplayCursors[0],
-		Limit:      2,
+		Cursor: res7.ReplayCursors[0],
+		Limit:  2,
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res8.Records, 2)
@@ -231,9 +229,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read data page 2 (should be empty)
 	res9, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res8.NextCursor,
-		Limit:      10,
+		Cursor: res8.NextCursor,
+		Limit:  10,
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res9.Records, 0)
@@ -256,8 +253,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		// create sub
 		ctx, cancel := context.WithCancel(grpcContext())
 		sub, err := gatewayGRPC.Subscribe(ctx, &pb.SubscribeRequest{
-			InstanceId: instanceID.Bytes(),
-			Cursor:     res10.ChangeCursors[0],
+			Cursor: res10.ChangeCursors[0],
 		})
 		panicIf(err)
 
@@ -327,7 +323,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	subset = foobars[split:]
 	code, res11 := queryGatewayHTTP(http.MethodPost, fmt.Sprintf("v1/-/instances/%s", instanceID.String()), subset)
 	assert.Equal(t, 200, code)
-	assert.Nil(t, res11)
+	assert.NotEqual(t, uuid.Nil, uuid.FromStringOrNil(res11["write_id"].(string)))
 
 	// wait to let writes happen
 	time.Sleep(200 * time.Millisecond)
@@ -348,7 +344,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		assert.Len(t, record["@meta"], 2)
 		assert.Equal(t, subset[idx].A, record["a"])
 		assert.Equal(t, float64(subset[idx].B), record["b"])
-		assert.Equal(t, "0x"+hex.EncodeToString(subset[idx].C), record["c"])
+		assert.Equal(t, base64.StdEncoding.EncodeToString(subset[idx].C), record["c"])
 		assert.Equal(t, float64(timeutil.UnixMilli(subset[idx].D)), record["d"])
 		assert.Equal(t, subset[idx].E.FloatString(0), record["e"])
 		assert.Equal(t, nil, record["f"])
@@ -440,9 +436,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read peek page 1
 	res17, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res16.ReplayCursors[0],
-		Limit:      60,
+		Cursor: res16.ReplayCursors[0],
+		Limit:  60,
 	})
 	assert.Nil(t, err)
 	assert.True(t, len(res17.NextCursor) > 0)
@@ -450,9 +445,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// read peek page 2
 	res18, err := gatewayGRPC.Read(grpcContext(), &pb.ReadRequest{
-		InstanceId: instanceID.Bytes(),
-		Cursor:     res17.NextCursor,
-		Limit:      60,
+		Cursor: res17.NextCursor,
+		Limit:  60,
 	})
 	assert.Nil(t, err)
 	assert.Len(t, res18.NextCursor, 0)

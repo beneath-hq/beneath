@@ -54,7 +54,7 @@ func postToWarehouseJob(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getFromWarehouseJob(w http.ResponseWriter, r *http.Request) error {
-	jobID, err := uuid.FromString(chi.URLParam(r, "job_id"))
+	jobID, err := uuid.FromString(chi.URLParam(r, "jobID"))
 	if err != nil {
 		return httputil.NewError(404, "job_id not found or not a valid UUID")
 	}
@@ -72,21 +72,21 @@ func getFromWarehouseJob(w http.ResponseWriter, r *http.Request) error {
 func parseQueryWarehouseArgs(r *http.Request) (queryWarehouseArgs, error) {
 	args := queryWarehouseArgs{}
 
-	args.Query = chi.URLParam(r, "query")
+	args.Query = r.URL.Query().Get("query")
 
-	dry, err := parseBoolParam("dry", chi.URLParam(r, "dry"))
+	dry, err := parseBoolParam("dry", r.URL.Query().Get("dry"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}
 	args.DryRun = dry
 
-	timeout, err := parseIntParam("timeout_ms", chi.URLParam(r, "timeout_ms"))
+	timeout, err := parseIntParam("timeout_ms", r.URL.Query().Get("timeout_ms"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}
 	args.TimeoutMs = int32(timeout)
 
-	maxBytesScanned, err := parseIntParam("max_bytes_scanned", chi.URLParam(r, "max_bytes_scanned"))
+	maxBytesScanned, err := parseIntParam("max_bytes_scanned", r.URL.Query().Get("max_bytes_scanned"))
 	if err != nil {
 		return args, httputil.NewError(http.StatusBadRequest, err.Error())
 	}

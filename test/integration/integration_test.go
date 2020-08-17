@@ -141,7 +141,7 @@ func TestMain(m *testing.M) {
 	if testOrg == nil {
 		panic(fmt.Errorf("testOrg is nil"))
 	}
-	err = testOrg.UpdateQuotas(ctx, nil, nil)
+	err = testOrg.UpdateQuotas(ctx, nil, nil, nil)
 	panicIf(err)
 	testSecret, err = entity.CreateUserSecret(ctx, testUser.UserID, "", false, false)
 	panicIf(err)

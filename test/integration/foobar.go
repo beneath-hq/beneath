@@ -1,9 +1,8 @@
 package integration
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"math"
 	"math/big"
 	"time"
@@ -41,7 +40,7 @@ func (f foobar) MarshalJSON() ([]byte, error) {
 	}{
 		A: f.A,
 		B: f.B,
-		C: fmt.Sprintf("0x%s", hex.EncodeToString(f.C)),
+		C: base64.StdEncoding.EncodeToString(f.C),
 		D: f.D,
 		E: f.E,
 		F: nil,
