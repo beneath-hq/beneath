@@ -5,9 +5,9 @@ import validator from "validator";
 
 import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
 
-import { UPDATE_PROJECT } from "../../apollo/queries/project";
+import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
-import { UpdateProject, UpdateProjectVariables } from "../../apollo/types/UpdateProject";
+import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
 import VSpace from "../VSpace";
 
 const useStyles = makeStyles((theme) => ({
@@ -28,7 +28,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
     photoURL: project.photoURL || "",
   });
 
-  const [updateProject, {loading, error}] = useMutation<UpdateProject, UpdateProjectVariables>(UPDATE_PROJECT);
+  const [stageProject, { loading, error }] = useMutation<StageProject, StageProjectVariables>(STAGE_PROJECT);
 
   const handleChange = (name: string) => (event: any) => {
     setValues({ ...values, [name]: event.target.value });
@@ -40,7 +40,11 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          updateProject({ variables: { projectID: project.projectID, ...values } });
+          stageProject({ variables: {
+            organizationName: project.organization.name,
+            projectName: project.name,
+            ...values,
+          } });
         }}
       >
         <TextField id="name" label="Name" value={project.name} margin="normal" fullWidth disabled />
