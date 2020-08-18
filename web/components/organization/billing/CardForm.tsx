@@ -11,7 +11,7 @@ import { OrganizationByName_organizationByName_PrivateOrganization } from "../..
 import useMe from "../../../hooks/useMe";
 import { useToken } from "../../../hooks/useToken";
 import billing from "../../../lib/billing";
-import connection from "../../../lib/connection";
+import { API_URL } from "../../../lib/connection";
 import Loading from "../../Loading";
 
 const useStyles = makeStyles((theme) => ({
@@ -109,7 +109,7 @@ const CardFormElement: FC<Props> = ({ organization, closeDialogue }) => {
       }
 
       const headers = { authorization: `Bearer ${token}` };
-      let url = `${connection.API_URL}/billing/stripecard/generate_setup_intent`;
+      let url = `${API_URL}/billing/stripecard/generate_setup_intent`;
       url += `?organizationID=${organization.organizationID}`;
       const res = await fetch(url, { headers });
 

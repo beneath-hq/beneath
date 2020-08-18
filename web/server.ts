@@ -1,17 +1,17 @@
-const next = require("next");
-const express = require("express");
-const connection = require("./lib/connection");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
-const fetch = require("isomorphic-unfetch");
-const helmet = require("helmet");
-const compression = require("compression");
-const redirectToHTTPS = require("express-http-to-https").redirectToHTTPS;
-const uuid = require("uuid");
+import next from "next";
+import express from "express";
+import { API_URL } from "./lib/connection";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import fetch from "isomorphic-unfetch";
+import helmet from "helmet";
+import compression from "compression";
+import { redirectToHTTPS } from "express-http-to-https";
+import { v4 as uuidv4 } from "uuid";
 
-global.fetch = require("isomorphic-unfetch"); // Polyfill fetch() on the server (used by apollo-client)
+import "isomorphic-unfetch"; // Polyfill fetch() on the server (used by apollo-client)
 
-const port = parseInt(process.env.PORT, 10) || 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -21,7 +21,7 @@ app.prepare().then(() => {
   const server = express();
 
   // Health check
-  server.get("/healthz", (req, res) => {
+  server.get("/healthz", (_, res) => {
     res.sendStatus(200);
   });
 
@@ -55,7 +55,7 @@ app.prepare().then(() => {
   server.use((req, res, next) => {
     const aid = req.cookies.aid;
     if (!aid) {
-      res.cookie("aid", uuid.v4(), { maxAge: cookieAge, secure: !dev });
+      res.cookie("aid", uuidv4(), { maxAge: cookieAge, secure: !dev });
     }
     next();
   });
@@ -63,9 +63,9 @@ app.prepare().then(() => {
   // Redirect "/" based on whether user logged in (only in production)
   if (!dev) {
     server.get("/", (req, res, next) => {
-      let loggedIn = !!req.cookies.token;
+      const loggedIn = !!req.cookies.token;
       if (!loggedIn) {
-        let noredirect = req.query.noredirect;
+        const noredirect = req.query.noredirect;
         if (!noredirect) {
           res.redirect("https://about.beneath.dev/");
           return;
@@ -76,13 +76,13 @@ app.prepare().then(() => {
   }
 
   // Redirect "/-/" to "/"
-  server.get("/-/", (req, res) => {
+  server.get("/-/", (_, res) => {
     res.redirect("/");
   });
 
   // Redirected to by backend after login
   server.get("/-/redirects/auth/login/callback", (req, res) => {
-    let token = req.query.token;
+    const token = req.query.token;
     if (token) {
       res.cookie("token", token, { secure: !dev });
     } else {
@@ -95,10 +95,10 @@ app.prepare().then(() => {
   server.get("/-/redirects/auth/logout", (req, res) => {
     // If the user is logged in, we'll let the backend logout the token (i.e. delete the token from it's registries)
     // Can't do it with a direct <a> on the client because we have to set the token in the header
-    let token = req.cookies.token;
+    const token = req.cookies.token;
     if (token) {
-      let headers = { authorization: `Bearer ${token}` };
-      fetch(`${connection.API_URL}/auth/logout`, { headers }).then((r) => {
+      const headers = { authorization: `Bearer ${token}` };
+      fetch(`${API_URL}/auth/logout`, { headers }).then((_) => {
         console.log(`Successfully logged out ${token}`);
       }).catch((e) => {
         console.error("Error occurred calling backend /auth/logout: ", e);
@@ -110,7 +110,7 @@ app.prepare().then(() => {
 
   // Redirect to user's secrets
   server.get("/-/redirects/secrets", (req, res) => {
-    let loggedIn = !!req.cookies.token;
+    const loggedIn = !!req.cookies.token;
     if (loggedIn) {
       // "me" gets replaced with billing org name in the organization page
       res.redirect("/me/-/secrets");
@@ -121,7 +121,7 @@ app.prepare().then(() => {
 
   // Redirect to billing
   server.get("/-/redirects/upgrade-pro", (req, res) => {
-    let loggedIn = !!req.cookies.token;
+    const loggedIn = !!req.cookies.token;
     if (loggedIn) {
       // "me" gets replaced with billing org name in the organization page
       res.redirect("/me/-/billing");
@@ -131,13 +131,13 @@ app.prepare().then(() => {
   });
 
   // Use to config routes
-  const addStaticRoute = (route) => {
+  const addStaticRoute = (route: string) => {
     server.get(route, (req, res) => {
       return handle(req, res);
     });
   };
 
-  const addDynamicRoute = (route, page) => {
+  const addDynamicRoute = (route: string, page: string) => {
     server.get(route, (req, res) => {
       app.render(req, res, page, req.params);
     });

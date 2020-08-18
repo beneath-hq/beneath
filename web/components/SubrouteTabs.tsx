@@ -7,7 +7,7 @@ import { makeStyles, Theme } from "@material-ui/core/styles";
 import Tab from "@material-ui/core/Tab";
 import Tabs from "@material-ui/core/Tabs";
 
-import NextMuiLink from "./NextMuiLink";
+import { NakedLink } from "./Link";
 import VSpace from "./VSpace";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -69,7 +69,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
                 )}
               </div>
             }
-            component={NextMuiLink}
+            component={NakedLink}
             shallow
             replace
             as={`${asPathBase}/-/${tab.value}`}

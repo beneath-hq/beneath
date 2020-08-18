@@ -5,7 +5,7 @@ import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } 
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
-import NextMuiLinkList from "../NextMuiLinkList";
+import { NakedLink } from "../Link";
 
 const useStyles = makeStyles((theme) => ({
   noDataCaption: {
@@ -25,7 +25,7 @@ const ViewServices: FC<ViewServicesProps> = ({ project }) => {
         {project.services.map(({ serviceID, name, description }) => (
           <ListItem
             key={serviceID}
-            component={NextMuiLinkList}
+            component={NakedLink}
             href={`/service?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
               project.name
             )}&service_name=${toURLName(name)}`}

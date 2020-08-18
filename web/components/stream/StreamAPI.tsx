@@ -8,7 +8,7 @@ import { toURLName } from "../../lib/names";
 
 import useMe from "../../hooks/useMe";
 import CodeBlock from "../CodeBlock";
-import LinkTypography from "../LinkTypography";
+import { Link } from "../Link";
 import VSpace from "../VSpace";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -35,17 +35,17 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
           {me && (
             <>
               To create a secret for connecting to Beneath, just head over to your{" "}
-              <LinkTypography
+              <Link
                 href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
                 as={`/${toURLName(me.name)}/-/secrets`}
               >
                 profile page
-              </LinkTypography>
+              </Link>
             </>
           )}
           {!me && (
             <>
-              You'll first have to <LinkTypography href="/-/auth">create a user</LinkTypography> to get a secret for
+              You'll first have to <Link href="/-/auth">create a user</Link> to get a secret for
               connecting to Beneath (don't worry, it's free and we won't share your data with anyone)
             </>
           )}
@@ -97,7 +97,7 @@ df = await client.easy_read("${toURLName(stream.project.organization.name)}/${to
       </Typography>
       <Typography variant="body2" paragraph>
         You can query this stream however you want using its public BigQuery dataset. Here's an example of how to query
-        it from the BigQuery <LinkTypography href="https://console.cloud.google.com/bigquery">console</LinkTypography>.
+        it from the BigQuery <Link href="https://console.cloud.google.com/bigquery">console</Link>.
       </Typography>
       <CodeBlock language={"sql"}>{`select * from \`${bigQueryName(stream)}\``}</CodeBlock>
       <Typography variant="body2" paragraph>

@@ -5,7 +5,7 @@ import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } 
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
-import NextMuiLinkList from "../NextMuiLinkList";
+import { NakedLink } from "../Link";
 
 interface ViewStreamsProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
@@ -25,7 +25,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
         {project.streams.map(({ streamID, name, description }) => (
           <ListItem
             key={streamID}
-            component={NextMuiLinkList}
+            component={NakedLink}
             href={`/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(project.name)}&stream_name=${toURLName(name)}`}
             as={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/${toURLName(name)}`}
             button

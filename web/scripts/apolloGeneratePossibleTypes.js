@@ -2,7 +2,7 @@
 // about fragments in our GraphQL schema for Apollo. See this page for details:
 // https://www.apollographql.com/docs/react/data/fragments/#fragments-on-unions-and-interfaces
 
-const connection = require("./lib/connection");
+const connection = require("../lib/connection");
 
 const fetch = require("node-fetch");
 const fs = require("fs");

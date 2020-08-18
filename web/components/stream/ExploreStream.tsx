@@ -9,7 +9,7 @@ import Typography from "@material-ui/core/Typography";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import BNTextField from "../BNTextField";
-import LinkTypography from "../LinkTypography";
+import { Link } from "../Link";
 import Loading from "../Loading";
 import SelectField from "../SelectField";
 import VSpace from "../VSpace";
@@ -155,9 +155,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                     <>
                       You can query the stream on indexed fields, check out the{" "}
                       {/* tslint:disable-next-line: max-line-length */}
-                      <LinkTypography href="https://about.beneath.dev/docs/reading-from-beneath/using-the-data-console-ui/">
+                      <Link href="https://about.beneath.dev/docs/reading-from-beneath/using-the-data-console-ui/">
                         docs
-                      </LinkTypography>{" "}
+                      </Link>{" "}
                       for more info.
                     </>
                   }

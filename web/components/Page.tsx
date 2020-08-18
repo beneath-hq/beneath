@@ -1,10 +1,10 @@
 import { Container, makeStyles, Typography } from "@material-ui/core";
+import Head from "next/head";
 import React from "react";
 
 import Drawer from "./Drawer";
 import Header from "./Header";
-import LinkTypography from "./LinkTypography";
-import PageTitle from "./PageTitle";
+import { Link } from "./Link";
 import Subheader from "./Subheader";
 
 interface IStylesProps {
@@ -61,7 +61,9 @@ const Page: React.FC<IProps> = (props) => {
   const classes = useStyles({ contentMarginTop: props.contentMarginTop });
   return (
     <div className={classes.container}>
-      <PageTitle title={props.title} />
+      <Head>
+        <title>{props.title ? props.title + " | " : ""} Beneath</title>
+      </Head>
       <Header toggleMobileDrawer={props.sidebar && toggleMobileDrawer} />
       <div className={classes.sidebarSubheaderAndContent}>
         {props.sidebar && (
@@ -79,9 +81,9 @@ const Page: React.FC<IProps> = (props) => {
       <div className={classes.footer}>
         <Typography variant="body1">
           Powered by Beneath.&nbsp;
-          <LinkTypography href="https://about.beneath.dev/policies/terms/">Terms</LinkTypography>.&nbsp;
-          <LinkTypography href="https://about.beneath.dev/policies/privacy/">Privacy</LinkTypography>.&nbsp;
-          <LinkTypography href="https://about.beneath.dev/contact/">Contact</LinkTypography>.&nbsp;
+          <Link href="https://about.beneath.dev/policies/terms/">Terms</Link>.&nbsp;
+          <Link href="https://about.beneath.dev/policies/privacy/">Privacy</Link>.&nbsp;
+          <Link href="https://about.beneath.dev/contact/">Contact</Link>.&nbsp;
         </Typography>
       </div>
     </div>
