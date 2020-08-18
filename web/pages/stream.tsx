@@ -16,6 +16,10 @@ import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
 // import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
+import { QUERY_PROJECT } from "../apollo/queries/project";
+import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
+import { useMonthlyMetrics } from "../components/metrics/hooks";
+import { EntityKind } from "../apollo/types/globalTypes";
 
 const StreamPage = () => {
   const router = useRouter();
@@ -41,7 +45,15 @@ const StreamPage = () => {
     variables: { organizationName, projectName, streamName },
   });
 
-  if (loading) {
+  const {
+    loading: loadingProject,
+    error: errorProject,
+    data: dataProject,
+  } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(QUERY_PROJECT, {
+    variables: { organizationName, projectName },
+  });
+
+  if (loading || loadingProject) {
     return (
       <Page title={title} subheader>
         <Loading justify="center" />
@@ -49,18 +61,19 @@ const StreamPage = () => {
     );
   }
 
-  if (error || !data) {
+  if (error || errorProject || !data || !dataProject) {
     return <ErrorPage apolloError={error} />;
   }
 
   const stream = data.streamByOrganizationProjectAndName;
+  const project = dataProject.projectByOrganizationAndName;
 
   const tabs = [];
 
   if (stream.primaryStreamInstanceID) {
     tabs.push({
       value: "explore",
-      label: "Explore",
+      label: "Data",
       render: (props: SubrouteTabProps) => <ExploreStream stream={stream} {...props} />,
     });
   }
@@ -79,7 +92,12 @@ const StreamPage = () => {
   const defaultValue = stream.primaryStreamInstanceID ? "explore" : "api";
   return (
     <Page title={title} subheader>
-      <ModelHero name={toURLName(stream.name)} description={stream.description} />
+      <ModelHero
+        name={toURLName(stream.name)}
+        description={stream.description}
+        permissions={project.public}
+        // metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
+      />
       <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
     </Page>
   );

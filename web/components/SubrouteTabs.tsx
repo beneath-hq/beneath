@@ -56,7 +56,14 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
   const classes = useStyles();
   return (
     <React.Fragment>
-      <Tabs indicatorColor="primary" textColor="primary" variant="scrollable" scrollButtons="off" value={selectedValue}>
+      <Tabs
+        indicatorColor="primary"
+        textColor="primary"
+        scrollButtons="off"
+        value={selectedValue}
+        centered
+        // variant="scrollable" // can't use this with the centered prop
+      >
         {tabs.map((tab) => (
           <Tab
             key={tab.value}
@@ -73,7 +80,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
             shallow
             replace
             as={`${asPathBase}/-/${tab.value}`}
-            href={buildHref(router.pathname, {...router.query, tab: tab.value})}
+            href={buildHref(router.pathname, { ...router.query, tab: tab.value })}
           />
         ))}
       </Tabs>
