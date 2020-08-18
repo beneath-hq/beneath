@@ -1,14 +1,14 @@
-const connection = require("./connection");
+import { IS_PRODUCTION } from "./connection";
 
-const ANARCHISM_DRIVER = "anarchism";
-const STRIPECARD_DRIVER = "stripecard";
-const STRIPEWIRE_DRIVER = "stripewire";
+export const ANARCHISM_DRIVER = "anarchism";
+export const STRIPECARD_DRIVER = "stripecard";
+export const STRIPEWIRE_DRIVER = "stripewire";
 
-const STRIPE_KEY = connection.IS_PRODUCTION
+export const STRIPE_KEY = IS_PRODUCTION
   ? "pk_live_fh1lh1v8DRZgX3zJ8IQKw2lu00ohe93Rdj"
   : "pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr";
 
-const COUNTRIES = [
+export const COUNTRIES = [
   {  value: "Afghanistan", label: "Afghanistan", code: "AF" },
   {  value: "Åland Islands", label: "Åland Islands", code: "AX"},
   {  value: "Albania", label: "Albania", code: "AL" },
@@ -260,7 +260,7 @@ const COUNTRIES = [
   {  value: "Zimbabwe", label: "Zimbabwe", code: "ZW" },
 ];
 
-const US_STATES = [
+export const US_STATES = [
   { label: "Alabama", value: "Alabama" },
   { label: "Alaska", value: "Alaska" },
   { label: "Arizona", value: "Arizona" },
@@ -315,7 +315,7 @@ const US_STATES = [
   { label: "Wyoming", value: "Wyoming" },
 ];
 
-module.exports = {
+export default {
   ANARCHISM_DRIVER,
   STRIPECARD_DRIVER,
   STRIPEWIRE_DRIVER,

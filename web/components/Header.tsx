@@ -3,7 +3,7 @@ import React, { FC } from "react";
 
 import useMe from "../hooks/useMe";
 import UsageIndicator from "./metrics/user/UsageIndicator";
-import NextMuiLink from "./NextMuiLink";
+import { NakedLink } from "./Link";
 
 import {
   AppBar,
@@ -74,7 +74,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
 
   const makeMenuItem = (text: string | JSX.Element, props: any) => {
     return (
-      <MenuItem component={props.as ? NextMuiLink : "a"} {...props}>
+      <MenuItem component={props.as ? NakedLink : "a"} {...props}>
         {text}
       </MenuItem>
     );
@@ -82,7 +82,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
 
   const makeButton = (text: string, props: any) => {
     return (
-      <Button component={NextMuiLink} {...props}>
+      <Button component={NakedLink} {...props}>
         {text}
       </Button>
     );
@@ -104,7 +104,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
         )}
         <Link
           className={classes.logo}
-          component={NextMuiLink}
+          component={NakedLink}
           href="/"
           variant="h6"
           color="inherit"
@@ -171,7 +171,7 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
           value={selectedTab ? selectedTab.href : false}
         >
           {tabs.map(({ href, label, external }) => (
-            <Tab key={href} label={label} value={href} component={external ? "a" : NextMuiLink} href={href} />
+            <Tab key={href} label={label} value={href} component={external ? "a" : NakedLink} href={href} />
           ))}
         </Tabs>
         {/* Login-specific stuff */}

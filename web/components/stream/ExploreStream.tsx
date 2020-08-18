@@ -15,7 +15,7 @@ import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import BNTextField from "../BNTextField";
-import LinkTypography from "../LinkTypography";
+import { Link } from "../Link";
 import Loading from "../Loading";
 import SelectField from "../SelectField";
 import VSpace from "../VSpace";

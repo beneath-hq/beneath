@@ -11,7 +11,7 @@ import { RegisterUserConsent, RegisterUserConsentVariables } from "../../apollo/
 import { UpdateOrganization, UpdateOrganizationVariables } from "../../apollo/types/UpdateOrganization";
 import { withApollo } from "../../apollo/withApollo";
 import CheckboxField from "../../components/CheckboxField";
-import LinkTypography from "../../components/LinkTypography";
+import { Link } from "../../components/Link";
 import Page from "../../components/Page";
 import useMe from "../../hooks/useMe";
 import { toBackendName, toURLName } from "../../lib/names";
@@ -134,8 +134,8 @@ const WelcomePage: NextPage = () => {
             label={
               <span>
                 I agree to the{" "}
-                <LinkTypography href="https://about.beneath.dev/policies/terms/">terms of service</LinkTypography> and{" "}
-                <LinkTypography href="https://about.beneath.dev/policies/privacy/">privacy policy</LinkTypography>
+                <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
+                <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
               </span>
             }
             checked={values.consentTerms}

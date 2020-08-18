@@ -1,7 +1,7 @@
 import { ApolloCache, ApolloClient } from '@apollo/client';
 import gql from "graphql-tag";
 
-import connection from "../../lib/connection";
+import { GATEWAY_URL} from "../../lib/connection";
 import { GET_AID, GET_TOKEN } from "../queries/local/token";
 import { CreateRecordsVariables } from "../types/CreateRecords";
 
@@ -27,7 +27,7 @@ export const resolvers = {
   Mutation: {
     createRecords: async (_: any, { instanceID, json }: CreateRecordsVariables, { cache }: ResolverContext) => {
       // build url with limit and where
-      const url = `${connection.GATEWAY_URL}/-/instances/${instanceID}`;
+      const url = `${GATEWAY_URL}/-/instances/${instanceID}`;
 
       // build headers with authorization
       const headers: any = makeHeaders(cache);

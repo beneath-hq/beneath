@@ -9,7 +9,7 @@ import { ProjectMembers, ProjectMembers_projectMembers, ProjectMembersVariables 
 import { toURLName } from "../../lib/names";
 import Avatar from "../Avatar";
 import Loading from "../Loading";
-import NextMuiLinkList from "../NextMuiLinkList";
+import { NakedLink } from "../Link";
 
 interface ViewMembersProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
@@ -34,7 +34,7 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
         {data.projectMembers.map((member) => (
           <ListItem
             key={member.userID}
-            component={NextMuiLinkList}
+            component={NakedLink}
             href={`/organization?organization_name=${toURLName(member.name)}`}
             as={`/${toURLName(member.name)}`}
             button

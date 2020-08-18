@@ -10,10 +10,10 @@ import { NextPage } from "next";
 
 import { withApollo } from "../../apollo/withApollo";
 import { GithubIcon, GoogleIcon } from "../../components/Icons";
-import LinkTypography from "../../components/LinkTypography";
+import { Link } from "../../components/Link";
 import Page from "../../components/Page";
 import VSpace from "../../components/VSpace";
-import connection from "../../lib/connection";
+import { API_URL } from "../../lib/connection";
 
 const useStyles = makeStyles((theme: Theme) => ({
   authButton: {
@@ -50,7 +50,7 @@ const AuthPage: NextPage = () => {
                 size="medium"
                 color="primary"
                 variant="outlined"
-                href={`${connection.API_URL}/auth/github`}
+                href={`${API_URL}/auth/github`}
               >
                 <GithubIcon className={classes.icon} />
                 Connect with Github
@@ -62,7 +62,7 @@ const AuthPage: NextPage = () => {
                 size="medium"
                 color="primary"
                 variant="outlined"
-                href={`${connection.API_URL}/auth/google`}
+                href={`${API_URL}/auth/google`}
               >
                 <GoogleIcon className={classes.icon} />
                 Connect with Google
@@ -73,9 +73,9 @@ const AuthPage: NextPage = () => {
         <VSpace units={4} />
         <Typography className={classes.title} variant="body2" color={"textSecondary"} align="center">
           By signing up or logging in you accept our&nbsp;
-          <LinkTypography href="https://about.beneath.dev/policies/terms/">Terms of Service</LinkTypography>
+          <Link href="https://about.beneath.dev/policies/terms/">Terms of Service</Link>
           &nbsp;and&nbsp;
-          <LinkTypography href="https://about.beneath.dev/policies/privacy/">Privacy Policy</LinkTypography>
+          <Link href="https://about.beneath.dev/policies/privacy/">Privacy Policy</Link>
         </Typography>
       </Container>
     </Page>
