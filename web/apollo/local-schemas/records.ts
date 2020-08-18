@@ -1,5 +1,4 @@
-import { ApolloClient } from "apollo-boost";
-import { ApolloCache } from "apollo-cache";
+import { ApolloCache, ApolloClient } from '@apollo/client';
 import gql from "graphql-tag";
 
 import connection from "../../lib/connection";

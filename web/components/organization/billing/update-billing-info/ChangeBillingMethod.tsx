@@ -12,7 +12,7 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import SelectField from "../../../SelectField";
 
-import { useMutation, useQuery } from "@apollo/react-hooks";
+import { useMutation, useQuery } from "@apollo/client";
 import { UPDATE_BILLING_INFO } from "../../../../apollo/queries/billinginfo";
 import { QUERY_BILLING_METHODS } from "../../../../apollo/queries/billingmethod";
 import { BillingInfo_billingInfo } from "../../../../apollo/types/BillingInfo";

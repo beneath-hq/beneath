@@ -1,4 +1,4 @@
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery } from "@apollo/client";
 
 import { GET_TOKEN } from "../apollo/queries/local/token";
 import { Token } from "../apollo/types/Token";

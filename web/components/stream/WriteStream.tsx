@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/react-hooks";
+import { useMutation } from "@apollo/client";
 import _ from "lodash";
 import React, { FC } from "react";
 

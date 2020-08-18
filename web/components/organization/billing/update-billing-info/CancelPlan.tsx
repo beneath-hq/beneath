@@ -10,7 +10,7 @@ import {
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
-import { useMutation, useQuery } from "@apollo/react-hooks";
+import { useMutation, useQuery } from "@apollo/client";
 import { UPDATE_BILLING_INFO } from "../../../../apollo/queries/billinginfo";
 import { QUERY_BILLING_PLANS } from "../../../../apollo/queries/billingplan";
 import { QUERY_ORGANIZATION } from "../../../../apollo/queries/organization";
