@@ -135,3 +135,30 @@ export const yearAgo = () => {
   const then = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
   return then;
 };
+
+export const prettyPrintBytes = (bytes: number) => {
+  const numDigits = bytes.toString().length;
+
+  // if bytes
+  if (numDigits < 4) {
+    return bytes + " B";
+  }
+
+  // if kilobytes
+  if (numDigits < 7) {
+    return Math.round(bytes/10**3) + " KB";
+  }
+
+  // if megabytes
+  if (numDigits < 10) {
+    return Math.round(bytes/10**6) + " MB";
+  }
+
+  // if gigabytes
+  if (numDigits < 13) {
+    return Math.round(bytes/10**9) + " GB";
+  }
+
+  // if terabytes :)
+  return Math.round(bytes/10**12) + " TB";
+};
