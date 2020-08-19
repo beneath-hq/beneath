@@ -47,3 +47,18 @@ export const QUERY_STREAM = gql`
     }
   }
 `;
+
+export const QUERY_STREAM_INSTANCES = gql`
+  query StreamInstancesByOrganizationProjectAndStreamName($organizationName: String!, $projectName: String!, $streamName: String!) {
+    streamInstancesByOrganizationProjectAndStreamName(
+      organizationName: $organizationName, projectName: $projectName, streamName: $streamName
+    ) {
+      streamInstanceID
+      streamID
+      version
+      createdOn
+      madePrimaryOn
+      madeFinalOn
+    }
+  }
+`;

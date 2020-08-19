@@ -2,6 +2,7 @@ extend type Query {
   streamByID(streamID: UUID!): Stream!
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
+  streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
 }
 
 extend type Mutation {

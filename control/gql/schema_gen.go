@@ -284,35 +284,36 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		BilledResources                     func(childComplexity int, organizationID uuid.UUID, billingTime time.Time) int
-		BillingInfo                         func(childComplexity int, organizationID uuid.UUID) int
-		BillingMethods                      func(childComplexity int, organizationID uuid.UUID) int
-		BillingPlans                        func(childComplexity int) int
-		Empty                               func(childComplexity int) int
-		ExploreProjects                     func(childComplexity int) int
-		GetMetrics                          func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetOrganizationMetrics              func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetServiceMetrics                   func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamInstanceMetrics            func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamMetrics                    func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetUserMetrics                      func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
-		Me                                  func(childComplexity int) int
-		OrganizationByID                    func(childComplexity int, organizationID uuid.UUID) int
-		OrganizationByName                  func(childComplexity int, name string) int
-		OrganizationByUserID                func(childComplexity int, userID uuid.UUID) int
-		OrganizationMembers                 func(childComplexity int, organizationID uuid.UUID) int
-		Ping                                func(childComplexity int) int
-		ProjectByID                         func(childComplexity int, projectID uuid.UUID) int
-		ProjectByOrganizationAndName        func(childComplexity int, organizationName string, projectName string) int
-		ProjectMembers                      func(childComplexity int, projectID uuid.UUID) int
-		ProjectsForUser                     func(childComplexity int, userID uuid.UUID) int
-		SecretsForService                   func(childComplexity int, serviceID uuid.UUID) int
-		SecretsForUser                      func(childComplexity int, userID uuid.UUID) int
-		ServiceByID                         func(childComplexity int, serviceID uuid.UUID) int
-		ServiceByOrganizationProjectAndName func(childComplexity int, organizationName string, projectName string, serviceName string) int
-		StreamByID                          func(childComplexity int, streamID uuid.UUID) int
-		StreamByOrganizationProjectAndName  func(childComplexity int, organizationName string, projectName string, streamName string) int
-		StreamInstancesForStream            func(childComplexity int, streamID uuid.UUID) int
+		BilledResources                                   func(childComplexity int, organizationID uuid.UUID, billingTime time.Time) int
+		BillingInfo                                       func(childComplexity int, organizationID uuid.UUID) int
+		BillingMethods                                    func(childComplexity int, organizationID uuid.UUID) int
+		BillingPlans                                      func(childComplexity int) int
+		Empty                                             func(childComplexity int) int
+		ExploreProjects                                   func(childComplexity int) int
+		GetMetrics                                        func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetOrganizationMetrics                            func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetServiceMetrics                                 func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamInstanceMetrics                          func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamMetrics                                  func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetUserMetrics                                    func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
+		Me                                                func(childComplexity int) int
+		OrganizationByID                                  func(childComplexity int, organizationID uuid.UUID) int
+		OrganizationByName                                func(childComplexity int, name string) int
+		OrganizationByUserID                              func(childComplexity int, userID uuid.UUID) int
+		OrganizationMembers                               func(childComplexity int, organizationID uuid.UUID) int
+		Ping                                              func(childComplexity int) int
+		ProjectByID                                       func(childComplexity int, projectID uuid.UUID) int
+		ProjectByOrganizationAndName                      func(childComplexity int, organizationName string, projectName string) int
+		ProjectMembers                                    func(childComplexity int, projectID uuid.UUID) int
+		ProjectsForUser                                   func(childComplexity int, userID uuid.UUID) int
+		SecretsForService                                 func(childComplexity int, serviceID uuid.UUID) int
+		SecretsForUser                                    func(childComplexity int, userID uuid.UUID) int
+		ServiceByID                                       func(childComplexity int, serviceID uuid.UUID) int
+		ServiceByOrganizationProjectAndName               func(childComplexity int, organizationName string, projectName string, serviceName string) int
+		StreamByID                                        func(childComplexity int, streamID uuid.UUID) int
+		StreamByOrganizationProjectAndName                func(childComplexity int, organizationName string, projectName string, streamName string) int
+		StreamInstancesByOrganizationProjectAndStreamName func(childComplexity int, organizationName string, projectName string, streamName string) int
+		StreamInstancesForStream                          func(childComplexity int, streamID uuid.UUID) int
 	}
 
 	Service struct {
@@ -488,6 +489,7 @@ type QueryResolver interface {
 	StreamByID(ctx context.Context, streamID uuid.UUID) (*entity.Stream, error)
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*entity.Stream, error)
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*entity.StreamInstance, error)
+	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*entity.StreamInstance, error)
 }
 type ServiceSecretResolver interface {
 	ServiceSecretID(ctx context.Context, obj *entity.ServiceSecret) (string, error)
@@ -2161,6 +2163,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.StreamByOrganizationProjectAndName(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string)), true
 
+	case "Query.streamInstancesByOrganizationProjectAndStreamName":
+		if e.complexity.Query.StreamInstancesByOrganizationProjectAndStreamName == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamInstancesByOrganizationProjectAndStreamName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamInstancesByOrganizationProjectAndStreamName(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string)), true
+
 	case "Query.streamInstancesForStream":
 		if e.complexity.Query.StreamInstancesForStream == nil {
 			break
@@ -2995,6 +3009,7 @@ type PermissionsServicesStreams {
   streamByID(streamID: UUID!): Stream!
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
+  streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
 }
 
 extend type Mutation {
@@ -4540,6 +4555,36 @@ func (ec *executionContext) field_Query_streamByID_args(ctx context.Context, raw
 }
 
 func (ec *executionContext) field_Query_streamByOrganizationProjectAndName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["organizationName"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["projectName"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["streamName"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamName"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamInstancesByOrganizationProjectAndStreamName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -12267,6 +12312,50 @@ func (ec *executionContext) _Query_streamInstancesForStream(ctx context.Context,
 	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_streamInstancesByOrganizationProjectAndStreamName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamInstancesByOrganizationProjectAndStreamName_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamInstancesByOrganizationProjectAndStreamName(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*entity.StreamInstance)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋcontrolᚋentityᚐStreamInstance(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -17277,6 +17366,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_streamInstancesForStream(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "streamInstancesByOrganizationProjectAndStreamName":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamInstancesByOrganizationProjectAndStreamName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

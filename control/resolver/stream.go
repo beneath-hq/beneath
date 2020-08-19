@@ -68,6 +68,22 @@ func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID u
 	return instances, nil
 }
 
+func (r *queryResolver) StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*entity.StreamInstance, error) {
+	stream := entity.FindStreamByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
+	if stream == nil {
+		return nil, gqlerror.Errorf("Stream %s/%s/%s not found", organizationName, projectName, streamName)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := secret.StreamPermissions(ctx, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	if !perms.Read {
+		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", stream.StreamID.String())
+	}
+
+	instances := entity.FindStreamInstances(ctx, stream.StreamID, nil, nil)
+	return instances, nil
+}
+
 func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind entity.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*entity.Stream, error) {
 	var project *entity.Project
 	var stream *entity.Stream
