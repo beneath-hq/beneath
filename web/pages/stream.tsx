@@ -1,11 +1,21 @@
 import { useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
-import React from "react";
-
-import { QUERY_STREAM } from "../apollo/queries/stream";
-import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "../apollo/types/StreamByOrganizationProjectAndName";
-import { withApollo } from "../apollo/withApollo";
+import React, { useEffect } from "react";
 import { toBackendName, toURLName } from "../lib/names";
+
+import { QUERY_STREAM, QUERY_STREAM_INSTANCES } from "../apollo/queries/stream";
+import { QUERY_PROJECT } from "../apollo/queries/project";
+import {
+  StreamByOrganizationProjectAndName,
+  StreamByOrganizationProjectAndNameVariables,
+  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance } from "../apollo/types/StreamByOrganizationProjectAndName";
+import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
+import {
+  StreamInstancesByOrganizationProjectAndStreamName,
+  StreamInstancesByOrganizationProjectAndStreamNameVariables,
+  StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName,
+} from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+import { withApollo } from "../apollo/withApollo";
 
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
@@ -14,15 +24,14 @@ import Page from "../components/Page";
 import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
-// import WriteStream from "../components/stream/WriteStream";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
-import { QUERY_PROJECT } from "../apollo/queries/project";
-import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
-import { useMonthlyMetrics } from "../components/metrics/hooks";
-import { EntityKind } from "../apollo/types/globalTypes";
 
 const StreamPage = () => {
   const router = useRouter();
+  const [instance, setInstance] = React.useState<
+    | StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
+    | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null
+  >(null);
 
   if (
     typeof router.query.organization_name !== "string"
@@ -53,7 +62,20 @@ const StreamPage = () => {
     variables: { organizationName, projectName },
   });
 
-  if (loading || loadingProject) {
+  const { loading: loadingInstances, error: errorInstances, data: dataInstances } = useQuery<
+    StreamInstancesByOrganizationProjectAndStreamName,
+    StreamInstancesByOrganizationProjectAndStreamNameVariables
+  >(QUERY_STREAM_INSTANCES, {
+    variables: { organizationName, projectName, streamName },
+  });
+
+  useEffect(() => {
+    if (data && data.streamByOrganizationProjectAndName) {
+      setInstance(data.streamByOrganizationProjectAndName.primaryStreamInstance);
+    }
+  }, [data]);
+
+  if (loading || loadingProject || loadingInstances) {
     return (
       <Page title={title} subheader>
         <Loading justify="center" />
@@ -61,41 +83,44 @@ const StreamPage = () => {
     );
   }
 
-  if (error || errorProject || !data || !dataProject) {
+  if (error || errorProject || errorInstances || !data || !dataProject || !dataInstances) {
     return <ErrorPage apolloError={error} />;
   }
 
   const stream = data.streamByOrganizationProjectAndName;
   const project = dataProject.projectByOrganizationAndName;
+  const instances = dataInstances.streamInstancesByOrganizationProjectAndStreamName;
 
   const tabs = [];
 
-  if (stream.primaryStreamInstanceID) {
-    tabs.push({
-      value: "explore",
-      label: "Data",
-      render: (props: SubrouteTabProps) => <ExploreStream stream={stream} {...props} />,
-    });
-  }
-
+  tabs.push({
+    value: "data",
+    label: "Data",
+    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} {...props} />,
+  });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
-
-  if (stream.allowManualWrites) {
-    // disable for now
-    // must update js client to be able to write data (current local resolvers do not work anymore!)
-    // and to allow both stream and batch writes
-    // tabs.push({ value: "write", label: "Write", render: () => <WriteStream stream={stream} /> });
-  }
-
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
-  const defaultValue = stream.primaryStreamInstanceID ? "explore" : "api";
+  const defaultValue = stream.primaryStreamInstanceID ? "data" : "api";
+
+  const handleSetInstance = (
+    instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
+  ) => {
+    setInstance(instance);
+    return;
+  };
+
   return (
     <Page title={title} subheader>
       <ModelHero
         name={toURLName(stream.name)}
+        project={stream.project.name}
+        organization={stream.project.organization.name}
         description={stream.description}
-        permissions={project.public}
+        permissions={project.public} // Q: should I instead add the public tag to the stream.project object?
+        currentInstance={instance?.streamInstanceID}
+        instances={instances}
+        setInstance={handleSetInstance}
         // metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
       />
       <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />

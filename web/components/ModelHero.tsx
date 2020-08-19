@@ -1,12 +1,14 @@
-import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import { FC } from "react";
 
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
+
 import { prettyPrintBytes, Metrics } from "./metrics/util";
 import SelectField from "./SelectField";
+import { NakedLink } from "./Link";
+import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -20,13 +22,18 @@ const useStyles = makeStyles((theme) => ({
 
 interface ModelHeroProps {
   name: string;
+  project: string;
+  organization: string;
   description: string | null;
   permissions: boolean;
+  currentInstance: string | undefined;
+  instances: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName[];
+  setInstance: (instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName) => void;
   // metrics: Metrics;
 }
 
-// const ModelHero: FC<ModelHeroProps> = ({ name, description, permissions, metrics }) => {
-const ModelHero: FC<ModelHeroProps> = ({ name, description, permissions }) => {
+// const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, description, permissions, currentInstance, instances, setInstance, metrics }) => {
+const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, description, permissions, currentInstance, instances, setInstance }) => {
   // console.log(metrics)
   const classes = useStyles();
   return (
@@ -41,17 +48,35 @@ const ModelHero: FC<ModelHeroProps> = ({ name, description, permissions }) => {
                 </Typography>
               </Grid>
               <Grid item>
-                <Chip label={permissions ? "public" : "private"}/>
+                <Chip
+                  label={permissions ? "public" : "private"}
+                  clickable
+                  component={NakedLink}
+                  href={`/project?organization_name=${organization}&project_name=${project}&tab=members`}
+                  as={`/${organization}/${project}/-/members`}
+                />
               </Grid>
             </Grid>
           </Grid>
           <Grid item>
             <Grid container spacing={1}>
               <Grid item>
-                <Chip label={prettyPrintBytes(23000000) + " written"} />
+                <Chip
+                  label={prettyPrintBytes(23000000) + " written"}
+                  clickable
+                  component={NakedLink}
+                  href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${name}&tab=monitoring`}
+                  as={`/${organization}/${project}/${name}/-/monitoring`}
+                />
               </Grid>
               <Grid item>
-                <Chip label={prettyPrintBytes(233333333) + " read"} />
+                <Chip
+                  label={prettyPrintBytes(233333333) + " read"}
+                  clickable
+                  component={NakedLink}
+                  href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${name}&tab=monitoring`}
+                  as={`/${organization}/${project}/${name}/-/monitoring`}
+                />
               </Grid>
             </Grid>
           </Grid>
@@ -64,13 +89,15 @@ const ModelHero: FC<ModelHeroProps> = ({ name, description, permissions }) => {
         <SelectField
           id="instance"
           label="Instance"
-          value={"Instance2"}
-          options={[
-            { label: "Instance1", value: "Instance1" },
-            { label: "Instance2", value: "Instance2" },
-          ]}
-          // onChange={({ target }) => setInstance(target.value)}
-          // controlClass={classes.selectPeekControl}
+          value={currentInstance}
+          options={instances.map((instance) => {
+            return { label: "v" + instance.version.toString(), value: instance.streamInstanceID };
+          })}
+          onChange={({ target }) =>
+            setInstance(
+              target.value as StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
+            )
+          }
         />
       </Grid>
     </Grid>

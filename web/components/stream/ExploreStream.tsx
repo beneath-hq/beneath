@@ -12,19 +12,18 @@ import OpenInNewIcon from "@material-ui/icons/OpenInNew";
 import ToggleButton from "@material-ui/lab/ToggleButton";
 import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName, StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
-import BNTextField from "../BNTextField";
-import { Link } from "../Link";
 import Loading from "../Loading";
-import SelectField from "../SelectField";
 import VSpace from "../VSpace";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
-import WriteStream from "../../components/stream/WriteStream";
+// import WriteStream from "../../components/stream/WriteStream";
+import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
   setLoading: (loading: boolean) => void;
 }
 
@@ -55,9 +54,15 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreStreamProps) => {
-  if (!stream.primaryStreamInstanceID) {
-    throw Error("internal error: can't use ExploreStream for stream without a primary instance ID");
+const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }: ExploreStreamProps) => {
+  if (!stream.primaryStreamInstanceID || !instance?.streamInstanceID) {
+    return (
+      <>
+        <Typography>
+          TODO: Create a mini tutorial for writing first data to the stream
+        </Typography>
+      </>
+    );
   }
 
   // determine if stream may have more data incoming
@@ -72,6 +77,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
   const [writeDialog, setWriteDialog] = React.useState(false);
   const [logCodeDialog, setLogCodeDialog] = React.useState(false);
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false);
+  const [liveToggle, setLiveToggle] = React.useState(true);
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
   const [schema, setSchema] = useState(() => new Schema(stream));
@@ -86,7 +92,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
   const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
     secret: token || undefined,
     stream: {
-      instanceID: stream.primaryStreamInstanceID,
+      instanceID: instance?.streamInstanceID,
     },
     query:
       queryType === "index"
@@ -209,13 +215,26 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                       </ToggleButtonGroup>
                     </Grid>
                     <Grid item>
-                      <Chip
-                        label="Live"
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        icon={<FiberManualRecordIcon />}
-                      />
+                      {liveToggle && (
+                        <Chip
+                          label="Live"
+                          variant="outlined"
+                          size="small"
+                          clickable
+                          onClick={() => setLiveToggle(false)} // TODO: add logic to stop the websockets
+                          icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
+                        />
+                      )}
+                      {!liveToggle && (
+                        <Chip
+                          label="Paused"
+                          variant="outlined"
+                          size="small"
+                          clickable
+                          onClick={() => setLiveToggle(true)} // TODO: add logic to start the websockets
+                          icon={<FiberManualRecordIcon style={{ color: "#8D919B" }} />}
+                        />
+                      )}
                     </Grid>
                   </Grid>
                 </Grid>
