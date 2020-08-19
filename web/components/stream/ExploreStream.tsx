@@ -1,6 +1,7 @@
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
+import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import { Box, makeStyles, Theme, Dialog, DialogContent } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
@@ -272,33 +273,32 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                           </Dialog>
                         </Grid>
                         <Grid item>
-                          <ToggleButton value="true" size="small">
-                            <Grid container direction="column">
-                              <Grid item>
-                                <Typography>Newest</Typography>
+                          <Button size="small" onClick={() => setLogPeek(!logPeek)}>
+                            <ArrowDownwardIcon />
+                            {logPeek && (
+                              <Grid container direction="column">
+                                <Grid item>
+                                  <Typography color="primary">Newest</Typography>
+                                </Grid>
+                                <Grid item>
+                                  <Typography>Oldest</Typography>
+                                </Grid>
                               </Grid>
-                              <Grid item>
-                                <Typography>Oldest</Typography>
+                            )}
+                            {!logPeek && (
+                              <Grid container direction="column">
+                                <Grid item>
+                                  <Typography>Oldest</Typography>
+                                </Grid>
+                                <Grid item>
+                                  <Typography color="primary">Newest</Typography>
+                                </Grid>
                               </Grid>
-                            </Grid>
-                          </ToggleButton>
+                            )}
+                          </Button>
                         </Grid>
                       </Grid>
                     </>
-                    // OLD. TODO: reuse the setLogPeek()
-                    // <Grid item sm={"auto"}>
-                    //   <SelectField
-                    //     id="peek"
-                    //     label="Order"
-                    //     value={logPeek ? "true" : "false"}
-                    //     options={[
-                    //       { label: "Latest first", value: "true" },
-                    //       { label: "Oldest first", value: "false" },
-                    //     ]}
-                    //     onChange={({ target }) => setLogPeek(target.value === "true")}
-                    //     controlClass={classes.selectPeekControl}
-                    //   />
-                    // </Grid>
                   )}
                 </Grid>
               </Grid>
