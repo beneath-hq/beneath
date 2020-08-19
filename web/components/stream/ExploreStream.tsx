@@ -77,7 +77,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
   const [writeDialog, setWriteDialog] = React.useState(false);
   const [logCodeDialog, setLogCodeDialog] = React.useState(false);
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false);
-  const [liveToggle, setLiveToggle] = React.useState(true);
+  const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
   const [schema, setSchema] = useState(() => new Schema(stream));
@@ -86,6 +86,18 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
       setSchema(new Schema(stream));
     }
   }, [stream]);
+
+  const isSubscribeable = () => {
+    if (typeof window === "undefined" || finalized) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const isSubscribed = () => {
+    return isSubscribeable() ? subscribeToggle : false;
+  };
 
   // get records
   const token = useToken();
@@ -100,14 +112,12 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
         : { type: "log", peek: logPeek },
     pageSize: 25,
     subscribe:
-      typeof window === "undefined"
-        ? false
-        : finalized
-        ? false
-        : {
+        isSubscribed()
+        ? {
             pageSize: 100,
             pollFrequencyMs: 250,
-          },
+          }
+        : false,
     renderFrequencyMs: 250,
     maxRecords: 1000,
     flashDurationMs: 2000,
@@ -215,23 +225,28 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                       </ToggleButtonGroup>
                     </Grid>
                     <Grid item>
-                      {liveToggle && (
+                      {isSubscribed() && (
                         <Chip
                           label="Live"
                           variant="outlined"
                           size="small"
                           clickable
-                          onClick={() => setLiveToggle(false)} // TODO: add logic to stop the websockets
+                          onClick={() => setSubscribeToggle(false)}
                           icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
                         />
                       )}
-                      {!liveToggle && (
+                      {!isSubscribed() && (
                         <Chip
                           label="Paused"
                           variant="outlined"
                           size="small"
-                          clickable
-                          onClick={() => setLiveToggle(true)} // TODO: add logic to start the websockets
+                          clickable={isSubscribeable() ? true : false}
+                          onClick={() => {
+                            if (isSubscribeable()) {
+                              setSubscribeToggle(true);
+                            }
+                            return;
+                          }}
                           icon={<FiberManualRecordIcon style={{ color: "#8D919B" }} />}
                         />
                       )}
