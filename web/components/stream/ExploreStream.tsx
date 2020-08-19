@@ -1,7 +1,7 @@
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
-import { Box, makeStyles, Theme } from "@material-ui/core";
+import { Box, makeStyles, Theme, Dialog, DialogContent } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
@@ -21,6 +21,7 @@ import SelectField from "../SelectField";
 import VSpace from "../VSpace";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
+import WriteStream from "../../components/stream/WriteStream";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -63,11 +64,14 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
   const finalized = !!stream.primaryStreamInstance?.madeFinalOn;
 
   // state
-  // const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
-  const [queryType, setQueryType] = useState<"log" | "index">("index");
+  const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
+  // const [queryType, setQueryType] = useState<"log" | "index">("index");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
   const [pendingFilter, setPendingFilter] = useState(""); // the value in the text field
   const [filter, setFilter] = useState(""); // updated when text field is submitted (used in call to useRecords)
+  const [writeDialog, setWriteDialog] = React.useState(false);
+  const [logCodeDialog, setLogCodeDialog] = React.useState(false);
+  const [indexCodeDialog, setIndexCodeDialog] = React.useState(false);
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
   const [schema, setSchema] = useState(() => new Schema(stream));
@@ -124,10 +128,35 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
         <Grid item>
           <Grid container justify="flex-end" spacing={2}>
             <Grid item>
-              <Button variant="outlined">
-                <Typography>Write a record</Typography>
-                <AddBoxIcon />
-              </Button>
+              {/* {stream.allowManualWrites && ( */}
+              {true && ( // always show for development
+                <>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setWriteDialog(true);
+                    }}
+                  >
+                    <Typography>Write a record</Typography>
+                    <AddBoxIcon />
+                  </Button>
+                  <Dialog
+                    open={writeDialog}
+                    fullWidth={true}
+                    maxWidth={"md"}
+                    onBackdropClick={() => {
+                      setWriteDialog(false);
+                    }}
+                  >
+                    {/*
+                      // disable for now
+                      // must update js client to be able to write data (current local resolvers do not work anymore!)
+                      // and to allow both stream and batch writes
+                      */}
+                    {/* <WriteStream stream={stream} /> */}
+                  </Dialog>
+                </>
+              )}
             </Grid>
             <Grid item>
               <Button variant="outlined">
@@ -195,7 +224,18 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                     <>
                       <Grid container direction="row" alignItems="center" spacing={2}>
                         <Grid item>
-                          <Typography>See the code</Typography>
+                          <Button
+                            onClick={() => {
+                              setLogCodeDialog(true);
+                            }}
+                          >
+                            See the code
+                          </Button>
+                          <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
+                            <DialogContent>
+                              <Typography>TODO</Typography>
+                            </DialogContent>
+                          </Dialog>
                         </Grid>
                         <Grid item>
                           <ToggleButton value="true" size="small">
@@ -247,14 +287,23 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, setLoading }: ExploreSt
                             </Box>
                           </Grid>
                           <Grid item>
-                            <Typography>
-                              + Add condition
-                            </Typography>
+                            <Button>+ Add condition</Button>
                           </Grid>
                         </Grid>
                       </Grid>
                       <Grid item>
-                        <Typography>See the code</Typography>
+                        <Button
+                          onClick={() => {
+                            setIndexCodeDialog(true);
+                          }}
+                        >
+                          See the code
+                        </Button>
+                        <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                          <DialogContent>
+                            <Typography>TODO</Typography>
+                          </DialogContent>
+                        </Dialog>
                       </Grid>
                       <Grid item>
                         <Button
