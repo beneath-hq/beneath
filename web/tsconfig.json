@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "commonjs",
     "jsx": "preserve",
     "lib": [
       "dom",
@@ -26,7 +26,6 @@
   },
   "exclude": [
     "dist",
-    "scripts",
     ".next",
     "out",
     "next.config.js",
@@ -34,6 +33,7 @@
   ],
   "include": [
     "next-env.d.ts",
+    "scripts",
     "**/*.ts",
     "**/*.tsx"
   ]
