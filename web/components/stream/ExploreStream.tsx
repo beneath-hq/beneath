@@ -2,7 +2,7 @@ import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
-import { Box, makeStyles, Theme, Dialog, DialogContent } from "@material-ui/core";
+import { Box, makeStyles, Theme, Dialog, DialogContent, DialogActions } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
@@ -21,10 +21,15 @@ import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
 // import WriteStream from "../../components/stream/WriteStream";
 import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+import SelectField from "components/SelectField";
+import BNTextField from "components/BNTextField";
+import CodeBlock from "components/CodeBlock";
+import organization from "pages/organization";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
+  permissions: boolean;
   setLoading: (loading: boolean) => void;
 }
 
@@ -48,14 +53,14 @@ const useStyles = makeStyles((theme: Theme) => ({
     borderColor: "text.primary",
   },
   indexQueryInput: {
-    width: "4rem",
+    width: "20rem",
     height: "3rem",
     borderColor: "text.primary",
     borderRadius: "5%"
   },
 }));
 
-const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }: ExploreStreamProps) => {
+const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, setLoading }: ExploreStreamProps) => {
   if (!stream.primaryStreamInstanceID || !instance?.streamInstanceID) {
     return (
       <>
@@ -268,8 +273,26 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                           </Button>
                           <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
                             <DialogContent>
-                              <Typography>TODO</Typography>
+                              <CodeBlock language={"javascript"}>
+                                {`import { useRecords } from "beneath-react";
+const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
+  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
+                                  stream.project.name
+                                }/${stream.name}",
+  query: {type: "log", peek: ${logPeek}},
+  pageSize: 25,
+  subscribe: ${isSubscribed()},
+  renderFrequencyMs: 250,
+  maxRecords: 1000,
+  flashDurationMs: 2000,
+});`}
+                              </CodeBlock>
                             </DialogContent>
+                            <DialogActions>
+                              <Button onClick={() => setLogCodeDialog(false)} color="primary">
+                                Close
+                              </Button>
+                            </DialogActions>
                           </Dialog>
                         </Grid>
                         <Grid item>
@@ -309,15 +332,38 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                       <Grid item xs>
                         <Grid container alignItems="center" spacing={2}>
                           <Grid item>
-                            <Box border={1} className={classes.indexQueryInput}>
-                              {/* <BNTextField
-                            id="where"
-                            label="Filter"
-                            value={pendingFilter}
-                            margin="none"
-                            onChange={({ target }) => setPendingFilter(target.value)}
-                            fullWidth
-                          /> */}
+                            <Box border={1} className={classes.indexQueryInput} padding={1}>
+                              <Grid container spacing={1}>
+                                <Grid item>
+                                  <SelectField
+                                    // prefilled primary index, but dropdown for other indices
+                                    id="index"
+                                    value={stream.streamIndexes[0].fields.join()}
+                                    options={stream.streamIndexes.map((index) => {
+                                      return { label: index.fields.join(), value: index.fields.join() };
+                                    })}
+                                  />
+                                </Grid>
+                                <Grid item>
+                                  <SelectField
+                                    // dropdown for comparison operator
+                                    id="comparison"
+                                    value={"_eq"}
+                                    options={comparisons}
+                                  />
+                                </Grid>
+                                <Grid item>
+                                  <BNTextField
+                                    // freetext field for value
+                                    id="where"
+                                    // label="Filter"
+                                    value={pendingFilter}
+                                    margin="none"
+                                    onChange={({ target }) => setPendingFilter(target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                              </Grid>
                             </Box>
                           </Grid>
                           <Grid item>
@@ -335,11 +381,29 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                         </Button>
                         <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
                           <DialogContent>
-                            <Typography>TODO</Typography>
+                            <CodeBlock language={"javascript"}>
+                              {`import { useRecords } from "beneath-react";
+const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
+  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
+                                stream.project.name
+                              }/${stream.name}",
+  query: {type: "index", filter: ${filter === "" ? undefined : filter}},
+  pageSize: 25,
+  subscribe: ${isSubscribed()},
+  renderFrequencyMs: 250,
+  maxRecords: 1000,
+  flashDurationMs: 2000,
+});`}
+                            </CodeBlock>
                           </DialogContent>
+                          <DialogActions>
+                            <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                              Close
+                            </Button>
+                          </DialogActions>
                         </Dialog>
                       </Grid>
-                      <Grid item>
+                      {/* <Grid item>
                         <Button
                           type="submit"
                           variant="contained"
@@ -352,7 +416,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                         >
                           Go
                         </Button>
-                      </Grid>
+                      </Grid> */}
                     </Grid>
                   </Box>
                 </>
@@ -423,3 +487,12 @@ const isJSON = (val: string): boolean => {
     return false;
   }
 };
+
+const comparisons = [
+  { value: "_eq", label: "=" },
+  { value: "_gt", label: ">" },
+  { value: "_gte", label: ">=" },
+  { value: "_lt", label: "<" },
+  { value: "_lte", label: "<=" },
+  { value: "_prefix", label: "prefix" },
+];

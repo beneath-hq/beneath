@@ -92,11 +92,10 @@ const StreamPage = () => {
   const instances = dataInstances.streamInstancesByOrganizationProjectAndStreamName;
 
   const tabs = [];
-
   tabs.push({
     value: "data",
     label: "Data",
-    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} {...props} />,
+    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} permissions={project.public} {...props} />,
   });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
