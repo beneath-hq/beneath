@@ -24,13 +24,18 @@ import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrga
 import SelectField from "components/SelectField";
 import BNTextField from "components/BNTextField";
 import CodeBlock from "components/CodeBlock";
-import organization from "pages/organization";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
   permissions: boolean;
   setLoading: (loading: boolean) => void;
+}
+
+interface FilterCondition {
+  key: string;
+  operator: string;
+  value: string;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -76,10 +81,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
 
   // state
   const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
-  // const [queryType, setQueryType] = useState<"log" | "index">("index");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
-  const [pendingFilter, setPendingFilter] = useState(""); // the value in the text field
-  const [filter, setFilter] = useState(""); // updated when text field is submitted (used in call to useRecords)
   const [writeDialog, setWriteDialog] = React.useState(false);
   const [logCodeDialog, setLogCodeDialog] = React.useState(false);
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false);
@@ -92,6 +94,62 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
       setSchema(new Schema(stream));
     }
   }, [stream]);
+
+  // TODO: go through schema and loop through
+  // TODO: add ability to clear filter(s)
+  const [filterObject, setFilterObject] = useState<FilterCondition[]>([
+    {
+      key: schema.keyFields[0],
+      operator: "_gt",
+      value: ""
+    }
+  ]);
+  const [filter, setFilter] = useState(""); // used in call to useRecords
+  const [moreConditions, setMoreConditions] = useState(true);
+
+  useEffect(() => {
+    const numKeyFields = schema.keyFields.length;
+
+    // compose JSON filter for useRecords()
+    const composedBase = filterObject.map((condition) => {
+      return `{"${condition.key}": {"${condition.operator}": "${condition.value}"}}`;
+    }).join(", ");
+    console.log(composedBase);
+    setFilter(
+      filterObject
+        .map((condition) => {
+          return `{"${condition.key}": {"${condition.operator}": "${condition.value}"}}`;
+        })
+        .join(", ")
+    );
+
+    // TODO: compose filter with >2 filterObject
+    // TODO: determine whether more conditions possible
+    // TODO: add new conditions to filterObject
+
+    // if using _prefix or _eq, then no more conditions allowed
+    if (filterObject[0].operator === "_prefix" || filterObject[0].operator === "_eq") {
+      setMoreConditions(false);
+      return;
+    }
+
+    // if one index, only allow two conditions
+    if (numKeyFields === 1 && filterObject.length === 2) {
+      setMoreConditions(false);
+      return;
+    }
+
+    // if no more indices, and on the most recent index: either _eq or two conditions. Then no more conditions allowed
+    // TODO
+
+    setMoreConditions(true);
+  }, [filterObject]);
+
+  const updateFilterObject = (num: number, field: string, value: any) => {
+    let newObject = [...filterObject];
+    newObject[num][field as keyof FilterCondition] = value;
+    setFilterObject(newObject);
+  };
 
   const isSubscribeable = () => {
     if (typeof window === "undefined" || finalized) {
@@ -189,197 +247,81 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
           </Grid>
         </Grid>
         <Grid item>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (pendingFilter !== filter) {
-                setFilter(pendingFilter);
-              }
-            }}
-          >
-            <Grid container direction="column">
-              <Grid item container spacing={2} justify="space-between">
-                <Grid item>
-                  <Grid container alignItems="center" spacing={2}>
-                    <Grid item>
-                      <ToggleButtonGroup
-                        exclusive
+          <Grid container direction="column">
+            <Grid item container spacing={2} justify="space-between">
+              <Grid item>
+                <Grid container alignItems="center" spacing={2}>
+                  <Grid item>
+                    <ToggleButtonGroup
+                      exclusive
+                      size="small"
+                      value={queryType}
+                      onChange={(event, value) => setQueryType(value as "log" | "index")}
+                    >
+                      <ToggleButton value="log">
+                        <Grid container direction="column">
+                          <Grid item>
+                            <Typography>Log</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography>Sort by time written</Typography>
+                          </Grid>
+                        </Grid>
+                      </ToggleButton>
+                      <ToggleButton value="index">
+                        <Grid container direction="column">
+                          <Grid item>
+                            <Typography>Index</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography>Lookup by key</Typography>
+                          </Grid>
+                        </Grid>
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </Grid>
+                  <Grid item>
+                    {isSubscribed() && (
+                      <Chip
+                        label="Live"
+                        variant="outlined"
                         size="small"
-                        value={queryType}
-                        onChange={(event, value) => setQueryType(value as "log" | "index")}
-                      >
-                        <ToggleButton value="log">
-                          <Grid container direction="column">
-                            <Grid item>
-                              <Typography>Log</Typography>
-                            </Grid>
-                            <Grid item>
-                              <Typography>Sort by time written</Typography>
-                            </Grid>
-                          </Grid>
-                        </ToggleButton>
-                        <ToggleButton value="index">
-                          <Grid container direction="column">
-                            <Grid item>
-                              <Typography>Index</Typography>
-                            </Grid>
-                            <Grid item>
-                              <Typography>Lookup by key</Typography>
-                            </Grid>
-                          </Grid>
-                        </ToggleButton>
-                      </ToggleButtonGroup>
-                    </Grid>
-                    <Grid item>
-                      {isSubscribed() && (
-                        <Chip
-                          label="Live"
-                          variant="outlined"
-                          size="small"
-                          clickable
-                          onClick={() => setSubscribeToggle(false)}
-                          icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
-                        />
-                      )}
-                      {!isSubscribed() && (
-                        <Chip
-                          label="Paused"
-                          variant="outlined"
-                          size="small"
-                          clickable={isSubscribeable() ? true : false}
-                          onClick={() => {
-                            if (isSubscribeable()) {
-                              setSubscribeToggle(true);
-                            }
-                            return;
-                          }}
-                          icon={<FiberManualRecordIcon style={{ color: "#8D919B" }} />}
-                        />
-                      )}
-                    </Grid>
+                        clickable
+                        onClick={() => setSubscribeToggle(false)}
+                        icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
+                      />
+                    )}
+                    {!isSubscribed() && (
+                      <Chip
+                        label="Paused"
+                        variant="outlined"
+                        size="small"
+                        clickable={isSubscribeable() ? true : false}
+                        onClick={() => {
+                          if (isSubscribeable()) {
+                            setSubscribeToggle(true);
+                          }
+                          return;
+                        }}
+                        icon={<FiberManualRecordIcon style={{ color: "#8D919B" }} />}
+                      />
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  {queryType === "log" && (
-                    <>
-                      <Grid container direction="row" alignItems="center" spacing={2}>
-                        <Grid item>
-                          <Button
-                            onClick={() => {
-                              setLogCodeDialog(true);
-                            }}
-                          >
-                            See the code
-                          </Button>
-                          <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
-                            <DialogContent>
-                              <CodeBlock language={"javascript"}>
-                                {`import { useRecords } from "beneath-react";
-const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
-                                  stream.project.name
-                                }/${stream.name}",
-  query: {type: "log", peek: ${logPeek}},
-  pageSize: 25,
-  subscribe: ${isSubscribed()},
-  renderFrequencyMs: 250,
-  maxRecords: 1000,
-  flashDurationMs: 2000,
-});`}
-                              </CodeBlock>
-                            </DialogContent>
-                            <DialogActions>
-                              <Button onClick={() => setLogCodeDialog(false)} color="primary">
-                                Close
-                              </Button>
-                            </DialogActions>
-                          </Dialog>
-                        </Grid>
-                        <Grid item>
-                          <Button size="small" onClick={() => setLogPeek(!logPeek)}>
-                            <ArrowDownwardIcon />
-                            {logPeek && (
-                              <Grid container direction="column">
-                                <Grid item>
-                                  <Typography color="primary">Newest</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Typography>Oldest</Typography>
-                                </Grid>
-                              </Grid>
-                            )}
-                            {!logPeek && (
-                              <Grid container direction="column">
-                                <Grid item>
-                                  <Typography>Oldest</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Typography color="primary">Newest</Typography>
-                                </Grid>
-                              </Grid>
-                            )}
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </>
-                  )}
-                </Grid>
               </Grid>
-              {queryType === "index" && (
-                <>
-                  <Box border={1} className={classes.indexQueryBox} display="flex" alignItems="center" p={1}>
-                    <Grid item container alignItems="center" spacing={2}>
-                      <Grid item xs>
-                        <Grid container alignItems="center" spacing={2}>
-                          <Grid item>
-                            <Box border={1} className={classes.indexQueryInput} padding={1}>
-                              <Grid container spacing={1}>
-                                <Grid item>
-                                  <SelectField
-                                    // prefilled primary index, but dropdown for other indices
-                                    id="index"
-                                    value={stream.streamIndexes[0].fields.join()}
-                                    options={stream.streamIndexes.map((index) => {
-                                      return { label: index.fields.join(), value: index.fields.join() };
-                                    })}
-                                  />
-                                </Grid>
-                                <Grid item>
-                                  <SelectField
-                                    // dropdown for comparison operator
-                                    id="comparison"
-                                    value={"_eq"}
-                                    options={comparisons}
-                                  />
-                                </Grid>
-                                <Grid item>
-                                  <BNTextField
-                                    // freetext field for value
-                                    id="where"
-                                    // label="Filter"
-                                    value={pendingFilter}
-                                    margin="none"
-                                    onChange={({ target }) => setPendingFilter(target.value)}
-                                    fullWidth
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Box>
-                          </Grid>
-                          <Grid item>
-                            <Button>+ Add condition</Button>
-                          </Grid>
-                        </Grid>
-                      </Grid>
+              <Grid item>
+                {queryType === "log" && (
+                  <>
+                    <Grid container direction="row" alignItems="center" spacing={2}>
                       <Grid item>
                         <Button
                           onClick={() => {
-                            setIndexCodeDialog(true);
+                            setLogCodeDialog(true);
                           }}
                         >
                           See the code
                         </Button>
-                        <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                        <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
                           <DialogContent>
                             <CodeBlock language={"javascript"}>
                               {`import { useRecords } from "beneath-react";
@@ -387,7 +329,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
   ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
                                 stream.project.name
                               }/${stream.name}",
-  query: {type: "index", filter: ${filter === "" ? undefined : filter}},
+  query: {type: "log", peek: ${logPeek}},
   pageSize: 25,
   subscribe: ${isSubscribed()},
   renderFrequencyMs: 250,
@@ -397,32 +339,147 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                             </CodeBlock>
                           </DialogContent>
                           <DialogActions>
-                            <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                            <Button onClick={() => setLogCodeDialog(false)} color="primary">
                               Close
                             </Button>
                           </DialogActions>
                         </Dialog>
                       </Grid>
-                      {/* <Grid item>
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          color="primary"
-                          disabled={
-                            loading ||
-                            !(pendingFilter.length === 0 || isJSON(pendingFilter)) ||
-                            !(pendingFilter.length <= 1024)
-                          }
-                        >
-                          Go
+                      <Grid item>
+                        <Button size="small" onClick={() => setLogPeek(!logPeek)}>
+                          <ArrowDownwardIcon />
+                          {logPeek && (
+                            <Grid container direction="column">
+                              <Grid item>
+                                <Typography color="primary">Newest</Typography>
+                              </Grid>
+                              <Grid item>
+                                <Typography>Oldest</Typography>
+                              </Grid>
+                            </Grid>
+                          )}
+                          {!logPeek && (
+                            <Grid container direction="column">
+                              <Grid item>
+                                <Typography>Oldest</Typography>
+                              </Grid>
+                              <Grid item>
+                                <Typography color="primary">Newest</Typography>
+                              </Grid>
+                            </Grid>
+                          )}
                         </Button>
-                      </Grid> */}
+                      </Grid>
                     </Grid>
-                  </Box>
-                </>
-              )}
+                  </>
+                )}
+              </Grid>
             </Grid>
-          </form>
+            {queryType === "index" && (
+              <>
+                <Box border={1} className={classes.indexQueryBox} display="flex" alignItems="center" p={1}>
+                  <Grid item container alignItems="center" spacing={2}>
+                    <Grid item xs>
+                      <Grid container alignItems="center" spacing={2}>
+                        { filterObject.map((filterCondition, index) => (
+                          <Grid item>
+                            <Box border={1} className={classes.indexQueryInput} padding={1}>
+                              <Grid container spacing={1}>
+                                <Grid item>
+                                  <SelectField
+                                    // prefilled primary index, but dropdown for other indices
+                                    id="index"
+                                    value={filterCondition.key}
+                                    options={stream.streamIndexes.map((index) => {
+                                      return { label: index.fields.join(), value: index.fields.join() };
+                                    })}
+                                    onChange={({ target }) => updateFilterObject(index, "key", target.value)}
+                                  />
+                                </Grid>
+                                <Grid item>
+                                  <SelectField
+                                    // dropdown for comparison operator
+                                    id="comparison"
+                                    value={filterCondition.operator}
+                                    options={
+                                      schema.columns.find((col) => col.name === filterObject[0].key)?.isNumeric()
+                                        ? numericComparisons
+                                        : allComparisons
+                                    }
+                                    onChange={({ target }) => updateFilterObject(index, "operator", target.value)}
+                                  />
+                                </Grid>
+                                <Grid item>
+                                  <BNTextField
+                                    // freetext field for value
+                                    id="where"
+                                    // label="Filter"
+                                    value={filterCondition.value}
+                                    margin="none"
+                                    onChange={({ target }) => updateFilterObject(index, "value", target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                              </Grid>
+                            </Box>
+                          </Grid>
+                        ))}
+                        {moreConditions && (
+                          <Grid item>
+                            <Button
+                              onClick={() => {
+                                setFilterObject(
+                                  filterObject.concat({
+                                    key: schema.keyFields[filterObject.length],
+                                    operator: "_gt",
+                                    value: "",
+                                  })
+                                );
+                              }}
+                            >
+                              + Add condition
+                            </Button>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        onClick={() => {
+                          setIndexCodeDialog(true);
+                        }}
+                      >
+                        See the code
+                      </Button>
+                      <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                        <DialogContent>
+                          <CodeBlock language={"javascript"}>
+                            {`import { useRecords } from "beneath-react";
+const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
+  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
+                              stream.project.name
+                            }/${stream.name}",
+  query: {type: "index", filter: ${filter === "" ? undefined : filter}},
+  pageSize: 25,
+  subscribe: ${isSubscribed()},
+  renderFrequencyMs: 250,
+  maxRecords: 1000,
+  flashDurationMs: 2000,
+});`}
+                          </CodeBlock>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                            Close
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </>
+            )}
+          </Grid>
           {filter !== "" && error && <Message error={true}>{error.message}</Message>}
           {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
           {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
@@ -479,20 +536,15 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
 
 export default ExploreStream;
 
-const isJSON = (val: string): boolean => {
-  try {
-    JSON.parse(val);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const comparisons = [
+const numericComparisons = [
   { value: "_eq", label: "=" },
   { value: "_gt", label: ">" },
   { value: "_gte", label: ">=" },
   { value: "_lt", label: "<" },
   { value: "_lte", label: "<=" },
-  { value: "_prefix", label: "prefix" },
 ];
+
+// non-numeric indicies also have this _prefix operator
+const allComparisons = numericComparisons.concat([
+  { value: "_prefix", label: "starts with" }
+],);
