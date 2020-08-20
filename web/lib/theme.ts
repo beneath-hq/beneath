@@ -128,6 +128,11 @@ theme.overrides = {
       backgroundColor: "rgb(60, 170, 255)",
     },
   },
+  MuiDialog: {
+    paper: {
+      backgroundColor: theme.palette.background?.default,
+    },
+  },
   MuiTab: {
     root: {
       fontSize: theme.typography.button?.fontSize,

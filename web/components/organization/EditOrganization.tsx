@@ -2,9 +2,8 @@ import { useMutation } from "@apollo/client";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
-import Moment from "react-moment";
 
-import { makeStyles, Typography, Container } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 
 import { UPDATE_ORGANIZATION } from "../../apollo/queries/organization";
 import { REGISTER_USER_CONSENT } from "../../apollo/queries/user";
