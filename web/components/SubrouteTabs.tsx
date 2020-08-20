@@ -23,6 +23,17 @@ const useStyles = makeStyles((theme: Theme) => ({
     marginLeft: "5px",
     marginTop: "3px",
   },
+  tabsRoot: {
+    [theme.breakpoints.up("lg")]: {
+      justifyContent: "center",
+    },
+  },
+  tabsScroller: {
+    [theme.breakpoints.up("lg")]: {
+      flex: "none",
+      justifyContent: "center",
+    },
+  },
 }));
 
 export interface SubrouteTabsProps {
@@ -59,10 +70,10 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
       <Tabs
         indicatorColor="primary"
         textColor="primary"
-        scrollButtons="off"
+        scrollButtons="auto"
         value={selectedValue}
-        centered
-        // variant="scrollable" // can't use this with the centered prop
+        variant="scrollable"
+        classes={{ root: classes.tabsRoot, scroller: classes.tabsScroller }}
       >
         {tabs.map((tab) => (
           <Tab

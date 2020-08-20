@@ -10,7 +10,7 @@ import { REGISTER_USER_CONSENT } from "../../apollo/queries/user";
 import { RegisterUserConsent, RegisterUserConsentVariables } from "../../apollo/types/RegisterUserConsent";
 import { UpdateOrganization, UpdateOrganizationVariables } from "../../apollo/types/UpdateOrganization";
 import { withApollo } from "../../apollo/withApollo";
-import CheckboxField from "../../components/CheckboxField";
+import CheckboxField from "../../components/forms/Checkbox";
 import { Link } from "../../components/Link";
 import Page from "../../components/Page";
 import useMe from "../../hooks/useMe";
