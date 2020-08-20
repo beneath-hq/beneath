@@ -1,8 +1,10 @@
 import React, { FC } from "react";
 import Moment from "react-moment";
 
-import { Button, FormControl, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, makeStyles, Theme, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
+
+import FormControl, { FormControlProps } from "./FormControl";
 
 const useStyles = makeStyles((theme: Theme) => ({
   alert: {
@@ -16,34 +18,33 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export interface SubmitControlProps {
+export interface SubmitControlProps extends FormControlProps {
   label?: string;
   errorAlert?: string;
   createdOn?: string;
   updatedOn?: string;
-  disabled?: boolean;
-  margin?: "none" | "dense" | "normal";
-  fullWidth?: boolean;
 }
 
 const SubmitControl: FC<SubmitControlProps> = (props) => {
-  const { label, errorAlert, createdOn, updatedOn, disabled, margin, fullWidth } = props;
-  const actualMargin = margin ?? "normal";
-  const actualFullWidth = fullWidth === undefined ? true : fullWidth;
+  const { label, errorAlert, createdOn, updatedOn, ...others } = props;
   const classes = useStyles();
   return (
-    <FormControl margin={actualMargin} error={!!errorAlert} fullWidth={actualFullWidth} disabled={disabled}>
+    <FormControl {...others}>
       {errorAlert && (
         <Alert className={classes.alert} severity="error">
           {errorAlert}
         </Alert>
       )}
-      <Button className={classes.button} type="submit" variant="contained" color="primary" disabled={disabled}>
+      <Button className={classes.button} type="submit" variant="contained" color="primary">
         {label}
       </Button>
       {(createdOn || updatedOn) && (
         <Typography className={classes.timestamps} variant="subtitle1" color="textSecondary">
-          {createdOn && <>Created <Moment fromNow date={createdOn} /></>}
+          {createdOn && (
+            <>
+              Created <Moment fromNow date={createdOn} />
+            </>
+          )}
           {updatedOn && (createdOn ? " and last updated " : "Last updated ")}
           {updatedOn && <Moment fromNow date={updatedOn} />}
         </Typography>

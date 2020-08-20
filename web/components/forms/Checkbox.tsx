@@ -3,13 +3,13 @@ import React, { FC } from "react";
 import {
   Checkbox as MuiCheckbox,
   CheckboxProps as MuiCheckboxProps,
-  FormControl,
   FormControlLabel,
   FormHelperText,
   makeStyles,
 } from "@material-ui/core";
 
 import FieldError from "./FieldError";
+import FormControl, { FormControlProps } from "./FormControl";
 
 const useStyles = makeStyles((theme) => ({
   checkbox: {
@@ -23,26 +23,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export interface CheckboxProps extends MuiCheckboxProps {
-  label?: string;
-  helperText?: string;
-  error?: boolean;
-  errorText?: string;
-  disabled?: boolean;
-  margin?: "none" | "dense" | "normal";
-  fullWidth?: boolean;
-}
+export interface CheckboxProps extends FormControlProps, MuiCheckboxProps {}
 
 const Checkbox: FC<CheckboxProps> = (props) => {
-  const { id, label, helperText, error, errorText, disabled, margin, fullWidth, ...other } = props;
+  const {
+    id,
+    label,
+    margin,
+    helperText,
+    error,
+    errorText,
+    fullWidth,
+    required, // ignored
+    disabled,
+    ...muiCheckboxProps
+  } = props;
+
   const classes = useStyles();
-  const actualFullWidth = fullWidth === undefined ? true : fullWidth;
-  const actualMargin = margin ?? "normal";
   return (
-    <FormControl margin={actualMargin} error={error} fullWidth={actualFullWidth} disabled={disabled}>
-      <FormControlLabel label={label} control={<MuiCheckbox className={classes.checkbox} id={id} {...other} />} />
+    <FormControl
+      id={id}
+      margin={margin}
+      helperText={helperText}
+      error={error}
+      errorText={errorText}
+      fullWidth={fullWidth}
+      disabled={disabled}
+    >
+      <FormControlLabel
+        label={label}
+        control={<MuiCheckbox className={classes.checkbox} id={id} {...muiCheckboxProps} />}
+      />
       {helperText && <FormHelperText className={classes.helper}>{helperText}</FormHelperText>}
-      <FieldError id={id} error={error} errorText={errorText} />
     </FormControl>
   );
 };

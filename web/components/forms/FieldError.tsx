@@ -1,4 +1,4 @@
-import { FormHelperText, InputLabel, makeStyles, Theme } from "@material-ui/core";
+import { FormHelperText, makeStyles, Theme } from "@material-ui/core";
 import { FC } from "react";
 
 const useStyles = makeStyles((theme: Theme) => ({
