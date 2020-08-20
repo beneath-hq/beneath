@@ -1,112 +1,99 @@
 import { useMutation } from "@apollo/client";
+import { Field, Form, Formik } from "formik";
 import React, { FC } from "react";
-import Moment from "react-moment";
 import validator from "validator";
 
-import { Button, makeStyles, TextField, Typography } from "@material-ui/core";
+import { Container } from "@material-ui/core";
 
 import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
-import VSpace from "../VSpace";
-
-const useStyles = makeStyles((theme) => ({
-  submitButton: {
-    marginTop: theme.spacing(3),
-  },
-}));
+import { handleSubmitMutation, TextField as FormikTextField } from "../formik";
+import SubmitControl from "../forms/SubmitControl";
 
 interface EditProjectProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
 const EditProject: FC<EditProjectProps> = ({ project }) => {
-  const [values, setValues] = React.useState({
+  const [stageProject] = useMutation<StageProject, StageProjectVariables>(STAGE_PROJECT);
+
+  const initialValues = {
     displayName: project.displayName || "",
     site: project.site || "",
     description: project.description || "",
     photoURL: project.photoURL || "",
-  });
-
-  const [stageProject, { loading, error }] = useMutation<StageProject, StageProjectVariables>(STAGE_PROJECT);
-
-  const handleChange = (name: string) => (event: any) => {
-    setValues({ ...values, [name]: event.target.value });
   };
 
-  const classes = useStyles();
   return (
-    <div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          stageProject({ variables: {
-            organizationName: project.organization.name,
-            projectName: project.name,
-            ...values,
-          } });
-        }}
+    <Container maxWidth={"sm"}>
+      <Formik
+        initialValues={initialValues}
+        onSubmit={async (values, actions) =>
+          handleSubmitMutation(
+            values,
+            actions,
+            stageProject({
+              variables: {
+                organizationName: project.organization.name,
+                projectName: project.name,
+                displayName: values.displayName,
+                site: values.site,
+                description: values.description,
+                photoURL: values.photoURL,
+              },
+            })
+          )
+        }
       >
-        <TextField id="name" label="Name" value={project.name} margin="normal" fullWidth disabled />
-        <TextField
-          id="displayName"
-          label="Display Name"
-          value={values.displayName}
-          margin="normal"
-          fullWidth
-          onChange={handleChange("displayName")}
-        />
-        <TextField
-          id="site"
-          label="Site"
-          value={values.site}
-          margin="normal"
-          fullWidth
-          onChange={handleChange("site")}
-        />
-        <TextField
-          id="description"
-          label="Description"
-          value={values.description}
-          margin="normal"
-          fullWidth
-          onChange={handleChange("description")}
-        />
-        <TextField
-          id="photoURL"
-          label="Photo Url"
-          value={values.photoURL}
-          margin="normal"
-          fullWidth
-          onChange={handleChange("photoURL")}
-        />
-        <Button
-          type="submit"
-          variant="outlined"
-          color="primary"
-          className={classes.submitButton}
-          disabled={
-            loading ||
-            !(values.displayName.length <= 40) ||
-            !(values.site === "" || validator.isURL(values.site)) ||
-            !(values.description === "" || values.description.length < 256) ||
-            !(values.photoURL === "" || validator.isURL(values.photoURL))
-          }
-        >
-          Save changes
-        </Button>
-        {error && (
-          <Typography variant="body1" color="error">
-            An error occurred: {JSON.stringify(error)}
-          </Typography>
+        {({ isSubmitting, status }) => (
+          <Form>
+            <Field
+              name="displayName"
+              validate={(val: string) => {
+                if (val && val.length > 50) {
+                  return "Display names should be shorter than 50 characters";
+                }
+              }}
+              component={FormikTextField}
+              label="Display Name"
+            />
+            <Field
+              name="site"
+              validate={(val: string) => {
+                if (val && !validator.isURL(val)) {
+                  return "Site must be a valid URL";
+                }
+              }}
+              component={FormikTextField}
+              type="url"
+              label="Project website"
+            />
+            <Field
+              name="description"
+              validate={(val: string) => {
+                if (val && val.length > 255) {
+                  return "Bios should be shorter than 255 characters";
+                }
+              }}
+              component={FormikTextField}
+              label="Description"
+              multiline
+              rows={1}
+              rowsMax={3}
+            />
+            <Field name="photoURL" component={FormikTextField} label="Photo URL" />
+            <SubmitControl
+              label="Save changes"
+              createdOn={project.createdOn}
+              updatedOn={project.updatedOn}
+              errorAlert={status}
+              disabled={isSubmitting}
+            />
+          </Form>
         )}
-      </form>
-      <VSpace units={2} />
-      <Typography variant="subtitle1" color="textSecondary">
-        The project was created <Moment fromNow date={project.createdOn} /> and last updated{" "}
-        <Moment fromNow date={project.updatedOn} />.
-      </Typography>
-    </div>
+      </Formik>
+    </Container>
   );
 };
 

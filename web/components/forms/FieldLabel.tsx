@@ -29,16 +29,18 @@ const FieldLabel: FC<FieldLabelProps> = ({ id, label, helperText, required }) =>
   const helperTextId = helperText && id ? `${id}-helper-text` : undefined;
   return (
     <>
-      <InputLabel
-        classes={{ formControl: clsx(classes.label, helperText) }}
-        disableAnimation={true}
-        shrink={false}
-        id={inputLabelId}
-        htmlFor={id}
-      >
-        {label}
-        {!required && " (optional)"}
-      </InputLabel>
+      {label && (
+        <InputLabel
+          classes={{ formControl: clsx(classes.label, helperText) }}
+          disableAnimation={true}
+          shrink={false}
+          id={inputLabelId}
+          htmlFor={id}
+        >
+          {label}
+          {!required && " (optional)"}
+        </InputLabel>
+      )}
       {helperText && (
         <FormHelperText id={helperTextId} className={classes.helper}>
           {helperText}
