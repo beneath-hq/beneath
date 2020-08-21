@@ -1,5 +1,6 @@
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
+import { merge } from "lodash";
 
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import { Box, makeStyles, Theme, Dialog, DialogContent, DialogActions } from "@material-ui/core";
@@ -95,13 +96,11 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     }
   }, [stream]);
 
-  // TODO: go through schema and loop through
-  // TODO: add ability to clear filter(s)
-  // TODO: compose filter with >2 filterObject (where fields are the same, I think I have to merge the two JSON conditions into one)
+  // TODO: when adding a condition, "starts with", the same direction as condition1, = shouldn't be options
   // TODO: determine whether more conditions possible
-  // TODO: add new conditions to filterObject
-  // TODO: only resubmit useRecords query if the value field of a condition changes
-  // TODO: when adding a condition, pre-populate the field
+  // TODO: fix error when no value for numeric field
+  // TODO: add ability to clear filter(s)?
+  // TODO: test with other streams with more complex indices
   const [filterObject, setFilterObject] = useState<FilterCondition[]>([
     {
       field: schema.keyFields[0],
@@ -110,21 +109,33 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     }
   ]);
   const [filter, setFilter] = useState(""); // used in call to useRecords
+  const [refresh, setRefresh] = useState(0);
   const [moreConditions, setMoreConditions] = useState(true); // reveals the Add-a-Condition button
+  const [refreshAddConditionButton, setRefreshAddConditionButton] = useState(0);
 
   useEffect(() => {
     // compose JSON filter for useRecords()
-    // TODO: merge conditions that share the same field
-    setFilter(
-      filterObject
+    const conditions = filterObject
         .map((condition) => {
-          return `{"${condition.field}": {"${condition.operator}": "${condition.value}"}}`;
-        })
-        .join(", ")
-    );
+          return {
+            [condition.field]: {
+              [condition.operator]: condition.value
+            }
+          };
+        });
+    let allConditions;
+    for (const condition of conditions) {
+      allConditions = merge(allConditions, condition);
+    }
+    setFilter(JSON.stringify(allConditions));
+  }, [refresh]);
 
+  useEffect(() => {
     // reasons for no more conditions
     if (
+      // the last value field is empty
+      filterObject[filterObject.length-1].value === "" ||
+
       // if using _prefix
       filterObject[0].operator === "_prefix" ||
       // if using _eq
@@ -146,11 +157,15 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     }
 
     setMoreConditions(true);
-  }, [filterObject]);
+
+  }, [refreshAddConditionButton]);
 
   const updateFilterObject = (idx: number, field: string, value: any) => {
     const newFilterObject = [...filterObject];
     newFilterObject[idx][field as keyof FilterCondition] = value;
+    if (field === "value") {
+      setRefreshAddConditionButton(refreshAddConditionButton+1);
+    }
     setFilterObject(newFilterObject);
   };
 
@@ -161,6 +176,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
         return index !== idx;
       })
     );
+    setRefresh(refresh+1);
   };
 
   const isSubscribeable = () => {
@@ -412,12 +428,12 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     // dropdown for comparison operator
                                     id="comparison"
                                     value={filterCondition.operator}
-                                    options={
-                                      schema.columns.find((col) => col.name === filterObject[0].field)?.isNumeric()
-                                        ? numericComparisons
-                                        : allComparisons
+                                    options={availableComparisons(index, filterObject)}
+                                    onChange={({ target }) => {
+                                        updateFilterObject(index, "operator", target.value);
+                                        setRefreshAddConditionButton(refreshAddConditionButton+1);
+                                      }
                                     }
-                                    onChange={({ target }) => updateFilterObject(index, "operator", target.value)}
                                   />
                                 </Grid>
                                 <Grid item>
@@ -426,12 +442,21 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     id="value"
                                     value={filterCondition.value}
                                     margin="none"
-                                    onChange={({ target }) => updateFilterObject(index, "value", target.value)}
+                                    onChange={({ target }) => {
+                                      updateFilterObject(index, "value", target.value);
+                                    }}
+                                    onBlur={({target}) => {if (target.value !== "0") { setRefresh(refresh+1); } }}
+                                    onKeyDown={(e) => {if (e.keyCode === 13) { setRefresh(refresh+1); } }}
                                     fullWidth
                                   />
                                 </Grid>
                                 {index > 0 && (<Grid item>
-                                  <Button onClick={() => removeFilterCondition(index)}>X</Button>
+                                  <Button onClick={() => {
+                                    removeFilterCondition(index);
+                                    setRefreshAddConditionButton(refreshAddConditionButton + 1);
+                                  }}>
+                                    X
+                                  </Button>
                                 </Grid>)}
                               </Grid>
                             </Box>
@@ -448,6 +473,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     value: "",
                                   })
                                 );
+                                setRefreshAddConditionButton(refreshAddConditionButton+1);
                               }}
                             >
                               + Add condition
@@ -549,13 +575,33 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
 
 export default ExploreStream;
 
-const numericComparisons = [
-  { value: "_eq", label: "=" },
+// IN PROGRESS
+const availableComparisons = (index: number, filterObject: FilterCondition[]) => {
+  let comparisons = [];
+
+  // if numeric, then no "prefix" operator
+  // if previous condition has the same field, then only allow the opposite greaterThan or lessThan
+
+  // OLD
+  // schema.columns.find((col) => col.name === filterObject[index].field)?.isNumeric()
+  //   ? numericComparisons
+  //   : allComparisons
+  return allComparisons;
+}
+
+const greaterThans = [
   { value: "_gt", label: ">" },
   { value: "_gte", label: ">=" },
+];
+
+const lessThans = [
   { value: "_lt", label: "<" },
   { value: "_lte", label: "<=" },
 ];
+
+const numericComparisons = greaterThans.concat(lessThans).concat([
+  { value: "_eq", label: "=" },
+]);
 
 // non-numeric indicies also have this _prefix operator
 const allComparisons = numericComparisons.concat([
