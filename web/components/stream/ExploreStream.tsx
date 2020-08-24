@@ -96,10 +96,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     }
   }, [stream]);
 
-  // TODO: when adding a condition, "starts with", the same direction as condition1, = shouldn't be options
+  // TODO: need a nicer message than "reached end of cursor + pinwheel"
   // TODO: determine whether more conditions possible
   // TODO: fix error when no value for numeric field
-  // TODO: add ability to clear filter(s)?
   // TODO: test with other streams with more complex indices
   const [filterObject, setFilterObject] = useState<FilterCondition[]>([
     {
@@ -113,8 +112,8 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
   const [moreConditions, setMoreConditions] = useState(true); // reveals the Add-a-Condition button
   const [refreshAddConditionButton, setRefreshAddConditionButton] = useState(0);
 
+  // compose JSON filter for useRecords()
   useEffect(() => {
-    // compose JSON filter for useRecords()
     const conditions = filterObject
         .map((condition) => {
           return {
@@ -130,6 +129,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     setFilter(JSON.stringify(allConditions));
   }, [refresh]);
 
+  // determine whether you can add more filter conditions
   useEffect(() => {
     // reasons for no more conditions
     if (
@@ -160,13 +160,27 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
 
   }, [refreshAddConditionButton]);
 
-  const updateFilterObject = (idx: number, field: string, value: any) => {
-    const newFilterObject = [...filterObject];
-    newFilterObject[idx][field as keyof FilterCondition] = value;
-    if (field === "value") {
+  const updateFilterObject = (idx: number, param: string, value: any) => {
+    let newFilterObject = [...filterObject];
+    newFilterObject[idx][param as keyof FilterCondition] = value;
+
+    if (param === "value") {
       setRefreshAddConditionButton(refreshAddConditionButton+1);
     }
+    if (param === "operator") {
+      if (value && (value === "_prefix" || value === "_eq")) {
+        newFilterObject = newFilterObject.filter((_, index) => {
+          return index <= idx;
+        });
+      }
+      setRefreshAddConditionButton(refreshAddConditionButton + 1);
+    }
+
     setFilterObject(newFilterObject);
+
+    if (param === "operator" && newFilterObject[idx].value) {
+      setRefresh(refresh + 1);
+    }
   };
 
   const removeFilterCondition = (idx: number) => {
@@ -177,18 +191,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
       })
     );
     setRefresh(refresh+1);
-  };
-
-  const isSubscribeable = () => {
-    if (typeof window === "undefined" || finalized) {
-      return false;
-    } else {
-      return true;
-    }
-  };
-
-  const isSubscribed = () => {
-    return isSubscribeable() ? subscribeToggle : false;
   };
 
   // get records
@@ -204,7 +206,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
         : { type: "log", peek: logPeek },
     pageSize: 25,
     subscribe:
-        isSubscribed()
+        isSubscribed(finalized, subscribeToggle)
         ? {
             pageSize: 100,
             pollFrequencyMs: 250,
@@ -308,7 +310,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                     </ToggleButtonGroup>
                   </Grid>
                   <Grid item>
-                    {isSubscribed() && (
+                    {isSubscribed(finalized, subscribeToggle) && (
                       <Chip
                         label="Live"
                         variant="outlined"
@@ -318,14 +320,14 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                         icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
                       />
                     )}
-                    {!isSubscribed() && (
+                    {!isSubscribed(finalized, subscribeToggle) && (
                       <Chip
                         label="Paused"
                         variant="outlined"
                         size="small"
-                        clickable={isSubscribeable() ? true : false}
+                        clickable={isSubscribeable(finalized) ? true : false}
                         onClick={() => {
-                          if (isSubscribeable()) {
+                          if (isSubscribeable(finalized)) {
                             setSubscribeToggle(true);
                           }
                           return;
@@ -358,7 +360,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                               }/${stream.name}",
   query: {type: "log", peek: ${logPeek}},
   pageSize: 25,
-  subscribe: ${isSubscribed()},
+  subscribe: ${isSubscribed(finalized, subscribeToggle)},
   renderFrequencyMs: 250,
   maxRecords: 1000,
   flashDurationMs: 2000,
@@ -417,9 +419,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     // prefilled index, but dropdown for other indices
                                     id="index"
                                     value={filterCondition.field}
-                                    options={stream.streamIndexes.map((index) => {
-                                      return { label: index.fields.join(), value: index.fields.join() };
-                                    })}
+                                    options={availableIndices(stream.streamIndexes)}
                                     onChange={({ target }) => updateFilterObject(index, "field", target.value)}
                                   />
                                 </Grid>
@@ -428,12 +428,8 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     // dropdown for comparison operator
                                     id="comparison"
                                     value={filterCondition.operator}
-                                    options={availableComparisons(index, filterObject)}
-                                    onChange={({ target }) => {
-                                        updateFilterObject(index, "operator", target.value);
-                                        setRefreshAddConditionButton(refreshAddConditionButton+1);
-                                      }
-                                    }
+                                    options={availableComparisons(index, filterObject, schema)}
+                                    onChange={({ target }) => updateFilterObject(index, "operator", target.value)}
                                   />
                                 </Grid>
                                 <Grid item>
@@ -442,15 +438,13 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                     id="value"
                                     value={filterCondition.value}
                                     margin="none"
-                                    onChange={({ target }) => {
-                                      updateFilterObject(index, "value", target.value);
-                                    }}
-                                    onBlur={({target}) => {if (target.value !== "0") { setRefresh(refresh+1); } }}
+                                    onChange={({ target }) => updateFilterObject(index, "value", target.value)}
+                                    onBlur={({target}) => {if (target.value !== "") { setRefresh(refresh+1); } }}
                                     onKeyDown={(e) => {if (e.keyCode === 13) { setRefresh(refresh+1); } }}
                                     fullWidth
                                   />
                                 </Grid>
-                                {index > 0 && (<Grid item>
+                                {filterObject.length > 1 && (<Grid item>
                                   <Button onClick={() => {
                                     removeFilterCondition(index);
                                     setRefreshAddConditionButton(refreshAddConditionButton + 1);
@@ -469,7 +463,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                                 setFilterObject(
                                   filterObject.concat({
                                     field: schema.keyFields[filterObject.length-1],
-                                    operator: "_gt",
+                                    operator: "",
                                     value: "",
                                   })
                                 );
@@ -500,7 +494,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                             }/${stream.name}",
   query: {type: "index", filter: ${filter === "" ? undefined : filter}},
   pageSize: 25,
-  subscribe: ${isSubscribed()},
+  subscribe: ${isSubscribed(finalized, subscribeToggle)},
   renderFrequencyMs: 250,
   maxRecords: 1000,
   flashDurationMs: 2000,
@@ -575,19 +569,50 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
 
 export default ExploreStream;
 
-// IN PROGRESS
-const availableComparisons = (index: number, filterObject: FilterCondition[]) => {
-  let comparisons = [];
+const isSubscribeable = (finalized: boolean) => {
+  if (typeof window === "undefined" || finalized) {
+    return false;
+  } else {
+    return true;
+  }
+};
 
+const isSubscribed = (finalized: boolean, subscribeToggle: boolean) => {
+  return isSubscribeable(finalized) ? subscribeToggle : false;
+};
+
+const availableIndices = (allIndices: any[]) => {
+  return allIndices.map((index) => {
+    return { label: index.fields.join(), value: index.fields.join() };
+  });
+};
+
+const availableComparisons = (index: number, filterObject: FilterCondition[], schema: Schema) => {
   // if numeric, then no "prefix" operator
-  // if previous condition has the same field, then only allow the opposite greaterThan or lessThan
+  const isNumeric = schema.columns.find((col) => col.name === filterObject[index].field)?.isNumeric();
+  const comparisons = isNumeric ? numericComparisons : allComparisons;
 
-  // OLD
-  // schema.columns.find((col) => col.name === filterObject[index].field)?.isNumeric()
-  //   ? numericComparisons
-  //   : allComparisons
-  return allComparisons;
-}
+  if (index === 0) {
+    return comparisons;
+  }
+
+  // if previous condition has the same field, then only allow the opposite greaterThan or lessThan
+  if (filterObject[index-1].field === filterObject[index].field) {
+    if (filterObject[index - 1].operator === "_prefix" || filterObject[index - 1].operator === "_eq") {
+      // THERE SHOULDN'T BE A SECOND CONDITION
+      return [];
+    }
+    if (filterObject[index - 1].operator === "_gt" || filterObject[index - 1].operator === "_gte") {
+      return lessThans;
+    }
+    if (filterObject[index - 1].operator === "_lt" || filterObject[index - 1].operator === "_lte") {
+      return greaterThans;
+    }
+  }
+
+  // if condition is on a new field
+  return comparisons;
+};
 
 const greaterThans = [
   { value: "_gt", label: ">" },
