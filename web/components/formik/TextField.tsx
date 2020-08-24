@@ -1,3 +1,4 @@
+// Adapted from https://github.com/stackworx/formik-material-ui
 import React, { FC } from "react";
 import TextField, { TextFieldProps } from "../forms/TextField";
 import { FieldProps, getIn } from "formik";
@@ -5,10 +6,11 @@ import { FieldProps, getIn } from "formik";
 export interface FormikTextFieldProps extends FieldProps, Omit<TextFieldProps, "name" | "value" | "error"> {}
 
 export function formikToComponent({
-  field: { onBlur: fieldOnBlur, ...field },
+  field: { onChange: formikOnChange, onBlur: formikOnBlur, ...field },
   form: { isSubmitting, touched, errors },
   disabled,
   onBlur,
+  onChange,
   id,
   ...props
 }: FormikTextFieldProps): TextFieldProps {
@@ -20,7 +22,18 @@ export function formikToComponent({
     error: showError,
     errorText: showError && fieldError,
     disabled: disabled ?? isSubmitting,
-    onBlur: onBlur ?? ((e) => fieldOnBlur(e ?? field.name)),
+    onChange: ((...args) => {
+      formikOnChange(...args);
+      if (onChange) {
+        onChange(...args);
+      }
+    }),
+    onBlur: ((...args) => {
+      formikOnBlur(...args);
+      if (onBlur) {
+        onBlur(...args);
+      }
+    }),
     id: actualID,
     ...field,
     ...props,

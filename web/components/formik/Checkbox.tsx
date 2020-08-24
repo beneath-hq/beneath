@@ -1,3 +1,4 @@
+// Adapted from https://github.com/stackworx/formik-material-ui
 import { FieldProps, getIn } from "formik";
 import React, { FC } from "react";
 
@@ -11,10 +12,11 @@ export interface FormikCheckboxProps
 
 export function formikToComponent({
   disabled,
-  field: { onBlur: fieldOnBlur, ...field },
+  field: { onChange: formikOnChange, onBlur: formikOnBlur, ...field },
   form: { isSubmitting, touched, errors },
   type,
   onBlur,
+  onChange,
   id,
   ...props
 }: FormikCheckboxProps): CheckboxProps {
@@ -35,7 +37,18 @@ export function formikToComponent({
     errorText: showError && fieldError,
     disabled: disabled ?? isSubmitting,
     indeterminate,
-    onBlur: onBlur ?? ((e) => fieldOnBlur(e ?? field.name)),
+    onChange: (e, checked) => {
+      formikOnChange(e);
+      if (onChange) {
+        onChange(e, checked);
+      }
+    },
+    onBlur: (e) => {
+      formikOnBlur(e);
+      if (onBlur) {
+        onBlur(e);
+      }
+    },
     id: actualID,
     ...field,
     ...props,

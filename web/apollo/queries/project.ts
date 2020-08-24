@@ -96,6 +96,10 @@ export const STAGE_PROJECT = gql`
       site
       photoURL
       updatedOn
+      organization {
+        organizationID
+        name
+      }
     }
   }
 `;

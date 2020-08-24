@@ -3,7 +3,7 @@ import { Field, Form, Formik } from "formik";
 import React, { FC } from "react";
 import validator from "validator";
 
-import { Container } from "@material-ui/core";
+import { Container, Typography } from "@material-ui/core";
 
 import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";

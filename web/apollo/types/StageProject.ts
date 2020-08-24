@@ -7,6 +7,12 @@
 // GraphQL mutation operation: StageProject
 // ====================================================
 
+export interface StageProject_stageProject_organization {
+  __typename: "PublicOrganization";
+  organizationID: string;
+  name: string;
+}
+
 export interface StageProject_stageProject {
   __typename: "Project";
   projectID: string;
@@ -17,6 +23,7 @@ export interface StageProject_stageProject {
   site: string | null;
   photoURL: string | null;
   updatedOn: ControlTime;
+  organization: StageProject_stageProject_organization;
 }
 
 export interface StageProject {

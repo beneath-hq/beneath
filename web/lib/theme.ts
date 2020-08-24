@@ -12,10 +12,14 @@ theme.typography = {
   h1: {
     fontWeight: 600,
     fontSize: "1.75rem",
+    letterSpacing: ".05rem",
+    wordSpacing: ".15rem",
   },
   h2: {
     fontWeight: 600,
     fontSize: "1.5rem",
+    letterSpacing: ".05rem",
+    wordSpacing: ".15rem",
   },
   h3: {
     fontWeight: 600,
@@ -92,6 +96,7 @@ theme.overrides = {
   },
   MuiIconButton: {
     root: {
+      color: theme.palette.text?.secondary,
       borderRadius: "4px",
     },
   },
