@@ -96,9 +96,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
     }
   }, [stream]);
 
+  // TODO: determine generalized rule for whether more conditions possible
   // TODO: need a nicer message than "reached end of cursor + pinwheel"
-  // TODO: determine whether more conditions possible
-  // TODO: fix error when no value for numeric field
+  // TODO: nicer error message for when strings not numbers are input to a query on a Numeric field
   // TODO: test with other streams with more complex indices
   const [filterObject, setFilterObject] = useState<FilterCondition[]>([
     {
@@ -116,11 +116,13 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
   useEffect(() => {
     const conditions = filterObject
         .map((condition) => {
-          return {
-            [condition.field]: {
-              [condition.operator]: condition.value
-            }
-          };
+          if (condition.value !== "") {
+            return {
+              [condition.field]: {
+                [condition.operator]: isFieldNumeric(condition.field, schema) ? parseInt(condition.value.replace(/,/g, ''), 10) : condition.value
+              }
+            };
+          }
         });
     let allConditions;
     for (const condition of conditions) {
@@ -587,10 +589,13 @@ const availableIndices = (allIndices: any[]) => {
   });
 };
 
+const isFieldNumeric = (field: string, schema: Schema) => {
+  return schema.columns.find((col) => col.name === field)?.isNumeric();
+};
+
 const availableComparisons = (index: number, filterObject: FilterCondition[], schema: Schema) => {
   // if numeric, then no "prefix" operator
-  const isNumeric = schema.columns.find((col) => col.name === filterObject[index].field)?.isNumeric();
-  const comparisons = isNumeric ? numericComparisons : allComparisons;
+  const comparisons = isFieldNumeric(filterObject[index].field, schema) ? numericComparisons : allComparisons;
 
   if (index === 0) {
     return comparisons;
