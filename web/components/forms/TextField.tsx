@@ -6,17 +6,19 @@ import FormControl, { FormControlProps } from "./FormControl";
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
     marginTop: "0.3rem",
-  },
-  input: {
     borderRadius: "4px",
     position: "relative",
     backgroundColor: theme.palette.background.paper,
     border: "1px solid",
     borderColor: "rgba(35, 48, 70, 1)",
-    padding: "10px 12px",
-    "&:focus": {
-      boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
-    },
+    padding: "0 12px",
+  },
+  focused: {
+    boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+  },
+  input: {
+    padding: "10px 0",
+    height: "100%",
   },
   multiline: {
     padding: "0",
@@ -58,7 +60,12 @@ const TextField: FC<TextFieldProps> = (props) => {
   return (
     <FormControl id={id} {...others}>
       <InputBase
-        classes={{ root: classes.root, input: classes.input, multiline: classes.multiline }}
+        classes={{
+          root: classes.root,
+          focused: classes.focused,
+          input: classes.input,
+          inputMultiline: classes.input,
+        }}
         id={id}
         value={value}
         multiline={multiline}

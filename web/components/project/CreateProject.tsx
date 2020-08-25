@@ -134,7 +134,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
             rows={1}
             rowsMax={3}
           />
-          <SubmitControl label="Save changes" errorAlert={status} disabled={isSubmitting} />
+          <SubmitControl label="Create project" errorAlert={status} disabled={isSubmitting} />
         </Form>
       )}
     </Formik>
