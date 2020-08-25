@@ -62,3 +62,74 @@ export const QUERY_STREAM_INSTANCES = gql`
     }
   }
 `;
+
+export const STAGE_STREAM = gql`
+  mutation StageStream(
+    $organizationName: String!,
+    $projectName: String!,
+    $streamName: String!
+    $schemaKind: StreamSchemaKind!,
+    $schema: String!,
+    $indexes: String,
+    $description: String,
+    $allowManualWrites: Boolean,
+    $useLog: Boolean,
+    $useIndex: Boolean,
+    $useWarehouse: Boolean,
+    $logRetentionSeconds: Int,
+    $indexRetentionSeconds: Int,
+    $warehouseRetentionSeconds: Int,
+  ) {
+    stageStream(
+      organizationName: $organizationName,
+      projectName: $projectName,
+      streamName: $streamName,
+      schemaKind: $schemaKind,
+      schema: $schema,
+      indexes: $indexes,
+      description: $description,
+      allowManualWrites: $allowManualWrites,
+      useLog: $useLog,
+      useIndex: $useIndex,
+      useWarehouse: $useWarehouse,
+      logRetentionSeconds: $logRetentionSeconds,
+      indexRetentionSeconds: $indexRetentionSeconds,
+      warehouseRetentionSeconds: $warehouseRetentionSeconds,
+    ) {
+      streamID
+      name
+      description
+      createdOn
+      updatedOn
+      project {
+        projectID
+        name
+        organization {
+          organizationID
+          name
+        }
+      }
+      schemaKind
+      schema
+      avroSchema
+      streamIndexes {
+        indexID
+        fields
+        primary
+        normalize
+      }
+      allowManualWrites
+      useLog
+      useIndex
+      useWarehouse
+      logRetentionSeconds
+      indexRetentionSeconds
+      warehouseRetentionSeconds
+      primaryStreamInstanceID
+      instancesCreatedCount
+      instancesDeletedCount
+      instancesMadeFinalCount
+      instancesMadePrimaryCount
+    }
+  }
+`;

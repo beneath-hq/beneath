@@ -2,7 +2,6 @@ import { useMutation } from "@apollo/client";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
-import validator from "validator";
 
 import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
