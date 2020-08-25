@@ -10,7 +10,6 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Paper,
 import { makeStyles } from "@material-ui/core/styles";
 
 import billing from "../../../lib/billing";
-import Loading from "../../Loading";
 import CancelPlan from "./update-billing-info/CancelPlan";
 import ChangeBillingMethod from "./update-billing-info/ChangeBillingMethod";
 import Checkout from "./update-billing-info/Checkout";
@@ -172,15 +171,12 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
                     setChangeBillingMethodDialogue(false);
                   }}
                 >
-                  <DialogTitle id="alert-dialog-title">{"Change billing method"}</DialogTitle>
                   <DialogContent>
                     <ChangeBillingMethod
-                      organization={organization}
                       closeDialogue={(confirmationMessage) => handleCloseDialogue(confirmationMessage)}
                       billingInfo={billingInfo}
                     />
                   </DialogContent>
-                  <DialogActions />
                 </Dialog>
               </Grid>
             )}
