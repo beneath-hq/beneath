@@ -39,6 +39,7 @@ const useStyles = makeStyles((theme) => ({
   },
   logo: {
     height: "30px",
+    marginRight: "1rem",
   },
   tabs: {
     paddingRight: theme.spacing(2),
@@ -163,6 +164,16 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
             </g>
           </svg>
         </Link>
+        {me && (
+          <>
+            <Button component={NakedLink} href="/-/create/project">
+              Create project
+            </Button>
+            <Button component={NakedLink} href="/-/create/stream">
+              Create stream
+            </Button>
+          </>
+        )}
         <div className={classes.grow} />
         <Tabs
           className={classes.tabs}
