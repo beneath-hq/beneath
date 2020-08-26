@@ -19,7 +19,6 @@ const useStyles = makeStyles((theme: Theme) => ({
   control: {
     display: "flex",
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
     marginTop: "0.3rem",
     borderRadius: "4px",
@@ -77,6 +76,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   valueRoot: {
     flexGrow: 1,
+    minWidth: "80px",
   },
   valueInput: {
     padding: "10px 0",
@@ -89,22 +89,39 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export type Operator = "=" | ">" | "<" | "<=" | ">=" | "prefix";
+export type Operator = "" | "=" | ">" | "<" | "<=" | ">=" | "prefix";
 export type FieldType = "text" | "hex" | "integer" | "float" | "datetime";
+export type Filter = { [key in Operator]: string };
 
 export interface Field {
   name: string;
   type: FieldType;
-  operators: Operator[];
   description?: string;
 }
 
 export interface FilterFieldProps {
   fields: Field[];
   cancellable?: boolean;
-  onBlur?: (field: Field, op: Operator, val: string) => void;
+  onBlur?: (field: Field, filter: Filter) => void;
   onCancel?: () => void;
 }
+
+const getOperators = (type: FieldType, firstOperator?: Operator): Operator[] | null => {
+  if (firstOperator) {
+    if (firstOperator === "<" || firstOperator === "<=") {
+      return ["", ">", ">="];
+    } else if (firstOperator === ">" || firstOperator === ">=") {
+      return ["", "<", "<="];
+    }
+    return null;
+  }
+
+  const operators: Operator[] = ["=", "<", ">", "<=", ">="];
+  if (type === "text" || type === "hex") {
+    operators.push("prefix");
+  }
+  return operators;
+};
 
 const getPlaceholder = (type: FieldType) => {
   if (type === "text") {
@@ -121,7 +138,7 @@ const getPlaceholder = (type: FieldType) => {
   return "";
 };
 
-const validateValue = (type: FieldType, value: string): (string | null) => {
+const validateValue = (type: FieldType, value: string): string | null => {
   if (value.length === 0 || type === "text") {
     return null;
   }
@@ -153,41 +170,24 @@ const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCanc
   const classes = useStyles();
   const [focused, setFocused] = useState(false);
   const [field, setField] = useState(fields[0]);
-  const [operator, setOperator] = useState<Operator>(field.operators[0]);
-  const [value, setValue] = useState("");
-  const [valueTouched, setValueTouched] = useState(false);
-  const [error, setError] = useState("");
+  const [firstOperator, setFirstOperator] = useState<Operator>("=");
+  const [firstValue, setFirstValue] = useState("");
+  const [firstHasError, setFirstHasError] = useState(false);
+  // TODO: add secondary operators in the future (e.g. greater than and less than)
 
   const blur = () => {
-    if (onBlur && error.length === 0) {
-      onBlur(field, operator, value);
+    if (onBlur) {
+      if (!firstHasError) {
+        const filter = {} as Filter;
+        if (firstValue) {
+          filter[firstOperator] = firstValue;
+        }
+        onBlur(field, filter);
+      }
     }
   };
 
-  useEffect(() => {
-    blur();
-  }, [field.name, operator]);
-
-  useEffect(() => {
-    if (valueTouched) {
-      const err = validateValue(field.type, value);
-      if (err) {
-        setError(err);
-      } else if (error.length !== 0) {
-        setError("");
-      }
-    }
-  }, [valueTouched, value]);
-
-  // Took out because formatting is too weird
-  // const valueType =
-  //   field.type === "text"
-  //     ? "text"
-  //     : field.type === "integer" || field.type === "float"
-  //     ? "number"
-  //     : field.type === "datetime"
-  //     ? "datetime-local"
-  //     : "";
+  useEffect(() => blur(), [firstOperator]);
 
   // make field elem
   let fieldElem: JSX.Element;
@@ -201,9 +201,9 @@ const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCanc
           for (const field of fields) {
             if (field.name === e.target.value) {
               setField(field);
-              setOperator(field.operators[0]);
-              setValue("");
-              setError("");
+              setFirstOperator("=");
+              setFirstValue("");
+              setFirstHasError(false);
               break;
             }
           }
@@ -229,11 +229,9 @@ const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCanc
 
   return (
     <div
-      className={clsx(classes.control, focused && classes.focused, error && classes.error)}
+      className={clsx(classes.control, focused && classes.focused, firstHasError && classes.error)}
       onFocus={() => setFocused(true)}
-      onBlur={() => {
-        setFocused(false);
-      }}
+      onBlur={() => setFocused(false)}
     >
       {cancellable && (
         <IconButton
@@ -250,47 +248,103 @@ const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCanc
         </IconButton>
       )}
       {fieldElem}
-      <Divider className={clsx(classes.divider, classes.leftDivider)} orientation="vertical" />
-      <Select
-        classes={{ select: classes.select, icon: classes.selectIcon }}
-        input={<InputBase classes={{ input: classes.selectInput }}></InputBase>}
-        value={operator}
-        onChange={(e) => setOperator(e.target.value as Operator)}
-      >
-        {field.operators.map((op) => (
-          <MenuItem key={op} value={op}>
-            {op}
-          </MenuItem>
-        ))}
-      </Select>
-      <Divider className={clsx(classes.divider, classes.rightDivider)} orientation="vertical" />
-      <InputBase
-        classes={{ root: classes.valueRoot, input: classes.valueInput }}
-        value={value}
-        // type={valueType}
-        placeholder={getPlaceholder(field.type)}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={(e) => {
-          blur();
-          if (!valueTouched) {
-            setValueTouched(true);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.keyCode === 13) {
-            blur();
-          }
-        }}
+      <OperatorValueField
+        field={field}
+        operators={getOperators(field.type) || []}
+        operator={firstOperator}
+        value={firstValue}
+        onBlur={blur}
+        onHasError={setFirstHasError}
+        onOperatorChange={setFirstOperator}
+        onValueChange={setFirstValue}
       />
-      {error && (
-        <Tooltip title={error}>
-          <Icon className={classes.iconTooltip}>
-            <WarningIcon fontSize="inherit" />
-          </Icon>
-        </Tooltip>
-      )}
     </div>
   );
 };
 
 export default FilterField;
+
+interface OperatorValueField {
+  field: Field;
+  operators: Operator[];
+  operator?: Operator;
+  value: string;
+  onBlur: () => void;
+  onHasError: (err: boolean) => void;
+  onOperatorChange: (op: Operator) => void;
+  onValueChange: (value: string) => void;
+}
+
+const OperatorValueField: FC<OperatorValueField> = ({
+  field,
+  operators,
+  operator,
+  value,
+  onBlur,
+  onHasError,
+  onOperatorChange,
+  onValueChange,
+}) => {
+  const classes = useStyles();
+  const [error, setError] = useState("");
+  const [valueTouched, setValueTouched] = useState(false);
+  useEffect(() => onHasError(!!(valueTouched && error)), [valueTouched, error]);
+  return (
+    <>
+      <Divider className={clsx(classes.divider, classes.leftDivider)} orientation="vertical" />
+      <Select
+        classes={{ select: classes.select, icon: classes.selectIcon }}
+        input={<InputBase classes={{ input: classes.selectInput }}></InputBase>}
+        value={operator}
+        displayEmpty
+        onChange={(e) => onOperatorChange(e.target.value as Operator)}
+      >
+        {operators.map((op) => (
+          <MenuItem key={op} value={op}>
+            {op}
+          </MenuItem>
+        ))}
+      </Select>
+      {operator && (
+        <>
+          <Divider className={clsx(classes.divider, classes.rightDivider)} orientation="vertical" />
+          <InputBase
+            classes={{ root: classes.valueRoot, input: classes.valueInput }}
+            value={value}
+            placeholder={getPlaceholder(field.type)}
+            onChange={(e) => {
+              onValueChange(e.target.value);
+              const err = validateValue(field.type, e.target.value);
+              setError(err || "");
+            }}
+            onBlur={(e) => {
+              if (!error) {
+                onBlur();
+              }
+              if (!valueTouched) {
+                setValueTouched(true);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.keyCode === 13) {
+                if (!error) {
+                  onBlur();
+                }
+                if (!valueTouched) {
+                  setValueTouched(true);
+                }
+              }
+            }}
+          />
+          {valueTouched && error && (
+            <Tooltip title={error}>
+              <Icon className={classes.iconTooltip}>
+                <WarningIcon fontSize="inherit" />
+              </Icon>
+            </Tooltip>
+          )}
+        </>
+      )}
+    </>
+  );
+};
