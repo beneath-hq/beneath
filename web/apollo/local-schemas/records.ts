@@ -27,7 +27,7 @@ export const resolvers = {
   Mutation: {
     createRecords: async (_: any, { instanceID, json }: CreateRecordsVariables, { cache }: ResolverContext) => {
       // build url with limit and where
-      const url = `${GATEWAY_URL}/-/instances/${instanceID}`;
+      const url = `${GATEWAY_URL}/v1/-/instances/${instanceID}`;
 
       // build headers with authorization
       const headers: any = makeHeaders(cache);
