@@ -1,6 +1,6 @@
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
-import { merge } from "lodash";
+import avro from "avsc";
 
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import { Box, makeStyles, Theme, Dialog, DialogContent, DialogActions } from "@material-ui/core";
@@ -20,11 +20,10 @@ import Loading from "../Loading";
 import VSpace from "../VSpace";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
-// import WriteStream from "../../components/stream/WriteStream";
+import WriteStream from "../../components/stream/WriteStream";
 import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
-import SelectField from "components/SelectField";
-import BNTextField from "components/BNTextField";
 import CodeBlock from "components/CodeBlock";
+import FilterForm from "./FilterForm";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -33,10 +32,12 @@ interface ExploreStreamProps {
   setLoading: (loading: boolean) => void;
 }
 
-interface FilterCondition {
-  field: string;
-  operator: string;
-  value: string;
+// from schema.tsx
+interface Column {
+  name: string;
+  type: avro.Type;
+  actualType: avro.Type;
+  doc?: string;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -87,6 +88,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
   const [logCodeDialog, setLogCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Log view
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Index view
   const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
+  const [filter, setFilter] = React.useState(""); // used in call to useRecords
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
   const [schema, setSchema] = useState(() => new Schema(stream));
@@ -95,105 +97,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
       setSchema(new Schema(stream));
     }
   }, [stream]);
-
-  // TODO: determine generalized rule for whether more conditions possible
-  // TODO: need a nicer message than "reached end of cursor + pinwheel"
-  // TODO: nicer error message for when strings not numbers are input to a query on a Numeric field
-  // TODO: test with other streams with more complex indices
-  const [filterObject, setFilterObject] = useState<FilterCondition[]>([
-    {
-      field: schema.keyFields[0],
-      operator: "_gt",
-      value: ""
-    }
-  ]);
-  const [filter, setFilter] = useState(""); // used in call to useRecords
-  const [refresh, setRefresh] = useState(0);
-  const [moreConditions, setMoreConditions] = useState(true); // reveals the Add-a-Condition button
-  const [refreshAddConditionButton, setRefreshAddConditionButton] = useState(0);
-
-  // compose JSON filter for useRecords()
-  useEffect(() => {
-    const conditions = filterObject
-        .map((condition) => {
-          if (condition.value !== "") {
-            return {
-              [condition.field]: {
-                [condition.operator]: isFieldNumeric(condition.field, schema) ? parseInt(condition.value.replace(/,/g, ''), 10) : condition.value
-              }
-            };
-          }
-        });
-    let allConditions;
-    for (const condition of conditions) {
-      allConditions = merge(allConditions, condition);
-    }
-    setFilter(JSON.stringify(allConditions));
-  }, [refresh]);
-
-  // determine whether you can add more filter conditions
-  useEffect(() => {
-    // reasons for no more conditions
-    if (
-      // the last value field is empty
-      filterObject[filterObject.length-1].value === "" ||
-
-      // if using _prefix
-      filterObject[0].operator === "_prefix" ||
-      // if using _eq
-      filterObject[0].operator === "_eq" ||
-      // if one index, only allow two conditions
-      (schema.keyFields.length === 1 && filterObject.length === 2)
-      // TODO: figure out generalizable rule for setMoreConditions(false). Is it:
-      // Option 1:
-      // if the last indexField has either _eq or _prefix or two conditions (which will be two greater/less than)
-
-      // Option 2:
-      // When:
-      // numConditions = schema.keyFields.length + 1 ||
-      // When _prefix is used anywhere ||
-      // When _eq is used on the last keyField
-    ) {
-      setMoreConditions(false);
-      return;
-    }
-
-    setMoreConditions(true);
-
-  }, [refreshAddConditionButton]);
-
-  const updateFilterObject = (idx: number, param: string, value: any) => {
-    let newFilterObject = [...filterObject];
-    newFilterObject[idx][param as keyof FilterCondition] = value;
-
-    if (param === "value") {
-      setRefreshAddConditionButton(refreshAddConditionButton+1);
-    }
-    if (param === "operator") {
-      if (value && (value === "_prefix" || value === "_eq")) {
-        newFilterObject = newFilterObject.filter((_, index) => {
-          return index <= idx;
-        });
-      }
-      setRefreshAddConditionButton(refreshAddConditionButton + 1);
-    }
-
-    setFilterObject(newFilterObject);
-
-    if (param === "operator" && newFilterObject[idx].value) {
-      setRefresh(refresh + 1);
-    }
-  };
-
-  const removeFilterCondition = (idx: number) => {
-    const newFilterObject = [...filterObject];
-    setFilterObject(
-      newFilterObject.filter((_, index) => {
-        return index !== idx;
-      })
-    );
-    setRefresh(refresh+1);
-  };
 
   // get records
   const token = useToken();
@@ -240,8 +143,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
         <Grid item>
           <Grid container justify="flex-end" spacing={2}>
             <Grid item>
-              {/* {stream.allowManualWrites && ( */}
-              {true && ( // always show for development
+              {stream.allowManualWrites && (
                 <>
                   <Button
                     variant="outlined"
@@ -255,7 +157,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                   <Dialog
                     open={writeDialog}
                     fullWidth={true}
-                    maxWidth={"md"}
+                    maxWidth={"xs"}
                     onBackdropClick={() => {
                       setWriteDialog(false);
                     }}
@@ -265,7 +167,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                       // must update js client to be able to write data (current local resolvers do not work anymore!)
                       // and to allow both stream and batch writes
                       */}
-                    {/* <WriteStream stream={stream} /> */}
+                    <DialogContent>
+                      <WriteStream stream={stream} />
+                    </DialogContent>
                   </Dialog>
                 </>
               )}
@@ -411,72 +315,10 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                 <Box border={1} className={classes.indexQueryBox} display="flex" alignItems="center" p={1}>
                   <Grid item container alignItems="center" spacing={2}>
                     <Grid item xs>
-                      <Grid container alignItems="center" spacing={2}>
-                        {filterObject.map((filterCondition, index) => (
-                          <Grid item key={index}>
-                            <Box border={1} className={classes.indexQueryInput} padding={1}>
-                              <Grid container spacing={1}>
-                                <Grid item>
-                                  <SelectField
-                                    // prefilled index, but dropdown for other indices
-                                    id="index"
-                                    value={filterCondition.field}
-                                    options={availableIndices(stream.streamIndexes)}
-                                    onChange={({ target }) => updateFilterObject(index, "field", target.value)}
-                                  />
-                                </Grid>
-                                <Grid item>
-                                  <SelectField
-                                    // dropdown for comparison operator
-                                    id="comparison"
-                                    value={filterCondition.operator}
-                                    options={availableComparisons(index, filterObject, schema)}
-                                    onChange={({ target }) => updateFilterObject(index, "operator", target.value)}
-                                  />
-                                </Grid>
-                                <Grid item>
-                                  <BNTextField
-                                    // freetext field for value
-                                    id="value"
-                                    value={filterCondition.value}
-                                    margin="none"
-                                    onChange={({ target }) => updateFilterObject(index, "value", target.value)}
-                                    onBlur={({target}) => {if (target.value !== "") { setRefresh(refresh+1); } }}
-                                    onKeyDown={(e) => {if (e.keyCode === 13) { setRefresh(refresh+1); } }}
-                                    fullWidth
-                                  />
-                                </Grid>
-                                {filterObject.length > 1 && (<Grid item>
-                                  <Button onClick={() => {
-                                    removeFilterCondition(index);
-                                    setRefreshAddConditionButton(refreshAddConditionButton + 1);
-                                  }}>
-                                    X
-                                  </Button>
-                                </Grid>)}
-                              </Grid>
-                            </Box>
-                          </Grid>
-                        ))}
-                        {moreConditions && (
-                          <Grid item>
-                            <Button
-                              onClick={() => {
-                                setFilterObject(
-                                  filterObject.concat({
-                                    field: schema.keyFields[filterObject.length-1],
-                                    operator: "",
-                                    value: "",
-                                  })
-                                );
-                                setRefreshAddConditionButton(refreshAddConditionButton+1);
-                              }}
-                            >
-                              + Add condition
-                            </Button>
-                          </Grid>
-                        )}
-                      </Grid>
+                      <FilterForm
+                        index={schema.columns.filter((col) => col.key) as Column[]}
+                        onChange={(filter) => setFilter(filter)}
+                      />
                     </Grid>
                     <Grid item>
                       <Button
@@ -582,58 +424,3 @@ const isSubscribeable = (finalized: boolean) => {
 const isSubscribed = (finalized: boolean, subscribeToggle: boolean) => {
   return isSubscribeable(finalized) ? subscribeToggle : false;
 };
-
-const availableIndices = (allIndices: any[]) => {
-  return allIndices.map((index) => {
-    return { label: index.fields.join(), value: index.fields.join() };
-  });
-};
-
-const isFieldNumeric = (field: string, schema: Schema) => {
-  return schema.columns.find((col) => col.name === field)?.isNumeric();
-};
-
-const availableComparisons = (index: number, filterObject: FilterCondition[], schema: Schema) => {
-  // if numeric, then no "prefix" operator
-  const comparisons = isFieldNumeric(filterObject[index].field, schema) ? numericComparisons : allComparisons;
-
-  if (index === 0) {
-    return comparisons;
-  }
-
-  // if previous condition has the same field, then only allow the opposite greaterThan or lessThan
-  if (filterObject[index-1].field === filterObject[index].field) {
-    if (filterObject[index - 1].operator === "_prefix" || filterObject[index - 1].operator === "_eq") {
-      // THERE SHOULDN'T BE A SECOND CONDITION
-      return [];
-    }
-    if (filterObject[index - 1].operator === "_gt" || filterObject[index - 1].operator === "_gte") {
-      return lessThans;
-    }
-    if (filterObject[index - 1].operator === "_lt" || filterObject[index - 1].operator === "_lte") {
-      return greaterThans;
-    }
-  }
-
-  // if condition is on a new field
-  return comparisons;
-};
-
-const greaterThans = [
-  { value: "_gt", label: ">" },
-  { value: "_gte", label: ">=" },
-];
-
-const lessThans = [
-  { value: "_lt", label: "<" },
-  { value: "_lte", label: "<=" },
-];
-
-const numericComparisons = greaterThans.concat(lessThans).concat([
-  { value: "_eq", label: "=" },
-]);
-
-// non-numeric indicies also have this _prefix operator
-const allComparisons = numericComparisons.concat([
-  { value: "_prefix", label: "starts with" }
-],);
