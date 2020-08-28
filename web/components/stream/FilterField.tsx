@@ -20,7 +20,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    marginTop: "0.3rem",
     borderRadius: "4px",
     position: "relative",
     backgroundColor: theme.palette.background.paper,
@@ -75,7 +74,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
   },
   valueRoot: {
-    flexGrow: 1,
+    flexGrow: 0,
     minWidth: "80px",
   },
   valueInput: {
