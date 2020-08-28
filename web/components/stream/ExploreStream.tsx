@@ -191,7 +191,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                       exclusive
                       size="small"
                       value={queryType}
-                      onChange={(_, value) => setQueryType(value as "log" | "index")}
+                      onChange={(_, value: "log" | "index" | null) => {
+                        if (value !== null) setQueryType(value);
+                      }}
                     >
                       <ToggleButton value="log">
                         <Grid container direction="column">
