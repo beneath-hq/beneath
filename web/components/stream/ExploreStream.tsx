@@ -54,10 +54,21 @@ const useStyles = makeStyles((theme: Theme) => ({
   selectPeekControl: {
     minWidth: 150,
   },
+  queryTypeButtons: {
+    width: "14rem",
+    // selected: {
+    //   color: "pink"
+    // }
+  },
   indexQueryBox: {
     width: "100%",
     height: "4rem",
-    borderColor: "text.primary",
+    border: `1px solid ${theme.palette.divider}`,
+  },
+  fetchMoreBox: {
+    width: "100%",
+    height: "4rem",
+    border: `1px solid ${theme.palette.divider}`,
   },
   indexQueryInput: {
     width: "25rem",
@@ -195,7 +206,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                         if (value !== null) setQueryType(value);
                       }}
                     >
-                      <ToggleButton value="log">
+                      <ToggleButton value="log" className={classes.queryTypeButtons}>
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Log</Typography>
@@ -205,7 +216,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                           </Grid>
                         </Grid>
                       </ToggleButton>
-                      <ToggleButton value="index">
+                      <ToggleButton value="index" className={classes.queryTypeButtons}>
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Index</Typography>
@@ -366,22 +377,23 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
           {(!loading || records.length > 0) && (
             <RecordsTable schema={schema} records={records} showTimestamps={queryType === "log"} />
           )}
-          <VSpace units={4} />
           {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
           {fetchMore && (
-            <Grid container justify="center">
-              <Grid item>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  className={classes.fetchMoreButton}
-                  disabled={loading}
-                  onClick={() => fetchMore()}
-                >
-                  Fetch more
-                </Button>
+            <Box border={1} className={classes.fetchMoreBox} display="flex" alignItems="center" p={1}>
+              <Grid container justify="center">
+                <Grid item>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className={classes.fetchMoreButton}
+                    disabled={loading}
+                    onClick={() => fetchMore()}
+                  >
+                    Fetch more
+                  </Button>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
           )}
           {!fetchMore && fetchMoreChanges && (
             <Grid container justify="center">

@@ -3,7 +3,6 @@ import clsx from "clsx";
 import React, { FC } from "react";
 
 import {
-  Box,
   Icon,
   makeStyles,
   Table,
@@ -24,7 +23,12 @@ const useStyles = makeStyles((theme: Theme) => ({
     width: "100%",
     overflowX: "auto",
   },
-  table: {},
+  table: {
+    border: `1px solid ${theme.palette.divider}`,
+  },
+  tableHead: {
+    backgroundColor: theme.palette.common.black,
+  },
   row: {
     "&:last-child": {
       "& td": {
@@ -70,50 +74,48 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, showTimestamps }
   const columns = schema.getColumns(showTimestamps);
   return (
     <div className={classes.paper}>
-      <Box border={1}>
-        <Table className={classes.table} size="small">
-          <TableHead>
-            <TableRow>
+      <Table className={classes.table} size="small">
+        <TableHead className={classes.tableHead}>
+          <TableRow>
+            {columns.map((column) => (
+              <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
+                <div className={classes.headerCellContent}>
+                  <span className={classes.headerCellText}>{column.displayName}</span>
+                  {column.doc && (
+                    <Tooltip title={column.doc} interactive>
+                      <Icon className={classes.headerCellInfo}>
+                        <InfoIcon fontSize="inherit" />
+                      </Icon>
+                    </Tooltip>
+                  )}
+                  {column.key && (
+                    <Tooltip title={"Column is part of an index"} interactive>
+                      <Icon className={classes.headerCellInfo}>
+                        <SearchIcon fontSize="inherit" />
+                      </Icon>
+                    </Tooltip>
+                  )}
+                </div>
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {records.map((record, _) => (
+            <TableRow
+              key={`${record["@meta"].key};${record["@meta"].timestamp}`}
+              className={clsx(classes.row, record["@meta"].flash && classes.highlightedCell)}
+              hover={true}
+            >
               {columns.map((column) => (
-                <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
-                  <div className={classes.headerCellContent}>
-                    <span className={classes.headerCellText}>{column.displayName}</span>
-                    {column.doc && (
-                      <Tooltip title={column.doc} interactive>
-                        <Icon className={classes.headerCellInfo}>
-                          <InfoIcon fontSize="inherit" />
-                        </Icon>
-                      </Tooltip>
-                    )}
-                    {column.key && (
-                      <Tooltip title={"Column is part of an index"} interactive>
-                        <Icon className={classes.headerCellInfo}>
-                          <SearchIcon fontSize="inherit" />
-                        </Icon>
-                      </Tooltip>
-                    )}
-                  </div>
+                <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
+                  {column.formatRecord(record)}
                 </TableCell>
               ))}
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {records.map((record, idx) => (
-              <TableRow
-                key={`${record["@meta"].key};${record["@meta"].timestamp}`}
-                className={clsx(classes.row, record["@meta"].flash && classes.highlightedCell)}
-                hover={true}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
-                    {column.formatRecord(record)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Box>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
