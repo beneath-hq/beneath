@@ -58,6 +58,9 @@ export const normalizeMetrics = (
       time: from,
       ...blankMetrics()
     }];
+  } else {
+    // Apollo result arrays are immutable, so we clone to a new result array
+    metrics = Object.assign([], metrics);
   }
 
   // add boundary time values if necessary

@@ -2,7 +2,9 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/gqlerror"
 
@@ -141,7 +143,16 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, organizationI
 
 	err := organization.UpdateDetails(ctx, name, displayName, description, photoURL)
 	if err != nil {
-		return nil, gqlerror.Errorf("Failed to update organization name: %s", err.Error())
+		// specifically handle the common error that a username is already taken
+		if strings.Contains(err.Error(), `duplicate key value violates unique constraint "organizations_name_key"`) {
+			path := graphql.GetResolverContext(ctx).Path()
+			path = append(path, "name")
+			if organization.UserID != nil {
+				return nil, gqlerror.ErrorPathf(path, "Username already taken")
+			}
+			return nil, gqlerror.ErrorPathf(path, "Name already taken")
+		}
+		return nil, gqlerror.Errorf("Failed to update organization: %s", err.Error())
 	}
 
 	return organizationToPrivateOrganization(ctx, organization, perms), nil
