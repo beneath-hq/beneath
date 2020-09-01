@@ -25,6 +25,8 @@ import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
+import { useMonthlyMetrics } from "components/metrics/hooks";
+import { EntityKind } from "apollo/types/globalTypes";
 
 const StreamPage = () => {
   const router = useRouter();
@@ -126,7 +128,7 @@ const StreamPage = () => {
         currentInstance={instance}
         instances={instances}
         setInstance={handleSetInstance}
-        // metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
+        metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
       />
       <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
     </Page>

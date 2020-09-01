@@ -30,12 +30,10 @@ interface ModelHeroProps {
   currentInstance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance;
   instances: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName[];
   setInstance: (instanceID: string) => void;
-  // metrics: Metrics;
+  metrics: Metrics;
 }
 
-// const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, description, permissions, currentInstance, instances, setInstance, metrics }) => {
-const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, description, permissions, currentInstance, instances, setInstance }) => {
-  // console.log(metrics)
+const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, description, permissions, currentInstance, instances, setInstance, metrics }) => {
   const classes = useStyles();
   return (
     <Grid container justify="space-between">
@@ -63,7 +61,7 @@ const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, descriptio
             <Grid container spacing={1}>
               <Grid item>
                 <Chip
-                  label={prettyPrintBytes(23000000) + " written"}
+                  label={prettyPrintBytes(metrics.writeBytes) + " written"}
                   clickable
                   component={NakedLink}
                   href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${name}&tab=monitoring`}
@@ -72,7 +70,7 @@ const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, descriptio
               </Grid>
               <Grid item>
                 <Chip
-                  label={prettyPrintBytes(233333333) + " read"}
+                  label={prettyPrintBytes(metrics.readBytes) + " read"}
                   clickable
                   component={NakedLink}
                   href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${name}&tab=monitoring`}
