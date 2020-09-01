@@ -100,6 +100,8 @@ const StreamPage = () => {
   const project = dataProject.projectByOrganizationAndName;
   const instances = dataInstances.streamInstancesByOrganizationProjectAndStreamName;
 
+  const metrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID).total;
+
   const tabs = [];
   tabs.push({
     value: "data",
@@ -128,7 +130,7 @@ const StreamPage = () => {
         currentInstance={instance}
         instances={instances}
         setInstance={handleSetInstance}
-        metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
+        metrics={metrics}
       />
       <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
     </Page>
