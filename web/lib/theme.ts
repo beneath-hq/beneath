@@ -125,6 +125,23 @@ theme.overrides = {
       },
     },
   },
+  MuiChip: {
+    root: {
+      // background: "none",
+      backgroundColor: theme.palette.background?.default,
+      fontWeight: "bold",
+      borderRadius: 0,
+      paddingLeft: "0px",
+      color: theme.palette.text?.secondary
+    },
+    clickable: {
+      "&:hover": {
+        background: "none",
+        // textDecoration: `underline ${theme.palette.common?.white}`,
+        color: theme.palette.text?.primary,
+      }
+    }
+  },
   MuiLinearProgress: {
     colorPrimary: {
       backgroundColor: "rgba(60, 170, 255, 0.25)",

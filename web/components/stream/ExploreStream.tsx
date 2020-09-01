@@ -55,10 +55,19 @@ const useStyles = makeStyles((theme: Theme) => ({
     minWidth: 150,
   },
   queryTypeButtons: {
-    width: "14rem",
-    // selected: {
-    //   color: "pink"
-    // }
+    width: "9rem",
+    height: "3rem",
+    textTransform: "capitalize",
+  },
+  queryTypeButtonsSelected: {
+    // width: "14rem",
+    // color: theme.palette.primary.dark,
+    // // fontSize: "4rem",
+    // backgroundColor: theme.palette.primary.dark,
+  },
+  subtext: {
+    fontSize: ".8rem",
+    textTransform: "initial",
   },
   indexQueryBox: {
     width: "100%",
@@ -206,23 +215,23 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                         if (value !== null) setQueryType(value);
                       }}
                     >
-                      <ToggleButton value="log" className={classes.queryTypeButtons}>
+                      <ToggleButton value="log" classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}>
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Log</Typography>
                           </Grid>
                           <Grid item>
-                            <Typography>Sort by time written</Typography>
+                            <Typography className={classes.subtext}>Sort by time written</Typography>
                           </Grid>
                         </Grid>
                       </ToggleButton>
-                      <ToggleButton value="index" className={classes.queryTypeButtons}>
+                      <ToggleButton value="index" classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}>
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Index</Typography>
                           </Grid>
                           <Grid item>
-                            <Typography>Lookup by key</Typography>
+                            <Typography className={classes.subtext}>Lookup by key</Typography>
                           </Grid>
                         </Grid>
                       </ToggleButton>
@@ -325,6 +334,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
             </Grid>
             {queryType === "index" && (
               <>
+                <VSpace units={4} />
                 <Box border={1} className={classes.indexQueryBox} display="flex" alignItems="center" p={1}>
                   <Grid item container alignItems="center" spacing={2}>
                     <Grid item xs>
@@ -370,6 +380,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
               </>
             )}
           </Grid>
+          <VSpace units={4} />
           {filter !== "" && error && <Message error={true}>{error.message}</Message>}
           {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
           {subscription.error && <Message error={true}>{subscription.error.message}</Message>}

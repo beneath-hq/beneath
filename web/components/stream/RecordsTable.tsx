@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     border: `1px solid ${theme.palette.divider}`,
   },
   tableHead: {
-    backgroundColor: theme.palette.common.black,
+    // backgroundColor: theme.palette.common.black,
   },
   row: {
     "&:last-child": {
