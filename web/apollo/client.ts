@@ -105,6 +105,7 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
   return new ApolloClient({
     connectToDevTools: typeof window === "undefined" && !IS_PRODUCTION,
     ssrMode: typeof window === "undefined",
+    ssrForceFetchDelay: 100,
     link: ApolloLink.from([errorLink, httpLink]),
     cache,
     typeDefs,
