@@ -29,9 +29,16 @@ import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
 const StreamPage = () => {
   const router = useRouter();
   const [instance, setInstance] = React.useState<
-    | StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
-    | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null
-  >(null);
+    StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
+    | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance
+  >({
+    __typename: "StreamInstance",
+    streamInstanceID: "",
+    version: 0,
+    createdOn: "",
+    madePrimaryOn: "",
+    madeFinalOn: "",
+  });
 
   if (
     typeof router.query.organization_name !== "string"
@@ -70,7 +77,7 @@ const StreamPage = () => {
   });
 
   useEffect(() => {
-    if (data && data.streamByOrganizationProjectAndName) {
+    if (data && data.streamByOrganizationProjectAndName && data.streamByOrganizationProjectAndName.primaryStreamInstance) {
       setInstance(data.streamByOrganizationProjectAndName.primaryStreamInstance);
     }
   }, [data]);
@@ -102,10 +109,9 @@ const StreamPage = () => {
 
   const defaultValue = stream.primaryStreamInstanceID ? "data" : "api";
 
-  const handleSetInstance = (
-    instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
-  ) => {
-    setInstance(instance);
+  const handleSetInstance = (instanceID: string) => {
+    setInstance(instances.find((instance) => instance.streamInstanceID === instanceID) as
+      StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName);
     return;
   };
 
@@ -117,7 +123,7 @@ const StreamPage = () => {
         organization={stream.project.organization.name}
         description={stream.description}
         permissions={project.public} // Q: should I instead add the public tag to the stream.project object?
-        currentInstance={instance?.streamInstanceID}
+        currentInstance={instance}
         instances={instances}
         setInstance={handleSetInstance}
         // metrics={useMonthlyMetrics(EntityKind.Stream, stream.streamID).total}
