@@ -9,6 +9,7 @@ import { prettyPrintBytes, Metrics } from "./metrics/util";
 import SelectField from "./SelectField";
 import { NakedLink } from "./Link";
 import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance } from "apollo/types/StreamByOrganizationProjectAndName";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -26,9 +27,9 @@ interface ModelHeroProps {
   organization: string;
   description: string | null;
   permissions: boolean;
-  currentInstance: string | undefined;
+  currentInstance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance;
   instances: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName[];
-  setInstance: (instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName) => void;
+  setInstance: (instanceID: string) => void;
   // metrics: Metrics;
 }
 
@@ -87,17 +88,15 @@ const ModelHero: FC<ModelHeroProps> = ({ name, project, organization, descriptio
       </Grid>
       <Grid item className={classes.container}>
         <SelectField
-          id="instance"
+          id="instanceID"
           label="Instance"
-          value={currentInstance}
+          value={currentInstance.streamInstanceID}
           options={instances.map((instance) => {
             return { label: "v" + instance.version.toString(), value: instance.streamInstanceID };
           })}
-          onChange={({ target }) =>
-            setInstance(
-              target.value as StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
-            )
-          }
+          onChange={({ target }) => {
+            setInstance(target.value as string);
+          }}
         />
       </Grid>
     </Grid>
