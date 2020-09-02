@@ -287,20 +287,20 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                         </Button>
                         <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
                           <DialogContent>
-                            <CodeBlock language={"javascript"}>
+                            <CodeBlock language={"python"}>
+                              {`import beneath
+beneath.easy_consume_stream(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
+          consume_fn=YOUR_CALLBACK_FUNCTION)`}
+                            </CodeBlock>
+                            {/* <CodeBlock language={"javascript"}>
                               {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
   ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
                                 stream.name
                               }",
   query: {type: "log", peek: ${logPeek}},
-  pageSize: 25,
-  subscribe: ${isSubscribed(finalized, subscribeToggle)},
-  renderFrequencyMs: 250,
-  maxRecords: 1000,
-  flashDurationMs: 2000,
 });`}
-                            </CodeBlock>
+                            </CodeBlock> */}
                           </DialogContent>
                           <DialogActions>
                             <Button onClick={() => setLogCodeDialog(false)} color="primary">
@@ -360,20 +360,22 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                       </Button>
                       <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
                         <DialogContent>
-                          <CodeBlock language={"javascript"}>
+                          <CodeBlock language={"python"}>
+                            {`import beneath
+df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}", 
+        filter=${filter === "" ? "None" : "'" + filter + "'"})
+df
+`}
+                          </CodeBlock>
+                          {/* <CodeBlock language={"javascript"}>
                             {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
   ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
                               stream.name
                             }",
   query: {type: "index", filter: ${filter === "" ? undefined : filter}},
-  pageSize: 25,
-  subscribe: ${isSubscribed(finalized, subscribeToggle)},
-  renderFrequencyMs: 250,
-  maxRecords: 1000,
-  flashDurationMs: 2000,
 });`}
-                          </CodeBlock>
+                          </CodeBlock> */}
                         </DialogContent>
                         <DialogActions>
                           <Button onClick={() => setIndexCodeDialog(false)} color="primary">
