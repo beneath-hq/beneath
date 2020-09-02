@@ -121,26 +121,27 @@ const WelcomePage: NextPage = () => {
           onChange={handleChange("name")}
         />
         <CheckboxField
+          id="consentNewsletter"
           label="Email me updates about Beneath"
           checked={values.consentNewsletter}
           margin="normal"
           fullWidth
-          onChange={(event, checked) => {
+          onChange={(_, checked) => {
             setValues({ ...values, consentNewsletter: checked });
           }}
         />
         <CheckboxField
+          id="consentTerms"
           label={
             <span>
-              I agree to the{" "}
-              <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
+              I agree to the <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
               <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
             </span>
           }
           checked={values.consentTerms}
           margin="normal"
           fullWidth
-          onChange={(event, checked) => {
+          onChange={(_, checked) => {
             setValues({ ...values, consentTerms: checked });
           }}
         />

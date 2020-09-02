@@ -18,14 +18,14 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export type FieldLabelProps = {
   id?: string;
-  label?: string;
+  label?: React.ReactNode;
   helperText?: string;
   required?: boolean;
 };
 
 const FieldLabel: FC<FieldLabelProps> = ({ id, label, helperText, required }) => {
   const classes = useStyles();
-  const inputLabelId = label && id ? `${id}-label` : undefined;
+  const inputLabelId = id ? `${id}-label` : undefined;
   const helperTextId = helperText && id ? `${id}-helper-text` : undefined;
   return (
     <>

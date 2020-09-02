@@ -6,7 +6,7 @@ import FieldError from "./FieldError";
 
 export type FormControlProps = {
   id?: string;
-  label?: string;
+  label?: React.ReactNode;
   margin?: "none" | "dense" | "normal";
   helperText?: string;
   error?: boolean;
