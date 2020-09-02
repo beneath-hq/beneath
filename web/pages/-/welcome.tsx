@@ -3,7 +3,7 @@ import { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
 
-import { Button, Container, makeStyles, TextField, Theme, Typography } from "@material-ui/core";
+import { Button, makeStyles, TextField, Theme, Typography } from "@material-ui/core";
 
 import { UPDATE_ORGANIZATION } from "../../apollo/queries/organization";
 import { REGISTER_USER_CONSENT } from "../../apollo/queries/user";
@@ -85,83 +85,81 @@ const WelcomePage: NextPage = () => {
   };
 
   return (
-    <Page title="Welcome" contentMarginTop="normal">
-      <Container maxWidth="sm">
-        <Typography component="h1" variant="h1" gutterBottom>
-          Welcome to Beneath!
-        </Typography>
-        <Typography gutterBottom>We just need a few more details to get you set up</Typography>
-        {/* Username form */}
-        <form
-          className={classes.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateOrganization({
-              variables: {
-                organizationID: me.organizationID,
-                name: toBackendName(values.name),
-              },
-            });
+    <Page title="Welcome" contentMarginTop="normal" maxWidth="sm">
+      <Typography component="h1" variant="h1" gutterBottom>
+        Welcome to Beneath!
+      </Typography>
+      <Typography gutterBottom>We just need a few more details to get you set up</Typography>
+      {/* Username form */}
+      <form
+        className={classes.form}
+        onSubmit={(e) => {
+          e.preventDefault();
+          updateOrganization({
+            variables: {
+              organizationID: me.organizationID,
+              name: toBackendName(values.name),
+            },
+          });
+        }}
+      >
+        <TextField
+          id="name"
+          label={"Pick a username"}
+          value={toURLName(values.name)}
+          margin="normal"
+          helperText={
+            error
+              ? isNameError(error)
+                ? "Username already taken"
+                : `An error occurred: ${JSON.stringify(error)}`
+              : "Lowercase letters, numbers and dashes allowed (min. 3 characters)"
+          }
+          error={!validateName(values.name) || !!isNameError(error)}
+          required
+          fullWidth
+          onChange={handleChange("name")}
+        />
+        <CheckboxField
+          label="Email me updates about Beneath"
+          checked={values.consentNewsletter}
+          margin="normal"
+          fullWidth
+          onChange={(event, checked) => {
+            setValues({ ...values, consentNewsletter: checked });
           }}
+        />
+        <CheckboxField
+          label={
+            <span>
+              I agree to the{" "}
+              <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
+              <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
+            </span>
+          }
+          checked={values.consentTerms}
+          margin="normal"
+          fullWidth
+          onChange={(event, checked) => {
+            setValues({ ...values, consentTerms: checked });
+          }}
+        />
+        <Button
+          type="submit"
+          variant="outlined"
+          color="primary"
+          fullWidth
+          className={classes.submitConsentButton}
+          disabled={loading || loadingConsent || !values.consentTerms}
         >
-          <TextField
-            id="name"
-            label={"Pick a username"}
-            value={toURLName(values.name)}
-            margin="normal"
-            helperText={
-              error
-                ? isNameError(error)
-                  ? "Username already taken"
-                  : `An error occurred: ${JSON.stringify(error)}`
-                : "Lowercase letters, numbers and dashes allowed (min. 3 characters)"
-            }
-            error={!validateName(values.name) || !!isNameError(error)}
-            required
-            fullWidth
-            onChange={handleChange("name")}
-          />
-          <CheckboxField
-            label="Email me updates about Beneath"
-            checked={values.consentNewsletter}
-            margin="normal"
-            fullWidth
-            onChange={(event, checked) => {
-              setValues({ ...values, consentNewsletter: checked });
-            }}
-          />
-          <CheckboxField
-            label={
-              <span>
-                I agree to the{" "}
-                <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
-                <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
-              </span>
-            }
-            checked={values.consentTerms}
-            margin="normal"
-            fullWidth
-            onChange={(event, checked) => {
-              setValues({ ...values, consentTerms: checked });
-            }}
-          />
-          <Button
-            type="submit"
-            variant="outlined"
-            color="primary"
-            fullWidth
-            className={classes.submitConsentButton}
-            disabled={loading || loadingConsent || !values.consentTerms}
-          >
-            All done
-          </Button>
-          {errorConsent && (
-            <Typography variant="body1" color="error">
-              {`An error occurred: ${JSON.stringify(errorConsent)}`}
-            </Typography>
-          )}
-        </form>
-      </Container>
+          All done
+        </Button>
+        {errorConsent && (
+          <Typography variant="body1" color="error">
+            {`An error occurred: ${JSON.stringify(errorConsent)}`}
+          </Typography>
+        )}
+      </form>
     </Page>
   );
 };

@@ -36,11 +36,9 @@ const AuthPage: NextPage = () => {
   const classes = useStyles();
   return (
     <Page title="Register or Login" contentMarginTop="normal">
-      <Container maxWidth="lg">
-        <Typography className={classes.title} component="h2" variant="h1" align="center">
-          Hello there! Pick an option to sign up or log in
-        </Typography>
-      </Container>
+      <Typography className={classes.title} component="h2" variant="h1" align="center">
+        Hello there! Pick an option to sign up or log in
+      </Typography>
       <Container maxWidth="sm">
         <div className={classes.authButtons}>
           <Grid container spacing={2} justify="center">

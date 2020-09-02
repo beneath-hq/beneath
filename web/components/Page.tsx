@@ -72,7 +72,7 @@ const Page: React.FC<IProps> = (props) => {
           </Drawer>
         )}
         <div className={classes.subheaderAndContent}>
-          <Container maxWidth={props.maxWidth || "lg"}>
+          <Container maxWidth={props.maxWidth === undefined ? "lg" : props.maxWidth}>
             {props.subheader && <Subheader />}
             <main className={classes.content}>{props.children}</main>
           </Container>
