@@ -2,6 +2,7 @@ import { InputBaseComponentProps, InputBase, makeStyles, Theme } from "@material
 import { FC } from "react";
 
 import FormControl, { FormControlProps } from "./FormControl";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
@@ -23,11 +24,16 @@ const useStyles = makeStyles((theme: Theme) => ({
   multiline: {
     padding: "0",
   },
+  monospace: {
+    fontFamily: theme.typography.fontFamilyMonospaced,
+    fontSize: theme.typography.body2.fontSize,
+  },
 }));
 
 export interface TextFieldProps extends FormControlProps {
   value?: string;
   multiline?: boolean;
+  monospace?: boolean;
   rows?: number;
   rowsMax?: number;
   inputProps?: InputBaseComponentProps;
@@ -44,6 +50,7 @@ const TextField: FC<TextFieldProps> = (props) => {
     id,
     value,
     multiline,
+    monospace,
     rows,
     rowsMax,
     inputProps,
@@ -61,7 +68,7 @@ const TextField: FC<TextFieldProps> = (props) => {
     <FormControl id={id} {...others}>
       <InputBase
         classes={{
-          root: classes.root,
+          root: clsx(classes.root, monospace && classes.monospace),
           focused: classes.focused,
           input: classes.input,
           inputMultiline: classes.input,

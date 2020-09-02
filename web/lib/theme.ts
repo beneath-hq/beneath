@@ -1,10 +1,21 @@
 import { createMuiTheme, ThemeOptions } from "@material-ui/core/styles";
 
+// "hack" to add custom properties to MUI theme
+declare module "@material-ui/core/styles/createTypography" {
+  interface TypographyOptions {
+    fontFamilyMonospaced: React.CSSProperties['fontFamily'];
+  }
+  interface Typography {
+    fontFamilyMonospaced: React.CSSProperties['fontFamily'];
+  }
+}
+
 const theme: ThemeOptions = {}; // the theme we're building
 const baseTheme = createMuiTheme(); // for reference to non-overridden values
 
 theme.typography = {
   fontFamily: `-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif`,
+  fontFamilyMonospaced: `Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace`,
   button: {
     fontSize: "1rem",
     fontWeight: 600,
