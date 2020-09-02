@@ -1,51 +1,33 @@
 import { useQuery } from "@apollo/client";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import { toBackendName, toURLName } from "../lib/names";
 
-import { QUERY_STREAM, QUERY_STREAM_INSTANCES } from "../apollo/queries/stream";
-import { QUERY_PROJECT } from "../apollo/queries/project";
+import { QUERY_STREAM } from "../apollo/queries/stream";
 import {
   StreamByOrganizationProjectAndName,
   StreamByOrganizationProjectAndNameVariables,
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance } from "../apollo/types/StreamByOrganizationProjectAndName";
-import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
-import {
-  StreamInstancesByOrganizationProjectAndStreamName,
-  StreamInstancesByOrganizationProjectAndStreamNameVariables,
-  StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName,
-} from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
+} from "../apollo/types/StreamByOrganizationProjectAndName";
 import { withApollo } from "../apollo/withApollo";
 
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
-import ModelHero from "../components/ModelHero";
+import StreamHero from "../components/StreamHero";
 import Page from "../components/Page";
-import ExploreStream from "../components/stream/ExploreStream";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
 import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
-import { useMonthlyMetrics } from "components/metrics/hooks";
-import { EntityKind } from "apollo/types/globalTypes";
+import { toBackendName, toURLName } from "../lib/names";
+
+const ExploreStream = dynamic(() => import("../components/stream/ExploreStream"), { ssr: false });
 
 const StreamPage = () => {
   const router = useRouter();
-  const [instance, setInstance] = React.useState<
-    StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName
-    | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance
-  >({
-    __typename: "StreamInstance",
-    streamInstanceID: "",
-    version: 0,
-    createdOn: "",
-    madePrimaryOn: "",
-    madeFinalOn: "",
-  });
-
   if (
-    typeof router.query.organization_name !== "string"
-    || typeof router.query.project_name !== "string"
-    || typeof router.query.stream_name !== "string"
+    typeof router.query.organization_name !== "string" ||
+    typeof router.query.project_name !== "string" ||
+    typeof router.query.stream_name !== "string"
   ) {
     return <ErrorPage statusCode={404} />;
   }
@@ -55,36 +37,27 @@ const StreamPage = () => {
   const streamName = toBackendName(router.query.stream_name);
   const title = `${toURLName(organizationName)}/${toURLName(projectName)}/${toURLName(streamName)}`;
 
-  const {
-    loading,
-    error,
-    data,
-  } = useQuery<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>(QUERY_STREAM, {
+  const { loading, error, data } = useQuery<
+    StreamByOrganizationProjectAndName,
+    StreamByOrganizationProjectAndNameVariables
+  >(QUERY_STREAM, {
     variables: { organizationName, projectName, streamName },
   });
 
-  const {
-    loading: loadingProject,
-    error: errorProject,
-    data: dataProject,
-  } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(QUERY_PROJECT, {
-    variables: { organizationName, projectName },
-  });
-
-  const { loading: loadingInstances, error: errorInstances, data: dataInstances } = useQuery<
-    StreamInstancesByOrganizationProjectAndStreamName,
-    StreamInstancesByOrganizationProjectAndStreamNameVariables
-  >(QUERY_STREAM_INSTANCES, {
-    variables: { organizationName, projectName, streamName },
-  });
+  const [
+    instance,
+    setInstance,
+  ] = React.useState<StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null>(
+    data?.streamByOrganizationProjectAndName.primaryStreamInstance || null
+  );
 
   useEffect(() => {
-    if (data && data.streamByOrganizationProjectAndName && data.streamByOrganizationProjectAndName.primaryStreamInstance) {
-      setInstance(data.streamByOrganizationProjectAndName.primaryStreamInstance);
+    if (data?.streamByOrganizationProjectAndName) {
+      setInstance(data?.streamByOrganizationProjectAndName.primaryStreamInstance);
     }
-  }, [data]);
+  }, [data?.streamByOrganizationProjectAndName.streamID]);
 
-  if (loading || loadingProject || loadingInstances) {
+  if (loading) {
     return (
       <Page title={title} subheader>
         <Loading justify="center" />
@@ -92,47 +65,25 @@ const StreamPage = () => {
     );
   }
 
-  if (error || errorProject || errorInstances || !data || !dataProject || !dataInstances) {
+  if (error || !data) {
     return <ErrorPage apolloError={error} />;
   }
 
   const stream = data.streamByOrganizationProjectAndName;
-  const project = dataProject.projectByOrganizationAndName;
-  const instances = dataInstances.streamInstancesByOrganizationProjectAndStreamName;
-
-  const metrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID).total;
 
   const tabs = [];
   tabs.push({
     value: "data",
     label: "Data",
-    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} permissions={project.public} {...props} />,
+    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} {...props} />,
   });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
-  const defaultValue = stream.primaryStreamInstanceID ? "data" : "api";
-
-  const handleSetInstance = (instanceID: string) => {
-    setInstance(instances.find((instance) => instance.streamInstanceID === instanceID) as
-      StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName);
-    return;
-  };
-
   return (
     <Page title={title} subheader>
-      <ModelHero
-        name={toURLName(stream.name)}
-        project={stream.project.name}
-        organization={stream.project.organization.name}
-        description={stream.description}
-        permissions={project.public} // Q: should I instead add the public tag to the stream.project object?
-        currentInstance={instance}
-        instances={instances}
-        setInstance={handleSetInstance}
-        metrics={metrics}
-      />
-      <SubrouteTabs defaultValue={defaultValue} tabs={tabs} />
+      <StreamHero stream={stream} instance={instance} setInstance={setInstance} />
+      <SubrouteTabs defaultValue={"data"} tabs={tabs} />
     </Page>
   );
 };

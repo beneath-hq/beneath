@@ -19,6 +19,7 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   __typename: "Project";
   projectID: string;
   name: string;
+  public: boolean;
   organization: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization;
 }
 

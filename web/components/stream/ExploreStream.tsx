@@ -1,43 +1,40 @@
-import { useRecords } from "beneath-react";
-import React, { FC, useEffect, useState } from "react";
-import avro from "avsc";
-
+import {
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  Grid,
+  makeStyles,
+  Theme,
+  Typography,
+} from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
-import { Box, makeStyles, Theme, Dialog, DialogContent, DialogActions } from "@material-ui/core";
-import Button from "@material-ui/core/Button";
-import Chip from "@material-ui/core/Chip";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
 import AddBoxIcon from "@material-ui/icons/AddBox";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import OpenInNewIcon from "@material-ui/icons/OpenInNew";
-import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
+import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
+import { useRecords } from "beneath-react";
+import React, { FC, useEffect, useState } from "react";
 
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName, StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance } from "../../apollo/types/StreamByOrganizationProjectAndName";
+import {
+  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName,
+  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
+} from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import Loading from "../Loading";
 import VSpace from "../VSpace";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
 import WriteStream from "../../components/stream/WriteStream";
-import { StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
 import CodeBlock from "components/CodeBlock";
 import FilterForm from "./FilterForm";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: StreamInstancesByOrganizationProjectAndStreamName_streamInstancesByOrganizationProjectAndStreamName | StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance;
-  permissions: boolean;
+  instance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
   setLoading: (loading: boolean) => void;
-}
-
-// from schema.tsx
-interface Column {
-  name: string;
-  type: avro.Type;
-  actualType: avro.Type;
-  doc?: string;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -83,40 +80,43 @@ const useStyles = makeStyles((theme: Theme) => ({
     width: "25rem",
     height: "3rem",
     borderColor: "text.primary",
-    borderRadius: "5%"
+    borderRadius: "5%",
+  },
+  liveIcon: {
+    color: theme.palette.success.light,
+  },
+  pausedIcon: {
+    color: theme.palette.grey[500],
   },
 }));
 
-const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, setLoading }: ExploreStreamProps) => {
-  if (!stream.primaryStreamInstanceID || !instance?.streamInstanceID) {
+const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }: ExploreStreamProps) => {
+  if (!instance) {
     return (
       <>
-        <Typography>
-          TODO: Create a mini tutorial for writing first data to the stream
-        </Typography>
+        <Typography>TODO: Create a mini tutorial for writing first data to the stream</Typography>
       </>
     );
   }
 
   // determine if stream may have more data incoming
-  const finalized = !!stream.primaryStreamInstance?.madeFinalOn;
+  const finalized = !!instance.madeFinalOn;
+  const isPublic = stream.project.public;
 
   // state
   const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
-  const [writeDialog, setWriteDialog] = React.useState(false);  // opens up the Write-a-Record dialog
+  const [writeDialog, setWriteDialog] = React.useState(false); // opens up the Write-a-Record dialog
   const [logCodeDialog, setLogCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Log view
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Index view
   const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
   const [filter, setFilter] = React.useState(""); // used in call to useRecords
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
-  const [schema, setSchema] = useState(() => new Schema(stream));
+  const [schema, setSchema] = useState(() => new Schema(stream.avroSchema, stream.streamIndexes));
   useEffect(() => {
-    if (schema.streamID !== stream.streamID) {
-      setSchema(new Schema(stream));
-    }
-  }, [stream]);
+    setSchema(new Schema(stream.avroSchema, stream.streamIndexes));
+  }, [stream.streamID]);
 
   // get records
   const token = useToken();
@@ -130,13 +130,12 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
         ? { type: "index", filter: filter === "" ? undefined : filter }
         : { type: "log", peek: logPeek },
     pageSize: 25,
-    subscribe:
-        isSubscribed(finalized, subscribeToggle)
-        ? {
-            pageSize: 100,
-            pollFrequencyMs: 250,
-          }
-        : false,
+    subscribe: isSubscribed(finalized, subscribeToggle)
+      ? {
+          pageSize: 100,
+          pollFrequencyMs: 250,
+        }
+      : false,
     renderFrequencyMs: 250,
     maxRecords: 1000,
     flashDurationMs: 2000,
@@ -151,7 +150,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
 
   const classes = useStyles();
 
-  const Message: FC<{ children: string, error?: boolean }> = ({ error, children }) => (
+  const Message: FC<{ children: string; error?: boolean }> = ({ error, children }) => (
     <Typography className={error ? classes.errorCaption : classes.infoCaption} variant="body2" align="center">
       {children}
     </Typography>
@@ -170,7 +169,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                     onClick={() => {
                       setWriteDialog(true);
                     }}
-                    endIcon={<AddBoxIcon/>}
+                    endIcon={<AddBoxIcon />}
                   >
                     Write a record
                   </Button>
@@ -195,7 +194,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
               )}
             </Grid>
             <Grid item>
-              <Button variant="outlined" endIcon={<OpenInNewIcon/>}>
+              <Button variant="outlined" endIcon={<OpenInNewIcon />}>
                 Query in SQL editor
               </Button>
             </Grid>
@@ -215,7 +214,10 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                         if (value !== null) setQueryType(value);
                       }}
                     >
-                      <ToggleButton value="log" classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}>
+                      <ToggleButton
+                        value="log"
+                        classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
+                      >
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Log</Typography>
@@ -225,7 +227,10 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                           </Grid>
                         </Grid>
                       </ToggleButton>
-                      <ToggleButton value="index" classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}>
+                      <ToggleButton
+                        value="index"
+                        classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
+                      >
                         <Grid container direction="column">
                           <Grid item>
                             <Typography>Index</Typography>
@@ -242,16 +247,18 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                       <Chip
                         label="Live"
                         variant="outlined"
+                        // color="primary"
                         size="small"
                         clickable
                         onClick={() => setSubscribeToggle(false)}
-                        icon={<FiberManualRecordIcon style={{ color: "#6FCF97" }} />}
+                        icon={<FiberManualRecordIcon className={classes.liveIcon} />}
                       />
                     )}
                     {!isSubscribed(finalized, subscribeToggle) && (
                       <Chip
                         label="Paused"
                         variant="outlined"
+                        color="secondary"
                         size="small"
                         clickable={isSubscribeable(finalized) ? true : false}
                         onClick={() => {
@@ -260,7 +267,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                           }
                           return;
                         }}
-                        icon={<FiberManualRecordIcon style={{ color: "#8D919B" }} />}
+                        icon={<FiberManualRecordIcon className={classes.pausedIcon} />}
                       />
                     )}
                   </Grid>
@@ -283,9 +290,9 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, permissions, 
                             <CodeBlock language={"javascript"}>
                               {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
-                                stream.project.name
-                              }/${stream.name}",
+  ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
+                                stream.name
+                              }",
   query: {type: "log", peek: ${logPeek}},
   pageSize: 25,
   subscribe: ${isSubscribed(finalized, subscribeToggle)},
@@ -339,7 +346,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                   <Grid item container alignItems="center" spacing={2}>
                     <Grid item xs>
                       <FilterForm
-                        index={schema.columns.filter((col) => col.key) as Column[]}
+                        index={schema.columns.filter((col) => col.isKey)}
                         onChange={(filter) => setFilter(filter)}
                       />
                     </Grid>
@@ -356,9 +363,9 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                           <CodeBlock language={"javascript"}>
                             {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-  ${permissions ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${
-                              stream.project.name
-                            }/${stream.name}",
+  ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
+                              stream.name
+                            }",
   query: {type: "index", filter: ${filter === "" ? undefined : filter}},
   pageSize: 25,
   subscribe: ${isSubscribed(finalized, subscribeToggle)},
