@@ -463,7 +463,10 @@ func (c *StreamCache) getterFunc(ctx context.Context, instanceID uuid.UUID) func
 			return nil, err
 		}
 
-		unwrapInternalCachedStream(internalResult, result)
+		err = unwrapInternalCachedStream(internalResult, result)
+		if err != nil {
+			return nil, err
+		}
 
 		return result, nil
 	}
