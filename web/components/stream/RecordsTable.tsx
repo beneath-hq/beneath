@@ -1,6 +1,8 @@
 import { Record } from "beneath-react";
 import clsx from "clsx";
+import dynamic from "next/dynamic";
 import React, { FC } from "react";
+const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import {
   Icon,
@@ -88,7 +90,7 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, showTimestamps }
                       </Icon>
                     </Tooltip>
                   )}
-                  {column.key && (
+                  {column.isKey && (
                     <Tooltip title={"Column is part of an index"} interactive>
                       <Icon className={classes.headerCellInfo}>
                         <SearchIcon fontSize="inherit" />
@@ -108,8 +110,12 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, showTimestamps }
               hover={true}
             >
               {columns.map((column) => (
-                <TableCell key={column.name} className={classes.cell} align={column.isNumeric() ? "right" : "left"}>
-                  {column.formatRecord(record)}
+                <TableCell key={column.name} className={classes.cell} align={column.isNumeric ? "right" : "left"}>
+                  {column.type === "timeago" ? (
+                    <Moment fromNow ago date={column.formatRecord(record)} />
+                  ) : (
+                    column.formatRecord(record)
+                  )}
                 </TableCell>
               ))}
             </TableRow>

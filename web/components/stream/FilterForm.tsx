@@ -4,13 +4,7 @@ import FilterField, { FieldType, Operator, Field, Filter } from "./FilterField";
 import _ from "lodash";
 import { Button, Grid } from "@material-ui/core";
 
-// from schema.tsx
-interface Column {
-  name: string;
-  type: avro.Type;
-  actualType: avro.Type;
-  doc?: string;
-}
+import { Column } from "./schema";
 
 // the form
 interface FilterFormProps {
@@ -73,7 +67,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       return;
     }
 
-    const fieldType = getFieldType(col.actualType);
+    const fieldType = getFieldType(col.type as avro.Type);
     const operators = getOperators(fieldType);
     const field = {
       name: col.name,
