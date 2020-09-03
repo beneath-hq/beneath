@@ -15,10 +15,10 @@ import (
 )
 
 type queryWarehouseArgs struct {
-	Query           string
-	DryRun          bool
-	TimeoutMs       int32
-	MaxBytesScanned int64
+	Query           string `json:"query",omitempty`
+	DryRun          bool   `json:"dry",omitempty`
+	TimeoutMs       int32  `json:"timeout_ms",omitempty`
+	MaxBytesScanned int64  `json:"max_bytes_scanned",omitempty`
 }
 
 type warehouseJob struct {
@@ -26,7 +26,7 @@ type warehouseJob struct {
 	Status              string      `json:"status,omitempty"`
 	Error               string      `json:"error,omitempty"`
 	ResultAvroSchema    string      `json:"result_avro_schema,omitempty"`
-	ReplayCursors       []string    `json:"replay_cursors,omitempty"`
+	ReplayCursor        string      `json:"replay_cursor,omitempty"`
 	ReferencedInstances []uuid.UUID `json:"referenced_instances,omitempty"`
 	BytesScanned        int64       `json:"bytes_scanned,omitempty"`
 	ResultSizeBytes     int64       `json:"result_size_bytes,omitempty"`
@@ -71,26 +71,10 @@ func getFromWarehouseJob(w http.ResponseWriter, r *http.Request) error {
 
 func parseQueryWarehouseArgs(r *http.Request) (queryWarehouseArgs, error) {
 	args := queryWarehouseArgs{}
-
-	args.Query = r.URL.Query().Get("query")
-
-	dry, err := parseBoolParam("dry", r.URL.Query().Get("dry"))
+	err := jsonutil.Unmarshal(r.Body, &args)
 	if err != nil {
-		return args, httputil.NewError(http.StatusBadRequest, err.Error())
+		return args, httputil.NewError(http.StatusBadRequest, "request body must be json")
 	}
-	args.DryRun = dry
-
-	timeout, err := parseIntParam("timeout_ms", r.URL.Query().Get("timeout_ms"))
-	if err != nil {
-		return args, httputil.NewError(http.StatusBadRequest, err.Error())
-	}
-	args.TimeoutMs = int32(timeout)
-
-	maxBytesScanned, err := parseIntParam("max_bytes_scanned", r.URL.Query().Get("max_bytes_scanned"))
-	if err != nil {
-		return args, httputil.NewError(http.StatusBadRequest, err.Error())
-	}
-	args.MaxBytesScanned = int64(maxBytesScanned)
 
 	return args, nil
 }
@@ -123,13 +107,16 @@ func handleWarehouseJob(w http.ResponseWriter, job *api.WarehouseJob) error {
 		encode.Error = job.Error.Error()
 	}
 
-	encode.ReplayCursors = make([]string, len(job.ReplayCursors))
-	for i, cursor := range job.ReplayCursors {
-		encode.ReplayCursors[i] = base58.Encode(cursor)
+	if len(job.ReplayCursors) > 0 {
+		encode.ReplayCursor = base58.Encode(job.ReplayCursors[0])
+	}
+
+	encodeWrapper := map[string]interface{}{
+		"data": encode,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err := jsonutil.MarshalWriter(encode, w)
+	err := jsonutil.MarshalWriter(encodeWrapper, w)
 	if err != nil {
 		return err
 	}

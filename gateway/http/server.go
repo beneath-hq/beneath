@@ -42,6 +42,9 @@ func Handler() http.Handler {
 	handler.Get("/", healthCheck)
 	handler.Get("/healthz", healthCheck)
 
+	// Add ping
+	handler.Method("GET", "/v1/-/ping", httputil.AppHandler(getPing))
+
 	// index and log endpoints
 	handler.Method("GET", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(getFromOrganizationAndProjectAndStream))
 	handler.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(getFromInstance))

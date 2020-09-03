@@ -64,7 +64,11 @@ func handleWrite(w http.ResponseWriter, r *http.Request, instanceID uuid.UUID) e
 	}
 
 	// result
-	encode := map[string]string{"write_id": res.WriteID.String()}
+	encode := map[string]interface{}{
+		"meta": map[string]string{
+			"write_id": res.WriteID.String(),
+		},
+	}
 
 	// write and finish
 	w.Header().Set("Content-Type", "application/json")
