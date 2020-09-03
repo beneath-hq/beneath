@@ -1,6 +1,6 @@
 {
   "name": "beneath",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Client library for https://beneath.dev",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "graphql": "^14.6.0",
+    "isomorphic-unfetch": "^3.0.0",
     "subscriptions-transport-ws": "^0.9.16"
   }
 }

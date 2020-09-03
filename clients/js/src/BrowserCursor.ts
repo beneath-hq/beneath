@@ -1,4 +1,4 @@
-import { BrowserConnection, Response, ResponseMeta } from "./BrowserConnection";
+import { BrowserConnection, RecordsMeta } from "./BrowserConnection";
 import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "./config";
 import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "./shared";
 
@@ -10,7 +10,7 @@ export class BrowserCursor<TRecord = any> {
   private defaultPageSize?: number;
   private initialData?: Record<TRecord>[];
 
-  constructor(connection: BrowserConnection, streamQualifier: StreamQualifier, meta?: ResponseMeta, data?: Record<TRecord>[], defaultPageSize?: number) {
+  constructor(connection: BrowserConnection, streamQualifier: StreamQualifier, meta?: RecordsMeta, data?: Record<TRecord>[], defaultPageSize?: number) {
     this.connection = connection;
     this.streamQualifier = streamQualifier;
     this.nextCursor = meta?.nextCursor;

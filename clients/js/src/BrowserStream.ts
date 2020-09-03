@@ -1,6 +1,11 @@
 import { BrowserCursor } from "./BrowserCursor";
-import { BrowserConnection } from "./BrowserConnection";
+import { BrowserConnection, WriteMeta } from "./BrowserConnection";
 import { StreamQualifier, QueryLogOptions, QueryIndexOptions } from "./shared";
+
+export interface BrowserWriteResult {
+  writeID?: string;
+  error?: Error;
+}
 
 export interface BrowserQueryResult<TRecord = any> {
   cursor?: BrowserCursor<TRecord>;
@@ -14,6 +19,15 @@ export class BrowserStream<TRecord = any> {
   constructor(connection: BrowserConnection, streamQualifier: StreamQualifier) {
     this.connection = connection;
     this.streamQualifier = streamQualifier;
+  }
+
+  public async write(records: TRecord[]): Promise<BrowserWriteResult> {
+    const { meta, error } = await this.connection.write(this.streamQualifier, records);
+    if (error) {
+      return { error };
+    }
+
+    return { writeID: meta?.writeID };
   }
 
   public async queryLog(opts?: QueryLogOptions): Promise<BrowserQueryResult<TRecord>> {

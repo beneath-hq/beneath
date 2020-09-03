@@ -1,6 +1,10 @@
+import { BrowserConnection, PingData, Response } from "./BrowserConnection";
+import { BrowserJob } from "./BrowserJob";
 import { BrowserStream } from "./BrowserStream";
-import { BrowserConnection } from "./BrowserConnection";
-import { StreamQualifier } from "./shared";
+import { JS_CLIENT_ID } from "./config";
+import { QueryWarehouseOptions, StreamQualifier } from "./shared";
+import { PACKAGE_VERSION } from "./version";
+
 
 /**
  * Options passed to the `BrowserClient` constructor
@@ -11,6 +15,14 @@ export interface BrowserClientOptions {
    * {@linkcode BrowserClient} for details on secrets.
    */
   secret?: string;
+}
+
+/**
+ * Result of a call to queryWarehouse on BrowserClient.
+ */
+export interface BrowserQueryWarehouseResult<TRecord = any> {
+  job?: BrowserJob<TRecord>;
+  error?: Error;
 }
 
 /**
@@ -48,13 +60,34 @@ export class BrowserClient {
   }
 
   /**
+   * Pings the server and reports a) whether the user is authenticated, b) the library version is up-to-date
+   */
+  public async ping(): Promise<Response<PingData>> {
+    return await this.connection.ping({ clientID: JS_CLIENT_ID, clientVersion: PACKAGE_VERSION });
+  }
+
+  /**
    * @param streamQualifier  Identifies the stream to find
    * @typeParam TRecord  Optional type for the records in the stream. No error
    * is thrown if it doesn't correctly correspond to the stream's schema; it is
    * for type hinting purposes only.
    */
-  findStream<TRecord = any>(streamQualifier: StreamQualifier): BrowserStream<TRecord> {
+  public findStream<TRecord = any>(streamQualifier: StreamQualifier): BrowserStream<TRecord> {
     return new BrowserStream<TRecord>(this.connection, streamQualifier);
+  }
+
+  /**
+   * @param opts Parameters of the warehouse query to execute
+   */
+  public async queryWarehouse<TRecord = any>(opts: QueryWarehouseOptions): Promise<BrowserQueryWarehouseResult<TRecord>> {
+    const args = { query: opts.query, dry: opts.dry, timeout_ms: opts.timeoutMilliseconds, max_bytes_scanned: opts.maxBytesScanned };
+    const res = await this.connection.queryWarehouse<TRecord>(args);
+    if (res.error || !res.data) {
+      return res;
+    }
+    const data = res.data;
+    const job = new BrowserJob<TRecord>(this.connection, data);
+    return { job };
   }
 
 }

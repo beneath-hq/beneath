@@ -18,3 +18,10 @@ export type SubscribeOptions<TRecord> = {
   pageSize?: number,
   pollAtMostEveryMilliseconds?: number,
 };
+
+export type QueryWarehouseOptions = {
+  query: string;
+  dry?: boolean;
+  maxBytesScanned?: number;
+  timeoutMilliseconds?: number;
+};

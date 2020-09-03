@@ -1,22 +1,49 @@
-import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "./config";
-import { Record, StreamQualifier } from "./shared";
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
-export interface Response<TRecord> {
-  data?: Record<TRecord>[];
+import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "./config";
+import { Record, StreamQualifier } from "./shared";
+
+export interface Response<Data = any, Meta = any> {
+  data?: Data;
   error?: Error;
-  meta?: ResponseMeta;
+  meta?: Meta;
 }
 
-export type ResponseMeta = {
+export type PingData = {
+  authenticated: string;
+  versionStatus: string;
+  recommendedVersion: string;
+};
+
+export type WriteMeta = {
+  writeID: string;
+};
+
+export type RecordsMeta = {
   instanceID?: string;
   nextCursor?: string;
   changeCursor?: string;
 };
 
+export type WarehouseJobData = {
+  jobID?: string;
+  status: string;
+  error?: string;
+  resultAvroSchema?: string;
+  replayCursor?: string;
+  referencedInstances?: string[];
+  bytesScanned?: number;
+  resultSizeBytes?: number;
+  resultSizeRecords?: number;
+};
+
+export type PingArgs = { clientID: string, clientVersion: string };
+
 export type QueryLogArgs = { limit?: number, peek?: boolean };
 
 export type QueryIndexArgs = { limit?: number, filter?: string };
+
+export type QueryWarehouseArgs = { query: string, dry?: boolean, maxBytesScanned?: number, timeoutMilliseconds?: number };
 
 export type ReadArgs = { cursor: string, limit?: number };
 
@@ -50,24 +77,72 @@ export class BrowserConnection {
     }
   }
 
-  public async queryLog<TRecord = any>(streamQualifier: StreamQualifier, args: QueryLogArgs): Promise<Response<TRecord>> {
+  public async ping(args: PingArgs): Promise<Response<PingData, null>> {
+    const res = await this.fetch<any, null>("GET", "v1/-/ping", {
+      client_id: args.clientID,
+      client_version: args.clientVersion,
+    });
+
+    if (res.data) {
+      const data = res.data;
+      data.versionStatus = data.version_status;
+      delete data.version_status;
+      data.recommendedVersion = data.recommended_version;
+      delete data.recommended_version;
+    }
+
+    return res;
+  }
+
+  public async write(streamQualifier: StreamQualifier, records: any[]): Promise<Response<null, WriteMeta>> {
     const path = this.makePath(streamQualifier);
-    return this.fetch("GET", path, { ...args, type: "log" });
+    const res = await this.fetch<null, any>("POST", path, records);
+
+    if (res.meta) {
+      res.meta.writeID = res.meta.write_id;
+      delete res.meta.write_id;
+    }
+
+    return res;
   }
 
-  public async queryIndex<TRecord = any>(streamQualifier: StreamQualifier, args: QueryIndexArgs): Promise<Response<TRecord>> {
-    const path = this.makePath(streamQualifier);
-    return this.fetch("GET", path, { ...args, type: "index" });
+  public async queryLog<TRecord = any>(streamQualifier: StreamQualifier, args: QueryLogArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    return this.fetchRecords(streamQualifier, { ...args, type: "log" });
   }
 
-  public async read<TRecord = any>(streamQualifier: StreamQualifier, args: ReadArgs): Promise<Response<TRecord>> {
-    const path = `${this.makePath(streamQualifier)}`;
-    return this.fetch("GET", path, args);
+  public async queryIndex<TRecord = any>(streamQualifier: StreamQualifier, args: QueryIndexArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    return this.fetchRecords(streamQualifier, { ...args, type: "index" });
   }
 
-  public async write(instanceID: string, records: any[]) {
-    // const url = `${connection.GATEWAY_URL}/-/instances/${instanceID}`;
-    // TODO
+  public async queryWarehouse<TRecord = any>(args: QueryWarehouseArgs): Promise<Response<WarehouseJobData, null>> {
+    const res = await this.fetch<any, null>("POST", "v1/-/warehouse", {
+      query: args.query,
+      dry: args.dry,
+      max_bytes_scanned: args.maxBytesScanned,
+      timeout_ms: args.timeoutMilliseconds,
+    });
+
+    if (res.error || !res.data) {
+      return res;
+    }
+
+    const data: WarehouseJobData = {
+      jobID: res.data.job_id,
+      status: res.data.status,
+      error: res.data.error,
+      resultAvroSchema: res.data.result_avro_schema,
+      replayCursor: res.data.replay_cursor,
+      referencedInstances: res.data.referenced_instances,
+      bytesScanned: res.data.bytes_scanned,
+      resultSizeBytes: res.data.result_size_bytes,
+      resultSizeRecords: res.data.result_size_records,
+    };
+
+    return { data };
+  }
+
+  public async read<TRecord = any>(streamQualifier: StreamQualifier, args: ReadArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    return this.fetchRecords(streamQualifier, args);
   }
 
   public subscribe<TRecord = any>(args: SubscribeArgs): { unsubscribe: () => void } {
@@ -90,38 +165,7 @@ export class BrowserConnection {
     return { unsubscribe: req.unsubscribe };
   }
 
-  private makePath(sq: StreamQualifier): string {
-    if (typeof sq === "string") {
-      sq = this.pathStringToObject(sq);
-    }
-    if ("instanceID" in sq && sq.instanceID) {
-      return `v1/-/instances/${sq.instanceID}`;
-    } else if ("project" in sq && "stream" in sq) {
-      return `v1/${sq.organization}/${sq.project}/${sq.stream}`;
-    }
-    throw Error("invalid stream qualifier");
-  }
-
-  private pathStringToObject(path: string): { organization: string, project: string, stream: string } {
-    const parts = path.split("/");
-
-    // trim leading/trailing "/"
-    if (parts.length > 0 && parts[0] === "/") { parts.shift(); }
-    if (parts.length > 0 && parts[parts.length - 1] === "/") { parts.pop(); }
-
-    // handle org/proj/stream
-    if (parts.length === 3) {
-      return {
-        organization: parts[0],
-        project: parts[1],
-        stream: parts[2],
-      };
-    }
-
-    throw Error(`Cannot parse stream path "${path}"; it must have the format "organization/project/stream"`);
-  }
-
-  private async fetch<TRecord>(method: "GET" | "POST", path: string, body: { [key: string]: any; }): Promise<Response<TRecord>> {
+  private async fetch<Data = any, Meta = any>(method: "GET" | "POST", path: string, body: { [key: string]: any; }): Promise<Response<Data, Meta>> {
     let url = `${BENEATH_GATEWAY_HOST}/${path}?`;
     if (method === "GET") {
       for (const key of Object.keys(body)) {
@@ -163,13 +207,22 @@ export class BrowserConnection {
       return { error: Error(error) };
     }
 
-    if (data) {
-      if (!Array.isArray(data)) {
-        throw Error(`Expected array data, got ${JSON.stringify(data)}`);
+    return { data, meta };
+  }
+
+  private async fetchRecords<TRecord>(streamQualifier: StreamQualifier, body: { [key: string]: any }): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    const path = this.makePath(streamQualifier);
+    const res = await this.fetch<Record<TRecord>[], any>("GET", path, body);
+
+    if (res.data) {
+      if (!Array.isArray(res.data)) {
+        throw Error(`Expected array data, got ${JSON.stringify(res.data)}`);
       }
     }
 
-    if (meta) {
+    if (res.meta) {
+      const meta = res.meta;
+
       if (meta.instance_id) {
         meta.instanceID = meta.instance_id;
         delete meta.instance_id;
@@ -186,7 +239,38 @@ export class BrowserConnection {
       }
     }
 
-    return { data, meta };
+    return res;
+  }
+
+  private makePath(sq: StreamQualifier): string {
+    if (typeof sq === "string") {
+      sq = this.pathStringToObject(sq);
+    }
+    if ("instanceID" in sq && sq.instanceID) {
+      return `v1/-/instances/${sq.instanceID}`;
+    } else if ("project" in sq && "stream" in sq) {
+      return `v1/${sq.organization}/${sq.project}/${sq.stream}`;
+    }
+    throw Error("invalid stream qualifier");
+  }
+
+  private pathStringToObject(path: string): { organization: string, project: string, stream: string } {
+    const parts = path.split("/");
+
+    // trim leading/trailing "/"
+    if (parts.length > 0 && parts[0] === "/") { parts.shift(); }
+    if (parts.length > 0 && parts[parts.length - 1] === "/") { parts.pop(); }
+
+    // handle org/proj/stream
+    if (parts.length === 3) {
+      return {
+        organization: parts[0],
+        project: parts[1],
+        stream: parts[2],
+      };
+    }
+
+    throw Error(`Cannot parse stream path "${path}"; it must have the format "organization/project/stream"`);
   }
 
 }
