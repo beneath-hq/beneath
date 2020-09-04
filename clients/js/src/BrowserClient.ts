@@ -1,7 +1,7 @@
 import { BrowserConnection, PingData, Response } from "./BrowserConnection";
 import { BrowserJob } from "./BrowserJob";
 import { BrowserStream } from "./BrowserStream";
-import { JS_CLIENT_ID } from "./config";
+import { DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS, DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED, JS_CLIENT_ID } from "./config";
 import { QueryWarehouseOptions, StreamQualifier } from "./shared";
 import { PACKAGE_VERSION } from "./version";
 
@@ -80,8 +80,9 @@ export class BrowserClient {
    * @param opts Parameters of the warehouse query to execute
    */
   public async queryWarehouse<TRecord = any>(opts: QueryWarehouseOptions): Promise<BrowserQueryWarehouseResult<TRecord>> {
-    const args = { query: opts.query, dry: opts.dry, timeout_ms: opts.timeoutMilliseconds, max_bytes_scanned: opts.maxBytesScanned };
-    const res = await this.connection.queryWarehouse<TRecord>(args);
+    opts.maxBytesScanned = opts.maxBytesScanned ?? DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED;
+    opts.timeoutMilliseconds = opts.timeoutMilliseconds ?? DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS;
+    const res = await this.connection.queryWarehouse(opts);
     if (res.error || !res.data) {
       return res;
     }

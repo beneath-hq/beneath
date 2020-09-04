@@ -15,6 +15,7 @@ const STREAM_SCHEMA = `
     b: String
   }
 `;
+const NUMROWS = 50;
 
 let client: BrowserClient;
 let streamQualifier: { organization: string, project: string, stream: string };
@@ -115,7 +116,7 @@ test("creates test stream", async () => {
 
 test("writes to test stream", async () => {
   const records = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < NUMROWS; i++) {
     records.push(makeFoo(i));
   }
 
@@ -126,8 +127,59 @@ test("writes to test stream", async () => {
 });
 
 test("runs warehouse job and reads results", async () => {
-  const query = `select * from \`${streamQualifier.organization}/${streamQualifier.project}/${streamQualifier.stream}\``;
-  const { job, error } = await client.queryWarehouse({ query, dry: true });
+  jest.setTimeout(30000);
+
+  const query = `
+    select a, count(*) as count
+    from \`${streamQualifier.organization}/${streamQualifier.project}/${streamQualifier.stream}\`
+    group by a
+    order by a
+  `;
+
+  // dry
+  const { job: dryJob, error: dryError } = await client.queryWarehouse({ query, dry: true });
+  expect(dryError).toBeUndefined();
+  expect(dryJob).toBeInstanceOf(BrowserJob);
+  expect(dryJob?.jobID).toBeUndefined();
+  expect(dryJob?.resultAvroSchema).toBeTruthy();
+  expect(dryJob?.referencedInstanceIDs).toHaveLength(1);
+  expect(dryJob?.status).toBe("done");
+  await expect(dryJob?.getCursor()).rejects.toThrow("Cannot poll dry run job");
+
+  // wet
+  const { job, error } = await client.queryWarehouse<{ a: number, count: number }>({ query });
   expect(error).toBeUndefined();
   expect(job).toBeInstanceOf(BrowserJob);
+  expect(job?.jobID).toBeTruthy();
+  expect(job?.status).toBe("running");
+
+  const cursor = await job?.getCursor();
+  expect(cursor).toBeTruthy();
+  expect(cursor?.nextCursor).toBeTruthy();
+  expect(cursor?.changeCursor).toBeUndefined();
+  expect(() => cursor?.subscribeChanges({ onData: () => undefined, onComplete: () => undefined })).toThrowError("cannot subscribe to changes for this query");
+
+  const n = NUMROWS / 2;
+  for (let j = 0; j <= NUMROWS; j += n) {
+    if (j === NUMROWS) {
+      expect(cursor?.hasNext()).toBeFalsy();
+      break;
+    }
+
+    const res = await cursor?.readNext({ pageSize: n });
+    expect(res?.error).toBeUndefined();
+
+    if (!res?.data) { // for satisfying typescript
+      fail("data is undefined");
+    }
+
+    expect(res?.data).toHaveLength(n);
+    for (let i = 0; i < n; i++) {
+      expect(res?.data[i].a).toBe(j + i);
+      expect(res?.data[i].count).toBeGreaterThan(0);
+    }
+  }
+
+  expect(job?.resultAvroSchema).toBeTruthy();
+  expect(job?.referencedInstanceIDs).toHaveLength(1);
 });

@@ -3,23 +3,19 @@ import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from
 import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "./shared";
 
 export class BrowserCursor<TRecord = any> {
+  public nextCursor?: string;
+  public changeCursor?: string;
   private connection: BrowserConnection;
-  private streamQualifier: StreamQualifier;
-  private nextCursor?: string;
-  private changeCursor?: string;
+  private streamQualifier?: StreamQualifier;
   private defaultPageSize?: number;
   private initialData?: Record<TRecord>[];
 
-  constructor(connection: BrowserConnection, streamQualifier: StreamQualifier, meta?: RecordsMeta, data?: Record<TRecord>[], defaultPageSize?: number) {
+  constructor(connection: BrowserConnection, nextCursor?: string, changeCursor?: string, data?: Record<TRecord>[], streamQualifier?: StreamQualifier, defaultPageSize?: number) {
     this.connection = connection;
+    this.nextCursor = nextCursor;
+    this.changeCursor = changeCursor;
     this.streamQualifier = streamQualifier;
-    this.nextCursor = meta?.nextCursor;
-    this.changeCursor = meta?.changeCursor;
     this.defaultPageSize = defaultPageSize;
-
-    if (meta?.instanceID) {
-      this.streamQualifier = { instanceID: meta.instanceID };
-    }
 
     this.initialData = data;
   }
@@ -68,7 +64,7 @@ export class BrowserCursor<TRecord = any> {
     }
 
     // fetch more
-    const { meta, data, error } = await this.connection.read<TRecord>(this.streamQualifier, { limit, cursor: this.nextCursor });
+    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.nextCursor }, this.streamQualifier);
     if (error) {
       return { error };
     }
@@ -89,7 +85,7 @@ export class BrowserCursor<TRecord = any> {
       return { error: Error("cannot fetch changes for this query") };
     }
 
-    const { meta, data, error } = await this.connection.read<TRecord>(this.streamQualifier, { limit, cursor: this.changeCursor });
+    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.changeCursor }, this.streamQualifier);
     if (error) {
       return { error };
     }
@@ -104,7 +100,8 @@ export class BrowserCursor<TRecord = any> {
     if (!this.changeCursor) {
       throw Error("cannot subscribe to changes for this query");
     }
-    if ((typeof this.streamQualifier === "string") || !("instanceID" in this.streamQualifier) || !this.streamQualifier.instanceID) {
+
+    if (!(this.streamQualifier && typeof this.streamQualifier !== "string" && "instanceID" in this.streamQualifier)) {
       throw Error("cannot subscribe to changes for this query");
     }
 

@@ -27,11 +27,11 @@ export type RecordsMeta = {
 
 export type WarehouseJobData = {
   jobID?: string;
-  status: string;
+  status: "pending" | "running" | "done";
   error?: string;
   resultAvroSchema?: string;
   replayCursor?: string;
-  referencedInstances?: string[];
+  referencedInstanceIDs?: string[];
   bytesScanned?: number;
   resultSizeBytes?: number;
   resultSizeRecords?: number;
@@ -107,42 +107,34 @@ export class BrowserConnection {
   }
 
   public async queryLog<TRecord = any>(streamQualifier: StreamQualifier, args: QueryLogArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    return this.fetchRecords(streamQualifier, { ...args, type: "log" });
+    const path = this.makePath(streamQualifier);
+    return this.fetchRecords(path, { ...args, type: "log" });
   }
 
   public async queryIndex<TRecord = any>(streamQualifier: StreamQualifier, args: QueryIndexArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    return this.fetchRecords(streamQualifier, { ...args, type: "index" });
+    const path = this.makePath(streamQualifier);
+    return this.fetchRecords(path, { ...args, type: "index" });
   }
 
-  public async queryWarehouse<TRecord = any>(args: QueryWarehouseArgs): Promise<Response<WarehouseJobData, null>> {
+  public async queryWarehouse(args: QueryWarehouseArgs): Promise<Response<WarehouseJobData, null>> {
     const res = await this.fetch<any, null>("POST", "v1/-/warehouse", {
       query: args.query,
       dry: args.dry,
       max_bytes_scanned: args.maxBytesScanned,
       timeout_ms: args.timeoutMilliseconds,
     });
-
-    if (res.error || !res.data) {
-      return res;
-    }
-
-    const data: WarehouseJobData = {
-      jobID: res.data.job_id,
-      status: res.data.status,
-      error: res.data.error,
-      resultAvroSchema: res.data.result_avro_schema,
-      replayCursor: res.data.replay_cursor,
-      referencedInstances: res.data.referenced_instances,
-      bytesScanned: res.data.bytes_scanned,
-      resultSizeBytes: res.data.result_size_bytes,
-      resultSizeRecords: res.data.result_size_records,
-    };
-
-    return { data };
+    return this.parseWarehouseResponse(res);
   }
 
-  public async read<TRecord = any>(streamQualifier: StreamQualifier, args: ReadArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    return this.fetchRecords(streamQualifier, args);
+  public async pollWarehouseJob(jobID: string): Promise<Response<WarehouseJobData, null>> {
+    const res = await this.fetch<any, null>("GET", `v1/-/warehouse/${jobID}`);
+    return this.parseWarehouseResponse(res);
+  }
+
+  public async read<TRecord = any>(args: ReadArgs, streamQualifier?: StreamQualifier): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    // we could make all cursor requests to "/v1/-/cursor", but for stream/instance reads it's neat for the URL to show the stream/instance in client logs
+    const path = streamQualifier ? this.makePath(streamQualifier) : "v1/-/cursor";
+    return this.fetchRecords(path, args);
   }
 
   public subscribe<TRecord = any>(args: SubscribeArgs): { unsubscribe: () => void } {
@@ -165,9 +157,9 @@ export class BrowserConnection {
     return { unsubscribe: req.unsubscribe };
   }
 
-  private async fetch<Data = any, Meta = any>(method: "GET" | "POST", path: string, body: { [key: string]: any; }): Promise<Response<Data, Meta>> {
+  private async fetch<Data = any, Meta = any>(method: "GET" | "POST", path: string, body?: { [key: string]: any; }): Promise<Response<Data, Meta>> {
     let url = `${BENEATH_GATEWAY_HOST}/${path}?`;
-    if (method === "GET") {
+    if (body && method === "GET") {
       for (const key of Object.keys(body)) {
         const val = body[key];
         if (val !== undefined) {
@@ -184,7 +176,7 @@ export class BrowserConnection {
     const res = await fetch(url, {
       method,
       headers,
-      body: method === "POST" ? JSON.stringify(body) : undefined,
+      body: (body && method === "POST") ? JSON.stringify(body) : undefined,
     });
 
     // if not json: if successful, return empty; else return just error
@@ -210,8 +202,7 @@ export class BrowserConnection {
     return { data, meta };
   }
 
-  private async fetchRecords<TRecord>(streamQualifier: StreamQualifier, body: { [key: string]: any }): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    const path = this.makePath(streamQualifier);
+  private async fetchRecords<TRecord>(path: string, body: { [key: string]: any }): Promise<Response<Record<TRecord>[], RecordsMeta>> {
     const res = await this.fetch<Record<TRecord>[], any>("GET", path, body);
 
     if (res.data) {
@@ -271,6 +262,26 @@ export class BrowserConnection {
     }
 
     throw Error(`Cannot parse stream path "${path}"; it must have the format "organization/project/stream"`);
+  }
+
+  private parseWarehouseResponse(res: Response<any, null>): Response<WarehouseJobData, null> {
+    if (res.error || !res.data) {
+      return res;
+    }
+
+    const data: WarehouseJobData = {
+      jobID: res.data.job_id,
+      status: res.data.status,
+      error: res.data.error,
+      resultAvroSchema: res.data.result_avro_schema,
+      replayCursor: res.data.replay_cursor,
+      referencedInstanceIDs: res.data.referenced_instances,
+      bytesScanned: res.data.bytes_scanned,
+      resultSizeBytes: res.data.result_size_bytes,
+      resultSizeRecords: res.data.result_size_records,
+    };
+
+    return { data };
   }
 
 }

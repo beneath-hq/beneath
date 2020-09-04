@@ -37,7 +37,12 @@ export class BrowserStream<TRecord = any> {
       return { error };
     }
 
-    const cursor = new BrowserCursor<TRecord>(this.connection, this.streamQualifier, meta, data, opts?.pageSize);
+    let qualifier = this.streamQualifier;
+    if (meta?.instanceID) {
+      qualifier = { instanceID: meta.instanceID };
+    }
+
+    const cursor = new BrowserCursor<TRecord>(this.connection, meta?.nextCursor, meta?.changeCursor, data, qualifier, opts?.pageSize);
     return { cursor };
   }
 
@@ -48,7 +53,12 @@ export class BrowserStream<TRecord = any> {
       return { error };
     }
 
-    const cursor = new BrowserCursor<TRecord>(this.connection, this.streamQualifier, meta, data, opts?.pageSize);
+    let qualifier = this.streamQualifier;
+    if (meta?.instanceID) {
+      qualifier = { instanceID: meta.instanceID };
+    }
+
+    const cursor = new BrowserCursor<TRecord>(this.connection, meta?.nextCursor, meta?.changeCursor, data, qualifier, opts?.pageSize);
     return { cursor };
   }
 
