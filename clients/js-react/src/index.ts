@@ -1,4 +1,4 @@
-import { BrowserClient, BrowserQueryResult, StreamQualifier } from "beneath";
+import { Client, StreamQualifier } from "beneath";
 import { sortedUniqBy } from "lodash";
 import { useEffect, useState } from "react";
 
@@ -23,7 +23,7 @@ export interface UseRecordsOptions {
 }
 
 export interface UseRecordsResult<TRecord> {
-  client?: BrowserClient;
+  client?: Client;
   records: Record<TRecord>[];
   error?: Error;
   fetchMore?: FetchMoreFunction;
@@ -68,7 +68,7 @@ export type Record<TRecord = any> = TRecord & {
  */
 export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsResult<TRecord> {
   // values
-  const [client, setClient] = useState<BrowserClient>(() => new BrowserClient({ secret: opts.secret }));
+  const [client, setClient] = useState<Client>(() => new Client({ secret: opts.secret }));
   const [data, setData] = useState<{ records: Record<TRecord>[] }>({ records: [] });
   const [error, setError] = useState<Error | undefined>(undefined);
   const [fetchMore, setFetchMore] = useState<FetchMoreFunction | undefined>(undefined);
@@ -122,12 +122,13 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       const stream = client.findStream(opts.stream);
 
       // query stream
-      let query: BrowserQueryResult<TRecord>;
-      if (queryType === "index") {
-        query = await stream.queryIndex({ filter: queryFilter, pageSize });
-      } else if (queryType === "log") {
-        query = await stream.queryLog({ pageSize, peek: queryPeek });
-      } else {
+      const query =
+        queryType === "index"
+        ? await stream.queryIndex({ filter: queryFilter, pageSize })
+        : queryType === "log"
+        ? await stream.queryLog({ pageSize, peek: queryPeek })
+        : undefined;
+      if (!query) {
         throw Error(`invalid view option <${queryType}>`);
       }
       if (cancel) { return; } // check cancel after await
@@ -143,13 +144,15 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       }
 
       // fetch first page and set
-      const read = await cursor.readNext({ pageSize });
-      if (cancel) { return; } // check cancel after await
-      if (read.error) {
-        setError(read.error);
-        return;
+      if (cursor.hasNext()) {
+        const read = await cursor.readNext({ pageSize });
+        if (cancel) { return; } // check cancel after await
+        if (read.error) {
+          setError(read.error);
+          return;
+        }
+        setData({ records: read.data || [] });
       }
-      setData({ records: read.data || [] });
 
       // done loading
       setLoading(false);
