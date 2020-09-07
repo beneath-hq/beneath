@@ -1,9 +1,9 @@
-import { BrowserCursor } from "./BrowserCursor";
-import { BrowserConnection, WarehouseJobData } from "./BrowserConnection";
+import { Cursor } from "./Cursor";
+import { Connection, WarehouseJobData } from "./Connection";
 
 const POLL_FREQUENCY = 1000;
 
-export class BrowserJob<TRecord = any> {
+export class Job<TRecord = any> {
   public jobID?: string;
   public resultAvroSchema?: string;
   public status: "pending" | "running" | "done";
@@ -12,10 +12,10 @@ export class BrowserJob<TRecord = any> {
   public resultSizeBytes?: number;
   public resultSizeRecords?: number;
 
-  private connection: BrowserConnection;
+  private connection: Connection;
   private jobData: WarehouseJobData;
 
-  constructor(connection: BrowserConnection, jobData: WarehouseJobData) {
+  constructor(connection: Connection, jobData: WarehouseJobData) {
     this.connection = connection;
     this.jobData = jobData; // to satisfy init check, overridden by setJobData
     this.status = "pending"; // to satisfy init check, overridden by setJobData
@@ -31,7 +31,7 @@ export class BrowserJob<TRecord = any> {
     this.setJobData(data);
   }
 
-  public async getCursor(): Promise<BrowserCursor<TRecord>> {
+  public async getCursor(): Promise<Cursor<TRecord>> {
     this.checkIsNotDry();
     // poll until completed
     while (this.status !== "done") {
@@ -41,7 +41,7 @@ export class BrowserJob<TRecord = any> {
       await this.poll();
     }
     // we know job completed without error (poll raises job errors)
-    return new BrowserCursor<TRecord>(this.connection, this.jobData.replayCursor);
+    return new Cursor<TRecord>(this.connection, this.jobData.replayCursor);
   }
 
   private setJobData(jobData: WarehouseJobData) {

@@ -1,6 +1,6 @@
 {
   "name": "beneath",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Client library for https://beneath.dev",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,9 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/node": "^13.9.1",
+    "@types/node-fetch": "^2.5.7",
     "@types/ws": "^7.2.3",
+    "isomorphic-unfetch": "^3.0.0",
     "jest": "^25.1.0",
     "ts-jest": "^25.2.1",
     "tslint": "^6.1.0",
@@ -24,7 +26,6 @@
   },
   "dependencies": {
     "graphql": "^14.6.0",
-    "isomorphic-unfetch": "^3.0.0",
     "subscriptions-transport-ws": "^0.9.16"
   }
 }

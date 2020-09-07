@@ -2,10 +2,9 @@ import fetch from "isomorphic-unfetch";
 import fs from "fs";
 import os from "os";
 
-import { BrowserClient } from "./BrowserClient";
-import { BENEATH_CONTROL_HOST, DEV } from "./config";
-import { StreamQualifier } from "./shared";
-import { BrowserJob } from "./BrowserJob";
+import { BENEATH_CONTROL_HOST, DEV } from "../config";
+import { Client } from "./Client";
+import { Job } from "./Job";
 
 const PROJECT_NAME = "js_test";
 const STREAM_NAME = "foo";
@@ -17,12 +16,12 @@ const STREAM_SCHEMA = `
 `;
 const NUMROWS = 50;
 
-let client: BrowserClient;
+let client: Client;
 let streamQualifier: { organization: string, project: string, stream: string };
 
 beforeAll(() => {
   const secret = loadLocalSecret();
-  client = new BrowserClient({ secret });
+  client = new Client({ secret });
 });
 
 const makeFoo = (i: number) => {
@@ -139,7 +138,7 @@ test("runs warehouse job and reads results", async () => {
   // dry
   const { job: dryJob, error: dryError } = await client.queryWarehouse({ query, dry: true });
   expect(dryError).toBeUndefined();
-  expect(dryJob).toBeInstanceOf(BrowserJob);
+  expect(dryJob).toBeInstanceOf(Job);
   expect(dryJob?.jobID).toBeUndefined();
   expect(dryJob?.resultAvroSchema).toBeTruthy();
   expect(dryJob?.referencedInstanceIDs).toHaveLength(1);
@@ -149,7 +148,7 @@ test("runs warehouse job and reads results", async () => {
   // wet
   const { job, error } = await client.queryWarehouse<{ a: number, count: number }>({ query });
   expect(error).toBeUndefined();
-  expect(job).toBeInstanceOf(BrowserJob);
+  expect(job).toBeInstanceOf(Job);
   expect(job?.jobID).toBeTruthy();
   expect(job?.status).toBe("running");
 
@@ -162,7 +161,7 @@ test("runs warehouse job and reads results", async () => {
   const n = NUMROWS / 2;
   for (let j = 0; j <= NUMROWS; j += n) {
     if (j === NUMROWS) {
-      expect(cursor?.hasNext()).toBeFalsy();
+      expect(cursor?.hasNext()).toBe(false);
       break;
     }
 

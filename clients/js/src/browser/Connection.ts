@@ -1,7 +1,28 @@
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
-import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "./config";
-import { Record, StreamQualifier } from "./shared";
+import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "../config";
+import { Record, StreamQualifier } from "../types";
+
+// Args types
+
+export type PingArgs = { clientID: string, clientVersion: string };
+
+export type ReadArgs = { cursor: string, limit?: number };
+
+export type QueryLogArgs = { limit?: number, peek?: boolean };
+
+export type QueryIndexArgs = { limit?: number, filter?: string };
+
+export type QueryWarehouseArgs = { query: string, dry?: boolean, maxBytesScanned?: number, timeoutMilliseconds?: number };
+
+export type SubscribeArgs = {
+  instanceID: string;
+  cursor: string;
+  onResult: () => void;
+  onComplete: (error?: Error) => void;
+};
+
+// Response types
 
 export interface Response<Data = any, Meta = any> {
   data?: Data;
@@ -13,10 +34,6 @@ export type PingData = {
   authenticated: string;
   versionStatus: string;
   recommendedVersion: string;
-};
-
-export type WriteMeta = {
-  writeID: string;
 };
 
 export type RecordsMeta = {
@@ -37,24 +54,13 @@ export type WarehouseJobData = {
   resultSizeRecords?: number;
 };
 
-export type PingArgs = { clientID: string, clientVersion: string };
-
-export type QueryLogArgs = { limit?: number, peek?: boolean };
-
-export type QueryIndexArgs = { limit?: number, filter?: string };
-
-export type QueryWarehouseArgs = { query: string, dry?: boolean, maxBytesScanned?: number, timeoutMilliseconds?: number };
-
-export type ReadArgs = { cursor: string, limit?: number };
-
-export type SubscribeArgs = {
-  instanceID: string;
-  cursor: string;
-  onResult: () => void;
-  onComplete: (error?: Error) => void;
+export type WriteMeta = {
+  writeID: string;
 };
 
-export class BrowserConnection {
+// Connection class
+
+export class Connection {
   public secret?: string;
   private subscription?: SubscriptionClient;
 

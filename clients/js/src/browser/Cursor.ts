@@ -1,16 +1,16 @@
-import { BrowserConnection, RecordsMeta } from "./BrowserConnection";
-import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "./config";
-import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "./shared";
+import { Connection } from "./Connection";
+import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "../config";
+import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "../types";
 
-export class BrowserCursor<TRecord = any> {
+export class Cursor<TRecord = any> {
   public nextCursor?: string;
   public changeCursor?: string;
-  private connection: BrowserConnection;
+  private connection: Connection;
   private streamQualifier?: StreamQualifier;
   private defaultPageSize?: number;
   private initialData?: Record<TRecord>[];
 
-  constructor(connection: BrowserConnection, nextCursor?: string, changeCursor?: string, data?: Record<TRecord>[], streamQualifier?: StreamQualifier, defaultPageSize?: number) {
+  constructor(connection: Connection, nextCursor?: string, changeCursor?: string, data?: Record<TRecord>[], streamQualifier?: StreamQualifier, defaultPageSize?: number) {
     this.connection = connection;
     this.nextCursor = nextCursor;
     this.changeCursor = changeCursor;
