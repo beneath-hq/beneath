@@ -1,6 +1,9 @@
 import { Cursor } from "./Cursor";
 import { Connection } from "./Connection";
-import { StreamQualifier, QueryLogOptions, QueryIndexOptions } from "../types";
+import { StreamQualifier } from "./types";
+
+export type QueryIndexOptions = { filter?: string, pageSize?: number };
+export type QueryLogOptions = { peek?: boolean, pageSize?: number };
 
 type QueryResult<TRecord> = { cursor?: Cursor<TRecord>, error?: Error };
 export type QueryLogResult<TRecord = any> = QueryResult<TRecord>;
@@ -25,7 +28,7 @@ export class Stream<TRecord = any> {
     return { writeID: meta?.writeID };
   }
 
-  public async queryLog(opts?: QueryLogOptions): Promise<QueryResult<TRecord>> {
+  public async queryLog(opts?: QueryLogOptions): Promise<QueryLogResult<TRecord>> {
     const args = { peek: opts?.peek, limit: opts?.pageSize };
     const { meta, data, error } = await this.connection.queryLog(this.streamQualifier, args);
     if (error) {
@@ -41,7 +44,7 @@ export class Stream<TRecord = any> {
     return { cursor };
   }
 
-  public async queryIndex(opts?: QueryIndexOptions): Promise<QueryResult<TRecord>> {
+  public async queryIndex(opts?: QueryIndexOptions): Promise<QueryIndexResult<TRecord>> {
     const args = { filter: opts?.filter, limit: opts?.pageSize };
     const { meta, data, error } = await this.connection.queryIndex(this.streamQualifier, args);
     if (error) {

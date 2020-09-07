@@ -2,7 +2,7 @@ import fetch from "isomorphic-unfetch";
 import fs from "fs";
 import os from "os";
 
-import { BENEATH_CONTROL_HOST, DEV } from "../config";
+import { BENEATH_CONTROL_HOST, DEV } from "./config";
 import { Client } from "./Client";
 import { Job } from "./Job";
 

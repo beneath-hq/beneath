@@ -1,13 +1,10 @@
 import { Connection, PingData, Response } from "./Connection";
 import { Job } from "./Job";
 import { Stream } from "./Stream";
-import { DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS, DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED, JS_CLIENT_ID } from "../config";
-import { QueryWarehouseOptions, StreamQualifier } from "../types";
-import { PACKAGE_VERSION } from "../version";
+import { DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS, DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED, JS_CLIENT_ID } from "./config";
+import { StreamQualifier } from "./types";
+import { PACKAGE_VERSION } from "./version";
 
-/**
- * Options passed to the `Client` constructor
- */
 export interface ClientOptions {
   /**
    * The secret used to authenticate to Beneath. NOTE: See
@@ -16,9 +13,13 @@ export interface ClientOptions {
   secret?: string;
 }
 
-/**
- * Result of a call to queryWarehouse on Client.
- */
+export type QueryWarehouseOptions = {
+  query: string;
+  dry?: boolean;
+  maxBytesScanned?: number;
+  timeoutMilliseconds?: number;
+};
+
 export interface QueryWarehouseResult<TRecord = any> {
   job?: Job<TRecord>;
   error?: Error;

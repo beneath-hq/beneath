@@ -1,6 +1,17 @@
 import { Connection } from "./Connection";
-import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "../config";
-import { Record, ReadOptions, ReadResult, StreamQualifier, SubscribeOptions } from "../types";
+import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "./config";
+import { Record, StreamQualifier } from "./types";
+
+export type ReadOptions = { pageSize?: number };
+
+export type ReadResult<TRecord = any> = { data?: Record<TRecord>[], error?: Error };
+
+export type SubscribeOptions<TRecord> = {
+  onData: (data: Record<TRecord>[]) => void,
+  onComplete: (error?: Error) => void,
+  pageSize?: number,
+  pollAtMostEveryMilliseconds?: number,
+};
 
 export class Cursor<TRecord = any> {
   public nextCursor?: string;
@@ -21,7 +32,7 @@ export class Cursor<TRecord = any> {
   }
 
   public hasNext(): boolean {
-    return !!this.nextCursor;
+    return !!this.nextCursor || !!this.initialData;
   }
 
   public hasNextChanges(): boolean {

@@ -1,7 +1,7 @@
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
-import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "../config";
-import { Record, StreamQualifier } from "../types";
+import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "./config";
+import { Record, StreamQualifier } from "./types";
 
 // Args types
 
