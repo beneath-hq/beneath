@@ -1536,7 +1536,7 @@
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-2.0.3.tgz#c893b73721db73699943bfc3653b1deb7faa4a3a"
   integrity sha512-Jus9s4CDbqwocc5pOAnh8ShfrnMcPHuJYzVcSUU7lrh8Ni5HuIqX3oilL86p3dlTrk0LzHRCgA/GQ7uNCw6l2Q==
 
-"@types/node-fetch@2.5.7":
+"@types/node-fetch@2.5.7", "@types/node-fetch@^2.5.7":
   version "2.5.7"
   resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.5.7.tgz#20a2afffa882ab04d44ca786449a276f9f6bbf3c"
   integrity sha512-o2WVNf5UhWRkxlf6eq+jMZDu7kjgpgJfl4xVNlvryc95O/6F2ld8ztKX+qu+Rjyet93WAWm5LjeX9H5FGkODvw==
@@ -2482,6 +2482,16 @@ beneath-react@^1.0.6:
   dependencies:
     beneath "^1.0.4"
     lodash "^4.17.15"
+
+beneath@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.0.tgz#2d0b04c2ff691d4d0cb7a2bad7b987e0d644f68a"
+  integrity sha512-oqyMXaU+jH27vq+tYx2C6Za7NDZsURqCJXrZor59GRnekqXiD07ZYRnAqhb7Ok2gZclzY5YbrwvD6eaAEnHhWw==
+  dependencies:
+    "@types/node-fetch" "^2.5.7"
+    graphql "^14.6.0"
+    isomorphic-unfetch "^3.0.0"
+    subscriptions-transport-ws "^0.9.16"
 
 beneath@^1.0.4:
   version "1.0.4"

@@ -23,6 +23,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@types/node-fetch": "^2.5.7",
     "graphql": "^14.6.0",
     "isomorphic-unfetch": "^3.0.0",
     "subscriptions-transport-ws": "^0.9.16"
