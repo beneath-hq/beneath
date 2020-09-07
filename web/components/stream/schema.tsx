@@ -3,6 +3,7 @@ import _ from "lodash";
 import numbro from "numbro";
 
 type TimeagoType = "timeago";
+export type InputType = "text" | "hex" | "integer" | "float" | "datetime";
 
 export interface Index {
   fields: string[];
@@ -52,6 +53,7 @@ export class Column {
   public name: string;
   public displayName: string;
   public type: avro.Type | TimeagoType;
+  public inputType: InputType;
   public doc: string | undefined;
   public isKey: boolean;
   public isNullable: boolean;
@@ -79,6 +81,9 @@ export class Column {
       this.isNullable = true;
     }
 
+    // get inputType
+    this.inputType = this.getInputType(this.type);
+
     // compute isNumeric
     this.isNumeric = false;
     if (this.type !== "timeago") {
@@ -94,6 +99,26 @@ export class Column {
 
   public formatRecord(record: any) {
     return this.formatter(_.get(record, this.name));
+  }
+
+  private getInputType = (type: avro.Type | TimeagoType) => {
+    if (avro.Type.isType(type, "logical:timestamp-millis")) {
+      return "datetime";
+    }
+    if (avro.Type.isType(type, "int", "long")) {
+      return "integer";
+    }
+    if (avro.Type.isType(type, "float", "double")) {
+      return "float";
+    }
+    if (avro.Type.isType(type, "bytes", "fixed")) {
+      return "hex";
+    }
+    if (avro.Type.isType(type, "string", "enum")) {
+      return "text";
+    }
+    // TimeagoType; shouldn't ever need this
+    return "datetime";
   }
 
   private makeFormatter() {

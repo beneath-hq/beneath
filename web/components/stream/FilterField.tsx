@@ -15,6 +15,8 @@ import WarningIcon from "@material-ui/icons/Error";
 import clsx from "clsx";
 import { FC, useState, useEffect } from "react";
 
+import { InputType } from "./schema";
+
 const useStyles = makeStyles((theme: Theme) => ({
   control: {
     display: "flex",
@@ -89,12 +91,11 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export type Operator = "" | "=" | ">" | "<" | "<=" | ">=" | "prefix";
-export type FieldType = "text" | "hex" | "integer" | "float" | "datetime";
 export type Filter = { [key in Operator]: string };
 
 export interface Field {
   name: string;
-  type: FieldType;
+  type: InputType;
   description?: string;
 }
 
@@ -105,7 +106,7 @@ export interface FilterFieldProps {
   onCancel?: () => void;
 }
 
-const getOperators = (type: FieldType, firstOperator?: Operator): Operator[] | null => {
+const getOperators = (type: InputType, firstOperator?: Operator): Operator[] | null => {
   if (firstOperator) {
     if (firstOperator === "<" || firstOperator === "<=") {
       return ["", ">", ">="];
@@ -122,7 +123,7 @@ const getOperators = (type: FieldType, firstOperator?: Operator): Operator[] | n
   return operators;
 };
 
-const getPlaceholder = (type: FieldType) => {
+export const getPlaceholder = (type: InputType) => {
   if (type === "text") {
     return "Abcd...";
   } else if (type === "hex") {
@@ -137,7 +138,7 @@ const getPlaceholder = (type: FieldType) => {
   return "";
 };
 
-const validateValue = (type: FieldType, value: string): string | null => {
+export const validateValue = (type: InputType, value: string): string | null => {
   if (value.length === 0 || type === "text") {
     return null;
   }
