@@ -1,11 +1,11 @@
 {
   "name": "beneath",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Client library for https://beneath.dev",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -r ./dist && tsc",
     "prepare": "tsc",
     "test": "jest",
     "docs": "typedoc"
