@@ -1,60 +1,67 @@
-import { useMutation } from "@apollo/client";
 import _ from "lodash";
 import React, { FC } from "react";
-
 import { Typography } from "@material-ui/core";
+import { BrowserClient } from "beneath";
 
-import { CREATE_RECORDS } from "../../apollo/queries/local/records";
-import { CreateRecords, CreateRecordsVariables } from "../../apollo/types/CreateRecords";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { Schema } from "./schema";
 import { Formik, Form, Field } from "formik";
-import { handleSubmitMutation } from "components/formik";
 import FormikTextField from "components/formik/TextField";
 import SubmitControl from "components/forms/SubmitControl";
-import { validateValue, getPlaceholder } from "./FilterField";
+import { validateValue } from "./FilterField";
+import { useToken } from "hooks/useToken";
 
 interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  instanceID: string;
+  setWriteDialog: (writeDialog: boolean) => void;
 }
 
-const WriteStream: FC<WriteStreamProps> = ({ stream }) => {
-  const schema = new Schema(stream);
+const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, setWriteDialog }) => {
+  const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
+  const token = useToken();
 
-  const [createRecords] = useMutation<CreateRecords, CreateRecordsVariables>(CREATE_RECORDS, {
-    onCompleted: ({ createRecords }) => {
-      if (createRecords.error) {
-        console.log(createRecords.error);
-      } else {
-        console.log("Successfully wrote record, but it might take a while before it shows up.");
-      }
-    },
-  });
+  const client = new BrowserClient({ secret: token || undefined });
+  const stream = client.findStream({instanceID});
 
   const initialValues: any = {
     data: {},
-    instanceID: stream.primaryStreamInstanceID,
+    instanceID,
   };
 
   schema.columns.map((col) => {
     initialValues.data[col.name]= "";
   });
 
+  const sanitize = (schema: Schema, data: any) => {
+    // when a field is optional or a key, and an empty string, remove the field from the record object
+    schema.columns.map((col) => {
+      if ((col.isNullable || col.isKey) && data[col.name] === "") {
+        delete data[col.name];
+      }
+    });
+
+    return;
+  };
+
   return (
     <Formik
       initialValues={initialValues}
-      onSubmit={async (values, actions) =>
-        handleSubmitMutation(
-          values,
-          actions,
-          createRecords({
-            variables: {
-              json: values.data,
-              instanceID: values.instanceID,
-            },
-          })
-        )
-      }
+      onSubmit={async (values, actions) => {
+        sanitize(schema, values.data);
+        const { writeID, error } = await stream.write(values.data);
+        if (error) {
+          const json = JSON.parse(error.message);
+          actions.setStatus(json.error);
+        } else {
+          // clear previous error
+          actions.setStatus("");
+        }
+        if (writeID) {
+          console.log("Successfully wrote record, but it might take a while before it shows up.");
+          setWriteDialog(false);
+        }
+      }}
     >
       {({ isSubmitting, status }) => (
         <Form>
@@ -66,14 +73,13 @@ const WriteStream: FC<WriteStreamProps> = ({ stream }) => {
               <Field
                 key={idx}
                 name={"data." + col.name}
-                placeholder="PLACEHOLDER" // Placeholders aren't working. Need to do some Formik edits I think.
-                // placeholder={getPlaceholder(col.fieldType)} // TODO: need to get a FieldType from the schema.Column class. Benjamin handling.
+                // placeholder={getPlaceholder(col.inputType)} // placeholders aren't this easy
                 validate={(val: string) => {
-                  // return validateValue(col.fieldType, val) // TODO: need to get a FieldType from the schema.Column class. Benjamin handling.
+                  return validateValue(col.inputType, val);
                 }}
                 component={FormikTextField}
                 label={col.displayName}
-                // required={col.nullable} // TODO: waiting on Benjamin to add this to the Column class
+                required={!col.isNullable}
               />
             );}
           )}
