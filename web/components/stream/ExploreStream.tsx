@@ -187,7 +187,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                       // and to allow both stream and batch writes
                       */}
                     <DialogContent>
-                      <WriteStream stream={stream} />
+                      <WriteStream stream={stream} instanceID={instance.streamInstanceID} setWriteDialog={setWriteDialog} />
                     </DialogContent>
                   </Dialog>
                 </>
@@ -362,7 +362,7 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
                         <DialogContent>
                           <CodeBlock language={"python"}>
                             {`import beneath
-df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}", 
+df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
         filter=${filter === "" ? "None" : "'" + filter + "'"})
 df
 `}

@@ -1,10 +1,9 @@
-import avro from "avsc";
 import { FC, useState, useEffect } from "react";
-import FilterField, { FieldType, Operator, Field, Filter } from "./FilterField";
+import FilterField, { Operator, Field, Filter } from "./FilterField";
 import _ from "lodash";
 import { Button, Grid } from "@material-ui/core";
 
-import { Column } from "./schema";
+import { Column, InputType } from "./schema";
 
 // the form
 interface FilterFormProps {
@@ -67,12 +66,11 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       return;
     }
 
-    const fieldType = getFieldType(col.type as avro.Type);
-    const operators = getOperators(fieldType);
+    const operators = getOperators(col.inputType);
     const field = {
       name: col.name,
       description: col.doc,
-      type: fieldType as FieldType,
+      type: col.inputType,
       operators,
     };
     setFields([...fields, field]);
@@ -149,23 +147,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
 
 export default FilterForm;
 
-const getFieldType = (actualType: avro.Type) => {
-  if (avro.Type.isType(actualType, "logical:timestamp-millis")) {
-    return "datetime";
-  }
-  if (avro.Type.isType(actualType, "int", "long")) {
-    return "integer";
-  }
-  if (avro.Type.isType(actualType, "float", "double")) {
-    return "float";
-  }
-  if (avro.Type.isType(actualType, "bytes", "fixed")) {
-    return "hex";
-  }
-  return "text";
-};
-
-const getOperators = (type: FieldType) => {
+const getOperators = (type: InputType) => {
   const operators: Operator[] = ["=", "<", ">", "<=", ">="];
   if (type === "text" || type === "hex") {
     operators.push("prefix");
