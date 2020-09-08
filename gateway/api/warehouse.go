@@ -70,7 +70,7 @@ type pollWarehouseTags struct {
 func HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseRequest) (*QueryWarehouseResponse, *Error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
-	if secret == nil {
+	if secret == nil || secret.IsAnonymous() {
 		return nil, newErrorf(http.StatusUnauthorized, "not authenticated")
 	}
 
@@ -132,7 +132,7 @@ func HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseRequest) (*Que
 
 	// check bytes scanned
 	estimatedBytesScanned := job.GetBytesScanned()
-	if estimatedBytesScanned > req.MaxBytesScanned {
+	if req.MaxBytesScanned != 0 && estimatedBytesScanned > req.MaxBytesScanned {
 		return nil, newErrorf(http.StatusTooManyRequests, "query would scan %d bytes, which exceeds job limit of %d (limit the query or increase the limit)", job.GetBytesScanned(), req.MaxBytesScanned)
 	}
 

@@ -158,9 +158,15 @@ func HandleRead(ctx context.Context, req *ReadRequest) (*ReadResponse, *Error) {
 			avro := record.GetAvro() // to calculate bytes read
 			data := record.GetJSON()
 
-			data["@meta"] = map[string]interface{}{
-				"key":       record.GetPrimaryKey(),
-				"timestamp": timeutil.UnixMilli(record.GetTimestamp()),
+			if cursor.GetType() == util.WarehouseCursorType {
+				data["@meta"] = map[string]interface{}{
+					"timestamp": timeutil.UnixMilli(record.GetTimestamp()),
+				}
+			} else {
+				data["@meta"] = map[string]interface{}{
+					"key":       record.GetPrimaryKey(),
+					"timestamp": timeutil.UnixMilli(record.GetTimestamp()),
+				}
 			}
 
 			// track
