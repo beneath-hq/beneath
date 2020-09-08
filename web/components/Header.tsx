@@ -166,6 +166,9 @@ const Header: FC<HeaderProps> = ({ toggleMobileDrawer }) => {
         </Link>
         {me && (
           <>
+            <Button component={NakedLink} href="/-/sql">
+              SQL
+            </Button>
             <Button component={NakedLink} href="/-/create/project">
               Create project
             </Button>
