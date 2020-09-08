@@ -62,12 +62,12 @@ export class Job<TRecord = any> {
     this.jobData = jobData;
     this.jobID = jobData.jobID;
     this.status = jobData.status;
-    this.resultAvroSchema = jobData.resultAvroSchema;
+    this.resultAvroSchema = jobData.resultAvroSchema ?? this.resultAvroSchema;
     this.replayCursor = jobData.replayCursor;
-    this.referencedInstanceIDs = jobData.referencedInstanceIDs;
-    this.bytesScanned = jobData.bytesScanned;
-    this.resultSizeBytes = jobData.resultSizeBytes;
-    this.resultSizeRecords = jobData.resultSizeRecords;
+    this.referencedInstanceIDs = jobData.referencedInstanceIDs ?? this.referencedInstanceIDs;
+    this.bytesScanned = jobData.bytesScanned ?? this.bytesScanned;
+    this.resultSizeBytes = jobData.resultSizeBytes ?? this.resultSizeBytes;
+    this.resultSizeRecords = jobData.resultSizeRecords ?? this.resultSizeRecords;
   }
 
   private checkIsNotDry() {
