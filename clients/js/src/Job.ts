@@ -3,10 +3,13 @@ import { Connection, WarehouseJobData } from "./Connection";
 
 const POLL_FREQUENCY = 1000;
 
+export type GetCursorOptions = { onPoll: () => void };
+
 export class Job<TRecord = any> {
   public jobID?: string;
-  public resultAvroSchema?: string;
   public status: "pending" | "running" | "done";
+  public resultAvroSchema?: string;
+  public replayCursor?: string;
   public referencedInstanceIDs?: string[];
   public bytesScanned?: number;
   public resultSizeBytes?: number;
@@ -22,33 +25,45 @@ export class Job<TRecord = any> {
     this.setJobData(jobData);
   }
 
-  public async poll() {
+  public async poll(): Promise<{ error?: Error }> {
     this.checkIsNotDry();
     const { data, error } = await this.connection.pollWarehouseJob(this.jobID as string);
-    if (error || !data) {
-      throw Error(`Error polling job: ${error?.message}`);
+    if (error) {
+      return { error };
+    }
+    if (!data) {
+      throw Error(`Error data is undefined`);
     }
     this.setJobData(data);
+    return {};
   }
 
-  public async getCursor(): Promise<Cursor<TRecord>> {
+  public async getCursor(opts?: GetCursorOptions): Promise<{ cursor?: Cursor<TRecord>, error?: Error }> {
     this.checkIsNotDry();
     // poll until completed
     while (this.status !== "done") {
       if (this.jobData) { // don't sleep if we haven't done first fetch yet
         await new Promise(resolve => setTimeout(resolve, POLL_FREQUENCY));
       }
-      await this.poll();
+      const { error } = await this.poll();
+      if (error) {
+        return { error };
+      }
+      if (opts?.onPoll) {
+        opts.onPoll();
+      }
     }
-    // we know job completed without error (poll raises job errors)
-    return new Cursor<TRecord>(this.connection, this.jobData.replayCursor);
+    // we know job completed without error
+    const cursor = new Cursor<TRecord>(this.connection, this.jobData.replayCursor);
+    return { cursor };
   }
 
   private setJobData(jobData: WarehouseJobData) {
     this.jobData = jobData;
     this.jobID = jobData.jobID;
-    this.resultAvroSchema = jobData.resultAvroSchema;
     this.status = jobData.status;
+    this.resultAvroSchema = jobData.resultAvroSchema;
+    this.replayCursor = jobData.replayCursor;
     this.referencedInstanceIDs = jobData.referencedInstanceIDs;
     this.bytesScanned = jobData.bytesScanned;
     this.resultSizeBytes = jobData.resultSizeBytes;

@@ -152,7 +152,12 @@ test("runs warehouse job and reads results", async () => {
   expect(job?.jobID).toBeTruthy();
   expect(job?.status).toBe("running");
 
-  const cursor = await job?.getCursor();
+  if (!job) { // for satisfying typescript
+    fail("job is undefined");
+  }
+
+  const { cursor, error: error2 } = await job?.getCursor();
+  expect(error2).toBeFalsy();
   expect(cursor).toBeTruthy();
   expect(cursor?.nextCursor).toBeTruthy();
   expect(cursor?.changeCursor).toBeUndefined();
