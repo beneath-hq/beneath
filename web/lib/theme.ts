@@ -9,6 +9,23 @@ declare module "@material-ui/core/styles/createTypography" {
     fontFamilyMonospaced: React.CSSProperties['fontFamily'];
   }
 }
+declare module "@material-ui/core/styles/createPalette" {
+  interface TypeBackground {
+    medium: string;
+  }
+  interface PaletteOptions {
+    border: {
+      background: string;
+      paper: string;
+    };
+  }
+  interface Palette {
+    border: {
+      background: string;
+      paper: string;
+    };
+  }
+}
 
 const theme: ThemeOptions = {}; // the theme we're building
 const baseTheme = createMuiTheme(); // for reference to non-overridden values
@@ -50,9 +67,14 @@ theme.palette = {
   },
   background: {
     paper: "rgba(26, 39, 75, 1)",
+    medium: "rgba(21, 31, 60)",
     default: "rgba(16, 24, 46, 1)",
   },
   divider: "rgba(45, 51, 71, 1)",
+  border: {
+    background: "rgba(45, 51, 71, 1)",
+    paper: "rgba(39, 55, 90)",
+  },
   primary: {
     light: "rgba(28, 198, 234, 1)",
     main: "rgba(12, 172, 234, 1)",
@@ -80,6 +102,9 @@ theme.palette = {
 };
 
 theme.props = {
+  MuiAppBar: {
+    elevation: 0,
+  },
   MuiButtonBase: {
     disableRipple: true,
   },
@@ -96,8 +121,11 @@ theme.props = {
 
 theme.overrides = {
   MuiAppBar: {
+    root: {
+      boxShadow: `inset 0 -1px 0 0 ${theme.palette.border.paper}`, // boxShadow doesn't stack with tab indicator, unlike borderBottom
+    },
     colorPrimary: {
-      backgroundColor: theme.palette.background?.default,
+      backgroundColor: theme.palette.background?.medium,
     },
   },
   MuiAvatar: {
@@ -164,6 +192,11 @@ theme.overrides = {
   MuiDialog: {
     paper: {
       backgroundColor: theme.palette.background?.default,
+    },
+  },
+  MuiPaper: {
+    outlined: {
+      border: `1px solid ${theme.palette.border.paper}`,
     },
   },
   MuiTab: {
