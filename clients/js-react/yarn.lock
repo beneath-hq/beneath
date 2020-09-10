@@ -752,10 +752,10 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-beneath@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.6.tgz#79e3340cb16174cc1a3d4a1f7388d1c52c0c7777"
-  integrity sha512-1SLiswlcVx3m2elyDmJGqkQ9CjSeRmEjLT/FezdPhJGkkxWDUcKJVpXW97RvnUISgqsjQm3P4kMCHRZUI1sEYg==
+beneath@^1.1.8:
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.8.tgz#d52f85c4a122b6d72efc4422f01779d600896e79"
+  integrity sha512-HpibJnn/ZcHMndNAu0wBucWFsiGnCHLSU5VzeLTZaDctWBj/s8kmArLc+dNkZP2BVBf6UyRyjX1FE78QqzlDmA==
   dependencies:
     "@types/node-fetch" "^2.5.7"
     graphql "^14.6.0"
