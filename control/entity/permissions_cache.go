@@ -138,6 +138,9 @@ func (c *PermissionsCache) Get(ctx context.Context, ownerID uuid.UUID, resourceI
 		Func:       c.getterFunc(ctx, ownerID, resourceID),
 	})
 	if err != nil {
+		if ctx.Err() == context.Canceled {
+			return res.Elem().Interface()
+		}
 		panic(err)
 	}
 	return res.Elem().Interface()
@@ -175,6 +178,9 @@ func (c PermissionsCache) getterFunc(ctx context.Context, ownerID uuid.UUID, res
 		res := reflect.New(c.prototype)
 		_, err := hub.DB.QueryContext(ctx, res.Interface(), c.query, ownerID, resourceID)
 		if err != nil && err != pg.ErrNoRows {
+			if ctx.Err() == context.Canceled {
+				return res.Elem().Interface(), nil
+			}
 			panic(err)
 		}
 		return res.Elem().Interface(), nil

@@ -50,6 +50,9 @@ func (c instanceCache) get(ctx context.Context, organizationName string, project
 	})
 
 	if err != nil {
+		if ctx.Err() == context.Canceled {
+			return uuid.Nil
+		}
 		panic(err)
 	}
 

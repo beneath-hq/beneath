@@ -331,6 +331,9 @@ func (c *StreamCache) Get(ctx context.Context, instanceID uuid.UUID) *CachedStre
 	})
 
 	if err != nil {
+		if ctx.Err() == context.Canceled {
+			return nil
+		}
 		panic(err)
 	}
 
