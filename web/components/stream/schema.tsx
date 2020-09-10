@@ -46,7 +46,6 @@ export class Schema {
     }
     return this.columns;
   }
-
 }
 
 export class Column {
@@ -60,7 +59,13 @@ export class Column {
   public isNumeric: boolean;
   public formatter: (val: any) => string;
 
-  constructor(name: string, displayName: string, type: avro.Type | TimeagoType, doc: string | undefined, isKey: boolean) {
+  constructor(
+    name: string,
+    displayName: string,
+    type: avro.Type | TimeagoType,
+    doc: string | undefined,
+    isKey: boolean
+  ) {
     this.name = name;
     this.displayName = displayName;
     this.type = type;
@@ -82,7 +87,7 @@ export class Column {
     }
 
     // get inputType
-    this.inputType = this.getInputType(this.type);
+    this.inputType = this.makeInputType(this.type);
 
     // compute isNumeric
     this.isNumeric = false;
@@ -101,7 +106,7 @@ export class Column {
     return this.formatter(_.get(record, this.name));
   }
 
-  private getInputType = (type: avro.Type | TimeagoType) => {
+  private makeInputType = (type: avro.Type | TimeagoType) => {
     if (avro.Type.isType(type, "logical:timestamp-millis")) {
       return "datetime";
     }
@@ -117,8 +122,11 @@ export class Column {
     if (avro.Type.isType(type, "string", "enum")) {
       return "text";
     }
-    // TimeagoType; shouldn't ever need this
-    return "datetime";
+    if (type === "timeago") {
+      // shouldn't ever need this
+      return "datetime";
+    }
+    return "text";
   }
 
   private makeFormatter() {
@@ -171,7 +179,6 @@ export class Column {
     }
     return (val: any) => val;
   }
-
 }
 
 class DateType extends avro.types.LogicalType {

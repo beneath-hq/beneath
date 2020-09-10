@@ -1,8 +1,8 @@
-import MuiLink from "@material-ui/core/Link";
+import MuiLink, { LinkProps as MuiLinkProps } from "@material-ui/core/Link";
 import NextLink, { LinkProps as NextLinkProps } from "next/link";
 import React, { FC } from "react";
 
-export const NakedLink = React.forwardRef<any, NextLinkProps>((props, ref) => {
+export const NakedLink = React.forwardRef<any, React.PropsWithChildren<NextLinkProps>>((props, ref) => {
   const { href, as, replace, scroll, shallow, passHref, prefetch, ...others } = props;
 
   // if it's an external href, use a normal anchor
@@ -25,7 +25,7 @@ export const NakedLink = React.forwardRef<any, NextLinkProps>((props, ref) => {
   );
 });
 
-type LinkProps = NextLinkProps & {
+type LinkProps = NextLinkProps & MuiLinkProps & {
   href: string;
   bold?: boolean;
   children?: any;

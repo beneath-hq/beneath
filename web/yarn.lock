@@ -2475,28 +2475,19 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-beneath-react@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.1.1.tgz#238f24825142e0dd54c27f89056ca78ddc5b0441"
-  integrity sha512-82OAC/oTF1yaNsu+/VT/y02E7Cx+QryP/KMzKlyIzrvVD6693cp0dPDg89hgibnEGhVmrHYD6FbMpvxPAqZVtQ==
+beneath-react@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.1.2.tgz#3ee6fb8420a9d6a301aa7e45873db6f1b95da313"
+  integrity sha512-i4vQ9tdE0CbTLTaqkSNqa4e5EiPqDc9G0l5R2VxdbrsKzafVSU16RTQNO0aiIblik6myD/LEHx50Nj56yxt8pw==
   dependencies:
-    beneath "^1.1.7"
+    beneath "^1.1.8"
     lodash "^4.17.15"
     uuid "^8.3.0"
 
-beneath@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.6.tgz#79e3340cb16174cc1a3d4a1f7388d1c52c0c7777"
-  integrity sha512-1SLiswlcVx3m2elyDmJGqkQ9CjSeRmEjLT/FezdPhJGkkxWDUcKJVpXW97RvnUISgqsjQm3P4kMCHRZUI1sEYg==
-  dependencies:
-    "@types/node-fetch" "^2.5.7"
-    graphql "^14.6.0"
-    subscriptions-transport-ws "^0.9.16"
-
-beneath@^1.1.7:
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.7.tgz#dcdc3b9d4ca6f750c32ac5e55124b26842ee76bb"
-  integrity sha512-ct0npD4jQfS2gFOgR/uX8WBbqQWeUhKLEWvWwdhtrigou93IBXM7KPFxWhEddoo9r5dqPORiS1gI9jnaFizO6g==
+beneath@^1.1.8:
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.8.tgz#d52f85c4a122b6d72efc4422f01779d600896e79"
+  integrity sha512-HpibJnn/ZcHMndNAu0wBucWFsiGnCHLSU5VzeLTZaDctWBj/s8kmArLc+dNkZP2BVBf6UyRyjX1FE78QqzlDmA==
   dependencies:
     "@types/node-fetch" "^2.5.7"
     graphql "^14.6.0"

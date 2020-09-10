@@ -1,4 +1,4 @@
-import { InputBaseComponentProps, InputBase, makeStyles, Theme } from "@material-ui/core";
+import { InputBaseComponentProps, InputBase, makeStyles, Paper, Theme } from "@material-ui/core";
 import { FC } from "react";
 
 import FormControl, { FormControlProps } from "./FormControl";
@@ -6,13 +6,15 @@ import clsx from "clsx";
 
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
-    marginTop: "0.3rem",
     borderRadius: "4px",
     position: "relative",
-    backgroundColor: theme.palette.background.paper,
-    border: "1px solid",
-    borderColor: "rgba(35, 48, 70, 1)",
     padding: "0 12px",
+    // outlined paper styles
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.border.paper}`,
+  },
+  rootMargin: {
+    marginTop: "0.3rem",
   },
   focused: {
     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
@@ -49,6 +51,7 @@ const TextField: FC<TextFieldProps> = (props) => {
   const {
     id,
     value,
+    margin,
     multiline,
     monospace,
     rows,
@@ -65,10 +68,10 @@ const TextField: FC<TextFieldProps> = (props) => {
   const classes = useStyles();
 
   return (
-    <FormControl id={id} {...others}>
+    <FormControl id={id} margin={margin} {...others}>
       <InputBase
         classes={{
-          root: clsx(classes.root, monospace && classes.monospace),
+          root: clsx(classes.root, margin !== "none" && classes.rootMargin, monospace && classes.monospace),
           focused: classes.focused,
           input: classes.input,
           inputMultiline: classes.input,
@@ -85,6 +88,7 @@ const TextField: FC<TextFieldProps> = (props) => {
         onFocus={onFocus}
         endAdornment={endAdornment}
         startAdornment={startAdornment}
+        spellCheck={multiline && !monospace}
       />
     </FormControl>
   );
