@@ -186,7 +186,7 @@ export class Connection {
     });
 
     // if not json: if successful, return empty; else return just error
-    if (res.headers.get("Content-Type") !== "application/json") {
+    if (res.headers.get("Content-Type")?.indexOf("application/json") === -1) {
       if (res.ok) {
         return {};
       }
