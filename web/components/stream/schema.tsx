@@ -53,6 +53,8 @@ export class Column {
   public displayName: string;
   public type: avro.Type | TimeagoType;
   public inputType: InputType;
+  public typeName: string;
+  public typeDescription: string;
   public doc: string | undefined;
   public isKey: boolean;
   public isNullable: boolean;
@@ -98,6 +100,11 @@ export class Column {
       }
     }
 
+    // compute type description
+    const { name: typeName, description: typeDescription } = this.makeTypeDescription(this.type);
+    this.typeName = typeName;
+    this.typeDescription = typeDescription;
+
     // make formatter
     this.formatter = this.makeFormatter();
   }
@@ -106,11 +113,67 @@ export class Column {
     return this.formatter(_.get(record, this.name));
   }
 
+  private makeTypeDescription = (type: avro.Type | TimeagoType): { name: string, description: string }  => {
+    if (type === "timeago") {
+      return { name: "Timestamp", description: "Date and time with millisecond-precision" };
+    }
+    if (avro.Type.isType(type, "logical:timestamp-millis")) {
+      return { name: "Timestamp", description: "Date and time with millisecond-precision" };
+    }
+    if (avro.Type.isType(type, "logical:decimal")) {
+      return { name: "Numeric", description: "Integer with up to 128 digits" };
+    }
+    if (avro.Type.isType(type, "logical:uuid")) {
+      return { name: "UUID", description: "16-byte unique identifier" };
+    }
+    if (avro.Type.isType(type, "int")) {
+      return { name: "Int", description: "32-bit integer" };
+    }
+    if (avro.Type.isType(type, "long")) {
+      return { name: "Long", description: "64-bit integer" };
+    }
+    if (avro.Type.isType(type, "float")) {
+      return { name: "Float", description: "32-bit float" };
+    }
+    if (avro.Type.isType(type, "double")) {
+      return { name: "Double", description: "64-bit float" };
+    }
+    if (avro.Type.isType(type, "bytes")) {
+      return { name: "Bytes", description: "Variable-length byte array" };
+    }
+    if (avro.Type.isType(type, "fixed")) {
+      const fixed = this.type as avro.types.FixedType;
+      return { name: `Bytes${fixed.size}`, description: `Fixed-length byte array of size ${fixed.size}` };
+    }
+    if (avro.Type.isType(type, "string")) {
+      return { name: "Bytes", description: "Variable-length UTF-8 string" };
+    }
+    if (avro.Type.isType(type, "enum")) {
+      const enumT = this.type as avro.types.EnumType;
+      return { name: `${enumT.name}`, description: `Enum with options: ${enumT.symbols.join(", ")}` };
+    }
+    if (avro.Type.isType(type, "array")) {
+      const array = this.type as avro.types.ArrayType;
+      const { name, description } = this.makeTypeDescription(array.itemsType);
+      return { name: `${name}[]`, description: `Array of: ${description}` };
+    }
+    if (avro.Type.isType(type, "record")) {
+      const record = this.type as avro.types.RecordType;
+      const summary = record.fields.map((field) => {
+        const { name } = this.makeTypeDescription(field.type);
+        return field.name + ": " + name;
+      });
+      return { name: record.name || "record", description: `Record with fields: ${summary}` };
+    }
+    console.error("Unrecognized type: ", type);
+    return { name: "Unknown", description: "Type not known" };
+  }
+
   private makeInputType = (type: avro.Type | TimeagoType) => {
     if (avro.Type.isType(type, "logical:timestamp-millis")) {
       return "datetime";
     }
-    if (avro.Type.isType(type, "int", "long")) {
+    if (avro.Type.isType(type, "int", "long", "logical:decimal")) {
       return "integer";
     }
     if (avro.Type.isType(type, "float", "double")) {

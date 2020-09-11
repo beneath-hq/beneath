@@ -1,28 +1,24 @@
 import { useApolloClient, ApolloQueryResult } from "@apollo/client";
-import { Button, CircularProgress, Grid, makeStyles, Theme, Typography, Paper, Chip } from "@material-ui/core";
+import { Button, CircularProgress, Grid, makeStyles, Theme, Chip } from "@material-ui/core";
 import { useWarehouse } from "beneath-react";
 import _ from "lodash";
 import { useRouter } from "next/router";
 import numbro from "numbro";
-import React, { useState, useMemo, useEffect, FC } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 import TextField from "../forms/TextField";
-import { Link } from "components/Link";
 import RecordsTable from "components/stream/RecordsTable";
 import { Schema } from "components/stream/schema";
 import { useToken } from "hooks/useToken";
 import { QUERY_STREAM } from "apollo/queries/stream";
 import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "apollo/types/StreamByOrganizationProjectAndName";
-import { toBackendName, toURLName } from "lib/names";
-import SchemaView from "./SchemaView";
+import { toBackendName } from "lib/names";
+import StreamPreview from "./StreamPreview";
 
 const useStyles = makeStyles((_: Theme) => ({
   statusAction: {
     display: "flex",
     alignItems: "center",
-  },
-  streamPreviewPaper: {
-    padding: "12px",
   },
 }));
 
@@ -88,7 +84,7 @@ const Main = () => {
   return (
     <Grid container spacing={2}>
       {/* Left */}
-      <Grid item xs={12} md={8}>
+      <Grid item xs={12} md={8} lg={9}>
         <Grid container spacing={2} direction="column">
           {/* Editor */}
           <Grid item xs={12}>
@@ -172,7 +168,7 @@ const Main = () => {
         </Grid>
       </Grid>
       {/* Right */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={4} lg={3}>
         <Grid container spacing={2} direction="column">
           {streams.map((result, idx) => (
             <Grid key={idx} item>
@@ -186,43 +182,3 @@ const Main = () => {
 };
 
 export default Main;
-
-interface StreamPreviewProps {
-  result: ApolloQueryResult<StreamByOrganizationProjectAndName>;
-}
-
-const StreamPreview: FC<StreamPreviewProps> = ({ result: { data, error, errors } }) => {
-  let errorMsg = null;
-  if (error || errors || !data) {
-    errorMsg = error ? error.message : (errors && errors.length > 0) ? errors[0].message : "Unknown error";
-  }
-
-  const stream = data?.streamByOrganizationProjectAndName;
-  const orgName = toURLName(stream?.project.organization.name || "");
-  const projName = toURLName(stream?.project.name || "");
-
-  const classes = useStyles();
-  return (
-    <Paper className={classes.streamPreviewPaper}>
-      {errorMsg && <Typography>{errorMsg}</Typography>}
-      {stream && (
-        <>
-          <Link
-            color="textPrimary"
-            underline="none"
-            variant="h3"
-            gutterBottom
-            href={`/stream?organization_name=${orgName}&project_name=${projName}&stream_name=${stream.name}`}
-            as={`/${orgName}/${projName}/${stream.name}`}
-          >
-            {orgName}/{projName}/{stream.name}
-          </Link>
-          <Typography color="textSecondary" gutterBottom>
-            {stream.description}
-          </Typography>
-          <SchemaView stream={stream} />
-        </>
-      )}
-    </Paper>
-  );
-};
