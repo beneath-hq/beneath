@@ -65,10 +65,11 @@ export function useWarehouse<TRecord = any>(opts: UseWarehouseOptions): UseWareh
 
     const fetchMore = async (opts?: FetchMoreOptions) => {
       setLoading(true);
-      const { data: batch, error } = await cursor.readNext({ pageSize: opts?.pageSize });
-      if (error || !batch) {
+      const { data: _batch, error } = await cursor.readNext({ pageSize: opts?.pageSize });
+      if (error) {
         return stop(error);
       }
+      const batch = _batch ?? [];
 
       // add key to batch
       for (const record of batch) {
