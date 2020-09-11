@@ -166,12 +166,8 @@ theme.overrides = {
   },
   MuiChip: {
     root: {
-      // background: "none",
-      backgroundColor: theme.palette.background?.default,
-      fontWeight: "bold",
-      borderRadius: 0,
-      paddingLeft: "0px",
-      color: theme.palette.text?.secondary
+      backgroundColor: theme.palette.background?.paper,
+      borderRadius: "4px",
     },
     clickable: {
       "&:hover": {

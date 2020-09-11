@@ -1,8 +1,9 @@
 import { useApolloClient, ApolloQueryResult } from "@apollo/client";
-import { Button, CircularProgress, Grid, makeStyles, Theme, Typography, Paper } from "@material-ui/core";
+import { Button, CircularProgress, Grid, makeStyles, Theme, Typography, Paper, Chip } from "@material-ui/core";
 import { useWarehouse } from "beneath-react";
 import _ from "lodash";
 import { useRouter } from "next/router";
+import numbro from "numbro";
 import React, { useState, useMemo, useEffect, FC } from "react";
 
 import TextField from "../forms/TextField";
@@ -87,75 +88,98 @@ const Main = () => {
   return (
     <Grid container spacing={2}>
       {/* Left */}
-      <Grid item xs={12} md={8} container spacing={2}>
-        {/* Editor */}
-        <Grid item xs={12}>
-          <TextField
-            multiline
-            margin="none"
-            monospace
-            rows={15}
-            rowsMax={200}
-            value={queryText}
-            onChange={(e) => setQueryText(e.target.value)}
-          />
-        </Grid>
-        {/* Action bar */}
-        <Grid item xs={12} container spacing={1}>
-          {loading && (
-            <Grid className={classes.statusAction} item>
-              <CircularProgress size={28} />
-            </Grid>
-          )}
-          {(loading || (job?.status && job.status !== "done")) && (
-            <Grid className={classes.statusAction} item>
-              <Typography>Job status: {job?.status ?? "pending"}</Typography>
-            </Grid>
-          )}
-          {job?.bytesScanned && (
-            <Grid className={classes.statusAction} item>
-              <Typography>Query scans {job?.bytesScanned} bytes</Typography>
-            </Grid>
-          )}
-          <Grid item xs></Grid>
-          <Grid item>
-            <Button variant="contained" disabled={loading} onClick={() => analyzeQuery(queryText)}>
-              Analyze
-            </Button>
+      <Grid item xs={12} md={8}>
+        <Grid container spacing={2} direction="column">
+          {/* Editor */}
+          <Grid item xs={12}>
+            <TextField
+              multiline
+              margin="none"
+              monospace
+              rows={15}
+              rowsMax={200}
+              value={queryText}
+              onChange={(e) => setQueryText(e.target.value)}
+            />
           </Grid>
-          <Grid item>
-            <Button variant="contained" color="primary" disabled={loading} onClick={() => runQuery(queryText)}>
-              Run
-            </Button>
+          {/* Action bar */}
+          <Grid item xs={12}>
+            <Grid container spacing={1}>
+              {(loading || (job?.status && job.status !== "done")) && (
+                <Grid className={classes.statusAction} item>
+                  <Chip label={`Job ${job?.status ?? "pending"}`} />
+                </Grid>
+              )}
+              {job?.bytesScanned && (
+                <Grid className={classes.statusAction} item>
+                  <Chip
+                    label={
+                      (!job.jobID ? "Query will scan " : job.status !== "done" ? "Scanning " : "Query scanned ") +
+                      numbro(job.bytesScanned).format({
+                        base: "binary",
+                        mantissa: 1,
+                        output: "byte",
+                        spaceSeparated: true,
+                        optionalMantissa: true,
+                        trimMantissa: true,
+                      })
+                    }
+                  />
+                </Grid>
+              )}
+              {job?.resultSizeRecords && (
+                <Grid className={classes.statusAction} item>
+                  <Chip label={`Result contains ${job?.resultSizeRecords} records`} />
+                </Grid>
+              )}
+              <Grid item xs></Grid>
+              {loading && (
+                <Grid className={classes.statusAction} item>
+                  <CircularProgress size={24} />
+                </Grid>
+              )}
+              <Grid item>
+                <Button variant="contained" disabled={loading} onClick={() => analyzeQuery(queryText)}>
+                  Analyze
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button variant="contained" color="primary" disabled={loading} onClick={() => runQuery(queryText)}>
+                  Run
+                </Button>
+              </Grid>
+            </Grid>
           </Grid>
-        </Grid>
-        {/* Table */}
-        <Grid item xs={12}>
-          <RecordsTable
-            schema={schema}
-            records={records}
-            fetchMore={fetchMore}
-            loading={loading}
-            error={!!error}
-            message={
-              error
-                ? error.message
-                : !job
-                ? "Query result will appear here"
-                : !job.jobID
-                ? "Query result will appear here"
-                : ""
-            }
-          />
+          {/* Table */}
+          <Grid item xs={12}>
+            <RecordsTable
+              schema={schema}
+              records={records}
+              fetchMore={fetchMore}
+              loading={loading}
+              error={!!error}
+              message={
+                error
+                  ? error.message
+                  : records === undefined
+                  ? "Query result will appear here"
+                  : records.length === 0
+                  ? "Result is empty"
+                  : ""
+              }
+            />
+          </Grid>
         </Grid>
       </Grid>
       {/* Right */}
-      <Grid item xs={12} md={4} container spacing={2}>
-        {streams.map((result, idx) => (
-          <Grid key={idx} item xs={12}>
-            <StreamPreview result={result} />
-          </Grid>
-        ))}
+      <Grid item xs={12} md={4}>
+        <Grid container spacing={2} direction="column">
+          {streams.map((result, idx) => (
+            <Grid key={idx} item>
+              <StreamPreview result={result} />
+            </Grid>
+          ))}
+        </Grid>
       </Grid>
     </Grid>
   );
