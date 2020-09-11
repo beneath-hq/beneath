@@ -120,20 +120,20 @@ func HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseRequest) (*Que
 	}
 
 	// analyze query
-	job, err := hub.Engine.Warehouse.AnalyzeWarehouseQuery(ctx, query)
+	analyzeJob, err := hub.Engine.Warehouse.AnalyzeWarehouseQuery(ctx, query)
 	if err != nil {
 		return nil, newErrorf(http.StatusBadRequest, "error during query analysis: %s", err.Error())
 	}
 
 	// stop if dry
 	if req.DryRun {
-		return &QueryWarehouseResponse{Job: wrapWarehouseJob(job)}, nil
+		return &QueryWarehouseResponse{Job: wrapWarehouseJob(analyzeJob, nil)}, nil
 	}
 
 	// check bytes scanned
-	estimatedBytesScanned := job.GetBytesScanned()
+	estimatedBytesScanned := analyzeJob.GetBytesScanned()
 	if req.MaxBytesScanned != 0 && estimatedBytesScanned > req.MaxBytesScanned {
-		return nil, newErrorf(http.StatusTooManyRequests, "query would scan %d bytes, which exceeds job limit of %d (limit the query or increase the limit)", job.GetBytesScanned(), req.MaxBytesScanned)
+		return nil, newErrorf(http.StatusTooManyRequests, "query would scan %d bytes, which exceeds job limit of %d (limit the query or increase the limit)", analyzeJob.GetBytesScanned(), req.MaxBytesScanned)
 	}
 
 	// check quota
@@ -144,10 +144,12 @@ func HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseRequest) (*Que
 
 	// run real job
 	jobID := uuid.NewV4()
-	job, err = hub.Engine.Warehouse.RunWarehouseQuery(ctx, jobID, query, int(req.Partitions), int(req.TimeoutMs), int(req.MaxBytesScanned))
+	job, err := hub.Engine.Warehouse.RunWarehouseQuery(ctx, jobID, query, int(req.Partitions), int(req.TimeoutMs), int(req.MaxBytesScanned))
 	if err != nil {
 		return nil, newErrorf(http.StatusBadRequest, "error running query: %s", err.Error())
 	}
+
+	// assign analyze fields not returned from run (kind of a hack..., fix this when we persist job objects)
 
 	// update payload
 	payload.JobID = &jobID
@@ -156,7 +158,7 @@ func HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseRequest) (*Que
 	// track read metrics
 	util.TrackScan(ctx, secret, estimatedBytesScanned)
 
-	return &QueryWarehouseResponse{Job: wrapWarehouseJob(job)}, nil
+	return &QueryWarehouseResponse{Job: wrapWarehouseJob(job, analyzeJob)}, nil
 }
 
 // HandlePollWarehouse handles a warehouse poll request
@@ -179,21 +181,27 @@ func HandlePollWarehouse(ctx context.Context, req *PollWarehouseRequest) (*PollW
 	payload.BytesScanned = job.GetBytesScanned()
 	middleware.SetTagsPayload(ctx, payload)
 
-	return &PollWarehouseResponse{Job: wrapWarehouseJob(job)}, nil
+	return &PollWarehouseResponse{Job: wrapWarehouseJob(job, nil)}, nil
 }
 
-func wrapWarehouseJob(job driver.WarehouseJob) *WarehouseJob {
+func wrapWarehouseJob(job driver.WarehouseJob, analyzeJob driver.WarehouseJob) *WarehouseJob {
 	var cursors [][]byte
 	for _, engineCursor := range job.GetReplayCursors() {
 		cursors = append(cursors, wrapCursor(util.WarehouseCursorType, job.GetJobID(), engineCursor))
 	}
 
-	referencedInstanceIDs := make([]uuid.UUID, len(job.GetReferencedInstances()))
-	for idx, instanceID := range job.GetReferencedInstances() {
+	// coalesce GetReferencedInstances with analyzeJob
+	referencedInstances := job.GetReferencedInstances()
+	if analyzeJob != nil && len(referencedInstances) == 0 {
+		referencedInstances = analyzeJob.GetReferencedInstances()
+	}
+
+	referencedInstanceIDs := make([]uuid.UUID, len(referencedInstances))
+	for idx, instanceID := range referencedInstances {
 		referencedInstanceIDs[idx] = instanceID.GetStreamInstanceID()
 	}
 
-	return &WarehouseJob{
+	res := &WarehouseJob{
 		JobID:               job.GetJobID(),
 		Status:              job.GetStatus(),
 		Error:               job.GetError(),
@@ -204,4 +212,16 @@ func wrapWarehouseJob(job driver.WarehouseJob) *WarehouseJob {
 		ResultSizeBytes:     job.GetResultSizeBytes(),
 		ResultSizeRecords:   job.GetResultSizeRecords(),
 	}
+
+	// coalesce GetResultAvroSchema with analyzeJob
+	if analyzeJob != nil && res.ResultAvroSchema == "" {
+		res.ResultAvroSchema = analyzeJob.GetResultAvroSchema()
+	}
+
+	// coalesce GetBytesScanned with analyzeJob
+	if analyzeJob != nil && res.BytesScanned == 0 {
+		res.BytesScanned = analyzeJob.GetBytesScanned()
+	}
+
+	return res
 }
