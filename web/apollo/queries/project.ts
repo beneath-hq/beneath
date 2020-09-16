@@ -74,6 +74,7 @@ export const QUERY_PROJECT = gql`
 export const QUERY_PROJECT_MEMBERS = gql`
   query ProjectMembers($projectID: UUID!) {
     projectMembers(projectID: $projectID) {
+      projectID
       userID
       name
       displayName

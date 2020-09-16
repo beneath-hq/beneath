@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import React, { FC } from "react";
 
-import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
+import { List, ListItem, ListItemAvatar, ListItemText } from "@material-ui/core";
 
 import { QUERY_PROJECT_MEMBERS } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
