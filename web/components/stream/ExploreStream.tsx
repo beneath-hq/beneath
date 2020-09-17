@@ -30,6 +30,7 @@ import { Schema } from "./schema";
 import WriteStream from "../../components/stream/WriteStream";
 import CodeBlock from "components/CodeBlock";
 import FilterForm from "./FilterForm";
+import { NakedLink } from "components/Link";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -187,14 +188,24 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                       // and to allow both stream and batch writes
                       */}
                     <DialogContent>
-                      <WriteStream stream={stream} instanceID={instance.streamInstanceID} setWriteDialog={setWriteDialog} />
+                      <WriteStream
+                        stream={stream}
+                        instanceID={instance.streamInstanceID}
+                        setWriteDialog={setWriteDialog}
+                      />
                     </DialogContent>
                   </Dialog>
                 </>
               )}
             </Grid>
             <Grid item>
-              <Button variant="outlined" endIcon={<OpenInNewIcon />}>
+              <Button
+                variant="outlined"
+                endIcon={<OpenInNewIcon />}
+                component={NakedLink}
+                href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
+                as={`/-/sql`}
+              >
                 Query in SQL editor
               </Button>
             </Grid>
@@ -395,7 +406,12 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
           {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
           {loading && records.length === 0 && <Loading justify="center" />}
           {(!loading || records.length > 0) && (
-            <RecordsTable schema={schema} records={records} fetchMore={fetchMore} showTimestamps={queryType === "log"} />
+            <RecordsTable
+              schema={schema}
+              records={records}
+              fetchMore={fetchMore}
+              showTimestamps={queryType === "log"}
+            />
           )}
           {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
           {!fetchMore && fetchMoreChanges && (
