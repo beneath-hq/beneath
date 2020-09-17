@@ -1,7 +1,7 @@
 import _ from "lodash";
 import React, { FC } from "react";
 import { Typography } from "@material-ui/core";
-import { BrowserClient } from "beneath";
+import { Client } from "beneath";
 
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { Schema } from "./schema";
@@ -21,7 +21,7 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
   const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
   const token = useToken();
 
-  const client = new BrowserClient({ secret: token || undefined });
+  const client = new Client({ secret: token || undefined });
   const stream = client.findStream({instanceID});
 
   const initialValues: any = {
