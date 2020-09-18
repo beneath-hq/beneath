@@ -206,7 +206,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                 href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
                 as={`/-/sql`}
               >
-                Query in SQL editor
+                Query with SQL
               </Button>
             </Grid>
           </Grid>
