@@ -24,7 +24,6 @@ import {
 } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import Loading from "../Loading";
-import VSpace from "../VSpace";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
 import WriteStream from "../../components/stream/WriteStream";
@@ -66,6 +65,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   subtext: {
     fontSize: ".8rem",
     textTransform: "initial",
+  },
+  actionBox: {
+    marginLeft: "1px",
+    border: `1px solid ${theme.palette.divider}`,
   },
   indexQueryBox: {
     width: "100%",
@@ -159,226 +162,247 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
 
   return (
     <>
-      <Grid container direction="column" spacing={2}>
+      <Grid container direction="column" spacing={4}>
+        {/* top-row buttons */}
         <Grid item>
-          <Grid container justify="flex-end" spacing={2}>
+          <Grid container justify="space-between" alignItems="center" spacing={2}>
             <Grid item>
-              {stream.allowManualWrites && (
-                <>
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setWriteDialog(true);
-                    }}
-                    endIcon={<AddBoxIcon />}
-                  >
-                    Write a record
-                  </Button>
-                  <Dialog
-                    open={writeDialog}
-                    fullWidth={true}
-                    maxWidth={"xs"}
-                    onBackdropClick={() => {
-                      setWriteDialog(false);
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <ToggleButtonGroup
+                    exclusive
+                    size="small"
+                    value={queryType}
+                    onChange={(_, value: "log" | "index" | null) => {
+                      if (value !== null) setQueryType(value);
                     }}
                   >
-                    {/*
-                      // disable for now
-                      // must update js client to be able to write data (current local resolvers do not work anymore!)
-                      // and to allow both stream and batch writes
-                      */}
-                    <DialogContent>
-                      <WriteStream
-                        stream={stream}
-                        instanceID={instance.streamInstanceID}
-                        setWriteDialog={setWriteDialog}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                </>
-              )}
-            </Grid>
-            <Grid item>
-              <Button
-                variant="outlined"
-                endIcon={<OpenInNewIcon />}
-                component={NakedLink}
-                href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
-                as={`/-/sql`}
-              >
-                Query with SQL
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid item>
-          <Grid container direction="column">
-            <Grid item container spacing={2} justify="space-between">
-              <Grid item>
-                <Grid container alignItems="center" spacing={2}>
-                  <Grid item>
-                    <ToggleButtonGroup
-                      exclusive
-                      size="small"
-                      value={queryType}
-                      onChange={(_, value: "log" | "index" | null) => {
-                        if (value !== null) setQueryType(value);
-                      }}
+                    <ToggleButton
+                      value="log"
+                      classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
                     >
-                      <ToggleButton
-                        value="log"
-                        classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
-                      >
-                        <Grid container direction="column">
-                          <Grid item>
-                            <Typography>Log</Typography>
-                          </Grid>
-                          <Grid item>
-                            <Typography className={classes.subtext}>Sort by time written</Typography>
-                          </Grid>
+                      <Grid container direction="column">
+                        <Grid item>
+                          <Typography>Log</Typography>
                         </Grid>
-                      </ToggleButton>
-                      <ToggleButton
-                        value="index"
-                        classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
-                      >
-                        <Grid container direction="column">
-                          <Grid item>
-                            <Typography>Index</Typography>
-                          </Grid>
-                          <Grid item>
-                            <Typography className={classes.subtext}>Lookup by key</Typography>
-                          </Grid>
+                        <Grid item>
+                          <Typography className={classes.subtext}>Sort by time written</Typography>
                         </Grid>
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </Grid>
-                  <Grid item>
-                    {isSubscribed(finalized, subscribeToggle) && (
-                      <Chip
-                        label="Live"
-                        variant="outlined"
-                        // color="primary"
-                        size="small"
-                        clickable
-                        onClick={() => setSubscribeToggle(false)}
-                        icon={<FiberManualRecordIcon className={classes.liveIcon} />}
-                      />
-                    )}
-                    {!isSubscribed(finalized, subscribeToggle) && (
-                      <Chip
-                        label="Paused"
-                        variant="outlined"
-                        color="secondary"
-                        size="small"
-                        clickable={isSubscribeable(finalized) ? true : false}
-                        onClick={() => {
-                          if (isSubscribeable(finalized)) {
-                            setSubscribeToggle(true);
-                          }
-                          return;
-                        }}
-                        icon={<FiberManualRecordIcon className={classes.pausedIcon} />}
-                      />
-                    )}
-                  </Grid>
+                      </Grid>
+                    </ToggleButton>
+                    <ToggleButton
+                      value="index"
+                      classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
+                    >
+                      <Grid container direction="column">
+                        <Grid item>
+                          <Typography>Index</Typography>
+                        </Grid>
+                        <Grid item>
+                          <Typography className={classes.subtext}>Lookup by key</Typography>
+                        </Grid>
+                      </Grid>
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
+                <Grid item>
+                  {isSubscribed(finalized, subscribeToggle) && (
+                    <Chip
+                      label="Live"
+                      variant="outlined"
+                      // color="primary"
+                      size="small"
+                      clickable
+                      onClick={() => setSubscribeToggle(false)}
+                      icon={<FiberManualRecordIcon className={classes.liveIcon} />}
+                    />
+                  )}
+                  {!isSubscribed(finalized, subscribeToggle) && (
+                    <Chip
+                      label="Paused"
+                      variant="outlined"
+                      color="secondary"
+                      size="small"
+                      clickable={isSubscribeable(finalized) ? true : false}
+                      onClick={() => {
+                        if (isSubscribeable(finalized)) {
+                          setSubscribeToggle(true);
+                        }
+                        return;
+                      }}
+                      icon={<FiberManualRecordIcon className={classes.pausedIcon} />}
+                    />
+                  )}
                 </Grid>
               </Grid>
-              <Grid item>
-                {queryType === "log" && (
+            </Grid>
+            <Grid item>
+              <Grid container spacing={2}>
+                {stream.allowManualWrites && (
                   <>
-                    <Grid container direction="row" alignItems="center" spacing={2}>
-                      <Grid item>
-                        <Button
-                          onClick={() => {
-                            setLogCodeDialog(true);
-                          }}
-                        >
-                          See the code
-                        </Button>
-                        <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
-                          <DialogContent>
-                            <CodeBlock language={"python"}>
-                              {`import beneath
-beneath.easy_consume_stream(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
-          consume_fn=YOUR_CALLBACK_FUNCTION)`}
-                            </CodeBlock>
-                            {/* <CodeBlock language={"javascript"}>
-                              {`import { useRecords } from "beneath-react";
-const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-  ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
-                                stream.name
-                              }",
-  query: {type: "log", peek: ${logPeek}},
-});`}
-                            </CodeBlock> */}
-                          </DialogContent>
-                          <DialogActions>
-                            <Button onClick={() => setLogCodeDialog(false)} color="primary">
-                              Close
-                            </Button>
-                          </DialogActions>
-                        </Dialog>
-                      </Grid>
-                      <Grid item>
-                        <Button size="small" onClick={() => setLogPeek(!logPeek)}>
-                          <ArrowDownwardIcon />
-                          {logPeek && (
-                            <Grid container direction="column">
-                              <Grid item>
-                                <Typography color="primary">Newest</Typography>
-                              </Grid>
-                              <Grid item>
-                                <Typography>Oldest</Typography>
-                              </Grid>
-                            </Grid>
-                          )}
-                          {!logPeek && (
-                            <Grid container direction="column">
-                              <Grid item>
-                                <Typography>Oldest</Typography>
-                              </Grid>
-                              <Grid item>
-                                <Typography color="primary">Newest</Typography>
-                              </Grid>
-                            </Grid>
-                          )}
-                        </Button>
-                      </Grid>
+                    <Grid item>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setWriteDialog(true);
+                        }}
+                        endIcon={<AddBoxIcon />}
+                      >
+                        Write a record
+                      </Button>
+                      <Dialog
+                        open={writeDialog}
+                        fullWidth={true}
+                        maxWidth={"xs"}
+                        onBackdropClick={() => {
+                          setWriteDialog(false);
+                        }}
+                      >
+                        {/*
+                        // disable for now
+                        // must update js client to be able to write data (current local resolvers do not work anymore!)
+                        // and to allow both stream and batch writes
+                        */}
+                        <DialogContent>
+                          <WriteStream
+                            stream={stream}
+                            instanceID={instance.streamInstanceID}
+                            setWriteDialog={setWriteDialog}
+                          />
+                        </DialogContent>
+                      </Dialog>
                     </Grid>
                   </>
                 )}
+                <Grid item>
+                  <Button
+                    variant="outlined"
+                    endIcon={<OpenInNewIcon />}
+                    component={NakedLink}
+                    href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
+                    as={`/-/sql`}
+                  >
+                    Query with SQL
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
-            {queryType === "index" && (
-              <>
-                <VSpace units={4} />
-                <Box border={1} className={classes.indexQueryBox} display="flex" alignItems="center" p={1}>
-                  <Grid item container alignItems="center" spacing={2}>
-                    <Grid item xs>
-                      <FilterForm
-                        index={schema.columns.filter((col) => col.isKey)}
-                        onChange={(filter) => setFilter(filter)}
-                      />
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        onClick={() => {
-                          setIndexCodeDialog(true);
-                        }}
-                      >
-                        See the code
-                      </Button>
-                      <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
-                        <DialogContent>
-                          <CodeBlock language={"python"}>
-                            {`import beneath
+          </Grid>
+        </Grid>
+        {/* action box */}
+        <Grid item>
+          {queryType === "log" && (
+            <>
+            <Grid container>
+              <Grid item>
+                <Grid
+                  container
+                  direction="row"
+                  justify="flex-start"
+                  alignItems="center"
+                  spacing={2}
+                  className={classes.actionBox}
+                >
+                  <Grid item>
+                    {logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Newest to Oldest</Button>}
+                    {!logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Oldest to Newest</Button>}
+                    {/* <Button size="small" onClick={() => setLogPeek(!logPeek)}>
+                      <ArrowDownwardIcon />
+                      {logPeek && (
+                        <Grid container direction="column">
+                          <Grid item>
+                            <Typography color="primary">Newest</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography>Oldest</Typography>
+                          </Grid>
+                        </Grid>
+                      )}
+                      {!logPeek && (
+                        <Grid container direction="column">
+                          <Grid item>
+                            <Typography>Oldest</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography color="primary">Newest</Typography>
+                          </Grid>
+                        </Grid>
+                      )}
+                    </Button> */}
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      onClick={() => {
+                        setLogCodeDialog(true);
+                      }}
+                    >
+                      See the code
+                    </Button>
+                    <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
+                      <DialogContent>
+                        <CodeBlock language={"python"}>
+                          {`import beneath
+  beneath.easy_consume_stream(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
+      consume_fn=YOUR_CALLBACK_FUNCTION)`}
+                        </CodeBlock>
+                        {/* <CodeBlock language={"javascript"}>
+                          {`import { useRecords } from "beneath-react";
+  const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
+  ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
+                            stream.name
+                          }",
+  query: {type: "log", peek: ${logPeek}},
+  });`}
+                        </CodeBlock> */}
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={() => setLogCodeDialog(false)} color="primary">
+                          Close
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+            </>
+          )}
+          {queryType === "index" && (
+            <>
+              <Grid container>
+              <Grid item>
+                <Grid
+                  container
+                  direction="row"
+                  justify="flex-start"
+                  alignItems="center"
+                  spacing={2}
+                  className={classes.actionBox}
+                >
+                  <Grid item>
+                    <FilterForm
+                      index={schema.columns.filter((col) => col.isKey)}
+                      onChange={(filter) => setFilter(filter)}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      onClick={() => {
+                        setIndexCodeDialog(true);
+                      }}
+                    >
+                      See the code
+                    </Button>
+                    <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                      <DialogContent>
+                        <CodeBlock language={"python"}>
+                          {`import beneath
 df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
         filter=${filter === "" ? "None" : "'" + filter + "'"})
 df
 `}
-                          </CodeBlock>
-                          {/* <CodeBlock language={"javascript"}>
+                        </CodeBlock>
+                        {/* <CodeBlock language={"javascript"}>
                             {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
   ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
@@ -387,20 +411,22 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
   query: {type: "index", filter: ${filter === "" ? undefined : filter}},
 });`}
                           </CodeBlock> */}
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={() => setIndexCodeDialog(false)} color="primary">
-                            Close
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
-                    </Grid>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                          Close
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </Grid>
-                </Box>
-              </>
-            )}
-          </Grid>
-          <VSpace units={4} />
+                </Grid>
+                </Grid>
+                </Grid>
+            </>
+          )}
+        </Grid>
+        {/* records table */}
+        <Grid item>
           {filter !== "" && error && <Message error={true}>{error.message}</Message>}
           {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
           {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
@@ -437,7 +463,6 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
               }`}
             </Message>
           )}
-          <VSpace units={8} />
         </Grid>
       </Grid>
     </>

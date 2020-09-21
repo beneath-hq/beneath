@@ -13,7 +13,7 @@ import { withApollo } from "../apollo/withApollo";
 
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
-import StreamHero from "../components/StreamHero";
+import StreamHero from "../components/stream/StreamHero";
 import Page from "../components/Page";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";

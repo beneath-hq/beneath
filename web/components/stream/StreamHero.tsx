@@ -2,10 +2,10 @@ import { useQuery } from "@apollo/client";
 import { Chip, Grid, Typography, makeStyles } from "@material-ui/core";
 import { FC } from "react";
 
-import { NakedLink } from "./Link";
-import { useMonthlyMetrics } from "./metrics/hooks";
-import { prettyPrintBytes } from "./metrics/util";
-import SelectField from "./SelectField";
+import { NakedLink } from "../Link";
+import { useMonthlyMetrics } from "../metrics/hooks";
+import { prettyPrintBytes } from "../metrics/util";
+import SelectField from "../SelectField";
 import { EntityKind } from "apollo/types/globalTypes";
 import { QUERY_STREAM_INSTANCES } from "apollo/queries/stream";
 import {
@@ -19,8 +19,8 @@ import {
 
 const useStyles = makeStyles((theme) => ({
   container: {
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing(4),
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
   },
   site: {
     display: "block",
@@ -61,9 +61,9 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
 
   const classes = useStyles();
   return (
-    <Grid container justify="space-between">
+    <Grid container justify="space-between" alignItems="flex-start" spacing={4} className={classes.container}>
       <Grid item>
-        <Grid container direction="column" spacing={1} className={classes.container}>
+        <Grid container direction="column" spacing={1}>
           <Grid item>
             <Grid container alignItems="center" spacing={2}>
               <Grid item>
@@ -105,7 +105,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
           </Grid>
         </Grid>
       </Grid>
-      <Grid item className={classes.container}>
+      <Grid item>
         <SelectField
           id="instanceID"
           label="Instance"
