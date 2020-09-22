@@ -293,20 +293,20 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
         <Grid item>
           {queryType === "log" && (
             <>
-            <Grid container>
-              <Grid item>
-                <Grid
-                  container
-                  direction="row"
-                  justify="flex-start"
-                  alignItems="center"
-                  spacing={2}
-                  className={classes.actionBox}
-                >
-                  <Grid item>
-                    {logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Newest to Oldest</Button>}
-                    {!logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Oldest to Newest</Button>}
-                    {/* <Button size="small" onClick={() => setLogPeek(!logPeek)}>
+              <Grid container>
+                <Grid item>
+                  <Grid
+                    container
+                    direction="row"
+                    justify="flex-start"
+                    alignItems="center"
+                    spacing={2}
+                    className={classes.actionBox}
+                  >
+                    <Grid item>
+                      {logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Newest to Oldest</Button>}
+                      {!logPeek && <Button onClick={() => setLogPeek(!logPeek)}>Oldest to Newest</Button>}
+                      {/* <Button size="small" onClick={() => setLogPeek(!logPeek)}>
                       <ArrowDownwardIcon />
                       {logPeek && (
                         <Grid container direction="column">
@@ -329,23 +329,23 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
                         </Grid>
                       )}
                     </Button> */}
-                  </Grid>
-                  <Grid item>
-                    <Button
-                      onClick={() => {
-                        setLogCodeDialog(true);
-                      }}
-                    >
-                      See the code
-                    </Button>
-                    <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
-                      <DialogContent>
-                        <CodeBlock language={"python"}>
-                          {`import beneath
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        onClick={() => {
+                          setLogCodeDialog(true);
+                        }}
+                      >
+                        See the code
+                      </Button>
+                      <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
+                        <DialogContent>
+                          <CodeBlock language={"python"}>
+                            {`import beneath
   beneath.easy_consume_stream(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
       consume_fn=YOUR_CALLBACK_FUNCTION)`}
-                        </CodeBlock>
-                        {/* <CodeBlock language={"javascript"}>
+                          </CodeBlock>
+                          {/* <CodeBlock language={"javascript"}>
                           {`import { useRecords } from "beneath-react";
   const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
   ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
@@ -354,55 +354,55 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
   query: {type: "log", peek: ${logPeek}},
   });`}
                         </CodeBlock> */}
-                      </DialogContent>
-                      <DialogActions>
-                        <Button onClick={() => setLogCodeDialog(false)} color="primary">
-                          Close
-                        </Button>
-                      </DialogActions>
-                    </Dialog>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={() => setLogCodeDialog(false)} color="primary">
+                            Close
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    </Grid>
                   </Grid>
                 </Grid>
               </Grid>
-            </Grid>
             </>
           )}
           {queryType === "index" && (
             <>
               <Grid container>
-              <Grid item>
-                <Grid
-                  container
-                  direction="row"
-                  justify="flex-start"
-                  alignItems="center"
-                  spacing={2}
-                  className={classes.actionBox}
-                >
-                  <Grid item>
-                    <FilterForm
-                      index={schema.columns.filter((col) => col.isKey)}
-                      onChange={(filter) => setFilter(filter)}
-                    />
-                  </Grid>
-                  <Grid item>
-                    <Button
-                      onClick={() => {
-                        setIndexCodeDialog(true);
-                      }}
-                    >
-                      See the code
-                    </Button>
-                    <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
-                      <DialogContent>
-                        <CodeBlock language={"python"}>
-                          {`import beneath
+                <Grid item>
+                  <Grid
+                    container
+                    direction="row"
+                    justify="flex-start"
+                    alignItems="center"
+                    spacing={2}
+                    className={classes.actionBox}
+                  >
+                    <Grid item>
+                      <FilterForm
+                        index={schema.columns.filter((col) => col.isKey)}
+                        onChange={(filter) => setFilter(filter)}
+                      />
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        onClick={() => {
+                          setIndexCodeDialog(true);
+                        }}
+                      >
+                        See the code
+                      </Button>
+                      <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                        <DialogContent>
+                          <CodeBlock language={"python"}>
+                            {`import beneath
 df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
         filter=${filter === "" ? "None" : "'" + filter + "'"})
 df
 `}
-                        </CodeBlock>
-                        {/* <CodeBlock language={"javascript"}>
+                          </CodeBlock>
+                          {/* <CodeBlock language={"javascript"}>
                             {`import { useRecords } from "beneath-react";
 const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
   ${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
@@ -411,60 +411,53 @@ const { records, error, loading, fetchMore, fetchMoreChanges, subscription, trun
   query: {type: "index", filter: ${filter === "" ? undefined : filter}},
 });`}
                           </CodeBlock> */}
-                      </DialogContent>
-                      <DialogActions>
-                        <Button onClick={() => setIndexCodeDialog(false)} color="primary">
-                          Close
-                        </Button>
-                      </DialogActions>
-                    </Dialog>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                            Close
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    </Grid>
                   </Grid>
                 </Grid>
-                </Grid>
-                </Grid>
+              </Grid>
             </>
           )}
         </Grid>
-        {/* records table */}
-        <Grid item>
-          {filter !== "" && error && <Message error={true}>{error.message}</Message>}
-          {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
-          {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
-          {loading && records.length === 0 && <Loading justify="center" />}
-          {(!loading || records.length > 0) && (
-            <RecordsTable
-              schema={schema}
-              records={records}
-              fetchMore={fetchMore}
-              showTimestamps={queryType === "log"}
-            />
-          )}
-          {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
-          {!fetchMore && fetchMoreChanges && (
-            <Grid container justify="center">
-              <Grid item>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  className={classes.fetchMoreButton}
-                  disabled={loading}
-                  onClick={() => fetchMoreChanges()}
-                >
-                  Fetch more changes
-                </Button>
-              </Grid>
-            </Grid>
-          )}
-          {filter === "" && error && <Message error={true}>{error.message}</Message>}
-          {!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end && (
-            <Message>
-              {`${records.length === 0 ? "Found no rows" : "Loaded all rows"} ${
-                filter !== "" ? "that match the filter" : ""
-              }`}
-            </Message>
-          )}
-        </Grid>
       </Grid>
+      {/* records table */}
+      {filter !== "" && error && <Message error={true}>{error.message}</Message>}
+      {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
+      {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
+      {loading && records.length === 0 && <Loading justify="center" />}
+      {(!loading || records.length > 0) && (
+        <RecordsTable schema={schema} records={records} fetchMore={fetchMore} showTimestamps={queryType === "log"} />
+      )}
+      {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
+      {!fetchMore && fetchMoreChanges && (
+        <Grid container justify="center">
+          <Grid item>
+            <Button
+              variant="outlined"
+              color="primary"
+              className={classes.fetchMoreButton}
+              disabled={loading}
+              onClick={() => fetchMoreChanges()}
+            >
+              Fetch more changes
+            </Button>
+          </Grid>
+        </Grid>
+      )}
+      {filter === "" && error && <Message error={true}>{error.message}</Message>}
+      {!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end && (
+        <Message>
+          {`${records.length === 0 ? "Found no rows" : "Loaded all rows"} ${
+            filter !== "" ? "that match the filter" : ""
+          }`}
+        </Message>
+      )}
     </>
   );
 };
