@@ -8,6 +8,7 @@ import MyProjectsTiles from "./MyProjectsTiles";
 import ActionTile from "./tiles/ActionTile";
 import HeroTile from "./tiles/HeroTile";
 import UsageTile from "./tiles/UsageTile";
+import VSpace from "components/VSpace";
 
 const Springboard: FC = () => {
   const me = useMe();
@@ -89,23 +90,26 @@ const Springboard: FC = () => {
     },
   ];
   return (
-    <Grid container direction="column" spacing={10}>
+    <Grid container direction="column">
       {sections.map((section) => {
         return (
-          <Grid item>
-            <Grid container direction="column" spacing={3}>
-              <Grid item>
-                <Typography component="h2" variant="h2">
-                  {section.label}
-                </Typography>
-              </Grid>
-              <Grid item>
-                <Grid container spacing={3}>
-                  {section.content}
+          <>
+            <Grid item>
+              <Grid container direction="column" spacing={3}>
+                <Grid item>
+                  <Typography component="h2" variant="h2">
+                    {section.label}
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Grid container spacing={3}>
+                    {section.content}
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-          </Grid>
+            <VSpace units={10} />
+          </>
         );
       })}
     </Grid>

@@ -27,6 +27,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
   },
   subheaderAndContent: {
+    overflow: "auto",
     flexGrow: 1,
     padding: theme.spacing(3),
   },
