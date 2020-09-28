@@ -102,7 +102,7 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
         separator={<NavigateNextIcon fontSize="small" />}
       >
         {crumbs &&
-          crumbs.map((crumb, idx) => {
+          crumbs.map((crumb) => {
             return crumb;
           })}
       </Breadcrumbs>

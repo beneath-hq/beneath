@@ -3,9 +3,9 @@ import Head from "next/head";
 import React from "react";
 
 import Drawer from "./Drawer";
-import Header from "./Header";
+import Header from "./header/Header";
 import { Link } from "./Link";
-import Subheader from "./Subheader";
+import Subheader from "./header/Subheader";
 
 interface IStylesProps {
   contentMarginTop?: null | "dense" | "normal" | "hero";
