@@ -2,12 +2,11 @@ import clsx from "clsx";
 import Link from "next/link";
 import React, { FC } from "react";
 
-import { Grid, makeStyles, Paper, Theme } from "@material-ui/core";
+import { Grid, makeStyles, Paper } from "@material-ui/core";
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles(() => ({
   paper: {
     height: "100%",
-    minHeight: "125px",
   },
   paperLink: {
     cursor: "pointer",
@@ -20,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 // tslint:disable-next-line: no-empty-interface
 export interface TileProps {
-  shape?: "normal" | "wide";
+  shape?: "normal" | "wide" | "dense";
   href?: string;
   as?: string;
   nopaper?: boolean;
@@ -48,9 +47,23 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, children }) => {
     }
   }
   return (
-    <Grid item xs={12} sm={shape === "wide" ? 12 : 6} md={shape === "wide" ? 8 : 4} lg={shape === "wide" ? 6 : 3}>
-      {tile}
-    </Grid>
+    <>
+      {shape === "dense" && (
+        <Grid item>
+          {tile}
+        </Grid>
+      )}
+      {shape === "normal" && (
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          {tile}
+        </Grid>
+      )}
+      {shape === "wide" && (
+        <Grid item xs={12} sm={12} md={8} lg={6}>
+          {tile}
+        </Grid>
+      )}
+    </>
   );
 };
 

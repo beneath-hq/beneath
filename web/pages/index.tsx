@@ -30,7 +30,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
   }
 
   return (
-    <Page title="Console" contentMarginTop="normal">
+    <Page title="Console" contentMarginTop="dense">
       {loggedIn && <Springboard />}
       {!loggedIn && <Welcome />}
     </Page>

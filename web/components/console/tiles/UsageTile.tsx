@@ -1,5 +1,4 @@
 import React, { FC } from "react";
-
 import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 
 import { ActualIndicator } from "../../metrics/user/UsageIndicator";
@@ -7,12 +6,7 @@ import { Tile, TileProps } from "./Tile";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
-    height: "inherit",
-    minHeight: "inherit",
     padding: theme.spacing(2),
-  },
-  title: {
-    fontSize: theme.typography.pxToRem(32),
   },
 }));
 
