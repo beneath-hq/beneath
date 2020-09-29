@@ -1,4 +1,4 @@
-import { Grid, makeStyles, Theme, Typography, Link } from "@material-ui/core";
+import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import React, { FC } from "react";
 import { ArrowRightAlt, Folder, LinearScale, VpnKey } from "@material-ui/icons";
 
@@ -9,6 +9,7 @@ import MyProjectsTiles from "./MyProjectsTiles";
 import UsageTile from "./tiles/UsageTile";
 import ActionTile from "./tiles/ActionTile";
 import ProfileHeroTile from "./tiles/ProfileHeroTile";
+import { Link } from "../Link";
 
 // Hack: in order to position the usage section in the top right-hand corner on medium+ screens,
 // we apply custom css styling to the Grid items. We pass through the styles to the Tile component, which is itself a Grid item.
@@ -87,9 +88,7 @@ const Springboard: FC = () => {
       {me.organizationID === me.personalUser?.billingOrganizationID && (
         <>
           <Grid item xs={12} className={classes.usageTitle}>
-            <Typography variant="h3">
-              Usage monitor
-            </Typography>
+            <Typography variant="h3">Usage monitor</Typography>
           </Grid>
           {me.readQuota && (
             <UsageTile
@@ -125,7 +124,7 @@ const Springboard: FC = () => {
         </>
       )}
       <Grid item xs={12} className={classes.usageUpgrade}>
-        <Link href={`/`}>
+        <Link href={`/organization?organization_name=${me.name}&tab=billing`} as={`/${me.name}/-/billing`}>
           <Grid container spacing={1} alignItems="center">
             <Grid item>
               <Typography variant="h3">Upgrade quotas</Typography>
