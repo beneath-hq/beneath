@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
   },
   orgName: {
-    marginRight: theme.spacing(1),
+    marginRight: theme.spacing(.75),
   },
   description: {
     marginTop: theme.spacing(3),
