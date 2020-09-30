@@ -30,19 +30,17 @@ export async function handleSubmitMutation<Values extends {}>(
         if (unknownErrors.length > 0) {
           status = unknownErrors.map((error) => {
             const message = error.message.length > 0 ? error.message : JSON.stringify(error);
-            return `Error: ${message}`;
+            return message;
           }).join("\n");
         }
       }
     }
   } catch (error) {
     const message = typeof error?.message === "string" && error.message.length > 0 ? error.message : JSON.stringify(error);
-    status = `${message}`;
+    status = message;
     console.error(error);
   }
-  if (status) {
-    actions.setStatus(status);
-  }
+  actions.setStatus(status);
   // TODO: Apollo refreshes the entire form (not so good), so cannot call setSubmitting as Formik is unmounted
   // See: https://github.com/formium/formik/issues/772
   // actions.setSubmitting(false);
