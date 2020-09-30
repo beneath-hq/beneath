@@ -1,4 +1,4 @@
-import { createMuiTheme, ThemeOptions } from "@material-ui/core/styles";
+import { createMuiTheme, ThemeOptions, responsiveFontSizes } from "@material-ui/core/styles";
 
 // "hack" to add custom properties to MUI theme
 declare module "@material-ui/core/styles/createTypography" {
@@ -82,9 +82,9 @@ theme.palette = {
     contrastText: "rgba(255, 255, 255, 0.9)",
   },
   secondary: {
-    light: "rgba(251, 149, 54, 1)",
-    main: "rgba(100, 120, 140, 1)",
-    dark: "rgba(217, 86, 35, 1)",
+    light: "rgba(130, 160, 190, 1)",
+    main: "rgba(90, 110, 140, 1)",
+    dark: "rgba(80, 95, 120, 1)",
     contrastText: "#fff",
   },
   error: {
@@ -106,6 +106,9 @@ theme.props = {
     elevation: 0,
   },
   MuiButtonBase: {
+    disableRipple: true,
+  },
+  MuiButtonGroup: {
     disableRipple: true,
   },
   MuiInputLabel: {
@@ -230,4 +233,4 @@ theme.zIndex = {
   modal: 1300,
 };
 
-export default createMuiTheme(theme);
+export default responsiveFontSizes(createMuiTheme(theme));

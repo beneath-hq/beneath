@@ -5,7 +5,6 @@ import React from "react";
 import Drawer from "./Drawer";
 import Header from "./header/Header";
 import { Link } from "./Link";
-import Subheader from "./header/Subheader";
 
 interface IStylesProps {
   contentMarginTop?: null | "dense" | "normal" | "hero";
@@ -47,7 +46,6 @@ const useStyles = makeStyles((theme) => ({
 interface IProps {
   title?: string;
   sidebar?: JSX.Element;
-  subheader?: boolean;
   maxWidth?: false | "xs" | "sm" | "md" | "lg" | "xl";
   contentMarginTop?: null | "dense" | "normal" | "hero";
 }
@@ -64,7 +62,7 @@ const Page: React.FC<IProps> = (props) => {
       <Head>
         <title>{props.title ? props.title + " | " : ""} Beneath</title>
       </Head>
-      <Header toggleMobileDrawer={props.sidebar && toggleMobileDrawer} />
+      <Header />
       <div className={classes.sidebarSubheaderAndContent}>
         {props.sidebar && (
           <Drawer mobileOpen={mobileDrawerOpen} toggleMobileOpen={toggleMobileDrawer}>
@@ -73,7 +71,6 @@ const Page: React.FC<IProps> = (props) => {
         )}
         <div className={classes.subheaderAndContent}>
           <Container maxWidth={props.maxWidth === undefined ? "lg" : props.maxWidth}>
-            {props.subheader && <Subheader />}
             <main className={classes.content}>{props.children}</main>
           </Container>
         </div>

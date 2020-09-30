@@ -1,42 +1,52 @@
 import clsx from "clsx";
 import Link from "next/link";
-import { NextRouter, withRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
 import React, { FC } from "react";
 
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
-import Divider from "@material-ui/core/Divider";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
-import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
-    paddingLeft: theme.spacing(1),
-  },
-  content: {},
-  divider: {
-    marginTop: theme.spacing(1),
   },
   link: {
     cursor: "pointer",
     color: theme.palette.text.secondary,
-    fontSize: theme.typography.body2.fontSize,
+    fontSize: theme.typography.body1.fontSize,
   },
   currentLink: {
     color: theme.palette.text.primary,
     fontWeight: theme.typography.fontWeightBold,
   },
+  crumbSeparator: {
+    fontSize: "1.5rem",
+    marginTop: "-0.3rem",
+  },
 }));
 
-interface SubheaderProps {
-  router: NextRouter;
-}
+export const PathBreadcrumbs: FC = () => {
+  const router = useRouter();
+  const classes = useStyles();
+  const crumbs = makeCrumbs(router);
+  return (
+    <Breadcrumbs
+      aria-label="Breadcrumbs"
+      className={classes.breadcrumbs}
+      separator={<span className={classes.crumbSeparator}>/</span>}
+    >
+      <span /> {/* To show a root "/" */}
+      {crumbs.length === 0 && <span />} {/* Shows root "/" if there are no crumbs */}
+      {crumbs}
+    </Breadcrumbs>
+  );
+};
 
-const Subheader: FC<SubheaderProps> = ({ router }) => {
-  let crumbs = null;
+export default PathBreadcrumbs;
+
+const makeCrumbs = (router: NextRouter) => {
   if (router.route === "/project") {
-    crumbs = [
-      <ConsoleCrumb key={0} />,
+    return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -46,8 +56,7 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
       />,
     ];
   } else if (router.route === "/stream") {
-    crumbs = [
-      <ConsoleCrumb key={0} />,
+    return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -63,13 +72,11 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
       />,
     ];
   } else if (router.route === "/organization") {
-    crumbs = [
-      <ConsoleCrumb key={0} />,
+    return [
       <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
     ];
   } else if (router.route === "/service") {
-    crumbs = [
-      <ConsoleCrumb key={0} />,
+    return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
         key={2}
@@ -91,31 +98,28 @@ const Subheader: FC<SubheaderProps> = ({ router }) => {
         service={router.query.service_name as string}
       />,
     ];
+  } else if (router.route === "/-/create/project") {
+    return [
+      <Crumb key={0} href="/-/create/project" label="Create project" isCurrent={true} />
+    ];
+  } else if (router.route === "/-/create/stream") {
+    return [<Crumb key={0} href="/-/create/stream" label="Create stream" isCurrent={true} />];
+  } else if (router.route === "/-/sql") {
+    return [<Crumb key={0} href="/-/sql" label="SQL Editor" isCurrent={true} />];
+  } else if (router.route === "/-/auth") {
+    return [<Crumb key={0} href="/-/auth" label="Authentication" isCurrent={true} />];
+  } else if (router.route === "/-/welcome") {
+    return [<Crumb key={0} href="/-/welcome" label="Welcome" isCurrent={true} />];
+  } else if (router.route === "/") {
+    return [<Crumb key={0} href="/" label="Home" isCurrent={true} />];
+  } else {
+    return [];
   }
-
-  const classes = useStyles();
-  return (
-    <div className={classes.content}>
-      <Breadcrumbs
-        aria-label="Breadcrumb"
-        className={classes.breadcrumbs}
-        separator={<NavigateNextIcon fontSize="small" />}
-      >
-        {crumbs &&
-          crumbs.map((crumb) => {
-            return crumb;
-          })}
-      </Breadcrumbs>
-      <Divider className={classes.divider} />
-    </div>
-  );
 };
-
-export default withRouter(Subheader);
 
 interface CrumbProps {
   href: string;
-  as: string;
+  as?: string;
   label: string;
   isCurrent?: boolean;
 }
@@ -124,18 +128,15 @@ const Crumb: FC<CrumbProps> = ({ href, as, label, isCurrent }) => {
   const classes = useStyles();
   return (
     <Link href={href} as={as}>
-      <MUILink className={clsx(classes.link, isCurrent && classes.currentLink)}>{label}</MUILink>
+      <MUILink
+        className={clsx(classes.link, isCurrent && classes.currentLink)}
+        aria-current={isCurrent ? "page" : undefined}
+      >
+        {label}
+      </MUILink>
     </Link>
   );
 };
-
-interface ConsoleCrumbProps {
-  isCurrent?: boolean;
-}
-
-const ConsoleCrumb: FC<ConsoleCrumbProps> = ({ isCurrent }) => (
-  <Crumb href="/" as="/" label="Console" isCurrent={isCurrent} />
-);
 
 interface ProjectCrumbProps {
   organization: string;

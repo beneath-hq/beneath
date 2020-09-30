@@ -20,10 +20,20 @@ const useStyles = makeStyles((theme: Theme) => ({
     marginRight: theme.spacing(1.5),
     fontSize: theme.typography.pxToRem(12),
   },
+  toolbar: {
+    width: theme.spacing(4.5),
+    height: theme.spacing(4.5),
+    fontSize: theme.typography.pxToRem(15),
+    borderRadius: theme.spacing(4),
+    boxShadow: `0 0 0 2px ${theme.palette.secondary.dark}`,
+    "&:hover": {
+      boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+    },
+  },
 }));
 
 export interface BetterAvatarProps extends Omit<AvatarProps, "src"> {
-  size: string;
+  size: "hero" | "list" | "dense-list" | "toolbar";
   label: string;
   src?: string | null;
 }
@@ -38,6 +48,8 @@ const BetterAvatar: FC<BetterAvatarProps> = ({ size, label, src, ...other }) => 
     className = classes.list;
   } else if (size === "dense-list") {
     className = classes.denseList;
+  } else if (size === "toolbar") {
+    className = classes.toolbar;
   }
 
   return (
