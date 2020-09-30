@@ -89,7 +89,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) error {
 
 	// redirect to client, setting token
 	url := fmt.Sprintf("%s/-/redirects/auth/login/callback?token=%s", gothConfig.ClientHost, url.QueryEscape(secret.Token.String()))
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, url, http.StatusSeeOther)
 
 	// done
 	return nil
