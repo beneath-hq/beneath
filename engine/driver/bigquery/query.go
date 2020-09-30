@@ -141,7 +141,7 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 
 	// extract avro schema, if possible (queryStats.Schema is only set for dry jobs)
 	if queryStats.Schema != nil {
-		avro, err := b.convertToAvroSchema(queryStats.Schema)
+		avro, err := b.convertToAvroSchema(queryStats.Schema, true, true)
 		if err != nil {
 			return nil, err
 		}
@@ -175,18 +175,24 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 	job.ResultSizeBytes = int64(resultTable.NumBytes)
 	job.ResultSizeRecords = int64(resultTable.NumRows)
 
-	// set result schema
-	avro, err := b.convertToAvroSchema(resultTable.Schema)
+	// set result avro schema
+	resultAvro, err := b.convertToAvroSchema(resultTable.Schema, true, true)
 	if err != nil {
 		return nil, err
 	}
-	job.ResultAvroSchema = avro
+	job.ResultAvroSchema = resultAvro
+
+	// get cursor avro schema (includes internal fields that'll be trimmed during read)
+	cursorAvro, err := b.convertToAvroSchema(resultTable.Schema, false, false)
+	if err != nil {
+		return nil, err
+	}
 
 	// set cursors
 	cursor := &pb.Cursor{
 		Dataset:    queryConf.Dst.DatasetID,
 		Table:      queryConf.Dst.TableID,
-		AvroSchema: avro,
+		AvroSchema: cursorAvro,
 	}
 	compiled, err := proto.Marshal(cursor)
 	if err != nil {
@@ -197,20 +203,25 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 	return job, nil
 }
 
-func (b BigQuery) convertToAvroSchema(bqSchema bigquery.Schema) (string, error) {
+func (b BigQuery) convertToAvroSchema(bqSchema bigquery.Schema, checkSchema bool, trimInternalFields bool) (string, error) {
 	// trim internal fields if present
-	trimmed := make(bigquery.Schema, 0, len(bqSchema))
-	for _, field := range bqSchema {
-		if len(field.Name) < 2 || field.Name[0:2] != "__" {
-			trimmed = append(trimmed, field)
+	trimmed := bqSchema
+	if trimInternalFields {
+		trimmed = make(bigquery.Schema, 0, len(bqSchema))
+		for _, field := range bqSchema {
+			if len(field.Name) < 2 || field.Name[0:2] != "__" {
+				trimmed = append(trimmed, field)
+			}
 		}
 	}
 
 	// transpile and check
 	schema := transpilers.FromBigQuery(trimmed)
-	err := schemalang.Check(schema)
-	if err != nil {
-		return "", err
+	if checkSchema {
+		err := schemalang.Check(schema)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return transpilers.ToAvro(schema, false), nil
@@ -235,6 +246,12 @@ func (b BigQuery) ReadWarehouseCursor(ctx context.Context, cursor []byte, limit 
 		return nil, fmt.Errorf("corrupt schema in cursor: %s", parsed.AvroSchema)
 	}
 
+	// cursor schema has internal fields, so we (re)compute result schema without internal fields for encoding output
+	outAvroSchema, err := b.convertToAvroSchema(bqSchema, false, true)
+	if err != nil {
+		return nil, fmt.Errorf("corrupt schema in cursor, error: %s", err.Error())
+	}
+
 	// prepare iterator
 	table := b.Client.Dataset(parsed.Dataset).Table(parsed.Table)
 	it := table.Read(ctx)
@@ -243,7 +260,7 @@ func (b BigQuery) ReadWarehouseCursor(ctx context.Context, cursor []byte, limit 
 	it.PageInfo().MaxSize = limit
 
 	// create codec
-	coder, err := codec.New(parsed.AvroSchema, nil, nil)
+	coder, err := codec.New(outAvroSchema, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("corrupt schema, error creating codec: %s", err.Error())
 	}
@@ -261,9 +278,23 @@ func (b BigQuery) ReadWarehouseCursor(ctx context.Context, cursor []byte, limit 
 			return nil, fmt.Errorf("corrupt cursor: invalid token: %s", err.Error())
 		}
 
+		// get timestamp
+		ts := time.Now()
+		if t, ok := dst["__timestamp"].(time.Time); ok {
+			ts = t
+		}
+
+		// remove internal fields
+		for fieldName := range dst {
+			if len(fieldName) >= 2 && fieldName[0:2] == "__" {
+				delete(dst, fieldName)
+			}
+		}
+
 		// save
 		records = append(records, resultRecord{
 			row:   dst,
+			ts:    ts,
 			coder: coder,
 		})
 
@@ -318,11 +349,12 @@ func bqValueToInterface(val bigquery.Value) interface{} {
 
 type resultRecord struct {
 	row   map[string]bigquery.Value
+	ts    time.Time
 	coder *codec.Codec
 }
 
 func (r resultRecord) GetTimestamp() time.Time {
-	return time.Now()
+	return r.ts
 }
 
 func (r resultRecord) GetAvro() []byte {
