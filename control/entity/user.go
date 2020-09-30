@@ -156,6 +156,14 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 			return nil, err
 		}
 
+		// send event about user update
+		err = hub.Engine.LogControlEvent(ctx, "user_update", map[string]interface{}{
+			"user_id": user.UserID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		return user, nil
 	}
 
@@ -271,6 +279,14 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		"control created user",
 		"user_id", user.UserID,
 	)
+
+	// send event about user create
+	err = hub.Engine.LogControlEvent(ctx, "user_create", map[string]interface{}{
+		"user_id": user.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }

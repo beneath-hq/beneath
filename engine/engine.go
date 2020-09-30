@@ -50,6 +50,10 @@ func NewEngine(mqDriver, lookupDriver, warehouseDriver string) *Engine {
 	if err != nil {
 		panic(err)
 	}
+	err = e.MQ.RegisterTopic(controlEventsTopic)
+	if err != nil {
+		panic(err)
+	}
 
 	return e
 }
