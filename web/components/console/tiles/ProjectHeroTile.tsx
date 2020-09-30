@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
   },
   orgName: {
-    marginRight: theme.spacing(1),
+    marginRight: theme.spacing(.75),
   },
   description: {
     marginTop: theme.spacing(3),
@@ -41,7 +41,7 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
   const classes = useStyles();
   return (
     <Tile shape={shape} {...tileProps}>
-      <Grid container spacing={0} className={classes.container} alignItems="center" xs={12}>
+      <Grid container spacing={0} className={classes.container} alignItems="center">
         <Grid item className={classes.avatar}>
           <Avatar size="list" label={displayName || name} src={avatarURL} />
         </Grid>

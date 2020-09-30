@@ -1,4 +1,4 @@
-import { Grid, makeStyles, Theme, Typography, Link } from "@material-ui/core";
+import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import React, { FC } from "react";
 import { ArrowRightAlt, Folder, LinearScale, VpnKey } from "@material-ui/icons";
 
@@ -9,11 +9,56 @@ import MyProjectsTiles from "./MyProjectsTiles";
 import UsageTile from "./tiles/UsageTile";
 import ActionTile from "./tiles/ActionTile";
 import ProfileHeroTile from "./tiles/ProfileHeroTile";
+import { Link } from "../Link";
+
+// Hack: in order to position the usage section in the top right-hand corner on medium+ screens,
+// we apply custom css styling to the Grid items. We pass through the styles to the Tile component, which is itself a Grid item.
+// Note that there's buggy behavior when we nest an extra Grid layer on top of the current structure, so we avoid that.
 
 const useStyles = makeStyles((theme: Theme) => ({
   sectionTitle: {
     marginTop: theme.spacing(4),
-  }
+  },
+  positionAncestor: {
+    [theme.breakpoints.up("md")]: {
+      position: "relative",
+    },
+  },
+  usageTitle: {
+    [theme.breakpoints.up("md")]: {
+      position: "absolute",
+      right: 0,
+      top: 0,
+      width: 300
+    },
+    [theme.breakpoints.down("sm")]: {
+      marginTop: theme.spacing(4),
+    },
+  },
+  readUsage: {
+    [theme.breakpoints.up("md")]: {
+      position: "absolute",
+      right: 0,
+      top: 46,
+      width: 300
+    },
+  },
+  writeUsage: {
+    [theme.breakpoints.up("md")]: {
+      position: "absolute",
+      right: 0,
+      top: 170,
+      width: 300
+    },
+  },
+  usageUpgrade: {
+    [theme.breakpoints.up("md")]: {
+      position: "absolute",
+      right: 0,
+      top: 294,
+      width: 300
+    },
+  },
 }));
 
 const Springboard: FC = () => {
@@ -25,7 +70,7 @@ const Springboard: FC = () => {
   }
 
   return (
-    <Grid container spacing={3} alignItems="stretch" alignContent="stretch">
+    <Grid container spacing={3} className={classes.positionAncestor}>
       <Grid item xs={12}>
         <Typography variant="h3">My profile</Typography>
       </Grid>
@@ -42,8 +87,8 @@ const Springboard: FC = () => {
 
       {me.organizationID === me.personalUser?.billingOrganizationID && (
         <>
-          <Grid item xs={12}>
-            <Typography variant="h3" className={classes.sectionTitle}>Free plan</Typography>
+          <Grid item xs={12} className={classes.usageTitle}>
+            <Typography variant="h3">Usage monitor</Typography>
           </Grid>
           {me.readQuota && (
             <UsageTile
@@ -52,6 +97,8 @@ const Springboard: FC = () => {
               title="Read quota usage"
               usage={me.readUsage}
               quota={me.readQuota}
+              responsive={false}
+              styleClass={classes.readUsage}
             />
           )}
           {me.writeQuota && (
@@ -61,6 +108,8 @@ const Springboard: FC = () => {
               title="Write quota usage"
               usage={me.writeUsage}
               quota={me.writeQuota}
+              responsive={false}
+              styleClass={classes.writeUsage}
             />
           )}
           {/* {me.scanQuota && (
@@ -74,9 +123,23 @@ const Springboard: FC = () => {
           )} */}
         </>
       )}
+      <Grid item xs={12} className={classes.usageUpgrade}>
+        <Link href={`/organization?organization_name=${me.name}&tab=billing`} as={`/${me.name}/-/billing`}>
+          <Grid container spacing={1} alignItems="center">
+            <Grid item>
+              <Typography variant="h3">Upgrade quotas</Typography>
+            </Grid>
+            <Grid item>
+              <ArrowRightAlt />
+            </Grid>
+          </Grid>
+        </Link>
+      </Grid>
 
       <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>Create new</Typography>
+        <Typography variant="h3" className={classes.sectionTitle}>
+          Create new
+        </Typography>
       </Grid>
       <ActionTile title="Project" href={`/-/create/project`} shape="dense">
         <Folder color="primary" />
@@ -107,11 +170,15 @@ const Springboard: FC = () => {
       </Grid>
 
       <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>My projects</Typography>
+        <Typography variant="h3" className={classes.sectionTitle}>
+          My projects
+        </Typography>
       </Grid>
       <MyProjectsTiles me={me} />
       <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>Featured projects and tutorials</Typography>
+        <Typography variant="h3" className={classes.sectionTitle}>
+          Featured projects and tutorials
+        </Typography>
       </Grid>
       <ExploreProjectsTiles />
     </Grid>

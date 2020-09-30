@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React, { FC } from "react";
-import { Typography } from "@material-ui/core";
+import { Button, makeStyles, Typography } from "@material-ui/core";
 import { Client } from "beneath";
 
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
@@ -10,6 +10,29 @@ import FormikTextField from "components/formik/TextField";
 import SubmitControl from "components/forms/SubmitControl";
 import { validateValue } from "./FilterField";
 import { useToken } from "hooks/useToken";
+import { useQuery } from "@apollo/client";
+import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
+import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
+import useMe from "hooks/useMe";
+
+const useStyles = makeStyles((theme) => ({
+  firstTitle: {
+    marginTop: theme.spacing(0),
+    marginBottom: theme.spacing(2),
+  },
+  title: {
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing(2),
+  },
+  errorMsg: {
+    marginTop: theme.spacing(3),
+  },
+  button: {
+    marginTop: theme.spacing(3),
+    marginBotton: theme.spacing(2),
+    marginRight: theme.spacing(3),
+  },
+}));
 
 interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -18,8 +41,35 @@ interface WriteStreamProps {
 }
 
 const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, setWriteDialog }) => {
+  const classes = useStyles();
   const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
   const token = useToken();
+  const me = useMe();
+  const { error, data } = useQuery<ProjectMembers, ProjectMembersVariables>(QUERY_PROJECT_MEMBERS, {
+    variables: { projectID: streamMetadata.project.projectID },
+  });
+
+  if (error || !data) {
+    return <p>Error: {JSON.stringify(error)}</p>;
+  }
+
+  const user = data.projectMembers.find((user) => (user.userID === me?.personalUserID));
+
+  if (!user?.create) {
+    return (
+      <>
+        <Typography variant="h1" gutterBottom>
+          Sorry, you can't do that
+        </Typography>
+        <Typography color="error" gutterBottom className={classes.errorMsg}>
+          You don't have permission to write to this stream. Make sure you are logged in.
+        </Typography>
+        <Button onClick={() => setWriteDialog(false)} className={classes.button} variant="contained" color="primary">
+          Go back
+        </Button>
+      </>
+    );
+  }
 
   const client = new Client({ secret: token || undefined });
   const stream = client.findStream({instanceID});

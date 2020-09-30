@@ -1,8 +1,8 @@
-import clsx from "clsx";
 import Link from "next/link";
 import React, { FC } from "react";
-
 import { Grid, makeStyles, Paper } from "@material-ui/core";
+
+import clsx from "clsx";
 
 const useStyles = makeStyles(() => ({
   paper: {
@@ -23,11 +23,16 @@ export interface TileProps {
   href?: string;
   as?: string;
   nopaper?: boolean;
+  responsive?: boolean;
+  styleClass?: string;
 }
 
-export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, children }) => {
+export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styleClass, children }) => {
   if (!shape) {
     shape = "normal";
+  }
+  if (responsive === undefined) {
+    responsive = true;
   }
 
   const classes = useStyles();
@@ -48,15 +53,18 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, children }) => {
   }
   return (
     <>
-      {shape === "dense" && (
-        <Grid item>
+      {shape === "dense" && <Grid item>{tile}</Grid>}
+      {shape === "normal" && responsive && (
+        <Grid item xs={12} sm={6} md={4} lg={3} className={styleClass}>
           {tile}
         </Grid>
       )}
-      {shape === "normal" && (
-        <Grid item xs={12} sm={6} md={4} lg={3}>
-          {tile}
-        </Grid>
+      {shape === "normal" && !responsive && (
+        <>
+          <Grid item className={styleClass}>
+            {tile}
+          </Grid>
+        </>
       )}
       {shape === "wide" && (
         <Grid item xs={12} sm={12} md={8} lg={6}>
