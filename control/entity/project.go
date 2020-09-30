@@ -23,6 +23,7 @@ type Project struct {
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`
 	Public         bool      `sql:",notnull,default:true"`
 	Locked         bool      `sql:",notnull,default:false"`
+	ExploreRank    int
 	OrganizationID uuid.UUID `sql:",on_delete:restrict,notnull,type:uuid"`
 	Organization   *Organization
 	CreatedOn      time.Time `sql:",default:now()"`
@@ -66,10 +67,15 @@ func FindProject(ctx context.Context, projectID uuid.UUID) *Project {
 	return project
 }
 
-// FindProjects returns a sample of projects
-func FindProjects(ctx context.Context) []*Project {
+// ExploreProjects returns a sample of projects
+func ExploreProjects(ctx context.Context) []*Project {
 	var projects []*Project
-	err := hub.DB.ModelContext(ctx, &projects).Where("project.public = true").Limit(200).Order("name").Relation("Organization").Select()
+	err := hub.DB.ModelContext(ctx, &projects).
+		Where("project.explore_rank IS NOT NULL").
+		Limit(200).
+		Order("explore_rank").
+		Relation("Organization").
+		Select()
 	if err != nil {
 		panic(err)
 	}

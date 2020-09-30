@@ -24,7 +24,7 @@ func (r *projectResolver) ProjectID(ctx context.Context, obj *entity.Project) (s
 }
 
 func (r *queryResolver) ExploreProjects(ctx context.Context) ([]*entity.Project, error) {
-	return entity.FindProjects(ctx), nil
+	return entity.ExploreProjects(ctx), nil
 }
 
 func (r *queryResolver) ProjectsForUser(ctx context.Context, userID uuid.UUID) ([]*entity.Project, error) {
