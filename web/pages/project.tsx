@@ -41,7 +41,7 @@ const ProjectPage = () => {
 
   if (loading) {
     return (
-      <Page title={title} subheader>
+      <Page title={title}>
         <Loading justify="center" />
       </Page>
     );
@@ -63,7 +63,7 @@ const ProjectPage = () => {
   }
 
   return (
-    <Page title={title} subheader>
+    <Page title={title}>
       <ProfileHero
         name={toURLName(project.name)}
         displayName={project.displayName}

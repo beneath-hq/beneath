@@ -44,8 +44,8 @@ export const UsageIndicator: FC<UsageIndicatorProps> = ({ standalone, kind, usag
 
 export default UsageIndicator;
 
-const percentFormat = { output: "percent", mantissa: 0 };
-const bytesFormat = { base: "decimal", mantissa: 0, output: "byte" };
+const percentFormat: numbro.Format = { output: "percent", mantissa: 0 };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 0, output: "byte" };
 
 export const ActualIndicator: FC<UsageIndicatorProps> = ({ standalone, kind, usage, quota }) => {
   const classes = useStyles();

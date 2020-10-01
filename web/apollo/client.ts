@@ -79,7 +79,7 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
   }
 
   // make error link
-  const errorLink = onError(({ graphQLErrors, networkError }) => {
+  const errorLink = onError(({ networkError }) => {
     // redirect to /auth/logout if error is `unauthenticated` (probably means the user logged out in another window)
     if (networkError && "result" in networkError) {
       if (networkError.result.error?.match(/authentication error.*/)) {

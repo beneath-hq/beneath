@@ -18,7 +18,7 @@ import ErrorPage from "../components/ErrorPage";
 import ViewMetrics from "../components/service/ViewMetrics";
 import { toBackendName, toURLName } from "../lib/names";
 
-const bytesFormat = { base: "decimal", mantissa: 1, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
 
 const ServicePage = () => {
   const router = useRouter();
@@ -46,7 +46,7 @@ const ServicePage = () => {
 
   if (loading) {
     return (
-      <Page title={title} subheader>
+      <Page title={title}>
         <Loading justify="center" />
       </Page>
     );
@@ -62,7 +62,7 @@ const ServicePage = () => {
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics service={service} /> });
 
   return (
-    <Page title={title} subheader>
+    <Page title={title}>
       <ProfileHero
         name={toURLName(service.name)}
         description={

@@ -59,7 +59,7 @@ const StreamPage = () => {
 
   if (loading) {
     return (
-      <Page title={title} subheader>
+      <Page title={title}>
         <Loading justify="center" />
       </Page>
     );
@@ -81,7 +81,7 @@ const StreamPage = () => {
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
   return (
-    <Page title={title} subheader>
+    <Page title={title}>
       <StreamHero stream={stream} instance={instance} setInstance={setInstance} />
       <SubrouteTabs defaultValue={"data"} tabs={tabs} />
     </Page>

@@ -17,7 +17,7 @@ import SingleIndicator from "../SingleIndicator";
 import { Metrics } from "../util";
 
 const intFormat = { thousandSeparated: true };
-const bytesFormat = { base: "decimal", mantissa: 1, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
 
 export interface TopIndicatorsProps {
   latest: Metrics;
