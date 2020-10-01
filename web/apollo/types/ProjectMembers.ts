@@ -9,6 +9,7 @@
 
 export interface ProjectMembers_projectMembers {
   __typename: "ProjectMember";
+  projectID: string;
   userID: string;
   name: string;
   displayName: string;

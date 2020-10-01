@@ -24,7 +24,10 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
       router.push("/-/welcome");
     } else if (writeHead && end) {
       // server-side redirect
-      writeHead(307, { Location: "/-/welcome" });
+      writeHead(307, {
+        Location: "/-/welcome",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      });
       end();
     }
   }

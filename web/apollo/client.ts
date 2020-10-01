@@ -84,10 +84,13 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
     if (networkError && "result" in networkError) {
       if (networkError.result.error?.match(/authentication error.*/)) {
         if (token) {
-          if (process.browser || !res) {
+          if (process.browser) {
             document.location.href = "/-/redirects/auth/logout";
           } else {
-            res.writeHead(302, { Location: "/-/redirects/auth/logout" });
+            if (res && !res.headersSent) {
+              res.writeHead(307, { Location: "/-/redirects/auth/logout" });
+              res.end();
+            }
           }
         }
       }
