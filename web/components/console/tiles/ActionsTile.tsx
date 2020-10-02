@@ -3,6 +3,7 @@ import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
 import { Code, Folder, Functions, LinearScale, Mail, MenuBook, VpnKey } from "@material-ui/icons";
 
 import { Tile, TileProps } from "./Tile";
+import useMe from "hooks/useMe";
 
 const useStyles = makeStyles((theme: Theme) => ({
   rightButton: {
@@ -15,6 +16,11 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
   const classes = useStyles();
+  const me = useMe();
+
+  if (!me) {
+    return <></>;
+  }
 
   return (
     <Tile {...tileProps}>
@@ -47,7 +53,13 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" color="secondary" size="small" startIcon={<VpnKey className={classes.icon} />}>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            startIcon={<VpnKey className={classes.icon} />}
+            href={`/organization?organization_name=${me.name}&tab=secrets`}
+          >
             Create secret
           </Button>
         </Grid>
@@ -57,7 +69,7 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<Code className={classes.icon} />}
-            href="/sql"
+            href="/-/sql"
           >
             SQL editor
           </Button>
@@ -74,7 +86,13 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" color="secondary" size="small" startIcon={<Mail className={classes.icon} />} href="https://about.beneath.dev/contact">
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            startIcon={<Mail className={classes.icon} />}
+            href="https://about.beneath.dev/contact"
+          >
             Contact us
           </Button>
         </Grid>
