@@ -1,30 +1,27 @@
 import React, { FC } from "react";
-
 import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+
 import { Tile, TileProps } from "./Tile";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
     height: "inherit",
-    minHeight: "inherit",
+    minHeight: theme.spacing(15),
     padding: theme.spacing(1.5),
   },
 }));
 
-export interface ActionTileProps extends TileProps {
+export interface PlaceholderTileProps extends TileProps {
   title: string;
 }
 
-export const ActionTile: FC<ActionTileProps> = ({ title, children, ...tileProps }) => {
+export const PlaceholderTile: FC<PlaceholderTileProps> = ({ title, ...tileProps }) => {
   const classes = useStyles();
   return (
     <Tile {...tileProps}>
-      <Grid className={classes.container} container alignItems="center" spacing={1}>
+      <Grid className={classes.container} container direction="column" justify="center">
         <Grid item>
-          {children}
-        </Grid>
-        <Grid item>
-          <Typography variant="h4">
+          <Typography variant="subtitle2" align="center">
             {title}
           </Typography>
         </Grid>
@@ -33,4 +30,4 @@ export const ActionTile: FC<ActionTileProps> = ({ title, children, ...tileProps 
   );
 };
 
-export default ActionTile;
+export default PlaceholderTile;

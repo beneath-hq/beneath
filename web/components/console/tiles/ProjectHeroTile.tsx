@@ -12,10 +12,12 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
   },
   orgName: {
-    marginRight: theme.spacing(.75),
+    marginRight: theme.spacing(0.75),
   },
-  description: {
-    marginTop: theme.spacing(3),
+  path: {
+    [theme.breakpoints.down("md")]: {
+      alignItems: "center",
+    },
   },
 }));
 
@@ -41,27 +43,25 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
   const classes = useStyles();
   return (
     <Tile shape={shape} {...tileProps}>
-      <Grid container spacing={0} className={classes.container} alignItems="center">
+      <Grid container spacing={2} className={classes.container} alignItems="center">
         <Grid item className={classes.avatar}>
           <Avatar size="list" label={displayName || name} src={avatarURL} />
         </Grid>
         <Grid item xs={9}>
-          <Grid container>
+          <Grid container className={classes.path}>
             <Grid item>
               <Typography color="textSecondary" className={classes.orgName}>
                 {organizationName} /
               </Typography>
             </Grid>
             <Grid item>
-              <Typography variant="h3">
-                {name}
-              </Typography>
+              <Typography variant="h3">{name}</Typography>
             </Grid>
           </Grid>
         </Grid>
         {description && (
           <Grid item xs={12}>
-            <Typography className={classes.description} variant="body1">
+            <Typography variant="body1">
               {description}
             </Typography>
           </Grid>
