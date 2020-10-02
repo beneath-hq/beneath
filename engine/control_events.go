@@ -10,12 +10,22 @@ import (
 )
 
 const (
-	controlEventsTopic = "control-events"
+	controlEventsTopic        = "control-events"
+	controlEventsSubscription = "control-events-worker"
 )
 
-// LogControlEvent publishes a control-plane event to controlEventsTopic
+// ControlEvent describes a control-plane event
+type ControlEvent struct {
+	// TODO... check to see if we need these json tags. look at stripe library for their events
+	ID        string `json:"unique_id"`
+	Name      string `json:"name"`
+	Timestamp int64  `json:"timestamp"`
+	Data      []byte `json:"data"`
+}
+
+// PublishControlEvent publishes a control-plane event to controlEventsTopic
 // for external consumption (e.g. for BI purposes)
-func (e *Engine) LogControlEvent(ctx context.Context, name string, data interface{}) error {
+func (e *Engine) PublishControlEvent(ctx context.Context, name string, data interface{}) error {
 	id := uuid.NewV4()
 	msg := map[string]interface{}{
 		"id":   id,
@@ -31,4 +41,17 @@ func (e *Engine) LogControlEvent(ctx context.Context, name string, data interfac
 		return fmt.Errorf("control event message has invalid size: '%s'", json)
 	}
 	return e.MQ.Publish(ctx, controlEventsTopic, json)
+}
+
+// SubscribeControlEvents subscribes to all control events
+// TODO: these are json encoded NOT protocol buffers
+func (e *Engine) SubscribeControlEvents(ctx context.Context, fn func(context.Context, *ControlEvent) error) error {
+	return e.MQ.Subscribe(ctx, controlEventsTopic, controlEventsSubscription, true, func(ctx context.Context, msg []byte) error {
+		t := &ControlEvent{}
+		err := json.Unmarshal(msg, t)
+		if err != nil {
+			return err
+		}
+		return fn(ctx, t)
+	})
 }

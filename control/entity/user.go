@@ -157,7 +157,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		}
 
 		// send event about user update
-		err = hub.Engine.LogControlEvent(ctx, "user_update", map[string]interface{}{
+		err = hub.Engine.PublishControlEvent(ctx, "user_update", map[string]interface{}{
 			"user_id": user.UserID,
 		})
 		if err != nil {
@@ -281,7 +281,7 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	)
 
 	// send event about user create
-	err = hub.Engine.LogControlEvent(ctx, "user_create", map[string]interface{}{
+	err = hub.Engine.PublishControlEvent(ctx, "user_create", map[string]interface{}{
 		"user_id": user.UserID,
 	})
 	if err != nil {
