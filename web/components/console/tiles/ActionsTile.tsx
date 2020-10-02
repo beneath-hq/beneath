@@ -58,7 +58,7 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<VpnKey className={classes.icon} />}
-            href={`/organization?organization_name=${me.name}&tab=secrets`}
+            // href={`/organization?organization_name=${me.name}&tab=secrets`}
           >
             Create secret
           </Button>
