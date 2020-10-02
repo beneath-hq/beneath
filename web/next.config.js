@@ -11,5 +11,9 @@ module.exports = (phase, { defaultConfig }) => {
   }
 
   // production config
-  return {};
+  return {
+    env: {
+      BENEATH_ENV: "production",
+    }
+  };
 };

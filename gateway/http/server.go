@@ -21,22 +21,22 @@ import (
 func Handler() http.Handler {
 	handler := chi.NewRouter()
 
-	handler.Use(chimiddleware.RealIP)
-	handler.Use(chimiddleware.DefaultCompress)
-	handler.Use(middleware.InjectTags)
-	handler.Use(middleware.Logger)
-	handler.Use(middleware.Recoverer)
-	handler.Use(middleware.Auth)
-	handler.Use(middleware.IPRateLimit())
-
-	// Add CORS
-	handler.Use(cors.New(cors.Options{
+	corsOptions := cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 		MaxAge:           7200,
 		Debug:            false,
-	}).Handler)
+	}
+
+	handler.Use(chimiddleware.RealIP)
+	handler.Use(chimiddleware.DefaultCompress)
+	handler.Use(cors.New(corsOptions).Handler)
+	handler.Use(middleware.InjectTags)
+	handler.Use(middleware.Logger)
+	handler.Use(middleware.Recoverer)
+	handler.Use(middleware.Auth)
+	handler.Use(middleware.IPRateLimit())
 
 	// Add health check
 	handler.Get("/", healthCheck)

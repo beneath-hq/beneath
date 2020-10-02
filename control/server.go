@@ -27,16 +27,7 @@ import (
 func Handler(host string, frontendHost string) http.Handler {
 	router := chi.NewRouter()
 
-	router.Use(chimiddleware.RealIP)
-	router.Use(chimiddleware.DefaultCompress)
-	router.Use(middleware.InjectTags)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Auth)
-	router.Use(middleware.IPRateLimit())
-
-	// Add CORS
-	router.Use(cors.New(cors.Options{
+	corsOptions := cors.Options{
 		AllowedOrigins: []string{
 			host,
 			frontendHost,
@@ -44,7 +35,16 @@ func Handler(host string, frontendHost string) http.Handler {
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 		Debug:            false,
-	}).Handler)
+	}
+
+	router.Use(chimiddleware.RealIP)
+	router.Use(chimiddleware.DefaultCompress)
+	router.Use(cors.New(corsOptions).Handler)
+	router.Use(middleware.InjectTags)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Auth)
+	router.Use(middleware.IPRateLimit())
 
 	// Authentication endpoints
 	router.Mount("/auth", auth.Router())

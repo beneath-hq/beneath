@@ -85,7 +85,7 @@ const RecordsTable: FC<RecordsTableProps> = ({ schema, records, showTimestamps, 
   const columns = schema?.getColumns(showTimestamps);
   return (
     <Grid container direction="column" spacing={2}>
-      <Grid item spacing={0} xs={12}>
+      <Grid item xs={12}>
         <Paper variant="outlined" className={classes.paper}>
           {columns && (
             <Table className={classes.table} size="small">

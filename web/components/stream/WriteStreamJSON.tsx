@@ -39,8 +39,8 @@ interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
 }
 
-const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {
-  const schema = new Schema(stream);
+const WriteStream: FC<WriteStreamProps> = ({ stream }) => {
+  // const schema = new Schema(stream.avroSchema, stream.streamIndexes);
 
   const [values, setValues] = React.useState({
     json: "",
@@ -110,7 +110,7 @@ const ExploreStream: FC<WriteStreamProps> = ({ stream }) => {
   );
 };
 
-export default ExploreStream;
+export default WriteStream;
 
 const isJSON = (val: string): boolean => {
   try {

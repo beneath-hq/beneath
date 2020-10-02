@@ -49,7 +49,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
     <Container maxWidth={"sm"}>
       <Formik
         initialValues={initialValues}
-        onSubmit={async (values, actions) => {
+        onSubmit={(values, actions) => {
           const mutationPromises = [];
           mutationPromises.push(
             updateOrganization({
@@ -74,7 +74,7 @@ const EditOrganization: FC<EditOrganizationProps> = ({ organization }) => {
               );
             }
           }
-          handleSubmitMutation(values, actions, ...mutationPromises);
+          return handleSubmitMutation(values, actions, ...mutationPromises);
         }}
       >
         {({ isSubmitting, status }) => (

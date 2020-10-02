@@ -26,16 +26,16 @@ export interface SubmitControlProps extends FormControlProps {
 }
 
 const SubmitControl: FC<SubmitControlProps> = (props) => {
-  const { label, errorAlert, createdOn, updatedOn, ...others } = props;
+  const { label, errorAlert, createdOn, updatedOn, disabled, ...others } = props;
   const classes = useStyles();
   return (
-    <FormControl {...others}>
+    <FormControl disabled={disabled} {...others}>
       {errorAlert && (
         <Alert className={classes.alert} severity="error">
           {errorAlert}
         </Alert>
       )}
-      <Button className={classes.button} type="submit" variant="contained" color="primary">
+      <Button className={classes.button} type="submit" disabled={disabled} variant="contained" color="primary">
         {label}
       </Button>
       {(createdOn || updatedOn) && (

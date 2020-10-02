@@ -1,16 +1,21 @@
 import { useMutation } from "@apollo/client";
+import { makeStyles, Theme, Typography } from "@material-ui/core";
+import { Field, Form, Formik } from "formik";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
-import React from "react";
-
-import { Button, makeStyles, TextField, Theme, Typography } from "@material-ui/core";
+import React, { useEffect } from "react";
 
 import { UPDATE_ORGANIZATION } from "../../apollo/queries/organization";
 import { REGISTER_USER_CONSENT } from "../../apollo/queries/user";
 import { RegisterUserConsent, RegisterUserConsentVariables } from "../../apollo/types/RegisterUserConsent";
 import { UpdateOrganization, UpdateOrganizationVariables } from "../../apollo/types/UpdateOrganization";
 import { withApollo } from "../../apollo/withApollo";
-import CheckboxField from "../../components/forms/Checkbox";
+import SubmitControl from "../../components/forms/SubmitControl";
+import {
+  Checkbox as FormikCheckbox,
+  handleSubmitMutation,
+  TextField as FormikTextField,
+} from "../../components/formik";
 import { Link } from "../../components/Link";
 import Page from "../../components/Page";
 import useMe from "../../hooks/useMe";
@@ -26,62 +31,36 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const WelcomePage: NextPage = () => {
+  // TODO: The routing hacks to get this to redirect are a mess
+
   const router = useRouter();
   const classes = useStyles();
+
+  const [updateOrganization] = useMutation<UpdateOrganization, UpdateOrganizationVariables>(UPDATE_ORGANIZATION);
+  const [registerUserConsent] = useMutation<RegisterUserConsent, RegisterUserConsentVariables>(REGISTER_USER_CONSENT, {
+    onCompleted: () => {
+      router.replace("/");
+    },
+  });
 
   const me = useMe();
   if (!me?.personalUser) {
     return <></>;
   }
+  const user = me?.personalUser;
 
-  if (me.personalUser.consentTerms) {
-    if (typeof window !== "undefined") {
-      router.push("/");
-    }
-  }
-
-  const [values, setValues] = React.useState({
-    name: me.name,
-    consentTerms: me.personalUser.consentTerms,
-    consentNewsletter: me.personalUser.consentNewsletter,
-  });
-
-  const [updateOrganization, { loading, error }] = useMutation<UpdateOrganization, UpdateOrganizationVariables>(
-    UPDATE_ORGANIZATION,
-    {
-      onCompleted: (data) => {
-        // stop if not succesful
-        if (!data) {
-          return;
-        }
-
-        // username updated successfully, so register consent
-        if (me.personalUser) {
-          registerUserConsent({
-            variables: {
-              userID: me.personalUser.userID,
-              terms: values.consentTerms,
-              newsletter: values.consentNewsletter,
-            },
-          });
-        }
-      },
-    }
-  );
-
-  const [registerUserConsent, { loading: loadingConsent, error: errorConsent }] = useMutation<
-    RegisterUserConsent,
-    RegisterUserConsentVariables
-  >(REGISTER_USER_CONSENT, {
-    onCompleted: (data) => {
-      if (data.registerUserConsent) {
-        router.push("/");
+  useEffect(() => {
+    if (user.consentTerms) {
+      if (typeof window !== "undefined") {
+        router.replace("/");
       }
-    },
-  });
+    }
+  }, []);
 
-  const handleChange = (name: string) => (event: any) => {
-    setValues({ ...values, [name]: event.target.value });
+  const initialValues = {
+    name: toURLName(me.name),
+    consentTerms: me.personalUser.consentTerms as boolean,
+    consentNewsletter: me.personalUser.consentNewsletter,
   };
 
   return (
@@ -91,86 +70,79 @@ const WelcomePage: NextPage = () => {
       </Typography>
       <Typography gutterBottom>We just need a few more details to get you set up</Typography>
       {/* Username form */}
-      <form
-        className={classes.form}
-        onSubmit={(e) => {
-          e.preventDefault();
-          updateOrganization({
-            variables: {
-              organizationID: me.organizationID,
-              name: toBackendName(values.name),
-            },
-          });
+      <Formik
+        initialValues={initialValues}
+        onSubmit={(values, actions) => {
+          return handleSubmitMutation(
+            values,
+            actions,
+            // first run update username, and only update consent if successful
+            (async () => {
+              const res = await updateOrganization({
+                variables: {
+                  organizationID: me.organizationID,
+                  name: toBackendName(values.name),
+                },
+              });
+              if (res.errors) {
+                return res;
+              }
+              return await registerUserConsent({
+                variables: {
+                  userID: user.userID,
+                  terms: values.consentTerms,
+                  newsletter: values.consentNewsletter,
+                },
+              });
+            })()
+          );
         }}
       >
-        <TextField
-          id="name"
-          label={"Pick a username"}
-          value={toURLName(values.name)}
-          margin="normal"
-          helperText={
-            error
-              ? isNameError(error)
-                ? "Username already taken"
-                : `An error occurred: ${JSON.stringify(error)}`
-              : "Lowercase letters, numbers and dashes allowed (min. 3 characters)"
-          }
-          error={!validateName(values.name) || !!isNameError(error)}
-          required
-          fullWidth
-          onChange={handleChange("name")}
-        />
-        <CheckboxField
-          id="consentNewsletter"
-          label="Email me updates about Beneath"
-          checked={values.consentNewsletter}
-          margin="normal"
-          fullWidth
-          onChange={(_, checked) => {
-            setValues({ ...values, consentNewsletter: checked });
-          }}
-        />
-        <CheckboxField
-          id="consentTerms"
-          label={
-            <span>
-              I agree to the <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
-              <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
-            </span>
-          }
-          checked={values.consentTerms}
-          margin="normal"
-          fullWidth
-          onChange={(_, checked) => {
-            setValues({ ...values, consentTerms: checked });
-          }}
-        />
-        <Button
-          type="submit"
-          variant="outlined"
-          color="primary"
-          fullWidth
-          className={classes.submitConsentButton}
-          disabled={loading || loadingConsent || !values.consentTerms}
-        >
-          All done
-        </Button>
-        {errorConsent && (
-          <Typography variant="body1" color="error">
-            {`An error occurred: ${JSON.stringify(errorConsent)}`}
-          </Typography>
+        {({ isSubmitting, status, values }) => (
+          <Form className={classes.form}>
+            <Field
+              name="name"
+              validate={(val: string) => {
+                if (!val || val.length < 3 || val.length > 40) {
+                  return "Usernames should be between 3 and 40 characters long";
+                }
+                if (!val.match(/^[_\-a-z][_\-a-z0-9]+$/)) {
+                  return "Usernames should consist of lowercase letters, numbers, underscores and dashes (cannot start with a number)";
+                }
+              }}
+              component={FormikTextField}
+              label={"Username"}
+              required
+            />
+
+            <Field
+              name="consentNewsletter"
+              component={FormikCheckbox}
+              type="checkbox"
+              label="Email me updates about Beneath"
+            />
+            <Field
+              name="consentTerms"
+              component={FormikCheckbox}
+              type="checkbox"
+              validate={(checked: any) => {
+                if (!checked) {
+                  return "Cannot continue without consent to the terms of service";
+                }
+              }}
+              label={
+                <span>
+                  I agree to the <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
+                  <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
+                </span>
+              }
+            />
+            <SubmitControl label="All done" errorAlert={status} disabled={!values.consentTerms || isSubmitting} />
+          </Form>
         )}
-      </form>
+      </Formik>
     </Page>
   );
 };
 
 export default withApollo(WelcomePage);
-
-const validateName = (val: string) => {
-  return val && val.length >= 3 && val.length <= 40 && val.match(/^[_\-a-z][_\-a-z0-9]+$/);
-};
-
-const isNameError = (error?: Error) => {
-  return error && error.message.match(/duplicate key value violates unique constraint/);
-};

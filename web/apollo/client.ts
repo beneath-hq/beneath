@@ -42,7 +42,8 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
       BillingMethod: { keyFields: ["billingMethodID"] },
       BillingPlan: { keyFields: ["billingPlanID"] },
       Metrics: { keyFields: ["entityID", "period", "time"] },
-      NewUserSecret: { keyFields: ["secretString"] },
+      NewUserSecret: { keyFields: false },
+      NewServiceSecret: { keyFields: false },
       Organization: { keyFields: ["organizationID"] },
       OrganizationMember: { keyFields: ["organizationID", "userID"] },
       PermissionsServicesStreams: { keyFields: false },
@@ -79,15 +80,18 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
   }
 
   // make error link
-  const errorLink = onError(({ graphQLErrors, networkError }) => {
+  const errorLink = onError(({ networkError }) => {
     // redirect to /auth/logout if error is `unauthenticated` (probably means the user logged out in another window)
     if (networkError && "result" in networkError) {
       if (networkError.result.error?.match(/authentication error.*/)) {
         if (token) {
-          if (process.browser || !res) {
+          if (process.browser) {
             document.location.href = "/-/redirects/auth/logout";
           } else {
-            res.writeHead(302, { Location: "/-/redirects/auth/logout" });
+            if (res && !res.headersSent) {
+              res.writeHead(307, { Location: "/-/redirects/auth/logout" });
+              res.end();
+            }
           }
         }
       }

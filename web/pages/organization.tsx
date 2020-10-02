@@ -50,7 +50,7 @@ const OrganizationPage = () => {
 
   if (loading) {
     return (
-      <Page title={organizationName} subheader>
+      <Page title={organizationName}>
         <Loading justify="center" />
       </Page>
     );
@@ -103,7 +103,7 @@ const OrganizationPage = () => {
   }
 
   return (
-    <Page title={toURLName(organization.name)} subheader>
+    <Page title={toURLName(organization.name)}>
       <ProfileHero
         name={toURLName(organization.name)}
         displayName={organization.displayName}
