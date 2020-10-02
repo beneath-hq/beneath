@@ -44,12 +44,12 @@ class Generate(Transform):
   async def process(self, incoming_records: Iterable[Mapping]):
     assert incoming_records is None
     async for records in self.fn(self.pipeline):
-      if not isinstance(records, list):
-        records = [records]
-      elif records == PIPELINE_IDLE:
+      if records == PIPELINE_IDLE:
         if self.pipeline.strategy != Strategy.continuous:
           return
         continue
+      if not isinstance(records, list):
+        records = [records]
       yield records
 
 
