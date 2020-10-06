@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/control/payments"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue/worker"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"

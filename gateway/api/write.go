@@ -13,7 +13,7 @@ import (
 	pb_engine "gitlab.com/beneath-hq/beneath/engine/proto"
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/gateway/util"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"

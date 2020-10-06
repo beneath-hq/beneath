@@ -6,7 +6,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )

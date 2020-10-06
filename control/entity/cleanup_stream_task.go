@@ -6,7 +6,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // CleanupStreamTask is a task triggered after a stream is deleted

@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // Service represents external service keys, models, and, in the future, charts, all of which need OrganizationIDs for billing

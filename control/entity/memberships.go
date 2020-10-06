@@ -6,7 +6,7 @@ import (
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // ProjectMember is a convenience representation of project membership

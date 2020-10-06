@@ -3,7 +3,7 @@ package entity
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 
 	"github.com/go-pg/pg/v9"

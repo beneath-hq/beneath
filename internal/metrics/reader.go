@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 

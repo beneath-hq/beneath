@@ -9,7 +9,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/engine/driver"
 	"gitlab.com/beneath-hq/beneath/gateway/util"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/internal/middleware"
 )
 

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/bytesutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"

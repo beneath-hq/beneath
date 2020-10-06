@@ -11,7 +11,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 
 	"gitlab.com/beneath-hq/beneath/control/migrations"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 

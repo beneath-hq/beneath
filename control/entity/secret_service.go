@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-pg/pg/v9"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // ServiceSecret implements Secret for Token entities
