@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardContent,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,7 +25,6 @@ const useStyles = makeStyles((theme) => ({
     display: "block",
     minHeight: theme.spacing(10),
     textAlign: "left",
-    textTransform: "none",
   },
 }));
 
@@ -56,44 +56,44 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   let input: any = null;
   const classes = useStyles();
   return (
-    <div>
+    <Container maxWidth={"sm"}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Button
             color="primary"
-            variant="outlined"
+            variant="contained"
             fullWidth
             className={classes.issueSecretButton}
             onClick={() => openDialog(true)}
           >
-            <Typography variant="button" display="block">
-              Create new read-only secret
+            Create new read-only secret
+            {/* <Typography variant="button" display="block">
             </Typography>
             <Typography variant="caption" display="block">
               Grants read access to all streams you have access to.
             </Typography>
             <Typography variant="caption" display="block">
               <strong>Use to</strong> quickly get started with integrating data from Beneath
-            </Typography>
+            </Typography> */}
           </Button>
         </Grid>
         <Grid item xs={12} md={6}>
           <Button
-            color="secondary"
-            variant="outlined"
+            // color="secondary"
+            variant="contained"
             fullWidth
             className={classes.issueSecretButton}
             onClick={() => openDialog(false)}
           >
-            <Typography variant="button" display="block">
-              Create new command-line secret
+            Create new command-line secret
+            {/* <Typography variant="button" display="block">
             </Typography>
             <Typography variant="caption" display="block">
               Grants full access to modify resources
             </Typography>
             <Typography variant="caption" display="block">
               <strong>Use to</strong> connect from the Beneath command-line app
-            </Typography>
+            </Typography> */}
           </Button>
         </Grid>
         {newSecretString !== "" && (
@@ -116,9 +116,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
       </Grid>
       <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
         <form onSubmit={(e) => e.preventDefault()}>
-          <DialogTitle id="form-dialog-title">
-            Issue {readOnlySecret ? "read-only" : "command-line"} secret
-          </DialogTitle>
+          <DialogTitle id="form-dialog-title">Issue {readOnlySecret ? "read-only" : "command-line"} secret</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -171,7 +169,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
           </DialogActions>
         </form>
       </Dialog>
-    </div>
+    </Container>
   );
 };
 

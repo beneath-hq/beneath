@@ -13,6 +13,7 @@ import useMe from "../../hooks/useMe";
 import { toURLName, toBackendName } from "../../lib/names";
 import { handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
+import FormikCodeEditor from "components/formik/CodeEditor";
 
 interface Project {
   organization: { name: string };
@@ -128,12 +129,12 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
                 return "You must provide a valid schema";
               }
             }}
-            component={FormikTextField}
+            component={FormikCodeEditor}
             label="Schema"
             required
             multiline
             rows={10}
-            rowsMax={200}
+            language={"graphql"}
           />
           <SubmitControl label="Create stream" errorAlert={status} disabled={isSubmitting} />
         </Form>

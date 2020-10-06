@@ -1,4 +1,4 @@
-import { FormControl as MuiFormControl } from "@material-ui/core";
+import { Box, FormControl as MuiFormControl } from "@material-ui/core";
 import { FC } from "react";
 
 import FieldLabel from "./FieldLabel";
@@ -35,6 +35,7 @@ const FormControl: FC<FormControlProps> = (props) => {
   return (
     <MuiFormControl margin={actualMargin} error={error} fullWidth={actualFullWidth} disabled={disabled}>
       {id && label && <FieldLabel id={id} label={label} helperText={helperText} required={required} />}
+      <Box height="0.3rem" />
       {children}
       {id && <FieldError id={id} error={error} errorText={errorText} />}
     </MuiFormControl>

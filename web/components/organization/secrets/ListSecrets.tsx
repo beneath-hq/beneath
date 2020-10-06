@@ -4,6 +4,7 @@ import Moment from "react-moment";
 
 import {
   Button,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -46,85 +47,88 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
   }
 
   return (
-    <List dense={true}>
-      {data.secretsForUser
-        .filter((secret) => secret.description !== "Browser session")
-        .map(({ createdOn, description, userSecretID, prefix }) => (
-          <ListItem key={userSecretID} disableGutters>
-            <ListItemText
-              primary={
-                <React.Fragment>
-                  {description || <em>No description</em>} (starts with <strong>{prefix}</strong>)
-                </React.Fragment>
-              }
-              secondary={
-                <React.Fragment>
-                  Secret issued <Moment fromNow date={createdOn} />
-                </React.Fragment>
-              }
-            />
-            <ListItemSecondaryAction>
-              <IconButton
-                edge="end"
-                aria-label="Delete"
-                disabled={mutLoading}
-                onClick={() => {
-                  setOpenDialogue(true);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-              <Dialog open={openDialogue}>
-                <DialogTitle id="alert-dialog-title">{"Are you sure you want to delete this secret?"}</DialogTitle>
-                <DialogContent>
-                  <DialogContentText id="alert-dialog-description">
-                    Any environments (your CLI, any services, Jupyter notebooks, etc.) that rely on this secret will no
-                    longer work. For the affected environments, you'll have to issue a new secret and re-authenticate.
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    color="primary"
-                    autoFocus
-                    onClick={() => {
-                      setOpenDialogue(false);
-                    }}
-                  >
-                    No, go back
-                  </Button>
-                  <Button
-                    color="primary"
-                    autoFocus
-                    onClick={() => {
-                      revokeSecret({
-                        variables: { secretID: userSecretID },
-                        update: (cache, { data }) => {
-                          if (data && data.revokeUserSecret) {
-                            const queryData = cache.readQuery({
-                              query: QUERY_USER_SECRETS,
-                              variables: { userID },
-                            }) as any;
-                            const filtered = queryData.secretsForUser.filter(
-                              (secret: any) => secret.userSecretID !== userSecretID
-                            );
-                            cache.writeQuery({
-                              query: QUERY_USER_SECRETS,
-                              variables: { userID },
-                              data: { secretsForUser: filtered },
-                            });
-                          }
-                        },
-                      });
-                    }}
-                  >
-                    Yes, I'm sure
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </ListItemSecondaryAction>
-          </ListItem>
-        ))}
-    </List>
+    <Container maxWidth={"md"}>
+      <List dense={true}>
+        {data.secretsForUser
+          .filter((secret) => secret.description !== "Browser session")
+          .map(({ createdOn, description, userSecretID, prefix }) => (
+            <ListItem key={userSecretID} disableGutters>
+              <ListItemText
+                primary={
+                  <React.Fragment>
+                    {description || <em>No description</em>} (starts with <strong>{prefix}</strong>)
+                  </React.Fragment>
+                }
+                secondary={
+                  <React.Fragment>
+                    Secret issued <Moment fromNow date={createdOn} />
+                  </React.Fragment>
+                }
+              />
+              <ListItemSecondaryAction>
+                <IconButton
+                  edge="end"
+                  aria-label="Delete"
+                  disabled={mutLoading}
+                  onClick={() => {
+                    setOpenDialogue(true);
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+                <Dialog open={openDialogue}>
+                  <DialogTitle id="alert-dialog-title">{"Are you sure you want to delete this secret?"}</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                      Any environments (your CLI, any services, Jupyter notebooks, etc.) that rely on this secret will
+                      no longer work. For the affected environments, you'll have to issue a new secret and
+                      re-authenticate.
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button
+                      color="primary"
+                      autoFocus
+                      onClick={() => {
+                        setOpenDialogue(false);
+                      }}
+                    >
+                      No, go back
+                    </Button>
+                    <Button
+                      color="primary"
+                      autoFocus
+                      onClick={() => {
+                        revokeSecret({
+                          variables: { secretID: userSecretID },
+                          update: (cache, { data }) => {
+                            if (data && data.revokeUserSecret) {
+                              const queryData = cache.readQuery({
+                                query: QUERY_USER_SECRETS,
+                                variables: { userID },
+                              }) as any;
+                              const filtered = queryData.secretsForUser.filter(
+                                (secret: any) => secret.userSecretID !== userSecretID
+                              );
+                              cache.writeQuery({
+                                query: QUERY_USER_SECRETS,
+                                variables: { userID },
+                                data: { secretsForUser: filtered },
+                              });
+                            }
+                          },
+                        });
+                      }}
+                    >
+                      Yes, I'm sure
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+      </List>
+    </Container>
   );
 };
 

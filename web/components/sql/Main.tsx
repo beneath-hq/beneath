@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import numbro from "numbro";
 import React, { useState, useMemo, useEffect } from "react";
 
-import TextField from "../forms/TextField";
+import CodeEditor from "components/CodeEditor";
 import RecordsTable from "components/stream/RecordsTable";
 import { Schema } from "components/stream/schema";
 import { useToken } from "hooks/useToken";
@@ -88,14 +88,11 @@ const Main = () => {
         <Grid container spacing={2} direction="column">
           {/* Editor */}
           <Grid item xs={12}>
-            <TextField
-              multiline
-              margin="none"
-              monospace
+            <CodeEditor
               rows={15}
-              rowsMax={200}
+              language="sql"
               value={queryText}
-              onChange={(e) => setQueryText(e.target.value)}
+              onChange={(value: string) => setQueryText(value)}
             />
           </Grid>
           {/* Action bar */}

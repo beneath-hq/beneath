@@ -1,4 +1,4 @@
-import { createMuiTheme, ThemeOptions, responsiveFontSizes } from "@material-ui/core/styles";
+import { createMuiTheme, ThemeOptions, responsiveFontSizes, rgbToHex } from "@material-ui/core/styles";
 
 // "hack" to add custom properties to MUI theme
 declare module "@material-ui/core/styles/createTypography" {
@@ -66,9 +66,9 @@ theme.palette = {
     white: "rgba(255, 255, 255, 1)",
   },
   background: {
-    paper: "rgba(26, 39, 75, 1)",
-    medium: "rgba(21, 31, 60)",
-    default: "rgba(16, 24, 46, 1)",
+    paper: rgbToHex("rgb(26, 39, 75)"),
+    medium: rgbToHex("rgb(21, 31, 60)"),
+    default: rgbToHex("rgb(16, 24, 46)"),
   },
   divider: "rgba(45, 51, 71, 1)",
   border: {

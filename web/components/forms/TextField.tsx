@@ -13,9 +13,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     backgroundColor: theme.palette.background.paper,
     border: `1px solid ${theme.palette.border.paper}`,
   },
-  rootMargin: {
-    marginTop: "0.3rem",
-  },
   focused: {
     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
   },
@@ -51,7 +48,6 @@ const TextField: FC<TextFieldProps> = (props) => {
   const {
     id,
     value,
-    margin,
     multiline,
     monospace,
     rows,
@@ -68,10 +64,10 @@ const TextField: FC<TextFieldProps> = (props) => {
   const classes = useStyles();
 
   return (
-    <FormControl id={id} margin={margin} {...others}>
+    <FormControl id={id} {...others}>
       <InputBase
         classes={{
-          root: clsx(classes.root, margin !== "none" && classes.rootMargin, monospace && classes.monospace),
+          root: clsx(classes.root, monospace && classes.monospace),
           focused: classes.focused,
           input: classes.input,
           inputMultiline: classes.input,
