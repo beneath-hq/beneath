@@ -11,6 +11,9 @@ const useStyles = makeStyles((theme) => ({
   container: {
     padding: theme.spacing(2),
   },
+  description: {
+    marginTop: theme.spacing(3),
+  },
 }));
 
 export interface ProfileHeroTileProps extends TileProps {
@@ -27,14 +30,21 @@ const ProfileHeroTile: FC<ProfileHeroTileProps> = ({ name, displayName, path, de
     <Tile shape={shape} {...tileProps}>
       <Grid container spacing={0} className={classes.container} alignItems="center">
         <Grid className={classes.avatar} item>
-          <Avatar size="list" label={displayName || name} src={avatarURL} />
+          <Avatar size="hero" label={displayName || name} src={avatarURL} />
         </Grid>
         <Grid item>
-          <Typography variant="h3">
-            {displayName || name}
+          <Typography variant="h3">{displayName || name}</Typography>
+          <Typography variant="subtitle1" color="textSecondary">
+            {path}
           </Typography>
-          <Typography variant="body1">{description}</Typography>
         </Grid>
+        {description && (
+          <Grid item xs={12}>
+            <Typography className={classes.description} variant="body1">
+              {description}
+            </Typography>
+          </Grid>
+        )}
       </Grid>
     </Tile>
   );

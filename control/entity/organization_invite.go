@@ -5,7 +5,7 @@ import (
 	"time"
 
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // OrganizationInvite represents invites to use an organization as your billing organization.

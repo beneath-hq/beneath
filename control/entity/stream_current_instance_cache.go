@@ -8,7 +8,7 @@ import (
 	"github.com/go-pg/pg/v9"
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 )
 
 // FindInstanceIDByOrganizationProjectAndName returns the current instance ID of the stream

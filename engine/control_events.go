@@ -10,25 +10,45 @@ import (
 )
 
 const (
-	controlEventsTopic = "control-events"
+	controlEventsTopic        = "control-events"
+	controlEventsSubscription = "control-events-worker"
 )
 
-// LogControlEvent publishes a control-plane event to controlEventsTopic
+// ControlEvent describes a control-plane event
+type ControlEvent struct {
+	ID        uuid.UUID              `json:"id"`
+	Name      string                 `json:"name"`
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
+}
+
+// PublishControlEvent publishes a control-plane event to controlEventsTopic
 // for external consumption (e.g. for BI purposes)
-func (e *Engine) LogControlEvent(ctx context.Context, name string, data interface{}) error {
-	id := uuid.NewV4()
-	msg := map[string]interface{}{
-		"id":   id,
-		"name": name,
-		"time": time.Now(),
-		"data": data,
+func (e *Engine) PublishControlEvent(ctx context.Context, name string, data map[string]interface{}) error {
+	msg := ControlEvent{
+		ID:        uuid.NewV4(),
+		Name:      name,
+		Timestamp: time.Now(),
+		Data:      data,
 	}
 	json, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	if len(msg) > e.MQ.MaxMessageSize() {
-		return fmt.Errorf("control event message has invalid size: '%s'", json)
+	if len(json) > e.MQ.MaxMessageSize() {
+		return fmt.Errorf("control event message %v has invalid size", json)
 	}
 	return e.MQ.Publish(ctx, controlEventsTopic, json)
+}
+
+// SubscribeControlEvents subscribes to all control events
+func (e *Engine) SubscribeControlEvents(ctx context.Context, fn func(context.Context, *ControlEvent) error) error {
+	return e.MQ.Subscribe(ctx, controlEventsTopic, controlEventsSubscription, true, func(ctx context.Context, msg []byte) error {
+		t := &ControlEvent{}
+		err := json.Unmarshal(msg, t)
+		if err != nil {
+			return err
+		}
+		return fn(ctx, t)
+	})
 }

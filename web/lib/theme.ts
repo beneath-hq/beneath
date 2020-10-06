@@ -83,7 +83,7 @@ theme.palette = {
   },
   secondary: {
     light: "rgba(130, 160, 190, 1)",
-    main: "rgba(90, 110, 140, 1)",
+    main: "rgba(44, 58, 86, 1)",
     dark: "rgba(80, 95, 120, 1)",
     contrastText: "#fff",
   },

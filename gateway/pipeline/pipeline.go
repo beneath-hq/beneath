@@ -13,7 +13,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/engine/proto"
 	pbgw "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )

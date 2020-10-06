@@ -1,11 +1,15 @@
 import Link from "next/link";
 import React, { FC } from "react";
-import { Grid, makeStyles, Paper } from "@material-ui/core";
+import { Grid, makeStyles, Paper, Theme } from "@material-ui/core";
 
 import clsx from "clsx";
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme: Theme) => ({
   paper: {
+    height: "100%",
+    border: `1px solid ${theme.palette.border.paper}`,
+  },
+  nopaper: {
     height: "100%",
   },
   paperLink: {
@@ -14,7 +18,7 @@ const useStyles = makeStyles(() => ({
   unstyledA: {
     color: "inherit",
     textDecoration: "inherit",
-  }
+  },
 }));
 
 // tslint:disable-next-line: no-empty-interface
@@ -39,7 +43,7 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styl
 
   let tile;
   if (nopaper) {
-    tile = <div className={clsx(classes.paper, href && classes.paperLink)}>{children}</div>;
+    tile = <div className={clsx(classes.nopaper, href && classes.paperLink)}>{children}</div>;
   } else {
     tile = <Paper className={clsx(classes.paper, href && classes.paperLink)}>{children}</Paper>;
   }
@@ -55,7 +59,7 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styl
     <>
       {shape === "dense" && <Grid item>{tile}</Grid>}
       {shape === "normal" && responsive && (
-        <Grid item xs={12} sm={6} md={4} lg={3} className={styleClass}>
+        <Grid item xs={12} sm={6} md={4} lg={4} className={styleClass}>
           {tile}
         </Grid>
       )}

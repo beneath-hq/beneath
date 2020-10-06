@@ -15,7 +15,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"gitlab.com/beneath-hq/beneath/control/taskqueue"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"

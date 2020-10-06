@@ -13,7 +13,7 @@ import (
 	gw "gitlab.com/beneath-hq/beneath/gateway"
 	gwgrpc "gitlab.com/beneath-hq/beneath/gateway/grpc"
 	gwhttp "gitlab.com/beneath-hq/beneath/gateway/http"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"

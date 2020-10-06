@@ -28,7 +28,7 @@ import (
 	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
 	gwhttp "gitlab.com/beneath-hq/beneath/gateway/http"
 	"gitlab.com/beneath-hq/beneath/gateway/pipeline"
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )

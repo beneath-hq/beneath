@@ -8,6 +8,7 @@ import { toURLName } from "../../lib/names";
 import ErrorTile from "./tiles/ErrorTile";
 import LoadingTile from "./tiles/LoadingTile";
 import ProjectHeroTile from "./tiles/ProjectHeroTile";
+import PlaceholderTile from "./tiles/PlaceholderTile";
 
 export interface MyProjectsTilesProps {
   me: Me_me;
@@ -28,7 +29,8 @@ const MyProjectsTiles: FC<MyProjectsTilesProps> = ({ me }) => {
     <>
       {loading && <LoadingTile />}
       {error && <ErrorTile error={error?.message || "Couldn't load your projects"} />}
-      {data && data.projectsForUser &&
+      {data &&
+        data.projectsForUser &&
         data.projectsForUser.map(({ projectID, name, description, photoURL, organization }) => (
           <ProjectHeroTile
             key={`explore:${projectID}`}
@@ -40,6 +42,7 @@ const MyProjectsTiles: FC<MyProjectsTilesProps> = ({ me }) => {
             avatarURL={photoURL}
           />
         ))}
+      {data && !data.projectsForUser && <PlaceholderTile title="Your first project will show up here" />}
     </>
   );
 };

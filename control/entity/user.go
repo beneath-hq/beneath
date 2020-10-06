@@ -11,7 +11,7 @@ import (
 	"github.com/go-pg/pg/v9/orm"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/internal/hub"
+	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
@@ -156,14 +156,6 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 			return nil, err
 		}
 
-		// send event about user update
-		err = hub.Engine.LogControlEvent(ctx, "user_update", map[string]interface{}{
-			"user_id": user.UserID,
-		})
-		if err != nil {
-			return nil, err
-		}
-
 		return user, nil
 	}
 
@@ -281,8 +273,9 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 	)
 
 	// send event about user create
-	err = hub.Engine.LogControlEvent(ctx, "user_create", map[string]interface{}{
-		"user_id": user.UserID,
+	err = hub.Engine.PublishControlEvent(ctx, "user_create", map[string]interface{}{
+		"organization_id": org.OrganizationID,
+		"user_id":         user.UserID,
 	})
 	if err != nil {
 		return nil, err
