@@ -30,7 +30,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   });
 
   const initialValues = {
-    description: "My personal secret",
+    description: "",
     access: "full",
     readOnly: false,
     publicOnly: false,
@@ -41,19 +41,22 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
     <>
       <Formik
         initialValues={initialValues}
-        onSubmit={async (values, actions) =>
+        onSubmit={(values, actions) =>
           handleSubmitMutation(
             values,
             actions,
             issueSecret({
               variables: {
                 description: values.description,
-                readOnly: values.readOnly,
-                publicOnly: values.publicOnly,
+                readOnly: values.access !== "full",
+                publicOnly: values.access === "readpublic",
               },
               update: (cache, { data }) => {
-                console.log(":PP", values);
                 if (data) {
+                  // reset form
+                  actions.resetForm();
+
+                  // update cache
                   const queryData = cache.readQuery({
                     query: QUERY_USER_SECRETS,
                     variables: { userID },
@@ -93,6 +96,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
               }}
               component={FormikTextField}
               label="Description"
+              placeholder="My personal secret"
               required
             />
             <Field

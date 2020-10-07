@@ -111,7 +111,7 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
               .filter((secret) => secret.description !== "Browser session")
               .map(({ createdOn, description, userSecretID, prefix, readOnly, publicOnly }) => (
                 <TableRow key={userSecretID} hover>
-                  <TableCell>{description}</TableCell> {/* component="th" scope="row" */}
+                  <TableCell>{description || ""}</TableCell>
                   <TableCell>{readOnly ? (publicOnly ? "Public read" : "Private read") : "Full access"}</TableCell>
                   <TableCell>{prefix}</TableCell>
                   <TableCell>
