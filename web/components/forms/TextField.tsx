@@ -31,6 +31,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export interface TextFieldProps extends FormControlProps {
   value?: string;
+  placeholder?: string;
   multiline?: boolean;
   monospace?: boolean;
   rows?: number;
@@ -48,6 +49,7 @@ const TextField: FC<TextFieldProps> = (props) => {
   const {
     id,
     value,
+    placeholder,
     multiline,
     monospace,
     rows,
@@ -74,6 +76,7 @@ const TextField: FC<TextFieldProps> = (props) => {
         }}
         id={id}
         value={value}
+        placeholder={placeholder}
         multiline={multiline}
         rows={rows}
         rowsMax={rowsMax}
