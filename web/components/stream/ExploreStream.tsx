@@ -169,34 +169,8 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
                   if (value !== null) setQueryType(value);
                 }}
               >
-                <ToggleButton
-                  value="log"
-                  // classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
-                >
-                  Log
-                  {/* <Grid container direction="column">
-                    <Grid item>
-                      <Typography>Log</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography className={classes.subtext}>Sort by time written</Typography>
-                    </Grid>
-                  </Grid> */}
-                </ToggleButton>
-                <ToggleButton
-                  value="index"
-                  // classes={{ root: classes.queryTypeButtons, selected: classes.queryTypeButtonsSelected }}
-                >
-                  Index
-                  {/* <Grid container direction="column">
-                    <Grid item>
-                      <Typography>Index</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography className={classes.subtext}>Lookup by key</Typography>
-                    </Grid>
-                  </Grid> */}
-                </ToggleButton>
+                <ToggleButton value="log">Log</ToggleButton>
+                <ToggleButton value="index">Index</ToggleButton>
               </ToggleButtonGroup>
             </Grid>
             <Grid item>
@@ -204,7 +178,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
                 <Chip
                   label="Live"
                   variant="outlined"
-                  // color="primary"
                   size="small"
                   clickable
                   onClick={() => setSubscribeToggle(false)}
@@ -215,7 +188,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
                 <Chip
                   label="Paused"
                   variant="outlined"
-                  color="secondary"
                   size="small"
                   clickable={isSubscribeable(finalized) ? true : false}
                   onClick={() => {
@@ -252,63 +224,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
                       Oldest to Newest
                     </Button>
                   )}
-                  {/* <Button size="small" onClick={() => setLogPeek(!logPeek)}>
-              <ArrowDownwardIcon />
-              {logPeek && (
-                <Grid container direction="column">
-                  <Grid item>
-                    <Typography color="primary">Newest</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography>Oldest</Typography>
-                  </Grid>
-                </Grid>
-              )}
-              {!logPeek && (
-                <Grid container direction="column">
-                  <Grid item>
-                    <Typography>Oldest</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography color="primary">Newest</Typography>
-                  </Grid>
-                </Grid>
-              )}
-            </Button> */}
-                </Grid>
-                <Grid item>
-                  <Button
-                    onClick={() => {
-                      setLogCodeDialog(true);
-                    }}
-                    size="small"
-                    endIcon={<Code />}
-                  >
-                    Code
-                  </Button>
-                  <Dialog open={logCodeDialog} onBackdropClick={() => setLogCodeDialog(false)}>
-                    <DialogContent>
-                      <CodeBlock language={"python"}>
-                        {`import beneath
-beneath.easy_consume_stream(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
-consume_fn=YOUR_CALLBACK_FUNCTION)`}
-                      </CodeBlock>
-                      {/* <CodeBlock language={"javascript"}>
-                  {`import { useRecords } from "beneath-react";
-const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
-                    stream.name
-                  }",
-query: {type: "log", peek: ${logPeek}},
-});`}
-                </CodeBlock> */}
-                    </DialogContent>
-                    <DialogActions>
-                      <Button onClick={() => setLogCodeDialog(false)} color="primary">
-                        Close
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
                 </Grid>
               </Grid>
             </>
@@ -329,42 +244,31 @@ query: {type: "log", peek: ${logPeek}},
                     onChange={(filter) => setFilter(filter)}
                   />
                 </Grid>
-                <Grid item>
-                  <Button
-                    onClick={() => {
-                      setIndexCodeDialog(true);
-                    }}
-                    size="small"
-                    endIcon={<Code />}
-                  >
-                    Code
-                  </Button>
-                  <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
-                    <DialogContent>
-                      <CodeBlock language={"python"}>
-                        {`import beneath
-df = await beneath.easy_read(stream_path="${stream.project.organization.name}/${stream.project.name}/${stream.name}",
-filter=${filter === "" ? "None" : "'" + filter + "'"})
-df
-`}
-                      </CodeBlock>
-                      {/* <CodeBlock language={"javascript"}>
-                    {`import { useRecords } from "beneath-react";
-const { records, error, loading, fetchMore, fetchMoreChanges, subscription, truncation } = useRecords({
-${isPublic ? "" : `secret: "YOUR_SECRET",\n  `}stream: "${stream.project.organization.name}/${stream.project.name}/${
-                      stream.name
-                    }",
-query: {type: "index", filter: ${filter === "" ? undefined : filter}},
-});`}
-                  </CodeBlock> */}
-                    </DialogContent>
-                    <DialogActions>
-                      <Button onClick={() => setIndexCodeDialog(false)} color="primary">
-                        Close
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
-                </Grid>
+                {filter && (
+                  <Grid item>
+                    <Button
+                      onClick={() => {
+                        setIndexCodeDialog(true);
+                      }}
+                      size="small"
+                      endIcon={<Code />}
+                    >
+                      Filter
+                    </Button>
+                    <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                      <DialogContent>
+                        <CodeBlock language={"python"}>
+                          {`${filter}`}
+                        </CodeBlock>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                          Close
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                  </Grid>
+                )}
               </Grid>
             </>
           )}
