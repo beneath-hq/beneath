@@ -17,7 +17,7 @@ import StreamHero from "../components/stream/StreamHero";
 import Page from "../components/Page";
 import StreamAPI from "../components/stream/StreamAPI";
 import ViewMetrics from "../components/stream/ViewMetrics";
-import SubrouteTabs, { SubrouteTabProps } from "../components/SubrouteTabs";
+import SubrouteTabs from "../components/SubrouteTabs";
 import { toBackendName, toURLName } from "../lib/names";
 
 const ExploreStream = dynamic(() => import("../components/stream/ExploreStream"), { ssr: false });
@@ -72,11 +72,7 @@ const StreamPage = () => {
   const stream = data.streamByOrganizationProjectAndName;
 
   const tabs = [];
-  tabs.push({
-    value: "data",
-    label: "Data",
-    render: (props: SubrouteTabProps) => <ExploreStream stream={stream} instance={instance} {...props} />,
-  });
+  tabs.push({ value: "data", label: "Data", render: () => <ExploreStream stream={stream} instance={instance} /> });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 

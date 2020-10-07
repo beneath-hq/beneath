@@ -35,7 +35,6 @@ import { Code } from "@material-ui/icons";
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
-  setLoading: (loading: boolean) => void;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -96,7 +95,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }: ExploreStreamProps) => {
+const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStreamProps) => {
   if (!instance) {
     return (
       <>
@@ -146,13 +145,6 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance, setLoading }:
     maxRecords: 1000,
     flashDurationMs: 2000,
   });
-
-  useEffect(() => {
-    setLoading(subscription.online);
-    return function cleanup() {
-      setLoading(false);
-    };
-  }, [subscription.online]);
 
   const classes = useStyles();
 

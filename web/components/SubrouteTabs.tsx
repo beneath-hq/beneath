@@ -45,11 +45,7 @@ export interface SubrouteTabsProps {
 export interface SubrouteTab {
   value: string;
   label: string;
-  render: (props: SubrouteTabProps) => React.ReactNode;
-}
-
-export interface SubrouteTabProps {
-  setLoading: (loading: boolean) => void;
+  render: () => React.ReactNode;
 }
 
 const buildHref = (path: string, query: NodeJS.Dict<string>) => {
@@ -97,7 +93,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
       </Tabs>
       <Divider />
       <VSpace units={4} />
-      {selectedTab && selectedTab.render({ setLoading })}
+      {selectedTab && selectedTab.render()}
     </React.Fragment>
   );
 };
