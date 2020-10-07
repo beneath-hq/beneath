@@ -8,7 +8,6 @@ import {
   makeStyles,
 } from "@material-ui/core";
 
-import FieldError from "./FieldError";
 import FormControl, { FormControlProps } from "./FormControl";
 
 const useStyles = makeStyles((theme) => ({

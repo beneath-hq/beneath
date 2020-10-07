@@ -1,3 +1,4 @@
+import { Box, Container, Paper, Typography, useTheme } from "@material-ui/core";
 import React, { FC } from "react";
 
 import IssueSecret from "./secrets/IssueSecret";
@@ -9,10 +10,11 @@ export interface ViewSecretsProps {
 
 const ViewSecrets: FC<ViewSecretsProps> = ({ userID }) => {
   return (
-    <>
+    <Container maxWidth="md">
       <IssueSecret userID={userID} />
+      <Box m={4} />
       <ListSecrets userID={userID} />
-    </>
+    </Container>
   );
 };
 

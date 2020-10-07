@@ -11,7 +11,10 @@ import RecordsTable from "components/stream/RecordsTable";
 import { Schema } from "components/stream/schema";
 import { useToken } from "hooks/useToken";
 import { QUERY_STREAM } from "apollo/queries/stream";
-import { StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables } from "apollo/types/StreamByOrganizationProjectAndName";
+import {
+  StreamByOrganizationProjectAndName,
+  StreamByOrganizationProjectAndNameVariables,
+} from "apollo/types/StreamByOrganizationProjectAndName";
 import { toBackendName } from "lib/names";
 import StreamPreview from "./StreamPreview";
 
@@ -35,15 +38,9 @@ const Main = () => {
 
   // Running query
   const token = useToken();
-  const {
-    analyzeQuery,
-    runQuery,
-    loading,
-    error,
-    job,
-    records,
-    fetchMore,
-  } = useWarehouse({ secret: token || undefined });
+  const { analyzeQuery, runQuery, loading, error, job, records, fetchMore } = useWarehouse({
+    secret: token || undefined,
+  });
 
   // Compute Schema object for job.resultAvroSchema
   const schema = useMemo(() => {
@@ -64,7 +61,7 @@ const Main = () => {
   useEffect(() => {
     const results: ApolloQueryResult<StreamByOrganizationProjectAndName>[] = [];
     const promises = streamPaths.map((path, idx) => {
-      const parts = path.substring(1, path.length-1).split("/");
+      const parts = path.substring(1, path.length - 1).split("/");
       return client
         .query<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>({
           query: QUERY_STREAM,
@@ -88,12 +85,7 @@ const Main = () => {
         <Grid container spacing={2} direction="column">
           {/* Editor */}
           <Grid item xs={12}>
-            <CodeEditor
-              rows={15}
-              language="sql"
-              value={queryText}
-              onChange={(value: string) => setQueryText(value)}
-            />
+            <CodeEditor rows={15} language="sql" value={queryText} onChange={(value: string) => setQueryText(value)} />
           </Grid>
           {/* Action bar */}
           <Grid item xs={12}>
@@ -146,20 +138,20 @@ const Main = () => {
           {/* Table */}
           <Grid item xs={12}>
             <RecordsTable
+              paper
               schema={schema}
               records={records}
               fetchMore={fetchMore}
               loading={loading}
-              error={!!error}
-              message={
-                error
-                  ? error.message
-                  : records === undefined
-                  ? "Query result will appear here"
-                  : records.length === 0
-                  ? "Result is empty"
-                  : ""
-              }
+              error={error?.message}
+              callToAction={{
+                message:
+                  records === undefined
+                    ? "Query result will appear here"
+                    : records.length === 0
+                    ? "Result is empty"
+                    : undefined,
+              }}
             />
           </Grid>
         </Grid>

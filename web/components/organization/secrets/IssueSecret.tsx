@@ -1,175 +1,143 @@
 import { useMutation } from "@apollo/client";
+import { makeStyles, Typography } from "@material-ui/core";
+import { Alert, AlertTitle } from "@material-ui/lab";
+import { Field, Formik } from "formik";
 import React, { FC } from "react";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Grid,
-  makeStyles,
-  TextField,
-  Typography,
-} from "@material-ui/core";
-
-import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "../../../apollo/queries/secret";
-import { IssueUserSecret, IssueUserSecretVariables } from "../../../apollo/types/IssueUserSecret";
+import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "apollo/queries/secret";
+import { IssueUserSecret, IssueUserSecretVariables } from "apollo/types/IssueUserSecret";
+import { Form, handleSubmitMutation, RadioGroup as FormikRadioGroup, TextField as FormikTextField } from "components/formik";
+import SubmitControl from "components/forms/SubmitControl";
+import CodeBlock from "components/CodeBlock";
 
 const useStyles = makeStyles((theme) => ({
-  issueSecretButton: {
-    display: "block",
-    minHeight: theme.spacing(10),
-    textAlign: "left",
+  newSecretCard: {
+    marginTop: theme.spacing(3),
   },
 }));
 
-interface IssueSecretProps {
+export interface IssueSecretProps {
   userID: string;
 }
 
 const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [readOnlySecret, setReadOnlySecret] = React.useState(true);
   const [newSecretString, setNewSecretString] = React.useState("");
 
   const [issueSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(ISSUE_USER_SECRET, {
     onCompleted: (data) => {
       setNewSecretString(data.issueUserSecret.token);
-      closeDialog();
     },
   });
 
-  const openDialog = (readonly: boolean) => {
-    setReadOnlySecret(readonly);
-    setDialogOpen(true);
+  const initialValues = {
+    description: "My personal secret",
+    access: "full",
+    readOnly: false,
+    publicOnly: false,
   };
 
-  const closeDialog = () => {
-    setDialogOpen(false);
-  };
-
-  let input: any = null;
   const classes = useStyles();
   return (
-    <Container maxWidth={"sm"}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Button
-            color="primary"
-            variant="contained"
-            fullWidth
-            className={classes.issueSecretButton}
-            onClick={() => openDialog(true)}
+    <>
+      <Formik
+        initialValues={initialValues}
+        onSubmit={async (values, actions) =>
+          handleSubmitMutation(
+            values,
+            actions,
+            issueSecret({
+              variables: {
+                description: values.description,
+                readOnly: values.readOnly,
+                publicOnly: values.publicOnly,
+              },
+              update: (cache, { data }) => {
+                console.log(":PP", values);
+                if (data) {
+                  const queryData = cache.readQuery({
+                    query: QUERY_USER_SECRETS,
+                    variables: { userID },
+                  }) as any;
+                  cache.writeQuery({
+                    query: QUERY_USER_SECRETS,
+                    variables: { userID },
+                    data: { secretsForUser: [data.issueUserSecret.secret].concat(queryData.secretsForUser) },
+                  });
+                }
+              },
+            })
+          )
+        }
+      >
+        {({ isSubmitting, status, values }) => (
+          <Form
+            title="Create personal secret"
+            variant="embedded"
+            helperText={
+              <>
+                Personal secrets have all your access permissions and their usage is counted directly against your
+                personal quotas. You should only use them in your local environment. Use a{" "}
+                <strong>service secret</strong> when deploying to production or embedding secrets in public code.
+              </>
+            }
           >
-            Create new read-only secret
-            {/* <Typography variant="button" display="block">
-            </Typography>
-            <Typography variant="caption" display="block">
-              Grants read access to all streams you have access to.
-            </Typography>
-            <Typography variant="caption" display="block">
-              <strong>Use to</strong> quickly get started with integrating data from Beneath
-            </Typography> */}
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Button
-            // color="secondary"
-            variant="contained"
-            fullWidth
-            className={classes.issueSecretButton}
-            onClick={() => openDialog(false)}
-          >
-            Create new command-line secret
-            {/* <Typography variant="button" display="block">
-            </Typography>
-            <Typography variant="caption" display="block">
-              Grants full access to modify resources
-            </Typography>
-            <Typography variant="caption" display="block">
-              <strong>Use to</strong> connect from the Beneath command-line app
-            </Typography> */}
-          </Button>
-        </Grid>
-        {newSecretString !== "" && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" color="textSecondary" gutterBottom>
-                  Here is your new secret:
-                </Typography>
-                <Typography color="textSecondary" noWrap gutterBottom>
-                  {newSecretString}
-                </Typography>
-                <Typography variant="body2">
-                  The secret will only be shown this once – remember to keep it safe!
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-      <Dialog open={dialogOpen} onClose={closeDialog} aria-labelledby="form-dialog-title" fullWidth>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <DialogTitle id="form-dialog-title">Issue {readOnlySecret ? "read-only" : "command-line"} secret</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              fullWidth
-              margin="dense"
-              id="name"
-              label="Enter a description of the secret"
-              defaultValue={`My ${readOnlySecret ? "read-only" : "command-line"} secret`}
-              inputRef={(node) => (input = node)}
-            />
-          </DialogContent>
-          {error && (
-            <DialogContent>
-              <DialogContentText>An error occurred: {JSON.stringify(error)}</DialogContentText>
-            </DialogContent>
-          )}
-          <DialogActions>
-            <Button color="primary" onClick={closeDialog}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              color="primary"
-              disabled={loading}
-              onClick={() => {
-                issueSecret({
-                  variables: {
-                    description: input.value,
-                    publicOnly: readOnlySecret,
-                    readOnly: readOnlySecret,
-                  },
-                  update: (cache, { data }) => {
-                    if (data) {
-                      const queryData = cache.readQuery({
-                        query: QUERY_USER_SECRETS,
-                        variables: { userID },
-                      }) as any;
-                      cache.writeQuery({
-                        query: QUERY_USER_SECRETS,
-                        variables: { userID },
-                        data: { secretsForUser: queryData.secretsForUser.concat([data.issueUserSecret.secret]) },
-                      });
-                    }
-                  },
-                });
+            <Field
+              name="description"
+              validate={(description: string) => {
+                if (description.length === 0) {
+                  return "You must provide a description";
+                }
+                if (description.length > 40) {
+                  return "Descriptions should be less than 40 characters long";
+                }
               }}
-            >
-              Issue secret
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </Container>
+              component={FormikTextField}
+              label="Description"
+              required
+            />
+            <Field
+              name="access"
+              component={FormikRadioGroup}
+              label="Access"
+              required
+              options={[
+                { value: "full", label: "Full" },
+                { value: "readonly", label: "Private read" },
+                { value: "readpublic", label: "Public read" },
+              ]}
+              row
+            />
+            {values.access === "full" && (
+              <Typography variant="body2" color="textSecondary">
+                Full access secrets can read/write streams and edit resources. Use them for e.g. CLI authentication,
+                private scripts and Jupyter notebooks.
+                <br />
+                <strong>Keep secure and don't share with others.</strong>
+              </Typography>
+            )}
+            {values.access === "readonly" && (
+              <Typography variant="body2" color="textSecondary">
+                Private read secrets can read data from every public and private stream you have access to.
+              </Typography>
+            )}
+            {values.access === "readpublic" && (
+              <Typography variant="body2" color="textSecondary">
+                Public read secrets can read data from every public stream you have access to, but not from streams in
+                private projects.
+              </Typography>
+            )}
+            <SubmitControl label="Create secret" errorAlert={status} disabled={isSubmitting} />
+          </Form>
+        )}
+      </Formik>
+      {newSecretString !== "" && (
+        <Alert severity="success" className={classes.newSecretCard}>
+          <AlertTitle>Here is your new secret!</AlertTitle>
+          <CodeBlock>{newSecretString}</CodeBlock>
+          The secret will only be shown this once – remember to keep it safe!
+        </Alert>
+      )}
+    </>
   );
 };
 

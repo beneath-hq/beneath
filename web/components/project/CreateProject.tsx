@@ -1,14 +1,13 @@
 import { useMutation } from "@apollo/client";
-import { Field, Form, Formik } from "formik";
+import { Field, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
 import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
 import { toURLName, toBackendName } from "../../lib/names";
-import { handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
+import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
-import { Typography } from "@material-ui/core";
 import useMe from "../../hooks/useMe";
 
 interface Organization {
@@ -75,10 +74,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
       }
     >
       {({ isSubmitting, status }) => (
-        <Form>
-          <Typography component="h2" variant="h1" gutterBottom>
-            Create project
-          </Typography>
+        <Form title="Create project">
           <Field
             name="organization"
             validate={(org?: Organization) => {
