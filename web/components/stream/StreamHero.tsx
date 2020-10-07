@@ -5,11 +5,10 @@ import { FC } from "react";
 import { NakedLink } from "../Link";
 import { useMonthlyMetrics } from "../metrics/hooks";
 import { prettyPrintBytes } from "../metrics/util";
-import SelectField from "../SelectField";
+import SelectField from "components/forms/SelectField";
 import { EntityKind } from "apollo/types/globalTypes";
 import { QUERY_STREAM_INSTANCES } from "apollo/queries/stream";
 import {
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
   StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName,
 } from "apollo/types/StreamByOrganizationProjectAndName";
 import {
@@ -27,11 +26,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+interface Instance {
+  streamInstanceID: string;
+  version: number;
+}
+
 export interface StreamHeroProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
+  instance: Instance | undefined;
   setInstance: (
-    instance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null
+    instance: Instance | null
   ) => void;
 }
 
@@ -52,11 +56,11 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
     console.error("Unexpected error loading instances: ", error);
   }
 
-  let instanceOptions: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance[] = [];
+  const instances: Instance[] = [];
   if (data) {
-    instanceOptions = data.streamInstancesByOrganizationProjectAndStreamName;
+    instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
   } else if (stream.primaryStreamInstance) {
-    instanceOptions.push(stream.primaryStreamInstance);
+    instances.push(stream.primaryStreamInstance);
   }
 
   const classes = useStyles();
@@ -109,19 +113,20 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
         <SelectField
           id="instanceID"
           label="Instance"
-          value={instance?.streamInstanceID || null}
-          options={
-            !data
-              ? []
-              : data.streamInstancesByOrganizationProjectAndStreamName.map((instance) => {
-                  return { label: "v" + instance.version.toString(), value: instance.streamInstanceID };
-                })
-          }
-          onChange={({ target }) => {
-            const instanceID = target.value;
-            const newInstance = instanceOptions.find((instance) => instance.streamInstanceID === instanceID);
-            setInstance(newInstance || null);
+          required
+          options={instances}
+          getOptionLabel={(option: Instance) => `v${option.version.toString()}`}
+          getOptionSelected={(option: Instance, value: Instance) => {
+            return option.version === value.version;
           }}
+          value={instance}
+          multiple={false}
+          onChange={( _, value ) => {
+            if (value) {
+              setInstance(value as Instance);
+            }
+          }}
+          margin="none"
         />
       </Grid>
     </Grid>
