@@ -4,6 +4,7 @@ import { Code, Folder, Functions, LinearScale, Mail, MenuBook, VpnKey } from "@m
 
 import { Tile, TileProps } from "./Tile";
 import useMe from "hooks/useMe";
+import { NakedLink } from "components/Link";
 
 const useStyles = makeStyles((theme: Theme) => ({
   rightButton: {
@@ -31,6 +32,7 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<Folder className={classes.icon} />}
+            component={NakedLink}
             href="/-/create/project"
           >
             Create project
@@ -42,6 +44,7 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<LinearScale className={classes.icon} />}
+            component={NakedLink}
             href="/-/create/stream"
           >
             Create stream
@@ -58,7 +61,9 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<VpnKey className={classes.icon} />}
-            // href={`/organization?organization_name=${me.name}&tab=secrets`}
+            component={NakedLink}
+            href={`/organization?organization_name=${me.name}&tab=secrets`}
+            as={`/${me.name}/-/secrets`}
           >
             Create secret
           </Button>
@@ -69,6 +74,7 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
             color="secondary"
             size="small"
             startIcon={<Code className={classes.icon} />}
+            component={NakedLink}
             href="/-/sql"
           >
             SQL editor

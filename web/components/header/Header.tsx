@@ -46,7 +46,14 @@ const Header: FC = () => {
   const createActions = [
     { label: "Create project", href: "/-/create/project" },
     { label: "Create stream", href: "/-/create/stream" },
-  ];
+  ] as { label: string; href: string; as?: string }[];
+  if (me) {
+    createActions.push({
+      label: "Create personal secret",
+      href: `/organization?organization_name=${me.name}&tab=secrets`,
+      as: `/${me.name}/-/secrets`,
+    });
+  }
 
   const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/" }];
   if (me) {
