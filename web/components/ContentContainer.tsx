@@ -11,6 +11,7 @@ export interface CallToAction {
 export type ContentContainerProps = {
   paper?: boolean;
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
+  margin?: "none" | "normal";
   loading?: boolean;
   error?: string;
   callToAction?: CallToAction;
@@ -25,10 +26,14 @@ const useStyles = makeStyles((theme) => ({
   message: {
     margin: "5rem 0",
   },
+  marginNormal: {
+    marginTop: "1.25rem",
+    marginBottom: "1.25rem",
+  },
 }));
 
 const ContentContainer: FC<ContentContainerProps> = (props) => {
-  const { paper, maxWidth, loading, error, callToAction, children } = props;
+  const { paper, maxWidth, margin, loading, error, callToAction, children } = props;
   const classes = useStyles();
 
   let innerEl = (
@@ -67,6 +72,10 @@ const ContentContainer: FC<ContentContainerProps> = (props) => {
 
   if (maxWidth) {
     innerEl = <Container maxWidth={maxWidth}>{innerEl}</Container>;
+  }
+
+  if (margin === "normal") {
+    innerEl = <div className={classes.marginNormal}>{innerEl}</div>;
   }
 
   return innerEl;

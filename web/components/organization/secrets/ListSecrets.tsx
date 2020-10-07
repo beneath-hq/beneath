@@ -94,8 +94,8 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>Personal secrets</Typography>
-      <ContentContainer paper loading={loading} error={error && JSON.stringify(error)}>
+      <Typography variant="h2">Personal secrets</Typography>
+      <ContentContainer paper margin="normal" loading={loading} error={error && JSON.stringify(error)}>
         <Table>
           <TableHead>
             <TableRow>
