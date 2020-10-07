@@ -430,7 +430,15 @@ query: {type: "index", filter: ${filter === "" ? undefined : filter}},
       {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
       {loading && records.length === 0 && <Loading justify="center" />}
       {(!loading || records.length > 0) && (
-        <RecordsTable schema={schema} records={records} fetchMore={fetchMore} showTimestamps={queryType === "log"} />
+        <RecordsTable
+          paper
+          schema={schema}
+          records={records}
+          fetchMore={fetchMore}
+          showTimestamps={queryType === "log"}
+          error={undefined} /* Todo */
+          callToAction={undefined} /* Todo */
+        />
       )}
       {truncation.end && <Message>We removed some records from the bottom to fit new records in the table</Message>}
       {!fetchMore && fetchMoreChanges && (

@@ -1,6 +1,6 @@
-import React, { PureComponent } from "react";
+import React, { FC } from "react";
 
-import { Theme, withTheme } from "@material-ui/core/styles";
+import { useTheme } from "@material-ui/core/styles";
 import Highlight, { defaultProps, Language } from "prism-react-renderer";
 import vsDark from "prism-react-renderer/themes/vsDark";
 
@@ -11,44 +11,42 @@ import vsDark from "prism-react-renderer/themes/vsDark";
 //   shadesOfPurple
 //   vsDark
 
-interface CodeBlockProps {
-  theme: Theme;
-  language: Language;
+export interface CodeBlockProps {
+  language?: Language;
   children: string;
 }
 
-class CodeBlock extends PureComponent<CodeBlockProps> {
-  public render() {
-    const { language, theme, children } = this.props;
+export const CodeBlock: FC<CodeBlockProps> = ({ language, children }) => {
+  const theme = useTheme();
+  const styles: React.CSSProperties = {
+    // backgroundColor: theme.palette.background.paper,
+    // padding: theme.spacing(0.75),
+    fontFamily: theme.typography.fontFamilyMonospaced,
+    fontSize: theme.typography.body2.fontSize,
+    overflowX: "auto",
+    width: "100%",
+  };
 
-    const prismTheme = Object.assign({}, vsDark, {
-      plain: {
-        width: "100%",
-        padding: "5px",
-        overflowX: "auto",
-        fontSize: "0.875rem",
-        fontStyle: "normal",
-        fontFamily: `SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",Courier,monospace`,
-        backgroundColor: theme.palette.background.paper,
-      },
-    });
-
-    return (
-      <Highlight {...defaultProps} code={children} language={language} theme={prismTheme}>
-        {({ className, style, tokens, getLineProps, getTokenProps }) => (
-          <pre className={className} style={style}>
-            {tokens.map((line, i) => (
-              <div {...getLineProps({ line, key: i })}>
-                {line.map((token, key) => (
-                  <span {...getTokenProps({ token, key })} />
-                ))}
-              </div>
-            ))}
-          </pre>
-        )}
-      </Highlight>
-    );
+  if (!language) {
+    return <pre style={styles}>{children}</pre>;
   }
-}
 
-export default withTheme(CodeBlock);
+  const prismTheme = Object.assign({}, vsDark, { plain: styles });
+  return (
+    <Highlight {...defaultProps} code={children} language={language} theme={prismTheme}>
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <pre className={className} style={style}>
+          {tokens.map((line, i) => (
+            <div {...getLineProps({ line, key: i })}>
+              {line.map((token, key) => (
+                <span {...getTokenProps({ token, key })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
+  );
+};
+
+export default CodeBlock;

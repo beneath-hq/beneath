@@ -40,13 +40,13 @@ theme.typography = {
   h1: {
     fontWeight: 600,
     fontSize: "1.75rem",
-    letterSpacing: ".05rem",
+    // letterSpacing: ".05rem",
     wordSpacing: ".15rem",
   },
   h2: {
     fontWeight: 600,
     fontSize: "1.5rem",
-    letterSpacing: ".05rem",
+    // letterSpacing: ".05rem",
     wordSpacing: ".15rem",
   },
   h3: {
@@ -142,6 +142,16 @@ theme.overrides = {
       borderRadius: "4px",
     },
   },
+  MuiRadio: {
+    root: {
+      borderRadius: "50%",
+    },
+  },
+  MuiTypography: {
+    gutterBottom: {
+      marginBottom: '0.5em',
+    }
+  },
   MuiButton: {
     root: {
       borderRadius: "4px",
@@ -211,6 +221,34 @@ theme.overrides = {
       "&:hover": {
         color: theme.palette.text?.primary,
       },
+    },
+  },
+  MuiTableRow: {
+    root: {
+      backgroundColor: theme.palette.background?.paper,
+      "&:last-child": {
+        "& td": {
+          borderBottom: "none",
+        },
+      },
+    },
+    head: {
+      backgroundColor: theme.palette.background?.medium,
+    },
+  },
+  MuiTableCell: {
+    root: {
+      borderBottom: `1px solid ${theme.palette.border.paper}`,
+    },
+  },
+  MuiFormControl: {
+    marginNormal: {
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    marginDense: {
+      marginTop: 10,
+      marginBottom: 5,
     },
   },
 };

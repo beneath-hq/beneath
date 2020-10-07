@@ -64,7 +64,7 @@ func FindUserSecret(ctx context.Context, secretID uuid.UUID) *UserSecret {
 // FindUserSecrets finds all the user's secrets
 func FindUserSecrets(ctx context.Context, userID uuid.UUID) []*UserSecret {
 	var secrets []*UserSecret
-	err := hub.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Select()
+	err := hub.DB.ModelContext(ctx, &secrets).Where("user_id = ?", userID).Limit(1000).Order("created_on DESC").Select()
 	if err != nil {
 		panic(err)
 	}

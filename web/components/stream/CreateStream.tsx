@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { Typography } from "@material-ui/core";
-import { Field, Form, Formik } from "formik";
+import { Field, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
@@ -11,7 +10,7 @@ import { ProjectsForUser, ProjectsForUserVariables } from "../../apollo/types/Pr
 import { StageStream, StageStreamVariables } from "../../apollo/types/StageStream";
 import useMe from "../../hooks/useMe";
 import { toURLName, toBackendName } from "../../lib/names";
-import { handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
+import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
 import FormikCodeEditor from "components/formik/CodeEditor";
 
@@ -74,10 +73,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
       }
     >
       {({ isSubmitting, status }) => (
-        <Form>
-          <Typography component="h2" variant="h1" gutterBottom>
-            Create stream
-          </Typography>
+        <Form title="Create stream">
           <Field
             name="project"
             validate={(proj?: Project) => {
