@@ -109,6 +109,7 @@ export const QUERY_ORGANIZATION = gql`
 export const QUERY_ORGANIZATION_MEMBERS = gql`
   query OrganizationMembers($organizationID: UUID!){
     organizationMembers(organizationID: $organizationID) {
+      organizationID
       userID
       billingOrganizationID
       name

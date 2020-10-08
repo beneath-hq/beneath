@@ -1,17 +1,16 @@
 import { useQuery } from "@apollo/client";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "@material-ui/core";
 import React, { FC } from "react";
 
-import { List, ListItem, ListItemAvatar, ListItemText } from "@material-ui/core";
+import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
+import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
+import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
+import { toURLName } from "lib/names";
+import Avatar from "components/Avatar";
+import { NakedLink } from "components/Link";
+import ContentContainer from "components/ContentContainer";
 
-import { QUERY_PROJECT_MEMBERS } from "../../apollo/queries/project";
-import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
-import { ProjectMembers, ProjectMembers_projectMembers, ProjectMembersVariables } from "../../apollo/types/ProjectMembers";
-import { toURLName } from "../../lib/names";
-import Avatar from "../Avatar";
-import Loading from "../Loading";
-import { NakedLink } from "../Link";
-
-interface ViewMembersProps {
+export interface ViewMembersProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
@@ -20,57 +19,42 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
     variables: { projectID: project.projectID },
   });
 
-  if (loading) {
-    return <Loading justify="center" />;
-  }
-
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
   return (
-    <>
-      <List>
-        {data.projectMembers.map((member) => (
-          <ListItem
-            key={member.userID}
-            component={NakedLink}
-            href={`/organization?organization_name=${toURLName(member.name)}`}
-            as={`/${toURLName(member.name)}`}
-            button
-            disableGutters
-          >
-            {member.photoURL && (
-              <ListItemAvatar>
-                <Avatar size="list" label={member.displayName} src={member.photoURL} />
-              </ListItemAvatar>
-            )}
-            <ListItemText
-              primary={member.displayName || toURLName(member.name)}
-              secondary={
-                project.permissions.create || project.permissions.admin ?
-                makePermissionsDescription(member) : undefined
-              }
-            />
-          </ListItem>
-        ))}
-      </List>
-    </>
+    <ContentContainer paper loading={loading} error={error && JSON.stringify(error)} note="Use the Beneath CLI to add members">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell padding="checkbox"></TableCell>
+            <TableCell>Username</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell align="center">View</TableCell>
+            <TableCell align="center">Create</TableCell>
+            <TableCell align="center">Admin</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data?.projectMembers.map((member) => (
+            <TableRow
+              key={member.userID}
+              component={NakedLink}
+              href={`/organization?organization_name=${toURLName(member.name)}`}
+              as={`/${toURLName(member.name)}`}
+              hover
+            >
+              <TableCell>
+                {member.photoURL && <Avatar size="list" label={member.displayName} src={member.photoURL} />}
+              </TableCell>
+              <TableCell>{toURLName(member.name)}</TableCell>
+              <TableCell>{member.displayName}</TableCell>
+              <TableCell align="center">{member.view && "✓"}</TableCell>
+              <TableCell align="center">{member.create && "✓"}</TableCell>
+              <TableCell align="center">{member.admin && "✓"}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </ContentContainer>
   );
-};
-
-const makePermissionsDescription = (member: ProjectMembers_projectMembers) => {
-  const res = [];
-  if (member.view) {
-    res.push("view streams");
-  }
-  if (member.create) {
-    res.push("create and modify streams");
-  }
-  if (member.admin) {
-    res.push("administrate project");
-  }
-  return `Permissions: ${res.join(", ")}`;
 };
 
 export default ViewMembers;

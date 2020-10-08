@@ -9,6 +9,7 @@
 
 export interface OrganizationMembers_organizationMembers {
   __typename: "OrganizationMember";
+  organizationID: string;
   userID: string;
   billingOrganizationID: ControlUUID;
   name: string;
