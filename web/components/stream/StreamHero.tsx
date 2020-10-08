@@ -77,7 +77,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
               </Grid>
               <Grid item>
                 <Chip
-                  label={stream.project.public ? "public" : "private"}
+                  label={stream.project.public ? "Public" : "Private"}
                   clickable
                   component={NakedLink}
                   href={`/project?organization_name=${organizationName}&project_name=${projectName}&tab=members`}

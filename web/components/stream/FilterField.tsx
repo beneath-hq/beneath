@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     border: "1px solid",
     borderColor: "rgba(35, 48, 70, 1)",
     padding: "0 12px",
+    height: 28
   },
   focused: {
     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,

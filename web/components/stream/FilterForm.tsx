@@ -1,9 +1,15 @@
 import { FC, useState, useEffect } from "react";
 import FilterField, { Operator, Field, Filter } from "./FilterField";
 import _ from "lodash";
-import { Button, Grid } from "@material-ui/core";
+import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
 
 import { Column, InputType } from "./schema";
+
+const useStyles = makeStyles((theme: Theme) => ({
+  height: {
+    height: 28
+  },
+}));
 
 // the form
 interface FilterFormProps {
@@ -12,6 +18,7 @@ interface FilterFormProps {
 }
 
 const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
+  const classes = useStyles();
   const [filter, setFilter] = useState<any>({});
   const [filterJSON, setFilterJSON] = useState("");
   const [fields, setFields] = useState<Field[]>([]);
@@ -138,7 +145,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       ))}
       {showAdd && (
         <Grid item>
-          <Button onClick={addField}>Add</Button>
+          <Button onClick={addField} size="small" className={classes.height}>Add</Button>
         </Grid>
       )}
     </Grid>
