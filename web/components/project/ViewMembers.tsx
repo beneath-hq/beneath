@@ -1,5 +1,4 @@
 import { useQuery } from "@apollo/client";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@material-ui/core";
 import React, { FC } from "react";
 
 import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
@@ -9,6 +8,7 @@ import { toURLName } from "lib/names";
 import Avatar from "components/Avatar";
 import { NakedLink } from "components/Link";
 import ContentContainer from "components/ContentContainer";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
 
 export interface ViewMembersProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
@@ -21,7 +21,7 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
 
   return (
     <ContentContainer paper loading={loading} error={error && JSON.stringify(error)} note="Use the Beneath CLI to add members">
-      <Table>
+      <Table textSize="medium">
         <TableHead>
           <TableRow>
             <TableCell padding="checkbox"></TableCell>

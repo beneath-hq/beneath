@@ -18,6 +18,9 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   streamID: string;
   name: string;
   description: string | null;
+  createdOn: ControlTime;
+  instancesCreatedCount: number;
+  instancesDeletedCount: number;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_services {
