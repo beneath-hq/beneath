@@ -46,6 +46,7 @@ const Header: FC = () => {
   const createActions = [
     { label: "Create project", href: "/-/create/project" },
     { label: "Create stream", href: "/-/create/stream" },
+    { label: "Create service", href: "/-/create/service" },
   ] as { label: string; href: string; as?: string }[];
   if (me) {
     createActions.push({

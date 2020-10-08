@@ -7,7 +7,7 @@ export const NakedLink = React.forwardRef<any, React.PropsWithChildren<NextLinkP
 
   // if it's an external href, use a normal anchor
   if (typeof href === "string" && href.indexOf("http") === 0) {
-    return <a ref={ref} href={href} {...others} />;
+    return <a ref={ref} style={{ textDecoration: "none" }} href={href} {...others} />;
   }
 
   return (
@@ -20,7 +20,7 @@ export const NakedLink = React.forwardRef<any, React.PropsWithChildren<NextLinkP
       passHref={passHref}
       prefetch={prefetch}
     >
-      <a ref={ref} {...others} />
+      <a ref={ref} style={{ textDecoration: "none" }} {...others} />
     </NextLink>
   );
 });

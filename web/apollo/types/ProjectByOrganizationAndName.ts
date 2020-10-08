@@ -25,6 +25,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_servi
   serviceID: ControlUUID;
   name: string;
   description: string | null;
+  createdOn: ControlTime;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_permissions {

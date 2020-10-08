@@ -1,11 +1,11 @@
-import { Button, Container, makeStyles, Paper, Typography } from "@material-ui/core";
+import { Box, Button, Container, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
 import { FC } from "react";
+import { NakedLink } from "./Link";
 import Loading from "./Loading";
 
 export interface CallToAction {
-  message?: string;
-  label?: string;
-  onClick?: () => void;
+  message?: string | JSX.Element;
+  buttons?: { label: string, href: string, as?: string }[];
 }
 
 export type ContentContainerProps = {
@@ -52,15 +52,25 @@ const ContentContainer: FC<ContentContainerProps> = (props) => {
         </div>
       )}
       {!error && callToAction?.message && (
-        <div className={classes.message}>
-          <Typography color="textSecondary" align="center">
-            {callToAction.message}
-          </Typography>
-          {callToAction.label && (
-            <Button variant="contained" onClick={callToAction.onClick}>
-              callToAction.label
-            </Button>
-          )}
+        <div className={classes.message} >
+        <Grid container spacing={4}>
+          <Grid item xs={12}>
+            <Typography color="textSecondary" align="center">
+              {callToAction.message}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Grid container justify="center" spacing={2}>
+              {callToAction.buttons?.map((cta, idx) => (
+                <Grid item key={idx}>
+                  <Button variant="contained" component={NakedLink} href={cta.href} as={cta.as}>
+                    {cta.label}
+                  </Button>
+                </Grid>
+              )) }
+            </Grid>
+          </Grid>
+        </Grid>
         </div>
       )}
     </>

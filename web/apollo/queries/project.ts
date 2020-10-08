@@ -61,6 +61,7 @@ export const QUERY_PROJECT = gql`
         serviceID
         name
         description
+        createdOn
       }
       permissions {
         view
