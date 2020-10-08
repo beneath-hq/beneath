@@ -10,7 +10,7 @@ import React, { FC } from "react";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
 import Avatar from "components/Avatar";
 import { NakedLink } from "components/Link";
-import ContentContainer from "components/ContentContainer";
+import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({}));
@@ -20,13 +20,16 @@ export interface ViewServicesProps {
 }
 
 const ViewServices: FC<ViewServicesProps> = ({ project }) => {
-  let cta;
+  let cta: CallToAction | undefined;
   if (!project.services?.length) {
     cta = {
       message: `${project.displayName || project.name} doesn't have any services`,
-      buttons: [{ label: "Create service", href: "/-/create/service" }],
     };
+    if (project.permissions.create) {
+      cta.buttons = [{ label: "Create service", href: "/-/create/service" }];
+    }
   }
+
   const classes = useStyles();
   return (
     <ContentContainer paper maxWidth={"md"} callToAction={cta}>

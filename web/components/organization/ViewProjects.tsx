@@ -1,49 +1,43 @@
+import { Grid } from "@material-ui/core";
 import React, { FC } from "react";
 
-import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
-
-import { OrganizationByName_organizationByName } from "../../apollo/types/OrganizationByName";
-import { toURLName } from "../../lib/names";
-import Avatar from "../Avatar";
-import { NakedLink } from "../Link";
-
-const useStyles = makeStyles((theme) => ({
-  noDataCaption: {
-    color: theme.palette.text.secondary,
-  },
-}));
+import { OrganizationByName_organizationByName } from "apollo/types/OrganizationByName";
+import ContentContainer, { CallToAction } from "components/ContentContainer";
+import { toURLName } from "lib/names";
+import ProjectHeroTile from "components/console/tiles/ProjectHeroTile";
 
 export interface ViewProjectsProps {
   organization: OrganizationByName_organizationByName;
 }
 
 const ViewProjects: FC<ViewProjectsProps> = ({ organization }) => {
-  const classes = useStyles();
+  let cta: CallToAction | undefined;
+  if (!organization.projects?.length) {
+    cta = {
+      message: `We didn't find any projects for @${organization.name}`,
+    };
+    if (organization.__typename === "PrivateOrganization" && organization.permissions.create) {
+      cta.buttons = [{ label: "Create project", href: "/-/create/project" }];
+    }
+  }
+
   return (
-    <>
-      <List>
+    <ContentContainer callToAction={cta}>
+      <Grid container spacing={3}>
         {organization.projects.map(({ projectID, name, displayName, description, photoURL }) => (
-          <ListItem
+          <ProjectHeroTile
             key={projectID}
-            component={NakedLink}
             href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
             as={`/${toURLName(organization.name)}/${toURLName(name)}`}
-            button
-            disableGutters
-          >
-            <ListItemAvatar>
-              <Avatar size="list" label={displayName || name} src={photoURL} />
-            </ListItemAvatar>
-            <ListItemText primary={displayName || name} secondary={description} />
-          </ListItem>
+            organizationName={organization.name}
+            name={name}
+            displayName={displayName}
+            description={description}
+            avatarURL={photoURL}
+          />
         ))}
-      </List>
-      {organization.projects.length === 0 && (
-        <Typography className={classes.noDataCaption} variant="body1" align="center">
-          {organization.displayName} doesn't have any projects to show
-        </Typography>
-      )}
-    </>
+      </Grid>
+    </ContentContainer>
   );
 };
 

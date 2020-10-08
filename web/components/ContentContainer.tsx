@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
     overflowX: "auto",
   },
   content: {
-    margin: "5rem 0",
+    margin: "3.5rem 0",
   },
   note: {
     marginTop: theme.spacing(2),

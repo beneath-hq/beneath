@@ -25,7 +25,6 @@ export interface ProjectHeroTileProps extends TileProps {
   name: string;
   organizationName: string;
   displayName?: string | null;
-  path?: string | null;
   description?: string | null;
   avatarURL?: string | null;
 }
@@ -34,7 +33,6 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
   name,
   organizationName,
   displayName,
-  path,
   description,
   avatarURL,
   shape,

@@ -1,32 +1,37 @@
+import { List, ListItem, ListItemAvatar, ListItemText } from "@material-ui/core";
 import React, { FC } from "react";
 
-import { List, ListItem, ListItemAvatar, ListItemText, makeStyles, Typography } from "@material-ui/core";
-
-import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
-import { toURLName } from "../../lib/names";
-import Avatar from "../Avatar";
-import { NakedLink } from "../Link";
+import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
+import Avatar from "components/Avatar";
+import ContentContainer, { CallToAction } from "components/ContentContainer";
+import { NakedLink } from "components/Link";
+import { toURLName } from "lib/names";
 
 interface ViewStreamsProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
-const useStyles = makeStyles((theme) => ({
-  noDataCaption: {
-    color: theme.palette.text.secondary,
-  },
-}));
-
 const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
-  const classes = useStyles();
+  let cta: CallToAction | undefined;
+  if (!project.streams?.length) {
+    cta = {
+      message: <>We didn't find any streams in <strong>{project.organization.name}/{project.name}</strong></>
+    };
+    if (project.permissions.create) {
+      cta.buttons = [{ label: "Create stream", href: "/-/create/stream" }];
+    }
+  }
+
   return (
-    <>
+    <ContentContainer callToAction={cta}>
       <List>
         {project.streams.map(({ streamID, name, description }) => (
           <ListItem
             key={streamID}
             component={NakedLink}
-            href={`/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(project.name)}&stream_name=${toURLName(name)}`}
+            href={`/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
+              project.name
+            )}&stream_name=${toURLName(name)}`}
             as={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/${toURLName(name)}`}
             button
             disableGutters
@@ -38,12 +43,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
           </ListItem>
         ))}
       </List>
-      {project.streams.length === 0 && (
-        <Typography className={classes.noDataCaption} variant="body1" align="center">
-          There are no streams in this project
-        </Typography>
-      )}
-    </>
+    </ContentContainer>
   );
 };
 
