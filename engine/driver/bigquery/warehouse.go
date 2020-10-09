@@ -114,8 +114,7 @@ func (b BigQuery) WriteToWarehouse(ctx context.Context, p driver.Project, s driv
 	}
 
 	// save rows
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
+	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
 	err := table.Inserter().Put(ctx, rows)
 	if err != nil {
 		return err
