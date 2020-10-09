@@ -19,7 +19,8 @@ import { LinkProps as NextLinkProps } from "next/link";
 const useStyles = makeStyles((theme) => ({
   medium: {
     "& .MuiTableCell-root": {
-      ...theme.typography.body1,
+      fontSize: theme.typography.body1.fontSize,
+      lineHeight: theme.typography.body1.lineHeight,
     },
   },
   linkRow: {

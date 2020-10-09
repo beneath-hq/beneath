@@ -227,7 +227,7 @@ theme.overrides = {
     root: {
       backgroundColor: theme.palette.background?.paper,
       "&:last-child": {
-        "& td": {
+        "& .MuiTableCell-root": {
           borderBottom: "none",
         },
       },
