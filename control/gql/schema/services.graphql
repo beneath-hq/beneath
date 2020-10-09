@@ -27,6 +27,8 @@ type Service {
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+  createdOn: Time!
+  updatedOn: Time!
 }
 
 type PermissionsServicesStreams {

@@ -317,6 +317,7 @@ type ComplexityRoot struct {
 	}
 
 	Service struct {
+		CreatedOn   func(childComplexity int) int
 		Description func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Project     func(childComplexity int) int
@@ -324,6 +325,7 @@ type ComplexityRoot struct {
 		ScanQuota   func(childComplexity int) int
 		ServiceID   func(childComplexity int) int
 		SourceURL   func(childComplexity int) int
+		UpdatedOn   func(childComplexity int) int
 		WriteQuota  func(childComplexity int) int
 	}
 
@@ -2187,6 +2189,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.StreamInstancesForStream(childComplexity, args["streamID"].(uuid.UUID)), true
 
+	case "Service.createdOn":
+		if e.complexity.Service.CreatedOn == nil {
+			break
+		}
+
+		return e.complexity.Service.CreatedOn(childComplexity), true
+
 	case "Service.description":
 		if e.complexity.Service.Description == nil {
 			break
@@ -2235,6 +2244,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Service.SourceURL(childComplexity), true
+
+	case "Service.updatedOn":
+		if e.complexity.Service.UpdatedOn == nil {
+			break
+		}
+
+		return e.complexity.Service.UpdatedOn(childComplexity), true
 
 	case "Service.writeQuota":
 		if e.complexity.Service.WriteQuota == nil {
@@ -2996,6 +3012,8 @@ type Service {
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+  createdOn: Time!
+  updatedOn: Time!
 }
 
 type PermissionsServicesStreams {
@@ -12712,6 +12730,80 @@ func (ec *executionContext) _Service_scanQuota(ctx context.Context, field graphq
 	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Service_createdOn(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_updatedOn(ctx context.Context, field graphql.CollectedField, obj *entity.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ServiceSecret_serviceSecretID(ctx context.Context, field graphql.CollectedField, obj *entity.ServiceSecret) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -17436,6 +17528,16 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Service_writeQuota(ctx, field, obj)
 		case "scanQuota":
 			out.Values[i] = ec._Service_scanQuota(ctx, field, obj)
+		case "createdOn":
+			out.Values[i] = ec._Service_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updatedOn":
+			out.Values[i] = ec._Service_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
