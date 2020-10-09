@@ -5,9 +5,8 @@ import Moment from "react-moment";
 import { EntityKind } from "apollo/types/globalTypes";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { NakedLink } from "components/Link";
 import { useMonthlyMetrics } from "components/metrics/hooks";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 
 const intFormat = { thousandSeparated: true };
@@ -50,22 +49,22 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
             <TableCell>Total records</TableCell>
             <TableCell>Total bytes</TableCell>
             {/* <TableCell align="right">Instances</TableCell> */}
-            <TableCell align="right">Created</TableCell>
+            <TableCell align="right">
+              Created
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {Array.from(project.streams)
             .sort((a, b) => a.name.localeCompare(b.name))
             .map(({ streamID, name, createdOn, instancesCreatedCount, instancesDeletedCount }, idx) => (
-              <TableRow
+              <TableLinkRow
                 key={streamID}
-                component={NakedLink}
                 href={
                   `/stream?organization_name=${toURLName(project.organization.name)}` +
                   `&project_name=${toURLName(project.name)}&stream_name=${toURLName(name)}`
                 }
                 as={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/${toURLName(name)}`}
-                hover
               >
                 <TableCell>{toURLName(name)}</TableCell>
                 <RecordsAndBytesCells skip={idx >= 25} streamID={streamID} />
@@ -73,7 +72,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
                 <TableCell align="right">
                   <Moment fromNow>{createdOn}</Moment>
                 </TableCell>
-              </TableRow>
+              </TableLinkRow>
             ))}
         </TableBody>
       </Table>

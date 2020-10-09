@@ -1,7 +1,4 @@
 import { useMutation, useQuery } from "@apollo/client";
-import React, { FC } from "react";
-import Moment from "react-moment";
-
 import {
   Button,
   Dialog,
@@ -10,19 +7,17 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography,
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
+import React, { FC } from "react";
+import Moment from "react-moment";
 
-import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "../../../apollo/queries/secret";
-import { RevokeUserSecret, RevokeUserSecretVariables } from "../../../apollo/types/RevokeUserSecret";
-import { SecretsForUser, SecretsForUserVariables } from "../../../apollo/types/SecretsForUser";
+import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "apollo/queries/secret";
+import { RevokeUserSecret, RevokeUserSecretVariables } from "apollo/types/RevokeUserSecret";
+import { SecretsForUser, SecretsForUserVariables } from "apollo/types/SecretsForUser";
 import ContentContainer from "components/ContentContainer";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
 
 export interface ListSecretsProps {
   userID: string;

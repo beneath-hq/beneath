@@ -10,7 +10,7 @@ import {
 import Avatar from "components/Avatar";
 import ContentContainer from "components/ContentContainer";
 import { NakedLink } from "components/Link";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { Table, TableBody, TableCell, TableHead,TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 
 export interface ViewMembersProps {
@@ -26,7 +26,12 @@ const ViewMembers: FC<ViewMembersProps> = ({ organization }) => {
   );
 
   return (
-    <ContentContainer paper loading={loading} error={error && JSON.stringify(error)} note="Use the Beneath CLI to add members">
+    <ContentContainer
+      paper
+      loading={loading}
+      error={error && JSON.stringify(error)}
+      note="Use the Beneath CLI to add members"
+    >
       <Table textSize="medium">
         <TableHead>
           <TableRow>
@@ -41,12 +46,10 @@ const ViewMembers: FC<ViewMembersProps> = ({ organization }) => {
         </TableHead>
         <TableBody>
           {data?.organizationMembers.map((member) => (
-            <TableRow
+            <TableLinkRow
               key={member.userID}
-              component={NakedLink}
               href={`/organization?organization_name=${toURLName(member.name)}`}
               as={`/${toURLName(member.name)}`}
-              hover
             >
               <TableCell>
                 {member.photoURL && <Avatar size="list" label={member.displayName} src={member.photoURL} />}
@@ -61,7 +64,7 @@ const ViewMembers: FC<ViewMembersProps> = ({ organization }) => {
                   ? "This organization"
                   : "Other organization"}
               </TableCell>
-            </TableRow>
+            </TableLinkRow>
           ))}
         </TableBody>
       </Table>

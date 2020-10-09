@@ -2,12 +2,15 @@ import MuiLink, { LinkProps as MuiLinkProps } from "@material-ui/core/Link";
 import NextLink, { LinkProps as NextLinkProps } from "next/link";
 import React, { FC } from "react";
 
-export const NakedLink = React.forwardRef<any, React.PropsWithChildren<NextLinkProps>>((props, ref) => {
+export const NakedLink = React.forwardRef<
+  any,
+  React.PropsWithChildren<NextLinkProps & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href">>
+>((props, ref) => {
   const { href, as, replace, scroll, shallow, passHref, prefetch, ...others } = props;
 
   // if it's an external href, use a normal anchor
   if (typeof href === "string" && href.indexOf("http") === 0) {
-    return <a ref={ref} style={{ textDecoration: "none" }} href={href} {...others} />;
+    return <a ref={ref} href={href} {...others} />;
   }
 
   return (
@@ -20,7 +23,7 @@ export const NakedLink = React.forwardRef<any, React.PropsWithChildren<NextLinkP
       passHref={passHref}
       prefetch={prefetch}
     >
-      <a ref={ref} style={{ textDecoration: "none" }} {...others} />
+      <a ref={ref} {...others} />
     </NextLink>
   );
 });

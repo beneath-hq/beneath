@@ -4,11 +4,10 @@ import React, { FC } from "react";
 import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
 import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
-import { toURLName } from "lib/names";
 import Avatar from "components/Avatar";
-import { NakedLink } from "components/Link";
 import ContentContainer from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
+import { toURLName } from "lib/names";
 
 export interface ViewMembersProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
@@ -20,7 +19,12 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
   });
 
   return (
-    <ContentContainer paper loading={loading} error={error && JSON.stringify(error)} note="Use the Beneath CLI to add members">
+    <ContentContainer
+      paper
+      loading={loading}
+      error={error && JSON.stringify(error)}
+      note="Use the Beneath CLI to add members"
+    >
       <Table textSize="medium">
         <TableHead>
           <TableRow>
@@ -34,12 +38,10 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
         </TableHead>
         <TableBody>
           {data?.projectMembers.map((member) => (
-            <TableRow
+            <TableLinkRow
               key={member.userID}
-              component={NakedLink}
               href={`/organization?organization_name=${toURLName(member.name)}`}
               as={`/${toURLName(member.name)}`}
-              hover
             >
               <TableCell>
                 {member.photoURL && <Avatar size="list" label={member.displayName} src={member.photoURL} />}
@@ -49,7 +51,7 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
               <TableCell align="center">{member.view && "✓"}</TableCell>
               <TableCell align="center">{member.create && "✓"}</TableCell>
               <TableCell align="center">{member.admin && "✓"}</TableCell>
-            </TableRow>
+            </TableLinkRow>
           ))}
         </TableBody>
       </Table>
