@@ -21,7 +21,7 @@ import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName} 
 import { useToken } from "../../hooks/useToken";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
-import WriteStream from "../../components/stream/WriteStream";
+import WriteStream from "./WriteStream";
 import CodeBlock from "components/CodeBlock";
 import FilterForm from "./FilterForm";
 import { NakedLink } from "components/Link";
@@ -30,9 +30,10 @@ import clsx from "clsx";
 import { Instance } from "pages/stream";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 
-interface ExploreStreamProps {
+interface DataTabProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: Instance | null;
+  setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -62,11 +63,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   fetchMoreButton: {},
 }));
 
-const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStreamProps) => {
+const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTabProps) => {
   if (!instance) {
     const cta: CallToAction = {
-      message: `Select an instance above, or create one`,
-      buttons: [{ label: "Create instance", onClick: () => console.log("create an instance!") }]
+      message: `The stream has no instances`,
+      buttons: [{ label: "Create instance", onClick: () => setOpenDialogID("create") }]
     };
     return (
       <>
@@ -129,7 +130,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
       message: `There's no data in this stream instance`,
       buttons: [
         // { label: "Write a record", onClick: () => setWriteDialog(true) },
-        { label: "Read the Writing Data docs", href: "https://about.beneath.dev/docs" }
+        { label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" }
       ]
     };
   }
@@ -380,7 +381,7 @@ const ExploreStream: FC<ExploreStreamProps> = ({ stream, instance }: ExploreStre
   );
 };
 
-export default ExploreStream;
+export default DataTab;
 
 const isSubscribeable = (finalized: boolean) => {
   if (typeof window === "undefined" || finalized) {

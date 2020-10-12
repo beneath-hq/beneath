@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent, DialogTitle, DialogContentText, DialogActions, Button } from "@material-ui/core";
 import { ArrowDropDown, Settings } from "@material-ui/icons";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 import { NakedLink } from "../Link";
 import { useMonthlyMetrics } from "../metrics/hooks";
@@ -30,21 +30,24 @@ const useStyles = makeStyles((theme) => ({
   site: {
     display: "block",
   },
+  selectField: {
+    width: "170px",
+  },
   dropdownButton: {
-    marginTop: theme.spacing(3.25)
+    marginTop: theme.spacing(.9)
   }
 }));
 
-
-
 export interface StreamHeroProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: Instance | undefined;
+  instance: Instance | null;
   setInstance: (instance: Instance | null) => void;
+  openDialogID: string | null;
+  setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
-const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
-  const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
+const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDialogID, setOpenDialogID }) => {
+  const [firstLoad, setFirstLoad] = useState(true);
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
@@ -66,6 +69,13 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
     instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
     instances.sort((a, b) => a.version < b.version ? 1 : -1);
   }
+
+  useEffect(() => {
+    if (instances && !stream.primaryStreamInstanceID && firstLoad) {
+      setInstance(instances[0] ? instances[0] : null);
+      setFirstLoad(false);
+    }
+  }, [instances]);
 
   const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create")}];
   if (instance && !instance?.madePrimaryOn) {
@@ -123,16 +133,15 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
       </Grid>
       <Grid item>
         <Grid container spacing={1}>
-          <Grid item>
+          <Grid item className={classes.selectField}>
             <SelectField
               id="instanceID"
-              label="Instance"
               required
               options={instances}
               getOptionLabel={(option: Instance) => {
                 const versionString = `v${option.version.toString()}`;
-                const primaryTag = option.madePrimaryOn ? " (primary) " : "";
-                const finalTag = option.madeFinalOn ? " (final) " : "";
+                const primaryTag = option.madePrimaryOn ? " (primary)" : "";
+                const finalTag = option.madeFinalOn ? " (final)" : "";
                 return versionString + primaryTag + finalTag;
               }}
               getOptionSelected={(option: Instance, value: Instance) => {
