@@ -19,7 +19,7 @@ export interface DropdownButtonProps {
   color?: PropTypes.Color;
   margin?: "normal" | "dense";
   variant?: "text" | "outlined" | "contained";
-  actions: { label: string; href: string; as?: string }[];
+  actions: { label: string; href?: string; as?: string; onClick?: () => void; }[];
   children?: any;
 }
 
@@ -58,7 +58,14 @@ export const DropdownButton: FC<DropdownButtonProps> = ({ className, color, marg
         getContentAnchorEl={null}
       >
         {actions.map((action, idx) => (
-          <MenuItem key={idx} component={NakedLink} href={action.href} as={action.as}>
+          <MenuItem key={idx}
+            onClick={() => {
+              if (action.onClick) {
+                action.onClick();
+                closeMenu();
+              }
+            }}
+            component={action.href ? NakedLink : "li"} href={action.href} as={action.as}>
             {action.label}
           </MenuItem>
         ))}
