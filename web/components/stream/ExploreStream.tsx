@@ -17,10 +17,7 @@ import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
-import {
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName,
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
-} from "../../apollo/types/StreamByOrganizationProjectAndName";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName} from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import Loading from "../Loading";
 import RecordsTable from "./RecordsTable";
@@ -31,10 +28,11 @@ import FilterForm from "./FilterForm";
 import { NakedLink } from "components/Link";
 import VSpace from "components/VSpace";
 import clsx from "clsx";
+import { Instance } from "pages/stream";
 
 interface ExploreStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null;
+  instance: Instance | null;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({

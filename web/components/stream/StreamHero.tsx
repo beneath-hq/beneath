@@ -1,6 +1,7 @@
 import { useQuery } from "@apollo/client";
-import { Chip, Grid, Typography, makeStyles } from "@material-ui/core";
-import { FC } from "react";
+import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent, DialogTitle, DialogContentText, DialogActions, Button } from "@material-ui/core";
+import { ArrowDropDown, Settings } from "@material-ui/icons";
+import { FC, useState } from "react";
 
 import { NakedLink } from "../Link";
 import { useMonthlyMetrics } from "../metrics/hooks";
@@ -15,6 +16,11 @@ import {
   StreamInstancesByOrganizationProjectAndStreamNameVariables,
   StreamInstancesByOrganizationProjectAndStreamName,
 } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+import DropdownButton from "components/DropdownButton";
+import CreateInstance from "./CreateInstance";
+import DeleteInstance from "./DeleteInstance";
+import PromoteInstance from "./PromoteInstance";
+import { Instance } from "pages/stream";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -24,22 +30,21 @@ const useStyles = makeStyles((theme) => ({
   site: {
     display: "block",
   },
+  dropdownButton: {
+    marginTop: theme.spacing(3.25)
+  }
 }));
 
-interface Instance {
-  streamInstanceID: string;
-  version: number;
-}
+
 
 export interface StreamHeroProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: Instance | undefined;
-  setInstance: (
-    instance: Instance | null
-  ) => void;
+  setInstance: (instance: Instance | null) => void;
 }
 
 const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
+  const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
@@ -59,8 +64,15 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
   const instances: Instance[] = [];
   if (data) {
     instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
-  } else if (stream.primaryStreamInstance) {
-    instances.push(stream.primaryStreamInstance);
+    instances.sort((a, b) => a.version < b.version ? 1 : -1);
+  }
+
+  const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create")}];
+  if (instance && !instance?.madePrimaryOn) {
+    instanceActions.push({ label: "Promote to primary", onClick: () => setOpenDialogID("promote") });
+  }
+  if (instance) {
+    instanceActions.push({ label: "Delete instance", onClick: () => setOpenDialogID("delete") });
   }
 
   const classes = useStyles();
@@ -110,24 +122,65 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance }) => {
         </Grid>
       </Grid>
       <Grid item>
-        <SelectField
-          id="instanceID"
-          label="Instance"
-          required
-          options={instances}
-          getOptionLabel={(option: Instance) => `v${option.version.toString()}`}
-          getOptionSelected={(option: Instance, value: Instance) => {
-            return option.version === value.version;
-          }}
-          value={instance}
-          multiple={false}
-          onChange={( _, value ) => {
-            if (value) {
-              setInstance(value as Instance);
-            }
-          }}
-          margin="none"
-        />
+        <Grid container spacing={1}>
+          <Grid item>
+            <SelectField
+              id="instanceID"
+              label="Instance"
+              required
+              options={instances}
+              getOptionLabel={(option: Instance) => {
+                const versionString = `v${option.version.toString()}`;
+                const primaryTag = option.madePrimaryOn ? " (primary) " : "";
+                const finalTag = option.madeFinalOn ? " (final) " : "";
+                return versionString + primaryTag + finalTag;
+              }}
+              getOptionSelected={(option: Instance, value: Instance) => {
+                return option.version === value.version;
+              }}
+              value={instance}
+              multiple={false}
+              onChange={( _, value ) => {
+                if (value) {
+                  setInstance(value as Instance);
+                }
+              }}
+              margin="none"
+            />
+          </Grid>
+          <Grid item>
+            <DropdownButton
+              // className={clsx(classes.rightItem, classes.rightButton)}
+              // color="secondary"
+              variant="contained"
+              margin="dense"
+              actions={instanceActions}
+              className={classes.dropdownButton}
+            >
+              <Settings />
+              <ArrowDropDown />
+            </DropdownButton>
+          </Grid>
+          <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
+            <DialogContent>
+              <CreateInstance stream={stream} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+            </DialogContent>
+          </Dialog>
+          {instance && (
+            <>
+              <Dialog open={openDialogID === "promote"} onBackdropClick={() => setOpenDialogID(null)}>
+                <DialogContent>
+                  <PromoteInstance stream={stream} instance={instance} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                </DialogContent>
+              </Dialog>
+              <Dialog open={openDialogID === "delete"} onBackdropClick={() => setOpenDialogID(null)}>
+                <DialogContent>
+                  <DeleteInstance stream={stream} instance={instance} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+        </Grid>
       </Grid>
     </Grid>
   );

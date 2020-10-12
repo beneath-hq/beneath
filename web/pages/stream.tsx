@@ -7,7 +7,6 @@ import { QUERY_STREAM } from "../apollo/queries/stream";
 import {
   StreamByOrganizationProjectAndName,
   StreamByOrganizationProjectAndNameVariables,
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
 } from "../apollo/types/StreamByOrganizationProjectAndName";
 import { withApollo } from "../apollo/withApollo";
 
@@ -21,6 +20,13 @@ import SubrouteTabs from "../components/SubrouteTabs";
 import { toBackendName, toURLName } from "../lib/names";
 
 const ExploreStream = dynamic(() => import("../components/stream/ExploreStream"), { ssr: false });
+
+export interface Instance {
+  streamInstanceID: string;
+  version: number;
+  madePrimaryOn: ControlTime | null;
+  madeFinalOn: ControlTime | null;
+}
 
 const StreamPage = () => {
   const router = useRouter();
@@ -44,10 +50,7 @@ const StreamPage = () => {
     variables: { organizationName, projectName, streamName },
   });
 
-  const [
-    instance,
-    setInstance,
-  ] = React.useState<StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null>(
+  const [instance, setInstance] = React.useState<Instance | null>(
     data?.streamByOrganizationProjectAndName.primaryStreamInstance || null
   );
 
