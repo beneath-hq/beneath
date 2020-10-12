@@ -23,7 +23,7 @@ const (
 
 // GetWarehouseTableName implements beneath.WarehouseService
 func (b BigQuery) GetWarehouseTableName(p driver.Project, s driver.Stream, i driver.StreamInstance) string {
-	return fmt.Sprintf("`%s.%s`", externalDatasetName(p), externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
+	return fmt.Sprintf("`%s.%s`", b.InstancesDataset.DatasetID, instanceTableName(i.GetStreamInstanceID()))
 }
 
 // AnalyzeWarehouseQuery implements beneath.WarehouseService
@@ -130,7 +130,7 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 				return nil, fmt.Errorf("Query references bad table: %s.%s.%s", table.ProjectID, table.DatasetID, table.TableID)
 			}
 
-			_, instanceID, err := parseExternalTableName(table.TableID)
+			instanceID, err := parseInstanceTableName(table.TableID)
 			if err != nil {
 				return nil, fmt.Errorf("Query references bad table: %s.%s.%s (%s)", table.ProjectID, table.DatasetID, table.TableID, err.Error())
 			}

@@ -3,14 +3,10 @@ package bigquery
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"cloud.google.com/go/bigquery"
-	"google.golang.org/api/iterator"
-	"robpike.io/filter"
 
 	"gitlab.com/beneath-hq/beneath/engine/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
@@ -31,62 +27,11 @@ func (b BigQuery) MaxRecordsInBatch() int {
 
 // RegisterProject implements beneath.Service
 func (b BigQuery) RegisterProject(ctx context.Context, p driver.Project) error {
-	err := b.createProject(ctx, p)
-	if err != nil {
-		if !isAlreadyExists(err) {
-			return fmt.Errorf("error creating dataset for project '%s': %v", p.GetProjectName(), err)
-		}
-		return b.updateProject(ctx, p)
-	}
-	return nil
-}
-
-func (b BigQuery) createProject(ctx context.Context, p driver.Project) error {
-	return b.Client.Dataset(externalDatasetName(p)).Create(ctx, &bigquery.DatasetMetadata{
-		Name: p.GetProjectName(),
-		Labels: map[string]string{
-			ProjectIDLabel: p.GetProjectID().String(),
-		},
-		Access: makeAccess(p.GetPublic(), nil),
-	})
-}
-
-func (b BigQuery) updateProject(ctx context.Context, p driver.Project) error {
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	md, err := dataset.Metadata(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting dataset to update '%s': %v", p.GetProjectName(), err)
-	}
-
-	_, err = dataset.Update(ctx, bigquery.DatasetMetadataToUpdate{
-		Name:   p.GetProjectName(),
-		Access: makeAccess(p.GetPublic(), md.Access),
-	}, md.ETag)
-
-	if err != nil && !isExpiredETag(err) {
-		return fmt.Errorf("error updating dataset for project '%s': %v", p.GetProjectName(), err)
-	}
-
 	return nil
 }
 
 // RemoveProject implements beneath.Service
 func (b BigQuery) RemoveProject(ctx context.Context, p driver.Project) error {
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	md, err := dataset.Metadata(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting dataset to delete '%s': %v", p.GetProjectName(), err)
-	}
-
-	if md.Labels[ProjectIDLabel] != p.GetProjectID().String() {
-		return fmt.Errorf("project ID label doesn't match project to delete for name '%s' and id '%s'", p.GetProjectName(), p.GetProjectID().String())
-	}
-
-	err = dataset.DeleteWithContents(ctx)
-	if err != nil {
-		return fmt.Errorf("error deleting dataset for project '%s': %v", p.GetProjectName(), err)
-	}
-
 	return nil
 }
 
@@ -117,73 +62,21 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 		Expiration: s.GetWarehouseRetention(),
 	}
 
-	// create external table
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
-	mdt, err := table.Metadata(ctx)
-	if err != nil {
-		if !isNotFound(err) {
-			return err
-		}
-
-		// table doesn't exist -- create it and return
-		// this is the expected scenario
-
-		err = table.Create(ctx, &bigquery.TableMetadata{
-			Schema:           bqSchema,
-			TimePartitioning: timePartitioning,
-			Clustering: &bigquery.Clustering{
-				Fields: s.GetCodec().PrimaryIndex.GetFields(),
-			},
-			Labels: map[string]string{
-				StreamIDLabel:   s.GetStreamID().String(),
-				InstanceIDLabel: i.GetStreamInstanceID().String(),
-			},
-		})
-		if err != nil && !isAlreadyExists(err) {
-			return err
-		}
-		return nil
-	}
-
-	// table somehow exists -- RegisterInstance must be idempotent, so we'll execute an update
-
-	// update
-	_, err = table.Update(ctx, bigquery.TableMetadataToUpdate{
-		Name:             s.GetStreamName(),
+	// create table
+	streamPath := fmt.Sprintf("%s-%s-%s", p.GetOrganizationName(), p.GetProjectName(), s.GetStreamName())
+	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
+	err = table.Create(ctx, &bigquery.TableMetadata{
 		Schema:           bqSchema,
 		TimePartitioning: timePartitioning,
-	}, mdt.ETag)
-	if err != nil {
-		if isExpiredETag(err) {
-			return nil
-		}
+		Clustering: &bigquery.Clustering{
+			Fields: s.GetCodec().PrimaryIndex.GetFields(),
+		},
+		Labels: map[string]string{
+			OriginalStreamPathLabel: streamPath,
+		},
+	})
+	if err != nil && !isAlreadyExists(err) { // for idempotency, we don't care if it exists
 		return err
-	}
-
-	// get view metadata (for ETag)
-	view := dataset.Table(externalStreamViewName(s.GetStreamName()))
-	mdv, err := view.Metadata(ctx)
-	if err != nil {
-		if isNotFound(err) {
-			log.S.Infof("couldn't update instance '%s' because its view doesn't exist", i.GetStreamInstanceID().String())
-			return nil
-		}
-		return err
-	}
-
-	// update view if same instance
-	if mdv.Labels[InstanceIDLabel] == i.GetStreamInstanceID().String() {
-		_, err = view.Update(ctx, bigquery.TableMetadataToUpdate{
-			Name:   s.GetStreamName(),
-			Schema: b.tableSchemaToViewSchema(bqSchema),
-		}, mdv.ETag)
-		if err != nil {
-			if isExpiredETag(err) {
-				return nil
-			}
-			return err
-		}
 	}
 
 	return nil
@@ -191,93 +84,16 @@ func (b BigQuery) RegisterInstance(ctx context.Context, p driver.Project, s driv
 
 // PromoteInstance implements beneath.Service
 func (b BigQuery) PromoteInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
-	// references
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	underlying := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
-	view := dataset.Table(externalStreamViewName(s.GetStreamName()))
-
-	// view details
-	viewQuery := fmt.Sprintf("select * except(`__key`, `__timestamp`) from `%s`", fullyQualifiedName(underlying))
-	labels := map[string]string{
-		StreamIDLabel:   s.GetStreamID().String(),
-		InstanceIDLabel: i.GetStreamInstanceID().String(),
-	}
-
-	// check underlying exists
-	md, err := underlying.Metadata(ctx)
-	if err != nil {
-		if isNotFound(err) {
-			log.S.Infof("couldn't promote instance '%s' because its underlying table doesn't exist", i.GetStreamInstanceID().String())
-			return nil
-		}
-		return err
-	}
-
-	// try to create view
-	err = view.Create(ctx, &bigquery.TableMetadata{
-		Name:      s.GetStreamName(),
-		ViewQuery: viewQuery,
-		Labels:    labels,
-	})
-	if err == nil {
-		// trigger update to set view field descriptions (not possible with Create for stupid reasons)
-		_, err = view.Update(ctx, bigquery.TableMetadataToUpdate{
-			Schema: b.tableSchemaToViewSchema(md.Schema),
-		}, "")
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
-		if !isAlreadyExists(err) {
-			return err
-		}
-
-		// update view instead
-		mdu := bigquery.TableMetadataToUpdate{
-			Name:           s.GetStreamName(),
-			ExpirationTime: bigquery.NeverExpire,
-			ViewQuery:      viewQuery,
-		}
-		for l, v := range labels {
-			mdu.SetLabel(l, v)
-		}
-		_, err = view.Update(ctx, mdu, "")
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 // RemoveInstance implements beneath.Service
 func (b BigQuery) RemoveInstance(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) error {
-
-	// delete external table
-	dataset := b.Client.Dataset(externalDatasetName(p))
-	table := dataset.Table(externalTableName(s.GetStreamName(), i.GetStreamInstanceID()))
+	// delete instance table
+	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
 	err := table.Delete(ctx)
 	if err != nil && !isNotFound(err) {
 		return err
-	}
-
-	// if view belongs to this instance, make it expire immediately
-	// (cannot delete directly because delete doesn't accept etag)
-	view := dataset.Table(externalStreamViewName(s.GetStreamName()))
-	md, err := view.Metadata(ctx)
-	if err != nil {
-		if isNotFound(err) {
-			return nil
-		}
-		return err
-	}
-	if md.Labels[InstanceIDLabel] == i.GetStreamInstanceID().String() {
-		_, err := view.Update(ctx, bigquery.TableMetadataToUpdate{
-			ExpirationTime: time.Now(),
-		}, md.ETag)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -285,65 +101,9 @@ func (b BigQuery) RemoveInstance(ctx context.Context, p driver.Project, s driver
 
 // Reset implements beneath.Service
 func (b BigQuery) Reset(ctx context.Context) error {
-	datasets := b.Client.Datasets(ctx)
-	for {
-		ds, err := datasets.Next()
-		if err == iterator.Done {
-			break
-		}
-
-		err = ds.Delete(ctx)
-		if err != nil {
-			return err
-		}
+	err := b.InstancesDataset.Delete(ctx)
+	if err != nil {
+		return err
 	}
-
 	return nil
-}
-
-func (b *BigQuery) tableSchemaToViewSchema(schema bigquery.Schema) bigquery.Schema {
-	schemaI := filter.Choose(schema, func(f *bigquery.FieldSchema) bool {
-		return f.Name != "__key" && f.Name != "__timestamp"
-	})
-	schema = schemaI.(bigquery.Schema)
-	b.recursivelyMakeSchemaFieldsNullable(schema)
-	return schema
-}
-
-func (b *BigQuery) recursivelyMakeSchemaFieldsNullable(schema bigquery.Schema) {
-	for _, f := range schema {
-		f.Required = false
-		if f.Schema != nil {
-			b.recursivelyMakeSchemaFieldsNullable(f.Schema)
-		}
-	}
-}
-
-func makeAccess(public bool, access []*bigquery.AccessEntry) []*bigquery.AccessEntry {
-	if public {
-		// check if exists
-		found := false
-		for _, a := range access {
-			if a.Entity == "allAuthenticatedUsers" {
-				found = true
-				return access
-			}
-		}
-
-		// add public auth if not exists
-		if !found {
-			access = append(access, &bigquery.AccessEntry{
-				Role:       bigquery.ReaderRole,
-				EntityType: bigquery.SpecialGroupEntity,
-				Entity:     "allAuthenticatedUsers",
-			})
-		}
-	} else {
-		// remove all occurences
-		filter.ChooseInPlace(&access, func(a *bigquery.AccessEntry) bool {
-			return a.Entity != "allAuthenticatedUsers"
-		})
-	}
-
-	return access
 }

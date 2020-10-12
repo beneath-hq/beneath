@@ -9,8 +9,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"gitlab.com/beneath-hq/beneath/engine/driver"
 )
 
 func isAlreadyExists(err error) bool {
@@ -35,37 +33,26 @@ func isNotFound(err error) bool {
 	return strings.Contains(err.Error(), "Error 404: Not found")
 }
 
-func externalDatasetName(p driver.Project) string {
-	return strings.ReplaceAll(p.GetOrganizationName()+"__"+p.GetProjectName(), "-", "_")
+func instanceTableName(instanceID uuid.UUID) string {
+	return fmt.Sprintf("%s", hex.EncodeToString(instanceID[:]))
 }
 
-func externalTableName(streamName string, instanceID uuid.UUID) string {
-	name := strings.ReplaceAll(streamName, "-", "_")
-	return fmt.Sprintf("%s_%s", name, hex.EncodeToString(instanceID[:]))
-}
-
-func parseExternalTableName(tableName string) (string, uuid.UUID, error) {
-	if len(tableName) < 2*uuid.Size+2 {
-		return "", uuid.Nil, fmt.Errorf("bad table name: %s", tableName)
+func parseInstanceTableName(tableName string) (uuid.UUID, error) {
+	if len(tableName) < 2*uuid.Size {
+		return uuid.Nil, fmt.Errorf("bad table name: %s", tableName)
 	}
 
-	idx := len(tableName) - 2*uuid.Size
-
-	idBytes, err := hex.DecodeString(tableName[idx:])
+	idBytes, err := hex.DecodeString(tableName)
 	if err != nil {
-		return "", uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
+		return uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
 	}
 
 	instanceID, err := uuid.FromBytes(idBytes)
 	if err != nil {
-		return "", uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
+		return uuid.Nil, fmt.Errorf("bad table name (corrupt instance id): %s", tableName)
 	}
 
-	return tableName[:(idx - 1)], instanceID, nil
-}
-
-func externalStreamViewName(streamName string) string {
-	return strings.ReplaceAll(streamName, "-", "_")
+	return instanceID, nil
 }
 
 func fullyQualifiedName(table *bigquery.Table) string {

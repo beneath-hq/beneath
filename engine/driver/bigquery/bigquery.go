@@ -12,27 +12,20 @@ import (
 
 // configSpecification defines the config variables to load from ENV
 type configSpecification struct {
-	ProjectID string `envconfig:"PROJECT_ID" required:"true"`
+	ProjectID          string `envconfig:"PROJECT_ID" required:"true"`
+	InstancesDatasetID string `envconfig:"INSTANCES_DATASET_ID" required:"true"`
 }
 
 // BigQuery implements beneath.WarehouseService
 type BigQuery struct {
-	Client    *bq.Client
-	ProjectID string
+	ProjectID        string
+	Client           *bq.Client
+	InstancesDataset *bq.Dataset
 }
 
 const (
-	// ProjectIDLabel is a bigquery label key for the project ID
-	ProjectIDLabel = "project_id"
-
-	// StreamIDLabel is a bigquery label key for a stream ID
-	StreamIDLabel = "stream_id"
-
-	// InstanceIDLabel is a bigquery label key for an instance ID
-	InstanceIDLabel = "instance_id"
-
-	// InternalDatasetName is the dataset that stores all raw records
-	InternalDatasetName = "__internal"
+	// OriginalStreamPathLabel is a label that gives the original path of the instance
+	OriginalStreamPathLabel = "original_stream_path"
 )
 
 // Global
@@ -50,10 +43,18 @@ func createGlobal() {
 		panic(err)
 	}
 
+	// create instances dataset if it doesn't exist
+	instancesDataset := client.Dataset(config.InstancesDatasetID)
+	err = instancesDataset.Create(context.Background(), nil)
+	if err != nil && !isAlreadyExists(err) {
+		panic(err)
+	}
+
 	// create instance
 	global = BigQuery{
-		Client:    client,
-		ProjectID: config.ProjectID,
+		ProjectID:        config.ProjectID,
+		Client:           client,
+		InstancesDataset: instancesDataset,
 	}
 }
 
