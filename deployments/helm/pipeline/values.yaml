@@ -47,6 +47,8 @@ env:
   value: "bigquery"
 - name: BENEATH_ENGINE_BIGQUERY_PROJECT_ID
   value: "beneath"
+- name: BENEATH_ENGINE_BIGQUERY_INSTANCES_DATASET_ID
+  value: "instances"
 - name: BENEATH_ENGINE_BIGTABLE_PROJECT_ID
   value: "beneath"
 - name: BENEATH_ENGINE_BIGTABLE_INSTANCE_ID
