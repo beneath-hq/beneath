@@ -1,13 +1,12 @@
 import { useQuery } from "@apollo/client";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { QUERY_STREAM } from "../apollo/queries/stream";
 import {
   StreamByOrganizationProjectAndName,
   StreamByOrganizationProjectAndNameVariables,
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance,
 } from "../apollo/types/StreamByOrganizationProjectAndName";
 import { withApollo } from "../apollo/withApollo";
 
@@ -20,10 +19,18 @@ import ViewMetrics from "../components/stream/ViewMetrics";
 import SubrouteTabs from "../components/SubrouteTabs";
 import { toBackendName, toURLName } from "../lib/names";
 
-const ExploreStream = dynamic(() => import("../components/stream/ExploreStream"), { ssr: false });
+const DataTab = dynamic(() => import("../components/stream/DataTab"), { ssr: false });
+
+export interface Instance {
+  streamInstanceID: string;
+  version: number;
+  madePrimaryOn: ControlTime | null;
+  madeFinalOn: ControlTime | null;
+}
 
 const StreamPage = () => {
   const router = useRouter();
+  const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
   if (
     typeof router.query.organization_name !== "string" ||
     typeof router.query.project_name !== "string" ||
@@ -44,15 +51,12 @@ const StreamPage = () => {
     variables: { organizationName, projectName, streamName },
   });
 
-  const [
-    instance,
-    setInstance,
-  ] = React.useState<StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_primaryStreamInstance | null>(
+  const [instance, setInstance] = React.useState<Instance | null>(
     data?.streamByOrganizationProjectAndName.primaryStreamInstance || null
   );
 
   useEffect(() => {
-    if (data?.streamByOrganizationProjectAndName) {
+    if (data?.streamByOrganizationProjectAndName.primaryStreamInstance) {
       setInstance(data?.streamByOrganizationProjectAndName.primaryStreamInstance);
     }
   }, [data?.streamByOrganizationProjectAndName.streamID]);
@@ -72,13 +76,13 @@ const StreamPage = () => {
   const stream = data.streamByOrganizationProjectAndName;
 
   const tabs = [];
-  tabs.push({ value: "data", label: "Data", render: () => <ExploreStream stream={stream} instance={instance} /> });
+  tabs.push({ value: "data", label: "Data", render: () => <DataTab stream={stream} instance={instance} setOpenDialogID={setOpenDialogID} /> });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
 
   return (
     <Page title={title}>
-      <StreamHero stream={stream} instance={instance} setInstance={setInstance} />
+      <StreamHero stream={stream} instance={instance || null} setInstance={setInstance} openDialogID={openDialogID} setOpenDialogID={setOpenDialogID} />
       <SubrouteTabs defaultValue={"data"} tabs={tabs} />
     </Page>
   );

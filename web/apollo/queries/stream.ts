@@ -134,3 +134,29 @@ export const STAGE_STREAM = gql`
     }
   }
 `;
+
+export const STAGE_STREAM_INSTANCE = gql`
+  mutation StageStreamInstance($streamID: UUID!, $version: Int!, $makeFinal: Boolean, $makePrimary: Boolean){
+  stageStreamInstance(
+    streamID: $streamID,
+    version: $version,
+    makeFinal: $makeFinal,
+    makePrimary: $makePrimary,
+  ) {
+    streamInstanceID
+    streamID
+    version
+    createdOn
+    madePrimaryOn
+    madeFinalOn
+  }
+}
+`;
+
+export const DELETE_STREAM_INSTANCE = gql`
+  mutation DeleteStreamInstance($instanceID: UUID!){
+  deleteStreamInstance(
+    instanceID: $instanceID,
+  )
+}
+`;

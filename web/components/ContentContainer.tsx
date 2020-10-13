@@ -26,7 +26,6 @@ const useStyles = makeStyles((theme) => ({
   },
   content: {
     margin: "3.5rem 0",
-    overflowX: "hidden",
   },
   note: {
     marginTop: theme.spacing(2),

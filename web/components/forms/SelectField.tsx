@@ -13,7 +13,7 @@ import { InputField } from "./TextField";
 export interface SelectFieldProps<T> extends FormControlProps {
   options: T[];
   getOptionLabel: (option: T) => string;
-  value?: T | T[];
+  value: T | T[] | null;
   loading?: boolean;
   multiple?: boolean;
   showClearButton?: boolean;

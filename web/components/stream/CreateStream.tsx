@@ -94,6 +94,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
               streamName: toBackendName(values.name),
               schemaKind: values.schemaKind,
               schema: values.schema,
+              allowManualWrites: true
             },
           })
         )
