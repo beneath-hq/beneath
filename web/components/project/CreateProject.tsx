@@ -87,7 +87,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
             helperText="Select a user or organization"
             required
             options={organizations}
-            getOptionLabel={(option: Organization) => option.name}
+            getOptionLabel={(option: Organization) => toURLName(option.name)}
             getOptionSelected={(option: Organization, value: Organization) => {
               return option.name === value.name;
             }}
