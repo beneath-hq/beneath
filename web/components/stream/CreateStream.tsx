@@ -94,7 +94,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
               streamName: toBackendName(values.name),
               schemaKind: values.schemaKind,
               schema: values.schema,
-              allowManualWrites: true
+              allowManualWrites: true,
             },
           })
         )
@@ -114,7 +114,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
             required
             loading={loading}
             options={data?.projectsForUser || []}
-            getOptionLabel={(option: Project) => `${option.organization.name}/${option.name}`}
+            getOptionLabel={(option: Project) => `${toURLName(option.organization.name)}/${toURLName(option.name)}`}
             getOptionSelected={(option: Project, value: Project) => {
               return option.name === value.name;
             }}
