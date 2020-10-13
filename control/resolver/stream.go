@@ -113,6 +113,11 @@ func (r *mutationResolver) StageStream(ctx context.Context, organizationName str
 		return nil, gqlerror.Errorf("Error staging stream: %s", err.Error())
 	}
 
+	_, err = stream.StageStreamInstance(ctx, 0, false, true)
+	if err != nil {
+		return nil, gqlerror.Errorf("Error creating first instance: %s", err.Error())
+	}
+
 	return stream, nil
 }
 
