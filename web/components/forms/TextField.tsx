@@ -29,7 +29,8 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export interface TextFieldProps extends FormControlProps {
+export interface InputFieldProps {
+  id?: string;
   value?: string;
   placeholder?: string;
   multiline?: boolean;
@@ -45,7 +46,54 @@ export interface TextFieldProps extends FormControlProps {
   startAdornment?: React.ReactNode;
 }
 
-const TextField: FC<TextFieldProps> = (props) => {
+export const InputField: FC<InputFieldProps> = (props) => {
+  const {
+    id,
+    value,
+    placeholder,
+    multiline,
+    monospace,
+    rows,
+    rowsMax,
+    inputProps,
+    inputRef,
+    onBlur,
+    onChange,
+    onFocus,
+    endAdornment,
+    startAdornment,
+  } = props;
+  const classes = useStyles();
+  return (
+    <InputBase
+      classes={{
+        root: clsx(classes.root, monospace && classes.monospace),
+        focused: classes.focused,
+        input: classes.input,
+        inputMultiline: classes.input,
+      }}
+      id={id}
+      value={value}
+      placeholder={placeholder}
+      multiline={multiline}
+      fullWidth={true}
+      rows={rows}
+      rowsMax={rowsMax}
+      inputProps={inputProps}
+      inputRef={inputRef}
+      onBlur={onBlur}
+      onChange={onChange}
+      onFocus={onFocus}
+      endAdornment={endAdornment}
+      startAdornment={startAdornment}
+      spellCheck={multiline && !monospace}
+    />
+  );
+};
+
+export type TextFieldProps = InputFieldProps & FormControlProps;
+
+export const TextField: FC<TextFieldProps> = (props) => {
   const {
     id,
     value,
@@ -63,21 +111,15 @@ const TextField: FC<TextFieldProps> = (props) => {
     startAdornment,
     ...others
   } = props;
-  const classes = useStyles();
 
   return (
     <FormControl id={id} {...others}>
-      <InputBase
-        classes={{
-          root: clsx(classes.root, monospace && classes.monospace),
-          focused: classes.focused,
-          input: classes.input,
-          inputMultiline: classes.input,
-        }}
+      <InputField
         id={id}
         value={value}
         placeholder={placeholder}
         multiline={multiline}
+        monospace={monospace}
         rows={rows}
         rowsMax={rowsMax}
         inputProps={inputProps}
@@ -87,7 +129,6 @@ const TextField: FC<TextFieldProps> = (props) => {
         onFocus={onFocus}
         endAdornment={endAdornment}
         startAdornment={startAdornment}
-        spellCheck={multiline && !monospace}
       />
     </FormControl>
   );

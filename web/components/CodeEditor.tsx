@@ -45,13 +45,13 @@ const CodeEditor: FC<CodeEditorProps> = (props) => {
           contextmenu: false,
           folding: false,
           fontFamily: theme.typography.fontFamilyMonospaced,
-          fontSize: 16,
+          fontSize: 14,
           lineDecorationsWidth: 20,
           lineNumbersMinChars: 4,
           minimap: {
             enabled: false,
           },
-          mouseWheelZoom: true,
+          // mouseWheelZoom: true,
           padding: {
             top: 15,
             bottom: 15,

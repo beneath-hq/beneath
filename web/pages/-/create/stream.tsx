@@ -30,7 +30,7 @@ const CreatePage: NextPage = () => {
   );
 
   return (
-    <Page title="Create stream" contentMarginTop="normal" maxWidth="sm">
+    <Page title="Create stream" contentMarginTop="normal" maxWidth="md">
       <CreateStream preselectedProject={data?.projectByOrganizationAndName} />
     </Page>
   );

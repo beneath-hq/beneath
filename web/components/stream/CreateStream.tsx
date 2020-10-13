@@ -24,6 +24,33 @@ export interface CreateProjectProps {
   preselectedProject?: Project;
 }
 
+const INITIAL_SCHEMA = `# Streams in Beneath have a predefined schema, which includes one or more
+# "key" fields that uniquely identify a record. The key is used for indexing
+# and compaction.
+
+# To create a stream from Python, see
+# https://about.beneath.dev/docs/reading-writing-data/creating-streams/
+
+# Example schema:
+
+" Description of the stream goes here "
+type Movie @stream @key(fields: ["title", "released_on"]) {
+  title: String!
+  released_on: Timestamp!
+  director: String!
+  platform: Platform!
+  description: String # optional field (no '!' after the type)
+}
+
+enum Platform {
+  Cinema
+  Apple
+  Amazon
+  Disney
+  Netflix
+}
+`;
+
 const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
   const me = useMe();
   const router = useRouter();
@@ -49,7 +76,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
     project: data?.projectsForUser?.length ? (preselectedProject ? preselectedProject : data.projectsForUser[0]) : null,
     name: "",
     schemaKind: StreamSchemaKind.GraphQL,
-    schema: "",
+    schema: INITIAL_SCHEMA,
   };
 
   return (
@@ -129,7 +156,7 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
             label="Schema"
             required
             multiline
-            rows={10}
+            rows={20}
             language={"graphql"}
           />
           <SubmitControl label="Create stream" errorAlert={status} disabled={isSubmitting} />

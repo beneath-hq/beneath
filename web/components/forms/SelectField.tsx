@@ -7,8 +7,8 @@ import {
 } from "@material-ui/lab";
 import { FocusEventHandler } from "react";
 
-import { FormControlProps } from "./FormControl";
-import TextField from "./TextField";
+import FormControl, { FormControlProps } from "./FormControl";
+import { InputField } from "./TextField";
 
 export interface SelectFieldProps<T> extends FormControlProps {
   options: T[];
@@ -59,41 +59,40 @@ function SelectField<T>(props: SelectFieldProps<T>) {
   } = props;
   const classes = useStyles();
   return (
-    <MuiAutocomplete<T, boolean, boolean, undefined>
-      id={id}
-      value={value}
-      disabled={disabled}
-      fullWidth={fullWidth}
-      options={options}
-      getOptionLabel={getOptionLabel}
-      getOptionSelected={getOptionSelected}
-      loading={loading}
-      multiple={multiple}
-      onBlur={onBlur}
-      onChange={onChange}
-      onInputChange={onInputChange}
-      classes={{
-        endAdornment: classes.endAdornment,
-        clearIndicator: showClearButton ? undefined : classes.hideClearIndicator,
-      }}
-      disableClearable={disableClearable}
-      openOnFocus
-      renderInput={(params) => {
-        const { id, disabled, fullWidth, inputProps, InputProps } = params;
-        return (
-          <TextField
-            {...formControlProps}
-            id={id}
-            disabled={disabled}
-            fullWidth={fullWidth}
-            inputRef={InputProps.ref}
-            inputProps={inputProps}
-            startAdornment={InputProps.startAdornment}
-            endAdornment={InputProps.endAdornment}
-          />
-        );
-      }}
-    />
+    <FormControl id={id} disabled={disabled} fullWidth={fullWidth} {...formControlProps}>
+      <MuiAutocomplete<T, boolean, boolean, undefined>
+        id={id}
+        value={value}
+        disabled={disabled}
+        fullWidth={true}
+        options={options}
+        getOptionLabel={getOptionLabel}
+        getOptionSelected={getOptionSelected}
+        loading={loading}
+        multiple={multiple}
+        onBlur={onBlur}
+        onChange={onChange}
+        onInputChange={onInputChange}
+        classes={{
+          endAdornment: classes.endAdornment,
+          clearIndicator: showClearButton ? undefined : classes.hideClearIndicator,
+        }}
+        disableClearable={disableClearable}
+        openOnFocus
+        renderInput={(params) => {
+          const { id, inputProps, InputProps } = params;
+          return (
+            <InputField
+              id={id}
+              inputRef={InputProps.ref}
+              inputProps={inputProps}
+              startAdornment={InputProps.startAdornment}
+              endAdornment={InputProps.endAdornment}
+            />
+          );
+        }}
+      />
+    </FormControl>
   );
 }
 
