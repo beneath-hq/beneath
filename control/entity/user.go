@@ -266,6 +266,23 @@ func CreateOrUpdateUser(ctx context.Context, githubID, googleID, email, nickname
 		return nil, err
 	}
 
+	// stage initial project
+	starterProject := &Project{
+		Name:           "starter_project",
+		DisplayName:    "Starter project",
+		Description:    "We automatically created this project for you to help you get started",
+		Public:         true,
+		OrganizationID: user.BillingOrganizationID,
+	}
+	err = starterProject.StageWithUser(ctx, nil, nil, nil, nil, nil, user.UserID, ProjectPermissions{
+		View:   true,
+		Create: true,
+		Admin:  true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// log new user
 	log.S.Infow(
 		"control created user",
