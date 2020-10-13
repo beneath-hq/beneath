@@ -171,14 +171,22 @@ func (t *fromAvro) fromMapEnum(val map[string]interface{}) (schemalang.Schema, e
 	if !ok {
 		doc = ""
 	}
-	symbols, ok := val["symbols"].([]string)
+	symbols, ok := val["symbols"].([]interface{})
 	if !ok || len(symbols) == 0 {
 		return nil, fmt.Errorf("expected non-empty array-of-strings field 'symbols' for type 'enum'")
+	}
+	symbolsStrings := make([]string, len(symbols))
+	for idx, val := range symbols {
+		symbol, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string symbol for enum, got: %v", symbol)
+		}
+		symbolsStrings[idx] = symbol
 	}
 	enum := &schemalang.Enum{
 		Name:    name,
 		Doc:     doc,
-		Symbols: symbols,
+		Symbols: symbolsStrings,
 	}
 	return enum, nil
 }
