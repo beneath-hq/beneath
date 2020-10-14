@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 // tslint:disable-next-line: no-empty-interface
 export interface TileProps {
-  shape?: "normal" | "wide" | "dense";
+  shape?: "normal" | "wide" | "dense" | "full";
   href?: string;
   as?: string;
   nopaper?: boolean;
@@ -72,6 +72,11 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styl
       )}
       {shape === "wide" && (
         <Grid item xs={12} sm={12} md={8} lg={6}>
+          {tile}
+        </Grid>
+      )}
+      {shape === "full" && (
+        <Grid item xs={12}>
           {tile}
         </Grid>
       )}
