@@ -9,6 +9,7 @@ import UsageTile from "./tiles/UsageTile";
 import ProfileHeroTile from "./tiles/ProfileHeroTile";
 import UpgradeTile from "./tiles/UpgradeTile";
 import ActionsTile from "./tiles/ActionsTile";
+import ContentContainer from "components/ContentContainer";
 
 // Hack: in order to position the usage section in the top right-hand corner on medium+ screens,
 // we apply custom css styling to the Grid items. We pass through the styles to the Tile component, which is itself a Grid item.
@@ -61,69 +62,71 @@ const Springboard: FC = () => {
 
 
   return (
-    <Grid container spacing={3} className={classes.positionAncestor}>
-      <ProfileHeroTile
-        shape="wide"
-        href={`/organization?organization_name=${toURLName(me.name)}`}
-        as={`/${toURLName(me.name)}`}
-        path={`@${toURLName(me.name)}`}
-        name={toURLName(me.name)}
-        displayName={me.displayName}
-        description={me.description}
-        avatarURL={me.photoURL}
-      />
+    <ContentContainer maxWidth="lg">
+      <Grid container spacing={3} className={classes.positionAncestor}>
+        <ProfileHeroTile
+          shape="wide"
+          href={`/organization?organization_name=${toURLName(me.name)}`}
+          as={`/${toURLName(me.name)}`}
+          path={`@${toURLName(me.name)}`}
+          name={toURLName(me.name)}
+          displayName={me.displayName}
+          description={me.description}
+          avatarURL={me.photoURL}
+        />
 
-      {me.organizationID === me.personalUser?.billingOrganizationID && (
-        <>
-          {me.readQuota && (
-            <UsageTile
-              href={`/organization?organization_name=${me.name}&tab=monitoring`}
-              as={`/${me.name}/-/monitoring`}
-              title="Read quota usage"
-              usage={me.readUsage}
-              quota={me.readQuota}
-              styleClass={classes.readUsage}
-            />
-          )}
-          {me.writeQuota && (
-            <UsageTile
-              href={`/organization?organization_name=${me.name}&tab=monitoring`}
-              as={`/${me.name}/-/monitoring`}
-              title="Write quota usage"
-              usage={me.writeUsage}
-              quota={me.writeQuota}
-              styleClass={classes.writeUsage}
-            />
-          )}
-          {/* {me.scanQuota && (
-            <UsageTile
-              href={`/organization?organization_name=${me.name}&tab=monitoring`}
-              as={`/${me.name}/-/monitoring`}
-              title="Scan quota usage"
-              usage={me.scanUsage}
-              quota={me.scanQuota}
-            />
-          )} */}
-          <UpgradeTile styleClass={classes.usageUpgrade} />
-        </>
-      )}
-      {isMd && (
-        <Grid item md={4} lg={6} />
-      )}
-      <ActionsTile shape="wide" nopaper />
-      <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>
-          My projects
-        </Typography>
+        {me.organizationID === me.personalUser?.billingOrganizationID && (
+          <>
+            {me.readQuota && (
+              <UsageTile
+                href={`/organization?organization_name=${me.name}&tab=monitoring`}
+                as={`/${me.name}/-/monitoring`}
+                title="Read quota usage"
+                usage={me.readUsage}
+                quota={me.readQuota}
+                styleClass={classes.readUsage}
+              />
+            )}
+            {me.writeQuota && (
+              <UsageTile
+                href={`/organization?organization_name=${me.name}&tab=monitoring`}
+                as={`/${me.name}/-/monitoring`}
+                title="Write quota usage"
+                usage={me.writeUsage}
+                quota={me.writeQuota}
+                styleClass={classes.writeUsage}
+              />
+            )}
+            {/* {me.scanQuota && (
+              <UsageTile
+                href={`/organization?organization_name=${me.name}&tab=monitoring`}
+                as={`/${me.name}/-/monitoring`}
+                title="Scan quota usage"
+                usage={me.scanUsage}
+                quota={me.scanQuota}
+              />
+            )} */}
+            <UpgradeTile styleClass={classes.usageUpgrade} />
+          </>
+        )}
+        {isMd && (
+          <Grid item md={4} lg={6} />
+        )}
+        <ActionsTile shape="wide" nopaper />
+        <Grid item xs={12}>
+          <Typography variant="h3" className={classes.sectionTitle}>
+            My projects
+          </Typography>
+        </Grid>
+        <MyProjectsTiles />
+        <Grid item xs={12}>
+          <Typography variant="h3" className={classes.sectionTitle}>
+            Featured projects and tutorials
+          </Typography>
+        </Grid>
+        <ExploreProjectsTiles />
       </Grid>
-      <MyProjectsTiles />
-      <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>
-          Featured projects and tutorials
-        </Typography>
-      </Grid>
-      <ExploreProjectsTiles />
-    </Grid>
+    </ContentContainer>
   );
 };
 
