@@ -116,7 +116,7 @@ const Springboard: FC = () => {
           My projects
         </Typography>
       </Grid>
-      <MyProjectsTiles me={me} />
+      <MyProjectsTiles />
       <Grid item xs={12}>
         <Typography variant="h3" className={classes.sectionTitle}>
           Featured projects and tutorials

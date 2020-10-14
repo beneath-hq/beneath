@@ -25,7 +25,7 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
   const me = useMe();
 
   if (!me || !me.personalUserID) {
-    return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>;
+    return <></>;
   }
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
