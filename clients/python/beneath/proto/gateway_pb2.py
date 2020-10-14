@@ -18,7 +18,6 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='gateway.v1',
   syntax='proto3',
   serialized_options=b'Z0gitlab.com/beneath-hq/beneath/gateway/grpc/proto',
-  create_key=_descriptor._internal_create_key,
   serialized_pb=b'\n\x1b\x62\x65neath/proto/gateway.proto\x12\ngateway.v1\".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"K\n\x0fInstanceRecords\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12#\n\x07records\x18\x02 \x03(\x0b\x32\x12.gateway.v1.Record\"\xb0\x02\n\x0cWarehouseJob\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c\x12/\n\x06status\x18\x02 \x01(\x0e\x32\x1f.gateway.v1.WarehouseJob.Status\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x1a\n\x12result_avro_schema\x18\x04 \x01(\t\x12\x16\n\x0ereplay_cursors\x18\x05 \x03(\x0c\x12\x1f\n\x17referenced_instance_ids\x18\x06 \x03(\x0c\x12\x15\n\rbytes_scanned\x18\x07 \x01(\x03\x12\x19\n\x11result_size_bytes\x18\x08 \x01(\x03\x12\x1b\n\x13result_size_records\x18\t \x01(\x03\",\n\x06Status\x12\x0b\n\x07PENDING\x10\x00\x12\x0b\n\x07RUNNING\x10\x01\x12\x08\n\x04\x44ONE\x10\x02\"8\n\x0bPingRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63lient_version\x18\x02 \x01(\t\"Z\n\x0cPingResponse\x12\x15\n\rauthenticated\x18\x01 \x01(\x08\x12\x16\n\x0eversion_status\x18\x02 \x01(\t\x12\x1b\n\x13recommended_version\x18\x03 \x01(\t\"E\n\x0cWriteRequest\x12\x35\n\x10instance_records\x18\x01 \x03(\x0b\x32\x1b.gateway.v1.InstanceRecords\"!\n\rWriteResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c\"H\n\x0fQueryLogRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0c\n\x04peek\x18\x03 \x01(\x08\"B\n\x10QueryLogResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c\"L\n\x11QueryIndexRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0e\n\x06\x66ilter\x18\x03 \x01(\t\"D\n\x12QueryIndexResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c\"z\n\x15QueryWarehouseRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0f\n\x07\x64ry_run\x18\x03 \x01(\x08\x12\x12\n\ntimeout_ms\x18\x04 \x01(\x05\x12\x19\n\x11max_bytes_scanned\x18\x05 \x01(\x03\"?\n\x16QueryWarehouseResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob\")\n\x17PollWarehouseJobRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c\"A\n\x18PollWarehouseJobResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob\",\n\x0bReadRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c\x12\r\n\x05limit\x18\x03 \x01(\x05\"H\n\x0cReadResponse\x12#\n\x07records\x18\x01 \x03(\x0b\x32\x12.gateway.v1.Record\x12\x13\n\x0bnext_cursor\x18\x02 \x01(\x0c\"\"\n\x10SubscribeRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c\"%\n\x11SubscribeResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c\x32\xe5\x04\n\x07Gateway\x12;\n\x04Ping\x12\x17.gateway.v1.PingRequest\x1a\x18.gateway.v1.PingResponse\"\x00\x12>\n\x05Write\x12\x18.gateway.v1.WriteRequest\x1a\x19.gateway.v1.WriteResponse\"\x00\x12G\n\x08QueryLog\x12\x1b.gateway.v1.QueryLogRequest\x1a\x1c.gateway.v1.QueryLogResponse\"\x00\x12M\n\nQueryIndex\x12\x1d.gateway.v1.QueryIndexRequest\x1a\x1e.gateway.v1.QueryIndexResponse\"\x00\x12Y\n\x0eQueryWarehouse\x12!.gateway.v1.QueryWarehouseRequest\x1a\".gateway.v1.QueryWarehouseResponse\"\x00\x12_\n\x10PollWarehouseJob\x12#.gateway.v1.PollWarehouseJobRequest\x1a$.gateway.v1.PollWarehouseJobResponse\"\x00\x12;\n\x04Read\x12\x17.gateway.v1.ReadRequest\x1a\x18.gateway.v1.ReadResponse\"\x00\x12L\n\tSubscribe\x12\x1c.gateway.v1.SubscribeRequest\x1a\x1d.gateway.v1.SubscribeResponse\"\x00\x30\x01\x42\x32Z0gitlab.com/beneath-hq/beneath/gateway/grpc/protob\x06proto3'
 )
 
@@ -29,23 +28,19 @@ _WAREHOUSEJOB_STATUS = _descriptor.EnumDescriptor(
   full_name='gateway.v1.WarehouseJob.Status',
   filename=None,
   file=DESCRIPTOR,
-  create_key=_descriptor._internal_create_key,
   values=[
     _descriptor.EnumValueDescriptor(
       name='PENDING', index=0, number=0,
       serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
+      type=None),
     _descriptor.EnumValueDescriptor(
       name='RUNNING', index=1, number=1,
       serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
+      type=None),
     _descriptor.EnumValueDescriptor(
       name='DONE', index=2, number=2,
       serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
@@ -61,7 +56,6 @@ _RECORD = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='avro_data', full_name='gateway.v1.Record.avro_data', index=0,
@@ -69,14 +63,14 @@ _RECORD = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='timestamp', full_name='gateway.v1.Record.timestamp', index=1,
       number=2, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -100,7 +94,6 @@ _INSTANCERECORDS = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='instance_id', full_name='gateway.v1.InstanceRecords.instance_id', index=0,
@@ -108,14 +101,14 @@ _INSTANCERECORDS = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='records', full_name='gateway.v1.InstanceRecords.records', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -139,7 +132,6 @@ _WAREHOUSEJOB = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='job_id', full_name='gateway.v1.WarehouseJob.job_id', index=0,
@@ -147,63 +139,63 @@ _WAREHOUSEJOB = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='status', full_name='gateway.v1.WarehouseJob.status', index=1,
       number=2, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='error', full_name='gateway.v1.WarehouseJob.error', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='result_avro_schema', full_name='gateway.v1.WarehouseJob.result_avro_schema', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='replay_cursors', full_name='gateway.v1.WarehouseJob.replay_cursors', index=4,
       number=5, type=12, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='referenced_instance_ids', full_name='gateway.v1.WarehouseJob.referenced_instance_ids', index=5,
       number=6, type=12, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='bytes_scanned', full_name='gateway.v1.WarehouseJob.bytes_scanned', index=6,
       number=7, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='result_size_bytes', full_name='gateway.v1.WarehouseJob.result_size_bytes', index=7,
       number=8, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='result_size_records', full_name='gateway.v1.WarehouseJob.result_size_records', index=8,
       number=9, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -228,7 +220,6 @@ _PINGREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='client_id', full_name='gateway.v1.PingRequest.client_id', index=0,
@@ -236,14 +227,14 @@ _PINGREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='client_version', full_name='gateway.v1.PingRequest.client_version', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -267,7 +258,6 @@ _PINGRESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='authenticated', full_name='gateway.v1.PingResponse.authenticated', index=0,
@@ -275,21 +265,21 @@ _PINGRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='version_status', full_name='gateway.v1.PingResponse.version_status', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='recommended_version', full_name='gateway.v1.PingResponse.recommended_version', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -313,7 +303,6 @@ _WRITEREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='instance_records', full_name='gateway.v1.WriteRequest.instance_records', index=0,
@@ -321,7 +310,7 @@ _WRITEREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -345,7 +334,6 @@ _WRITERESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='write_id', full_name='gateway.v1.WriteResponse.write_id', index=0,
@@ -353,7 +341,7 @@ _WRITERESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -377,7 +365,6 @@ _QUERYLOGREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='instance_id', full_name='gateway.v1.QueryLogRequest.instance_id', index=0,
@@ -385,21 +372,21 @@ _QUERYLOGREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='partitions', full_name='gateway.v1.QueryLogRequest.partitions', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='peek', full_name='gateway.v1.QueryLogRequest.peek', index=2,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -423,7 +410,6 @@ _QUERYLOGRESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='replay_cursors', full_name='gateway.v1.QueryLogResponse.replay_cursors', index=0,
@@ -431,14 +417,14 @@ _QUERYLOGRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='change_cursors', full_name='gateway.v1.QueryLogResponse.change_cursors', index=1,
       number=2, type=12, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -462,7 +448,6 @@ _QUERYINDEXREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='instance_id', full_name='gateway.v1.QueryIndexRequest.instance_id', index=0,
@@ -470,21 +455,21 @@ _QUERYINDEXREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='partitions', full_name='gateway.v1.QueryIndexRequest.partitions', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='filter', full_name='gateway.v1.QueryIndexRequest.filter', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -508,7 +493,6 @@ _QUERYINDEXRESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='replay_cursors', full_name='gateway.v1.QueryIndexResponse.replay_cursors', index=0,
@@ -516,14 +500,14 @@ _QUERYINDEXRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='change_cursors', full_name='gateway.v1.QueryIndexResponse.change_cursors', index=1,
       number=2, type=12, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -547,7 +531,6 @@ _QUERYWAREHOUSEREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='query', full_name='gateway.v1.QueryWarehouseRequest.query', index=0,
@@ -555,35 +538,35 @@ _QUERYWAREHOUSEREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='partitions', full_name='gateway.v1.QueryWarehouseRequest.partitions', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='dry_run', full_name='gateway.v1.QueryWarehouseRequest.dry_run', index=2,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='timeout_ms', full_name='gateway.v1.QueryWarehouseRequest.timeout_ms', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='max_bytes_scanned', full_name='gateway.v1.QueryWarehouseRequest.max_bytes_scanned', index=4,
       number=5, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -607,7 +590,6 @@ _QUERYWAREHOUSERESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='job', full_name='gateway.v1.QueryWarehouseResponse.job', index=0,
@@ -615,7 +597,7 @@ _QUERYWAREHOUSERESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -639,7 +621,6 @@ _POLLWAREHOUSEJOBREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='job_id', full_name='gateway.v1.PollWarehouseJobRequest.job_id', index=0,
@@ -647,7 +628,7 @@ _POLLWAREHOUSEJOBREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -671,7 +652,6 @@ _POLLWAREHOUSEJOBRESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='job', full_name='gateway.v1.PollWarehouseJobResponse.job', index=0,
@@ -679,7 +659,7 @@ _POLLWAREHOUSEJOBRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -703,7 +683,6 @@ _READREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='cursor', full_name='gateway.v1.ReadRequest.cursor', index=0,
@@ -711,14 +690,14 @@ _READREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='limit', full_name='gateway.v1.ReadRequest.limit', index=1,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -742,7 +721,6 @@ _READRESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='records', full_name='gateway.v1.ReadResponse.records', index=0,
@@ -750,14 +728,14 @@ _READRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='next_cursor', full_name='gateway.v1.ReadResponse.next_cursor', index=1,
       number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -781,7 +759,6 @@ _SUBSCRIBEREQUEST = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='cursor', full_name='gateway.v1.SubscribeRequest.cursor', index=0,
@@ -789,7 +766,7 @@ _SUBSCRIBEREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -813,7 +790,6 @@ _SUBSCRIBERESPONSE = _descriptor.Descriptor(
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
-  create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
       name='write_id', full_name='gateway.v1.SubscribeResponse.write_id', index=0,
@@ -821,7 +797,7 @@ _SUBSCRIBERESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -1008,7 +984,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  create_key=_descriptor._internal_create_key,
   serialized_start=1516,
   serialized_end=2129,
   methods=[
@@ -1020,7 +995,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_PINGREQUEST,
     output_type=_PINGRESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='Write',
@@ -1030,7 +1004,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_WRITEREQUEST,
     output_type=_WRITERESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='QueryLog',
@@ -1040,7 +1013,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_QUERYLOGREQUEST,
     output_type=_QUERYLOGRESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='QueryIndex',
@@ -1050,7 +1022,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_QUERYINDEXREQUEST,
     output_type=_QUERYINDEXRESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='QueryWarehouse',
@@ -1060,7 +1031,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_QUERYWAREHOUSEREQUEST,
     output_type=_QUERYWAREHOUSERESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='PollWarehouseJob',
@@ -1070,7 +1040,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_POLLWAREHOUSEJOBREQUEST,
     output_type=_POLLWAREHOUSEJOBRESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='Read',
@@ -1080,7 +1049,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_READREQUEST,
     output_type=_READRESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='Subscribe',
@@ -1090,7 +1058,6 @@ _GATEWAY = _descriptor.ServiceDescriptor(
     input_type=_SUBSCRIBEREQUEST,
     output_type=_SUBSCRIBERESPONSE,
     serialized_options=None,
-    create_key=_descriptor._internal_create_key,
   ),
 ])
 _sym_db.RegisterServiceDescriptor(_GATEWAY)
