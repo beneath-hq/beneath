@@ -2,6 +2,8 @@ import { Record } from "beneath-react";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 import React, { FC } from "react";
+import times from 'lodash/times';
+
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import {
@@ -45,20 +47,22 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   headerCellText: {
     flex: "1",
-    marginRight: theme.spacing(1)
+    marginRight: theme.spacing(1),
+    fontSize: theme.typography.pxToRem(16),
+    fontWeight: "bold"
   },
   headerCellPaper: {
     marginLeft: theme.spacing(1),
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
-    cursor: "default"
+    paddingLeft: theme.spacing(.75),
+    paddingRight: theme.spacing(.75),
+    cursor: "default",
+    height: "18px",
   },
-  headerCellPaperInfo: {
-    backgroundColor: theme.palette.border.background,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    height: "24px"
+  headerCellPaperText: {
+    display: "table-cell",
+    textAlign: "center",
+    verticalAlign: "middle",
+    lineHeight: "18px",
   },
   headerCellPaperKey: {
     backgroundColor: theme.palette.primary.dark,
@@ -66,9 +70,18 @@ const useStyles = makeStyles((theme: Theme) => ({
   headerCellPaperType: {
     backgroundColor: theme.palette.border.background
   },
+  headerCellPaperInfo: {
+    backgroundColor: theme.palette.border.background,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  },
   headerCellInfo: {
     fontSize: theme.typography.h3.fontSize,
   },
+  emptyCell: {
+    height: theme.spacing(4)
+  }
 }));
 
 export interface RecordsTableProps extends ContentContainerProps {
@@ -102,15 +115,17 @@ const RecordsTable: FC<RecordsTableProps> = ({
                       {column.isKey && (
                         <Tooltip title={"Column is part of an index"} interactive>
                           <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperKey)}>
-                            <Typography variant="caption">Key</Typography>
+                            <Typography variant="caption" className={classes.headerCellPaperText}>Key</Typography>
                           </Paper>
                         </Tooltip>
                       )}
-                      <Tooltip title={column.typeDescription} interactive>
-                        <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperType)}>
-                          <Typography variant="caption">{column.typeName}</Typography>
-                        </Paper>
-                      </Tooltip>
+                      {column.displayName !== "Time ago" && (
+                        <Tooltip title={column.typeDescription} interactive>
+                          <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperType)}>
+                            <Typography variant="caption" className={classes.headerCellPaperText}>{column.typeName}</Typography>
+                          </Paper>
+                        </Tooltip>
+                      )}
                       {column.doc && (
                         <Tooltip title={column.doc} interactive>
                           <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperInfo)}>
@@ -145,6 +160,18 @@ const RecordsTable: FC<RecordsTableProps> = ({
                           </TableCell>
                         )
                     )}
+                  </TableRow>
+                ))}
+                {records && records.length === 0 && times(3, (num) => (
+                  <TableRow key={num} hover={true}>
+                    {columns.map((column, idx) => (
+                      <TableCell
+                        key={idx}
+                        className={clsx(classes.cell, column.isKey && classes.keyCell, classes.emptyCell)}
+                        align={column.isNumeric ? "right" : "left"}
+                      >
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
             </TableBody>
