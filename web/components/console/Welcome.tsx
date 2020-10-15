@@ -25,7 +25,7 @@ const Welcome: FC = () => {
   const steps = [
     {label: 'Create an account', content: 'Connect with Github or Google, and you can start writing data for free - no credit card required'},
     {label: 'Create a stream', content: `Provide the name, description, and schema for your new stream`},
-    {label: 'Write data to your stream', content: 'Use the easy Beneath Python library or the Beneath UI to write records to your stream'}
+    {label: 'Write data', content: 'Use the easy Beneath Python library or the Beneath UI to write records to your stream'}
   ];
 
   return (
@@ -39,7 +39,7 @@ const Welcome: FC = () => {
 
         <Grid item xs={12}>
           <Typography variant="h3" className={classes.sectionTitle}>
-            Quick start for writing data
+            Three quick steps to create your first stream
           </Typography>
         </Grid>
         <Tile shape="full">
