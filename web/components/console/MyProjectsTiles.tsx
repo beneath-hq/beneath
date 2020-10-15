@@ -23,6 +23,7 @@ const MyProjectsTiles: FC = () => {
   }
 
   const { loading, error, data } = useQuery<ProjectsForUser, ProjectsForUserVariables>(QUERY_PROJECTS_FOR_USER, {
+    fetchPolicy: "cache-and-network",
     variables: {
       userID: me.personalUserID,
     },
