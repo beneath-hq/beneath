@@ -85,6 +85,7 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
 
   const sanitize = (schema: Schema, data: any) => {
     // when a field is optional or a key, and an empty string, remove the field from the record object
+    // note: a required string field, which isn't a key, CAN be an empty string, so we don't remove it
     schema.columns.map((col) => {
       if ((col.isNullable || col.isKey) && data[col.name] === "") {
         delete data[col.name];
@@ -98,17 +99,16 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
     <Formik
       initialValues={initialValues}
       onSubmit={async (values, actions) => {
+        // clear any previous error
+        actions.setStatus(null);
+
         sanitize(schema, values.data);
         const { writeID, error } = await stream.write(values.data);
         if (error) {
-          const json = JSON.parse(error.message);
-          actions.setStatus(json.error);
-        } else {
-          // clear previous error
-          actions.setStatus("");
+          actions.setStatus(error.message);
         }
         if (writeID) {
-          console.log("Successfully wrote record, but it might take a while before it shows up.");
+          // successfully wrote record
           setWriteDialog(false);
         }
       }}
@@ -118,21 +118,19 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
           <Typography component="h2" variant="h1" gutterBottom>
             Write a record
           </Typography>
-          {schema.columns.map((col, idx) => {
-            return (
-              <Field
-                key={idx}
-                name={"data." + col.name}
-                // placeholder={getPlaceholder(col.inputType)} // placeholders aren't this easy
-                validate={(val: string) => {
-                  return validateValue(col.inputType, val);
-                }}
-                component={FormikTextField}
-                label={col.displayName}
-                required={!col.isNullable}
-              />
-            );}
-          )}
+          {schema.columns.map((col, idx) => (
+            <Field
+              key={idx}
+              name={"data." + col.name}
+              // placeholder={getPlaceholder(col.inputType)} // placeholders aren't this easy
+              validate={(val: string) => {
+                return validateValue(col.inputType, val);
+              }}
+              component={FormikTextField}
+              label={`${col.displayName} (${col.typeName})`}
+              required={!col.isNullable}
+            />
+          ))}
           <SubmitControl label="Write record" errorAlert={status} disabled={isSubmitting} />
         </Form>
       )}
