@@ -34,8 +34,12 @@ const FormControl: FC<FormControlProps> = (props) => {
   const actualMargin = margin ?? "normal";
   return (
     <MuiFormControl margin={actualMargin} error={error} fullWidth={actualFullWidth} disabled={disabled}>
-      {id && label && <FieldLabel id={id} label={label} helperText={helperText} required={required} />}
-      <Box height="0.3rem" />
+      {id && label && (
+        <>
+          <FieldLabel id={id} label={label} helperText={helperText} required={required} />
+          <Box height="0.3rem" />
+        </>
+      )}
       {children}
       {id && <FieldError id={id} error={error} errorText={errorText} />}
     </MuiFormControl>

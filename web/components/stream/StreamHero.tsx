@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
-import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent, DialogTitle, DialogContentText, DialogActions, Button } from "@material-ui/core";
-import { ArrowDropDown, Settings } from "@material-ui/icons";
+import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent } from "@material-ui/core";
+import { MoreVert } from "@material-ui/icons";
 import { FC, useEffect, useState } from "react";
 
 import { NakedLink } from "../Link";
@@ -34,7 +34,12 @@ const useStyles = makeStyles((theme) => ({
     width: "170px",
   },
   dropdownButton: {
-    marginTop: theme.spacing(.9)
+    backgroundColor: theme.palette.background.paper,
+    "&:hover": {
+      backgroundColor: theme.palette.secondary.main,
+    },
+    border: `1px solid ${theme.palette.border.paper}`,
+    color: theme.palette.common.white,
   }
 }));
 
@@ -132,7 +137,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
         </Grid>
       </Grid>
       <Grid item>
-        <Grid container spacing={1}>
+        <Grid container spacing={1} alignItems="center">
           <Grid item className={classes.selectField}>
             <SelectField
               id="instanceID"
@@ -159,15 +164,12 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
           </Grid>
           <Grid item>
             <DropdownButton
-              // className={clsx(classes.rightItem, classes.rightButton)}
-              // color="secondary"
               variant="contained"
               margin="dense"
               actions={instanceActions}
               className={classes.dropdownButton}
             >
-              <Settings />
-              <ArrowDropDown />
+              <MoreVert />
             </DropdownButton>
           </Grid>
           <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
