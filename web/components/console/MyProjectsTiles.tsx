@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client";
-import { FC } from "react";
+import React, { FC } from "react";
 import { Grid, useMediaQuery, useTheme } from "@material-ui/core";
 
 import { QUERY_PROJECTS_FOR_USER } from "../../apollo/queries/project";
@@ -41,9 +41,9 @@ const MyProjectsTiles: FC = () => {
       {data &&
         data.projectsForUser &&
         data.projectsForUser.map(({ projectID, name, description, photoURL, organization }, i) => (
-          // if its the 3rd or 5th item, on medium+ screens, and you're on the free plan, then add a spacer to avoid overlap with the UpgradeTile
-          <>
-            {(i === 2 || i === 4) && isMd && data2 && data2.billingInfo.billingPlan.default && <Grid item xs={4} />}
+          <React.Fragment key={i}>
+            {/* if its the 3rd or 5th item, on medium+ screens, and you're on the free plan, then add a spacer to avoid overlap with the UpgradeTile */}
+             {(i === 2 || i === 4) && isMd && data2 && data2.billingInfo.billingPlan.default && <Grid item xs={4} />}
               <ProjectHeroTile
                 key={`explore:${projectID}`}
                 href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
@@ -53,7 +53,7 @@ const MyProjectsTiles: FC = () => {
                 description={description}
                 avatarURL={photoURL}
               />
-            </>
+            </React.Fragment>
           )
         )}
       {data && !data.projectsForUser && <PlaceholderTile title="Your first project will show up here" />}
