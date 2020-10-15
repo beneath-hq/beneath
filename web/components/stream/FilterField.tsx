@@ -140,7 +140,7 @@ export const getPlaceholder = (type: InputType) => {
 };
 
 export const validateValue = (type: InputType, value: string): string | null => {
-  if (value.length === 0 || type === "text") {
+  if (!value || value.length === 0 || type === "text") {
     return null;
   }
 
