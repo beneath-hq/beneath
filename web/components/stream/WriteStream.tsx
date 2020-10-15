@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React, { FC } from "react";
-import { Button, makeStyles, Typography } from "@material-ui/core";
+import { Button, Dialog, DialogContent, Grid, Typography } from "@material-ui/core";
+import AddBoxIcon from "@material-ui/icons/AddBox";
 import { Client } from "beneath";
 
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
@@ -15,36 +16,20 @@ import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMem
 import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
 import useMe from "hooks/useMe";
 
-const useStyles = makeStyles((theme) => ({
-  firstTitle: {
-    marginTop: theme.spacing(0),
-    marginBottom: theme.spacing(2),
-  },
-  title: {
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing(2),
-  },
-  errorMsg: {
-    marginTop: theme.spacing(3),
-  },
-  button: {
-    marginTop: theme.spacing(3),
-    marginBotton: theme.spacing(2),
-    marginRight: theme.spacing(3),
-  },
-}));
-
 interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instanceID: string;
-  setWriteDialog: (writeDialog: boolean) => void;
+  buttonStyleClass: string;
 }
 
-const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, setWriteDialog }) => {
-  const classes = useStyles();
+const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, buttonStyleClass }) => {
   const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
-  const token = useToken();
   const me = useMe();
+  const token = useToken();
+  const [writeDialog, setWriteDialog] = React.useState(false);
+
+  if (!streamMetadata.allowManualWrites || !me || !token) { return <></>; }
+
   const { error, data } = useQuery<ProjectMembers, ProjectMembersVariables>(QUERY_PROJECT_MEMBERS, {
     variables: { projectID: streamMetadata.project.projectID },
   });
@@ -54,22 +39,8 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
   }
 
   const user = data.projectMembers.find((user) => (user.userID === me?.personalUserID));
-
-  if (!user?.create) {
-    return (
-      <>
-        <Typography variant="h1" gutterBottom>
-          Sorry, you can't do that
-        </Typography>
-        <Typography color="error" gutterBottom className={classes.errorMsg}>
-          You don't have permission to write to this stream. Make sure you are logged in.
-        </Typography>
-        <Button onClick={() => setWriteDialog(false)} className={classes.button} variant="contained" color="primary">
-          Go back
-        </Button>
-      </>
-    );
-  }
+  // if not allowed to create in the project, don't show the Write Record button
+  if (!user?.create) { return <></>; }
 
   const client = new Client({ secret: token || undefined });
   const stream = client.findStream({instanceID});
@@ -91,50 +62,70 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
         delete data[col.name];
       }
     });
-
-    return;
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={async (values, actions) => {
-        // clear any previous error
-        actions.setStatus(null);
+    <>
+      <Grid item>
+        <Button
+          variant="outlined"
+          onClick={() => setWriteDialog(true)}
+          endIcon={<AddBoxIcon />}
+          size="small"
+          className={buttonStyleClass}
+        >
+          Write record
+        </Button>
+        <Dialog
+          open={writeDialog}
+          fullWidth={true}
+          maxWidth={"xs"}
+          onBackdropClick={() => setWriteDialog(false)}
+        >
+          <DialogContent>
+            <Formik
+              initialValues={initialValues}
+              onSubmit={async (values, actions) => {
+                // clear any previous error
+                actions.setStatus(null);
 
-        sanitize(schema, values.data);
-        const { writeID, error } = await stream.write(values.data);
-        if (error) {
-          actions.setStatus(error.message);
-        }
-        if (writeID) {
-          // successfully wrote record
-          setWriteDialog(false);
-        }
-      }}
-    >
-      {({ isSubmitting, status }) => (
-        <Form>
-          <Typography component="h2" variant="h1" gutterBottom>
-            Write a record
-          </Typography>
-          {schema.columns.map((col, idx) => (
-            <Field
-              key={idx}
-              name={"data." + col.name}
-              // placeholder={getPlaceholder(col.inputType)} // placeholders aren't this easy
-              validate={(val: string) => {
-                return validateValue(col.inputType, val);
+                sanitize(schema, values.data);
+                const { writeID, error } = await stream.write(values.data);
+                if (error) {
+                  actions.setStatus(error.message);
+                }
+                if (writeID) {
+                  // successfully wrote record
+                  setWriteDialog(false);
+                }
               }}
-              component={FormikTextField}
-              label={`${col.displayName} (${col.typeName})`}
-              required={!col.isNullable}
-            />
-          ))}
-          <SubmitControl label="Write record" errorAlert={status} disabled={isSubmitting} />
-        </Form>
-      )}
-    </Formik>
+            >
+              {({ isSubmitting, status }) => (
+                <Form>
+                  <Typography component="h2" variant="h1" gutterBottom>
+                    Write a record
+                  </Typography>
+                  {schema.columns.map((col, idx) => (
+                    <Field
+                      key={idx}
+                      name={"data." + col.name}
+                      // placeholder={getPlaceholder(col.inputType)} // placeholders aren't this easy
+                      validate={(val: string) => {
+                        return validateValue(col.inputType, val);
+                      }}
+                      component={FormikTextField}
+                      label={`${col.displayName} (${col.typeName})`}
+                      required={!col.isNullable}
+                    />
+                  ))}
+                  <SubmitControl label="Write record" errorAlert={status} disabled={isSubmitting} />
+                </Form>
+              )}
+            </Formik>
+          </DialogContent>
+        </Dialog>
+      </Grid>
+    </>
   );
 };
 
