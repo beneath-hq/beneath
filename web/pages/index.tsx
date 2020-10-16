@@ -7,7 +7,7 @@ import Page from "../components/Page";
 import Springboard from "../components/console/Springboard";
 import Welcome from "../components/console/Welcome";
 import useMe from "../hooks/useMe";
-import { checkForRedirect } from "lib/authRedirect";
+import { checkForRedirectAfterAuth } from "lib/authRedirect";
 
 interface Props {
   writeHead?: any;
@@ -36,7 +36,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
   if (me?.personalUser?.consentTerms) {
     if (typeof window !== "undefined") {
       // client-side redirect
-      const redirectAfterAuth = checkForRedirect();
+      const redirectAfterAuth = checkForRedirectAfterAuth();
       if (redirectAfterAuth) {
         const router = useRouter();
         router.push(redirectAfterAuth);

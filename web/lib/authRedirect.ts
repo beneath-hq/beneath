@@ -1,12 +1,16 @@
 const redirectAfterAuth = "redirect_after_auth";
 const expirationMilliseconds = 5 * 60 * 1000; // ensures the user can login in this time
 
-export const setRedirect = (href: string) => {
+export const setRedirectAfterAuth = (href: string) => {
   const item = { href, timestamp: new Date().getTime() };
   localStorage.setItem(redirectAfterAuth, JSON.stringify(item));
 };
 
-export const checkForRedirect = () => {
+export const removeRedirectAfterAuth = () => {
+  localStorage.removeItem(redirectAfterAuth);
+};
+
+export const checkForRedirectAfterAuth = () => {
   const itemStr = localStorage.getItem(redirectAfterAuth);
 
   // no redirects in localStorage
