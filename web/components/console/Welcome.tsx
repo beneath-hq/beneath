@@ -1,6 +1,7 @@
 import { Button, Grid, makeStyles, Paper, Step, StepButton, StepContent, StepLabel, Stepper, Theme, Typography } from "@material-ui/core";
 import ContentContainer from "components/ContentContainer";
 import { NakedLink } from "components/Link";
+import { setRedirect } from "lib/authRedirect";
 import React, { FC } from "react";
 
 import ExploreProjectsTiles from "./ExploreProjectsTiles";
@@ -59,8 +60,7 @@ const Welcome: FC = () => {
               </Stepper>
             </Grid>
             <Grid item>
-              {/* TODO: after auth, redirect to the Create Stream page */}
-              <Button variant="contained" color="primary" component={NakedLink} href="/-/auth" className={classes.stepperCallToActionButton}
+              <Button variant="contained" color="primary" component={NakedLink} onClick={() => setRedirect("/-/create/stream")} href="/-/auth" className={classes.stepperCallToActionButton}
               >
                 Get started!
               </Button>

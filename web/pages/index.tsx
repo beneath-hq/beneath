@@ -7,6 +7,7 @@ import Page from "../components/Page";
 import Springboard from "../components/console/Springboard";
 import Welcome from "../components/console/Welcome";
 import useMe from "../hooks/useMe";
+import { checkForRedirect } from "lib/authRedirect";
 
 interface Props {
   writeHead?: any;
@@ -29,6 +30,21 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
         "Cache-Control": "no-store, no-cache, must-revalidate",
       });
       end();
+    }
+  }
+
+  if (me?.personalUser?.consentTerms) {
+    if (typeof window !== "undefined") {
+      // client-side redirect
+      const redirectAfterAuth = checkForRedirect();
+      if (redirectAfterAuth) {
+        const router = useRouter();
+        router.push(redirectAfterAuth);
+        return (
+            // without this prop, React complains about different renderings between client-side and server-side
+            <div suppressHydrationWarning={true} />
+        );
+      }
     }
   }
 
