@@ -123,22 +123,10 @@ func (r *mutationResolver) StageProject(ctx context.Context, organizationName st
 		}
 	}
 
-	// default public to true upon creation
+	// default public to false upon creation
 	if create && public == nil {
-		trueVal := true
-		public = &trueVal
-	}
-
-	// check billing info if project is private
-	if public != nil && !*public {
-		bi := entity.FindBillingInfo(ctx, organization.OrganizationID)
-		if bi == nil {
-			return nil, gqlerror.Errorf("Could not find billing info for organization %s", organizationName)
-		}
-
-		if !bi.BillingPlan.PrivateProjects {
-			return nil, gqlerror.Errorf("Your organization's billing plan does not permit private projects")
-		}
+		falseVal := false
+		public = &falseVal
 	}
 
 	err := project.StageWithUser(ctx, displayName, public, description, site, photoURL, secret.GetOwnerID(), perms)
