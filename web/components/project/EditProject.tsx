@@ -3,13 +3,14 @@ import { Field, Form, Formik } from "formik";
 import React, { FC } from "react";
 import validator from "validator";
 
-import { Container } from "@material-ui/core";
+import { Container, Typography } from "@material-ui/core";
 
 import { STAGE_PROJECT } from "../../apollo/queries/project";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
 import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
 import { handleSubmitMutation, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
+import FormikRadioGroup from "components/formik/RadioGroup";
 
 interface EditProjectProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
@@ -23,6 +24,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
     site: project.site || "",
     description: project.description || "",
     photoURL: project.photoURL || "",
+    public: project.public ? "public" : "private",
   };
 
   return (
@@ -41,12 +43,13 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
                 site: values.site,
                 description: values.description,
                 photoURL: values.photoURL,
+                public: values.public === "public" ? true : false,
               },
             })
           )
         }
       >
-        {({ isSubmitting, status }) => (
+        {({ values, isSubmitting, status }) => (
           <Form>
             <Field
               name="displayName"
@@ -83,6 +86,27 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
               rowsMax={3}
             />
             <Field name="photoURL" component={FormikTextField} label="Photo URL" />
+            <Field
+              name="public"
+              component={FormikRadioGroup}
+              label="Access"
+              required
+              options={[
+                { value: "public", label: "Public" },
+                { value: "private", label: "Private" },
+              ]}
+              row
+            />
+            {values.public === "public" && (
+              <Typography variant="body2" color="textSecondary">
+                Open your data streams to the world and see what people build!
+              </Typography>
+            )}
+            {values.public === "private" && (
+              <Typography variant="body2" color="textSecondary">
+                Keep your data streams private and add collaborators as needed.
+              </Typography>
+            )}
             <SubmitControl
               label="Save changes"
               createdOn={project.createdOn}

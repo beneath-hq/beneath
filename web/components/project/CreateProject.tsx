@@ -9,6 +9,8 @@ import { toURLName, toBackendName } from "../../lib/names";
 import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
 import useMe from "../../hooks/useMe";
+import { Typography } from "@material-ui/core";
+import FormikRadioGroup from "components/formik/RadioGroup";
 
 interface Organization {
   organizationID: string;
@@ -52,6 +54,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
     displayName: "",
     description: "",
     photoURL: "",
+    public: "private",
   };
 
   return (
@@ -68,13 +71,17 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
               displayName: values.displayName,
               description: values.description,
               photoURL: values.photoURL,
+              public: values.public === "public" ? true : false,
             },
           })
         )
       }
     >
-      {({ isSubmitting, status }) => (
+      {({ values, isSubmitting, status }) => (
         <Form title="Create project">
+          <Typography variant="body2">
+            A project in Beneath is like a repository on GitHub. A project contains streams and services (like a GitHub repository contains code files), and every project has its own access management.
+          </Typography>
           <Field
             name="organization"
             validate={(org?: Organization) => {
@@ -103,6 +110,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
               }
             }}
             component={FormikTextField}
+            helperText={`Your project URL will be https://beneath.dev/${values.organization ? toURLName(values.organization.name) : "USERNAME"}/${values.name ? toURLName(values.name) : "NAME"}`}
             label="Name"
             required
           />
@@ -129,6 +137,27 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
             rows={1}
             rowsMax={3}
           />
+          <Field
+              name="public"
+              component={FormikRadioGroup}
+              label="Access"
+              required
+              options={[
+                { value: "public", label: "Public" },
+                { value: "private", label: "Private" },
+              ]}
+              row
+            />
+          {values.public === "public" && (
+            <Typography variant="body2" color="textSecondary">
+              Open your data streams to the world and see what people build!
+            </Typography>
+          )}
+          {values.public === "private" && (
+            <Typography variant="body2" color="textSecondary">
+              Keep your data streams private and add collaborators as needed.
+            </Typography>
+          )}
           <SubmitControl label="Create project" errorAlert={status} disabled={isSubmitting} />
         </Form>
       )}
