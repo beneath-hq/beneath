@@ -93,8 +93,6 @@ func (bi *BillingInfo) Update(ctx context.Context, billingMethodID *uuid.UUID, b
 			if err != nil {
 				log.S.Errorw("Error creating task", err)
 			}
-
-			// TODO: LockOrganizationPrivateProjects()
 		}
 	}
 

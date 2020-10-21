@@ -48,7 +48,6 @@ type BillingPlan struct {
 	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
 	ScanOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
 	MultipleUsers          bool            `sql:",notnull"`
-	PrivateProjects        bool            `sql:",notnull"`
 	AvailableInUI          bool            `sql:",notnull,default:false"`
 }
 
@@ -103,18 +102,17 @@ func FindBillingPlansAvailableInUI(ctx context.Context) []*BillingPlan {
 
 func makeDefaultBillingPlan() *BillingPlan {
 	return &BillingPlan{
-		Default:         true,
-		Description:     "Free",
-		Currency:        DollarCurrency,
-		Period:          timeutil.PeriodMonth,
-		BaseReadQuota:   2000000000,
-		BaseWriteQuota:  1000000000,
-		BaseScanQuota:   100000000000,
-		ReadQuota:       2000000000,
-		WriteQuota:      1000000000,
-		ScanQuota:       100000000000,
-		MultipleUsers:   false,
-		PrivateProjects: false,
-		AvailableInUI:   true,
+		Default:        true,
+		Description:    "Free",
+		Currency:       DollarCurrency,
+		Period:         timeutil.PeriodMonth,
+		BaseReadQuota:  2000000000,
+		BaseWriteQuota: 1000000000,
+		BaseScanQuota:  100000000000,
+		ReadQuota:      2000000000,
+		WriteQuota:     1000000000,
+		ScanQuota:      100000000000,
+		MultipleUsers:  false,
+		AvailableInUI:  true,
 	}
 }
