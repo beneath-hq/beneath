@@ -153,9 +153,7 @@ export const validateValue = (type: InputType, value: string): string | null => 
       return "Expected an integer";
     }
   } else if (type === "float") {
-    try {
-      parseFloat(value);
-    } catch {
+    if (isNaN(parseFloat(value))) {
       return "Expected a floating-point number";
     }
   } else if (type === "datetime") {
