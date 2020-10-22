@@ -58,7 +58,7 @@ class ReadStream(Transform):
   qualifier: StreamQualifier
   limit: int
   instance: StreamInstance
-  state_key: str
+  checkpoint_key: str
   cursor: Cursor
 
   def __init__(self, pipeline: Pipeline, stream_path: str, batch_size: int = DEFAULT_READ_BATCH_SIZE):
@@ -77,29 +77,29 @@ class ReadStream(Transform):
     for it in iterators:
       async for batch in it:
         yield batch
-        await self._write_state()
+        await self._write_checkpoint()
 
   async def _init_cursor(self):
     self.instance = self.pipeline.instances[self.qualifier]
-    self.state_key = str(self.instance.instance_id) + ":cursor"
-    state = await self.pipeline.get_state(self.state_key)
-    if state:
+    self.checkpoint_key = str(self.instance.instance_id) + ":cursor"
+    checkpoint = await self.pipeline.get_checkpoint(self.checkpoint_key)
+    if checkpoint:
       self.cursor = Cursor(
         connection=self.instance.stream.client.connection,
         schema=self.instance.stream.schema,
-        replay_cursor=state.get("replay"),
-        changes_cursor=state.get("changes"),
+        replay_cursor=checkpoint.get("replay"),
+        changes_cursor=checkpoint.get("changes"),
       )
     else:
       self.cursor = await self.instance.query_log()
 
-  async def _write_state(self):
-    state = {}
+  async def _write_checkpoint(self):
+    checkpoint = {}
     if self.cursor.replay_cursor:
-      state["replay"] = self.cursor.replay_cursor
+      checkpoint["replay"] = self.cursor.replay_cursor
     if self.cursor.changes_cursor:
-      state["changes"] = self.cursor.changes_cursor
-    await self.pipeline.set_state(self.state_key, state)
+      checkpoint["changes"] = self.cursor.changes_cursor
+    await self.pipeline.set_checkpoint(self.checkpoint_key, checkpoint)
 
   async def _replay(self):
     if not self.cursor.replay_cursor:
@@ -229,8 +229,8 @@ class Pipeline(BasePipeline):
   async def _before_run(self):
     if self.strategy == Strategy.batch:
       return
-    if not self.state_instance.is_primary:
-      await self.state_instance.update(make_primary=True)
+    if not self.checkpoint_instance.is_primary:
+      await self.checkpoint_instance.update(make_primary=True)
     for qualifier in self._output_qualifiers:
       instance = self.instances[qualifier]
       if not instance.is_primary:
@@ -242,8 +242,8 @@ class Pipeline(BasePipeline):
   async def _after_run(self):
     if self.strategy != Strategy.batch:
       return
-    if not self.state_instance.is_primary or not self.state_instance.is_final:
-      await self.state_instance.update(make_primary=True, make_final=True)
+    if not self.checkpoint_instance.is_primary or not self.checkpoint_instance.is_final:
+      await self.checkpoint_instance.update(make_primary=True, make_final=True)
     for qualifier in self._output_qualifiers:
       instance = self.instances[qualifier]
       if not instance.is_primary or not instance.is_final:
