@@ -13,12 +13,11 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 )
 
 func (s *Service) initRateLimiter() {
-	s.limiter = redis_rate.NewLimiter(hub.Redis, &redis_rate.Limit{
+	s.limiter = redis_rate.NewLimiter(s.Redis, &redis_rate.Limit{
 		Burst:  20,
 		Rate:   20,
 		Period: time.Second * 15,

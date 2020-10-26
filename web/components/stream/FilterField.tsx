@@ -140,7 +140,7 @@ export const getPlaceholder = (type: InputType) => {
 };
 
 export const validateValue = (type: InputType, value: string): string | null => {
-  if (value.length === 0 || type === "text") {
+  if (!value || value.length === 0 || type === "text") {
     return null;
   }
 
@@ -153,9 +153,7 @@ export const validateValue = (type: InputType, value: string): string | null => 
       return "Expected an integer";
     }
   } else if (type === "float") {
-    try {
-      parseFloat(value);
-    } catch {
+    if (isNaN(parseFloat(value))) {
       return "Expected a floating-point number";
     }
   } else if (type === "datetime") {

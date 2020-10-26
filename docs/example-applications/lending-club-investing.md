@@ -143,12 +143,12 @@ A Beneath stream *generator function* does a few things: keeps track of state, p
 
 The ability to keeping track of state is super handy. Here, we keep track of which is the most recently listed loan that we've processed:
 ```python
-await p.set_state("latest_list_d", max_list_d.isoformat())
+await p.set_checkpoint("latest_list_d", max_list_d.isoformat())
 ```
 
 And we get the state like so:
 ```python
-latest_list_d = await p.get_state("latest_list_d", default="1970-01-01T00:00:00.000000+00:00")
+latest_list_d = await p.get_checkpoint("latest_list_d", default="1970-01-01T00:00:00.000000+00:00")
 ```
 
 Keeping this state ensures that, in the event of failure, we don't write repeat data to Beneath. It allows us to stay truly *synced* with our external data source.

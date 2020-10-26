@@ -115,7 +115,7 @@ const Header: FC = () => {
             </Button>
           ))}
 
-        {/* Login/signup button */}
+        {/* Login button */}
         {!me && (
           <Button
             className={clsx(classes.rightItem, classes.rightButton)}
@@ -124,6 +124,18 @@ const Header: FC = () => {
             href="/-/auth"
           >
             Login
+          </Button>
+        )}
+        {/* Signup button */}
+        {!me && (
+          <Button
+            className={clsx(classes.rightItem, classes.rightButton)}
+            component={NakedLink}
+            variant="contained"
+            href="/-/auth"
+            color="primary"
+          >
+            Sign up
           </Button>
         )}
         {me && <ProfileButton className={classes.rightItem} me={me} />}

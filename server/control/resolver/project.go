@@ -123,10 +123,10 @@ func (r *mutationResolver) StageProject(ctx context.Context, organizationName st
 		}
 	}
 
-	// default public to true upon creation
+	// default public to false upon creation
 	if create && public == nil {
-		trueVal := true
-		public = &trueVal
+		falseVal := false
+		public = &falseVal
 	}
 
 	err := r.Projects.StageWithUser(ctx, project, displayName, public, description, site, photoURL, secret.GetOwnerID(), perms)

@@ -13,6 +13,7 @@ import { toURLName, toBackendName } from "../../lib/names";
 import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
 import FormikCodeEditor from "components/formik/CodeEditor";
+import { removeRedirectAfterAuth } from "lib/authRedirect";
 
 interface Project {
   organization: { name: string };
@@ -71,6 +72,8 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
     variables: { userID: me?.personalUserID || "" },
     skip: !me,
   });
+
+  removeRedirectAfterAuth();
 
   const initialValues = {
     project: data?.projectsForUser?.length ? (preselectedProject ? preselectedProject : data.projectsForUser[0]) : null,

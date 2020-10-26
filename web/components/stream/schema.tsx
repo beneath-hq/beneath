@@ -146,7 +146,7 @@ export class Column {
       return { name: `Bytes${fixed.size}`, description: `Fixed-length byte array of size ${fixed.size}` };
     }
     if (avro.Type.isType(type, "string")) {
-      return { name: "Bytes", description: "Variable-length UTF-8 string" };
+      return { name: "String", description: "Variable-length UTF-8 string" };
     }
     if (avro.Type.isType(type, "enum")) {
       const enumT = this.type as avro.types.EnumType;

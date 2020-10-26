@@ -11,7 +11,6 @@ import {
 } from "@material-ui/core";
 import { Code } from "@material-ui/icons";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
-import AddBoxIcon from "@material-ui/icons/AddBox";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
 import { useRecords } from "beneath-react";
@@ -78,12 +77,10 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
 
   // determine if stream may have more data incoming
   const finalized = !!instance.madeFinalOn;
-  const isPublic = stream.project.public;
 
   // state
   const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
-  const [writeDialog, setWriteDialog] = React.useState(false); // opens up the Write-a-Record dialog
   const [indexCodeDialog, setIndexCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Index view
   const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
   const [filter, setFilter] = React.useState(""); // used in call to useRecords
@@ -309,44 +306,11 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
           </Grid>
           <Grid item xs={12} md={3}>
             <Grid container spacing={2} justify="flex-end" className={classes.justifyLeftXsSm}>
-              {stream.allowManualWrites && (
-                <>
-                  <Grid item>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setWriteDialog(true);
-                      }}
-                      endIcon={<AddBoxIcon />}
-                      size="small"
-                      className={classes.topRowHeight}
-                    >
-                      Write record
-                    </Button>
-                    <Dialog
-                      open={writeDialog}
-                      fullWidth={true}
-                      maxWidth={"xs"}
-                      onBackdropClick={() => {
-                        setWriteDialog(false);
-                      }}
-                    >
-                      {/*
-                      // disable for now
-                      // must update js client to be able to write data (current local resolvers do not work anymore!)
-                      // and to allow both stream and batch writes
-                      */}
-                      <DialogContent>
-                        <WriteStream
-                          stream={stream}
-                          instanceID={instance.streamInstanceID}
-                          setWriteDialog={setWriteDialog}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  </Grid>
-                </>
-              )}
+              <WriteStream
+                stream={stream}
+                instanceID={instance.streamInstanceID}
+                buttonStyleClass={classes.topRowHeight}
+              />
               <Grid item>
                 <Button
                   variant="outlined"

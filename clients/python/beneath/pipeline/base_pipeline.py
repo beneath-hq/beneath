@@ -41,9 +41,9 @@ class Strategy(Enum):
   batch = "batch"
 
 
-SERVICE_STATE_LOG_RETENTION = timedelta(hours=6)
-SERVICE_STATE_SCHEMA = """
-  type ServiceState @stream @key(fields: ["key"]) {
+SERVICE_CHECKPOINT_LOG_RETENTION = timedelta(hours=6)
+SERVICE_CHECKPOINT_SCHEMA = """
+  type ServiceCheckpoint @stream @key(fields: ["key"]) {
     key: String!
     value: Bytes
   }
@@ -53,9 +53,9 @@ SERVICE_STATE_SCHEMA = """
 class BasePipeline:
 
   instances: Dict[StreamQualifier, StreamInstance]
-  state_instance: StreamInstance
+  checkpoint_instance: StreamInstance
   writer: Writer
-  state_writer: BasePipeline._StateWriter
+  checkpoint_writer: BasePipeline._CheckpointWriter
   service_id: uuid.UUID
   description: str
 
@@ -76,7 +76,7 @@ class BasePipeline:
     parse_args: bool = False,
     client: Client = None,
     write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
-    write_state_delay_ms: int = config.DEFAULT_WRITE_PIPELINE_STATE_DELAY_MS,
+    write_checkpoint_delay_ms: int = config.DEFAULT_WRITE_PIPELINE_CHECKPOINT_DELAY_MS,
   ):
     if parse_args:
       parse_pipeline_args()
@@ -105,11 +105,11 @@ class BasePipeline:
     )
     self.client = client if client else Client()
     self.write_delay_ms = write_delay_ms
-    self.write_state_delay_ms = write_state_delay_ms
+    self.write_checkpoint_delay_ms = write_checkpoint_delay_ms
     self.instances: Dict[StreamQualifier, StreamInstance] = {}
-    self.state_instance = None
+    self.checkpoint_instance = None
     self.writer = None
-    self.state_writer = None
+    self.checkpoint_writer = None
     self.service_id = None
     self.description = None
     self._stage_tasks = []
@@ -189,57 +189,57 @@ class BasePipeline:
       logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
 
     self.writer = self.client.writer(dry=self.dry, write_delay_ms=self.write_delay_ms)
-    self.state_writer = self._StateWriter(self)
+    self.checkpoint_writer = self._CheckpointWriter(self)
 
     await self._before_run()
     await self.writer.start()
-    await self.state_writer.start()
+    await self.checkpoint_writer.start()
     try:
       await self._run()
-      await self.state_writer.stop()
+      await self.checkpoint_writer.stop()
       await self.writer.stop()
       await self._after_run()
     except asyncio.CancelledError:
       logger.info("Pipeline cancelled, flushing buffered records...")
-      await self.state_writer.stop()
+      await self.checkpoint_writer.stop()
       await self.writer.stop()
       raise
 
     logger.info("Pipeline completed successfully")
 
-  # SERVICE STATE
+  # SERVICE CHECKPOINT
 
-  class _StateWriter(AIODelayBuffer[Tuple[str, Any]]):
+  class _CheckpointWriter(AIODelayBuffer[Tuple[str, Any]]):
 
-    state: Dict[str, Any]
+    checkpoint: Dict[str, Any]
 
     def __init__(self, pipeline: BasePipeline):
-      super().__init__(max_delay_ms=pipeline.write_state_delay_ms, max_size=sys.maxsize, max_count=sys.maxsize)
+      super().__init__(max_delay_ms=pipeline.write_checkpoint_delay_ms, max_size=sys.maxsize, max_count=sys.maxsize)
       self.pipeline = pipeline
 
     def _reset(self):
-      self.state = {}
+      self.checkpoint = {}
 
     def _merge(self, value: Tuple[str, Any]):
-      (key, state) = value
-      self.state[key] = state
+      (key, checkpoint) = value
+      self.checkpoint[key] = checkpoint
 
     async def _flush(self):
       records = ({
         "key": key,
-        "value": msgpack.packb(state),
-      } for (key, state) in self.state.items())
-      await self.pipeline.writer.write(instance=self.pipeline.state_instance, records=records)
+        "value": msgpack.packb(checkpoint),
+      } for (key, checkpoint) in self.checkpoint.items())
+      await self.pipeline.writer.write(instance=self.pipeline.checkpoint_instance, records=records)
 
     # pylint: disable=arguments-differ
-    async def write(self, key: str, state: Any):
-      await super().write(value=(key, state), size=0)
+    async def write(self, key: str, checkpoint: Any):
+      await super().write(value=(key, checkpoint), size=0)
 
-  async def get_state(self, key: str, default: Any = None) -> Any:
+  async def get_checkpoint(self, key: str, default: Any = None) -> Any:
     if self.dry:
       return default
 
-    cursor = await self.state_instance.query_index(
+    cursor = await self.checkpoint_instance.query_index(
       filter=json.dumps({
         "key": key,
       })
@@ -255,8 +255,8 @@ class BasePipeline:
 
     return value
 
-  async def set_state(self, key: str, value: Any):
-    await self.state_writer.write(key, value)
+  async def set_checkpoint(self, key: str, value: Any):
+    await self.checkpoint_writer.write(key, value)
 
   # STAGING
 
@@ -267,7 +267,7 @@ class BasePipeline:
   async def _stage(self):
     logger.info("Staging service '%s'", self.service_qualifier)
     await self._stage_service()
-    await asyncio.gather(self._stage_service_state(), *self._stage_tasks)
+    await asyncio.gather(self._stage_service_checkpoint(), *self._stage_tasks)
     logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
 
   async def _stage_service(self):
@@ -288,8 +288,8 @@ class BasePipeline:
       )
     self.service_id = uuid.UUID(hex=admin_data["serviceID"])
 
-  async def _stage_service_state(self):
-    stream_name = f"{self.service_qualifier.service}-state"
+  async def _stage_service_checkpoint(self):
+    stream_name = f"{self.service_qualifier.service}-checkpoint"
     qualifier = StreamQualifier(
       organization=self.service_qualifier.organization,
       project=self.service_qualifier.project,
@@ -298,16 +298,16 @@ class BasePipeline:
     if self.is_stage:
       stream = await self.client.stage_stream(
         stream_path=str(qualifier),
-        schema=SERVICE_STATE_SCHEMA,
-        log_retention=SERVICE_STATE_LOG_RETENTION,
+        schema=SERVICE_CHECKPOINT_SCHEMA,
+        log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
         use_warehouse=False,
       )
       await self._update_service_permissions(stream, read=True, write=True)
     else:
       stream = await self.client.find_stream(stream_path=str(qualifier))
     instance = await stream.stage_instance(version=self.version, dry=self.dry)
-    self.state_instance = instance
-    logger.info("Staged stream for pipeline state '%s' (using version %i)", qualifier, self.version)
+    self.checkpoint_instance = instance
+    logger.info("Staged stream for pipeline checkpoint '%s' (using version %i)", qualifier, self.version)
 
   def _parse_stream_path(self, stream_path: str) -> StreamQualifier:
     # use service organization and project if "stream_path" is just a name
@@ -421,8 +421,8 @@ class BasePipeline:
       instance = self.instances[qualifier]
       await instance.stream.delete()
       logger.info("Deleted output stream '%s'", qualifier)
-    await self.state_instance.stream.delete()
-    logger.info("Deleted stream for pipeline state '%s'", self.state_instance.stream.qualifier)
+    await self.checkpoint_instance.stream.delete()
+    logger.info("Deleted stream for pipeline checkpoint '%s'", self.checkpoint_instance.stream.qualifier)
     await self.client.admin.services.delete(self.service_id)
     logger.info("Deleted pipeline service '%s'", self.service_qualifier)
     logger.info("Finished teardown of pipeline for service '%s'", self.service_qualifier)

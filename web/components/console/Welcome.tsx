@@ -1,8 +1,11 @@
-import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, Grid, makeStyles, Step, StepContent, StepLabel, Stepper, Theme, Typography } from "@material-ui/core";
 import React, { FC } from "react";
 
+import ContentContainer from "components/ContentContainer";
+import { NakedLink } from "components/Link";
+import { setRedirectAfterAuth } from "lib/authRedirect";
 import ExploreProjectsTiles from "./ExploreProjectsTiles";
-import ActionsTile from "./tiles/ActionsTile";
+import Tile from "./tiles/Tile";
 
 const useStyles = makeStyles((theme: Theme) => ({
   sectionTitle: {
@@ -10,30 +13,69 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   title: {
     fontSize: theme.typography.pxToRem(32),
-    marginBottom: theme.spacing(2)
   },
+  stepperCallToActionButton: {
+    marginLeft: theme.spacing(3),
+    marginBottom: theme.spacing(3)
+  }
 }));
 
 const Welcome: FC = () => {
   const classes = useStyles();
 
+  const steps = [
+    {label: 'Create an account', content: 'Connect with Github or Google, and you can start writing data for free - no credit card required'},
+    {label: 'Create a stream', content: `Provide the name, description, and schema for your new stream`},
+    {label: 'Write data', content: 'Use the easy Beneath Python library or the Beneath UI to write records to your stream'}
+  ];
+
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Typography variant="h1" className={classes.title}>
-          Welcome to Beneath!
-        </Typography>
-      </Grid>
+    <ContentContainer maxWidth="md" >
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Typography variant="h1" className={classes.title}>
+            Welcome to Beneath!
+          </Typography>
+        </Grid>
 
-      <ActionsTile shape="wide" nopaper />
+        <Grid item xs={12}>
+          <Typography variant="h3" className={classes.sectionTitle}>
+            Three quick steps to create your first stream
+          </Typography>
+        </Grid>
+        <Tile shape="full">
+          <Grid container direction="column">
+            <Grid item>
+              <Stepper orientation="vertical">
+                {steps.map(({label, content}, index) => (
+                  <Step key={index} active={true}>
+                    <StepLabel>
+                      <Typography variant="h4">{label}</Typography>
+                      </StepLabel>
+                    <StepContent>
+                      <Typography variant="body2">{content}</Typography>
+                    </StepContent>
+                  </Step>
+                ))}
+              </Stepper>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" color="primary" component={NakedLink} onClick={() => setRedirectAfterAuth("/-/create/stream")} href="/-/auth" className={classes.stepperCallToActionButton}
+              >
+                Get started!
+              </Button>
+            </Grid>
+          </Grid>
+        </Tile>
 
-      <Grid item xs={12}>
-        <Typography variant="h3" className={classes.sectionTitle}>
-          Featured projects and tutorials
-        </Typography>
+        <Grid item xs={12}>
+          <Typography variant="h3" className={classes.sectionTitle}>
+            Featured projects and tutorials
+          </Typography>
+        </Grid>
+        <ExploreProjectsTiles />
       </Grid>
-      <ExploreProjectsTiles />
-    </Grid>
+    </ContentContainer>
   );
 };
 

@@ -34,6 +34,8 @@ export const useMonthlyMetrics = (entityKind: EntityKind, entityID: string) => {
       from: from.toISOString(),
       period: "M",
     },
+    fetchPolicy: "cache-and-network",
+    pollInterval: 30000 // 30 seconds in milliseconds
   });
 
   const { metrics, total, latest } = normalizeMetrics(from, until, "month", data?.getMetrics);

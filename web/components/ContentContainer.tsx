@@ -1,7 +1,8 @@
-import { Box, Button, Container, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
+import { Button, Container, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
 import { FC } from "react";
 import { NakedLink } from "./Link";
 import Loading from "./Loading";
+import VSpace from "./VSpace";
 
 export interface CallToAction {
   message?: string | JSX.Element;
@@ -57,16 +58,19 @@ const ContentContainer: FC<ContentContainerProps> = (props) => {
       )}
       {!error && callToAction?.message && (
         <div className={classes.content}>
-          <Grid container spacing={4}>
+          <Grid container direction="column">
             {callToAction.message && (
-              <Grid item xs={12}>
-                <Typography color="textSecondary" align="center">
-                  {callToAction.message}
-                </Typography>
-              </Grid>
+              <>
+                <Grid item>
+                  <Typography color="textSecondary" align="center">
+                    {callToAction.message}
+                  </Typography>
+                </Grid>
+                <VSpace units={4} />
+              </>
             )}
-            <Grid item xs={12}>
-              <Grid container justify="center" spacing={2}>
+            <Grid item>
+              <Grid container justify="center">
                 {callToAction.buttons?.map((cta, idx) => (
                   <Grid item key={idx}>
                     <Button

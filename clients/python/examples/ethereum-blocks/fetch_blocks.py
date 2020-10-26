@@ -131,7 +131,7 @@ def get_block(num):
 
 
 async def generate_blocks(p: beneath.Pipeline):  # pylint: disable=redefined-outer-name
-  state = await p.get_state("state", default={
+  checkpoint = await p.get_checkpoint("checkpoint", default={
     "next_stable": 0,
     "next_unstable": 0,
     "latest_hashes": [],
@@ -141,55 +141,55 @@ async def generate_blocks(p: beneath.Pipeline):  # pylint: disable=redefined-out
 
   while True:
     # get next block
-    unstable_block = get_block(state["next_unstable"])
+    unstable_block = get_block(checkpoint["next_unstable"])
     if not unstable_block:
       await asyncio.sleep(POLL_SECONDS)
       continue
 
     # reprocess previous block if parent hash doesn't match
-    if (len(state["latest_hashes"]) > 0) and (unstable_block["parent_hash"] != state["latest_hashes"][-1]):
-      state["latest_hashes"].pop()
-      p.logger.info("fork next_number=%d", state["next_unstable"])
-      state["next_unstable"] -= 1
+    if (len(checkpoint["latest_hashes"]) > 0) and (unstable_block["parent_hash"] != checkpoint["latest_hashes"][-1]):
+      checkpoint["latest_hashes"].pop()
+      p.logger.info("fork next_number=%d", checkpoint["next_unstable"])
+      checkpoint["next_unstable"] -= 1
       if len(cached_blocks) > 0:
         cached_blocks.pop()
-      if state["next_unstable"] < state["next_stable"]:
-        state["next_stable"] = state["next_unstable"]
-        p.logger.info("fork_before_stable next_number=%d", state["next_unstable"])
+      if checkpoint["next_unstable"] < checkpoint["next_stable"]:
+        checkpoint["next_stable"] = checkpoint["next_unstable"]
+        p.logger.info("fork_before_stable next_number=%d", checkpoint["next_unstable"])
       continue
 
     # process unstable_block
     yield ("unstable", unstable_block)
     p.logger.info("write_unstable number=%d hash=%s", unstable_block["number"], unstable_block["hash"].hex())
-    state["next_unstable"] += 1
+    checkpoint["next_unstable"] += 1
     cached_blocks.append(unstable_block)
 
     # track in latest hashes (and keep it trimmed)
-    state["latest_hashes"].append(unstable_block["hash"])
-    if len(state["latest_hashes"]) >= LATEST_COUNT:
-      state["latest_hashes"] = state["latest_hashes"][1:]
+    checkpoint["latest_hashes"].append(unstable_block["hash"])
+    if len(checkpoint["latest_hashes"]) >= LATEST_COUNT:
+      checkpoint["latest_hashes"] = checkpoint["latest_hashes"][1:]
 
     # get and write stable if necessary
-    while (state["next_stable"] + STABLE_AFTER) < state["next_unstable"]:
+    while (checkpoint["next_stable"] + STABLE_AFTER) < checkpoint["next_unstable"]:
       # get stable block from cached_blocks or using get_block
       stable_block = None
-      if (len(cached_blocks) > 0) and cached_blocks[0]["number"] == state["next_stable"]:
+      if (len(cached_blocks) > 0) and cached_blocks[0]["number"] == checkpoint["next_stable"]:
         stable_block = cached_blocks[0]
         cached_blocks = cached_blocks[1:]
-        p.logger.info("get_stable_cache_hit number=%d", state["next_stable"])
+        p.logger.info("get_stable_cache_hit number=%d", checkpoint["next_stable"])
       else:
-        p.logger.info("get_stable_cache_miss number=%d", state["next_stable"])
-        stable_block = get_block(state["next_stable"])
+        p.logger.info("get_stable_cache_miss number=%d", checkpoint["next_stable"])
+        stable_block = get_block(checkpoint["next_stable"])
         if stable_block is None:
           raise Exception("get_block should not return a null value for a stable block")
 
       # write stable block
       yield ("stable", stable_block)
       p.logger.info("write_stable number=%d hash=%s", stable_block["number"], stable_block["hash"].hex())
-      state["next_stable"] += 1
+      checkpoint["next_stable"] += 1
 
-    # write updated state
-    await p.set_state("state", state)
+    # write updated checkpoint
+    await p.set_checkpoint("checkpoint", checkpoint)
 
 
 async def filter_stable(record):
