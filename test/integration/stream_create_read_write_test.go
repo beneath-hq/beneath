@@ -18,7 +18,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	assert "github.com/stretchr/testify/require"
 
-	pb "gitlab.com/beneath-hq/beneath/gateway/grpc/proto"
+	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 

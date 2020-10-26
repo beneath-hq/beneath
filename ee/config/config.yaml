@@ -1,0 +1,5 @@
+payments:
+  drivers:
+    - anarchism
+  stripe:
+    secret: ""

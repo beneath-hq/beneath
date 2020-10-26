@@ -1,3 +1,3 @@
 # `build/`
 
-This directory contains build manifests (currently only Dockerfiles) for each executable in `cmd/` that is deployed in production.
+This directory contains build manifests (Dockerfiles) for the web frontend in `web/` and backend executable in `cmd/beneath/`.

@@ -23,46 +23,16 @@ build:web:
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
 
-.build:go:
+build:backend:
+  variables:
+    IMAGE: gcr.io/beneath/backend
   script: 
     - docker pull ${IMAGE}:builder || true
-    - docker build -f ./build/${CMD_NAME}/Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
-    - docker build -f ./build/${CMD_NAME}/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
+    - docker build -f ./build/backend/Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
+    - docker build -f ./build/backend/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
     - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE}:latest
     - docker push ${IMAGE}:builder
-
-build:control:
-  extends:
-  - .build
-  - .build:go
-  variables:
-    CMD_NAME: control
-    IMAGE: gcr.io/beneath/${CMD_NAME}
-
-build:gateway:
-  extends:
-  - .build
-  - .build:go
-  variables:
-    CMD_NAME: gateway
-    IMAGE: gcr.io/beneath/${CMD_NAME}
-
-build:pipeline:
-  extends:
-  - .build
-  - .build:go
-  variables:
-    CMD_NAME: pipeline
-    IMAGE: gcr.io/beneath/${CMD_NAME}
-
-build:taskqueue:
-  extends:
-  - .build
-  - .build:go
-  variables:
-    CMD_NAME: taskqueue
-    IMAGE: gcr.io/beneath/${CMD_NAME}
 
 .deploy:
   stage: deploy
@@ -93,7 +63,7 @@ deploy:control:
   extends:
   - .deploy
   - .deploy:prod
-  needs: ["build:control"]
+  needs: ["build:backend"]
   variables:
     CMD_NAME: control
     REPLICAS: ${REPLICAS_CONTROL}
@@ -103,7 +73,7 @@ deploy:gateway:
   extends:
   - .deploy
   - .deploy:prod
-  needs: ["build:gateway"]
+  needs: ["build:backend"]
   variables:
     CMD_NAME: gateway
     REPLICAS: ${REPLICAS_GATEWAY}
@@ -113,7 +83,7 @@ deploy:pipeline:
   extends:
   - .deploy
   - .deploy:prod
-  needs: ["build:pipeline"]
+  needs: ["build:backend"]
   variables:
     CMD_NAME: pipeline
     REPLICAS: ${REPLICAS_PIPELINE}
@@ -123,7 +93,7 @@ deploy:taskqueue:
   extends:
   - .deploy
   - .deploy:prod
-  needs: ["build:taskqueue"]
+  needs: ["build:backend"]
   variables:
     CMD_NAME: taskqueue
     REPLICAS: ${REPLICAS_TASKQUEUE}

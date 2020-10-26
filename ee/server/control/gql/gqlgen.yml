@@ -1,0 +1,25 @@
+# Configures gqlgen – docs at https://gqlgen.com/config/
+schema:
+- "ee/server/control/schema/**/*.graphql"
+exec:
+  filename: ee/server/control/gql/schema_gen.go
+  package: gql
+model:
+  filename: ee/server/control/gql/models_gen.go
+  package: gql
+resolver:
+  filename: ee/server/control/resolver/generated.go
+  package: resolver
+  type: Resolver
+autobind: []
+models:
+  BillingPlan:
+    model: gitlab.com/beneath-hq/beneath/ee/models.BillingPlan
+  BilledResource:
+    model: gitlab.com/beneath-hq/beneath/ee/models.BilledResource
+  BillingMethod:
+    model: gitlab.com/beneath-hq/beneath/ee/models.BillingMethod
+  BillingInfo:
+    model: gitlab.com/beneath-hq/beneath/ee/models.BillingInfo
+  PaymentMethod:
+    model: gitlab.com/beneath-hq/beneath/ee/models.PaymentMethod

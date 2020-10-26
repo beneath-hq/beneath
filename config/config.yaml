@@ -1,0 +1,58 @@
+mq:
+  driver: "" # env: BENEATH_MQ_DRIVER, flag: --mq-driver
+
+control:
+  port: 4000 # env: BENEATH_CONTROL_PORT, flag: --control-port
+  host: "http://localhost:4000" # env: BENEATH_CONTROL_HOST, flag: --control-host
+  frontend_host: "http://localhost:3000" # env: BENEATH_CONTROL_FRONTEND_HOST, flag: --control-frontend-host
+
+  redis:
+    url: "redis://localhost/" # env: BENEATH_CONTROL_REDIS_URL, flag: --control-redis-url
+
+  postgres:
+    host: "localhost" # env: BENEATH_CONTROL_POSTGRES_HOST, flag: --control-postgres-host
+    db: "postgres" # env: BENEATH_CONTROL_POSTGRES_DB, flag: --control-postgres-db
+    user: "postgres" # env: BENEATH_CONTROL_POSTGRES_USER, flag: --control-postgres-user
+    password: "" # env: BENEATH_CONTROL_POSTGRES_PASSWORD, flag: --control-postgres-password
+
+  session_secret: "" # env: BENEATH_CONTROL_SESSION_SECRET, flag: --control-session-secret
+  auth:
+    github:
+      id: "" # env: BENEATH_CONTROL_AUTH_GITHUB_ID, flag: --control-auth-github-id
+      secret: "" # env: BENEATH_CONTROL_AUTH_GITHUB_SECRET, flag: --control-auth-github-secret
+    google:
+      id: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_ID, flag: --control-auth-google-id
+      secret: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_SECRET, flag: --control-auth-google-secret
+
+data:
+  http_port: 5000 # env: BENEATH_DATA_HTTP_PORT, flag: --data-port-http
+  grpc_port: 50051 # env: BENEATH_DATA_GRPC_PORT, flag: --data-port-grpc
+
+  log:
+    driver: "" # env: BENEATH_DATA_LOG_DRIVER, flag: --data-log-driver
+    # driver-specific settings...
+  
+  index:
+    driver: "" # env: BENEATH_DATA_INDEX_DRIVER, flag: --data-index-driver
+    # driver-specific settings...
+  
+  warehouse:
+    driver: "" # env: BENEATH_DATA_WAREHOUSE_DRIVER, flag: --data-warehouse-driver
+    # driver-specific settings...
+
+# MQ driver settings:
+#   - pubsub:
+#     project_id: ""
+#     subscriber_id: ""
+#     emulator_host: ""
+#     topic_prefix: ""
+#     subscription_prefix: ""
+#
+# Data driver settings:
+#   - bigtable:
+#     project_id: ""
+#     instance_id: ""
+#     emulator_host: ""
+#   - bigquery:
+#     project_id: ""
+#     instances_dataset_id: ""

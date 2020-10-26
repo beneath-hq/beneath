@@ -1,0 +1,10 @@
+scalar Time
+scalar UUID
+
+type Query {
+  empty: String
+}
+
+type Mutation {
+  empty: String
+}

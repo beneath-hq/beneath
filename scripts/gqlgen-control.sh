@@ -1,1 +1,1 @@
-go run github.com/99designs/gqlgen -c control/gql/gqlgen.yml 
+go run github.com/99designs/gqlgen --config server/control/gql/gqlgen.yml 
