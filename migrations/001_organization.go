@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Extensions
 		_, err = db.Exec(`
 			CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -34,7 +32,9 @@ func init() {
 		return nil
 	}, func(db migrations.DB) (err error) {
 		// Organization
-		err = db.Model(&entity.Organization{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS organizations CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

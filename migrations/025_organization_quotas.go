@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Organizations.ReadQuota, Organizations.WriteQuota
 		_, err = db.Exec(`
 			ALTER TABLE organizations

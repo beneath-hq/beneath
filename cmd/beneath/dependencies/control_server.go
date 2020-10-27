@@ -1,16 +1,26 @@
 package dependencies
 
 import (
+	"context"
+
 	"github.com/spf13/viper"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
+	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/migrations"
 	"gitlab.com/beneath-hq/beneath/server/control"
 )
 
 func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "control-server",
-		Register: func(lc *cli.Lifecycle, server *control.Server) {
-			lc.Add(server)
+		Register: func(lc *cli.Lifecycle, server *control.Server, db db.DB) {
+			// running the control server also runs automigrate
+			lc.AddFunc("automigrate", func(ctx context.Context) error {
+				return migrations.Migrator.AutomigrateAndLog(db, false)
+			})
+
+			// add control server to lifecycle
+			lc.Add("control-server", server)
 		},
 	})
 

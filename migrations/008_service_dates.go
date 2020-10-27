@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Service.CreatedOn and Service.UpdatedOn
 		_, err = db.Exec(`
 			ALTER TABLE services

@@ -20,7 +20,7 @@ func init() {
 		Description: "Postgres host for control-plane db",
 	})
 	cli.AddConfigKey(&cli.ConfigKey{
-		Key:         "control.postgres.db",
+		Key:         "control.postgres.database",
 		Default:     "postgres",
 		Description: "Postgres database for control-plane db",
 	})

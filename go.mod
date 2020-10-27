@@ -53,7 +53,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c
-	go.uber.org/fx v1.13.1
+	go.uber.org/dig v1.10.0
 	go.uber.org/zap v1.10.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/api v0.31.0

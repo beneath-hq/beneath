@@ -6,10 +6,13 @@ import (
 
 func init() {
 	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
+		// BillingInfo tax info
 		_, err = db.Exec(`
-			ALTER TABLE projects
-			ADD explore_rank integer;
-			CREATE INDEX ON projects (explore_rank) WHERE explore_rank IS NOT NULL;
+			ALTER TABLE billing_infos
+			ADD country text,
+			ADD region text,
+			ADD company_name text,
+			ADD tax_number text;
 		`)
 		if err != nil {
 			return err
@@ -18,9 +21,13 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
+		// BillingInfo tax info
 		_, err = db.Exec(`
-			ALTER TABLE projects
-			DROP explore_rank;
+			ALTER TABLE billing_infos 
+			DROP country,
+			DROP region,
+			DROP company_name,
+			DROP tax_number;
 		`)
 		if err != nil {
 			return err

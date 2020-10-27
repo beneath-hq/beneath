@@ -5,29 +5,10 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// BillingPlan.MultipleUsers
-		_, err = db.Exec(`
-			ALTER TABLE billing_plans
-			RENAME COLUMN personal TO multiple_users;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
+		// moved to ee
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// BillingPlan.MultipleUsers
-		_, err = db.Exec(`
-			ALTER TABLE billing_plans
-			RENAME COLUMN multiple_users TO personal;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
 		return nil
 	})
 }

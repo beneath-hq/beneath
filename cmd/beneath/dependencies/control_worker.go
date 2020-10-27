@@ -17,7 +17,7 @@ func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "control-worker",
 		Register: func(lc *cli.Lifecycle, worker *ControlWorker) {
-			lc.Add(worker)
+			lc.Add("control-worker", worker)
 		},
 	})
 

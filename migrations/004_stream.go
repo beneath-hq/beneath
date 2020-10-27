@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Stream
 		_, err = db.Exec(`
 			CREATE TABLE streams(
@@ -70,14 +68,10 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// StreamInstance
-		err = db.Model(&entity.StreamInstance{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// Stream
-		err = db.Model(&entity.Stream{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS stream_instances CASCADE;
+			DROP TABLE IF EXISTS streams CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

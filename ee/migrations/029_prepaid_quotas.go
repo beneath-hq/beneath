@@ -6,10 +6,11 @@ import (
 
 func init() {
 	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
+		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
-			ALTER TABLE projects
-			ADD explore_rank integer;
-			CREATE INDEX ON projects (explore_rank) WHERE explore_rank IS NOT NULL;
+			ALTER TABLE organizations
+			ADD prepaid_read_quota bigint,
+			ADD prepaid_write_quota bigint;
 		`)
 		if err != nil {
 			return err
@@ -18,9 +19,11 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
+		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
-			ALTER TABLE projects
-			DROP explore_rank;
+			ALTER TABLE organizations
+			DROP prepaid_read_quota,
+			DROP prepaid_write_quota;
 		`)
 		if err != nil {
 			return err

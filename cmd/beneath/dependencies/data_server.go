@@ -11,8 +11,8 @@ func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "data-server",
 		Register: func(lc *cli.Lifecycle, server *data.Server, metrics *metrics.Broker) {
-			lc.Add(server)
-			lc.Add(metrics)
+			lc.Add("data-server", server)
+			lc.Add("metrics-broker", metrics)
 		},
 	})
 

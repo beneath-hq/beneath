@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Model
 		_, err = db.Exec(`
 			CREATE TABLE models (
