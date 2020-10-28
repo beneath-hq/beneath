@@ -9,13 +9,13 @@ import (
 	uuid "github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments/driver"
 	"gitlab.com/beneath-hq/beneath/control/payments/driver/stripeutil"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments/driver"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
+	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
 // StripeCard implements beneath.PaymentsDriver
@@ -173,7 +173,7 @@ func (c *StripeCard) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		if (*invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.AttemptCount == maxCardRetries) && (invoice.Paid == false) {
 			defaultBillingPlan := entity.FindDefaultBillingPlan(req.Context())
 
-			billingInfo := entity.FindBillingInfo(req.Context(), organizationID)
+			billingInfo := entity.FindBillingInfoByOrganization(req.Context(), organizationID)
 			if billingInfo == nil {
 				panic("could not find organization's billing info")
 			}
