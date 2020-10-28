@@ -7,6 +7,7 @@ import warnings
 import aiogrpc
 import aiohttp
 import grpc
+from datetime import datetime, timedelta
 
 from beneath import __version__
 from beneath import config
@@ -196,9 +197,21 @@ class Connection:
       metadata=self.request_metadata,
     )
 
-  async def subscribe(self, cursor: bytes) -> AsyncIterator[gateway_pb2.SubscribeResponse]:
-    await self.ensure_connected()
-    return self.stub.Subscribe(
-      gateway_pb2.SubscribeRequest(cursor=cursor),
-      metadata=self.request_metadata,
-    )
+  async def subscribe(self, cursor: bytes) -> AsyncIterator[gateway_pb2.SubscribeResponse]:    
+    retry = True
+    while retry:
+      retry = False
+      started = datetime.now()
+      try:
+        await self.ensure_connected()
+        subscription = self.stub.Subscribe(
+          gateway_pb2.SubscribeRequest(cursor=cursor),
+          metadata=self.request_metadata,
+        )
+        async for msg in subscription:
+          yield msg
+      except grpc.RpcError as e:
+        if e.code() in (grpc.StatusCode.CANCELLED, grpc.StatusCode.UNAVAILABLE) and datetime.now() - started >= timedelta(seconds=15):
+          retry = True
+        else:
+          raise e

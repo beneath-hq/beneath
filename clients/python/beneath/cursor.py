@@ -181,7 +181,7 @@ class Cursor:
         await _poll()
 
     async def _subscribe():
-      subscription = await self.connection.subscribe(
+      subscription = self.connection.subscribe(
         cursor=self.changes_cursor,
       )
       async for _ in subscription:
