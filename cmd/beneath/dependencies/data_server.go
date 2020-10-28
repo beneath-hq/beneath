@@ -4,18 +4,9 @@ import (
 	"github.com/spf13/viper"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/server/data"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
 )
 
 func init() {
-	cli.AddStartable(&cli.Startable{
-		Name: "data-server",
-		Register: func(lc *cli.Lifecycle, server *data.Server, metrics *metrics.Broker) {
-			lc.Add("data-server", server)
-			lc.Add("metrics-broker", metrics)
-		},
-	})
-
 	cli.AddDependency(data.NewServer)
 
 	cli.AddDependency(func(v *viper.Viper) (*data.ServerOptions, error) {

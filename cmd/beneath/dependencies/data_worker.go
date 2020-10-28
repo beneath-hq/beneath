@@ -11,16 +11,7 @@ import (
 func init() {
 	// Like the control worker, the data worker is so lean it's defined below in this file.
 	// It basically just calls RunWorker on a *data.Service.
-
 	cli.AddDependency(NewDataWorker)
-
-	cli.AddStartable(&cli.Startable{
-		Name: "data-worker",
-		Register: func(lc *cli.Lifecycle, worker *DataWorker) {
-			lc.Add("data-worker", worker)
-		},
-	})
-
 }
 
 // DataWorker is the data background worker (that writes data to the engine)
