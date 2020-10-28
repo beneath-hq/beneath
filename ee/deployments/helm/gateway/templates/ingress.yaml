@@ -42,6 +42,7 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600" # for grpc streaming
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600" # for grpc streaming
+    nginx.ingress.kubernetes.io/server-snippet: "grpc_read_timeout 3600s; grpc_send_timeout 3600s;"
 spec:
   tls:
   - secretName: {{ include "gateway.name" . }}-grpc-tls
