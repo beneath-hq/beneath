@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// User
 		_, err = db.Exec(`
 			CREATE TABLE users (
@@ -84,20 +82,11 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// PermissionsUsersProjects
-		err = db.Model(&entity.PermissionsUsersProjects{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// PermissionsUsersOrganizations
-		err = db.Model(&entity.PermissionsUsersOrganizations{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// User
-		err = db.Model(&entity.User{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS permissions_users_organizations CASCADE;
+			DROP TABLE IF EXISTS permissions_users_projects CASCADE;
+			DROP TABLE IF EXISTS users CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

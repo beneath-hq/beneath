@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Project.DisplayName NOT NULL
 		_, err = db.Exec(`
 			ALTER TABLE projects ALTER COLUMN display_name DROP NOT NULL;

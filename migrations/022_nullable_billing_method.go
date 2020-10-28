@@ -5,20 +5,10 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// BillingInfo.BillingMethodID
-		_, err = db.Exec(`
-			ALTER TABLE billing_infos
-			ALTER COLUMN billing_method_id DROP NOT NULL;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
+		// moved to ee
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Done
 		return nil
 	})
 }

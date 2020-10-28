@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Secret
 		_, err = db.Exec(`
 			DROP TABLE IF EXISTS secrets;
@@ -59,12 +57,10 @@ func init() {
 	}, func(db migrations.DB) (err error) {
 		// not quite reversible due to dropped table
 
-		err = db.Model(&entity.UserSecret{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		err = db.Model(&entity.ServiceSecret{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS user_secrets CASCADE;
+			DROP TABLE IF EXISTS service_secrets CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

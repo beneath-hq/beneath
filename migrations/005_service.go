@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Stream
 		_, err = db.Exec(`
 			CREATE TABLE services (
@@ -44,14 +42,10 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// PermissionsServicesStreams
-		err = db.Model(&entity.PermissionsServicesStreams{}).DropTable(defaultDropOptions)
-		if err != nil {
-			return err
-		}
-
-		// Service
-		err = db.Model(&entity.Service{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS permissions_services_streams CASCADE;
+			DROP TABLE IF EXISTS services CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

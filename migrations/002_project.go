@@ -1,13 +1,11 @@
 package migrations
 
 import (
-	"gitlab.com/beneath-hq/beneath/control/entity"
-
 	"github.com/go-pg/migrations/v7"
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Project
 		_, err = db.Exec(`
 			CREATE TABLE projects (
@@ -40,8 +38,9 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// Project
-		err = db.Model(&entity.Project{}).DropTable(defaultDropOptions)
+		_, err = db.Exec(`
+			DROP TABLE IF EXISTS projects CASCADE;
+		`)
 		if err != nil {
 			return err
 		}

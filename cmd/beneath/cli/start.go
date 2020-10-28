@@ -2,8 +2,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/fx"
 
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
@@ -45,21 +43,21 @@ func (c *CLI) newStartCmd() *cobra.Command {
 func (c *CLI) runStartableServices(services []*Startable) {
 	log.InitLogger()
 
-	var invokers []interface{}
+	// At this point, every dependency should already have been registered with AddDependency
+
+	// Provides the Lifecycle object (see registry.go for more)
+	AddDependency(func() *Lifecycle { return &Lifecycle{} })
+
+	// Invoke every service's register function
 	for _, service := range services {
-		invokers = append(invokers, service.Register)
+		err := Dig.Invoke(service.Register)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	var lc *Lifecycle
-	fx.New(
-		fx.NopLogger,
-		fx.Provide(func() *Lifecycle { return &Lifecycle{} }), // provides Lifecycle object (see registry.go for more)
-		fx.Provide(func() *viper.Viper { return c.v }),        // provides viper config for other dependencies to consume
-		fx.Provide(dependencies...),                           // all dependencies registered with AddDependency
-		fx.Invoke(invokers...),                                // registers every startable
-		fx.Populate(&lc),                                      // extract lifecycle
-	)
-
-	// migrations.MustRunUp(hub.DB)
-	lc.Run()
+	// Invoke lifecycle
+	Dig.Invoke(func(lc *Lifecycle) {
+		lc.Run()
+	})
 }

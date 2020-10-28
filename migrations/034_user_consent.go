@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// User.ConsentTerms, User.ConsentNewsletter
 		_, err = db.Exec(`
 			ALTER TABLE users

@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		// Organization.Name UNIQUE
 		_, err = db.Exec(`
 			CREATE UNIQUE INDEX organizations_name_key ON public.organizations USING btree (lower(name));

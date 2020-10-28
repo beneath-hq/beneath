@@ -5,29 +5,10 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
-		// BillingPlan.PrivateProjects
-		_, err = db.Exec(`
-			ALTER TABLE billing_plans
-			DROP private_projects;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
+		// moved to ee
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// BillingPlan.PrivateProjects
-		_, err = db.Exec(`
-			ALTER TABLE billing_plans
-			ADD private_projects boolean NOT NULL default true;
-		`)
-		if err != nil {
-			return err
-		}
-
-		// Done
 		return nil
 	})
 }

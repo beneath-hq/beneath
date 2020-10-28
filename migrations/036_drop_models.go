@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	migrations.MustRegisterTx(func(db migrations.DB) (err error) {
+	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		_, err = db.Exec(`
 			ALTER TABLE streams DROP source_model_id;
 			DROP TABLE streams_into_models;

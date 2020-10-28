@@ -1,43 +1,43 @@
 mq:
-  driver: "" # env: BENEATH_MQ_DRIVER, flag: --mq-driver
+  driver: "" # env: BENEATH_MQ_DRIVER
 
 control:
-  port: 4000 # env: BENEATH_CONTROL_PORT, flag: --control-port
-  host: "http://localhost:4000" # env: BENEATH_CONTROL_HOST, flag: --control-host
-  frontend_host: "http://localhost:3000" # env: BENEATH_CONTROL_FRONTEND_HOST, flag: --control-frontend-host
+  port: 4000 # env: BENEATH_CONTROL_PORT
+  host: "http://localhost:4000" # env: BENEATH_CONTROL_HOST
+  frontend_host: "http://localhost:3000" # env: BENEATH_CONTROL_FRONTEND_HOST
 
   redis:
-    url: "redis://localhost/" # env: BENEATH_CONTROL_REDIS_URL, flag: --control-redis-url
+    url: "redis://localhost/" # env: BENEATH_CONTROL_REDIS_URL
 
   postgres:
-    host: "localhost" # env: BENEATH_CONTROL_POSTGRES_HOST, flag: --control-postgres-host
-    db: "postgres" # env: BENEATH_CONTROL_POSTGRES_DB, flag: --control-postgres-db
-    user: "postgres" # env: BENEATH_CONTROL_POSTGRES_USER, flag: --control-postgres-user
-    password: "" # env: BENEATH_CONTROL_POSTGRES_PASSWORD, flag: --control-postgres-password
+    host: "localhost" # env: BENEATH_CONTROL_POSTGRES_HOST
+    database: "postgres" # env: BENEATH_CONTROL_POSTGRES_DB
+    user: "postgres" # env: BENEATH_CONTROL_POSTGRES_USER
+    password: "" # env: BENEATH_CONTROL_POSTGRES_PASSWORD
 
-  session_secret: "" # env: BENEATH_CONTROL_SESSION_SECRET, flag: --control-session-secret
+  session_secret: "" # env: BENEATH_CONTROL_SESSION_SECRET
   auth:
     github:
-      id: "" # env: BENEATH_CONTROL_AUTH_GITHUB_ID, flag: --control-auth-github-id
-      secret: "" # env: BENEATH_CONTROL_AUTH_GITHUB_SECRET, flag: --control-auth-github-secret
+      id: "" # env: BENEATH_CONTROL_AUTH_GITHUB_ID
+      secret: "" # env: BENEATH_CONTROL_AUTH_GITHUB_SECRET
     google:
-      id: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_ID, flag: --control-auth-google-id
-      secret: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_SECRET, flag: --control-auth-google-secret
+      id: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_ID
+      secret: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_SECRET
 
 data:
-  http_port: 5000 # env: BENEATH_DATA_HTTP_PORT, flag: --data-port-http
-  grpc_port: 50051 # env: BENEATH_DATA_GRPC_PORT, flag: --data-port-grpc
+  http_port: 5000 # env: BENEATH_DATA_HTTP_PORT
+  grpc_port: 50051 # env: BENEATH_DATA_GRPC_PORT
 
   log:
-    driver: "" # env: BENEATH_DATA_LOG_DRIVER, flag: --data-log-driver
+    driver: "" # env: BENEATH_DATA_LOG_DRIVER
     # driver-specific settings...
   
   index:
-    driver: "" # env: BENEATH_DATA_INDEX_DRIVER, flag: --data-index-driver
+    driver: "" # env: BENEATH_DATA_INDEX_DRIVER
     # driver-specific settings...
   
   warehouse:
-    driver: "" # env: BENEATH_DATA_WAREHOUSE_DRIVER, flag: --data-warehouse-driver
+    driver: "" # env: BENEATH_DATA_WAREHOUSE_DRIVER
     # driver-specific settings...
 
 # MQ driver settings:
