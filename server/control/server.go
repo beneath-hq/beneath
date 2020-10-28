@@ -123,6 +123,7 @@ func NewServer(
 	gqlHandler.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
 		panic(err)
 	})
+	router.Handle("/graphql", gqlHandler)
 
 	return server
 }
