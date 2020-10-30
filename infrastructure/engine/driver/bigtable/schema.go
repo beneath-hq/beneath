@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
-
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
@@ -18,35 +16,6 @@ type IndexHash [uuid.Size]byte
 // row key for sequencer entries
 func makeSequencerKey(instanceID uuid.UUID) string {
 	return string(instanceID[:])
-}
-
-// row key for usage rows
-func makeUsageKey(id uuid.UUID, period timeutil.Period, ts time.Time, delta time.Duration) string {
-	cap := uuid.Size + 1 + int64ByteSize
-	key := make([]byte, 0, cap)
-	key = append(key, id[:]...)
-	key = append(key, period.Byte())
-	key = append(key, timeToBytesMs(timeutil.Floor(ts, period).Add(delta))...)
-	return byteSliceToString(key)
-}
-
-// parses row keys returned by makeUsageKey
-func parseUsageKey(key string) (id uuid.UUID, period timeutil.Period, ts time.Time) {
-	bs := stringToByteSlice(key)
-	if len(bs) != uuid.Size+1+int64ByteSize {
-		panic(fmt.Errorf("not a usage key"))
-	}
-
-	id = uuid.FromBytesOrNil(bs[:uuid.Size])
-
-	period, err := timeutil.PeriodFromByte(bs[uuid.Size])
-	if err != nil {
-		panic(err)
-	}
-
-	ts = bytesToTimeMs(bs[uuid.Size+1:])
-
-	return id, period, ts
 }
 
 // row key for a log row (full)

@@ -8,16 +8,17 @@ import (
 
 // User represents a Beneath user
 type User struct {
-	_msgpack              struct{}        `msgpack:",omitempty"`
-	UserID                uuid.UUID       `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Email                 string          `sql:",notnull",validate:"required,email"`
-	GoogleID              string          `sql:",unique",validate:"omitempty,lte=255"`
-	GithubID              string          `sql:",unique",validate:"omitempty,lte=255"`
-	CreatedOn             time.Time       `sql:",default:now()"`
-	UpdatedOn             time.Time       `sql:",default:now()"`
-	Master                bool            `sql:",notnull,default:false"` // NOTE: when updating value, clear secret cache
-	ConsentTerms          bool            `sql:",notnull,default:false"`
-	ConsentNewsletter     bool            `sql:",notnull,default:false"`
+	_msgpack              struct{}  `msgpack:",omitempty"`
+	UserID                uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Email                 string    `sql:",notnull",validate:"required,email"`
+	GoogleID              string    `sql:",unique",validate:"omitempty,lte=255"`
+	GithubID              string    `sql:",unique",validate:"omitempty,lte=255"`
+	CreatedOn             time.Time `sql:",default:now()"`
+	UpdatedOn             time.Time `sql:",default:now()"`
+	Master                bool      `sql:",notnull,default:false"` // NOTE: when updating value, clear secret cache
+	ConsentTerms          bool      `sql:",notnull,default:false"`
+	ConsentNewsletter     bool      `sql:",notnull,default:false"`
+	QuotaEpoch            time.Time
 	ReadQuota             *int64          // NOTE: when updating value, clear secret cache
 	WriteQuota            *int64          // NOTE: when updating value, clear secret cache
 	ScanQuota             *int64          // NOTE: when updating value, clear secret cache

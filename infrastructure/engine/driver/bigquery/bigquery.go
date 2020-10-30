@@ -64,3 +64,8 @@ func (b *BigQuery) AsLookupService() driver.LookupService {
 func (b *BigQuery) AsWarehouseService() driver.WarehouseService {
 	return b
 }
+
+// AsUsageService implements Service
+func (b *BigQuery) AsUsageService() driver.UsageService {
+	return nil
+}

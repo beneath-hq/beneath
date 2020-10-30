@@ -30,7 +30,7 @@ func (s *Service) streamUpdated(ctx context.Context, msg *models.StreamUpdatedEv
 }
 
 func (s *Service) streamDeleted(ctx context.Context, msg *models.StreamDeletedEvent) error {
-	err := s.Engine.ClearUsage(ctx, msg.StreamID)
+	err := s.Engine.Usage.ClearUsage(ctx, msg.StreamID)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (s *Service) streamInstanceDeleted(ctx context.Context, msg *models.StreamI
 		return err
 	}
 
-	err = s.Engine.ClearUsage(ctx, msg.StreamInstance.StreamInstanceID)
+	err = s.Engine.Usage.ClearUsage(ctx, msg.StreamInstance.StreamInstanceID)
 	if err != nil {
 		return err
 	}

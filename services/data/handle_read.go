@@ -74,7 +74,7 @@ func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadRespon
 	}
 
 	// check quota
-	err = s.CheckReadQuota(ctx, secret)
+	err = s.Metrics.CheckReadQuota(ctx, secret)
 	if err != nil {
 		return nil, newError(http.StatusTooManyRequests, err.Error())
 	}
@@ -178,7 +178,7 @@ func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadRespon
 	resp.NextCursor = wrapCursor(cursor.GetType(), cursor.GetID(), it.NextCursor())
 
 	// track read metrics
-	s.TrackRead(ctx, secret, streamID, instanceID, int64(nrecords), int64(nbytes))
+	s.Metrics.TrackRead(ctx, secret, streamID, instanceID, int64(nrecords), int64(nbytes))
 
 	// update log message
 	payload.BytesRead = nbytes

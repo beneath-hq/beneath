@@ -44,7 +44,7 @@ type Server struct {
 	Router  *chi.Mux
 	Options *ServerOptions
 
-	Metrics       *metrics.Broker
+	Metrics       *metrics.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service
@@ -57,7 +57,7 @@ type Server struct {
 // NewServer returns a new control server
 func NewServer(
 	opts *ServerOptions,
-	metrics *metrics.Broker,
+	metrics *metrics.Service,
 	middleware *middleware.Service,
 	organization *organization.Service,
 	permissions *permissions.Service,

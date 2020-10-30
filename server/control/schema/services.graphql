@@ -24,6 +24,7 @@ type Service {
   description: String
   sourceURL: String
   project: Project!
+  quotaEpoch: Time
   readQuota: Int
   writeQuota: Int
   scanQuota: Int

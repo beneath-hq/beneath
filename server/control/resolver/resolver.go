@@ -16,7 +16,7 @@ import (
 
 // Resolver implements gql.ResolverRoot
 type Resolver struct {
-	Metrics       *metrics.Broker
+	Metrics       *metrics.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service

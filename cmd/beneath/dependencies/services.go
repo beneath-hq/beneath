@@ -24,7 +24,7 @@ import (
 // AllServices is a convenience wrapper that initializes all services
 type AllServices struct {
 	Data         *data.Service
-	Metrics      *metrics.Broker
+	Metrics      *metrics.Service
 	Middleware   *middleware.Service
 	Organization *organization.Service
 	Permissions  *permissions.Service
@@ -38,7 +38,7 @@ type AllServices struct {
 // NewAllServices creates a new AllServices
 func NewAllServices(
 	data *data.Service,
-	metrics *metrics.Broker,
+	metrics *metrics.Service,
 	middleware *middleware.Service,
 	organization *organization.Service,
 	permissions *permissions.Service,

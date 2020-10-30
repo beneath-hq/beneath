@@ -11,13 +11,14 @@ import (
 // Service represents non-user accounts, which have distinct access permissions, API secrets, monitoring and quotas.
 // They're used eg. when deploying to production.
 type Service struct {
-	_msgpack    struct{}         `msgpack:",omitempty"`
-	ServiceID   uuid.UUID        `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name        string           `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
-	Description string           `validate:"omitempty,lte=255"`
-	SourceURL   string           `validate:"omitempty,url,lte=255"`
-	ProjectID   uuid.UUID        `sql:"on_delete:restrict,notnull,type:uuid"`
-	Project     *Project         `msgpack:"-"`
+	_msgpack    struct{}  `msgpack:",omitempty"`
+	ServiceID   uuid.UUID `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	Name        string    `sql:",notnull",validate:"required,gte=1,lte=40"` // not unique because of (organization_id, service_id) index
+	Description string    `validate:"omitempty,lte=255"`
+	SourceURL   string    `validate:"omitempty,url,lte=255"`
+	ProjectID   uuid.UUID `sql:"on_delete:restrict,notnull,type:uuid"`
+	Project     *Project  `msgpack:"-"`
+	QuotaEpoch  time.Time
 	ReadQuota   *int64           // NOTE: when updating value, clear secret cache
 	WriteQuota  *int64           // NOTE: when updating value, clear secret cache
 	ScanQuota   *int64           // NOTE: when updating value, clear secret cache

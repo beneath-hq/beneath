@@ -32,6 +32,9 @@ type Secret interface {
 	// IsMaster is true iff the secret is a master secret
 	IsMaster() bool
 
+	// GetBillingQuotaEpoch returns the starting time for the current billing quotas
+	GetBillingQuotaEpoch() time.Time
+
 	// GetBillingReadQuota returns the billing organization's read quota (or nil if unlimited)
 	GetBillingReadQuota() *int64
 
@@ -40,6 +43,9 @@ type Secret interface {
 
 	// GetBillingScanQuota returns the billing organization's scan quota (or nil if unlimited)
 	GetBillingScanQuota() *int64
+
+	// GetOwnerQuotaEpoch returns the starting time for the current owner quotas
+	GetOwnerQuotaEpoch() time.Time
 
 	// GetOwnerReadQuota returns the owner's read quota (or nil if unlimited)
 	GetOwnerReadQuota() *int64
@@ -63,9 +69,11 @@ type BaseSecret struct {
 	Token                 secrettoken.Token `sql:"-"`
 	Master                bool              `sql:"-"`
 	BillingOrganizationID uuid.UUID         `sql:"-"`
+	BillingQuotaEpoch     time.Time         `sql:"-"`
 	BillingReadQuota      *int64            `sql:"-"`
 	BillingWriteQuota     *int64            `sql:"-"`
 	BillingScanQuota      *int64            `sql:"-"`
+	OwnerQuotaEpoch       time.Time         `sql:"-"`
 	OwnerReadQuota        *int64            `sql:"-"`
 	OwnerWriteQuota       *int64            `sql:"-"`
 	OwnerScanQuota        *int64            `sql:"-"`
@@ -81,6 +89,11 @@ func (s *BaseSecret) IsMaster() bool {
 	return s.Master
 }
 
+// GetBillingQuotaEpoch implements Secret
+func (s *BaseSecret) GetBillingQuotaEpoch() time.Time {
+	return s.BillingQuotaEpoch
+}
+
 // GetBillingReadQuota implements Secret
 func (s *BaseSecret) GetBillingReadQuota() *int64 {
 	return s.BillingReadQuota
@@ -94,6 +107,11 @@ func (s *BaseSecret) GetBillingWriteQuota() *int64 {
 // GetBillingScanQuota implements Secret
 func (s *BaseSecret) GetBillingScanQuota() *int64 {
 	return s.BillingScanQuota
+}
+
+// GetOwnerQuotaEpoch implements Secret
+func (s *BaseSecret) GetOwnerQuotaEpoch() time.Time {
+	return s.OwnerQuotaEpoch
 }
 
 // GetOwnerReadQuota implements Secret
@@ -234,6 +252,11 @@ func (s *AnonymousSecret) IsMaster() bool {
 	return false
 }
 
+// GetBillingQuotaEpoch implements Secret
+func (s *AnonymousSecret) GetBillingQuotaEpoch() time.Time {
+	panic(fmt.Errorf("Called GetBillingQuotaEpoch on an anonymous secret"))
+}
+
 // GetBillingReadQuota implements Secret
 func (s *AnonymousSecret) GetBillingReadQuota() *int64 {
 	panic(fmt.Errorf("Called GetBillingReadQuota on an anonymous secret"))
@@ -247,6 +270,11 @@ func (s *AnonymousSecret) GetBillingWriteQuota() *int64 {
 // GetBillingScanQuota implements Secret
 func (s *AnonymousSecret) GetBillingScanQuota() *int64 {
 	panic(fmt.Errorf("Called GetBillingScanQuota on an anonymous secret"))
+}
+
+// GetOwnerQuotaEpoch implements Secret
+func (s *AnonymousSecret) GetOwnerQuotaEpoch() time.Time {
+	panic(fmt.Errorf("Called GetOwnerQuotaEpoch on an anonymous secret"))
 }
 
 // GetOwnerReadQuota implements Secret

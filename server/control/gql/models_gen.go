@@ -48,12 +48,13 @@ type PrivateOrganization struct {
 	PhotoURL          *string                               `json:"photoURL"`
 	CreatedOn         time.Time                             `json:"createdOn"`
 	UpdatedOn         time.Time                             `json:"updatedOn"`
-	PrepaidReadQuota  *int                                  `json:"prepaidReadQuota"`
-	PrepaidWriteQuota *int                                  `json:"prepaidWriteQuota"`
-	PrepaidScanQuota  *int                                  `json:"prepaidScanQuota"`
+	QuotaEpoch        *time.Time                            `json:"quotaEpoch"`
 	ReadQuota         *int                                  `json:"readQuota"`
 	WriteQuota        *int                                  `json:"writeQuota"`
 	ScanQuota         *int                                  `json:"scanQuota"`
+	PrepaidReadQuota  *int                                  `json:"prepaidReadQuota"`
+	PrepaidWriteQuota *int                                  `json:"prepaidWriteQuota"`
+	PrepaidScanQuota  *int                                  `json:"prepaidScanQuota"`
 	ReadUsage         int                                   `json:"readUsage"`
 	WriteUsage        int                                   `json:"writeUsage"`
 	ScanUsage         int                                   `json:"scanUsage"`

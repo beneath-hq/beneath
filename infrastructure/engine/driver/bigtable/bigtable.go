@@ -143,6 +143,11 @@ func (b *BigTable) AsWarehouseService() driver.WarehouseService {
 	return nil
 }
 
+// AsUsageService implements Service
+func (b *BigTable) AsUsageService() driver.UsageService {
+	return b
+}
+
 func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge time.Duration) *bigtable.Table {
 	// create table
 	err := b.Admin.CreateTable(context.Background(), name)

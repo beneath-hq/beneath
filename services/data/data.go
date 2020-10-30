@@ -14,7 +14,7 @@ import (
 type Service struct {
 	MQ          mq.MessageQueue
 	Engine      *engine.Engine
-	Metrics     *metrics.Broker
+	Metrics     *metrics.Service
 	Permissions *permissions.Service
 	Streams     *stream.Service
 
@@ -23,7 +23,7 @@ type Service struct {
 }
 
 // New returns a new data service instance
-func New(mq mq.MessageQueue, engine *engine.Engine, metrics *metrics.Broker, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
+func New(mq mq.MessageQueue, engine *engine.Engine, metrics *metrics.Service, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
 	err := mq.RegisterTopic(writeRequestsTopic)
 	if err != nil {
 		return nil, err

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/pkg/mathutil"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
@@ -108,13 +109,19 @@ func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period
 		until = &time.Time{}
 	}
 
-	// parse period from string
-	p, err := timeutil.PeriodFromString(period)
-	if err != nil {
-		return nil, gqlerror.Errorf("%v", err.Error())
+	// parse label from period from string
+	var label driver.UsageLabel
+	if period == "month" {
+		label = driver.UsageLabelMonthly
+	} else if period == "hour" {
+		label = driver.UsageLabelHourly
+	} else if period == "quota_month" {
+		label = driver.UsageLabelQuotaMonth
+	} else {
+		return nil, gqlerror.Errorf("unsupported usage period '%s'", period)
 	}
 
-	times, usages, err := r.Metrics.GetHistoricalUsage(ctx, entityID, p, from, *until)
+	times, usages, err := r.Metrics.GetHistoricalUsage(ctx, entityID, label, from, *until)
 	if err != nil {
 		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
 	}

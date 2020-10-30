@@ -51,7 +51,7 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 	}
 
 	// check quota
-	err := s.CheckWriteQuota(ctx, secret)
+	err := s.Metrics.CheckWriteQuota(ctx, secret)
 	if err != nil {
 		return nil, newError(http.StatusTooManyRequests, err.Error())
 	}
@@ -148,7 +148,7 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 	// track write metrics
 	for _, im := range instanceMetrics {
 		stream := instances[im.InstanceID]
-		s.TrackWrite(ctx, secret, stream.StreamID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
+		s.Metrics.TrackWrite(ctx, secret, stream.StreamID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
 	}
 
 	// set log payload

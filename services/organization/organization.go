@@ -101,6 +101,7 @@ func (s *Service) FindOrganizationMembers(ctx context.Context, organizationID uu
 			p.view,
 			p."create",
 			p.admin,
+			u.quota_epoch,
 			u.read_quota,
 			u.write_quota,
 			u.scan_quota

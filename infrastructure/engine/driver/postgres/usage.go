@@ -6,12 +6,12 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
+	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
-// CommitUsage implements engine.LookupService
-func (b Postgres) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time, usage pb.QuotaUsage) error {
+// WriteUsage implements engine.LookupService
+func (b Postgres) WriteUsage(ctx context.Context, id uuid.UUID, label driver.UsageLabel, ts time.Time, usage pb.QuotaUsage) error {
 	panic("not implemented")
 }
 
@@ -20,12 +20,12 @@ func (b Postgres) ClearUsage(ctx context.Context, id uuid.UUID) error {
 	panic("not implemented")
 }
 
-// ReadSingleUsage implements engine.LookupService
-func (b Postgres) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
+// ReadUsageSingle implements engine.LookupService
+func (b Postgres) ReadUsageSingle(ctx context.Context, id uuid.UUID, label driver.UsageLabel, ts time.Time) (pb.QuotaUsage, error) {
 	panic("not implemented")
 }
 
-// ReadUsage implements engine.LookupService
-func (b Postgres) ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
+// ReadUsageRange engine.LookupService
+func (b Postgres) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
 	panic("not implemented")
 }

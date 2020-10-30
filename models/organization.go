@@ -21,12 +21,13 @@ type Organization struct {
 	User              *User      `msgpack:"-"`
 	CreatedOn         time.Time  `sql:",default:now()"`
 	UpdatedOn         time.Time  `sql:",default:now()"`
-	PrepaidReadQuota  *int64     // bytes
-	PrepaidWriteQuota *int64     // bytes
-	PrepaidScanQuota  *int64     // bytes
+	QuotaEpoch        time.Time
 	ReadQuota         *int64     // bytes // NOTE: when updating value, clear secret cache
 	WriteQuota        *int64     // bytes // NOTE: when updating value, clear secret cache
 	ScanQuota         *int64     // bytes // NOTE: when updating value, clear secret cache
+	PrepaidReadQuota  *int64     // bytes
+	PrepaidWriteQuota *int64     // bytes
+	PrepaidScanQuota  *int64     // bytes
 	Projects          []*Project `msgpack:"-"`
 	Users             []*User    `pg:"fk:billing_organization_id",msgpack:"-"`
 
@@ -78,6 +79,7 @@ type OrganizationMember struct {
 	View                  bool
 	Create                bool
 	Admin                 bool
+	QuotaEpoch            *time.Time
 	ReadQuota             *int
 	WriteQuota            *int
 	ScanQuota             *int

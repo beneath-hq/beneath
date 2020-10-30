@@ -119,6 +119,7 @@ type ComplexityRoot struct {
 		Name                  func(childComplexity int) int
 		OrganizationID        func(childComplexity int) int
 		PhotoURL              func(childComplexity int) int
+		QuotaEpoch            func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
 		ScanQuota             func(childComplexity int) int
 		UserID                func(childComplexity int) int
@@ -163,6 +164,7 @@ type ComplexityRoot struct {
 		PrepaidScanQuota  func(childComplexity int) int
 		PrepaidWriteQuota func(childComplexity int) int
 		Projects          func(childComplexity int) int
+		QuotaEpoch        func(childComplexity int) int
 		ReadQuota         func(childComplexity int) int
 		ReadUsage         func(childComplexity int) int
 		ScanQuota         func(childComplexity int) int
@@ -179,6 +181,7 @@ type ComplexityRoot struct {
 		ConsentTerms          func(childComplexity int) int
 		CreatedOn             func(childComplexity int) int
 		Email                 func(childComplexity int) int
+		QuotaEpoch            func(childComplexity int) int
 		ReadQuota             func(childComplexity int) int
 		ScanQuota             func(childComplexity int) int
 		UpdatedOn             func(childComplexity int) int
@@ -258,6 +261,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Project     func(childComplexity int) int
+		QuotaEpoch  func(childComplexity int) int
 		ReadQuota   func(childComplexity int) int
 		ScanQuota   func(childComplexity int) int
 		ServiceID   func(childComplexity int) int
@@ -904,6 +908,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationMember.PhotoURL(childComplexity), true
 
+	case "OrganizationMember.quotaEpoch":
+		if e.complexity.OrganizationMember.QuotaEpoch == nil {
+			break
+		}
+
+		return e.complexity.OrganizationMember.QuotaEpoch(childComplexity), true
+
 	case "OrganizationMember.readQuota":
 		if e.complexity.OrganizationMember.ReadQuota == nil {
 			break
@@ -1128,6 +1139,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PrivateOrganization.Projects(childComplexity), true
 
+	case "PrivateOrganization.quotaEpoch":
+		if e.complexity.PrivateOrganization.QuotaEpoch == nil {
+			break
+		}
+
+		return e.complexity.PrivateOrganization.QuotaEpoch(childComplexity), true
+
 	case "PrivateOrganization.readQuota":
 		if e.complexity.PrivateOrganization.ReadQuota == nil {
 			break
@@ -1218,6 +1236,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PrivateUser.Email(childComplexity), true
+
+	case "PrivateUser.quotaEpoch":
+		if e.complexity.PrivateUser.QuotaEpoch == nil {
+			break
+		}
+
+		return e.complexity.PrivateUser.QuotaEpoch(childComplexity), true
 
 	case "PrivateUser.readQuota":
 		if e.complexity.PrivateUser.ReadQuota == nil {
@@ -1776,6 +1801,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Service.Project(childComplexity), true
+
+	case "Service.quotaEpoch":
+		if e.complexity.Service.QuotaEpoch == nil {
+			break
+		}
+
+		return e.complexity.Service.QuotaEpoch(childComplexity), true
 
 	case "Service.readQuota":
 		if e.complexity.Service.ReadQuota == nil {
@@ -2339,12 +2371,13 @@ type PrivateOrganization implements Organization {
   photoURL: String
   createdOn: Time!
   updatedOn: Time!
-  prepaidReadQuota: Int
-  prepaidWriteQuota: Int
-  prepaidScanQuota: Int
+  quotaEpoch: Time
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+  prepaidReadQuota: Int
+  prepaidWriteQuota: Int
+  prepaidScanQuota: Int
   readUsage: Int!
   writeUsage: Int!
   scanUsage: Int!
@@ -2364,6 +2397,7 @@ type OrganizationMember {
   view: Boolean!
   create: Boolean!
   admin: Boolean!
+  quotaEpoch: Time!
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
@@ -2484,6 +2518,7 @@ type Service {
   description: String
   sourceURL: String
   project: Project!
+  quotaEpoch: Time
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
@@ -2604,6 +2639,7 @@ type PrivateUser {
   updatedOn: Time!
   consentTerms: Boolean!
   consentNewsletter: Boolean!
+  quotaEpoch: Time
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
@@ -6103,6 +6139,41 @@ func (ec *executionContext) _OrganizationMember_admin(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _OrganizationMember_quotaEpoch(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationMember) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OrganizationMember",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.QuotaEpoch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _OrganizationMember_readQuota(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationMember) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6928,7 +6999,7 @@ func (ec *executionContext) _PrivateOrganization_updatedOn(ctx context.Context, 
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _PrivateOrganization_prepaidReadQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+func (ec *executionContext) _PrivateOrganization_quotaEpoch(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6946,7 +7017,7 @@ func (ec *executionContext) _PrivateOrganization_prepaidReadQuota(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PrepaidReadQuota, nil
+		return obj.QuotaEpoch, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6955,73 +7026,9 @@ func (ec *executionContext) _PrivateOrganization_prepaidReadQuota(ctx context.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _PrivateOrganization_prepaidWriteQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "PrivateOrganization",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PrepaidWriteQuota, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _PrivateOrganization_prepaidScanQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "PrivateOrganization",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PrepaidScanQuota, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PrivateOrganization_readQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
@@ -7107,6 +7114,102 @@ func (ec *executionContext) _PrivateOrganization_scanQuota(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ScanQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_prepaidReadQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PrivateOrganization",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidReadQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_prepaidWriteQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PrivateOrganization",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidWriteQuota, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateOrganization_prepaidScanQuota(ctx context.Context, field graphql.CollectedField, obj *PrivateOrganization) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PrivateOrganization",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrepaidScanQuota, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7567,6 +7670,38 @@ func (ec *executionContext) _PrivateUser_consentNewsletter(ctx context.Context, 
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PrivateUser_quotaEpoch(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PrivateUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.QuotaEpoch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PrivateUser_readQuota(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -10019,6 +10154,38 @@ func (ec *executionContext) _Service_project(ctx context.Context, field graphql.
 	res := resTmp.(*models.Project)
 	fc.Result = res
 	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_quotaEpoch(ctx context.Context, field graphql.CollectedField, obj *models.Service) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.QuotaEpoch, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Service_readQuota(ctx context.Context, field graphql.CollectedField, obj *models.Service) (ret graphql.Marshaler) {
@@ -13375,6 +13542,11 @@ func (ec *executionContext) _OrganizationMember(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "quotaEpoch":
+			out.Values[i] = ec._OrganizationMember_quotaEpoch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "readQuota":
 			out.Values[i] = ec._OrganizationMember_readQuota(ctx, field, obj)
 		case "writeQuota":
@@ -13568,18 +13740,20 @@ func (ec *executionContext) _PrivateOrganization(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "prepaidReadQuota":
-			out.Values[i] = ec._PrivateOrganization_prepaidReadQuota(ctx, field, obj)
-		case "prepaidWriteQuota":
-			out.Values[i] = ec._PrivateOrganization_prepaidWriteQuota(ctx, field, obj)
-		case "prepaidScanQuota":
-			out.Values[i] = ec._PrivateOrganization_prepaidScanQuota(ctx, field, obj)
+		case "quotaEpoch":
+			out.Values[i] = ec._PrivateOrganization_quotaEpoch(ctx, field, obj)
 		case "readQuota":
 			out.Values[i] = ec._PrivateOrganization_readQuota(ctx, field, obj)
 		case "writeQuota":
 			out.Values[i] = ec._PrivateOrganization_writeQuota(ctx, field, obj)
 		case "scanQuota":
 			out.Values[i] = ec._PrivateOrganization_scanQuota(ctx, field, obj)
+		case "prepaidReadQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidReadQuota(ctx, field, obj)
+		case "prepaidWriteQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidWriteQuota(ctx, field, obj)
+		case "prepaidScanQuota":
+			out.Values[i] = ec._PrivateOrganization_prepaidScanQuota(ctx, field, obj)
 		case "readUsage":
 			out.Values[i] = ec._PrivateOrganization_readUsage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13670,6 +13844,8 @@ func (ec *executionContext) _PrivateUser(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "quotaEpoch":
+			out.Values[i] = ec._PrivateUser_quotaEpoch(ctx, field, obj)
 		case "readQuota":
 			out.Values[i] = ec._PrivateUser_readQuota(ctx, field, obj)
 		case "writeQuota":
@@ -14344,6 +14520,8 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "quotaEpoch":
+			out.Values[i] = ec._Service_quotaEpoch(ctx, field, obj)
 		case "readQuota":
 			out.Values[i] = ec._Service_readQuota(ctx, field, obj)
 		case "writeQuota":
@@ -15719,6 +15897,27 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
 	res, err := UnmarshalUUID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -16147,6 +16346,15 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	return graphql.MarshalTime(v)
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {

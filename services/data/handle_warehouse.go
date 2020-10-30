@@ -135,7 +135,7 @@ func (s *Service) HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseR
 	}
 
 	// check quota
-	err = s.CheckScanQuota(ctx, secret, estimatedBytesScanned)
+	err = s.Metrics.CheckScanQuota(ctx, secret, estimatedBytesScanned)
 	if err != nil {
 		return nil, newError(http.StatusTooManyRequests, err.Error())
 	}
@@ -154,7 +154,7 @@ func (s *Service) HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseR
 	middleware.SetTagsPayload(ctx, payload)
 
 	// track read metrics
-	s.TrackScan(ctx, secret, estimatedBytesScanned)
+	s.Metrics.TrackScan(ctx, secret, estimatedBytesScanned)
 
 	return &QueryWarehouseResponse{Job: wrapWarehouseJob(job, analyzeJob)}, nil
 }
