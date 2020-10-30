@@ -1,4 +1,4 @@
-package metrics
+package usage
 
 import (
 	"context"
@@ -20,7 +20,7 @@ var (
 	sem        = semaphore.NewWeighted(int64(maxWorkers))
 )
 
-// Run periodically commits buffered metrics until ctx is cancelled or an error occurs
+// Run periodically flushes buffered usage data until ctx is cancelled or an error occurs
 func (s *Service) Run(ctx context.Context) error {
 	if s.running {
 		panic(fmt.Errorf("Cannot call RunForever twice"))
@@ -40,13 +40,13 @@ func (s *Service) Run(ctx context.Context) error {
 			s.commitTicker.Stop()
 			s.commitToTable()
 			s.running = false
-			log.S.Infow("metrics committed before stopping")
+			log.S.Infow("buffered usage flushed before stopping")
 			return nil
 		}
 	}
 }
 
-// commitToTable commits a batch of accumulated metrics to the engine every X seconds
+// commitToTable flushes a batch of accumulated usage data to the engine (called by Run every X seconds)
 func (s *Service) commitToTable() error {
 	ctx := context.Background()
 
@@ -114,7 +114,7 @@ func (s *Service) commitToTable() error {
 	// log
 	elapsed := time.Since(now)
 	log.S.Infow(
-		"metrics write",
+		"usage flush",
 		"ids", len(usageBuffer),
 		"quota_ids", len(quotaEpochBuffer),
 		"elapsed", elapsed,

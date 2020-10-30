@@ -5,7 +5,6 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 	"gitlab.com/beneath-hq/beneath/services/organization"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
@@ -13,6 +12,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/services/secret"
 	"gitlab.com/beneath-hq/beneath/services/service"
 	"gitlab.com/beneath-hq/beneath/services/stream"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 	"gitlab.com/beneath-hq/beneath/services/user"
 )
 
@@ -24,7 +24,7 @@ import (
 // AllServices is a convenience wrapper that initializes all services
 type AllServices struct {
 	Data         *data.Service
-	Metrics      *metrics.Service
+	Usage      *usage.Service
 	Middleware   *middleware.Service
 	Organization *organization.Service
 	Permissions  *permissions.Service
@@ -38,7 +38,7 @@ type AllServices struct {
 // NewAllServices creates a new AllServices
 func NewAllServices(
 	data *data.Service,
-	metrics *metrics.Service,
+	usage *usage.Service,
 	middleware *middleware.Service,
 	organization *organization.Service,
 	permissions *permissions.Service,
@@ -50,7 +50,7 @@ func NewAllServices(
 ) *AllServices {
 	return &AllServices{
 		Data:         data,
-		Metrics:      metrics,
+		Usage:      usage,
 		Middleware:   middleware,
 		Organization: organization,
 		Permissions:  permissions,
@@ -65,7 +65,7 @@ func NewAllServices(
 func init() {
 	cli.AddDependency(NewAllServices)
 	cli.AddDependency(data.New)
-	cli.AddDependency(metrics.New)
+	cli.AddDependency(usage.New)
 	cli.AddDependency(middleware.New)
 	cli.AddDependency(organization.New)
 	cli.AddDependency(permissions.New)
@@ -75,9 +75,9 @@ func init() {
 	cli.AddDependency(stream.New)
 	cli.AddDependency(user.New)
 
-	// the metrics service takes some extra options
-	cli.AddDependency(func() *metrics.Options {
-		return &metrics.Options{
+	// the usage service takes some extra options
+	cli.AddDependency(func() *usage.Options {
+		return &usage.Options{
 			CacheSize:      2500,
 			CommitInterval: 30 * time.Second,
 		}

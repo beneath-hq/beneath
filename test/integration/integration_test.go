@@ -21,16 +21,15 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/auth"
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/migrations"
-	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue/worker"
-	"gitlab.com/beneath-hq/beneath/server/data"
+	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments"
+	"gitlab.com/beneath-hq/beneath/hub"
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"gitlab.com/beneath-hq/beneath/pkg/log"
 	gwgrpc "gitlab.com/beneath-hq/beneath/server/data/grpc"
 	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	gwhttp "gitlab.com/beneath-hq/beneath/server/data/http"
 	"gitlab.com/beneath-hq/beneath/server/data/pipeline"
-	"gitlab.com/beneath-hq/beneath/hub"
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type configSpecification struct {
@@ -80,8 +79,8 @@ func TestMain(m *testing.M) {
 	panicIf(err)
 
 	// Init gateway globals
-	gateway.InitMetrics(100, metricsCommitInterval)
-	go gateway.Metrics.RunForever(context.Background())
+	gateway.InitUsage(100, metricsCommitInterval)
+	go gateway.Usage.RunForever(context.Background())
 	gateway.InitSubscriptions(hub.Engine)
 	go gateway.Subscriptions.RunForever(context.Background())
 

@@ -58,20 +58,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Metrics struct {
-		EntityID     func(childComplexity int) int
-		Period       func(childComplexity int) int
-		ReadBytes    func(childComplexity int) int
-		ReadOps      func(childComplexity int) int
-		ReadRecords  func(childComplexity int) int
-		ScanBytes    func(childComplexity int) int
-		ScanOps      func(childComplexity int) int
-		Time         func(childComplexity int) int
-		WriteBytes   func(childComplexity int) int
-		WriteOps     func(childComplexity int) int
-		WriteRecords func(childComplexity int) int
-	}
-
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
@@ -230,12 +216,12 @@ type ComplexityRoot struct {
 	Query struct {
 		Empty                                             func(childComplexity int) int
 		ExploreProjects                                   func(childComplexity int) int
-		GetMetrics                                        func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetOrganizationMetrics                            func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetServiceMetrics                                 func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamInstanceMetrics                          func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamMetrics                                  func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetUserMetrics                                    func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetOrganizationUsage                              func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetServiceUsage                                   func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamInstanceUsage                            func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetStreamUsage                                    func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetUsage                                          func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetUserUsage                                      func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
 		Me                                                func(childComplexity int) int
 		OrganizationByID                                  func(childComplexity int, organizationID uuid.UUID) int
 		OrganizationByName                                func(childComplexity int, name string) int
@@ -327,6 +313,20 @@ type ComplexityRoot struct {
 		Empty func(childComplexity int) int
 	}
 
+	Usage struct {
+		EntityID     func(childComplexity int) int
+		Period       func(childComplexity int) int
+		ReadBytes    func(childComplexity int) int
+		ReadOps      func(childComplexity int) int
+		ReadRecords  func(childComplexity int) int
+		ScanBytes    func(childComplexity int) int
+		ScanOps      func(childComplexity int) int
+		Time         func(childComplexity int) int
+		WriteBytes   func(childComplexity int) int
+		WriteOps     func(childComplexity int) int
+		WriteRecords func(childComplexity int) int
+	}
+
 	UserSecret struct {
 		CreatedOn    func(childComplexity int) int
 		Description  func(childComplexity int) int
@@ -388,12 +388,6 @@ type PublicOrganizationResolver interface {
 type QueryResolver interface {
 	Empty(ctx context.Context) (*string, error)
 	Ping(ctx context.Context) (string, error)
-	GetMetrics(ctx context.Context, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetOrganizationMetrics(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
-	GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Metrics, error)
 	Me(ctx context.Context) (*PrivateOrganization, error)
 	OrganizationByName(ctx context.Context, name string) (Organization, error)
 	OrganizationByID(ctx context.Context, organizationID uuid.UUID) (Organization, error)
@@ -412,6 +406,12 @@ type QueryResolver interface {
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error)
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error)
 	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error)
+	GetUsage(ctx context.Context, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetOrganizationUsage(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetServiceUsage(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetStreamInstanceUsage(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetStreamUsage(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetUserUsage(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
 }
 type ServiceSecretResolver interface {
 	ServiceSecretID(ctx context.Context, obj *models.ServiceSecret) (string, error)
@@ -446,83 +446,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Metrics.entityID":
-		if e.complexity.Metrics.EntityID == nil {
-			break
-		}
-
-		return e.complexity.Metrics.EntityID(childComplexity), true
-
-	case "Metrics.period":
-		if e.complexity.Metrics.Period == nil {
-			break
-		}
-
-		return e.complexity.Metrics.Period(childComplexity), true
-
-	case "Metrics.readBytes":
-		if e.complexity.Metrics.ReadBytes == nil {
-			break
-		}
-
-		return e.complexity.Metrics.ReadBytes(childComplexity), true
-
-	case "Metrics.readOps":
-		if e.complexity.Metrics.ReadOps == nil {
-			break
-		}
-
-		return e.complexity.Metrics.ReadOps(childComplexity), true
-
-	case "Metrics.readRecords":
-		if e.complexity.Metrics.ReadRecords == nil {
-			break
-		}
-
-		return e.complexity.Metrics.ReadRecords(childComplexity), true
-
-	case "Metrics.scanBytes":
-		if e.complexity.Metrics.ScanBytes == nil {
-			break
-		}
-
-		return e.complexity.Metrics.ScanBytes(childComplexity), true
-
-	case "Metrics.scanOps":
-		if e.complexity.Metrics.ScanOps == nil {
-			break
-		}
-
-		return e.complexity.Metrics.ScanOps(childComplexity), true
-
-	case "Metrics.time":
-		if e.complexity.Metrics.Time == nil {
-			break
-		}
-
-		return e.complexity.Metrics.Time(childComplexity), true
-
-	case "Metrics.writeBytes":
-		if e.complexity.Metrics.WriteBytes == nil {
-			break
-		}
-
-		return e.complexity.Metrics.WriteBytes(childComplexity), true
-
-	case "Metrics.writeOps":
-		if e.complexity.Metrics.WriteOps == nil {
-			break
-		}
-
-		return e.complexity.Metrics.WriteOps(childComplexity), true
-
-	case "Metrics.writeRecords":
-		if e.complexity.Metrics.WriteRecords == nil {
-			break
-		}
-
-		return e.complexity.Metrics.WriteRecords(childComplexity), true
 
 	case "Mutation.acceptOrganizationInvite":
 		if e.complexity.Mutation.AcceptOrganizationInvite == nil {
@@ -1496,77 +1419,77 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ExploreProjects(childComplexity), true
 
-	case "Query.getMetrics":
-		if e.complexity.Query.GetMetrics == nil {
+	case "Query.getOrganizationUsage":
+		if e.complexity.Query.GetOrganizationUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getOrganizationUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetMetrics(childComplexity, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetOrganizationUsage(childComplexity, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
-	case "Query.getOrganizationMetrics":
-		if e.complexity.Query.GetOrganizationMetrics == nil {
+	case "Query.getServiceUsage":
+		if e.complexity.Query.GetServiceUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getOrganizationMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getServiceUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetOrganizationMetrics(childComplexity, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetServiceUsage(childComplexity, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
-	case "Query.getServiceMetrics":
-		if e.complexity.Query.GetServiceMetrics == nil {
+	case "Query.getStreamInstanceUsage":
+		if e.complexity.Query.GetStreamInstanceUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getServiceMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getStreamInstanceUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetServiceMetrics(childComplexity, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetStreamInstanceUsage(childComplexity, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
-	case "Query.getStreamInstanceMetrics":
-		if e.complexity.Query.GetStreamInstanceMetrics == nil {
+	case "Query.getStreamUsage":
+		if e.complexity.Query.GetStreamUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getStreamInstanceMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getStreamUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetStreamInstanceMetrics(childComplexity, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetStreamUsage(childComplexity, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
-	case "Query.getStreamMetrics":
-		if e.complexity.Query.GetStreamMetrics == nil {
+	case "Query.getUsage":
+		if e.complexity.Query.GetUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getStreamMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetStreamMetrics(childComplexity, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetUsage(childComplexity, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
-	case "Query.getUserMetrics":
-		if e.complexity.Query.GetUserMetrics == nil {
+	case "Query.getUserUsage":
+		if e.complexity.Query.GetUserUsage == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getUserMetrics_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getUserUsage_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserMetrics(childComplexity, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetUserUsage(childComplexity, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -2145,6 +2068,83 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Subscription.Empty(childComplexity), true
 
+	case "Usage.entityID":
+		if e.complexity.Usage.EntityID == nil {
+			break
+		}
+
+		return e.complexity.Usage.EntityID(childComplexity), true
+
+	case "Usage.period":
+		if e.complexity.Usage.Period == nil {
+			break
+		}
+
+		return e.complexity.Usage.Period(childComplexity), true
+
+	case "Usage.readBytes":
+		if e.complexity.Usage.ReadBytes == nil {
+			break
+		}
+
+		return e.complexity.Usage.ReadBytes(childComplexity), true
+
+	case "Usage.readOps":
+		if e.complexity.Usage.ReadOps == nil {
+			break
+		}
+
+		return e.complexity.Usage.ReadOps(childComplexity), true
+
+	case "Usage.readRecords":
+		if e.complexity.Usage.ReadRecords == nil {
+			break
+		}
+
+		return e.complexity.Usage.ReadRecords(childComplexity), true
+
+	case "Usage.scanBytes":
+		if e.complexity.Usage.ScanBytes == nil {
+			break
+		}
+
+		return e.complexity.Usage.ScanBytes(childComplexity), true
+
+	case "Usage.scanOps":
+		if e.complexity.Usage.ScanOps == nil {
+			break
+		}
+
+		return e.complexity.Usage.ScanOps(childComplexity), true
+
+	case "Usage.time":
+		if e.complexity.Usage.Time == nil {
+			break
+		}
+
+		return e.complexity.Usage.Time(childComplexity), true
+
+	case "Usage.writeBytes":
+		if e.complexity.Usage.WriteBytes == nil {
+			break
+		}
+
+		return e.complexity.Usage.WriteBytes(childComplexity), true
+
+	case "Usage.writeOps":
+		if e.complexity.Usage.WriteOps == nil {
+			break
+		}
+
+		return e.complexity.Usage.WriteOps(childComplexity), true
+
+	case "Usage.writeRecords":
+		if e.complexity.Usage.WriteRecords == nil {
+			break
+		}
+
+		return e.complexity.Usage.WriteRecords(childComplexity), true
+
 	case "UserSecret.createdOn":
 		if e.complexity.UserSecret.CreatedOn == nil {
 			break
@@ -2291,36 +2291,6 @@ type Subscription {
   empty: String
 }
 `, BuiltIn: false},
-	{Name: "server/control/schema/metrics.graphql", Input: `extend type Query {
-  getMetrics(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getOrganizationMetrics(organizationID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getServiceMetrics(serviceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getStreamInstanceMetrics(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getStreamMetrics(streamID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-  getUserMetrics(userID: UUID!, period: String!, from: Time!, until: Time): [Metrics!]!
-}
-
-type Metrics {
-  entityID: UUID!
-  period: String!
-  time: Time!
-  readOps: Int!
-  readBytes: Int!
-  readRecords: Int!
-  writeOps: Int!
-  writeBytes: Int!
-  writeRecords: Int!
-  scanOps: Int!
-  scanBytes: Int!
-}
-
-enum EntityKind {
-  Organization
-  Service
-  StreamInstance
-  Stream
-  User
-}`, BuiltIn: false},
 	{Name: "server/control/schema/organizations.graphql", Input: `extend type Query {
   me: PrivateOrganization
   organizationByName(name: String!): Organization!
@@ -2623,6 +2593,36 @@ type StreamIndex {
   normalize: Boolean!
 }
 `, BuiltIn: false},
+	{Name: "server/control/schema/usage.graphql", Input: `extend type Query {
+  getUsage(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getOrganizationUsage(organizationID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getServiceUsage(serviceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getStreamInstanceUsage(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getStreamUsage(streamID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getUserUsage(userID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+}
+
+type Usage {
+  entityID: UUID!
+  period: String!
+  time: Time!
+  readOps: Int!
+  readBytes: Int!
+  readRecords: Int!
+  writeOps: Int!
+  writeBytes: Int!
+  writeRecords: Int!
+  scanOps: Int!
+  scanBytes: Int!
+}
+
+enum EntityKind {
+  Organization
+  Service
+  StreamInstance
+  Stream
+  User
+}`, BuiltIn: false},
 	{Name: "server/control/schema/users.graphql", Input: `# extend type Query {}
 
 extend type Mutation {
@@ -3618,7 +3618,175 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getOrganizationUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["organizationID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["organizationID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getServiceUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getStreamInstanceUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamInstanceID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamInstanceID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamInstanceID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getStreamUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["period"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["period"] = arg1
+	var arg2 time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg2
+	var arg3 *time.Time
+	if tmp, ok := rawArgs["until"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["until"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 EntityKind
@@ -3669,175 +3837,7 @@ func (ec *executionContext) field_Query_getMetrics_args(ctx context.Context, raw
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getOrganizationMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["organizationID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["organizationID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_getServiceMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["serviceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["serviceID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_getStreamInstanceMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamInstanceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamInstanceID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamInstanceID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_getStreamMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_getUserMetrics_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getUserUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 uuid.UUID
@@ -4219,391 +4219,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Metrics_entityID(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EntityID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(uuid.UUID)
-	fc.Result = res
-	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_period(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Period, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_time(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Time, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_readOps(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReadOps, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_readBytes(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReadBytes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_readRecords(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ReadRecords, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_writeOps(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.WriteOps, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_writeBytes(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.WriteBytes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_writeRecords(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.WriteRecords, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_scanOps(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ScanOps, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Metrics_scanBytes(ctx context.Context, field graphql.CollectedField, obj *Metrics) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Metrics",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ScanBytes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
 
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -8931,258 +8546,6 @@ func (ec *executionContext) _Query_ping(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetMetrics(rctx, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getOrganizationMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getOrganizationMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetOrganizationMetrics(rctx, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getServiceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getServiceMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetServiceMetrics(rctx, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getStreamInstanceMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getStreamInstanceMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetStreamInstanceMetrics(rctx, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getStreamMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getStreamMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetStreamMetrics(rctx, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_getUserMetrics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getUserMetrics_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserMetrics(rctx, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*Metrics)
-	fc.Result = res
-	return ec.marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9914,6 +9277,258 @@ func (ec *executionContext) _Query_streamInstancesByOrganizationProjectAndStream
 	res := resTmp.([]*models.StreamInstance)
 	fc.Result = res
 	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamInstanceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUsage(rctx, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getOrganizationUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getOrganizationUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetOrganizationUsage(rctx, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getServiceUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getServiceUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetServiceUsage(rctx, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getStreamInstanceUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getStreamInstanceUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetStreamInstanceUsage(rctx, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getStreamUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getStreamUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetStreamUsage(rctx, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getUserUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getUserUsage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUserUsage(rctx, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Usage)
+	fc.Result = res
+	return ec.marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11816,6 +11431,391 @@ func (ec *executionContext) _Subscription_empty(ctx context.Context, field graph
 	}
 }
 
+func (ec *executionContext) _Usage_entityID(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EntityID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_period(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Period, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_time(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_readOps(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_readBytes(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadBytes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_readRecords(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_writeOps(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteOps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_writeBytes(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteBytes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_writeRecords(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WriteRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_scanOps(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanOps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Usage_scanBytes(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Usage",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScanBytes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _UserSecret_userSecretID(ctx context.Context, field graphql.CollectedField, obj *models.UserSecret) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -13177,83 +13177,6 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 
 // region    **************************** object.gotpl ****************************
 
-var metricsImplementors = []string{"Metrics"}
-
-func (ec *executionContext) _Metrics(ctx context.Context, sel ast.SelectionSet, obj *Metrics) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, metricsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Metrics")
-		case "entityID":
-			out.Values[i] = ec._Metrics_entityID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "period":
-			out.Values[i] = ec._Metrics_period(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "time":
-			out.Values[i] = ec._Metrics_time(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "readOps":
-			out.Values[i] = ec._Metrics_readOps(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "readBytes":
-			out.Values[i] = ec._Metrics_readBytes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "readRecords":
-			out.Values[i] = ec._Metrics_readRecords(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "writeOps":
-			out.Values[i] = ec._Metrics_writeOps(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "writeBytes":
-			out.Values[i] = ec._Metrics_writeBytes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "writeRecords":
-			out.Values[i] = ec._Metrics_writeRecords(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "scanOps":
-			out.Values[i] = ec._Metrics_scanOps(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "scanBytes":
-			out.Values[i] = ec._Metrics_scanBytes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -14148,90 +14071,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "getMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getOrganizationMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getOrganizationMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getServiceMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getServiceMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getStreamInstanceMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getStreamInstanceMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getStreamMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getStreamMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "getUserMetrics":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getUserMetrics(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "me":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -14470,6 +14309,90 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_streamInstancesByOrganizationProjectAndStreamName(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUsage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getOrganizationUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getOrganizationUsage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getServiceUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getServiceUsage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getStreamInstanceUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getStreamInstanceUsage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getStreamUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getStreamUsage(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getUserUsage":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUserUsage(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -14883,6 +14806,83 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 }
 
+var usageImplementors = []string{"Usage"}
+
+func (ec *executionContext) _Usage(ctx context.Context, sel ast.SelectionSet, obj *Usage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, usageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Usage")
+		case "entityID":
+			out.Values[i] = ec._Usage_entityID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "period":
+			out.Values[i] = ec._Usage_period(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "time":
+			out.Values[i] = ec._Usage_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readOps":
+			out.Values[i] = ec._Usage_readOps(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readBytes":
+			out.Values[i] = ec._Usage_readBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readRecords":
+			out.Values[i] = ec._Usage_readRecords(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeOps":
+			out.Values[i] = ec._Usage_writeOps(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeBytes":
+			out.Values[i] = ec._Usage_writeBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "writeRecords":
+			out.Values[i] = ec._Usage_writeRecords(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "scanOps":
+			out.Values[i] = ec._Usage_scanOps(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "scanBytes":
+			out.Values[i] = ec._Usage_scanBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var userSecretImplementors = []string{"UserSecret"}
 
 func (ec *executionContext) _UserSecret(ctx context.Context, sel ast.SelectionSet, obj *models.UserSecret) graphql.Marshaler {
@@ -15262,53 +15262,6 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNMetrics2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetricsᚄ(ctx context.Context, sel ast.SelectionSet, v []*Metrics) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNMetrics2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetrics(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNMetrics2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐMetrics(ctx context.Context, sel ast.SelectionSet, v *Metrics) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Metrics(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNNewServiceSecret2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐNewServiceSecret(ctx context.Context, sel ast.SelectionSet, v NewServiceSecret) graphql.Marshaler {
@@ -15931,6 +15884,53 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUI
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*Usage) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUsage2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsage(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNUsage2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsage(ctx context.Context, sel ast.SelectionSet, v *Usage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Usage(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUserSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐUserSecretᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.UserSecret) graphql.Marshaler {

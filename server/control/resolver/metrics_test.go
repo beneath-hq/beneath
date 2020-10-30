@@ -8,8 +8,8 @@ import (
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
 )
 
-func TestAddMetrics(t *testing.T) {
-	m1 := &gql.Metrics{
+func TestAddUsage(t *testing.T) {
+	m1 := &gql.Usage{
 		ReadOps:      1,
 		ReadBytes:    10,
 		ReadRecords:  100,
@@ -18,7 +18,7 @@ func TestAddMetrics(t *testing.T) {
 		WriteRecords: 100000,
 	}
 
-	m2 := &gql.Metrics{
+	m2 := &gql.Usage{
 		ReadOps:      1,
 		ReadBytes:    2,
 		ReadRecords:  3,
@@ -27,7 +27,7 @@ func TestAddMetrics(t *testing.T) {
 		WriteRecords: 6,
 	}
 
-	m := addMetrics(m1, m2)
+	m := addUsage(m1, m2)
 	assert.Equal(t, m, m1)
 	assert.Equal(t, m.ReadOps, 2)
 	assert.Equal(t, m.ReadBytes, 12)
@@ -37,21 +37,21 @@ func TestAddMetrics(t *testing.T) {
 	assert.Equal(t, m.WriteRecords, 100006)
 }
 
-func TestMergeMetrics(t *testing.T) {
-	xs := []*gql.Metrics{
-		makeMetrics(2001, 1),
-		makeMetrics(2002, 2),
-		makeMetrics(2003, 3),
-		makeMetrics(2005, 4),
+func TestMergeUsage(t *testing.T) {
+	xs := []*gql.Usage{
+		makeUsage(2001, 1),
+		makeUsage(2002, 2),
+		makeUsage(2003, 3),
+		makeUsage(2005, 4),
 	}
 
-	ys := []*gql.Metrics{
-		makeMetrics(2000, 10),
-		makeMetrics(2001, 20),
-		makeMetrics(2002, 30),
-		makeMetrics(2004, 40),
-		makeMetrics(2005, 50),
-		makeMetrics(2006, 60),
+	ys := []*gql.Usage{
+		makeUsage(2000, 10),
+		makeUsage(2001, 20),
+		makeUsage(2002, 30),
+		makeUsage(2004, 40),
+		makeUsage(2005, 50),
+		makeUsage(2006, 60),
 	}
 
 	zs := mergeUsage(xs, ys)
@@ -73,8 +73,8 @@ func TestMergeMetrics(t *testing.T) {
 	assert.Equal(t, zs[6].ReadOps, 60)
 }
 
-func makeMetrics(year, val int) *gql.Metrics {
-	return &gql.Metrics{
+func makeUsage(year, val int) *gql.Usage {
+	return &gql.Usage{
 		Time:         time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
 		ReadOps:      val,
 		ReadBytes:    val,

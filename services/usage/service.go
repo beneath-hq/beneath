@@ -1,4 +1,4 @@
-package metrics
+package usage
 
 import (
 	"sync"
@@ -22,22 +22,22 @@ const (
 	OpTypeScan
 )
 
-// Options for creating the metrics service
+// Options for creating the usage service
 type Options struct {
 	CacheSize      int
 	CommitInterval time.Duration
 }
 
-// Service reads and writes metrics. For writes, it buffers updates and flushes them in the background.
+// Service reads and writes usage. For writes, it buffers updates and flushes them in the background.
 type Service struct {
 	opts   *Options
 	engine *engine.Engine
 
 	running          bool
-	usageBuffer      map[uuid.UUID]pb.QuotaUsage // accumulates metrics to commit
+	usageBuffer      map[uuid.UUID]pb.QuotaUsage // accumulates usage to flush
 	quotaEpochBuffer map[uuid.UUID]time.Time     // stores quota epochs for IDs in usageBuffer
 	mu               sync.RWMutex                // for buffers
-	commitTicker     *time.Ticker                // periodically triggers a commit to BigTable
+	commitTicker     *time.Ticker                // periodically triggers a flush to BigTable
 
 	usageCache gcache.Cache
 }

@@ -368,8 +368,8 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// check metrics have been accurately tracked for stream
 	res14 := queryGQL(`
-		query GetStreamMetrics($streamID: UUID!, $from: Time!) {
-			getStreamMetrics(streamID: $streamID, period: "month", from: $from) {
+		query GetStreamUsage($streamID: UUID!, $from: Time!) {
+			getStreamUsage(streamID: $streamID, period: "month", from: $from) {
 				entityID
 				time
 				readOps
@@ -385,20 +385,20 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"from":     timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
 	})
 	assert.Empty(t, res14.Errors)
-	streamMetrics := res14.Results()["getStreamMetrics"]
-	assert.Len(t, streamMetrics, 1)
-	assert.Equal(t, stream["streamID"], streamMetrics[0]["entityID"])
-	assert.Greater(t, int(streamMetrics[0]["readOps"].(float64)), 0)
-	assert.Greater(t, int(streamMetrics[0]["readBytes"].(float64)), 0)
-	assert.Greater(t, int(streamMetrics[0]["readRecords"].(float64)), 0)
-	assert.Equal(t, int(streamMetrics[0]["writeOps"].(float64)), 2)
-	assert.Greater(t, int(streamMetrics[0]["writeBytes"].(float64)), 0)
-	assert.Equal(t, int(streamMetrics[0]["writeRecords"].(float64)), len(foobars))
+	streamUsage := res14.Results()["getStreamUsage"]
+	assert.Len(t, streamUsage, 1)
+	assert.Equal(t, stream["streamID"], streamUsage[0]["entityID"])
+	assert.Greater(t, int(streamUsage[0]["readOps"].(float64)), 0)
+	assert.Greater(t, int(streamUsage[0]["readBytes"].(float64)), 0)
+	assert.Greater(t, int(streamUsage[0]["readRecords"].(float64)), 0)
+	assert.Equal(t, int(streamUsage[0]["writeOps"].(float64)), 2)
+	assert.Greater(t, int(streamUsage[0]["writeBytes"].(float64)), 0)
+	assert.Equal(t, int(streamUsage[0]["writeRecords"].(float64)), len(foobars))
 
 	// check metrics have been accurately tracked for the user
 	res15 := queryGQL(`
-		query GetUserMetrics($userID: UUID!, $from: Time!) {
-			getUserMetrics(userID: $userID, period: "month", from: $from) {
+		query GetUserUsage($userID: UUID!, $from: Time!) {
+			getUserUsage(userID: $userID, period: "month", from: $from) {
 				entityID
 				time
 				readOps
@@ -414,15 +414,15 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"from":   timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
 	})
 	assert.Empty(t, res15.Errors)
-	userMetrics := res15.Results()["getUserMetrics"]
-	assert.Len(t, userMetrics, 1)
-	assert.Equal(t, testUser.UserID.String(), userMetrics[0]["entityID"])
-	assert.Greater(t, int(userMetrics[0]["readOps"].(float64)), 0)
-	assert.Greater(t, int(userMetrics[0]["readBytes"].(float64)), 0)
-	assert.Greater(t, int(userMetrics[0]["readRecords"].(float64)), 0)
-	assert.Equal(t, int(userMetrics[0]["writeOps"].(float64)), 2)
-	assert.Greater(t, int(userMetrics[0]["writeBytes"].(float64)), 0)
-	assert.Equal(t, int(userMetrics[0]["writeRecords"].(float64)), len(foobars))
+	userUsage := res15.Results()["getUserUsage"]
+	assert.Len(t, userUsage, 1)
+	assert.Equal(t, testUser.UserID.String(), userUsage[0]["entityID"])
+	assert.Greater(t, int(userUsage[0]["readOps"].(float64)), 0)
+	assert.Greater(t, int(userUsage[0]["readBytes"].(float64)), 0)
+	assert.Greater(t, int(userUsage[0]["readRecords"].(float64)), 0)
+	assert.Equal(t, int(userUsage[0]["writeOps"].(float64)), 2)
+	assert.Greater(t, int(userUsage[0]["writeBytes"].(float64)), 0)
+	assert.Equal(t, int(userUsage[0]["writeRecords"].(float64)), len(foobars))
 
 	// test peek by grpc
 	res16, err := gatewayGRPC.QueryLog(grpcContext(), &pb.QueryLogRequest{

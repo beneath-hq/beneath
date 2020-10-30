@@ -1,4 +1,4 @@
-package metrics
+package usage
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func (s *Service) GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, la
 		until = time.Now()
 	}
 
-	// read usage table and collect usage metrics
+	// read and collect usage
 	var times []time.Time
 	var usages []pb.QuotaUsage
 	err := s.engine.Usage.ReadUsageRange(ctx, entityID, label, from, until, maxPeriods, func(ts time.Time, usage pb.QuotaUsage) error {
@@ -30,7 +30,7 @@ func (s *Service) GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, la
 		return nil
 	})
 	if err != nil {
-		panic(fmt.Errorf("error reading from metrics table: %s", err.Error()))
+		panic(fmt.Errorf("error reading usage: %s", err.Error()))
 	}
 
 	return times, usages, nil

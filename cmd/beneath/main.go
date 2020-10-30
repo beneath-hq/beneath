@@ -10,7 +10,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 
 	// registers all dependencies with the CLI
 	_ "gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
@@ -48,9 +48,9 @@ func init() {
 
 	cli.AddStartable(&cli.Startable{
 		Name: "data-server",
-		Register: func(lc *cli.Lifecycle, server *data.Server, metrics *metrics.Service) {
+		Register: func(lc *cli.Lifecycle, server *data.Server, usage *usage.Service) {
 			lc.Add("data-server", server)
-			lc.Add("metrics-broker", metrics)
+			lc.Add("usage-writer", usage)
 		},
 	})
 

@@ -1,4 +1,4 @@
-package metrics
+package usage
 
 import (
 	"context"
@@ -56,7 +56,7 @@ func (s *Service) TrackScan(ctx context.Context, secret models.Secret, nbytes in
 	}
 }
 
-// trackOp records the metrics for a given ID (project, user, or secret)
+// trackOp records the usage for a given ID (stream, instance, user, service, organization, ...)
 func (s *Service) trackOp(op OpType, id uuid.UUID, maybeQuotaEpoch time.Time, nrecords int64, nbytes int64) {
 	s.mu.Lock()
 	u := s.usageBuffer[id]

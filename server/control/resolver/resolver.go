@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
 	"gitlab.com/beneath-hq/beneath/services/organization"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
 	"gitlab.com/beneath-hq/beneath/services/project"
 	"gitlab.com/beneath-hq/beneath/services/secret"
 	"gitlab.com/beneath-hq/beneath/services/service"
 	"gitlab.com/beneath-hq/beneath/services/stream"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 	"gitlab.com/beneath-hq/beneath/services/user"
 )
 
 // Resolver implements gql.ResolverRoot
 type Resolver struct {
-	Metrics       *metrics.Service
+	Usage       *usage.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service

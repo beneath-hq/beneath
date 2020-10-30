@@ -19,7 +19,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
 	"gitlab.com/beneath-hq/beneath/server/control/resolver"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 	"gitlab.com/beneath-hq/beneath/services/organization"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
@@ -27,6 +26,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/services/secret"
 	"gitlab.com/beneath-hq/beneath/services/service"
 	"gitlab.com/beneath-hq/beneath/services/stream"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 	"gitlab.com/beneath-hq/beneath/services/user"
 )
 
@@ -44,7 +44,7 @@ type Server struct {
 	Router  *chi.Mux
 	Options *ServerOptions
 
-	Metrics       *metrics.Service
+	Usage       *usage.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service
@@ -57,7 +57,7 @@ type Server struct {
 // NewServer returns a new control server
 func NewServer(
 	opts *ServerOptions,
-	metrics *metrics.Service,
+	usage *usage.Service,
 	middleware *middleware.Service,
 	organization *organization.Service,
 	permissions *permissions.Service,
@@ -71,7 +71,7 @@ func NewServer(
 	server := &Server{
 		Router:        router,
 		Options:       opts,
-		Metrics:       metrics,
+		Usage:       usage,
 		Organizations: organization,
 		Permissions:   permissions,
 		Projects:      project,
@@ -148,7 +148,7 @@ func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {
 	return gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{
-		Metrics:       s.Metrics,
+		Usage:       s.Usage,
 		Organizations: s.Organizations,
 		Permissions:   s.Permissions,
 		Projects:      s.Projects,

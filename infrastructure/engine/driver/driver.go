@@ -277,13 +277,13 @@ const (
 // UsageService stores and retrieves aggregated usage by timestamp for different resources in Beneath.
 // It powers the monitoring dashboards and quota checks.
 type UsageService interface {
-	// WriteUsage writes a batch of usage metrics
+	// WriteUsage writes a batch of usage data
 	WriteUsage(ctx context.Context, id uuid.UUID, label UsageLabel, ts time.Time, usage pb.QuotaUsage) error
 
-	// ReadSingleUsage reads usage metrics for one key
+	// ReadSingleUsage reads usage data for one key
 	ReadUsageSingle(ctx context.Context, id uuid.UUID, label UsageLabel, ts time.Time) (pb.QuotaUsage, error)
 
-	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
+	// ReadUsage reads usage data for multiple periods and calls fn one by one
 	ReadUsageRange(ctx context.Context, id uuid.UUID, label UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error
 
 	// ClearUsage clears all usage data saved for the id

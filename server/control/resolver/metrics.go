@@ -15,33 +15,33 @@ import (
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
-func (r *queryResolver) GetMetrics(ctx context.Context, entityKind gql.EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetUsage(ctx context.Context, entityKind gql.EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	switch entityKind {
 	case gql.EntityKindOrganization:
-		return r.GetOrganizationMetrics(ctx, entityID, period, from, until)
+		return r.GetOrganizationUsage(ctx, entityID, period, from, until)
 	case gql.EntityKindService:
-		return r.GetServiceMetrics(ctx, entityID, period, from, until)
+		return r.GetServiceUsage(ctx, entityID, period, from, until)
 	case gql.EntityKindStreamInstance:
-		return r.GetStreamInstanceMetrics(ctx, entityID, period, from, until)
+		return r.GetStreamInstanceUsage(ctx, entityID, period, from, until)
 	case gql.EntityKindStream:
-		return r.GetStreamMetrics(ctx, entityID, period, from, until)
+		return r.GetStreamUsage(ctx, entityID, period, from, until)
 	case gql.EntityKindUser:
-		return r.GetUserMetrics(ctx, entityID, period, from, until)
+		return r.GetUserUsage(ctx, entityID, period, from, until)
 	}
 	return nil, gqlerror.Errorf("Unrecognized entity kind %s", entityKind)
 }
 
-func (r *queryResolver) GetOrganizationMetrics(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetOrganizationUsage(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.OrganizationPermissionsForSecret(ctx, secret, organizationID)
 	if !perms.View {
-		return nil, gqlerror.Errorf("you do not have permission to view this organization's metrics")
+		return nil, gqlerror.Errorf("you do not have permission to view this organization's usage")
 	}
 
 	return r.getUsage(ctx, organizationID, period, from, until)
 }
 
-func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetServiceUsage(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	service := r.Services.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("service not found")
@@ -50,13 +50,13 @@ func (r *queryResolver) GetServiceMetrics(ctx context.Context, serviceID uuid.UU
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
 	if !perms.View {
-		return nil, gqlerror.Errorf("you do not have permission to view this service's metrics")
+		return nil, gqlerror.Errorf("you do not have permission to view this service's usage")
 	}
 
 	return r.getUsage(ctx, serviceID, period, from, until)
 }
 
-func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetStreamInstanceUsage(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	stream := r.Streams.FindCachedInstance(ctx, streamInstanceID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream for instance %s not found", streamInstanceID.String())
@@ -65,13 +65,13 @@ func (r *queryResolver) GetStreamInstanceMetrics(ctx context.Context, streamInst
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
+		return nil, gqlerror.Errorf("you do not have permission to view this stream's usage")
 	}
 
 	return r.getUsage(ctx, streamInstanceID, period, from, until)
 }
 
-func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetStreamUsage(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	stream := r.Streams.FindStream(ctx, streamID)
 	if stream == nil {
 		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
@@ -80,13 +80,13 @@ func (r *queryResolver) GetStreamMetrics(ctx context.Context, streamID uuid.UUID
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, streamID, stream.ProjectID, stream.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("you do not have permission to view this stream's metrics")
+		return nil, gqlerror.Errorf("you do not have permission to view this stream's usage")
 	}
 
 	return r.getUsage(ctx, stream.StreamID, period, from, until)
 }
 
-func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
+func (r *queryResolver) GetUserUsage(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
 	secret := middleware.GetSecret(ctx)
 	if secret.GetOwnerID() != userID {
 		user := r.Users.FindUser(ctx, userID)
@@ -96,15 +96,15 @@ func (r *queryResolver) GetUserMetrics(ctx context.Context, userID uuid.UUID, pe
 
 		perms := r.Permissions.OrganizationPermissionsForSecret(ctx, secret, user.BillingOrganizationID)
 		if !perms.View {
-			return nil, gqlerror.Errorf("you do not have permission to view this user's metrics")
+			return nil, gqlerror.Errorf("you do not have permission to view this user's usage")
 		}
 	}
 
 	return r.getUsage(ctx, userID, period, from, until)
 }
 
-func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Metrics, error) {
-	// if until is not provided, set to the empty time (metrics.GetUsage then defaults to current time)
+func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*gql.Usage, error) {
+	// if until is not provided, set to the empty time (usage.GetUsage then defaults to current time)
 	if until == nil {
 		until = &time.Time{}
 	}
@@ -121,14 +121,14 @@ func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period
 		return nil, gqlerror.Errorf("unsupported usage period '%s'", period)
 	}
 
-	times, usages, err := r.Metrics.GetHistoricalUsage(ctx, entityID, label, from, *until)
+	times, usages, err := r.Usage.GetHistoricalUsage(ctx, entityID, label, from, *until)
 	if err != nil {
 		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
 	}
 
-	metrics := make([]*gql.Metrics, len(usages))
+	gqlUsages := make([]*gql.Usage, len(usages))
 	for i, usage := range usages {
-		metrics[i] = &gql.Metrics{
+		gqlUsages[i] = &gql.Usage{
 			EntityID:     entityID,
 			Period:       period,
 			Time:         times[i],
@@ -143,10 +143,10 @@ func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period
 		}
 	}
 
-	return metrics, nil
+	return gqlUsages, nil
 }
 
-func mergeUsage(xs []*gql.Metrics, ys []*gql.Metrics) []*gql.Metrics {
+func mergeUsage(xs []*gql.Usage, ys []*gql.Usage) []*gql.Usage {
 	if len(xs) == 0 {
 		return ys
 	}
@@ -155,13 +155,13 @@ func mergeUsage(xs []*gql.Metrics, ys []*gql.Metrics) []*gql.Metrics {
 	}
 
 	n := mathutil.MaxInt(len(xs), len(ys))
-	zs := make([]*gql.Metrics, 0, n)
+	zs := make([]*gql.Usage, 0, n)
 
 	var i, j int
 	for i < len(xs) && j < len(ys) {
 		diff := xs[i].Time.Sub(ys[j].Time)
 		if diff == 0 {
-			zs = append(zs, addMetrics(xs[i], ys[j]))
+			zs = append(zs, addUsage(xs[i], ys[j]))
 			i++
 			j++
 		} else if diff < 0 {
@@ -188,7 +188,7 @@ func mergeUsage(xs []*gql.Metrics, ys []*gql.Metrics) []*gql.Metrics {
 	return zs
 }
 
-func addMetrics(target, other *gql.Metrics) *gql.Metrics {
+func addUsage(target, other *gql.Usage) *gql.Usage {
 	target.ReadOps += other.ReadOps
 	target.ReadBytes += other.ReadBytes
 	target.ReadRecords += other.ReadRecords

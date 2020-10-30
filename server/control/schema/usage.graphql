@@ -1,0 +1,30 @@
+extend type Query {
+  getUsage(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getOrganizationUsage(organizationID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getServiceUsage(serviceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getStreamInstanceUsage(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getStreamUsage(streamID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getUserUsage(userID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+}
+
+type Usage {
+  entityID: UUID!
+  period: String!
+  time: Time!
+  readOps: Int!
+  readBytes: Int!
+  readRecords: Int!
+  writeOps: Int!
+  writeBytes: Int!
+  writeRecords: Int!
+  scanOps: Int!
+  scanBytes: Int!
+}
+
+enum EntityKind {
+  Organization
+  Service
+  StreamInstance
+  Stream
+  User
+}
