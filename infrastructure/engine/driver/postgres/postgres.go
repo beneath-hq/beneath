@@ -39,3 +39,8 @@ func (p *Postgres) AsLookupService() driver.LookupService {
 func (p *Postgres) AsWarehouseService() driver.WarehouseService {
 	return p
 }
+
+// AsUsageService implements Service
+func (p *Postgres) AsUsageService() driver.UsageService {
+	return p
+}

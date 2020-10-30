@@ -25,3 +25,8 @@ func (p *Mock) AsLookupService() driver.LookupService {
 func (p *Mock) AsWarehouseService() driver.WarehouseService {
 	return p
 }
+
+// AsUsageService implements Service
+func (p *Mock) AsUsageService() driver.UsageService {
+	return nil
+}

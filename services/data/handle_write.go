@@ -32,11 +32,11 @@ const (
 )
 
 type writeTags struct {
-	WriteID   uuid.UUID      `json:"write_id,omitempty"`
-	Instances []writeMetrics `json:"instances,omitempty"`
+	WriteID   uuid.UUID    `json:"write_id,omitempty"`
+	Instances []writeUsage `json:"instances,omitempty"`
 }
 
-type writeMetrics struct {
+type writeUsage struct {
 	InstanceID   uuid.UUID `json:"instance,omitempty"`
 	RecordsCount int       `json:"records,omitempty"`
 	BytesWritten int       `json:"bytes,omitempty"`
@@ -51,7 +51,7 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 	}
 
 	// check quota
-	err := s.CheckWriteQuota(ctx, secret)
+	err := s.Usage.CheckWriteQuota(ctx, secret)
 	if err != nil {
 		return nil, newError(http.StatusTooManyRequests, err.Error())
 	}
@@ -108,7 +108,7 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 
 	// process each InstanceRecords
 	instanceRecords := make([]*pb.InstanceRecords, 0, len(req.InstanceRecords))
-	instanceMetrics := make([]writeMetrics, 0, len(req.InstanceRecords))
+	instanceUsage := make([]writeUsage, 0, len(req.InstanceRecords))
 	for instanceID, records := range req.InstanceRecords {
 		// check the batch length is valid
 		err = s.Engine.CheckBatchLength(records.Len())
@@ -128,7 +128,7 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 			InstanceId: instanceID.Bytes(),
 			Records:    pbs,
 		})
-		instanceMetrics = append(instanceMetrics, writeMetrics{
+		instanceUsage = append(instanceUsage, writeUsage{
 			InstanceID:   instanceID,
 			BytesWritten: bytes,
 			RecordsCount: records.Len(),
@@ -145,16 +145,16 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 		return nil, newError(http.StatusBadRequest, err.Error())
 	}
 
-	// track write metrics
-	for _, im := range instanceMetrics {
+	// track write usage
+	for _, im := range instanceUsage {
 		stream := instances[im.InstanceID]
-		s.TrackWrite(ctx, secret, stream.StreamID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
+		s.Usage.TrackWrite(ctx, secret, stream.StreamID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
 	}
 
 	// set log payload
 	payload := writeTags{
 		WriteID:   writeID,
-		Instances: instanceMetrics,
+		Instances: instanceUsage,
 	}
 	middleware.SetTagsPayload(ctx, payload)
 

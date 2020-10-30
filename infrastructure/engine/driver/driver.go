@@ -10,7 +10,6 @@ import (
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/codec"
 	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // Tracking drivers
@@ -122,11 +121,14 @@ type Record interface {
 
 // Service encapsulates functionality expected of components that store instance data in Beneath
 type Service interface {
-	// AsLookupService should return the service cast as a LookupService if supported, else false
+	// AsLookupService should return the service cast as a LookupService if supported, else nil
 	AsLookupService() LookupService
 
-	// AsWarehouseService should return the service cast as a WarehouseService if supported, else false
+	// AsWarehouseService should return the service cast as a WarehouseService if supported, else nil
 	AsWarehouseService() WarehouseService
+
+	// AsUsageService should return the service cast as a UsageService if supported, else nil
+	AsUsageService() UsageService
 
 	// MaxKeySize should return the maximum allowed byte size of a single record's key
 	MaxKeySize() int
@@ -166,20 +168,6 @@ type LookupService interface {
 
 	// WriteRecord persists the records
 	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
-
-	// NOTE: Usage tracking is temporarily implemented here, but really should be implemented on top of the engine, not in it
-
-	// CommitUsage writes a batch of usage metrics
-	CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time, usage pb.QuotaUsage) error
-
-	// ReadSingleUsage reads usage metrics for one key
-	ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error)
-
-	// ReadUsage reads usage metrics for multiple periods and calls fn one by one
-	ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error
-
-	// ClearUsage clears all usage data saved for the id
-	ClearUsage(ctx context.Context, id uuid.UUID) error
 }
 
 // Warehouse
@@ -268,4 +256,39 @@ type WarehouseJob interface {
 
 	// GetResultSizeRecords returns an estimate of the number of records in the query result
 	GetResultSizeRecords() int64
+}
+
+// Usage
+// -----
+
+// NOTE: Usage tracking is temporarily implemented in the engine, but logically doesn't really belong here.
+// It should really be implemented as separate infrastructure (possibly even on top of the engine as "meta" streams).
+
+// UsageLabel defines valid labels for UsageService
+type UsageLabel string
+
+// Consts for UsageService
+const (
+	UsageLabelMonthly    = "month"
+	UsageLabelHourly     = "hour"
+	UsageLabelQuotaMonth = "quota_month"
+)
+
+// UsageService stores and retrieves aggregated usage by timestamp for different resources in Beneath.
+// It powers the monitoring dashboards and quota checks.
+type UsageService interface {
+	// WriteUsage writes a batch of usage data
+	WriteUsage(ctx context.Context, id uuid.UUID, label UsageLabel, ts time.Time, usage pb.QuotaUsage) error
+
+	// ReadSingleUsage reads usage data for one key
+	ReadUsageSingle(ctx context.Context, id uuid.UUID, label UsageLabel, ts time.Time) (pb.QuotaUsage, error)
+
+	// ReadUsage reads usage data for multiple periods and calls fn one by one
+	ReadUsageRange(ctx context.Context, id uuid.UUID, label UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error
+
+	// ClearUsage clears all usage data saved for the id
+	ClearUsage(ctx context.Context, id uuid.UUID) error
+
+	// Reset should clear all data in the service
+	Reset(ctx context.Context) error
 }

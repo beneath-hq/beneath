@@ -169,12 +169,16 @@ func (c *Cache) userGetter(ctx context.Context, hashedToken []byte) func() (inte
 				"user_secret.read_only",
 				"user_secret.public_only",
 				"User.user_id",
+				"User.quota_epoch",
 				"User.read_quota",
 				"User.write_quota",
+				"User.scan_quota",
 				"User.master",
 				"User.BillingOrganization.organization_id",
+				"User.BillingOrganization.quota_epoch",
 				"User.BillingOrganization.read_quota",
 				"User.BillingOrganization.write_quota",
+				"User.BillingOrganization.scan_quota",
 			).
 			Where("hashed_token = ?", hashedToken).
 			Select()
@@ -185,11 +189,15 @@ func (c *Cache) userGetter(ctx context.Context, hashedToken []byte) func() (inte
 		if secret.User != nil {
 			secret.UserID = secret.User.UserID
 			secret.Master = secret.User.Master
+			secret.BillingQuotaEpoch = secret.User.BillingOrganization.QuotaEpoch
 			secret.BillingOrganizationID = secret.User.BillingOrganization.OrganizationID
 			secret.BillingReadQuota = secret.User.BillingOrganization.ReadQuota
 			secret.BillingWriteQuota = secret.User.BillingOrganization.WriteQuota
+			secret.BillingScanQuota = secret.User.BillingOrganization.ScanQuota
+			secret.OwnerQuotaEpoch = secret.User.QuotaEpoch
 			secret.OwnerReadQuota = secret.User.ReadQuota
 			secret.OwnerWriteQuota = secret.User.WriteQuota
+			secret.OwnerScanQuota = secret.User.ScanQuota
 			secret.User = nil
 		}
 
@@ -204,11 +212,15 @@ func (c *Cache) serviceGetter(ctx context.Context, hashedToken []byte) func() (i
 			Column(
 				"service_secret.service_secret_id",
 				"Service.service_id",
+				"Service.quota_epoch",
 				"Service.read_quota",
 				"Service.write_quota",
+				"Service.scan_quota",
 				"Service.Project.organization_id",
+				"Service.Project.Organization.quota_epoch",
 				"Service.Project.Organization.read_quota",
 				"Service.Project.Organization.write_quota",
+				"Service.Project.Organization.scan_quota",
 			).
 			Where("hashed_token = ?", hashedToken).
 			Select()
@@ -220,10 +232,14 @@ func (c *Cache) serviceGetter(ctx context.Context, hashedToken []byte) func() (i
 			secret.ServiceID = secret.Service.ServiceID
 			secret.Master = false
 			secret.BillingOrganizationID = secret.Service.Project.OrganizationID
+			secret.BillingQuotaEpoch = secret.Service.Project.Organization.QuotaEpoch
 			secret.BillingReadQuota = secret.Service.Project.Organization.ReadQuota
 			secret.BillingWriteQuota = secret.Service.Project.Organization.WriteQuota
+			secret.BillingScanQuota = secret.Service.Project.Organization.ScanQuota
+			secret.OwnerQuotaEpoch = secret.Service.QuotaEpoch
 			secret.OwnerReadQuota = secret.Service.ReadQuota
 			secret.OwnerWriteQuota = secret.Service.WriteQuota
+			secret.OwnerScanQuota = secret.Service.ScanQuota
 			secret.Service = nil
 		}
 

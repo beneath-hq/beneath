@@ -348,7 +348,7 @@ func (r *Resolver) organizationToPrivateOrganization(ctx context.Context, o *mod
 		Projects:          o.Projects,
 	}
 
-	usage := r.Metrics.GetCurrentUsage(ctx, o.OrganizationID)
+	usage := r.Usage.GetCurrentQuotaUsage(ctx, o.OrganizationID, o.QuotaEpoch)
 	po.ReadUsage = int(usage.ReadBytes)
 	po.WriteUsage = int(usage.WriteBytes)
 	po.ScanUsage = int(usage.ScanBytes)

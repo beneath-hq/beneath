@@ -11,16 +11,7 @@ func init() {
 	// The control worker is so lean, it's defined below in this file.
 	// It basically just ensures all services are created in the process (to register
 	// their events handlers with the bus, and then calls bus.Run)
-
 	cli.AddDependency(NewControlWorker)
-
-	cli.AddStartable(&cli.Startable{
-		Name: "control-worker",
-		Register: func(lc *cli.Lifecycle, worker *ControlWorker) {
-			lc.Add("control-worker", worker)
-		},
-	})
-
 }
 
 // ControlWorker is the background worker for async events (i.e. it runs bus.Run)

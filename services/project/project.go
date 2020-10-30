@@ -9,8 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // Service manages Beneath projects
@@ -64,7 +64,7 @@ func (s *Service) FindProjectByOrganizationAndName(ctx context.Context, organiza
 func (s *Service) FindProjectsForUser(ctx context.Context, userID uuid.UUID) []*models.Project {
 	var projects []*models.Project
 	err := s.DB.GetDB(ctx).ModelContext(ctx, &projects).
-		Relation("Organization").
+		Column("project.*", "Organization").
 		Join("JOIN permissions_users_projects AS pup ON pup.project_id = project.project_id").
 		Where("pup.user_id = ?", userID).
 		Order("project.name").

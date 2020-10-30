@@ -53,7 +53,7 @@ func (s *Service) HandleSubscribe(ctx context.Context, req *SubscribeRequest) (*
 	}
 
 	// check usage
-	err = s.CheckReadQuota(ctx, req.Secret)
+	err = s.Usage.CheckReadQuota(ctx, req.Secret)
 	if err != nil {
 		return nil, newError(http.StatusTooManyRequests, err.Error())
 	}

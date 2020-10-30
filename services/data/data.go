@@ -3,9 +3,9 @@ package data
 import (
 	"gitlab.com/beneath-hq/beneath/infrastructure/engine"
 	"gitlab.com/beneath-hq/beneath/infrastructure/mq"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
 	"gitlab.com/beneath-hq/beneath/services/stream"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 )
 
 // Service implements the data-plane functionality for handling requests
@@ -14,7 +14,7 @@ import (
 type Service struct {
 	MQ          mq.MessageQueue
 	Engine      *engine.Engine
-	Metrics     *metrics.Broker
+	Usage     *usage.Service
 	Permissions *permissions.Service
 	Streams     *stream.Service
 
@@ -23,7 +23,7 @@ type Service struct {
 }
 
 // New returns a new data service instance
-func New(mq mq.MessageQueue, engine *engine.Engine, metrics *metrics.Broker, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
+func New(mq mq.MessageQueue, engine *engine.Engine, usage *usage.Service, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
 	err := mq.RegisterTopic(writeRequestsTopic)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func New(mq mq.MessageQueue, engine *engine.Engine, metrics *metrics.Broker, per
 	return &Service{
 		MQ:          mq,
 		Engine:      engine,
-		Metrics:     metrics,
+		Usage:     usage,
 		Permissions: permissions,
 		Streams:     streams,
 	}, nil

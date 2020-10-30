@@ -1,5 +1,5 @@
 # Configures gqlgen – docs at https://gqlgen.com/config/
-# skip_validation: true
+skip_validation: true
 schema:
 - "server/control/schema/**/*.graphql"
 exec:

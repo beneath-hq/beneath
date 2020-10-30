@@ -7,8 +7,8 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
 	"gitlab.com/beneath-hq/beneath/pkg/paymentsutil"
+	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
 func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUID) (*entity.BillingInfo, error) {
@@ -19,7 +19,7 @@ func (r *queryResolver) BillingInfo(ctx context.Context, organizationID uuid.UUI
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions in organization %s", organizationID.String())
 	}
 
-	billingInfo := entity.FindBillingInfo(ctx, organizationID)
+	billingInfo := entity.FindBillingInfoByOrganization(ctx, organizationID)
 	if billingInfo == nil {
 		return nil, gqlerror.Errorf("Billing info for organization %s not found", organizationID)
 	}
@@ -35,7 +35,7 @@ func (r *mutationResolver) UpdateBillingInfo(ctx context.Context, organizationID
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
-	prevBillingInfo := entity.FindBillingInfo(ctx, organizationID)
+	prevBillingInfo := entity.FindBillingInfoByOrganization(ctx, organizationID)
 	if prevBillingInfo == nil {
 		return nil, gqlerror.Errorf("Existing billing info not found")
 	}

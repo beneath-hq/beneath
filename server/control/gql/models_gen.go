@@ -16,20 +16,6 @@ type Organization interface {
 	IsOrganization()
 }
 
-type Metrics struct {
-	EntityID     uuid.UUID `json:"entityID"`
-	Period       string    `json:"period"`
-	Time         time.Time `json:"time"`
-	ReadOps      int       `json:"readOps"`
-	ReadBytes    int       `json:"readBytes"`
-	ReadRecords  int       `json:"readRecords"`
-	WriteOps     int       `json:"writeOps"`
-	WriteBytes   int       `json:"writeBytes"`
-	WriteRecords int       `json:"writeRecords"`
-	ScanOps      int       `json:"scanOps"`
-	ScanBytes    int       `json:"scanBytes"`
-}
-
 type NewServiceSecret struct {
 	Secret *models.ServiceSecret `json:"secret"`
 	Token  string                `json:"token"`
@@ -48,12 +34,13 @@ type PrivateOrganization struct {
 	PhotoURL          *string                               `json:"photoURL"`
 	CreatedOn         time.Time                             `json:"createdOn"`
 	UpdatedOn         time.Time                             `json:"updatedOn"`
-	PrepaidReadQuota  *int                                  `json:"prepaidReadQuota"`
-	PrepaidWriteQuota *int                                  `json:"prepaidWriteQuota"`
-	PrepaidScanQuota  *int                                  `json:"prepaidScanQuota"`
+	QuotaEpoch        *time.Time                            `json:"quotaEpoch"`
 	ReadQuota         *int                                  `json:"readQuota"`
 	WriteQuota        *int                                  `json:"writeQuota"`
 	ScanQuota         *int                                  `json:"scanQuota"`
+	PrepaidReadQuota  *int                                  `json:"prepaidReadQuota"`
+	PrepaidWriteQuota *int                                  `json:"prepaidWriteQuota"`
+	PrepaidScanQuota  *int                                  `json:"prepaidScanQuota"`
 	ReadUsage         int                                   `json:"readUsage"`
 	WriteUsage        int                                   `json:"writeUsage"`
 	ScanUsage         int                                   `json:"scanUsage"`
@@ -64,6 +51,20 @@ type PrivateOrganization struct {
 }
 
 func (PrivateOrganization) IsOrganization() {}
+
+type Usage struct {
+	EntityID     uuid.UUID `json:"entityID"`
+	Period       string    `json:"period"`
+	Time         time.Time `json:"time"`
+	ReadOps      int       `json:"readOps"`
+	ReadBytes    int       `json:"readBytes"`
+	ReadRecords  int       `json:"readRecords"`
+	WriteOps     int       `json:"writeOps"`
+	WriteBytes   int       `json:"writeBytes"`
+	WriteRecords int       `json:"writeRecords"`
+	ScanOps      int       `json:"scanOps"`
+	ScanBytes    int       `json:"scanBytes"`
+}
 
 type EntityKind string
 

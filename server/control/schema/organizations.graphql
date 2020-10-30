@@ -48,12 +48,13 @@ type PrivateOrganization implements Organization {
   photoURL: String
   createdOn: Time!
   updatedOn: Time!
-  prepaidReadQuota: Int
-  prepaidWriteQuota: Int
-  prepaidScanQuota: Int
+  quotaEpoch: Time
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+  prepaidReadQuota: Int
+  prepaidWriteQuota: Int
+  prepaidScanQuota: Int
   readUsage: Int!
   writeUsage: Int!
   scanUsage: Int!
@@ -73,6 +74,7 @@ type OrganizationMember {
   view: Boolean!
   create: Boolean!
   admin: Boolean!
+  quotaEpoch: Time!
   readQuota: Int
   writeQuota: Int
   scanQuota: Int

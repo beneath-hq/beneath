@@ -15,6 +15,7 @@ import (
 type Engine struct {
 	Lookup    driver.LookupService
 	Warehouse driver.WarehouseService
+	Usage     driver.UsageService
 
 	maxBatchLength int
 	maxRecordSize  int
@@ -63,9 +64,16 @@ func NewEngine(indexOpts *IndexOptions, warehouseOpts *WarehouseOptions) (*Engin
 		}
 	}
 
+	// make usage service. THIS IS A HACK.
+	usageService := lookupService.AsUsageService()
+	if usageService == nil {
+		return nil, fmt.Errorf("expected lookup service to double as a usage service")
+	}
+
 	e := &Engine{
 		Lookup:         lookupService,
 		Warehouse:      warehouseService,
+		Usage:          usageService,
 		maxBatchLength: mathutil.MinInts(lookupService.MaxRecordsInBatch(), warehouseService.MaxRecordsInBatch()),
 		maxRecordSize:  mathutil.MinInts(lookupService.MaxRecordSize(), warehouseService.MaxRecordSize()),
 		maxKeySize:     mathutil.MinInts(lookupService.MaxKeySize(), warehouseService.MaxKeySize()),

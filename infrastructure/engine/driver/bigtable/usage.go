@@ -3,22 +3,19 @@ package bigtable
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/bigtable"
 	uuid "github.com/satori/go.uuid"
 
+	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
-// CommitUsage implements engine.LookupService
-func (b BigTable) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time, usage pb.QuotaUsage) error {
-	// get table
-	table := b.Usage
-	if period > timeutil.PeriodDay {
-		table = b.UsageTemp
-	}
+// WriteUsage implements engine.LookupService
+func (b BigTable) WriteUsage(ctx context.Context, id uuid.UUID, label driver.UsageLabel, ts time.Time, usage pb.QuotaUsage) error {
+	table := b.tableForUsageLabel(label)
 
 	rmw := bigtable.NewReadModifyWrite()
 
@@ -39,7 +36,7 @@ func (b BigTable) CommitUsage(ctx context.Context, id uuid.UUID, period timeutil
 		rmw.Increment(usageColumnFamilyName, usageScanBytesColumnName, usage.ScanBytes)
 	}
 
-	key := makeUsageKey(id, period, ts, 0)
+	key := b.makeUsageKey(id, label, ts)
 	_, err := table.ApplyReadModifyWrite(ctx, key, rmw)
 	return err
 }
@@ -61,49 +58,30 @@ func (b BigTable) ClearUsage(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// ReadSingleUsage implements engine.LookupService
-func (b BigTable) ReadSingleUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, ts time.Time) (pb.QuotaUsage, error) {
-	// get table
-	table := b.Usage
-	if period > timeutil.PeriodDay {
-		table = b.UsageTemp
-	}
-
-	// add filter for latest cell value
+// ReadUsageSingle implements engine.LookupService
+func (b BigTable) ReadUsageSingle(ctx context.Context, id uuid.UUID, label driver.UsageLabel, ts time.Time) (pb.QuotaUsage, error) {
+	key := b.makeUsageKey(id, label, ts)
+	table := b.tableForUsageLabel(label)
 	filter := bigtable.RowFilter(bigtable.LatestNFilter(1))
-
-	// read row
-	key := makeUsageKey(id, period, ts, 0)
 	row, err := table.ReadRow(ctx, key, filter)
 	if err != nil {
 		return pb.QuotaUsage{}, err
 	}
-
-	// build usage
-	usage := b.rowToUsage(row)
-
-	// done
-	return usage, nil
+	return b.rowToUsage(row), nil
 }
 
-// ReadUsage implements engine.LookupService
-func (b BigTable) ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.Period, from time.Time, until time.Time, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
-	// get table
-	table := b.Usage
-	if period > timeutil.PeriodDay {
-		table = b.UsageTemp
-	}
-
+// ReadUsageRange implements engine.LookupService
+func (b BigTable) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
 	// convert keyRange to RowSet
-	fromKey := makeUsageKey(id, period, from, 0)
-	toKey := makeUsageKey(id, period, until, time.Second)
+	fromKey := b.makeUsageKey(id, label, from)
+	toKey := b.makeUsageKey(id, label, until.Add(time.Second))
 	rr := bigtable.NewRange(fromKey, toKey)
 
 	// define callback triggered on each bigtable row
 	var cbErr error
 	cb := func(row bigtable.Row) bool {
 		// get values
-		_, _, ts := parseUsageKey(row.Key())
+		ts := b.parseUsageKeyTime(row.Key())
 		usage := b.rowToUsage(row)
 
 		// trigger callback
@@ -117,7 +95,8 @@ func (b BigTable) ReadUsage(ctx context.Context, id uuid.UUID, period timeutil.P
 	}
 
 	// read rows
-	err := table.ReadRows(ctx, rr, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	table := b.tableForUsageLabel(label)
+	err := table.ReadRows(ctx, rr, cb, bigtable.RowFilter(bigtable.LatestNFilter(1)), bigtable.LimitRows(int64(limit)))
 	if err != nil {
 		return err
 	} else if cbErr != nil {
@@ -152,4 +131,43 @@ func (b *BigTable) rowToUsage(row bigtable.Row) pb.QuotaUsage {
 		}
 	}
 	return usage
+}
+
+func (b *BigTable) tableForUsageLabel(label driver.UsageLabel) *bigtable.Table {
+	if label == driver.UsageLabelHourly {
+		return b.UsageTemp
+	}
+	return b.Usage
+}
+
+func (b *BigTable) usageLabelToByte(label driver.UsageLabel) byte {
+	switch label {
+	case driver.UsageLabelMonthly:
+		return 'M'
+	case driver.UsageLabelHourly:
+		return 'H'
+	case driver.UsageLabelQuotaMonth:
+		return 'q'
+	default:
+		panic(fmt.Errorf("missing case in usageLabelToByte"))
+	}
+}
+
+func (b *BigTable) makeUsageKey(id uuid.UUID, label driver.UsageLabel, ts time.Time) string {
+	cap := uuid.Size + 1 + int64ByteSize
+	key := make([]byte, 0, cap)
+	key = append(key, id[:]...)
+	key = append(key, b.usageLabelToByte(label))
+	key = append(key, timeToBytesMs(ts)...)
+	return byteSliceToString(key)
+}
+
+func (b *BigTable) parseUsageKeyTime(key string) time.Time {
+	bs := stringToByteSlice(key)
+	if len(bs) != uuid.Size+1+int64ByteSize {
+		panic(fmt.Errorf("not a usage key"))
+	}
+
+	ts := bytesToTimeMs(bs[uuid.Size+1:])
+	return ts
 }
