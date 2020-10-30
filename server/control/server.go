@@ -8,12 +8,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
-	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
@@ -44,7 +44,7 @@ type Server struct {
 	Router  *chi.Mux
 	Options *ServerOptions
 
-	Usage       *usage.Service
+	Usage         *usage.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service
@@ -71,7 +71,7 @@ func NewServer(
 	server := &Server{
 		Router:        router,
 		Options:       opts,
-		Usage:       usage,
+		Usage:         usage,
 		Organizations: organization,
 		Permissions:   permissions,
 		Projects:      project,
@@ -113,17 +113,16 @@ func NewServer(
 		panic(fmt.Errorf("Testing error at %v", time.Now()))
 	})
 
-	// Add playground
-	router.Handle("/playground", playground.Handler("Beneath", "/graphql"))
-
 	// Add graphql server
-	gqlHandler := handler.New(server.makeExecutableSchema())
-	gqlHandler.AroundResponses(graphqlQueryLoggingMiddleware)
-	gqlHandler.SetErrorPresenter(graphqlErrorPresenter)
-	gqlHandler.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
-		panic(err)
-	})
-	router.Handle("/graphql", gqlHandler)
+	gqlsrv := handler.New(server.makeExecutableSchema())
+	gqlsrv.AddTransport(transport.GET{})
+	gqlsrv.AddTransport(transport.POST{})
+	gqlsrv.Use(extension.Introspection{})
+	gqlsrv.AroundResponses(middleware.QueryLoggingGQLMiddleware)
+	gqlsrv.SetErrorPresenter(middleware.DefaultGQLErrorPresenter)
+	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc)
+	router.Handle("/graphql", gqlsrv)
+	router.Handle("/playground", playground.Handler("Beneath", "/graphql"))
 
 	return server
 }
@@ -148,7 +147,7 @@ func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {
 	return gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{
-		Usage:       s.Usage,
+		Usage:         s.Usage,
 		Organizations: s.Organizations,
 		Permissions:   s.Permissions,
 		Projects:      s.Projects,
@@ -157,49 +156,4 @@ func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {
 		Streams:       s.Streams,
 		Users:         s.Users,
 	}})
-}
-
-type gqlLog struct {
-	Op    string                 `json:"op"`
-	Name  string                 `json:"name,omitempty"`
-	Field string                 `json:"field"`
-	Error error                  `json:"error,omitempty"`
-	Vars  map[string]interface{} `json:"vars,omitempty"`
-}
-
-func graphqlErrorPresenter(ctx context.Context, err error) *gqlerror.Error {
-	tags := middleware.GetTags(ctx)
-	if q, ok := tags.Payload.(gqlLog); ok {
-		q.Error = err
-	}
-	// Uncomment this line to print resolver error details in the console
-	// fmt.Printf("Error in GraphQL Resolver: %s", err.Error())
-	return graphql.DefaultErrorPresenter(ctx, err)
-}
-
-func graphqlQueryLoggingMiddleware(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
-	reqCtx := graphql.GetRequestContext(ctx)
-	middleware.SetTagsPayload(ctx, logInfoFromRequestContext(reqCtx))
-	return next(ctx)
-}
-
-func logInfoFromRequestContext(ctx *graphql.RequestContext) interface{} {
-	var queries []gqlLog
-	for _, op := range ctx.Doc.Operations {
-		for _, sel := range op.SelectionSet {
-			if field, ok := sel.(*ast.Field); ok {
-				name := op.Name
-				if name == "" {
-					name = "Unnamed"
-				}
-				queries = append(queries, gqlLog{
-					Op:    string(op.Operation),
-					Name:  name,
-					Field: field.Name,
-					Vars:  ctx.Variables,
-				})
-			}
-		}
-	}
-	return queries
 }
