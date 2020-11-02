@@ -177,6 +177,9 @@ class Cursor:
           break
 
     async def _tick():
+      # poll on startup
+      await _poll()
+
       async for _ in ticker:
         await _poll()
 
