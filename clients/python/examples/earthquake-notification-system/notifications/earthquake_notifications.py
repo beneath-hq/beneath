@@ -31,7 +31,7 @@ p = beneath.Pipeline(parse_args=True)
 
 async def detect_big_earthquakes(earthquake):
   # only react to big earthquakes
-  is_big = earthquake['mag'] > BIG_EARTHQUAKE_THRESHOLD
+  is_big = earthquake['mag'] is not None and earthquake['mag'] > BIG_EARTHQUAKE_THRESHOLD
   # only react to current earthquakes
   is_current = datetime.now(tz=pytz.utc) - earthquake['time'] < timedelta(minutes=CURRENT_EARTHQUAKE_THRESHOLD)
   
