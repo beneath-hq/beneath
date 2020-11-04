@@ -6,11 +6,11 @@ import (
 
 func init() {
 	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
-		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
-			ALTER TABLE organizations
-			ADD prepaid_read_quota bigint,
-			ADD prepaid_write_quota bigint;
+			ALTER TABLE billing_infos
+			ADD next_billing_time timestamptz NOT NULL,
+			ADD last_invoice_time timestamptz NOT NULL
+			;
 		`)
 		if err != nil {
 			return err
@@ -19,11 +19,11 @@ func init() {
 		// Done
 		return nil
 	}, func(db migrations.DB) (err error) {
-		// BillingPlan.ReadQuotaCap, BillingPlan.WriteQuotaCap
 		_, err = db.Exec(`
-			ALTER TABLE organizations
-			DROP prepaid_read_quota,
-			DROP prepaid_write_quota;
+			ALTER TABLE billing_infos
+			DROP next_billing_time,
+			DROP last_invoice_time
+			;
 		`)
 		if err != nil {
 			return err

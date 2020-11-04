@@ -3,8 +3,10 @@ extend type Query {
 }
 
 type BillingMethod {
-  billingMethodID: UUID!
+  billingMethodID: ID!
   organizationID: UUID!
 	paymentsDriver: String!
   driverPayload: String!
+  createdOn: Time!
+  updatedOn: Time!
 }

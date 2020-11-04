@@ -3,15 +3,21 @@ extend type Query {
 }
 
 extend type Mutation {
-  updateBillingInfo(organizationID: UUID!, billingMethodID: UUID, billingPlanID: UUID!, country: String!, region: String, companyName: String, taxNumber: String): BillingInfo!
+  updateBillingDetails(organizationID: UUID!, country: String, region: String, companyName: String, taxNumber: String): BillingInfo!
+  updateBillingMethod(organizationID: UUID!, billingMethodID: UUID): BillingInfo!
+  updateBillingPlan(organizationID: UUID!, billingPlanID: UUID!): BillingInfo!
 }
 
 type BillingInfo {
-  organizationID: UUID!
+  organizationID: ID!
   billingMethod: BillingMethod
   billingPlan: BillingPlan!
   country: String!
   region: String
   companyName: String
   taxNumber: String
+  nextBillingTime: Time
+  lastInvoiceTime: Time
+  createdOn: Time!
+  updatedOn: Time!
 }

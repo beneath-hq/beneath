@@ -14,8 +14,13 @@ const (
 	maxPeriods = 175 // roughly one week on an hourly basis
 )
 
-// GetHistoricalUsage returns usage info for the given length of time
-func (s *Service) GetHistoricalUsage(ctx context.Context, entityID uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time) ([]time.Time, []pb.QuotaUsage, error) {
+// GetHistoricalUsageSingle returns usage info for a specific timestamp
+func (s *Service) GetHistoricalUsageSingle(ctx context.Context, entityID uuid.UUID, label driver.UsageLabel, ts time.Time) (pb.QuotaUsage, error) {
+	return s.engine.Usage.ReadUsageSingle(ctx, entityID, label, ts)
+}
+
+// GetHistoricalUsageRange returns usage info for the given length of time
+func (s *Service) GetHistoricalUsageRange(ctx context.Context, entityID uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time) ([]time.Time, []pb.QuotaUsage, error) {
 	// if "until" is 0, set it to the current time
 	if until.IsZero() {
 		until = time.Now()

@@ -90,7 +90,7 @@ func (s *Service) commitToTable() error {
 
 			// add usage to quota month count (if applicable)
 			if quotaEpoch, ok := quotaEpochBuffer[id]; ok {
-				err = s.engine.Usage.WriteUsage(ctx, id, driver.UsageLabelQuotaMonth, s.currentQuotaTime(quotaEpoch, now), usage)
+				err = s.engine.Usage.WriteUsage(ctx, id, driver.UsageLabelQuotaMonth, s.GetQuotaPeriod(quotaEpoch).Floor(now), usage)
 				if err != nil {
 					return err
 				}

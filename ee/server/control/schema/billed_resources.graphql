@@ -1,9 +1,9 @@
 extend type Query {
-  billedResources(organizationID: UUID!, billingTime: Time!): [BilledResource!]!
+  billedResources(organizationID: UUID!, fromBillingTime: Time!, toBillingTime: Time!): [BilledResource!]!
 }
 
 type BilledResource {
-  billedResourceID: UUID!
+  billedResourceID: ID!
   organizationID: UUID!
 	billingTime: Time!
 	entityID: UUID!

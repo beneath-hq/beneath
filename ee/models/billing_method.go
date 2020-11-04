@@ -8,13 +8,13 @@ import (
 	"gitlab.com/beneath-hq/beneath/models"
 )
 
-// PaymentMethodType represents different methods of payment
-type PaymentMethodType string
+// PaymentMethod represents different methods of payment
+type PaymentMethod string
 
-// Constants for PaymentMethodType
+// Constants for PaymentMethod
 const (
-	CardPaymentMethod PaymentMethodType = "card"
-	WirePaymentMethod                   = "wire"
+	CardPaymentMethod PaymentMethod = "card"
+	WirePaymentMethod               = "wire"
 )
 
 // BillingMethod represents an organization's method of payment

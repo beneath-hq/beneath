@@ -3,9 +3,20 @@ package control
 import (
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
+
+	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
+	"gitlab.com/beneath-hq/beneath/ee/server/control/resolver"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
+	"gitlab.com/beneath-hq/beneath/ee/services/payments"
+	"gitlab.com/beneath-hq/beneath/services/middleware"
 	"gitlab.com/beneath-hq/beneath/services/organization"
+	"gitlab.com/beneath-hq/beneath/services/permissions"
 )
 
 // Server is the enterprise control server.
@@ -15,40 +26,51 @@ import (
 type Server struct {
 	Router *chi.Mux
 
-	Billing      *billing.Service
-	Organization *organization.Service
+	Billing       *billing.Service
+	Payments      *payments.Service
+	Permissions   *permissions.Service
+	Organizations *organization.Service
 }
 
 // NewServer returns a new enterprise control server
-func NewServer(billing *billing.Service, organization *organization.Service) *Server {
+func NewServer(billing *billing.Service, middleware *middleware.Service, payments *payments.Service, permissions *permissions.Service, organization *organization.Service) *Server {
 	router := chi.NewRouter()
 	server := &Server{
-		Router:       router,
-		Billing:      billing,
-		Organization: organization,
+		Router:        router,
+		Billing:       billing,
+		Payments:      payments,
+		Permissions:   permissions,
+		Organizations: organization,
 	}
 
-	// // Add payments handlers
-	// for name, driver := range hub.PaymentDrivers {
-	// 	for subpath, handler := range driver.GetHTTPHandlers() {
-	// 		path := fmt.Sprintf("/billing/%s/%s", name, subpath)
-	// 		router.Handle(path, httputil.AppHandler(handler))
-	// 	}
-	// }
-
-	// Add graphql server
-	// gqlHandler := handler.New(server.makeExecutableSchema())
-	// gqlHandler.AroundResponses(graphqlQueryLoggingMiddleware)
-	// gqlHandler.SetErrorPresenter(graphqlErrorPresenter)
-	// gqlHandler.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
-	// 	panic(err)
-	// })
-	// router.Handle("/graphql", gqlHandler)
+	// not adding middleware since router will be mounted on existing non-EE control server at /ee
 
 	router.Get("/hello", func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(200)
 		res.Write([]byte("hello world"))
 	})
 
+	// register payment handlers
+	payments.RegisterHandlers(router)
+
+	// Add graphql server
+	gqlsrv := handler.New(server.makeExecutableSchema())
+	gqlsrv.AddTransport(transport.GET{})
+	gqlsrv.AddTransport(transport.POST{})
+	gqlsrv.Use(extension.Introspection{})
+	gqlsrv.AroundResponses(middleware.QueryLoggingGQLMiddleware)
+	gqlsrv.SetErrorPresenter(middleware.DefaultGQLErrorPresenter)
+	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc)
+	router.Handle("/graphql", gqlsrv)
+	router.Handle("/playground", playground.Handler("Beneath", "/ee/graphql"))
+
 	return server
+}
+
+func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {
+	return gql.NewExecutableSchema(gql.Config{Resolvers: &resolver.Resolver{
+		Billing:       s.Billing,
+		Permissions:   s.Permissions,
+		Organizations: s.Organizations,
+	}})
 }

@@ -3,23 +3,24 @@ extend type Query {
 }
 
 type BillingPlan {
-  billingPlanID: UUID!
+  billingPlanID: ID!
 	default: Boolean!
 	description: String
 	currency: String!
 	period: String!
+	basePriceCents: Int!
 	seatPriceCents: Int!
-	seatReadQuota: Int!
-	seatWriteQuota: Int!
-	seatScanQuota: Int!
-	readOveragePriceCents: Int! 
-	writeOveragePriceCents: Int!
-	scanOveragePriceCents: Int!
 	baseReadQuota: Int!
 	baseWriteQuota: Int!
 	baseScanQuota: Int!
+	seatReadQuota: Int!
+	seatWriteQuota: Int!
+	seatScanQuota: Int!
 	readQuota: Int!
 	writeQuota: Int!
 	scanQuota: Int!
+	readOveragePriceCents: Int! 
+	writeOveragePriceCents: Int!
+	scanOveragePriceCents: Int!
 	availableInUI: Boolean!
 }

@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-pg/pg/v9/orm"
 
-	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // CreateOrUpdateUser consolidates and returns the user matching the args
@@ -154,6 +154,12 @@ func (s *Service) getUserForCreateOrUpdate(ctx context.Context, githubID, google
 		if err != nil {
 			return false, nil, nil, fmt.Errorf("Couldn't find personal organization for user: %s", err.Error())
 		}
+	}
+
+	// if not found, set quota epoch
+	if !found {
+		org.QuotaEpoch = time.Now()
+		user.QuotaEpoch = org.QuotaEpoch
 	}
 
 	// done

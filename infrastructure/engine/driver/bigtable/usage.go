@@ -71,10 +71,10 @@ func (b BigTable) ReadUsageSingle(ctx context.Context, id uuid.UUID, label drive
 }
 
 // ReadUsageRange implements engine.LookupService
-func (b BigTable) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
+func (b BigTable) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, to time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
 	// convert keyRange to RowSet
 	fromKey := b.makeUsageKey(id, label, from)
-	toKey := b.makeUsageKey(id, label, until.Add(time.Second))
+	toKey := b.makeUsageKey(id, label, to)
 	rr := bigtable.NewRange(fromKey, toKey)
 
 	// define callback triggered on each bigtable row

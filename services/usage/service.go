@@ -54,7 +54,8 @@ func New(opts *Options, e *engine.Engine) *Service {
 // QuotaMonthDuration sets a "quota month" to a fixed-size 31 days
 const QuotaMonthDuration = 31 * 24 * time.Hour
 
-// currentQuotaTime returns the timestamp to register quota usage at based on for an owner with a given quota epoch
-func (s *Service) currentQuotaTime(quotaEpoch, now time.Time) time.Time {
-	return timeutil.NewFixedOffsetPeriod(quotaEpoch, QuotaMonthDuration).Floor(now)
+// GetQuotaPeriod gets the period to use for calculating quota-related timestamps for an owner
+// with the given quota epoch.
+func (s *Service) GetQuotaPeriod(quotaEpoch time.Time) timeutil.FixedOffsetPeriod {
+	return timeutil.NewFixedOffsetPeriod(quotaEpoch, QuotaMonthDuration)
 }

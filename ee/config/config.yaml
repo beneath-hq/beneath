@@ -1,5 +1,12 @@
+# Beneath doesn't load config files from "ee/config/", only from "config/".
+# In development/test, copy these into your .ENV.yaml file *in the root "config/" folder!*.
+# You should use one config file per environment (also in production), this file is just a 
+# convenience to easily copy/paste the relevant EE-related keys into your global config file.
+
 payments:
   drivers:
-    - anarchism
-  stripe:
-    secret: ""
+    - driver: "anarchism"
+    - driver: "stripecard"
+      stripe_secret: ""
+    - driver: "stripewire"
+      stripe_secret: ""

@@ -44,8 +44,8 @@ type BillingPlan struct {
 	UpdatedOn              time.Time       `sql:",notnull,default:now()"`
 	Currency               Currency        `sql:",notnull"`
 	Period                 timeutil.Period `sql:",notnull"`
-	BasePriceCents         int32           `sql:",notnull"`
-	SeatPriceCents         int32           `sql:",notnull"`
+	BasePriceCents         int64           `sql:",notnull"`
+	SeatPriceCents         int64           `sql:",notnull"`
 	BaseReadQuota          int64           `sql:",notnull"` // bytes
 	BaseWriteQuota         int64           `sql:",notnull"` // bytes
 	BaseScanQuota          int64           `sql:",notnull"` // bytes
@@ -55,9 +55,9 @@ type BillingPlan struct {
 	ReadQuota              int64           `sql:",notnull"` // bytes
 	WriteQuota             int64           `sql:",notnull"` // bytes
 	ScanQuota              int64           `sql:",notnull"` // bytes
-	ReadOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
-	WriteOveragePriceCents int32           `sql:",notnull"` // price per GB overage
-	ScanOveragePriceCents  int32           `sql:",notnull"` // price per GB overage
+	ReadOveragePriceCents  int64           `sql:",notnull"` // price per GB overage
+	WriteOveragePriceCents int64           `sql:",notnull"` // price per GB overage
+	ScanOveragePriceCents  int64           `sql:",notnull"` // price per GB overage
 	MultipleUsers          bool            `sql:",notnull"`
 	AvailableInUI          bool            `sql:",notnull,default:false"`
 }

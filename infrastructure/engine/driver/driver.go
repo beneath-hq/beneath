@@ -283,8 +283,8 @@ type UsageService interface {
 	// ReadSingleUsage reads usage data for one key
 	ReadUsageSingle(ctx context.Context, id uuid.UUID, label UsageLabel, ts time.Time) (pb.QuotaUsage, error)
 
-	// ReadUsage reads usage data for multiple periods and calls fn one by one
-	ReadUsageRange(ctx context.Context, id uuid.UUID, label UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error
+	// ReadUsage reads usage data for multiple periods (inclusive of from, exclusive of to) and calls fn one by one
+	ReadUsageRange(ctx context.Context, id uuid.UUID, label UsageLabel, from time.Time, to time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error
 
 	// ClearUsage clears all usage data saved for the id
 	ClearUsage(ctx context.Context, id uuid.UUID) error

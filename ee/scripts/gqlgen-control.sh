@@ -1,0 +1,1 @@
+go run github.com/99designs/gqlgen --config ee/server/control/gql/gqlgen.yml 
