@@ -137,8 +137,12 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
       {newSecretString !== "" && (
         <Alert severity="success" className={classes.newSecretCard}>
           <AlertTitle>Here is your new secret!</AlertTitle>
-          <CodeBlock>{newSecretString}</CodeBlock>
-          The secret will only be shown this once – remember to keep it safe!
+          <Typography gutterBottom variant="body2">
+            {newSecretString}
+          </Typography>
+          <Typography>
+            The secret will only be shown this once – remember to keep it safe!
+          </Typography>
         </Alert>
       )}
     </>
