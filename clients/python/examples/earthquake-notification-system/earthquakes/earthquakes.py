@@ -12,10 +12,10 @@ To run this example:
     beneath project stage USERNAME/earthquakes
   
   4. Stage the pipeline
-    python earthquake.py stage USERNAME/earthquakes/get-earthquakes
+    python earthquakes.py stage USERNAME/earthquakes/get-earthquakes
 
   5. Run the pipeline
-    python earthquake.py run USERNAME/earthquakes/get-earthquakes
+    python earthquakes.py run USERNAME/earthquakes/get-earthquakes
 
   6. Check out the data on beneath.dev!
 """
@@ -73,10 +73,18 @@ earthquakes = p.generate(query_earthquakes)
 # write to Beneath as the second step in the pipeline
 # define the stream's schema
 p.write_stream(earthquakes, "earthquakes", """
+  " Earthquakes fetched from https://earthquake.usgs.gov/. Code and how to deploy: https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python/examples/earthquake-notification-system/earthquakes"
   type Earthquake @stream @key(fields: "time") {
+    " Time of earthquake "
     time: Timestamp!
-    mag: Float32!
+
+    " Richter scale magnitude " 
+    mag: Float32
+
+    " Location of earthquake "
     place: String!
+
+    " Link for more information "
     detail: String
   }
 """)
