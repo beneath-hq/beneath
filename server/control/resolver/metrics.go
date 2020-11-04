@@ -121,7 +121,7 @@ func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, period
 		return nil, gqlerror.Errorf("unsupported usage period '%s'", period)
 	}
 
-	times, usages, err := r.Usage.GetHistoricalUsage(ctx, entityID, label, from, *until)
+	times, usages, err := r.Usage.GetHistoricalUsageRange(ctx, entityID, label, from, *until)
 	if err != nil {
 		return nil, gqlerror.Errorf("couldn't get usage: %v", err)
 	}

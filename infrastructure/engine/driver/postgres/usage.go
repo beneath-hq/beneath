@@ -26,6 +26,6 @@ func (b Postgres) ReadUsageSingle(ctx context.Context, id uuid.UUID, label drive
 }
 
 // ReadUsageRange engine.LookupService
-func (b Postgres) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
+func (b Postgres) ReadUsageRange(ctx context.Context, id uuid.UUID, label driver.UsageLabel, from time.Time, to time.Time, limit int, fn func(ts time.Time, usage pb.QuotaUsage) error) error {
 	panic("not implemented")
 }

@@ -63,7 +63,7 @@ func (s *Service) FindDefaultBillingPlan(ctx context.Context) *models.BillingPla
 func makeDefaultBillingPlan() *models.BillingPlan {
 	return &models.BillingPlan{
 		Default:        true,
-		Description:    "Free",
+		Description:    "Free plan",
 		Currency:       models.DollarCurrency,
 		Period:         timeutil.PeriodMonth,
 		BaseReadQuota:  2000000000,

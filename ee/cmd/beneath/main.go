@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 
+	"github.com/spf13/cobra"
+
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
 	eedependencies "gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
 	eemigrations "gitlab.com/beneath-hq/beneath/ee/migrations"
 	eecontrol "gitlab.com/beneath-hq/beneath/ee/server/control"
+	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
 	"gitlab.com/beneath-hq/beneath/migrations"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"
-	"gitlab.com/beneath-hq/beneath/services/metrics"
+	"gitlab.com/beneath-hq/beneath/services/usage"
 
 	// registers all dependencies with the CLI
 	_ "gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
@@ -41,15 +44,38 @@ func addMigrateCmd(c *cli.CLI) {
 	})
 }
 
+func addBillingCmd(c *cli.CLI) {
+	log.InitLogger()
+	billingCmd := &cobra.Command{
+		Use:   "billing",
+		Short: "Billing-related functionality",
+	}
+	billingCmd.AddCommand(&cobra.Command{
+		Use:   "run",
+		Short: "Runs billing for all customers whose plan is set to renew since the last invocation",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			cli.Dig.Invoke(func(billing *billing.Service) {
+				err := billing.RunBilling(context.Background())
+				if err != nil {
+					log.S.Errorf("Billing failed with error: %s", err.Error())
+				}
+			})
+		},
+	})
+	c.Root.AddCommand(billingCmd)
+}
+
 func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "control-server",
 		Register: func(lc *cli.Lifecycle, server *control.Server, eeServer *eecontrol.Server, db db.DB) {
-			// running the control server also runs automigrate
+			// running the control server also runs automigrate (ce migrations first, then ee migrations)
 			lc.AddFunc("automigrate", func(ctx context.Context) error {
-				return migrations.Migrator.AutomigrateAndLog(db, false)
-			})
-			lc.AddFunc("automigrate-ee", func(ctx context.Context) error {
+				err := migrations.Migrator.AutomigrateAndLog(db, false)
+				if err != nil {
+					return err
+				}
 				return eemigrations.Migrator.AutomigrateAndLog(db, false)
 			})
 
@@ -63,9 +89,9 @@ func init() {
 
 	cli.AddStartable(&cli.Startable{
 		Name: "data-server",
-		Register: func(lc *cli.Lifecycle, server *data.Server, metrics *metrics.Broker) {
+		Register: func(lc *cli.Lifecycle, server *data.Server, usage *usage.Service) {
 			lc.Add("data-server", server)
-			lc.Add("metrics-broker", metrics)
+			lc.Add("usage-writer", usage)
 		},
 	})
 

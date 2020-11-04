@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/ee/models"
+	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
@@ -18,33 +18,33 @@ func (r *Resolver) BilledResource() gql.BilledResourceResolver {
 
 type billedResourceResolver struct{ *Resolver }
 
-func (r *billedResourceResolver) EntityKind(ctx context.Context, obj *entity.BilledResource) (string, error) {
+func (r *billedResourceResolver) BilledResourceID(ctx context.Context, obj *models.BilledResource) (string, error) {
+	return obj.BilledResourceID.String(), nil
+}
+
+func (r *billedResourceResolver) EntityKind(ctx context.Context, obj *models.BilledResource) (string, error) {
 	return string(obj.EntityKind), nil
 }
 
-func (r *billedResourceResolver) Product(ctx context.Context, obj *entity.BilledResource) (string, error) {
+func (r *billedResourceResolver) Product(ctx context.Context, obj *models.BilledResource) (string, error) {
 	return string(obj.Product), nil
 }
 
-func (r *billedResourceResolver) Quantity(ctx context.Context, obj *entity.BilledResource) (float64, error) {
+func (r *billedResourceResolver) Quantity(ctx context.Context, obj *models.BilledResource) (float64, error) {
 	return float64(obj.Quantity), nil
 }
 
-func (r *billedResourceResolver) Currency(ctx context.Context, obj *entity.BilledResource) (string, error) {
+func (r *billedResourceResolver) Currency(ctx context.Context, obj *models.BilledResource) (string, error) {
 	return string(obj.Currency), nil
 }
 
-func (r *queryResolver) BilledResources(ctx context.Context, organizationID uuid.UUID, billingTime time.Time) ([]*entity.BilledResource, error) {
+func (r *queryResolver) BilledResources(ctx context.Context, organizationID uuid.UUID, fromBillingTime time.Time, toBillingTime time.Time) ([]*models.BilledResource, error) {
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.OrganizationPermissionsForSecret(ctx, secret, organizationID)
 	if !perms.Admin {
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
-	billedResources := entity.FindBilledResources(ctx, organizationID, billingTime)
-	if billedResources == nil {
-		return nil, gqlerror.Errorf("Billed resources for organization %s and time %s not found", organizationID.String(), billingTime)
-	}
-
+	billedResources := r.Billing.FindBilledResources(ctx, organizationID, fromBillingTime, toBillingTime)
 	return billedResources, nil
 }

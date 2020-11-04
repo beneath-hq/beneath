@@ -5,11 +5,11 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 
-	"gitlab.com/beneath-hq/beneath/control/entity"
-	"gitlab.com/beneath-hq/beneath/control/gql"
+	"gitlab.com/beneath-hq/beneath/ee/models"
+	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
+	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
 // BillingMethod returns the gql.BillingMethodResolver
@@ -19,16 +19,20 @@ func (r *Resolver) BillingMethod() gql.BillingMethodResolver {
 
 type billingMethodResolver struct{ *Resolver }
 
-func (r *billingMethodResolver) PaymentsDriver(ctx context.Context, obj *entity.BillingMethod) (string, error) {
+func (r *billingMethodResolver) BillingMethodID(ctx context.Context, obj *models.BillingMethod) (string, error) {
+	return obj.BillingMethodID.String(), nil
+}
+
+func (r *billingMethodResolver) PaymentsDriver(ctx context.Context, obj *models.BillingMethod) (string, error) {
 	return string(obj.PaymentsDriver), nil
 }
 
-func (r *billingMethodResolver) DriverPayload(ctx context.Context, obj *entity.BillingMethod) (string, error) {
+func (r *billingMethodResolver) DriverPayload(ctx context.Context, obj *models.BillingMethod) (string, error) {
 	json, err := jsonutil.Marshal(obj.DriverPayload)
 	return string(json), err
 }
 
-func (r *queryResolver) BillingMethods(ctx context.Context, organizationID uuid.UUID) ([]*entity.BillingMethod, error) {
+func (r *queryResolver) BillingMethods(ctx context.Context, organizationID uuid.UUID) ([]*models.BillingMethod, error) {
 	secret := middleware.GetSecret(ctx)
 
 	perms := r.Permissions.OrganizationPermissionsForSecret(ctx, secret, organizationID)
@@ -36,7 +40,7 @@ func (r *queryResolver) BillingMethods(ctx context.Context, organizationID uuid.
 		return nil, gqlerror.Errorf("Not allowed to perform admin functions on organization %s", organizationID.String())
 	}
 
-	billingMethods := entity.FindBillingMethodsByOrganization(ctx, organizationID)
+	billingMethods := r.Billing.FindBillingMethodsByOrganization(ctx, organizationID)
 
 	// billingMethods may be empty
 	return billingMethods, nil

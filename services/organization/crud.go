@@ -10,8 +10,11 @@ import (
 
 // CreateWithUser creates an organization and makes user a member
 func (s *Service) CreateWithUser(ctx context.Context, name string, userID uuid.UUID, view bool, create bool, admin bool) (*models.Organization, error) {
-	// validate name
-	org := &models.Organization{Name: name}
+	// create org and validate
+	org := &models.Organization{
+		Name:       name,
+		QuotaEpoch: time.Now(),
+	}
 	err := org.Validate()
 	if err != nil {
 		return nil, err
@@ -117,6 +120,32 @@ func (s *Service) UpdateQuotas(ctx context.Context, o *models.Organization, read
 	o.UpdatedOn = time.Now()
 	_, err = s.DB.GetDB(ctx).ModelContext(ctx, o).
 		Column("read_quota", "write_quota", "scan_quota", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	// send event
+	err = s.Bus.Publish(ctx, &models.OrganizationUpdatedEvent{
+		Organization: o,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateQuotaEpoch updates the organization's quota epoch (doesn't do any checks, but will trigger a cache eviction)
+func (s *Service) UpdateQuotaEpoch(ctx context.Context, o *models.Organization, quotaEpoch time.Time) error {
+	// set fields
+	o.QuotaEpoch = quotaEpoch
+	o.UpdatedOn = time.Now()
+
+	// update
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, o).
+		Column("quota_epoch", "updated_on").
 		WherePK().
 		Update()
 	if err != nil {

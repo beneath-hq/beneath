@@ -1,4 +1,5 @@
 # Configures gqlgen – docs at https://gqlgen.com/config/
+skip_validation: true
 schema:
 - "ee/server/control/schema/**/*.graphql"
 exec:
@@ -13,6 +14,8 @@ resolver:
   type: Resolver
 autobind: []
 models:
+  UUID:
+    model: gitlab.com/beneath-hq/beneath/ee/server/control/gql.UUID
   BillingPlan:
     model: gitlab.com/beneath-hq/beneath/ee/models.BillingPlan
   BilledResource:

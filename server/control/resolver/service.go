@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -54,9 +55,10 @@ func (r *mutationResolver) StageService(ctx context.Context, organizationName st
 			return nil, gqlerror.Errorf("Project %s/%s not found", organizationName, projectName)
 		}
 		service = &models.Service{
-			Name:      serviceName,
-			Project:   project,
-			ProjectID: project.ProjectID,
+			Name:       serviceName,
+			Project:    project,
+			ProjectID:  project.ProjectID,
+			QuotaEpoch: time.Now(),
 		}
 	} else {
 		project = service.Project

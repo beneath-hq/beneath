@@ -19,7 +19,7 @@ import (
 // If the background writer isn't running, it fetches from infrastructure on every call.
 func (s *Service) GetCurrentQuotaUsage(ctx context.Context, ownerID uuid.UUID, quotaEpoch time.Time) pb.QuotaUsage {
 	// the beginning of the current quota period
-	currentQuotaTime := s.currentQuotaTime(quotaEpoch, time.Now())
+	currentQuotaTime := s.GetQuotaPeriod(quotaEpoch).Floor(time.Now())
 
 	// if not running, we fetch without caching
 	if !s.running {
