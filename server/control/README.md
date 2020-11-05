@@ -32,19 +32,3 @@ These are the main libraries used in the control server
 2. Register the task in the `init()` function with `taskqueue.RegisterTask`
 3. Implement `Run(ctx context.Context) error` on the task struct with the logic you want to execute in the background
 4. When you want to trigger the background task, call `taskqueue.Submit(t)` where t is the instantiated task struct
-
-## Payments
-
-### Changing payment plans
-
-TODO: These instructions are do not cover all cases.
-
-- To upgrade a customer to Enterprise, submit an http request to http://localhost:4000/billing/stripewire/initialize_customer with these parameters: organizationID, billingPlanID, emailAddress
-
-- To downgrade a customer to Free, submit an http request to http://localhost:4000/billing/anarchism/initialize_customer with these parameters: organizationID, billingPlanID
- 
-### Stripe
-
-To get a grip on how the Stripe Go library works, check out the [Usage](https://github.com/stripe/stripe-go#usage) section.
-
-To test Stripe's webhooks in your local development environment, execute this command in a terminal: `stripe listen --forward-to localhost:4000/billing/stripecard/webhook`.
