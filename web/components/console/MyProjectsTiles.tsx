@@ -10,8 +10,8 @@ import LoadingTile from "./tiles/LoadingTile";
 import ProjectHeroTile from "./tiles/ProjectHeroTile";
 import PlaceholderTile from "./tiles/PlaceholderTile";
 import useMe from "hooks/useMe";
-import { BillingInfo, BillingInfoVariables } from "apollo/types/BillingInfo";
-import { QUERY_BILLING_INFO } from "apollo/queries/billinginfo";
+import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
+import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 
 const MyProjectsTiles: FC = () => {
   const me = useMe();
@@ -29,11 +29,15 @@ const MyProjectsTiles: FC = () => {
     },
   });
 
-  const { loading: loading2, error: error2, data: data2 } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
-    variables: {
-      organizationID: me.organizationID,
-    },
-  });
+  const { loading: loading2, error: error2, data: data2 } = useQuery<BillingInfo, BillingInfoVariables>(
+    QUERY_BILLING_INFO,
+    {
+      context: { ee: true },
+      variables: {
+        organizationID: me.organizationID,
+      },
+    }
+  );
 
   return (
     <>

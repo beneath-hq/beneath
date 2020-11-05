@@ -2,14 +2,14 @@ import { useQuery } from "@apollo/client";
 import _ from "lodash";
 import React, { FC } from "react";
 
-import { QUERY_BILLING_INFO } from "../../../apollo/queries/billinginfo";
-import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "../../../apollo/types/BillingInfo";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
+import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
+import { BillingInfo, BillingInfo_billingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Paper, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
-import billing from "../../../lib/billing";
+import billing from "ee/lib/billing";
 import CancelPlan from "./update-billing-info/CancelPlan";
 import ChangeBillingMethod from "./update-billing-info/ChangeBillingMethod";
 import Checkout from "./update-billing-info/Checkout";
@@ -42,6 +42,7 @@ const ViewBillingInfo: FC<BillingInfoProps> = ({ organization }) => {
   const [confirmationMessage, setConfirmationMessage] = React.useState("");
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+    context: { ee: true },
     variables: {
       organizationID: organization.organizationID,
     },

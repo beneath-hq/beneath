@@ -4,11 +4,11 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: GetStreamMetrics
+// GraphQL query operation: GetOrganizationUsage
 // ====================================================
 
-export interface GetStreamMetrics_getStreamMetrics {
-  __typename: "Metrics";
+export interface GetOrganizationUsage_getOrganizationUsage {
+  __typename: "Usage";
   entityID: ControlUUID;
   period: string;
   time: ControlTime;
@@ -18,14 +18,16 @@ export interface GetStreamMetrics_getStreamMetrics {
   writeOps: number;
   writeBytes: number;
   writeRecords: number;
+  scanOps: number;
+  scanBytes: number;
 }
 
-export interface GetStreamMetrics {
-  getStreamMetrics: GetStreamMetrics_getStreamMetrics[];
+export interface GetOrganizationUsage {
+  getOrganizationUsage: GetOrganizationUsage_getOrganizationUsage[];
 }
 
-export interface GetStreamMetricsVariables {
-  streamID: ControlUUID;
+export interface GetOrganizationUsageVariables {
+  organizationID: ControlUUID;
   period: string;
   from: ControlTime;
   until?: ControlTime | null;

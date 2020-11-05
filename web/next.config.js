@@ -31,10 +31,12 @@ module.exports = (phase) => {
   // add BENEATH_ENV variable
   if (phase === PHASE_DEVELOPMENT_SERVER) {
     config.env = Object.assign({}, config.env, {
+      BENEATH_EE: process.env.BENEATH_EE,
       BENEATH_ENV: "development",
     });
   } else {
     config.env = Object.assign({}, config.env, {
+      BENEATH_EE: process.env.BENEATH_EE,
       BENEATH_ENV: "production",
     });
   }

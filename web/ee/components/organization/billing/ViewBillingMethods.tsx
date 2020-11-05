@@ -3,7 +3,7 @@ import _ from "lodash";
 import dynamic from "next/dynamic";
 import React, { FC } from "react";
 
-import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingmethod";
+import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingMethod";
 import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 import billing from "../../../lib/billing";
@@ -36,7 +36,8 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization }) => {
   const DynamicCardForm = dynamic(() => import("./CardForm"));
 
   const { loading, error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
-    variables: { organizationID: organization.organizationID, },
+    context: { ee: true },
+    variables: { organizationID: organization.organizationID },
   });
 
   if (error || !data) {

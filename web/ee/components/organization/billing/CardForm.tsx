@@ -7,12 +7,12 @@ import React, { FC, useEffect } from "react";
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
-import useMe from "../../../hooks/useMe";
-import { useToken } from "../../../hooks/useToken";
-import billing from "../../../lib/billing";
-import { API_URL } from "../../../lib/connection";
-import Loading from "../../Loading";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import useMe from "hooks/useMe";
+import { useToken } from "hooks/useToken";
+import billing from "ee/lib/billing";
+import { API_URL } from "lib/connection";
+import Loading from "components/Loading";
 
 const useStyles = makeStyles((theme) => ({
   title: {

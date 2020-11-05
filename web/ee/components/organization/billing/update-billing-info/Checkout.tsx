@@ -20,18 +20,18 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import CheckIcon from "@material-ui/icons/Check";
 import { Autocomplete } from "@material-ui/lab";
-import SelectField from "../../../SelectField";
+import SelectField from "components/SelectField";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { UPDATE_BILLING_INFO } from "../../../../apollo/queries/billinginfo";
-import { QUERY_BILLING_METHODS } from "../../../../apollo/queries/billingmethod";
-import { QUERY_BILLING_PLANS } from "../../../../apollo/queries/billingplan";
-import { QUERY_ORGANIZATION } from "../../../../apollo/queries/organization";
-import { BillingMethods, BillingMethodsVariables } from "../../../../apollo/types/BillingMethods";
-import { BillingPlans } from "../../../../apollo/types/BillingPlans";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../../apollo/types/OrganizationByName";
-import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../../apollo/types/UpdateBillingInfo";
-import billing from "../../../../lib/billing";
+import { UPDATE_BILLING_DETAILS } from "ee/apollo/queries/billingInfo";
+import { QUERY_BILLING_METHODS } from "ee/apollo/queries/billingMethod";
+import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
+import { QUERY_ORGANIZATION } from "apollo/queries/organization";
+import { BillingMethods, BillingMethodsVariables } from "ee/apollo/types/BillingMethods";
+import { BillingPlans } from "ee/apollo/types/BillingPlans";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import { UpdateBillingDetails, UpdateBillingDetailsVariables } from "ee/apollo/types/UpdateBillingDetails";
+import billing from "ee/lib/billing";
 
 const useStyles = makeStyles((theme) => ({
   firstTitle: {
@@ -109,18 +109,22 @@ const Checkout: FC<Props> = ({ organization, closeDialogue }) => {
     acceptedTerms: false,
   });
 
-  const { loading, error: queryError, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
+  const { loading, error: queryError, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
+    context: { ee: true },
+  });
 
   const { loading: loading2, error: queryError2, data: data2 } = useQuery<BillingMethods, BillingMethodsVariables>(
     QUERY_BILLING_METHODS,
     {
+      context: { ee: true },
       variables: { organizationID: organization.organizationID },
     }
   );
 
-  const [updateBillingInfo, { error: mutError }] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(
-    UPDATE_BILLING_INFO,
+  const [updateBillingDetails, { error: mutError }] = useMutation<UpdateBillingDetails, UpdateBillingDetailsVariables>(
+    UPDATE_BILLING_DETAILS,
     {
+      context: { ee: true },
       onCompleted: (data) => {
         if (data) {
           closeDialogue("Thanks for your order! Receipts will be sent to your email each month.");
@@ -382,11 +386,9 @@ const Checkout: FC<Props> = ({ organization, closeDialogue }) => {
               !values.acceptedTerms
             }
             onClick={() => {
-              updateBillingInfo({
+              updateBillingDetails({
                 variables: {
                   organizationID: organization.organizationID,
-                  billingMethodID: values.billingMethodID,
-                  billingPlanID: proPlan.billingPlanID,
                   country: values.country,
                   region: sanitize("region", values.region),
                   companyName: sanitize("companyName", values.companyName),

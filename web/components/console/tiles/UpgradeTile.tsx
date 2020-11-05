@@ -5,8 +5,8 @@ import { Tile, TileProps } from "./Tile";
 import { NakedLink } from "components/Link";
 import useMe from "hooks/useMe";
 import { useQuery } from "@apollo/client";
-import { BillingInfo, BillingInfoVariables } from "apollo/types/BillingInfo";
-import { QUERY_BILLING_INFO } from "apollo/queries/billinginfo";
+import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
+import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
@@ -29,6 +29,7 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
   }
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+    context: { ee: true },
     variables: {
       organizationID: me.organizationID,
     },

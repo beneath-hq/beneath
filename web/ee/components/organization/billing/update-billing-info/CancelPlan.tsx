@@ -11,13 +11,13 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { UPDATE_BILLING_INFO } from "../../../../apollo/queries/billinginfo";
-import { QUERY_BILLING_PLANS } from "../../../../apollo/queries/billingplan";
-import { QUERY_ORGANIZATION } from "../../../../apollo/queries/organization";
-import { BillingInfo_billingInfo } from "../../../../apollo/types/BillingInfo";
-import { BillingPlans } from "../../../../apollo/types/BillingPlans";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../../apollo/types/OrganizationByName";
-import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../../apollo/types/UpdateBillingInfo";
+import { UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
+import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
+import { QUERY_ORGANIZATION } from "apollo/queries/organization";
+import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
+import { BillingPlans } from "ee/apollo/types/BillingPlans";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/UpdateBillingPlan";
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -39,11 +39,14 @@ interface Props {
 const CancelPlan: FC<Props> = ({ organization, closeDialogue, billingInfo }) => {
   const classes = useStyles();
 
-  const { loading, error: queryError, data: data1 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS);
+  const { loading, error: queryError, data: data1 } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
+    context: { ee: true },
+  });
 
-  const [updateBillingInfo, { error: mutError }] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(
-    UPDATE_BILLING_INFO,
+  const [updateBillingPlan, { error: mutError }] = useMutation<UpdateBillingPlan, UpdateBillingPlanVariables>(
+    UPDATE_BILLING_PLAN,
     {
+      context: { ee: true },
       onCompleted: (data) => {
         if (data) {
           closeDialogue("Your plan has been canceled.");
@@ -77,11 +80,10 @@ const CancelPlan: FC<Props> = ({ organization, closeDialogue, billingInfo }) => 
             color="primary"
             autoFocus
             onClick={() => {
-              updateBillingInfo({
+              updateBillingPlan({
                 variables: {
                   organizationID: organization.organizationID,
                   billingPlanID: freePlan.billingPlanID,
-                  country: billingInfo.country,
                 },
               });
             }}

@@ -4,10 +4,14 @@ import { IncomingMessage, ServerResponse } from "http";
 
 import fetch from "isomorphic-unfetch";
 
-import { API_URL, IS_PRODUCTION } from "../lib/connection";
-import possibleTypes from "./possibleTypes.json";
-import { resolvers, typeDefs } from "./schema";
-import { GET_AID, GET_TOKEN } from "./queries/local/token";
+import { resolvers, typeDefs } from "apollo/schema";
+import { GET_AID, GET_TOKEN } from "apollo/queries/local/token";
+import { API_URL, IS_EE, IS_PRODUCTION } from "lib/connection";
+
+import possibleTypesCE from "apollo/possibleTypes.json";
+import possibleTypesEE from "ee/apollo/possibleTypes.json";
+import typePoliciesCE from "apollo/typePolicies";
+import typePoliciesEE from "ee/apollo/typePolicies";
 
 let apolloClient: ApolloClient<NormalizedCacheObject>;
 
@@ -32,35 +36,12 @@ export const getApolloClient = ({ req, res, initialState }: GetApolloClientOptio
 };
 
 const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) => {
+  // setup type info for in-memory cache
+  const possibleTypes = !IS_EE ? possibleTypesCE : { ...possibleTypesCE, ...possibleTypesEE };
+  const typePolicies = !IS_EE ? typePoliciesCE : { ...typePoliciesCE, ...typePoliciesEE };
+
   // configure cache
-  const cache = new InMemoryCache({
-    possibleTypes,
-    typePolicies: {
-      // Data normalization config. See https://www.apollographql.com/docs/react/caching/cache-configuration/#data-normalization
-      // NOTE: setting keyFields to false causes objects to be embedded in the entry of their parent object, see: https://www.apollographql.com/docs/react/caching/cache-configuration/#disabling-normalization
-      BillingInfo: { keyFields: ["organizationID"] },
-      BillingMethod: { keyFields: ["billingMethodID"] },
-      BillingPlan: { keyFields: ["billingPlanID"] },
-      Metrics: { keyFields: ["entityID", "period", "time"] },
-      NewUserSecret: { keyFields: ["secret", ["userSecretID"]] },
-      NewServiceSecret: { keyFields: ["secret", "serviceSecretID"] },
-      Organization: { keyFields: ["organizationID"] },
-      OrganizationMember: { keyFields: ["organizationID", "userID"] },
-      PermissionsServicesStreams: { keyFields: false },
-      PermissionsUsersOrganizations: { keyFields: false },
-      PermissionsUsersProjects: { keyFields: false },
-      PrivateOrganization: { keyFields: ["organizationID"] },
-      PrivateUser: { keyFields: ["userID"] },
-      Project: { keyFields: ["projectID"] },
-      ProjectMember: { keyFields: ["projectID", "userID"] },
-      PublicOrganization: { keyFields: ["organizationID"] },
-      Service: { keyFields: ["serviceID"] },
-      Stream: { keyFields: ["streamID"] },
-      StreamIndex: { keyFields: ["indexID"] },
-      StreamInstance: { keyFields: ["streamInstanceID"] },
-      UserSecret: { keyFields: ["userSecretID"] },
-    },
-  }).restore(initialState || {});
+  const cache = new InMemoryCache({ possibleTypes, typePolicies }).restore(initialState || {});
 
   // prepare headers
   const headers = {} as any;
@@ -99,12 +80,28 @@ const createApolloClient = ({ req, res, initialState }: GetApolloClientOptions) 
   });
 
   // http link
-  const httpLink = new HttpLink({
+  let httpLink: ApolloLink = new HttpLink({
     credentials: "include",
     fetch,
     headers,
     uri: `${API_URL}/graphql`,
   });
+
+  // adds ee link
+  if (IS_EE) {
+    const eeHttpLink = new HttpLink({
+      credentials: "include",
+      fetch,
+      headers,
+      uri: `${API_URL}/ee/graphql`,
+    });
+
+    httpLink = ApolloLink.split(
+      (operation) => operation.getContext().ee,
+      eeHttpLink,
+      httpLink,
+    );
+  }
 
   return new ApolloClient({
     connectToDevTools: typeof window === "undefined" && !IS_PRODUCTION,

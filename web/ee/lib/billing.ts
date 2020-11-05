@@ -1,4 +1,4 @@
-import { IS_PRODUCTION } from "./connection";
+import { IS_PRODUCTION } from "lib/connection";
 
 export const ANARCHISM_DRIVER = "anarchism";
 export const STRIPECARD_DRIVER = "stripecard";

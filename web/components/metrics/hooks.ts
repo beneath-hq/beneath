@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 
-import { GET_METRICS } from "../../apollo/queries/metrics";
-import { GetMetrics, GetMetricsVariables } from "../../apollo/types/GetMetrics";
+import { GET_USAGE } from "../../apollo/queries/usage";
+import { GetUsage, GetUsageVariables } from "../../apollo/types/GetUsage";
 import { EntityKind } from "../../apollo/types/globalTypes";
 import { hourFloor, monthFloor, normalizeMetrics, now, weekAgo, yearAgo } from "./util";
 
@@ -9,7 +9,7 @@ export const useWeeklyMetrics = (entityKind: EntityKind, entityID: string) => {
   const from = hourFloor(weekAgo());
   const until = hourFloor(now());
 
-  const { loading, error, data } = useQuery<GetMetrics, GetMetricsVariables>(GET_METRICS, {
+  const { loading, error, data } = useQuery<GetUsage, GetUsageVariables>(GET_USAGE, {
     variables: {
       entityKind,
       entityID,
@@ -18,7 +18,7 @@ export const useWeeklyMetrics = (entityKind: EntityKind, entityID: string) => {
     },
   });
 
-  const { metrics, total, latest } = normalizeMetrics(from, until, "hour", data?.getMetrics);
+  const { metrics, total, latest } = normalizeMetrics(from, until, "hour", data?.getUsage);
 
   return { metrics, total, latest, error, loading };
 };
@@ -27,7 +27,7 @@ export const useMonthlyMetrics = (entityKind: EntityKind, entityID: string) => {
   const from = monthFloor(yearAgo());
   const until = monthFloor(now());
 
-  const { loading, error, data } = useQuery<GetMetrics, GetMetricsVariables>(GET_METRICS, {
+  const { loading, error, data } = useQuery<GetUsage, GetUsageVariables>(GET_USAGE, {
     variables: {
       entityKind,
       entityID,
@@ -38,7 +38,7 @@ export const useMonthlyMetrics = (entityKind: EntityKind, entityID: string) => {
     pollInterval: 30000 // 30 seconds in milliseconds
   });
 
-  const { metrics, total, latest } = normalizeMetrics(from, until, "month", data?.getMetrics);
+  const { metrics, total, latest } = normalizeMetrics(from, until, "month", data?.getUsage);
 
   return { metrics, total, latest, error, loading };
 };

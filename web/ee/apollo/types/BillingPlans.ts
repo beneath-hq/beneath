@@ -9,9 +9,25 @@
 
 export interface BillingPlans_billingPlans {
   __typename: "BillingPlan";
-  billingPlanID: ControlUUID;
+  billingPlanID: string;
   default: boolean;
   description: string | null;
+  currency: string;
+  period: string;
+  basePriceCents: number;
+  seatPriceCents: number;
+  baseReadQuota: number;
+  baseWriteQuota: number;
+  baseScanQuota: number;
+  seatReadQuota: number;
+  seatWriteQuota: number;
+  seatScanQuota: number;
+  readQuota: number;
+  writeQuota: number;
+  scanQuota: number;
+  readOveragePriceCents: number;
+  writeOveragePriceCents: number;
+  scanOveragePriceCents: number;
   availableInUI: boolean;
 }
 

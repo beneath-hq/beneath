@@ -4,12 +4,12 @@ import React, { FC } from "react";
 import { Typography } from "@material-ui/core";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { UPDATE_BILLING_INFO } from "../../../../apollo/queries/billinginfo";
-import { QUERY_BILLING_METHODS } from "../../../../apollo/queries/billingmethod";
-import { BillingInfo_billingInfo } from "../../../../apollo/types/BillingInfo";
-import { BillingMethods, BillingMethodsVariables } from "../../../../apollo/types/BillingMethods";
-import { UpdateBillingInfo, UpdateBillingInfoVariables } from "../../../../apollo/types/UpdateBillingInfo";
-import billing from "../../../../lib/billing";
+import { UPDATE_BILLING_METHOD } from "ee/apollo/queries/billingInfo";
+import { QUERY_BILLING_METHODS } from "ee/apollo/queries/billingMethod";
+import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
+import { BillingMethods, BillingMethodsVariables } from "ee/apollo/types/BillingMethods";
+import { UpdateBillingMethod, UpdateBillingMethodVariables } from "ee/apollo/types/UpdateBillingMethod";
+import billing from "ee/lib/billing";
 import { Formik, Form, Field } from "formik";
 import { handleSubmitMutation } from "components/formik";
 import SubmitControl from "components/forms/SubmitControl";
@@ -28,18 +28,18 @@ interface Props {
 
 const ChangeBillingMethod: FC<Props> = ({ closeDialogue, billingInfo }) => {
   const { error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
-      variables: { organizationID: billingInfo.organizationID },
-    }
-  );
+    context: { ee: true },
+    variables: { organizationID: billingInfo.organizationID },
+  });
 
-  const [updateBillingInfo] = useMutation<UpdateBillingInfo, UpdateBillingInfoVariables>(UPDATE_BILLING_INFO, {
-      onCompleted: (data) => {
-        if (data) {
-          closeDialogue("Your billing method has been changed.");
-        }
-      },
-    }
-  );
+  const [updateBillingMethod] = useMutation<UpdateBillingMethod, UpdateBillingMethodVariables>(UPDATE_BILLING_METHOD, {
+    context: { ee: true },
+    onCompleted: (data) => {
+      if (data) {
+        closeDialogue("Your billing method has been changed.");
+      }
+    },
+  });
 
   if (error || !data) {
     return <p>Error: {JSON.stringify(error)}</p>;
@@ -69,12 +69,10 @@ const ChangeBillingMethod: FC<Props> = ({ closeDialogue, billingInfo }) => {
         handleSubmitMutation(
           values,
           actions,
-          updateBillingInfo({
+          updateBillingMethod({
             variables: {
               organizationID: billingInfo.organizationID,
               billingMethodID: values.billingMethod?.billingMethodID,
-              billingPlanID: billingInfo.billingPlan.billingPlanID,
-              country: billingInfo.country,
             },
           })
         )
