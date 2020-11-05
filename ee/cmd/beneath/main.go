@@ -26,6 +26,7 @@ import (
 func main() {
 	cli := cli.NewCLI()
 	addMigrateCmd(cli)
+	addBillingCmd(cli)
 	cli.Run()
 }
 
