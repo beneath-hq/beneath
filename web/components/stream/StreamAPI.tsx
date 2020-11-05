@@ -1,7 +1,6 @@
 import React, { FC, useState } from "react";
-import { Alert, TabContext, TabPanel, ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
-import { AppBar, Container, Grid, Link as MUILink, makeStyles, Tab, Tabs, Theme, Typography, useMediaQuery, useTheme } from "@material-ui/core";
-import CodeIcon from '@material-ui/icons/Code';
+import { Alert, TabContext } from "@material-ui/lab";
+import { Container, Grid, Link as MUILink, makeStyles, Tab, Tabs, Theme, Typography } from "@material-ui/core";
 
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { GATEWAY_URL } from "../../lib/connection";
@@ -30,13 +29,11 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
   const classes = useStyles();
   const [language, setLanguage] = useState('Python');
   const [pythonDetail, setPythonDetail] = useState('Reading');
-  const [pythonPipelineDetail, setPythonPipelineDetail] = useState('Consume');
   const [javascriptDetail, setJavascriptDetail] = useState('Reading');
   const [reactDetail, setReactDetail] = useState('Reading');
 
   const languageTabs = ["Python", "Javascript", "React", "SQL", "cURL"];
   const pythonTabs = ["Setup", "Reading", "Writing", "Pipelines"];
-  const pythonPipelineTabs = ["Consume", "Derive", "Advanced"];
   const javascriptTabs = ["Setup", "Reading"];
   const reactTabs = ["Setup", "Reading"];
 
@@ -199,40 +196,16 @@ async with instance.writer() as w:
           )}
           {language === "Python" && pythonDetail === "Pipelines" && (
             <>
-              <Typography variant="body1" paragraph>
+              <Typography paragraph>
                 Beneath Pipelines make it easy to do stream processing on any Beneath data stream.
-                Apply a user-defined function to a stream ("Consume"). Additionally create and write to a new stream ("Derive").
-                Or take full control and design an advanced pipeline.
               </Typography>
               <Typography paragraph>
-                First, create a new Python file for your pipeline logic.
+                First, create a new Python file for your pipeline logic. Choose one from the "Consume," "Derive," or "Advanced" options below.
               </Typography>
-              {language === "Python" && pythonDetail === "Pipelines" && (
-          <>
-            <Grid item>
-              <TabContext value={pythonPipelineDetail}>
-                <Tabs
-                  value={pythonPipelineDetail}
-                  onChange={(_, value) => setPythonPipelineDetail(value)}
-                  variant="scrollable"
-                  scrollButtons="auto"
-                >
-                  {pythonPipelineTabs.map((tab) => (
-                    <Tab
-                      key={tab}
-                      label={tab}
-                      value={tab}
-                      className={classes.tab}
-                    />
-                  ))}
-                </Tabs>
-              </TabContext>
-            </Grid>
-            <VSpace units={3} />
-          </>
-        )}
-              {pythonPipelineDetail === "Consume" && (
-                <CodeBlock language={"python"} title={"your_pipeline.py"}>
+              <Typography variant="subtitle1" gutterBottom>
+                Consume: apply a user-defined function
+              </Typography>
+              <CodeBlock language={"python"} title={"your_pipeline.py"}>
 {`import beneath
 
 async def consume_fn(record):
@@ -242,10 +215,12 @@ beneath.easy_consume_stream(
   input_stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}",
   consume_fn=consume_fn,
 )`}
-                </CodeBlock>
-              )}
-              {pythonPipelineDetail === "Derive" && (
-                <CodeBlock language={"python"} title={"your_pipeline.py"}>
+              </CodeBlock>
+              <VSpace units={2} />
+              <Typography variant="subtitle1" gutterBottom>
+                Derive: apply a user-defined function and write results to a new stream
+              </Typography>
+              <CodeBlock language={"python"} title={"your_pipeline.py"}>
 {`import beneath
 
 OUTPUT_SCHEMA="""
@@ -254,6 +229,7 @@ YOUR OUTPUT SCHEMA HERE
 
 async def apply_fn(record):
   # YOUR LOGIC HERE
+  yield new_record
 
 beneath.easy_derive_stream(
   input_stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}",
@@ -261,31 +237,21 @@ beneath.easy_derive_stream(
   output_stream_path="USER/PROJECT/YOUR_NEW_STREAM_NAME",
   output_stream_schema=OUTPUT_SCHEMA
 )`}
-                </CodeBlock>
-              )}
-              {pythonPipelineDetail === "Advanced" && (
-                <CodeBlock language={"python"} title={"your_pipeline.py"}>
-{`import beneath
-
-p = beneath.Pipeline(parse_args=True)
-
-data = p.read_stream("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")
-
-# Check out the full docs to see what you can do in an advanced pipeline
-
-p.main()`}
-                </CodeBlock>
-              )}
+              </CodeBlock>
+              <VSpace units={2} />
+              <Typography variant="subtitle1" gutterBottom>
+                Advanced: check out the full docs to see what you can do with an advanced pipeline
+              </Typography>
               <VSpace units={2} />
               <Typography variant="body1" paragraph>
-                <Link href={"/-/create/service"}>Create a service</Link>, then stage your pipeline:
+                Second, <Link href={"/-/create/service"}>create a service</Link>, then stage your pipeline:
               </Typography>
               <CodeBlock language={"bash"}>
 {`python your_pipeline.py stage USERNAME/PROJECT/SERVICE`}
               </CodeBlock>
               <VSpace units={2} />
               <Typography variant="body1" paragraph>
-                Run your pipeline:
+                Lastly, run your pipeline:
               </Typography>
               <CodeBlock language={"bash"}>
 {`python your_pipeline.py run USERNAME/PROJECT/SERVICE`}
