@@ -30,11 +30,13 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
   const classes = useStyles();
   const [language, setLanguage] = useState('Python');
   const [pythonDetail, setPythonDetail] = useState('Reading');
+  const [pythonPipelineDetail, setPythonPipelineDetail] = useState('Consume');
   const [javascriptDetail, setJavascriptDetail] = useState('Reading');
   const [reactDetail, setReactDetail] = useState('Reading');
 
   const languageTabs = ["Python", "Javascript", "React", "SQL", "cURL"];
   const pythonTabs = ["Setup", "Reading", "Writing", "Pipelines"];
+  const pythonPipelineTabs = ["Consume", "Derive", "Advanced"];
   const javascriptTabs = ["Setup", "Reading"];
   const reactTabs = ["Setup", "Reading"];
 
@@ -170,8 +172,8 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
               </Typography>
               <CodeBlock language={"python"}>
 {`import beneath
-client = beneath.Client()
-df = await client.easy_read("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")`}
+
+df = await beneath.easy_read("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")`}
               </CodeBlock>
             </>
           )}
@@ -198,20 +200,82 @@ async with instance.writer() as w:
           {language === "Python" && pythonDetail === "Pipelines" && (
             <>
               <Typography variant="body1" paragraph>
-                Create a new Python file with your pipeline logic:
+                Beneath Pipelines make it easy to do stream processing on any Beneath data stream.
+                Apply a user-defined function to a stream ("Consume"). Additionally create and write to a new stream ("Derive").
+                Or take full control and design an advanced pipeline.
               </Typography>
-              <CodeBlock language={"python"} title={"your_pipeline.py"}>
+              <Typography paragraph>
+                First, create a new Python file for your pipeline logic.
+              </Typography>
+              {language === "Python" && pythonDetail === "Pipelines" && (
+          <>
+            <Grid item>
+              <TabContext value={pythonPipelineDetail}>
+                <Tabs
+                  value={pythonPipelineDetail}
+                  onChange={(_, value) => setPythonPipelineDetail(value)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  {pythonPipelineTabs.map((tab) => (
+                    <Tab
+                      key={tab}
+                      label={tab}
+                      value={tab}
+                      className={classes.tab}
+                    />
+                  ))}
+                </Tabs>
+              </TabContext>
+            </Grid>
+            <VSpace units={3} />
+          </>
+        )}
+              {pythonPipelineDetail === "Consume" && (
+                <CodeBlock language={"python"} title={"your_pipeline.py"}>
 {`import beneath
-p = beneath.Pipeline(parse_args=True)
 
-async def fn(record):
+async def consume_fn(record):
   # YOUR LOGIC HERE
 
+beneath.easy_consume_stream(
+  input_stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}",
+  consume_fn=consume_fn,
+)`}
+                </CodeBlock>
+              )}
+              {pythonPipelineDetail === "Derive" && (
+                <CodeBlock language={"python"} title={"your_pipeline.py"}>
+{`import beneath
+
+OUTPUT_SCHEMA="""
+YOUR OUTPUT SCHEMA HERE
+"""
+
+async def apply_fn(record):
+  # YOUR LOGIC HERE
+
+beneath.easy_derive_stream(
+  input_stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}",
+  apply_fn=apply_fn,
+  output_stream_path="USER/PROJECT/YOUR_NEW_STREAM_NAME",
+  output_stream_schema=OUTPUT_SCHEMA
+)`}
+                </CodeBlock>
+              )}
+              {pythonPipelineDetail === "Advanced" && (
+                <CodeBlock language={"python"} title={"your_pipeline.py"}>
+{`import beneath
+
+p = beneath.Pipeline(parse_args=True)
+
 data = p.read_stream("${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}")
-new_data = p.apply(data, fn)
-p.write_stream(new_data, "OUTPUT_STREAM_PATH") # optional
+
+# Check out the full docs to see what you can do in an advanced pipeline
+
 p.main()`}
-              </CodeBlock>
+                </CodeBlock>
+              )}
               <VSpace units={2} />
               <Typography variant="body1" paragraph>
                 <Link href={"/-/create/service"}>Create a service</Link>, then stage your pipeline:
@@ -248,8 +312,7 @@ p.main()`}
           {language === "Javascript" && javascriptDetail === "Reading" && (
             <>
               <Typography variant="body1" paragraph>
-                You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
-                very important that you only use read-only secrets in your front-end.
+                You can query this stream directly from your frontend. It's very important to use permissioned "read-only" secrets in your frontend code.
               </Typography>
               <CodeBlock language={"javascript"}>
                 {`fetch("${GATEWAY_URL}/v1/${toURLName(
@@ -286,8 +349,7 @@ p.main()`}
           {language === "React" && reactDetail === "Reading" && (
             <>
               <Typography variant="body1" paragraph>
-                You can query this stream directly from your front-end. Just copy and paste this snippet to get started. It's
-                very important that you only use read-only secrets in your front-end.
+                You can query this stream directly from your frontend. It's very important to use permissioned "read-only" secrets in your frontend code.
               </Typography>
               <CodeBlock language={"javascript"}>
 {`import { useRecords } from "beneath-react";
@@ -305,7 +367,7 @@ const App = () => {
           {language === "SQL" && (
             <>
               <Typography variant="body1" paragraph>
-                You can query this stream in the <Link href="/-/sql">Beneath SQL Editor</Link> like so:
+                You can query this stream in the <Link href="/-/sql">Beneath SQL Editor</Link> like this:
               </Typography>
               <CodeBlock language={"sql"}>{`select * from \`${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}\``}</CodeBlock>
               <VSpace units={2} />
@@ -317,8 +379,7 @@ const App = () => {
           {language === "cURL" && (
             <>
               <Typography variant="body1" paragraph>
-                You can lookup records in this stream from anywhere using the REST API. Here's an example of how to query it
-                from the command line:
+                You can query this data stream from anywhere using the REST API. Here's an example using cURL from the command line:
               </Typography>
               <CodeBlock language={"bash"}>
                 {`curl -H "Authorization: Bearer SECRET" ${GATEWAY_URL}/v1/${toURLName(stream.project.organization.name)}/${toURLName(
