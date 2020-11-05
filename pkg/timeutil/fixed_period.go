@@ -22,3 +22,13 @@ func NewFixedOffsetPeriod(epoch time.Time, periodDuration time.Duration) FixedOf
 func (p FixedOffsetPeriod) Floor(ts time.Time) time.Time {
 	return p.Epoch.Add(ts.Sub(p.Epoch).Truncate(p.PeriodDuration))
 }
+
+// PrevFloor returns the floor of the previous multiple of the given period of ts
+func (p FixedOffsetPeriod) PrevFloor(ts time.Time) time.Time {
+	return p.Floor(ts).Add(-1 * p.PeriodDuration)
+}
+
+// Next rounds ts up to the next multiple of the given period
+func (p FixedOffsetPeriod) Next(ts time.Time) time.Time {
+	return p.Floor(ts).Add(p.PeriodDuration)
+}
