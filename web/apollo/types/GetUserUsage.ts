@@ -3,14 +3,12 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
-import { EntityKind } from "./globalTypes";
-
 // ====================================================
-// GraphQL query operation: GetMetrics
+// GraphQL query operation: GetUserUsage
 // ====================================================
 
-export interface GetMetrics_getMetrics {
-  __typename: "Metrics";
+export interface GetUserUsage_getUserUsage {
+  __typename: "Usage";
   entityID: ControlUUID;
   period: string;
   time: ControlTime;
@@ -24,13 +22,12 @@ export interface GetMetrics_getMetrics {
   scanBytes: number;
 }
 
-export interface GetMetrics {
-  getMetrics: GetMetrics_getMetrics[];
+export interface GetUserUsage {
+  getUserUsage: GetUserUsage_getUserUsage[];
 }
 
-export interface GetMetricsVariables {
-  entityKind: EntityKind;
-  entityID: ControlUUID;
+export interface GetUserUsageVariables {
+  userID: ControlUUID;
   period: string;
   from: ControlTime;
   until?: ControlTime | null;

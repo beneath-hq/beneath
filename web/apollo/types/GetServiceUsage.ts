@@ -4,11 +4,11 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL query operation: GetServiceMetrics
+// GraphQL query operation: GetServiceUsage
 // ====================================================
 
-export interface GetServiceMetrics_getServiceMetrics {
-  __typename: "Metrics";
+export interface GetServiceUsage_getServiceUsage {
+  __typename: "Usage";
   entityID: ControlUUID;
   period: string;
   time: ControlTime;
@@ -22,11 +22,11 @@ export interface GetServiceMetrics_getServiceMetrics {
   scanBytes: number;
 }
 
-export interface GetServiceMetrics {
-  getServiceMetrics: GetServiceMetrics_getServiceMetrics[];
+export interface GetServiceUsage {
+  getServiceUsage: GetServiceUsage_getServiceUsage[];
 }
 
-export interface GetServiceMetricsVariables {
+export interface GetServiceUsageVariables {
   serviceID: ControlUUID;
   period: string;
   from: ControlTime;

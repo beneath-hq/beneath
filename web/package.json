@@ -6,7 +6,7 @@
     "dev": "NODE_ENV=development nodemon",
     "build": "next build && tsc --project tsconfig.server.json",
     "start": "cross-env NODE_ENV=production node dist/server.js",
-    "apollo:generate": "ts-node ./scripts/apolloGeneratePossibleTypes.ts && apollo codegen:generate --target typescript --outputFlat apollo/types --passthroughCustomScalars --customScalarsPrefix Control"
+    "apollo:generate": "scripts/generateApolloTypes.sh && ee/scripts/generateApolloTypes.sh"
   },
   "dependencies": {
     "@apollo/client": "^3.1.3",

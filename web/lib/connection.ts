@@ -1,3 +1,4 @@
+export const IS_EE = !!process.env.BENEATH_EE;
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export const HTTP_PROTOCOL = IS_PRODUCTION ? "https" : "http";

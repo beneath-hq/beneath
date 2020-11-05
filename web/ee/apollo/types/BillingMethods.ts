@@ -9,7 +9,7 @@
 
 export interface BillingMethods_billingMethods {
   __typename: "BillingMethod";
-  billingMethodID: ControlUUID;
+  billingMethodID: string;
   organizationID: ControlUUID;
   paymentsDriver: string;
   driverPayload: string;
