@@ -6,6 +6,8 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
 var (
@@ -18,7 +20,7 @@ var (
 
 // InitLogger sets global L and S variables
 func InitLogger() {
-	// env := envutil.GetEnv()
+	env := envutil.GetEnv()
 
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
@@ -31,11 +33,16 @@ func InitLogger() {
 	consoleDebugging := zapcore.Lock(os.Stdout)
 	consoleErrors := zapcore.Lock(os.Stderr)
 
-	consoleEncoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	var encoder zapcore.Encoder
+	if env == envutil.Production {
+		encoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	} else {
+		encoder = zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+	}
 
 	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
-		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+		zapcore.NewCore(encoder, consoleErrors, highPriority),
+		zapcore.NewCore(encoder, consoleDebugging, lowPriority),
 	)
 
 	L = zap.New(
