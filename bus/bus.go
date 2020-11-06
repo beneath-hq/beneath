@@ -240,7 +240,7 @@ func (b *Bus) unmarshalAsyncMsg(ctx context.Context, data []byte) (*asyncMsg, er
 		return nil, fmt.Errorf("cannot find msg type with name '%s'", pbmsg.Name)
 	}
 
-	payload := reflect.New(msgType).Interface().(Msg) // pointer to struct
+	payload := reflect.New(msgType.Elem()).Interface().(Msg) // pointer to struct
 	err = msgpack.Unmarshal(pbmsg.Payload, payload)
 	if err != nil {
 		return nil, err
