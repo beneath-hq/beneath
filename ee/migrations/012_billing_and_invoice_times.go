@@ -8,8 +8,8 @@ func init() {
 	Migrator.MustRegisterTx(func(db migrations.DB) (err error) {
 		_, err = db.Exec(`
 			ALTER TABLE billing_infos
-			ADD next_billing_time timestamptz NOT NULL,
-			ADD last_invoice_time timestamptz NOT NULL
+			ADD next_billing_time timestamptz NOT NULL DEFAULT now(),
+			ADD last_invoice_time timestamptz NOT NULL DEFAULT now()
 			;
 		`)
 		if err != nil {

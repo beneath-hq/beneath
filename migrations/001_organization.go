@@ -39,14 +39,6 @@ func init() {
 			return err
 		}
 
-		// Extensions
-		_, err = db.Exec(`
-			DROP EXTENSION "uuid-ossp";
-		`)
-		if err != nil {
-			return err
-		}
-
 		// Done
 		return nil
 	})

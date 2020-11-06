@@ -63,9 +63,9 @@ func init() {
 		return nil
 	}, func(db migrations.DB) (err error) {
 		_, err = db.Exec(`
-			ALTER TABLE streams DROP source_model_id;
-			DROP TABLE streams_into_models;
-			DROP TABLE models;
+			ALTER TABLE streams DROP IF EXISTS source_model_id;
+			DROP TABLE IF EXISTS streams_into_models;
+			DROP TABLE IF EXISTS models;
 		`)
 		if err != nil {
 			return err

@@ -21,9 +21,9 @@ func init() {
 		return nil
 	}, func(db migrations.DB) (err error) {
 		_, err = db.Exec(`
-			ALTER TABLE organizations DROP quota_epoch timestamptz;
-			ALTER TABLE services DROP quota_epoch timestamptz;
-			ALTER TABLE users DROP quota_epoch timestamptz;
+			ALTER TABLE organizations DROP quota_epoch;
+			ALTER TABLE services DROP quota_epoch;
+			ALTER TABLE users DROP quota_epoch;
 		`)
 		if err != nil {
 			return err

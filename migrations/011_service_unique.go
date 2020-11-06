@@ -27,7 +27,7 @@ func init() {
 	}, func(db migrations.DB) (err error) {
 		// (Organization, name) unique index
 		_, err = db.Exec(`
-			DROP INDEX services_organization_id_name_key;
+			DROP INDEX IF EXISTS services_organization_id_name_key;
 		`)
 		if err != nil {
 			return err

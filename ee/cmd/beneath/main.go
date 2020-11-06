@@ -33,7 +33,7 @@ func main() {
 // registers migrate command
 func addMigrateCmd(c *cli.CLI) {
 	log.InitLogger()
-	migrations.Migrator.AddCmd(c.Root, "migrate", func(args []string) {
+	migrations.Migrator.AddCmd(c.Root, "migrate-ce", func(args []string) {
 		cli.Dig.Invoke(func(db db.DB) {
 			migrations.Migrator.RunWithArgs(db, args...)
 		})
