@@ -15,10 +15,22 @@ const envVarPrefix = "BENEATH"
 func (c *CLI) loadConfig(configFileOrEmpty string) error {
 	// load config file
 	if configFileOrEmpty != "" {
-		c.loadConfigFile(configFileOrEmpty)
+		err := c.loadConfigFile(configFileOrEmpty)
+		if err != nil {
+			return err
+		}
 	} else {
-		c.searchLoadAndMergeConfigName(".default")                           // always loads config/.default
-		c.searchLoadAndMergeConfigName(fmt.Sprintf(".%s", envutil.GetEnv())) // if env=DEV, then loads config/.development.yaml
+		// always loads config/.default
+		err := c.searchLoadAndMergeConfigName(".default")
+		if err != nil {
+			return err
+		}
+
+		// eg. if ENV=dev, then loads config/.development.yaml
+		err = c.searchLoadAndMergeConfigName(fmt.Sprintf(".%s", envutil.GetEnv()))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Not using v.AutomaticEnv() and v.SetEnvPrefix() to directly handle
