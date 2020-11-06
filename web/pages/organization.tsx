@@ -11,7 +11,7 @@ import { toBackendName, toURLName } from "../lib/names";
 import ErrorPage from "../components/ErrorPage";
 import Loading from "../components/Loading";
 import EditOrganization from "../components/organization/EditOrganization";
-import ViewBilling from "../components/organization/ViewBilling";
+import ViewBilling from "../ee/components/organization/ViewBilling";
 import ViewMembers from "../components/organization/ViewMembers";
 import ViewMetrics from "../components/organization/ViewMetrics";
 import ViewProjects from "../components/organization/ViewProjects";

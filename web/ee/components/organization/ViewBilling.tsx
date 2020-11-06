@@ -3,7 +3,7 @@ import React, { FC } from "react";
 
 import { Grid, Link, makeStyles, Paper, Typography } from "@material-ui/core";
 
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../apollo/types/OrganizationByName";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
 import ViewBillingInfo from "./billing/ViewBillingInfo";
 import ViewBillingMethods from "./billing/ViewBillingMethods";
 

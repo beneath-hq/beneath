@@ -133,7 +133,6 @@ type BilledResourceResolver interface {
 	EntityKind(ctx context.Context, obj *models.BilledResource) (string, error)
 
 	Product(ctx context.Context, obj *models.BilledResource) (string, error)
-	Quantity(ctx context.Context, obj *models.BilledResource) (float64, error)
 
 	Currency(ctx context.Context, obj *models.BilledResource) (string, error)
 }
@@ -1295,14 +1294,14 @@ func (ec *executionContext) _BilledResource_quantity(ctx context.Context, field 
 		Object:     "BilledResource",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BilledResource().Quantity(rctx, obj)
+		return obj.Quantity, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1349,9 +1348,9 @@ func (ec *executionContext) _BilledResource_totalPriceCents(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BilledResource_currency(ctx context.Context, field graphql.CollectedField, obj *models.BilledResource) (ret graphql.Marshaler) {
@@ -2238,9 +2237,9 @@ func (ec *executionContext) _BillingPlan_basePriceCents(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_seatPriceCents(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
@@ -2273,9 +2272,9 @@ func (ec *executionContext) _BillingPlan_seatPriceCents(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_baseReadQuota(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
@@ -2623,9 +2622,9 @@ func (ec *executionContext) _BillingPlan_readOveragePriceCents(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_writeOveragePriceCents(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
@@ -2658,9 +2657,9 @@ func (ec *executionContext) _BillingPlan_writeOveragePriceCents(ctx context.Cont
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_scanOveragePriceCents(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
@@ -2693,9 +2692,9 @@ func (ec *executionContext) _BillingPlan_scanOveragePriceCents(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int32)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int32(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingPlan_availableInUI(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
@@ -4329,19 +4328,10 @@ func (ec *executionContext) _BilledResource(ctx context.Context, sel ast.Selecti
 				return res
 			})
 		case "quantity":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BilledResource_quantity(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._BilledResource_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "totalPriceCents":
 			out.Values[i] = ec._BilledResource_totalPriceCents(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5243,21 +5233,6 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface
 
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v interface{}) (int32, error) {
-	res, err := graphql.UnmarshalInt32(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
-	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

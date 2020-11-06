@@ -16,7 +16,9 @@ func (s *Service) HandleOrganizationCreatedEvent(ctx context.Context, msg *nee_m
 
 	defaultPlan := s.GetDefaultBillingPlan(ctx)
 	bi := &models.BillingInfo{
+		Organization:    msg.Organization,
 		OrganizationID:  msg.Organization.OrganizationID,
+		BillingPlan:     defaultPlan,
 		BillingPlanID:   defaultPlan.BillingPlanID,
 		NextBillingTime: quotaPeriod.Next(time.Now()),
 		LastInvoiceTime: time.Time{},
