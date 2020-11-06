@@ -67,7 +67,7 @@ func (s *Service) CreateServiceSecret(ctx context.Context, serviceID uuid.UUID, 
 // RevokeUserSecret revokes a user secret
 func (s *Service) RevokeUserSecret(ctx context.Context, secret *models.UserSecret) {
 	// delete from db
-	_, err := s.DB.GetDB(ctx).ModelContext(ctx, secret).Delete()
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, secret).WherePK().Delete()
 	if err != nil && err != pg.ErrNoRows {
 		panic(err)
 	}
@@ -79,7 +79,7 @@ func (s *Service) RevokeUserSecret(ctx context.Context, secret *models.UserSecre
 // RevokeServiceSecret revokes a service secret
 func (s *Service) RevokeServiceSecret(ctx context.Context, secret *models.ServiceSecret) {
 	// delete from db
-	_, err := s.DB.GetDB(ctx).ModelContext(ctx, secret).Delete()
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, secret).WherePK().Delete()
 	if err != nil && err != pg.ErrNoRows {
 		panic(err)
 	}

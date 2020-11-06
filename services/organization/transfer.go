@@ -66,14 +66,14 @@ func (s *Service) TransferUser(ctx context.Context, fromOrg *models.Organization
 		}
 
 		// publish events
-		err = s.Bus.Publish(ctx, models.UserUpdatedEvent{
+		err = s.Bus.Publish(ctx, &models.UserUpdatedEvent{
 			User: user,
 		})
 		if err != nil {
 			return err
 		}
 
-		err = s.Bus.Publish(ctx, models.OrganizationTransferredUserEvent{
+		err = s.Bus.Publish(ctx, &models.OrganizationTransferredUserEvent{
 			Source: fromOrg,
 			Target: targetOrg,
 			User:   user,

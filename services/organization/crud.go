@@ -169,7 +169,7 @@ func (s *Service) Delete(ctx context.Context, o *models.Organization) error {
 	// NOTE: effectively, this resolver doesn't work, as there will always be one admin member.
 	// TODO: check it's empty and has just one admin user, trigger bill, make the admin leave, delete org.
 
-	_, err := s.DB.GetDB(ctx).ModelContext(ctx, o).Delete()
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, o).WherePK().Delete()
 	if err != nil {
 		return err
 	}

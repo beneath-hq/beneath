@@ -65,7 +65,7 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, githubID, googleID, em
 			}
 
 			// publish event and commit
-			err := s.Bus.Publish(ctx, models.UserUpdatedEvent{
+			err := s.Bus.Publish(ctx, &models.UserUpdatedEvent{
 				User: user,
 			})
 			if err != nil {
@@ -73,6 +73,7 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, githubID, googleID, em
 			}
 
 			// commit
+			createdUser = user
 			return nil
 		}
 
@@ -113,6 +114,7 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, githubID, googleID, em
 		}
 
 		// commit
+		createdUser = user
 		return nil
 	})
 	if err != nil {

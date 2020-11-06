@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // Service contains functionality for finding and creating services.
@@ -132,7 +132,7 @@ func (s *Service) Stage(ctx context.Context, service *models.Service, descriptio
 			return err
 		}
 
-		err = s.Bus.Publish(ctx, models.ServiceUpdatedEvent{
+		err = s.Bus.Publish(ctx, &models.ServiceUpdatedEvent{
 			Service: service,
 		})
 		if err != nil {

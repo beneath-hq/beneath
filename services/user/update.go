@@ -65,7 +65,7 @@ func (s *Service) UpdateQuotas(ctx context.Context, u *models.User, readQuota *i
 	}
 
 	// publish event
-	err = s.Bus.Publish(ctx, models.UserUpdatedEvent{
+	err = s.Bus.Publish(ctx, &models.UserUpdatedEvent{
 		User: u,
 	})
 	if err != nil {

@@ -229,7 +229,7 @@ func (s *Service) DeleteStream(ctx context.Context, stream *models.Stream) error
 	}
 
 	// delete stream
-	_, err := s.DB.GetDB(ctx).ModelContext(ctx, stream).Delete()
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, stream).WherePK().Delete()
 	if err != nil {
 		return err
 	}

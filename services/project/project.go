@@ -210,7 +210,7 @@ func (s *Service) StageWithUser(ctx context.Context, p *models.Project, displayN
 
 // Delete safely deletes the project (fails if the project still has content)
 func (s *Service) Delete(ctx context.Context, project *models.Project) error {
-	_, err := s.DB.GetDB(ctx).ModelContext(ctx, project).Delete()
+	_, err := s.DB.GetDB(ctx).ModelContext(ctx, project).WherePK().Delete()
 	if err != nil {
 		return err
 	}
