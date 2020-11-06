@@ -113,7 +113,7 @@ func (b *Bus) addListener(listeners map[string][]HandlerFunc, handler HandlerFun
 	}
 
 	// get msg type and name
-	msgName := msgType.Name()
+	msgName := msgType.Elem().Name()
 
 	// track msg type if it doesn't exist
 	_, exists := b.msgTypes[msgName]
@@ -134,7 +134,11 @@ func (b *Bus) addListener(listeners map[string][]HandlerFunc, handler HandlerFun
 // listeners will not be called. Async listeners run in a background
 // worker, so msg will be serialized with msgpack.
 func (b *Bus) Publish(ctx context.Context, msg Msg) error {
-	msgName := reflect.TypeOf(msg).Elem().Name()
+	msgPtr := reflect.TypeOf(msg)
+	if msgPtr.Kind() != reflect.Ptr || msgPtr.Elem().Kind() != reflect.Struct {
+		panic(fmt.Errorf("expected published msg to be a struct pointer, got %T", msg))
+	}
+	msgName := msgPtr.Elem().Name()
 
 	err := b.callListeners(ctx, b.syncListeners[msgName], msg)
 	if err != nil {
