@@ -73,7 +73,9 @@ const CreateStream: FC<CreateProjectProps> = ({ preselectedProject }) => {
     skip: !me,
   });
 
-  removeRedirectAfterAuth();
+  if (typeof window !== "undefined") {
+    removeRedirectAfterAuth();
+  }
 
   const initialValues = {
     project: data?.projectsForUser?.length ? (preselectedProject ? preselectedProject : data.projectsForUser[0]) : null,
