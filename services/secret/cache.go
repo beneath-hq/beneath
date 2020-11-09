@@ -13,7 +13,9 @@ import (
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 )
 
-// AuthenticateWithToken returns the secret object matching token or AnonymousSecret
+// AuthenticateWithToken returns the secret object matching token, or nil.
+// NOTE: It does *not* return AnonymousSecret when token is empty. The auth middleware
+// returns AnonymousSecret if no token is provided, but this function checks a provided token.
 func (s *Service) AuthenticateWithToken(ctx context.Context, token secrettoken.Token) models.Secret {
 	return s.cache.Get(ctx, token)
 }

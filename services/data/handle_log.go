@@ -33,9 +33,6 @@ type queryLogTags struct {
 func (s *Service) HandleQueryLog(ctx context.Context, req *QueryLogRequest) (*QueryLogResponse, *Error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
-	if secret == nil {
-		return nil, newErrorf(http.StatusUnauthorized, "not authenticated")
-	}
 
 	// set payload
 	payload := queryLogTags{

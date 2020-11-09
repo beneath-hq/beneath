@@ -16,6 +16,8 @@ func (s *Service) StreamPermissionsForSecret(ctx context.Context, secret models.
 		return s.streamPermissionsForUserSecret(ctx, secret, streamID, projectID, public)
 	case *models.ServiceSecret:
 		return s.streamPermissionsForServiceSecret(ctx, secret, streamID, projectID, public)
+	case *models.AnonymousSecret:
+		return models.StreamPermissions{Read: public}
 	default:
 		panic(fmt.Errorf("unrecognized secret type %T", secret))
 	}
@@ -40,6 +42,8 @@ func (s *Service) ProjectPermissionsForSecret(ctx context.Context, secret models
 		return s.projectPermissionsForUserSecret(ctx, secret, projectID, public)
 	case *models.ServiceSecret:
 		return s.projectPermissionsForServiceSecret(ctx, secret, projectID, public)
+	case *models.AnonymousSecret:
+		return models.ProjectPermissions{View: public}
 	default:
 		panic(fmt.Errorf("unrecognized secret type %T", secret))
 	}
@@ -74,6 +78,8 @@ func (s *Service) OrganizationPermissionsForSecret(ctx context.Context, secret m
 		return s.organizationPermissionsForUserSecret(ctx, secret, organizationID)
 	case *models.ServiceSecret:
 		return s.organizationPermissionsForServiceSecret(ctx, secret, organizationID)
+	case *models.AnonymousSecret:
+		return models.OrganizationPermissions{} // Everyone has basic view access for orgs. The View property here indicates insider-view.
 	default:
 		panic(fmt.Errorf("unrecognized secret type %T", secret))
 	}

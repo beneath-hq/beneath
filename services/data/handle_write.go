@@ -46,7 +46,7 @@ type writeUsage struct {
 func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteResponse, *Error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
-	if secret == nil {
+	if secret == nil || secret.IsAnonymous() {
 		return nil, newError(http.StatusForbidden, "not authenticated")
 	}
 

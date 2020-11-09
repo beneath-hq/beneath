@@ -12,7 +12,7 @@ import (
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {
 	// get auth
 	secret := middleware.GetSecret(ss.Context())
-	if secret == nil {
+	if secret.IsAnonymous() {
 		return grpc.Errorf(codes.PermissionDenied, "not authenticated")
 	}
 

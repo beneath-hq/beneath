@@ -95,7 +95,7 @@ func (r *queryResolver) GetUserUsage(ctx context.Context, userID uuid.UUID, peri
 		}
 
 		perms := r.Permissions.OrganizationPermissionsForSecret(ctx, secret, user.BillingOrganizationID)
-		if !perms.View {
+		if !perms.Admin {
 			return nil, gqlerror.Errorf("you do not have permission to view this user's usage")
 		}
 	}
