@@ -2,14 +2,12 @@ package middleware
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
@@ -35,7 +33,7 @@ func (s *Service) DefaultGQLRecoverFunc(ctx context.Context, errT interface{}) e
 	} else {
 		log.L.Error("http recovered panic", zap.Reflect("error", errT))
 	}
-	return httputil.NewError(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
+	return gqlerror.Errorf("Internal server error")
 }
 
 // QueryLoggingGQLMiddleware logs sensible info about every GraphQL request
@@ -47,6 +45,10 @@ func (s *Service) QueryLoggingGQLMiddleware(ctx context.Context, next graphql.Re
 
 func (s *Service) logInfoFromGQLRequestContext(ctx *graphql.RequestContext) interface{} {
 	var queries []gqlLog
+	if ctx.Doc == nil {
+		return queries
+	}
+
 	for _, op := range ctx.Doc.Operations {
 		for _, sel := range op.SelectionSet {
 			if field, ok := sel.(*ast.Field); ok {
