@@ -15,4 +15,4 @@ Use sync event handlers for light operations or operations that require the publ
 
 The background worker calls `bus.Run` to start processing async events dispatched from other processes. It's started with the `control-worker` startable (see `cmd/beneath/`).
 
-**It's critical that every service that handles async events is initialized in the worker process** before bus.Run is called! (See `cmd/beneath/dependencies/services.go`.)
+**It's critical that every service that handles async events is initialized in the worker process** before `bus.Run` is called! (See `cmd/beneath/dependencies/services.go`.)
