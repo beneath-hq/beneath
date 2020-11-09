@@ -37,7 +37,7 @@ func (s *Service) FindStreamInstanceByVersion(ctx context.Context, streamID uuid
 			"Stream.Project",
 			"Stream.Project.Organization",
 		).
-		Where("stream_id = ?", streamID).
+		Where("stream_instance.stream_id = ?", streamID).
 		Where("version = ?", version).
 		Select()
 	if !db.AssertFoundOne(err) {
