@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"go.uber.org/dig"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // Dig manages and creates dependencies
@@ -62,8 +62,13 @@ type Runable interface {
 // Lifecycle runs one or more Runables. It is inspired by fx.Lifecycle,
 // but we prefer a ctx-based Run function to start/stop hooks.
 type Lifecycle struct {
+	Logger  *zap.SugaredLogger
 	Names   []string
 	Runners []Runable
+}
+
+func newLifecycle(logger *zap.Logger) *Lifecycle {
+	return &Lifecycle{Logger: logger.Sugar()}
 }
 
 // Add registers a new Runable in the lifecycle
@@ -98,9 +103,9 @@ func (l *Lifecycle) Run() {
 		idx := idx
 		runner := runner
 		group.Go(func() error {
-			log.S.Infof("running %s", l.Names[idx])
+			l.Logger.Infof("running %s", l.Names[idx])
 			err := runner.Run(ctx)
-			log.S.Infof("stopped %s", l.Names[idx])
+			l.Logger.Infof("stopped %s", l.Names[idx])
 			if err != nil {
 				cancel()
 			}
@@ -110,7 +115,8 @@ func (l *Lifecycle) Run() {
 
 	err := group.Wait()
 	if err != nil {
-		log.S.Fatal(err)
+		l.Logger.Fatal(err)
 	}
+	l.Logger.Sync()
 	os.Exit(0)
 }

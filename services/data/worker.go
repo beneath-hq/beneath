@@ -12,7 +12,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
 	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 	pbgw "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 )
@@ -69,8 +68,8 @@ func (s *Service) processWriteRequest(ctx context.Context, req *pb.WriteRequest)
 
 	// finalise metrics
 	elapsed := time.Since(start)
-	log.S.Infow(
-		"pipeline write",
+	s.Logger.Infow(
+		"records write",
 		"write_id", req.WriteId,
 		"records", recordsCount,
 		"bytes", bytesTotal,
@@ -87,7 +86,7 @@ func (s *Service) processInstanceRecords(ctx context.Context, writeID []byte, ir
 	stream := s.Streams.FindCachedInstance(ctx, instanceID)
 	if stream == nil {
 		// TODO: use dead letter queue that retries
-		log.S.Errorw("instance not found", "instance", instanceID.String(), "records", ir.Records)
+		s.Logger.Errorw("instance not found", "instance", instanceID.String(), "records", ir.Records)
 		return 0, nil
 	}
 

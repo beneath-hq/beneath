@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
 	"gitlab.com/beneath-hq/beneath/ee/server/control/resolver"
@@ -26,6 +27,7 @@ import (
 type Server struct {
 	Router *chi.Mux
 
+	Logger        *zap.Logger
 	Billing       *billing.Service
 	Payments      *payments.Service
 	Permissions   *permissions.Service
@@ -33,10 +35,12 @@ type Server struct {
 }
 
 // NewServer returns a new enterprise control server
-func NewServer(billing *billing.Service, middleware *middleware.Service, payments *payments.Service, permissions *permissions.Service, organization *organization.Service) *Server {
+func NewServer(logger *zap.Logger, billing *billing.Service, middleware *middleware.Service, payments *payments.Service, permissions *permissions.Service, organization *organization.Service) *Server {
+	l := logger.Named("control.eeserver")
 	router := chi.NewRouter()
 	server := &Server{
 		Router:        router,
+		Logger:        l,
 		Billing:       billing,
 		Payments:      payments,
 		Permissions:   permissions,
@@ -60,7 +64,7 @@ func NewServer(billing *billing.Service, middleware *middleware.Service, payment
 	gqlsrv.Use(extension.Introspection{})
 	gqlsrv.AroundResponses(middleware.QueryLoggingGQLMiddleware)
 	gqlsrv.SetErrorPresenter(middleware.DefaultGQLErrorPresenter)
-	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc)
+	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc(l))
 	router.Handle("/graphql", gqlsrv)
 	router.Handle("/playground", playground.Handler("Beneath", "/ee/graphql"))
 

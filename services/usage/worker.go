@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
@@ -40,7 +39,7 @@ func (s *Service) Run(ctx context.Context) error {
 			s.commitTicker.Stop()
 			s.commitToTable()
 			s.running = false
-			log.S.Infow("buffered usage flushed before stopping")
+			s.logger.Infow("buffered usage flushed before stopping")
 			return nil
 		}
 	}
@@ -67,7 +66,7 @@ func (s *Service) commitToTable() error {
 	for id, usage := range usageBuffer {
 		// when maxWorkers goroutines are in flight, Acquire blocks until one of the workers finishes.
 		if err := sem.Acquire(ctx, 1); err != nil {
-			log.S.Errorf("Failed to acquire semaphore: %v", err)
+			s.logger.Errorf("failed to acquire semaphore: %v", err)
 			break
 		}
 
@@ -102,7 +101,7 @@ func (s *Service) commitToTable() error {
 
 	// acquire all of the tokens to wait for any remaining workers to finish.
 	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
-		log.S.Errorf("Failed to acquire semaphore: %v", err)
+		s.logger.Errorf("failed to acquire semaphore: %v", err)
 	}
 
 	// release all the tokens to be ready for the next batch
@@ -113,7 +112,7 @@ func (s *Service) commitToTable() error {
 
 	// log
 	elapsed := time.Since(now)
-	log.S.Infow(
+	s.logger.Infow(
 		"usage flush",
 		"ids", len(usageBuffer),
 		"quota_ids", len(quotaEpochBuffer),

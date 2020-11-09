@@ -11,58 +11,58 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // LoggerMiddleware is a HTTP middleware that logs each request, along with some useful data
 // about what was requested, what the response status was, and how long it took to return.
-func (s *Service) LoggerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t1 := time.Now()
+func (s *Service) LoggerMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t1 := time.Now()
 
-		ww := chimiddleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		next.ServeHTTP(ww, r)
+			ww := chimiddleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
 
-		tags := GetTags(r.Context())
-		l := loggerWithTags(log.L, tags)
+			tags := GetTags(r.Context())
+			l := loggerWithTags(logger, tags)
 
-		if r.RequestURI == "/healthz" {
-			return
-		}
+			if r.RequestURI == "/healthz" {
+				return
+			}
 
-		status := ww.Status()
-		if status == 0 {
-			status = 200
-		}
+			status := ww.Status()
+			if status == 0 {
+				status = 200
+			}
 
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			ip = r.RemoteAddr
-		}
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				ip = r.RemoteAddr
+			}
 
-		l.Info(
-			"http request",
-			zap.String("method", r.Method),
-			zap.String("proto", r.Proto),
-			zap.String("host", r.Host),
-			zap.String("path", r.RequestURI),
-			zap.String("ip", ip),
-			zap.Duration("time", time.Since(t1)),
-			zap.Int("status", status),
-			zap.Int("size", ww.BytesWritten()),
-		)
-	})
+			l.Info(
+				"http request",
+				zap.String("method", r.Method),
+				zap.String("proto", r.Proto),
+				zap.String("host", r.Host),
+				zap.String("path", r.RequestURI),
+				zap.String("ip", ip),
+				zap.Duration("time", time.Since(t1)),
+				zap.Int("status", status),
+				zap.Int("size", ww.BytesWritten()),
+			)
+		})
+	}
 }
 
 // LoggerUnaryServerInterceptor is a gRPC interceptor that logs each request
-func (s *Service) LoggerUnaryServerInterceptor() grpc.UnaryServerInterceptor {
+func (s *Service) LoggerUnaryServerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		t1 := time.Now()
 		resp, err := handler(ctx, req)
 
 		tags := GetTags(ctx)
-		l := loggerWithTags(log.L, tags)
+		l := loggerWithTags(logger, tags)
 
 		l.Info(
 			"grpc unary request",
@@ -77,13 +77,13 @@ func (s *Service) LoggerUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // LoggerStreamServerInterceptor is a gRPC interceptor that logs each streaming request
-func (s *Service) LoggerStreamServerInterceptor() grpc.StreamServerInterceptor {
+func (s *Service) LoggerStreamServerInterceptor(logger *zap.Logger) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		t1 := time.Now()
 		err := handler(srv, ss)
 
 		tags := GetTags(ss.Context())
-		l := loggerWithTags(log.L, tags)
+		l := loggerWithTags(logger, tags)
 
 		l.Info(
 			"grpc stream request",

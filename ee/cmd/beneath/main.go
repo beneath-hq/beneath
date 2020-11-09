@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
@@ -13,7 +14,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
 	"gitlab.com/beneath-hq/beneath/migrations"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"
 	"gitlab.com/beneath-hq/beneath/services/usage"
@@ -32,21 +32,19 @@ func main() {
 
 // registers migrate command
 func addMigrateCmd(c *cli.CLI) {
-	log.InitLogger()
 	migrations.Migrator.AddCmd(c.Root, "migrate-ce", func(args []string) {
-		cli.Dig.Invoke(func(db db.DB) {
-			migrations.Migrator.RunWithArgs(db, args...)
+		cli.Dig.Invoke(func(db db.DB, logger *zap.Logger) {
+			migrations.Migrator.RunWithArgs(db, logger, args...)
 		})
 	})
 	migrations.Migrator.AddCmd(c.Root, "migrate-ee", func(args []string) {
-		cli.Dig.Invoke(func(db db.DB) {
-			eemigrations.Migrator.RunWithArgs(db, args...)
+		cli.Dig.Invoke(func(db db.DB, logger *zap.Logger) {
+			eemigrations.Migrator.RunWithArgs(db, logger, args...)
 		})
 	})
 }
 
 func addBillingCmd(c *cli.CLI) {
-	log.InitLogger()
 	billingCmd := &cobra.Command{
 		Use:   "billing",
 		Short: "Billing-related functionality",
@@ -56,10 +54,10 @@ func addBillingCmd(c *cli.CLI) {
 		Short: "Runs billing for all customers whose plan is set to renew since the last invocation",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			cli.Dig.Invoke(func(billing *billing.Service) {
+			cli.Dig.Invoke(func(logger *zap.Logger, billing *billing.Service) {
 				err := billing.RunBilling(context.Background())
 				if err != nil {
-					log.S.Errorf("Billing failed with error: %s", err.Error())
+					logger.Sugar().Errorf("Billing failed with error: %s", err.Error())
 				}
 			})
 		},
@@ -70,14 +68,14 @@ func addBillingCmd(c *cli.CLI) {
 func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "control-server",
-		Register: func(lc *cli.Lifecycle, server *control.Server, eeServer *eecontrol.Server, db db.DB) {
+		Register: func(lc *cli.Lifecycle, server *control.Server, eeServer *eecontrol.Server, db db.DB, logger *zap.Logger) {
 			// running the control server also runs automigrate (ce migrations first, then ee migrations)
 			lc.AddFunc("automigrate", func(ctx context.Context) error {
-				err := migrations.Migrator.AutomigrateAndLog(db, false)
+				err := migrations.Migrator.AutomigrateAndLog(db, logger, false)
 				if err != nil {
 					return err
 				}
-				return eemigrations.Migrator.AutomigrateAndLog(db, false)
+				return eemigrations.Migrator.AutomigrateAndLog(db, logger, false)
 			})
 
 			// mounts the enterprise control server on the "/ee" route of the normal control server (parasite!)

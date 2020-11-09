@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // HandleShouldInvoiceBilledResourcesEvent triggers invoicing after new billed resources are committed
@@ -34,12 +33,12 @@ func (s *Service) invoiceOutstanding(ctx context.Context, bi *models.BillingInfo
 
 	resources := s.Billing.FindBilledResources(ctx, bi.OrganizationID, invoiceFromTime, invoiceToTime)
 	if len(resources) == 0 {
-		log.S.Infof("didn't find any billed resources for organization %s", bi.OrganizationID.String())
+		s.Logger.Infof("didn't find any billed resources for organization %s", bi.OrganizationID.String())
 		return nil
 	}
 
 	if bi.BillingMethodID == nil {
-		log.S.Infof("organization %s does not have billing method, skipping", bi.OrganizationID.String())
+		s.Logger.Infof("organization %s does not have billing method, skipping", bi.OrganizationID.String())
 		return nil
 	}
 

@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
 	"gitlab.com/beneath-hq/beneath/migrations"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"
 	"gitlab.com/beneath-hq/beneath/services/usage"
@@ -24,10 +25,9 @@ func main() {
 
 // registers migrate command
 func addMigrateCmd(c *cli.CLI) {
-	log.InitLogger()
 	migrations.Migrator.AddCmd(c.Root, "migrate", func(args []string) {
-		cli.Dig.Invoke(func(db db.DB) {
-			migrations.Migrator.RunWithArgs(db, args...)
+		cli.Dig.Invoke(func(db db.DB, logger *zap.Logger) {
+			migrations.Migrator.RunWithArgs(db, logger, args...)
 		})
 	})
 }
@@ -35,10 +35,10 @@ func addMigrateCmd(c *cli.CLI) {
 func init() {
 	cli.AddStartable(&cli.Startable{
 		Name: "control-server",
-		Register: func(lc *cli.Lifecycle, server *control.Server, db db.DB) {
+		Register: func(lc *cli.Lifecycle, server *control.Server, db db.DB, logger *zap.Logger) {
 			// running the control server also runs automigrate
 			lc.AddFunc("automigrate", func(ctx context.Context) error {
-				return migrations.Migrator.AutomigrateAndLog(db, false)
+				return migrations.Migrator.AutomigrateAndLog(db, logger, false)
 			})
 
 			// add control server to lifecycle

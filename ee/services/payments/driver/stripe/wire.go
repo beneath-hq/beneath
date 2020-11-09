@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
@@ -19,6 +20,7 @@ import (
 
 // WireDriver implements payments.Driver
 type WireDriver struct {
+	Logger        *zap.SugaredLogger
 	Billing       *billing.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
@@ -33,7 +35,7 @@ func init() {
 	driver.AddDriver(driver.StripeWire, newStripeWire)
 }
 
-func newStripeWire(billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, optsMap map[string]interface{}) (driver.Driver, error) {
+func newStripeWire(logger *zap.Logger, billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, optsMap map[string]interface{}) (driver.Driver, error) {
 	// load options
 	var opts WireOptions
 	err := mapstructure.Decode(optsMap, &opts)
@@ -45,6 +47,7 @@ func newStripeWire(billing *billing.Service, organizations *organization.Service
 	stripeutil.InitStripe(opts.StripeSecret)
 
 	return &WireDriver{
+		Logger:        logger.Named("stripe.wire").Sugar(),
 		Billing:       billing,
 		Organizations: organizations,
 		Permissions:   permissions,

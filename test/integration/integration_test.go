@@ -25,7 +25,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments"
 	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	gwgrpc "gitlab.com/beneath-hq/beneath/server/data/grpc"
 	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	gwhttp "gitlab.com/beneath-hq/beneath/server/data/http"
@@ -64,9 +63,6 @@ func TestMain(m *testing.M) {
 	// load config
 	var config configSpecification
 	envutil.LoadConfig("beneath", &config)
-
-	// Init logging
-	log.InitLogger()
 
 	// connect postgres, redis, engine, and payment drivers
 	hub.InitPostgres(config.PostgresHost, config.PostgresDB, config.PostgresUser, config.PostgresPassword)

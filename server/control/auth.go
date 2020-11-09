@@ -16,7 +16,6 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
@@ -131,8 +130,8 @@ func (s *Server) logoutHandler(w http.ResponseWriter, r *http.Request) error {
 	if secret != nil {
 		if secret.IsUser() {
 			s.Secrets.RevokeUserSecret(r.Context(), secret.(*models.UserSecret))
-			log.S.Infow(
-				"control user logout",
+			s.Logger.Infow(
+				"user logout",
 				"user_id", secret.GetOwnerID(),
 				"secret_id", secret.GetSecretID(),
 			)

@@ -7,10 +7,10 @@ import (
 	"github.com/go-pg/migrations/v7"
 	"github.com/go-pg/pg/v9"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/infrastructure/db"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // Migrator wraps go-pg/migrations with useful extra functionality
@@ -90,10 +90,10 @@ func (m *Migrator) AddCmd(root *cobra.Command, name string, fn func(args []strin
 }
 
 // RunWithArgs runs migrations with command-line args (as registered with RegisterCmd)
-func (m *Migrator) RunWithArgs(db db.DB, args ...string) {
+func (m *Migrator) RunWithArgs(db db.DB, logger *zap.Logger, args ...string) {
 	pg := db.GetDB(context.Background()).(*pg.DB)
 	oldVersion, newVersion, err := m.Collection.Run(pg, args...)
-	m.log(oldVersion, newVersion, err)
+	m.log(logger, oldVersion, newVersion, err)
 }
 
 // Automigrate automatically applies every new migration. If reset is true, it resets migrations
@@ -137,18 +137,19 @@ func (m *Migrator) Automigrate(db db.DB, reset bool) (oldVersion, newVersion int
 }
 
 // AutomigrateAndLog runs m.Automigrate and logs the result, returning only an error if applicable
-func (m *Migrator) AutomigrateAndLog(db db.DB, reset bool) error {
+func (m *Migrator) AutomigrateAndLog(db db.DB, logger *zap.Logger, reset bool) error {
 	oldVersion, newVersion, err := m.Automigrate(db, reset)
-	m.log(oldVersion, newVersion, err)
+	m.log(logger, oldVersion, newVersion, err)
 	return err
 }
 
-func (m *Migrator) log(oldVersion, newVersion int64, err error) {
+func (m *Migrator) log(logger *zap.Logger, oldVersion, newVersion int64, err error) {
+	l := logger.Named("migrator")
 	if err != nil {
-		log.S.Errorf("failed running migrations on '%s': %s", m.TableName, err.Error())
+		l.Sugar().Errorf("failed running migrations on '%s': %s", m.TableName, err.Error())
 	} else if newVersion != oldVersion {
-		log.S.Infof("migrated '%s' from version %d to %d", m.TableName, oldVersion, newVersion)
+		l.Sugar().Infof("migrated '%s' from version %d to %d", m.TableName, oldVersion, newVersion)
 	} else {
-		log.S.Infof("migration version is %d on '%s'", newVersion, m.TableName)
+		l.Sugar().Infof("migration version is %d on '%s'", newVersion, m.TableName)
 	}
 }

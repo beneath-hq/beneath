@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"github.com/mitchellh/mapstructure"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/infrastructure/mq"
 )
@@ -17,6 +18,7 @@ func init() {
 
 // PubSub implements beneath.MessageQueue
 type PubSub struct {
+	Logger *zap.SugaredLogger
 	Client *pubsub.Client
 	Topics map[string]*pubsub.Topic
 	Opts   *Options
@@ -31,7 +33,7 @@ type Options struct {
 	EmulatorHost       string `mapstructure:"emulator_host"`
 }
 
-func newPubsub(optsMap map[string]interface{}) (mq.MessageQueue, error) {
+func newPubsub(logger *zap.Logger, optsMap map[string]interface{}) (mq.MessageQueue, error) {
 	// decode options
 	var opts Options
 	err := mapstructure.Decode(optsMap, &opts)
@@ -52,6 +54,7 @@ func newPubsub(optsMap map[string]interface{}) (mq.MessageQueue, error) {
 	}
 
 	return &PubSub{
+		Logger: logger.Named("pubsub").Sugar(),
 		Client: client,
 		Topics: make(map[string]*pubsub.Topic),
 		Opts:   &opts,

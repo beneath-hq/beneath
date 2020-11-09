@@ -14,9 +14,9 @@ import (
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
 	"gitlab.com/beneath-hq/beneath/server/control/resolver"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
@@ -41,9 +41,10 @@ type ServerOptions struct {
 
 // Server is the control server
 type Server struct {
-	Router  *chi.Mux
-	Options *ServerOptions
+	Router *chi.Mux
 
+	Options       *ServerOptions
+	Logger        *zap.SugaredLogger
 	Usage         *usage.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
@@ -57,6 +58,7 @@ type Server struct {
 // NewServer returns a new control server
 func NewServer(
 	opts *ServerOptions,
+	logger *zap.Logger,
 	usage *usage.Service,
 	middleware *middleware.Service,
 	organization *organization.Service,
@@ -67,10 +69,12 @@ func NewServer(
 	stream *stream.Service,
 	user *user.Service,
 ) *Server {
+	l := logger.Named("control.server")
 	router := chi.NewRouter()
 	server := &Server{
 		Router:        router,
 		Options:       opts,
+		Logger:        l.Sugar(),
 		Usage:         usage,
 		Organizations: organization,
 		Permissions:   permissions,
@@ -95,8 +99,8 @@ func NewServer(
 	router.Use(chimiddleware.DefaultCompress)
 	router.Use(cors.New(corsOptions).Handler)
 	router.Use(middleware.InjectTagsMiddleware)
-	router.Use(middleware.LoggerMiddleware)
-	router.Use(middleware.RecovererMiddleware)
+	router.Use(middleware.LoggerMiddleware(l))
+	router.Use(middleware.RecovererMiddleware(l))
 	router.Use(middleware.AuthMiddleware)
 	router.Use(middleware.IPRateLimitMiddleware)
 
@@ -120,7 +124,7 @@ func NewServer(
 	gqlsrv.Use(extension.Introspection{})
 	gqlsrv.AroundResponses(middleware.QueryLoggingGQLMiddleware)
 	gqlsrv.SetErrorPresenter(middleware.DefaultGQLErrorPresenter)
-	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc)
+	gqlsrv.SetRecoverFunc(middleware.DefaultGQLRecoverFunc(l))
 	router.Handle("/graphql", gqlsrv)
 	router.Handle("/playground", playground.Handler("Beneath", "/graphql"))
 
@@ -129,7 +133,7 @@ func NewServer(
 
 // Run starts the control server
 func (s *Server) Run(ctx context.Context) error {
-	log.S.Infof("serving control server on port %d", s.Options.Port)
+	s.Logger.Infof("serving on port %d", s.Options.Port)
 	httpServer := &http.Server{Handler: s.Router}
 	return httputil.ListenAndServeContext(ctx, httpServer, s.Options.Port)
 }
@@ -140,7 +144,7 @@ func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {
-		log.S.Errorf("Control database health check failed")
+		s.Logger.Errorf("control database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }

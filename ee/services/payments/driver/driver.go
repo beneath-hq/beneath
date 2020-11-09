@@ -3,6 +3,8 @@ package driver
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
@@ -27,7 +29,7 @@ type Driver interface {
 }
 
 // Constructor is a function that creates a payments driver from a config object
-type Constructor func(billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, opts map[string]interface{}) (Driver, error)
+type Constructor func(logger *zap.Logger, billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, opts map[string]interface{}) (Driver, error)
 
 // Drivers is a registry of driver constructors
 var Drivers = make(map[string]Constructor)

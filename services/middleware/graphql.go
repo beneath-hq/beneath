@@ -7,8 +7,6 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
-
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 type gqlLog struct {
@@ -27,13 +25,15 @@ func (s *Service) DefaultGQLErrorPresenter(ctx context.Context, err error) *gqle
 }
 
 // DefaultGQLRecoverFunc is called when a graphql request panics
-func (s *Service) DefaultGQLRecoverFunc(ctx context.Context, errT interface{}) error {
-	if err, ok := errT.(error); ok {
-		log.L.Error("http recovered panic", zap.Error(err))
-	} else {
-		log.L.Error("http recovered panic", zap.Reflect("error", errT))
+func (s *Service) DefaultGQLRecoverFunc(logger *zap.Logger) graphql.RecoverFunc {
+	return func(ctx context.Context, errT interface{}) error {
+		if err, ok := errT.(error); ok {
+			logger.Error("http recovered panic", zap.Error(err))
+		} else {
+			logger.Error("http recovered panic", zap.Reflect("error", errT))
+		}
+		return gqlerror.Errorf("Internal server error")
 	}
-	return gqlerror.Errorf("Internal server error")
 }
 
 // QueryLoggingGQLMiddleware logs sensible info about every GraphQL request

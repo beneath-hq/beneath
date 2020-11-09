@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 // SubscriptionMessage encapsulates a subscription update dispatched by a Broker
@@ -48,7 +47,7 @@ func (s *Service) ServeSubscriptions(ctx context.Context) error {
 	// TODO: gracefully shutdown subscriptions
 
 	s.subscriptions.open = false
-	log.S.Infow("subscriptions broker shutdown gracefully")
+	s.Logger.Infow("subscriptions broker shutdown gracefully")
 	return nil
 }
 
@@ -108,7 +107,7 @@ func (s *Service) handleWriteReport(ctx context.Context, rep *pb.WriteReport) er
 
 	cbs.RUnlock()
 
-	log.S.Infow(
+	s.Logger.Infow(
 		"subscription dispatch",
 		"instance", instanceID.String(),
 		"clients", n,

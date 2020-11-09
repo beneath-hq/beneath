@@ -3,6 +3,8 @@ package mq
 import (
 	"context"
 	"fmt"
+
+	"go.uber.org/zap"
 )
 
 // MessageQueue encapsulates functionality for message passing in Beneath
@@ -25,7 +27,7 @@ type MessageQueue interface {
 }
 
 // Driver is a function that creates a MessageQueue from a config object
-type Driver func(opts map[string]interface{}) (MessageQueue, error)
+type Driver func(logger *zap.Logger, opts map[string]interface{}) (MessageQueue, error)
 
 // drivers is a registry of MessageQueue drivers
 var drivers = make(map[string]Driver)
@@ -45,10 +47,10 @@ type Options struct {
 }
 
 // NewMessageQueue constructs a new MessageQueue
-func NewMessageQueue(opts *Options) (MessageQueue, error) {
+func NewMessageQueue(logger *zap.Logger, opts *Options) (MessageQueue, error) {
 	constructor := drivers[opts.DriverName]
 	if constructor == nil {
 		return nil, fmt.Errorf("'%s' is not a valid MessageQueue driver", opts.DriverName)
 	}
-	return constructor(opts.DriverOptions)
+	return constructor(logger.Named("mq"), opts.DriverOptions)
 }

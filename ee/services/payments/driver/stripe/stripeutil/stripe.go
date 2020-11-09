@@ -12,11 +12,11 @@ import (
 	"github.com/stripe/stripe-go/paymentmethod"
 	"github.com/stripe/stripe-go/setupintent"
 	"github.com/stripe/stripe-go/taxrate"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/pkg/paymentsutil"
 	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 )
 
 const (
@@ -291,22 +291,22 @@ func FindCustomerInvoices(customerID string) []*stripe.Invoice {
 
 // PayInvoice triggers Stripe to pay the invoice on behalf of the customer
 // use this for customers who pay by card and are automatically charged
-func PayInvoice(invoiceID string) error {
+func PayInvoice(logger *zap.SugaredLogger, invoiceID string) error {
 	_, err := invoice.Pay(invoiceID, nil)
 	if err != nil {
 		if stripeErr, ok := err.(*stripe.Error); ok {
 			switch stripeErr.Code {
 			case stripe.ErrorCodeCardDeclined:
-				log.S.Infow("stripe card declined", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
+				logger.Infow("card declined", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
 				return nil
 			case stripe.ErrorCodeExpiredCard:
-				log.S.Infow("stripe card expired", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
+				logger.Infow("card expired", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
 				return nil
 			case "invoice_payment_intent_requires_action":
 				// stripe will send the customer an email, bring them to a hosted checkout page, and get manual authorization
 				// https://stripe.com/docs/error-codes/invoice-payment-intent-requires-action
 				// https://stripe.com/docs/billing/subscriptions/payment#handling-action-required
-				log.S.Infow("stripe card payment requires action", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
+				logger.Infow("card payment requires action", "invoice_id", invoiceID, "error_msg", stripeErr.Msg)
 				return nil
 			}
 		}

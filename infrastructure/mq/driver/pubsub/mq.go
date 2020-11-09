@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -71,7 +70,7 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 		err := fn(ctx, msg.Data)
 		if err != nil {
 			// TODO: we'll want to keep the pipeline going in the future when things are stable
-			log.S.Errorf("couldn't process %s record: %s", topic, err.Error())
+			p.Logger.Errorf("couldn't process %s record: %s", topic, err.Error())
 			msg.Nack()
 			cancel()
 			return

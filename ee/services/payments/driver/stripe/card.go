@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stripe/stripe-go"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
@@ -17,7 +18,6 @@ import (
 	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver/stripe/stripeutil"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 	"gitlab.com/beneath-hq/beneath/services/organization"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
@@ -29,6 +29,7 @@ const (
 
 // CardDriver implements driver.Driver
 type CardDriver struct {
+	Logger        *zap.SugaredLogger
 	Billing       *billing.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
@@ -43,7 +44,7 @@ func init() {
 	driver.AddDriver(driver.StripeCard, newCardDriver)
 }
 
-func newCardDriver(billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, optsMap map[string]interface{}) (driver.Driver, error) {
+func newCardDriver(logger *zap.Logger, billing *billing.Service, organizations *organization.Service, permissions *permissions.Service, optsMap map[string]interface{}) (driver.Driver, error) {
 	// load options
 	var opts CardOptions
 	err := mapstructure.Decode(optsMap, &opts)
@@ -55,6 +56,7 @@ func newCardDriver(billing *billing.Service, organizations *organization.Service
 	stripeutil.InitStripe(opts.StripeSecret)
 
 	return &CardDriver{
+		Logger:        logger.Named("stripe.card").Sugar(),
 		Billing:       billing,
 		Organizations: organizations,
 		Permissions:   permissions,
@@ -76,7 +78,7 @@ func (d *CardDriver) IssueInvoiceForResources(bi *models.BillingInfo, resources 
 		return err
 	}
 
-	err = stripeutil.PayInvoice(invoice.ID)
+	err = stripeutil.PayInvoice(d.Logger, invoice.ID)
 	if err != nil {
 		return err
 	}
@@ -129,14 +131,14 @@ func (d *CardDriver) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 	// get payload
 	payload, err := ioutil.ReadAll(http.MaxBytesReader(w, req.Body, 2^16))
 	if err != nil {
-		log.S.Errorf("Stripe webhook: Error reading request body: %s", err.Error())
+		d.Logger.Errorf("webhook: error reading request body: %s", err.Error())
 		return err
 	}
 
 	// parse event
 	event := &stripe.Event{}
 	if err := json.Unmarshal(payload, event); err != nil {
-		log.S.Errorf("Stripe webhook: Failed to parse webhook body json: %s", err.Error())
+		d.Logger.Errorf("webhook: failed to parse body: %s", err.Error())
 		return err
 	}
 
@@ -148,12 +150,12 @@ func (d *CardDriver) handleStripeWebhook(w http.ResponseWriter, req *http.Reques
 		err = d.handlePaymentFailed(req.Context(), w, event)
 	default:
 		w.WriteHeader(http.StatusOK)
-		log.S.Errorf("Unexpected event type: %s", event.Type)
+		d.Logger.Errorf("unexpected event type: %s", event.Type)
 		return nil
 	}
 
 	if err != nil {
-		log.S.Errorf("Stripe webhook handler error for event '%s': %s", event.Type, err.Error())
+		d.Logger.Errorf("webhook handler error for event '%s': %s", event.Type, err.Error())
 		return err
 	}
 
@@ -165,7 +167,7 @@ func (d *CardDriver) handleSetupIntentSucceeded(ctx context.Context, w http.Resp
 	setupIntent := &stripe.SetupIntent{}
 	err := json.Unmarshal(event.Data.Raw, setupIntent)
 	if err != nil {
-		return fmt.Errorf("Error parsing webhook JSON: %s", err.Error())
+		return fmt.Errorf("error parsing webhook json: %s", err.Error())
 	}
 
 	organizationID := uuid.FromStringOrNil(setupIntent.Metadata["OrganizationID"])
@@ -232,7 +234,7 @@ func (d *CardDriver) handlePaymentFailed(ctx context.Context, w http.ResponseWri
 	invoice := &stripe.Invoice{}
 	err := json.Unmarshal(event.Data.Raw, invoice)
 	if err != nil {
-		return fmt.Errorf("Error parsing webhook JSON: %s", err.Error())
+		return fmt.Errorf("error parsing webhook JSON: %s", err.Error())
 	}
 
 	customer, err := stripeutil.RetrieveCustomer(invoice.Customer.ID)
@@ -241,7 +243,7 @@ func (d *CardDriver) handlePaymentFailed(ctx context.Context, w http.ResponseWri
 	}
 
 	organizationID := uuid.FromStringOrNil(customer.Metadata["OrganizationID"])
-	log.S.Infof("Invoice payment failed on attempt #%d for organization %s", invoice.AttemptCount, organizationID.String())
+	d.Logger.Infof("invoice payment failed on attempt #%d for organization %s", invoice.AttemptCount, organizationID.String())
 
 	// after X failed card retries, if the customer is not an multi-user customer, downgrade the customer to a free plan, which will update the users' quotas
 	if (invoice.CollectionMethod != nil && *invoice.CollectionMethod == stripe.InvoiceCollectionMethodChargeAutomatically) && (invoice.AttemptCount >= maxCardRetries) && (invoice.Paid == false) {
@@ -257,7 +259,7 @@ func (d *CardDriver) handlePaymentFailed(ctx context.Context, w http.ResponseWri
 			if err != nil {
 				return err
 			}
-			log.S.Infof("Organization %s downgraded to the default plan due to payment failure", organizationID.String())
+			d.Logger.Infof("organization %s downgraded to the default plan due to payment failure", organizationID.String())
 		}
 	}
 

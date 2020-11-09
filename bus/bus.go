@@ -10,10 +10,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
+	"go.uber.org/zap"
 
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
 	"gitlab.com/beneath-hq/beneath/infrastructure/mq"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 
@@ -28,7 +28,8 @@ type HandlerFunc interface{}
 // immediately by sync listeners (and will use any DB transactions in ctx),
 // and in a background worker by async listeners (passed over MQ).
 type Bus struct {
-	MQ mq.MessageQueue
+	Logger *zap.SugaredLogger
+	MQ     mq.MessageQueue
 
 	msgTypes       map[string]reflect.Type
 	syncListeners  map[string][]HandlerFunc
@@ -49,7 +50,7 @@ type asyncMsg struct {
 }
 
 // NewBus creates a new Bus
-func NewBus(mq mq.MessageQueue) (*Bus, error) {
+func NewBus(logger *zap.Logger, mq mq.MessageQueue) (*Bus, error) {
 	err := mq.RegisterTopic(asyncTopic)
 	if err != nil {
 		return nil, err
@@ -61,6 +62,7 @@ func NewBus(mq mq.MessageQueue) (*Bus, error) {
 	}
 
 	return &Bus{
+		Logger:         logger.Named("bus").Sugar(),
 		MQ:             mq,
 		msgTypes:       make(map[string]reflect.Type),
 		syncListeners:  make(map[string][]HandlerFunc),
@@ -208,7 +210,7 @@ func (b *Bus) publishAsync(ctx context.Context, msgName string, msg Msg) error {
 		return err
 	}
 
-	log.S.Infow("bus_async_publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
+	b.Logger.Infow("async publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
 	return nil
 }
 
@@ -266,23 +268,23 @@ func (b *Bus) Run(ctx context.Context) error {
 
 		amsg, err := b.unmarshalAsyncMsg(ctx, data)
 		if err != nil {
-			log.S.Errorf("bus async worker got unmarshal err, nacking...: %s", err)
+			b.Logger.Errorf("async worker got unmarshal err, nacking...: %s", err)
 			return err
 		}
 
 		listeners := b.asyncListeners[amsg.Name]
 		if len(listeners) == 0 {
-			log.S.Errorf("bus async worker got msg with no listeners, the correct services are likely not created in this process, acking...: %x", data)
+			b.Logger.Errorf("async worker got msg with no listeners, the correct services are likely not created in this process, acking...: %x", data)
 			return nil
 		}
 
 		err = b.callListeners(ctx, listeners, amsg.Payload)
 		if err != nil {
-			log.S.Errorf("bus async worker got err when calling listeners, nacking...: %s", err)
+			b.Logger.Errorf("async worker got err when calling listeners, nacking...: %s", err)
 			return err
 		}
 
-		log.S.Infow("bus_async_processed", "id", amsg.ID.String(), "name", amsg.Name, "time", amsg.Timestamp, "elapsed", time.Since(startTime))
+		b.Logger.Infow("async processed", "id", amsg.ID.String(), "name", amsg.Name, "time", amsg.Timestamp, "elapsed", time.Since(startTime))
 
 		return nil
 	})

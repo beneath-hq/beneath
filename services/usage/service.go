@@ -6,6 +6,7 @@ import (
 
 	"github.com/bluele/gcache"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/infrastructure/engine"
 	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
@@ -31,6 +32,7 @@ type Options struct {
 // Service reads and writes usage. For writes, it buffers updates and flushes them in the background.
 type Service struct {
 	opts   *Options
+	logger *zap.SugaredLogger
 	engine *engine.Engine
 
 	running          bool
@@ -43,9 +45,10 @@ type Service struct {
 }
 
 // New initializes the service
-func New(opts *Options, e *engine.Engine) *Service {
+func New(opts *Options, logger *zap.Logger, e *engine.Engine) *Service {
 	b := &Service{
 		opts:   opts,
+		logger: logger.Named("usage").Sugar(),
 		engine: e,
 	}
 	return b

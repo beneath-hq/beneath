@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 
+	"gitlab.com/beneath-hq/beneath/bus"
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
@@ -18,6 +18,7 @@ import (
 
 // Service handles payment, i.e., invoicing and charging
 type Service struct {
+	Logger  *zap.SugaredLogger
 	Bus     *bus.Bus
 	Billing *billing.Service
 	drivers map[string]driver.Driver
@@ -32,7 +33,8 @@ type Options struct {
 }
 
 // New creates a new Payments
-func New(opts *Options, bus *bus.Bus, billing *billing.Service, organizations *organization.Service, permissions *permissions.Service) (*Service, error) {
+func New(opts *Options, logger *zap.Logger, bus *bus.Bus, billing *billing.Service, organizations *organization.Service, permissions *permissions.Service) (*Service, error) {
+	l := logger.Named("payments")
 	drivers := make(map[string]driver.Driver)
 	for _, driverConf := range opts.Drivers {
 		name := driverConf.DriverName
@@ -41,7 +43,7 @@ func New(opts *Options, bus *bus.Bus, billing *billing.Service, organizations *o
 			return nil, fmt.Errorf("no driver found with name '%s'", name)
 		}
 
-		drv, err := constructor(billing, organizations, permissions, driverConf.DriverOpts)
+		drv, err := constructor(l, billing, organizations, permissions, driverConf.DriverOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -50,6 +52,7 @@ func New(opts *Options, bus *bus.Bus, billing *billing.Service, organizations *o
 	}
 
 	s := &Service{
+		Logger:  l.Sugar(),
 		Bus:     bus,
 		Billing: billing,
 		drivers: drivers,

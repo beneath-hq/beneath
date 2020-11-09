@@ -8,7 +8,6 @@ import (
 	"github.com/mr-tron/base58"
 
 	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
 	"gitlab.com/beneath-hq/beneath/pkg/ws"
 	"gitlab.com/beneath-hq/beneath/services/data"
@@ -17,7 +16,7 @@ import (
 // KeepAlive implements ws.Server
 func (a *app) KeepAlive(numClients int, elapsed time.Duration) {
 	// log state
-	log.S.Infow(
+	a.Logger.Infow(
 		"ws keepalive",
 		"clients", numClients,
 		"elapsed", elapsed,
@@ -135,7 +134,7 @@ func (a *app) StopQuery(client *ws.Client, id ws.QueryID) error {
 }
 
 func (a *app) logWithSecret(sec models.Secret, msg string, keysAndValues ...interface{}) {
-	l := log.S
+	l := a.Logger
 
 	if sec.IsUser() {
 		l = l.With(

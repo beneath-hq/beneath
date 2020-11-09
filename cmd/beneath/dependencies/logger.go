@@ -1,4 +1,4 @@
-package log
+package dependencies
 
 import (
 	"os"
@@ -7,19 +7,15 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
-var (
-	// L is the Zap logger
-	L *zap.Logger
+func init() {
+	cli.AddDependency(initLogger)
+}
 
-	// S is a suggared Zap logger
-	S *zap.SugaredLogger
-)
-
-// InitLogger sets global L and S variables
-func InitLogger() {
+func initLogger() *zap.Logger {
 	env := envutil.GetEnv()
 
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
@@ -45,14 +41,13 @@ func InitLogger() {
 		zapcore.NewCore(encoder, consoleDebugging, lowPriority),
 	)
 
-	L = zap.New(
+	logger := zap.New(
 		core,
 		zap.AddStacktrace(zap.ErrorLevel),
 		zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 			return zapcore.NewSampler(core, time.Second, int(100), int(100))
 		}),
 	)
-	defer L.Sync()
 
-	S = L.Sugar()
+	return logger
 }

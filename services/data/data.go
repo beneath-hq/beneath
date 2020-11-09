@@ -6,15 +6,17 @@ import (
 	"gitlab.com/beneath-hq/beneath/services/permissions"
 	"gitlab.com/beneath-hq/beneath/services/stream"
 	"gitlab.com/beneath-hq/beneath/services/usage"
+	"go.uber.org/zap"
 )
 
 // Service implements the data-plane functionality for handling requests
 // (in a protocol-agnostic way used by the http and grpc interfaces), and for
 // processing records in the background.
 type Service struct {
+	Logger      *zap.SugaredLogger
 	MQ          mq.MessageQueue
 	Engine      *engine.Engine
-	Usage     *usage.Service
+	Usage       *usage.Service
 	Permissions *permissions.Service
 	Streams     *stream.Service
 
@@ -23,7 +25,7 @@ type Service struct {
 }
 
 // New returns a new data service instance
-func New(mq mq.MessageQueue, engine *engine.Engine, usage *usage.Service, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
+func New(logger *zap.Logger, mq mq.MessageQueue, engine *engine.Engine, usage *usage.Service, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
 	err := mq.RegisterTopic(writeRequestsTopic)
 	if err != nil {
 		return nil, err
@@ -35,9 +37,10 @@ func New(mq mq.MessageQueue, engine *engine.Engine, usage *usage.Service, permis
 	}
 
 	return &Service{
+		Logger:      logger.Named("data").Sugar(),
 		MQ:          mq,
 		Engine:      engine,
-		Usage:     usage,
+		Usage:       usage,
 		Permissions: permissions,
 		Streams:     streams,
 	}, nil

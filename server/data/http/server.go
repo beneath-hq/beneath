@@ -9,9 +9,9 @@ import (
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/log"
 	"gitlab.com/beneath-hq/beneath/pkg/ws"
 	"gitlab.com/beneath-hq/beneath/services/data"
 	"gitlab.com/beneath-hq/beneath/services/middleware"
@@ -20,14 +20,17 @@ import (
 )
 
 type app struct {
+	Logger        *zap.SugaredLogger
 	DataService   *data.Service
 	SecretService *secret.Service
 	StreamService *stream.Service
 }
 
 // NewServer creates and returns the data HTTP server
-func NewServer(data *data.Service, middleware *middleware.Service, secret *secret.Service, stream *stream.Service) *http.Server {
+func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Service, secret *secret.Service, stream *stream.Service) *http.Server {
+	l := logger.Named("http")
 	app := &app{
+		Logger:        l.Sugar(),
 		DataService:   data,
 		SecretService: secret,
 		StreamService: stream,
@@ -46,8 +49,8 @@ func NewServer(data *data.Service, middleware *middleware.Service, secret *secre
 	router.Use(chimiddleware.DefaultCompress)
 	router.Use(cors.New(corsOptions).Handler)
 	router.Use(middleware.InjectTagsMiddleware)
-	router.Use(middleware.LoggerMiddleware)
-	router.Use(middleware.RecovererMiddleware)
+	router.Use(middleware.LoggerMiddleware(l))
+	router.Use(middleware.RecovererMiddleware(l))
 	router.Use(middleware.AuthMiddleware)
 	router.Use(middleware.IPRateLimitMiddleware)
 
@@ -87,7 +90,7 @@ func (a *app) healthCheck(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(http.StatusText(http.StatusOK)))
 	} else {
-		log.S.Errorf("Gateway database health check failed")
+		a.Logger.Errorf("database health check failed")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }

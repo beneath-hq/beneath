@@ -3,6 +3,7 @@ package grpc
 import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
@@ -24,21 +25,22 @@ type gRPCServer struct {
 }
 
 // NewServer creates and returns the data GRPC server
-func NewServer(data *data.Service, middleware *middleware.Service) *grpc.Server {
+func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Service) *grpc.Server {
+	l := logger.Named("grpc")
 	server := grpc.NewServer(
 		grpc.MaxRecvMsgSize(maxRecvMsgSize),
 		grpc.MaxSendMsgSize(maxSendMsgSize),
 		grpc_middleware.WithUnaryServerChain(
 			middleware.InjectTagsUnaryServerInterceptor(),
-			middleware.LoggerUnaryServerInterceptor(),
+			middleware.LoggerUnaryServerInterceptor(l),
 			grpc_auth.UnaryServerInterceptor(middleware.AuthInterceptor),
-			middleware.RecovererUnaryServerInterceptor(),
+			middleware.RecovererUnaryServerInterceptor(l),
 		),
 		grpc_middleware.WithStreamServerChain(
 			middleware.InjectTagsStreamServerInterceptor(),
-			middleware.LoggerStreamServerInterceptor(),
+			middleware.LoggerStreamServerInterceptor(l),
 			grpc_auth.StreamServerInterceptor(middleware.AuthInterceptor),
-			middleware.RecovererStreamServerInterceptor(),
+			middleware.RecovererStreamServerInterceptor(l),
 		),
 	)
 	pb.RegisterGatewayServer(server, &gRPCServer{
