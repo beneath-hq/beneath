@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/go-pg/pg/v9"
 	"go.uber.org/zap"
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
@@ -27,7 +28,8 @@ func main() {
 func addMigrateCmd(c *cli.CLI) {
 	migrations.Migrator.AddCmd(c.Root, "migrate", func(args []string) {
 		cli.Dig.Invoke(func(db db.DB, logger *zap.Logger) {
-			migrations.Migrator.RunWithArgs(db, logger, args...)
+			pgDb := db.GetDB(context.Background()).(*pg.DB)
+			migrations.Migrator.RunWithArgs(pgDb, logger, args...)
 		})
 	})
 }
@@ -38,7 +40,8 @@ func init() {
 		Register: func(lc *cli.Lifecycle, server *control.Server, db db.DB, logger *zap.Logger) {
 			// running the control server also runs automigrate
 			lc.AddFunc("automigrate", func(ctx context.Context) error {
-				return migrations.Migrator.AutomigrateAndLog(db, logger, false)
+				pgDb := db.GetDB(context.Background()).(*pg.DB)
+				return migrations.Migrator.AutomigrateAndLog(pgDb, logger, false)
 			})
 
 			// add control server to lifecycle

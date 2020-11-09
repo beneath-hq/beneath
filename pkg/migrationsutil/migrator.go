@@ -1,7 +1,6 @@
 package migrationsutil
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/go-pg/migrations/v7"
@@ -9,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
@@ -90,30 +88,27 @@ func (m *Migrator) AddCmd(root *cobra.Command, name string, fn func(args []strin
 }
 
 // RunWithArgs runs migrations with command-line args (as registered with RegisterCmd)
-func (m *Migrator) RunWithArgs(db db.DB, logger *zap.Logger, args ...string) {
-	pg := db.GetDB(context.Background()).(*pg.DB)
-	oldVersion, newVersion, err := m.Collection.Run(pg, args...)
+func (m *Migrator) RunWithArgs(db *pg.DB, logger *zap.Logger, args ...string) {
+	oldVersion, newVersion, err := m.Collection.Run(db, args...)
 	m.log(logger, oldVersion, newVersion, err)
 }
 
 // Automigrate automatically applies every new migration. If reset is true, it resets migrations
 // before automigrating.
-func (m *Migrator) Automigrate(db db.DB, reset bool) (oldVersion, newVersion int64, err error) {
-	pgDb := db.GetDB(context.Background()).(*pg.DB)
-
+func (m *Migrator) Automigrate(db *pg.DB, reset bool) (oldVersion, newVersion int64, err error) {
 	// safety check on reset in production
 	if reset && envutil.GetEnv() == envutil.Production {
 		return 0, 0, fmt.Errorf("Cannot automigrate with reset=true in production")
 	}
 
 	// run init only if necessary
-	_, err = m.Version(pgDb)
+	_, err = m.Version(db)
 	if err != nil {
 		if err.Error() != fmt.Sprintf(`ERROR #42P01 relation "%s" does not exist`, m.TableName) {
 			return 0, 0, err
 		}
 
-		_, _, err := m.Collection.Run(pgDb, "init")
+		_, _, err := m.Collection.Run(db, "init")
 		if err != nil {
 			return 0, 0, err
 		}
@@ -121,14 +116,14 @@ func (m *Migrator) Automigrate(db db.DB, reset bool) (oldVersion, newVersion int
 
 	// run reset if requested
 	if reset {
-		_, _, err := m.Collection.Run(pgDb, "reset")
+		_, _, err := m.Collection.Run(db, "reset")
 		if err != nil {
 			return 0, 0, err
 		}
 	}
 
 	// run up migrations
-	oldVersion, newVersion, err = m.Collection.Run(pgDb, "up")
+	oldVersion, newVersion, err = m.Collection.Run(db, "up")
 	if err != nil {
 		return oldVersion, newVersion, err
 	}
@@ -137,7 +132,7 @@ func (m *Migrator) Automigrate(db db.DB, reset bool) (oldVersion, newVersion int
 }
 
 // AutomigrateAndLog runs m.Automigrate and logs the result, returning only an error if applicable
-func (m *Migrator) AutomigrateAndLog(db db.DB, logger *zap.Logger, reset bool) error {
+func (m *Migrator) AutomigrateAndLog(db *pg.DB, logger *zap.Logger, reset bool) error {
 	oldVersion, newVersion, err := m.Automigrate(db, reset)
 	m.log(logger, oldVersion, newVersion, err)
 	return err
