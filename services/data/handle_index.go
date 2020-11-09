@@ -34,9 +34,6 @@ type queryIndexTags struct {
 func (s *Service) HandleQueryIndex(ctx context.Context, req *QueryIndexRequest) (*QueryIndexResponse, *Error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
-	if secret == nil {
-		return nil, newErrorf(http.StatusUnauthorized, "not authenticated")
-	}
 
 	// set payload
 	payload := queryIndexTags{

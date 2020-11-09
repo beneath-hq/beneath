@@ -49,9 +49,6 @@ const (
 func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadResponse, *Error) {
 	// get auth
 	secret := middleware.GetSecret(ctx)
-	if secret == nil {
-		return nil, newErrorf(http.StatusUnauthorized, "not authenticated")
-	}
 
 	// set payload
 	payload := readTags{
