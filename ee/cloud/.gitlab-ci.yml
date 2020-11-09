@@ -1,0 +1,62 @@
+.cloud:deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl:3.2.1
+  only:
+    - stable
+  script:
+    - helm upgrade --install --wait --force ${CMD_NAME} deployments/helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
+
+.cloud:deploy:prod:
+  extends:
+  - .cloud:deploy
+  when: manual
+  variables:
+    KUBE_NAMESPACE: production
+  environment:
+    name: production
+    url: https://beneath.dev
+
+cloud:deploy:web:
+  extends:
+  - .cloud:deploy:prod
+  needs: ["build:web"]
+  variables:
+    CMD_NAME: web
+    REPLICAS: ${REPLICAS_WEB}
+    REPLICAS_WEB: 2
+
+cloud:deploy:control:
+  extends:
+  - .cloud:deploy:prod
+  needs: ["build:backend"]
+  variables:
+    CMD_NAME: control
+    REPLICAS: ${REPLICAS_CONTROL}
+    REPLICAS_CONTROL: 2
+
+cloud:deploy:gateway:
+  extends:
+  - .cloud:deploy:prod
+  needs: ["build:backend"]
+  variables:
+    CMD_NAME: gateway
+    REPLICAS: ${REPLICAS_GATEWAY}
+    REPLICAS_GATEWAY: 2
+
+cloud:deploy:pipeline:
+  extends:
+  - .cloud:deploy:prod
+  needs: ["build:backend"]
+  variables:
+    CMD_NAME: pipeline
+    REPLICAS: ${REPLICAS_PIPELINE}
+    REPLICAS_PIPELINE: 1
+
+cloud:deploy:taskqueue:
+  extends:
+  - .cloud:deploy:prod
+  needs: ["build:backend"]
+  variables:
+    CMD_NAME: taskqueue
+    REPLICAS: ${REPLICAS_TASKQUEUE}
+    REPLICAS_TASKQUEUE: 1
