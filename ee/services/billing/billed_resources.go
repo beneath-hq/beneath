@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 	nee_models "gitlab.com/beneath-hq/beneath/models"
 )
 

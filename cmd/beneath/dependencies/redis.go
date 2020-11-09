@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/viper"
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/infrastructure/redis"
+	"gitlab.com/beneath-hq/beneath/infra/redis"
 )
 
 func init() {

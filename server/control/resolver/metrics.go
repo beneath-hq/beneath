@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"

@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
 	"gitlab.com/beneath-hq/beneath/ee/pkg/paymentsutil"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 )
 
 // FindBillingInfoByOrganization finds an organization's billing info

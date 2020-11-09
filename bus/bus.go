@@ -12,8 +12,8 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
-	"gitlab.com/beneath-hq/beneath/infrastructure/mq"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
+	"gitlab.com/beneath-hq/beneath/infra/mq"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/pkg/refreshingval"
 	"gitlab.com/beneath-hq/beneath/services/organization"
 	"gitlab.com/beneath-hq/beneath/services/usage"

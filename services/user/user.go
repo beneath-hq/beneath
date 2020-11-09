@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/bus"
 	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 )
 
 // Service contains functionality for finding and creating users

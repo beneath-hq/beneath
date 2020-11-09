@@ -9,7 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 )

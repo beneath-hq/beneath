@@ -8,8 +8,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine"
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
+	"gitlab.com/beneath-hq/beneath/infra/engine"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
 )
 

@@ -22,7 +22,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/control/entity"
 	"gitlab.com/beneath-hq/beneath/control/migrations"
 	"gitlab.com/beneath-hq/beneath/control/taskqueue/worker"
-	"gitlab.com/beneath-hq/beneath/ee/infrastructure/payments"
+	"gitlab.com/beneath-hq/beneath/ee/infra/payments"
 	"gitlab.com/beneath-hq/beneath/hub"
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 	gwgrpc "gitlab.com/beneath-hq/beneath/server/data/grpc"

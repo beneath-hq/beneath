@@ -1,8 +1,8 @@
 package data
 
 import (
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine"
-	"gitlab.com/beneath-hq/beneath/infrastructure/mq"
+	"gitlab.com/beneath-hq/beneath/infra/engine"
+	"gitlab.com/beneath-hq/beneath/infra/mq"
 	"gitlab.com/beneath-hq/beneath/services/permissions"
 	"gitlab.com/beneath-hq/beneath/services/stream"
 	"gitlab.com/beneath-hq/beneath/services/usage"

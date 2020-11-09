@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 )
 
 const (

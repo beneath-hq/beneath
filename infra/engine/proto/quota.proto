@@ -1,0 +1,14 @@
+syntax = "proto3";
+option go_package = "gitlab.com/beneath-hq/beneath/infra/engine/proto";
+package engine;
+
+message QuotaUsage {
+  int64 read_ops = 1;
+  int64 read_records = 2;
+  int64 read_bytes = 3;
+  int64 write_ops = 4;
+  int64 write_records = 5;
+  int64 write_bytes = 6;
+  int64 scan_ops = 7;
+  int64 scan_bytes = 8;
+}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-redis/redis/v7"
 	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/models"
 )
 

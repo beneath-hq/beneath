@@ -8,8 +8,8 @@ import (
 	"github.com/bluele/gcache"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/pkg/bytesutil"
 )

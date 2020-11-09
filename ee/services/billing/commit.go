@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
 	nee_models "gitlab.com/beneath-hq/beneath/models"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/services/data"
 	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 func (s *gRPCServer) QueryWarehouse(ctx context.Context, req *pb.QueryWarehouseRequest) (*pb.QueryWarehouseResponse, error) {

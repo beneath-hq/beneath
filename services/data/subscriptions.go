@@ -8,8 +8,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/infrastructure/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infrastructure/engine/proto"
+	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 )
 
 // SubscriptionMessage encapsulates a subscription update dispatched by a Broker

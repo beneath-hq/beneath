@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-pg/pg/v9/orm"
 
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/models"
 )
 

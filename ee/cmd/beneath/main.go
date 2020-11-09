@@ -12,7 +12,7 @@ import (
 	eemigrations "gitlab.com/beneath-hq/beneath/ee/migrations"
 	eecontrol "gitlab.com/beneath-hq/beneath/ee/server/control"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/migrations"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"

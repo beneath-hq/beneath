@@ -7,7 +7,7 @@ The bus was inspired by the [communication model in Grafana](https://github.com/
 ## Sync and async handlers
 
 - *Sync event handlers* are called sequentially in-process when an event is published, and causes the event publisher to fail on error. If an event is sent in a DB transaction, subscribed handlers will also run inside that transaction!
-- *Async event handlers* are called in a background worker. They retry on error. Event messages are serializes with msgpack and passed through the MQ (`infrastructure/mq/`).
+- *Async event handlers* are called in a background worker. They retry on error. Event messages are serializes with msgpack and passed through the MQ (`infra/mq/`).
 
 Use sync event handlers for light operations or operations that require the publisher to fail on error. Use async event handlers for everything else.
 

@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
-	"gitlab.com/beneath-hq/beneath/infrastructure/db"
+	"gitlab.com/beneath-hq/beneath/infra/db"
 	"gitlab.com/beneath-hq/beneath/migrations"
 	"gitlab.com/beneath-hq/beneath/server/control"
 	"gitlab.com/beneath-hq/beneath/server/data"
