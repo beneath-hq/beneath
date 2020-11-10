@@ -21,7 +21,7 @@ const (
 
 // GetEnv reads the ENV environment variable. It panics if it's not set.
 func GetEnv() Env {
-	env := os.Getenv("ENV")
+	env := os.Getenv("BENEATH_ENV")
 	switch env {
 	case "production":
 		return Production
@@ -34,7 +34,7 @@ func GetEnv() Env {
 	case "test":
 		return Test
 	case "":
-		panic(fmt.Errorf("ENV not set"))
+		return Production
 	default:
 		panic(fmt.Errorf("ENV <%s> not recognized", env))
 	}
