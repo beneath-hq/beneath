@@ -20,6 +20,7 @@ func NewCLI() *CLI {
 	c.v = viper.New()
 	c.Root = c.newRootCmd()
 	c.Root.AddCommand(c.newStartCmd())
+	c.Root.AddCommand(c.newConfigCmd())
 	return c
 }
 
