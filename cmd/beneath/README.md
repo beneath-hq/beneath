@@ -1,8 +1,8 @@
 # `cmd/beneath/`
 
-This folder contains the main executable for the Beneath backend. It can start different backend services and manage migrations. Run `ENV=dev go run cmd/beneath/main.go --help` for a quick overview.
+This folder contains the main executable for the Beneath backend. It can start different backend services and manage migrations. Run `BENEATH_ENV=dev go run cmd/beneath/main.go --help` for a quick overview.
 
-**To start the backend in development, run: `ENV=dev go run cmd/beneath/main.go start all`**
+**To start the backend in development, run: `BENEATH_ENV=dev go run cmd/beneath/main.go start all`**
 
 This folder also contains config management and dependency initialization/injection code. The implementation may seem unexpectedly complicated, but it's necessary to for two reasons:
 

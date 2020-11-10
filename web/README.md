@@ -18,6 +18,7 @@ The primary libraries used in the frontend are:
 
 - `web/apollo` contains queries, types, and configs related to Apollo
 - `web/components` contains standalone React components, and its subdirectories (whose names mirror pages in `web/pages` contain React components used by particular pages)
+- `web/ee` contains code for the enterprise edition
 - `web/hooks` contains useful, shared React hooks
 - `web/lib` contains assorted configs, utilities and non-React JS code
 - `web/pages` contains the distinct pages of the site (it's a Nextjs convention); note that we *don't* use nested pages to auto-generate dynamic routes (which is a recent Nextjs convention), see `web/server.js` for the routes
@@ -40,3 +41,9 @@ Regenerate types for Apollo queries (only covers queries in `web/apollo/queries/
 The stream data exploration page uses the JS and React clients (see `clients/js` and `clients/js-react` under the repository root) to fetch data. It does *not* locally link to these, but instead uses the versions stored on NPM. It's significantly simpler and less brittle to do it this way, but it does mean that changes made in the clients aren't immediately reflected when developing the console.
 
 If you need to edit the two simultaneously, you have to short-circuit the imports (and remember to run `tsc` first in the client libraries). Before committing, you should revert the short-circuiting code, publish the client libraries as new versions to NPM, and update the dependent versions in `web/package.json`.
+
+## EE development
+
+Code related to the enterprise edition is placed in a matching hierarchy in `web/ee/`.
+
+Unlike the Beneath backend implementation, the `web` frontend implementation is not currently completely decoupled from the EE code. Concretely, we use the `IS_EE` global in `lib/connection.ts` to conditionally include EE components.

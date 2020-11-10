@@ -16,3 +16,48 @@ Use sync event handlers for light operations or operations that require the publ
 The background worker calls `bus.Run` to start processing async events dispatched from other processes. It's started with the `control-worker` startable (see `cmd/beneath/`).
 
 **It's critical that every service that handles async events is initialized in the worker process** before `bus.Run` is called! (See `cmd/beneath/dependencies/services.go`.)
+
+## Example
+
+```go
+// Something
+
+type Something struct {
+  Bus *bus.Bus
+}
+
+func NewSomething(bus *bus.Bus) *Something {
+  s := &Something{Bus: bus}
+  return s
+}
+
+func (s *Something) Create(ctx context.Context) error {
+  // ...
+
+  // publish event
+	err = s.Bus.Publish(ctx, &models.SomethingCreated{
+		SomethingID: id,
+	})
+	if err != nil {
+		return err
+	}
+  return nil
+}
+
+// Other
+
+type Other struct {
+  Bus *bus.Bus
+}
+
+func NewOther(bus *bus.Bus) *Other {
+  o := &Other{Bus: bus}
+  o.Bus.AddAsyncListener(o.HandleSomethingCreated)
+  return o
+}
+
+func (o *Other) HandleSomethingCreated(ctx context.Context, msg *models.SomethingCreated) error {
+  // ...
+  return nil
+}
+```
