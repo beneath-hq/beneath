@@ -26,10 +26,13 @@ type Service struct {
 
 // Options configures the payments service
 type Options struct {
-	Drivers []*struct {
-		DriverName string                 `mapstructure:"driver"`
-		DriverOpts map[string]interface{} `mapstructure:",remain"`
-	} `mapstructure:"drivers"`
+	Drivers []*DriverOption `mapstructure:"drivers"`
+}
+
+// DriverOption specifies a payments driver
+type DriverOption struct {
+	DriverName string                 `mapstructure:"driver"`
+	DriverOpts map[string]interface{} `mapstructure:",remain"`
 }
 
 // New creates a new Payments

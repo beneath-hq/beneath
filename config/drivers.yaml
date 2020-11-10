@@ -1,0 +1,26 @@
+# NOTE: The config.yaml template does not contain driver-specific keys.
+# Instead they are listed in this file.
+
+
+# # MQ driver for Google Cloud Pubsub 
+# mq:
+#   driver: "pubsub"
+#   project_id: ""
+#   subscriber_id: ""
+#   emulator_host: ""
+#   topic_prefix: ""
+#   subscription_prefix: ""
+
+# # Index driver for Google Bigtable
+# data:
+#   index:
+#     driver: "bigtable"
+#     project_id: ""
+#     emulator_host: ""
+
+# # Warehouse driver Google BigQuery
+# data:
+#   warehouse:
+#     driver: "bigquery"
+#     project_id: ""
+#     instances_dataset_id: ""

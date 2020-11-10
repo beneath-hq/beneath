@@ -1,58 +1,48 @@
-mq:
-  driver: "" # env: BENEATH_MQ_DRIVER
-
 control:
-  port: 4000 # env: BENEATH_CONTROL_PORT
-  host: "http://localhost:4000" # env: BENEATH_CONTROL_HOST
-  frontend_host: "http://localhost:3000" # env: BENEATH_CONTROL_FRONTEND_HOST
-
-  redis:
-    url: "redis://localhost/" # env: BENEATH_CONTROL_REDIS_URL
-
-  postgres:
-    host: "localhost" # env: BENEATH_CONTROL_POSTGRES_HOST
-    database: "postgres" # env: BENEATH_CONTROL_POSTGRES_DB
-    user: "postgres" # env: BENEATH_CONTROL_POSTGRES_USER
-    password: "" # env: BENEATH_CONTROL_POSTGRES_PASSWORD
-
-  session_secret: "" # env: BENEATH_CONTROL_SESSION_SECRET
   auth:
     github:
-      id: "" # env: BENEATH_CONTROL_AUTH_GITHUB_ID
-      secret: "" # env: BENEATH_CONTROL_AUTH_GITHUB_SECRET
+      # id for authentication with Github (env: BENEATH_CONTROL_AUTH_GITHUB_ID)
+      id: ""
+      # secret for authentication with Github (env: BENEATH_CONTROL_AUTH_GITHUB_SECRET)
+      secret: ""
     google:
-      id: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_ID
-      secret: "" # env: BENEATH_CONTROL_AUTH_GOOGLE_SECRET
+      # id for authentication with Google (env: BENEATH_CONTROL_AUTH_GOOGLE_ID)
+      id: ""
+      # secret for authentication with Google (env: BENEATH_CONTROL_AUTH_GOOGLE_SECRET)
+      secret: ""
+  # host (with protocol) of the web frontend (for redirects) (env: BENEATH_CONTROL_FRONTEND_HOST)
+  frontend_host: "http://localhost:3000"
+  # control server host (with protocol) (for redirects) (env: BENEATH_CONTROL_HOST)
+  host: "http://localhost:4000"
+  # control server port (env: BENEATH_CONTROL_PORT)
+  port: "4000"
+  postgres:
+    # Postgres database for control-plane db (env: BENEATH_CONTROL_POSTGRES_DATABASE)
+    database: "postgres"
+    # Postgres host for control-plane db (env: BENEATH_CONTROL_POSTGRES_HOST)
+    host: "localhost"
+    # Postgres password for control-plane db (env: BENEATH_CONTROL_POSTGRES_PASSWORD)
+    password: ""
+    # Postgres user for control-plane db (env: BENEATH_CONTROL_POSTGRES_USER)
+    user: "postgres"
+  redis:
+    # Redis connection URL for control-plane caching (env: BENEATH_CONTROL_REDIS_URL)
+    url: "redis://localhost/"
+  # secret to use for signing session tokens (env: BENEATH_CONTROL_SESSION_SECRET)
+  session_secret: ""
 
 data:
-  http_port: 5000 # env: BENEATH_DATA_HTTP_PORT
-  grpc_port: 50051 # env: BENEATH_DATA_GRPC_PORT
-
-  log:
-    driver: "" # env: BENEATH_DATA_LOG_DRIVER
-    # driver-specific settings...
-  
+  # data server port for GRPC (env: BENEATH_DATA_GRPC_PORT)
+  grpc_port: "50051"
+  # data server port for HTTP (env: BENEATH_DATA_HTTP_PORT)
+  http_port: "5000"
   index:
-    driver: "" # env: BENEATH_DATA_INDEX_DRIVER
-    # driver-specific settings...
-  
+    # driver to use for (indexed) operational serving of stream records (env: BENEATH_DATA_INDEX_DRIVER)
+    driver: ""
   warehouse:
-    driver: "" # env: BENEATH_DATA_WAREHOUSE_DRIVER
-    # driver-specific settings...
+    # driver to use for OLAP queries of stream records (env: BENEATH_DATA_WAREHOUSE_DRIVER)
+    driver: ""
 
-# MQ driver settings:
-#   - pubsub:
-#     project_id: ""
-#     subscriber_id: ""
-#     emulator_host: ""
-#     topic_prefix: ""
-#     subscription_prefix: ""
-#
-# Data driver settings:
-#   - bigtable:
-#     project_id: ""
-#     instance_id: ""
-#     emulator_host: ""
-#   - bigquery:
-#     project_id: ""
-#     instances_dataset_id: ""
+mq:
+  # driver to use for message queue (env: BENEATH_MQ_DRIVER)
+  driver: ""

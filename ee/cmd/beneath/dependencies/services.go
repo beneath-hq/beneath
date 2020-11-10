@@ -6,6 +6,7 @@ import (
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/ee/services/payments"
+	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
 
 	// registers all payments drivers
 	_ "gitlab.com/beneath-hq/beneath/ee/services/payments/driver/anarchism"
@@ -44,7 +45,7 @@ func init() {
 	})
 	cli.AddConfigKey(&cli.ConfigKey{
 		Key:         "payments.drivers",
-		Default:     nil,
+		Default:     []*payments.DriverOption{&payments.DriverOption{DriverName: driver.Anarchism}},
 		Description: "drivers to enable for processing payments",
 	})
 }
