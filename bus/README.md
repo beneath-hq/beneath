@@ -20,7 +20,7 @@ The background worker calls `bus.Run` to start processing async events dispatche
 ## Example
 
 ```go
-// Something
+// Something (publisher)
 
 type Something struct {
   Bus *bus.Bus
@@ -32,19 +32,19 @@ func NewSomething(bus *bus.Bus) *Something {
 }
 
 func (s *Something) Create(ctx context.Context) error {
-  // ...
+  // create something...
 
   // publish event
-	err = s.Bus.Publish(ctx, &models.SomethingCreated{
-		SomethingID: id,
-	})
-	if err != nil {
-		return err
-	}
+  err := s.Bus.Publish(ctx, &models.SomethingCreated{
+    SomethingID: id,
+  })
+  if err != nil {
+    return err
+  }
   return nil
 }
 
-// Other
+// Other (subscriber)
 
 type Other struct {
   Bus *bus.Bus
