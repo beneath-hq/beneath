@@ -18,32 +18,39 @@ Client libraries (i.e. language-specific libraries that read from and write to B
 
 ## Core components
 
-The entire system is implemented in Go with the exception of the frontend, which is implemented in TypeScript (and React), and the client libraries, which are implemented for a variety of different languages.
+The entire backend is implemented in Go, the frontend is implemented in TypeScript (React), and the client libraries are (naturally) implemented in a variety of different languages.
 
-The core system spans multiple separate executable services, namely:
+Conceptually, the backend is divided into two planes:
 
-- The **control server** (found in `control/`), which manages users, projects, streams, etc. It exposes a GraphQL API and is backed by Postgres and Redis.
-- The **task queue** (found in `control/taskqueue/`), which executes background jobs issued by the control server.
-- The **gateway server** (found in `gateway/`), which reads and writes data to Beneath. It exposes REST and gRPC APIs and interfaces with the underlying infrastructure using its **pipeline** and the **engine** (found in `engine/`).
-- The **pipeline** (found in `gateway/pipeline/`), which in the background receives data from the gateway and writes it to the engine.
+- The **control plane** manages users, projects, streams, etc., and is backed by Postgres and Redis.
+- The **data plane** reads and writes stream records, and is backed by pluggable data systems for log storage, indexed lookups and warehouse/OLAP queries (known as the "engine", see `infra/engine/`).
 
-Here's a rough guide to the project structure:
+The backend is compiled as one executable (`cmd/beneath/`) that can run one or all of the following services:
+
+- `control-server`, which exposes a GraphQL API for the control plane
+- `control-worker`, which runs background tasks related to the control plane
+- `data-server`, which exposes REST, Websockets and GRPC APIs for the data plane (i.e. reading and writing streams)
+- `data-worker`, which asynchronously processes records written to `data-server` and writes them to the underlying data systems
+
+Here's a rough guide to the project structure (each folder has a `README.md` with further details):
 
 - `assets`: Assets such as logos, images, etc.
 - `build`: Dockerfiles for the deployed executables in `cmd`
+- `bus`: Control-plane message bus for in-process and async event publish-subscribe; publishers and subscribers are found in `services/`, and events are defined in `models/`
 - `clients`: Language-specific libraries used to interface with Beneath, including reading and writing data
-- `cmd`: contains a package with a `main.go` file for each executable program
-- `configs`: should contain `.development.env` and `.test.env` files that configure the platform in local development
-- `control`: code related to the control server, including Postgres models, GraphQL resolvers, and the task queue
-- `deployments`: Kubernetes and Helm manifests for deploying to production
-- `docs/contributing`: documentation that describes how the codebase is structured and how to contribute to it
-- `engine`: drivers for interfacing with the underlying data infrastructure, e.g., Pubsub, BigTable, BigQuery, etc.
-- `gateway`: code related to the data gateway server (excluding data infrastructure code -- that's in `engine`)
-- `internal`: utility libraries that are not directly related to any specific service (e.g., HTTP middleware)
-- `pkg`: stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
-- `scripts`: contains helper scripts for code generation, etc.
-- `test`: contains end-to-end and integration tests
-- `web`: contains the frontend (data console) code
+- `cmd`: Contains the `main.go` for the backend executable
+- `config`: Contains a YAML config template, and may contain local development config (e.g. `.development.yaml`, which is ignored by Git)
+- `docs/contributing`: Documentation that describes how the codebase is structured and how to contribute to it
+- `ee`: Enterprise-edition functionality, such as billing
+- `infra`: Packages for connecting to external systems / infrastructure, such as Postgres, Redis, MQ, and notably the "engine", which has drivers for the data systems used in the data-plane 
+- `migrations`: Postgres migrations for the control-plane models in `models/`
+- `models`: Control-plane models and bus events
+- `pkg`: Stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
+- `scripts`: Helper scripts for code generation, etc.
+- `server`: Implementations of the control and data servers
+- `services`: Contains packages ("services") that encapsulate functionality for a specific domain of the app, typically involving persistant operations on `infra/`
+- `test`: End-to-end and integration tests
+- `web`: Contains the frontend (data console) code
 
 ## Technologies
 

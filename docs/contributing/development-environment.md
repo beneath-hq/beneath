@@ -26,7 +26,7 @@ It's a good idea to run each dependency in a separate tab of a single terminal w
 
 ### Install Google Cloud SDK
 
-Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably home or documents). 
+Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably `home` or `documents`). 
 
 Check that everything installed correctly and that you're in the `beneath` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
 
@@ -50,25 +50,11 @@ Check that everything installed correctly and that you're in the `beneath` Googl
 
 ### Configure environment variables
 
-- Copy `configs/example.env` into `configs/.development.env` and `configs/.test.env` and configure all variables (ask a core team member)
+- Copy `config/config.yaml` into `config/.development.yaml` and `config/.test.yaml` and configure all variables (ask a core team member)
 
-### Control backend
+### Backend
 
-- For development, run with `ENV=dev go run cmd/control/main.go`
-- If successful, you can access a GraphQL Playground at http://localhost:4000/playground
-
-### Gateway backend
-
-- Run with `ENV=dev go run cmd/gateway/main.go`
-- If successful, you can ping the gateway at http://localhost:5000/
-
-### Pipeline
-
-- Run with `ENV=dev go run cmd/pipeline/main.go`
-
-### Task queue
-
-- Run with `ENV=dev go run cmd/taskqueue/main.go`
+For development, run with `BENEATH_ENV=dev go run cmd/beneath/main.go start all` (if successful, you can access the control server playground at http://localhost:4000/playground and ping the data server at http://localhost:5000/)
 
 ### Frontend (UI)
 

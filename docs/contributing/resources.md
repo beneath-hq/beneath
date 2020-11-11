@@ -15,6 +15,10 @@ Use this document to track interesting resources (articles, videos, books, etc.)
 - (Book) [Designing Data-Intensive Applications](https://dataintensive.net/). THE book on the design, details and trade-offs of data systems at any scale.
 - (Article) [Kleppmann 2019 article on OLEP paradigm](https://queue.acm.org/detail.cfm?id=3321612)
 
+## Workflow
+
+- (Article) [Design Docs at Google](https://www.industrialempathy.com/posts/design-docs-at-google/)
+
 ## Data serialization
 
 - (Article) [Sort order preserving serialization](https://ananthakumaran.in/2018/08/17/order-preserving-serialization.html). We use the library described here for encoding keys in the engine.
@@ -28,6 +32,7 @@ Use this document to track interesting resources (articles, videos, books, etc.)
 
 - (Article) [Centrifuge: a reliable system for delivering billions of events per day](https://segment.com/blog/introducing-centrifuge/)
 - (Article) [Delivering billions of messages exactly once](https://segment.com/blog/exactly-once-delivery/)
+- (Paper) [Large-scale Incremental Processing Using Distributed Transactions and Notifications](https://storage.googleapis.com/pub-tools-public-publication-data/pdf/36726.pdf)
 - (Discussion) [Ask HN: What does your BI stack look like?](https://news.ycombinator.com/item?id=21513566)
 
 ## Go
