@@ -2,7 +2,6 @@ package bus
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -52,11 +51,6 @@ type asyncMsg struct {
 // NewBus creates a new Bus
 func NewBus(logger *zap.Logger, mq mq.MessageQueue) (*Bus, error) {
 	err := mq.RegisterTopic(asyncTopic)
-	if err != nil {
-		return nil, err
-	}
-
-	err = mq.RegisterTopic(controlEventsTopic)
 	if err != nil {
 		return nil, err
 	}
@@ -287,51 +281,5 @@ func (b *Bus) Run(ctx context.Context) error {
 		b.Logger.Infow("async processed", "id", amsg.ID.String(), "name", amsg.Name, "time", amsg.Timestamp, "elapsed", time.Since(startTime))
 
 		return nil
-	})
-}
-
-// TODO: Remove this, but not right now
-
-const (
-	controlEventsTopic        = "control-events"
-	controlEventsSubscription = "control-events-worker"
-)
-
-// ControlEvent describes a control-plane event
-type ControlEvent struct {
-	ID        uuid.UUID              `json:"id"`
-	Name      string                 `json:"name"`
-	Timestamp time.Time              `json:"timestamp"`
-	Data      map[string]interface{} `json:"data"`
-}
-
-// PublishControlEvent publishes a control-plane event to controlEventsTopic
-// for external consumption (e.g. for BI purposes)
-func (b *Bus) PublishControlEvent(ctx context.Context, name string, data map[string]interface{}) error {
-	msg := ControlEvent{
-		ID:        uuid.NewV4(),
-		Name:      name,
-		Timestamp: time.Now(),
-		Data:      data,
-	}
-	json, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	if len(json) > b.MQ.MaxMessageSize() {
-		return fmt.Errorf("control event message %v has invalid size", json)
-	}
-	return b.MQ.Publish(ctx, controlEventsTopic, json)
-}
-
-// SubscribeControlEvents subscribes to all control events
-func (b *Bus) SubscribeControlEvents(ctx context.Context, fn func(context.Context, *ControlEvent) error) error {
-	return b.MQ.Subscribe(ctx, controlEventsTopic, controlEventsSubscription, true, func(ctx context.Context, msg []byte) error {
-		t := &ControlEvent{}
-		err := json.Unmarshal(msg, t)
-		if err != nil {
-			return err
-		}
-		return fn(ctx, t)
 	})
 }

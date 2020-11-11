@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/viper"
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
+	"gitlab.com/beneath-hq/beneath/ee/services/bi"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
 	"gitlab.com/beneath-hq/beneath/ee/services/payments"
 	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
@@ -17,13 +18,15 @@ import (
 
 // AllServices is a convenience wrapper that initializes all *enterprise* services
 type AllServices struct {
+	BI       *bi.Service
 	Billing  *billing.Service
 	Payments *payments.Service
 }
 
 // NewAllServices creates a new AllServices
-func NewAllServices(billing *billing.Service, payments *payments.Service) *AllServices {
+func NewAllServices(bi *bi.Service, billing *billing.Service, payments *payments.Service) *AllServices {
 	return &AllServices{
+		BI:       bi,
 		Billing:  billing,
 		Payments: payments,
 	}
@@ -31,6 +34,7 @@ func NewAllServices(billing *billing.Service, payments *payments.Service) *AllSe
 
 func init() {
 	cli.AddDependency(NewAllServices)
+	cli.AddDependency(bi.New)
 	cli.AddDependency(billing.New)
 	cli.AddDependency(payments.New)
 
