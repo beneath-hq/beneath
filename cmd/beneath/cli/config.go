@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-
 	"github.com/spf13/viper"
+
 	"gitlab.com/beneath-hq/beneath/pkg/envutil"
 )
 
@@ -30,7 +30,7 @@ func (c *CLI) loadConfig(configFileOrEmpty string) error {
 			return err
 		}
 
-		// eg. if ENV=dev, then loads config/.development.yaml
+		// eg. if BENEATH_ENV=dev, then loads config/.development.yaml
 		err = c.searchLoadAndMergeConfigName(fmt.Sprintf(".%s", envutil.GetEnv()))
 		if err != nil {
 			return err
