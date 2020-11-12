@@ -123,13 +123,12 @@ func (d *CardDriver) handleGenerateSetupIntent(w http.ResponseWriter, req *http.
 	return nil
 }
 
-// webhook called by Stripe with the card setup outcome
-// Q: What's the right way to return errors for the webhook?
 func (d *CardDriver) handleStripeWebhook(w http.ResponseWriter, req *http.Request) error {
 	// TODO: Add check for Stripe's signature on each webhook event. See: https://stripeutil.com/docs/webhooks/signatures
-
 	// get payload
-	payload, err := ioutil.ReadAll(http.MaxBytesReader(w, req.Body, 2^16))
+	const MaxBodyBytes = int64(65536)
+	req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
+	payload, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		d.Logger.Errorf("webhook: error reading request body: %s", err.Error())
 		return err
@@ -222,7 +221,17 @@ func (d *CardDriver) handleSetupIntentSucceeded(ctx context.Context, w http.Resp
 		"expYear":           paymentMethod.Card.ExpYear,
 	}
 
-	_, err = d.Billing.CreateBillingMethod(ctx, organization.OrganizationID, driver.StripeCard, driverPayload)
+	bm, err := d.Billing.CreateBillingMethod(ctx, organization.OrganizationID, driver.StripeCard, driverPayload)
+	if err != nil {
+		return err
+	}
+
+	bi := d.Billing.FindBillingInfoByOrganization(ctx, organization.OrganizationID)
+	if bi == nil {
+		return fmt.Errorf("Existing billing info not found for organization %s", organizationID.String())
+	}
+
+	err = d.Billing.UpdateBillingMethod(ctx, bi, bm)
 	if err != nil {
 		return err
 	}
