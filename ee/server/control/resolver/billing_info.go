@@ -43,7 +43,7 @@ func (r *mutationResolver) UpdateBillingDetails(ctx context.Context, organizatio
 	}
 
 	bi := r.Billing.FindBillingInfoByOrganization(ctx, organizationID)
-	if bi != nil {
+	if bi == nil {
 		return nil, gqlerror.Errorf("Existing billing info not found for organization %s", organizationID.String())
 	}
 
@@ -63,7 +63,7 @@ func (r *mutationResolver) UpdateBillingMethod(ctx context.Context, organization
 	}
 
 	bi := r.Billing.FindBillingInfoByOrganization(ctx, organizationID)
-	if bi != nil {
+	if bi == nil {
 		return nil, gqlerror.Errorf("Existing billing info not found for organization %s", organizationID.String())
 	}
 
@@ -91,7 +91,7 @@ func (r *mutationResolver) UpdateBillingPlan(ctx context.Context, organizationID
 	}
 
 	bi := r.Billing.FindBillingInfoByOrganization(ctx, organizationID)
-	if bi != nil {
+	if bi == nil {
 		return nil, gqlerror.Errorf("Existing billing info not found for organization %s", organizationID.String())
 	}
 
