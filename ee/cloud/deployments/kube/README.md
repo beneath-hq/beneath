@@ -25,7 +25,7 @@ Create nginx ingress in cluster. (Change `loadBalancerIP` to the external IP you
 ​
     helm upgrade --wait --install --namespace nginx ingress-nginx ingress-nginx/ingress-nginx --set controller.service.loadBalancerIP="35.231.110.138" --set controller.service.externalTrafficPolicy=Local
 
-NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want the world burn. We use the *former*, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
+NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want to watch the world burn. We use the *former*, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
 ​
 ### cert-manager
 ​
@@ -67,23 +67,15 @@ Create the production namespace like this:
 ​
     kubectl create namespace production
 
-### Kubernetes secrets
+### Backend config file
 
-The Helm charts rely on the existance of the `beneath-secrets` secret in the `production` namespace. It's initialized like this:
+The `backend` Helm deployment relies on the existance of a `backend-config` secret in the `production` namespace. It's initialized like this (assumes a config file `production.yaml` is available):
 
-    kubectl create secret generic beneath-secrets --namespace production --dry-run -o yaml \
-      --from-literal pg-user=INSERT \
-      --from-literal pg-password=INSERT \
-      --from-literal session-secret=INSERT \
-      --from-literal stripe-publishable-key=INSERT \
-      --from-literal stripe-secret-key=INSERT \
-      --from-literal github-auth-id=INSERT \
-      --from-literal github-auth-secret=INSERT \
-      --from-literal google-auth-id=INSERT \
-      --from-literal google-auth-secret=INSERT \
-      | kubectl apply -f -
+```
+kubectl create secret generic backend-config --from-file production.yaml --namespace production
+```
 
-Below is an approximate list of places from which the secrets were sourced:
+Below is an approximate list of places from which the secrets used in `production.yaml` were sourced:
 
 - Postgres credentials: Cloud SQL admin console
 - Session secret: randomly generated

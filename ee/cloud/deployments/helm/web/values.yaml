@@ -9,9 +9,7 @@ image:
   tag: latest
 
 ingress:
-  hosts:
-  - beneath.dev
-  - www.beneath.dev
+  hosts: []
 
 resources: {}
   # limits:
@@ -21,15 +19,4 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
-env:
-- name: ENV
-  value: "production"
-- name: NODE_ENV
-  value: "production"
-- name: PORT
-  value: "8080"
-- name: STRIPE_PUBLISHABLE_KEY
-  valueFrom:
-    secretKeyRef:
-      name: beneath-secrets
-      key: stripe-publishable-key
+extraEnv: []

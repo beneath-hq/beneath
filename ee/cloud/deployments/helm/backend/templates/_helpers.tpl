@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "gateway.name" -}}
+{{- define "backend.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "gateway.fullname" -}}
+{{- define "backend.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,6 +27,26 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "gateway.chart" -}}
+{{- define "backend.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create fully qualified names for each deployment.
+(Truncated to 63 chars, see above.)
+*/}}
+{{- define "backend.ctrlserver.fullname" -}}
+{{- print (include "backend.fullname" .) "-" "ctrl-server" | trunc 63 | trimAll "-" -}}
+{{- end -}}
+
+{{- define "backend.ctrlworker.fullname" -}}
+{{- print (include "backend.fullname" .) "-" "ctrl-worker" | trunc 63 | trimAll "-" -}}
+{{- end -}}
+
+{{- define "backend.dataserver.fullname" -}}
+{{- print (include "backend.fullname" .) "-" "data-server" | trunc 63 | trimAll "-" -}}
+{{- end -}}
+
+{{- define "backend.dataworker.fullname" -}}
+{{- print (include "backend.fullname" .) "-" "data-worker" | trunc 63 | trimAll "-" -}}
 {{- end -}}

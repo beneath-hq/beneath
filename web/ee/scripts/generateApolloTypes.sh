@@ -10,3 +10,6 @@ yarn run apollo codegen:generate \
   --target typescript \
   --passthroughCustomScalars \
   --customScalarsPrefix Control
+
+# The generated globalTypes.ts is currently empty, causing an isolatedModules error; delete it
+rm ./ee/apollo/types/globalTypes.ts

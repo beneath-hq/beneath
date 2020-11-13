@@ -18,45 +18,46 @@ func init() {
 
 // PubSub implements beneath.MessageQueue
 type PubSub struct {
-	Logger *zap.SugaredLogger
-	Client *pubsub.Client
-	Topics map[string]*pubsub.Topic
-	Opts   *Options
+	Logger       *zap.SugaredLogger
+	Client       *pubsub.Client
+	Topics       map[string]*pubsub.Topic
+	Opts         *Options
+	SubscriberID string
 }
 
 // Options for creating a Pubsub
 type Options struct {
 	ProjectID          string `mapstructure:"project_id"`
-	SubscriberID       string `mapstructure:"subscriber_id"`
 	TopicPrefix        string `mapstructure:"topic_prefix"`
 	SubscriptionPrefix string `mapstructure:"subscription_prefix"`
 	EmulatorHost       string `mapstructure:"emulator_host"`
 }
 
-func newPubsub(logger *zap.Logger, optsMap map[string]interface{}) (mq.MessageQueue, error) {
+func newPubsub(logger *zap.Logger, opts *mq.Options) (mq.MessageQueue, error) {
 	// decode options
-	var opts Options
-	err := mapstructure.Decode(optsMap, &opts)
+	var psOpts Options
+	err := mapstructure.Decode(opts.DriverOptions, &psOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding pubsub options: %s", err.Error())
 	}
 
 	// connect to emulator if set
-	if opts.EmulatorHost != "" {
-		os.Setenv("PUBSUB_PROJECT_ID", opts.ProjectID)
-		os.Setenv("PUBSUB_EMULATOR_HOST", opts.EmulatorHost)
+	if psOpts.EmulatorHost != "" {
+		os.Setenv("PUBSUB_PROJECT_ID", psOpts.ProjectID)
+		os.Setenv("PUBSUB_EMULATOR_HOST", psOpts.EmulatorHost)
 	}
 
 	// prepare pubsub client
-	client, err := pubsub.NewClient(context.Background(), opts.ProjectID)
+	client, err := pubsub.NewClient(context.Background(), psOpts.ProjectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed connecting to pubsub: %s", err)
 	}
 
 	return &PubSub{
-		Logger: logger.Named("pubsub").Sugar(),
-		Client: client,
-		Topics: make(map[string]*pubsub.Topic),
-		Opts:   &opts,
+		Logger:       logger.Named("pubsub").Sugar(),
+		Client:       client,
+		Topics:       make(map[string]*pubsub.Topic),
+		Opts:         &psOpts,
+		SubscriberID: opts.SubscriberID,
 	}, nil
 }

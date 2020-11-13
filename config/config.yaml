@@ -46,3 +46,5 @@ data:
 mq:
   # driver to use for message queue (env: BENEATH_MQ_DRIVER)
   driver: ""
+  # unique identifier for the subscriber (env: BENEATH_MQ_SUBSCRIBER_ID)
+  subscriber_id: ""

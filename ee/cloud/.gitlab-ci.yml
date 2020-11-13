@@ -1,14 +1,8 @@
-.cloud:deploy:
+.cloud:deploy:prod:
   stage: deploy
   image: dtzar/helm-kubectl:3.2.1
   only:
     - stable
-  script:
-    - helm upgrade --install --wait --force ${CMD_NAME} deployments/helm/${CMD_NAME}/ --set image.tag=${CI_COMMIT_SHORT_SHA} --set replicaCount=${REPLICAS} --namespace=${KUBE_NAMESPACE}
-
-.cloud:deploy:prod:
-  extends:
-  - .cloud:deploy
   when: manual
   variables:
     KUBE_NAMESPACE: production
@@ -19,44 +13,31 @@
 cloud:deploy:web:
   extends:
   - .cloud:deploy:prod
-  needs: ["build:web"]
+  needs: ["ee:build:web"]
+  script:
+  - helm upgrade --install --wait --force web ee/cloud/deployments/helm/web/
+    --namespace=${KUBE_NAMESPACE}
+    --values ee/cloud/deployments/helm/web_values.yaml
+    --set image.tag=${CI_COMMIT_SHORT_SHA}
+    --set replicaCount=${REPLICAS_WEB}
   variables:
-    CMD_NAME: web
-    REPLICAS: ${REPLICAS_WEB}
     REPLICAS_WEB: 2
 
-cloud:deploy:control:
+cloud:deploy:backend:
   extends:
   - .cloud:deploy:prod
-  needs: ["build:backend"]
+  needs: ["ee:build:backend"]
+  script:
+  - helm upgrade --install --wait --force backend ee/cloud/deployments/helm/backend/
+    --namespace=${KUBE_NAMESPACE}
+    --values ee/cloud/deployments/helm/backend_values.yaml
+    --set image.tag=${CI_COMMIT_SHORT_SHA}
+    --set ctrl.server.replicaCount=${REPLICAS_CTRL_SERVER}
+    --set ctrl.worker.replicaCount=${REPLICAS_CTRL_WORKER}
+    --set data.server.replicaCount=${REPLICAS_DATA_SERVER}
+    --set data.worker.replicaCount=${REPLICAS_DATA_WORKER}
   variables:
-    CMD_NAME: control
-    REPLICAS: ${REPLICAS_CONTROL}
-    REPLICAS_CONTROL: 2
-
-cloud:deploy:gateway:
-  extends:
-  - .cloud:deploy:prod
-  needs: ["build:backend"]
-  variables:
-    CMD_NAME: gateway
-    REPLICAS: ${REPLICAS_GATEWAY}
-    REPLICAS_GATEWAY: 2
-
-cloud:deploy:pipeline:
-  extends:
-  - .cloud:deploy:prod
-  needs: ["build:backend"]
-  variables:
-    CMD_NAME: pipeline
-    REPLICAS: ${REPLICAS_PIPELINE}
-    REPLICAS_PIPELINE: 1
-
-cloud:deploy:taskqueue:
-  extends:
-  - .cloud:deploy:prod
-  needs: ["build:backend"]
-  variables:
-    CMD_NAME: taskqueue
-    REPLICAS: ${REPLICAS_TASKQUEUE}
-    REPLICAS_TASKQUEUE: 1
+    REPLICAS_CTRL_SERVER: 2
+    REPLICAS_CTRL_WORKER: 2
+    REPLICAS_DATA_SERVER: 2
+    REPLICAS_DATA_WORKER: 2

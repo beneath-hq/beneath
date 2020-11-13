@@ -6,6 +6,9 @@
     "dev": "NODE_ENV=development nodemon",
     "build": "next build && tsc --project tsconfig.server.json",
     "start": "cross-env NODE_ENV=production node dist/server.js",
+    "dev-ee": "BENEATH_EE=1 yarn dev",
+    "build-ee": "BENEATH_EE=1 yarn build",
+    "start-ee": "BENEATH_EE=1 yarn start",
     "apollo:generate": "scripts/generateApolloTypes.sh && ee/scripts/generateApolloTypes.sh"
   },
   "dependencies": {

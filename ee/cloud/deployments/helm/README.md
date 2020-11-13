@@ -1,8 +1,8 @@
-# `deployments/helm/`
+# `ee/cloud/deployments/helm/`
 
-Before using a Helm chart in production, please:
+Before committing a Helm chart in production, please:
 
 - Run the Helm linter
 - Do a dry-run and inspect the compiled files
 
-There's more details here: https://github.com/helm/helm/blob/master/docs/chart_template_guide/debugging.md
+There's more details here: https://helm.sh/docs/chart_template_guide/debugging/

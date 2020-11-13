@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "backend.dataserver.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "backend.chart" . }}
+spec:
+  ports:
+  - port: 8080
+    name: data-http-port
+    targetPort: data-http-port
+    protocol: TCP
+  - port: 9090
+    name: data-grpc-port
+    targetPort: data-grpc-port
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
