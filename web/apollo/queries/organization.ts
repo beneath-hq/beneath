@@ -79,6 +79,7 @@ export const QUERY_ORGANIZATION = gql`
         scanQuota
         readUsage
         writeUsage
+        scanUsage
         personalUser {
           userID
           email

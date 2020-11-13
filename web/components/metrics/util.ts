@@ -139,7 +139,11 @@ export const yearAgo = () => {
   return then;
 };
 
-export const prettyPrintBytes = (bytes: number) => {
+export const prettyPrintBytes = (bytes: number | null) => {
+  if (!bytes) {
+    return "0 B";
+  }
+
   const numDigits = bytes.toString().length;
 
   // if bytes

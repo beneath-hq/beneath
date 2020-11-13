@@ -85,6 +85,7 @@ export interface OrganizationByName_organizationByName_PrivateOrganization {
   scanQuota: number | null;
   readUsage: number;
   writeUsage: number;
+  scanUsage: number;
   personalUser: OrganizationByName_organizationByName_PrivateOrganization_personalUser | null;
   permissions: OrganizationByName_organizationByName_PrivateOrganization_permissions;
 }

@@ -47,8 +47,8 @@ export interface BillingInfo_billingInfo {
   region: string | null;
   companyName: string | null;
   taxNumber: string | null;
-  nextBillingTime: ControlTime | null;
-  lastInvoiceTime: ControlTime | null;
+  nextBillingTime: ControlTime;
+  lastInvoiceTime: ControlTime;
 }
 
 export interface BillingInfo {
