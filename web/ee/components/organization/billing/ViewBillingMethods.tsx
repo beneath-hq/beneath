@@ -3,10 +3,10 @@ import _ from "lodash";
 import dynamic from "next/dynamic";
 import React, { FC } from "react";
 
-import { QUERY_BILLING_METHODS } from "../../../apollo/queries/billingMethod";
-import { BillingMethods, BillingMethodsVariables } from "../../../apollo/types/BillingMethods";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "../../../apollo/types/OrganizationByName";
-import billing from "../../../lib/billing";
+import { QUERY_BILLING_METHODS } from "ee/apollo/queries/billingMethod";
+import { BillingMethods, BillingMethodsVariables } from "ee/apollo/types/BillingMethods";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import billing from "ee/lib/billing";
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
