@@ -1,0 +1,38 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  pullPolicy: IfNotPresent
+  repository: gcr.io/beneath/ee-backend
+  tag: latest
+
+configSecretName: "beneath-config"
+configFileName: config.yaml
+
+ctrl:
+  server:
+    host: ""
+    replicaCount: 1
+    resources: {}
+  worker:
+    replicaCount: 1
+    resources: {}
+
+data:
+  server:
+    httpHost: ""
+    grpcHost: ""
+    replicaCount: 1
+    resources: {}
+  worker:
+    replicaCount: 1
+    resources: {}
+
+extraEnv: []
+# - name: ENV_VAR
+#   value: env-var-value
+
+extraSecretMounts: []
+# - secretName: secret-files
+#   mountPath: /etc/secrets
+

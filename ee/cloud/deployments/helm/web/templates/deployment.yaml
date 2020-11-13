@@ -35,4 +35,10 @@ spec:
             path: /healthz
             port: web-port
         env:
-        {{- toYaml .Values.env | nindent 8 }}
+        - name: PORT
+          value: "8080"
+        - name: NODE_ENV
+          value: "production"
+        {{- if not (empty .Values.extraEnv) }}
+        {{- toYaml .Values.extraEnv | nindent 8 }}
+        {{- end }}

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "backend.dataserver.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "backend.chart" . }}
+spec:
+  replicas: {{ .Values.data.server.replicaCount }}
+  serviceName: {{ include "backend.dataserver.fullname" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: {{ .Values.configSecretName }}
+        secret:
+          secretName: {{ .Values.configSecretName }}
+      {{- range .Values.extraSecretMounts }}
+      - name: {{ .secretName }}
+        secret:
+          secretName: {{ .secretName }}
+      {{- end }}
+      containers:
+      - name: data-server
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - start data-server --config /etc/config/{{ .Values.configFileName }}
+        volumeMounts:
+        - name: {{ .Values.configSecretName }}
+          mountPath: /etc/config
+        {{- range .Values.extraSecretMounts }}
+        - name: {{ .secretName }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        ports:
+        - name: data-http-port
+          containerPort: 8080
+        - name: data-grpc-port
+          containerPort: 9090
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: data-http-port
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: data-http-port
+        resources:
+          {{- toYaml .Values.data.server.resources | nindent 10 }}
+        env:
+        - name: BENEATH_DATA_HTTP_PORT
+          value: 8080
+        - name: BENEATH_DATA_GRPC_PORT
+          value: 9090
+        - name: BENEATH_MQ_SUBSCRIBER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        {{- if not (empty .Values.extraEnv) }}
+        {{- toYaml .Values.extraEnv | nindent 8 }}
+        {{- end }}

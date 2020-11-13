@@ -1,12 +1,12 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ include "gateway.fullname" . }}
+  name: {{ include "backend.dataserver.fullname" . | trunc 58 }}-http
   labels:
-    app.kubernetes.io/name: {{ include "gateway.name" . }}
+    app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "gateway.chart" . }}
+    helm.sh/chart: {{ include "backend.chart" . }}
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -14,27 +14,27 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600" # for websockets
 spec:
   tls:
-  - secretName: {{ include "gateway.name" . }}-tls
+  - secretName: {{ include "backend.dataserver.fullname" . }}-http-tls
     hosts: 
-    - {{ .Values.ingress.host }}
+    - {{ .Values.data.server.httpHost }}
   rules:
-  - host: {{ .Values.ingress.host }}
+  - host: {{ .Values.data.server.httpHost }}
     http:
       paths:
       - path: /
         backend:
-          serviceName: {{ include "gateway.fullname" . }}
+          serviceName: {{ include "backend.dataserver.fullname" . }}
           servicePort: 8080
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ include "gateway.fullname" . | trunc 58 }}-grpc
+  name: {{ include "backend.dataserver.fullname" . | trunc 58 }}-grpc
   labels:
-    app.kubernetes.io/name: {{ include "gateway.name" . }}
+    app.kubernetes.io/name: {{ include "backend.dataserver.fullname" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "gateway.chart" . }}
+    helm.sh/chart: {{ include "backend.chart" . }}
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -42,17 +42,17 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600" # for grpc streaming
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600" # for grpc streaming
-    nginx.ingress.kubernetes.io/server-snippet: "grpc_read_timeout 3600s; grpc_send_timeout 3600s;"
+    nginx.ingress.kubernetes.io/server-snippet: "grpc_read_timeout 3600s; grpc_send_timeout 3600s; client_body_timeout 3600s;" # for grpc streaming
 spec:
   tls:
-  - secretName: {{ include "gateway.name" . }}-grpc-tls
+  - secretName: {{ include "backend.dataserver.fullname" . }}-grpc-tls
     hosts: 
-    - {{ .Values.ingress.grpcHost }}
+    - {{ .Values.data.server.grpcHost }}
   rules:
-  - host: {{ .Values.ingress.grpcHost }}
+  - host: {{ .Values.data.server.grpcHost }}
     http:
       paths:
       - path: /
         backend:
-          serviceName: {{ include "gateway.fullname" . }}
+          serviceName: {{ include "backend.dataserver.fullname" . }}
           servicePort: 9090

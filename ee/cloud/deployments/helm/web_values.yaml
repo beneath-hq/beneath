@@ -1,0 +1,4 @@
+ingress:
+  hosts:
+  - beneath.dev
+  - www.beneath.dev

@@ -1,25 +1,25 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ include "control.fullname" . }}
+  name: {{ include "backend.ctrlserver.fullname" . }}
   labels:
-    app.kubernetes.io/name: {{ include "control.name" . }}
+    app.kubernetes.io/name: {{ include "backend.ctrlserver.fullname" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "control.chart" . }}
+    helm.sh/chart: {{ include "backend.chart" . }}
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
-  - secretName: {{ include "control.name" . }}-tls
+  - secretName: {{ include "backend.ctrlserver.fullname" . }}-tls
     hosts: 
-    - {{ .Values.ingress.host }}
+    - {{ .Values.ctrl.server.host }}
   rules:
-  - host: {{ .Values.ingress.host }}
+  - host: {{ .Values.ctrl.server.host }}
     http:
       paths:
       - path: /
         backend:
-          serviceName: {{ include "control.fullname" . }}
+          serviceName: {{ include "backend.ctrlserver.fullname" . }}
           servicePort: 8080

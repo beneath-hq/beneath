@@ -1,0 +1,27 @@
+image:
+  pullPolicy: IfNotPresent
+  repository: gcr.io/beneath/ee-backend
+  tag: latest
+
+configSecretName: backend-config
+configFileName: production.yaml
+
+ctrl:
+  server:
+    host: control.beneath.dev
+    resources: {}
+  worker:
+    resources: {}
+
+data:
+  server:
+    httpHost: data.beneath.dev
+    grpcHost: grpc.data.beneath.dev
+
+extraEnv:
+- name: GOOGLE_APPLICATION_CREDENTIALS
+  value: /var/secrets/google/key.json
+
+extraSecretMounts:
+- secretName: beneath-sa-key
+  mountPath: /var/secrets/google
