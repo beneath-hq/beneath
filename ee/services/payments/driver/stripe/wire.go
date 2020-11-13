@@ -77,13 +77,16 @@ func (d *WireDriver) IssueInvoiceForResources(bi *models.BillingInfo, resources 
 }
 
 // handleInitializeCustomer can be called by Beneath masters to create/update a customer's wire billing info
+// TODO: make this idempotent -- there shouldn't be multiple wire billing methods
 func (d *WireDriver) handleInitializeCustomer(w http.ResponseWriter, req *http.Request) error {
+	ctx := req.Context()
+
 	organizationID, err := uuid.FromString(req.URL.Query().Get("organization_id"))
 	if err != nil {
 		return httputil.NewError(400, "couldn't get organization_id from the request")
 	}
 
-	organization := d.Organizations.FindOrganization(req.Context(), organizationID)
+	organization := d.Organizations.FindOrganization(ctx, organizationID)
 	if organization == nil {
 		return httputil.NewError(400, "organization not found")
 	}
@@ -94,12 +97,12 @@ func (d *WireDriver) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 	}
 
 	// Beneath will call the function from an admin panel (after a customer discussion)
-	secret := middleware.GetSecret(req.Context())
+	secret := middleware.GetSecret(ctx)
 	if !secret.IsMaster() {
 		return httputil.NewError(403, fmt.Sprintf("caller must be a Beneath master to enable payment by wire"))
 	}
 
-	billingMethods := d.Billing.FindBillingMethodsByOrganization(req.Context(), organization.OrganizationID)
+	billingMethods := d.Billing.FindBillingMethodsByOrganization(ctx, organization.OrganizationID)
 
 	// if customer has already been registered with stripe, get customerID from driver_payload
 	customerID := ""
@@ -126,10 +129,21 @@ func (d *WireDriver) handleInitializeCustomer(w http.ResponseWriter, req *http.R
 
 	driverPayload := make(map[string]interface{})
 	driverPayload["customer_id"] = customerID
+	driverPayload["email_address"] = emailAddress
 
-	_, err = d.Billing.CreateBillingMethod(req.Context(), organization.OrganizationID, driver.StripeWire, driverPayload)
+	bm, err := d.Billing.CreateBillingMethod(ctx, organization.OrganizationID, driver.StripeWire, driverPayload)
 	if err != nil {
 		return httputil.NewError(400, "error creating billing method: %s", err.Error())
+	}
+
+	bi := d.Billing.FindBillingInfoByOrganization(ctx, organization.OrganizationID)
+	if bi == nil {
+		return fmt.Errorf("Existing billing info not found for organization %s", organizationID.String())
+	}
+
+	err = d.Billing.UpdateBillingMethod(ctx, bi, bm)
+	if err != nil {
+		return err
 	}
 
 	return nil
