@@ -1,0 +1,32 @@
+.ee:build:
+  stage: build
+  image: docker:stable
+  services:
+  - docker:dind
+  before_script:
+  - docker login -u _json_key -p "${GCR_SERVICE_KEY}" https://gcr.io
+  when: manual
+  only:
+    - stable
+
+ee:build:web:
+  extends: .ee:build
+  variables:
+    IMAGE: gcr.io/beneath/ee-web
+  script: 
+    - docker pull ${IMAGE}:latest || true
+    - docker build -f ./ee/build/web/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:latest ./web
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+
+ee:build:backend:
+  extends: .ee:build
+  variables:
+    IMAGE: gcr.io/beneath/ee-backend
+  script: 
+    - docker pull ${IMAGE}:builder || true
+    - docker build -f ./ee/build/backend/Dockerfile --target builder -t ${IMAGE}:builder --cache-from ${IMAGE}:builder .
+    - docker build -f ./ee/build/backend/Dockerfile -t ${IMAGE}:latest -t ${IMAGE}:${CI_COMMIT_SHORT_SHA} --cache-from ${IMAGE}:builder .
+    - docker push ${IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE}:latest
+    - docker push ${IMAGE}:builder
