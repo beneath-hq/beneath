@@ -33,7 +33,7 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
-        - start ctrl-worker --config /etc/config/{{ .Values.configFileName }}
+        - start control-worker --config /etc/config/{{ .Values.configFileName }}
         volumeMounts:
         - name: {{ .Values.configSecretName }}
           mountPath: /etc/config
