@@ -21,4 +21,9 @@ func init() {
 		Default:     "",
 		Description: "driver to use for message queue",
 	})
+	cli.AddConfigKey(&cli.ConfigKey{
+		Key:         "mq.subscriber_id",
+		Default:     "",
+		Description: "unique identifier for the subscriber",
+	})
 }

@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"fmt"
+	"math/rand"
 
 	"go.uber.org/zap"
 )
@@ -27,7 +28,7 @@ type MessageQueue interface {
 }
 
 // Driver is a function that creates a MessageQueue from a config object
-type Driver func(logger *zap.Logger, opts map[string]interface{}) (MessageQueue, error)
+type Driver func(logger *zap.Logger, opts *Options) (MessageQueue, error)
 
 // drivers is a registry of MessageQueue drivers
 var drivers = make(map[string]Driver)
@@ -43,14 +44,18 @@ func AddDriver(name string, driver Driver) {
 // Options for opening a message queue connection
 type Options struct {
 	DriverName    string                 `mapstructure:"driver"`
+	SubscriberID  string                 `mapstructure:"subscriber_id"`
 	DriverOptions map[string]interface{} `mapstructure:",remain"`
 }
 
 // NewMessageQueue constructs a new MessageQueue
 func NewMessageQueue(logger *zap.Logger, opts *Options) (MessageQueue, error) {
+	if opts.SubscriberID == "" {
+		opts.SubscriberID = fmt.Sprintf("%x", rand.Uint64())
+	}
 	constructor := drivers[opts.DriverName]
 	if constructor == nil {
 		return nil, fmt.Errorf("'%s' is not a valid MessageQueue driver", opts.DriverName)
 	}
-	return constructor(logger.Named("mq"), opts.DriverOptions)
+	return constructor(logger.Named("mq"), opts)
 }

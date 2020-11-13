@@ -55,7 +55,7 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 	if persistent {
 		sub = p.getPersistentSubscription(ctx, p.Topics[topic], fullName)
 	} else {
-		sub = p.getEphemeralSubscription(ctx, p.Topics[topic], fullName, p.Opts.SubscriberID)
+		sub = p.getEphemeralSubscription(ctx, p.Topics[topic], fullName, p.SubscriberID)
 	}
 
 	// receive messages forever (or until error occurs)

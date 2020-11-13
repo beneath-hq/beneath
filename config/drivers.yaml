@@ -16,6 +16,7 @@
 #   index:
 #     driver: "bigtable"
 #     project_id: ""
+#     instance_id: ""
 #     emulator_host: ""
 
 # # Warehouse driver Google BigQuery
