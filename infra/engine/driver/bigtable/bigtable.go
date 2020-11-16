@@ -149,8 +149,28 @@ func (b *BigTable) AsUsageService() driver.UsageService {
 }
 
 func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge time.Duration) *bigtable.Table {
+	// check if exists
+	tableInfo, err := b.Admin.TableInfo(context.Background(), name)
+	if err == nil {
+		// if column family isn't found, continue to create
+		for _, fi := range tableInfo.FamilyInfos {
+			if fi.Name == cfName {
+				// found column family, return without creating
+				return b.Client.Open(name)
+			}
+		}
+	} else {
+		// if err is NotFound, continue to create table
+		status, ok := status.FromError(err)
+		if !ok || status.Code() != codes.NotFound {
+			panic(err)
+		}
+	}
+
+	// CREATING...
+
 	// create table
-	err := b.Admin.CreateTable(context.Background(), name)
+	err = b.Admin.CreateTable(context.Background(), name)
 	if err != nil {
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.AlreadyExists {
