@@ -50,6 +50,11 @@ func (c *CLI) loadConfig(configFileOrEmpty string) error {
 		c.v.BindEnv(configKey.Key, envVarName)
 	}
 
+	// necessary when using UnmarshalKey and loading env keys (see https://github.com/spf13/viper/issues/798)
+	for _, key := range c.v.AllKeys() {
+		c.v.Set(key, c.v.Get(key))
+	}
+
 	return nil
 }
 
