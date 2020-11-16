@@ -139,14 +139,8 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
-	healthy := true // TODO
-	if healthy {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(http.StatusText(http.StatusOK)))
-	} else {
-		s.Logger.Errorf("control database health check failed")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(http.StatusText(http.StatusOK)))
 }
 
 func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {

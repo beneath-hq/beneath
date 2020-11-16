@@ -86,13 +86,8 @@ func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Se
 }
 
 func (a *app) healthCheck(w http.ResponseWriter, r *http.Request) {
-	if true { // TODO
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(http.StatusText(http.StatusOK)))
-	} else {
-		a.Logger.Errorf("database health check failed")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(http.StatusText(http.StatusOK)))
 }
 
 func parseBoolParam(name string, val string) (bool, error) {
