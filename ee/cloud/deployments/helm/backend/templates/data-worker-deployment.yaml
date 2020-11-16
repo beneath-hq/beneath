@@ -32,8 +32,7 @@ spec:
       - name: data-worker
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        args:
-        - start data-worker --config /etc/config/{{ .Values.configFileName }}
+        args: ["start", "data-worker", "--config", "/etc/config/{{ .Values.configFileName }}"]
         volumeMounts:
         - name: {{ .Values.configSecretName }}
           mountPath: /etc/config

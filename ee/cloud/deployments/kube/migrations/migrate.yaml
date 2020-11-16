@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-migrate
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: backend-config
+    secret:
+      secretName: backend-config
+  - name: beneath-sa-key
+    secret:
+      secretName: beneath-sa-key
+  containers:
+  - name: backend
+    image: gcr.io/beneath/ee-backend:latest
+    imagePullPolicy: IfNotPresent
+    args: ["migrate-ee", "set_version", "11", "--config", "/etc/config/production.yaml"]
+    volumeMounts:
+    - name: backend-config
+      mountPath: /etc/config
+    - name: beneath-sa-key
+      mountPath: /var/secrets/google
+    env:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: /var/secrets/google/key.json

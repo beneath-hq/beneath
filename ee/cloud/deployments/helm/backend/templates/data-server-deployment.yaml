@@ -34,8 +34,7 @@ spec:
       - name: data-server
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        args:
-        - start data-server --config /etc/config/{{ .Values.configFileName }}
+        args: ["start", "data-server", "--config", "/etc/config/{{ .Values.configFileName }}"]
         volumeMounts:
         - name: {{ .Values.configSecretName }}
           mountPath: /etc/config
@@ -60,9 +59,9 @@ spec:
           {{- toYaml .Values.data.server.resources | nindent 10 }}
         env:
         - name: BENEATH_DATA_HTTP_PORT
-          value: 8080
+          value: "8080"
         - name: BENEATH_DATA_GRPC_PORT
-          value: 9090
+          value: "9090"
         - name: BENEATH_MQ_SUBSCRIBER_ID
           valueFrom:
             fieldRef:
