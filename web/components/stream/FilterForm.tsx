@@ -19,9 +19,9 @@ interface FilterFormProps {
 
 const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
   const classes = useStyles();
+  const [fields, setFields] = useState<Field[]>([]);
   const [filter, setFilter] = useState<any>({});
   const [filterJSON, setFilterJSON] = useState("");
-  const [fields, setFields] = useState<Field[]>([]);
   const [showAdd, setShowAdd] = useState(false);
 
   // trigger filter update
@@ -88,7 +88,8 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
   }
 
   const removeField = (idx: number) => {
-    if (idx > fields.length) {
+    // nothing to remove
+    if (idx + 1 > fields.length) {
       return;
     }
     for (let i = idx; i < fields.length; i++) {
@@ -122,6 +123,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
     }
 
     // if field is not the last one in the index, then remove subsequent fields
+    // this ensures that, when editing a field's filter, no subsequent fields maintain their filter
     const idx = index.findIndex(col => col.name === field.name);
     if (idx < index.length - 1) {
       removeField(idx + 1);

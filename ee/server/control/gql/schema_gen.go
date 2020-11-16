@@ -735,8 +735,8 @@ type BillingInfo {
   region: String
   companyName: String
   taxNumber: String
-  nextBillingTime: Time
-  lastInvoiceTime: Time
+  nextBillingTime: Time!
+  lastInvoiceTime: Time!
   createdOn: Time!
   updatedOn: Time!
 }
@@ -1716,11 +1716,14 @@ func (ec *executionContext) _BillingInfo_nextBillingTime(ctx context.Context, fi
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingInfo_lastInvoiceTime(ctx context.Context, field graphql.CollectedField, obj *models.BillingInfo) (ret graphql.Marshaler) {
@@ -1748,11 +1751,14 @@ func (ec *executionContext) _BillingInfo_lastInvoiceTime(ctx context.Context, fi
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BillingInfo_createdOn(ctx context.Context, field graphql.CollectedField, obj *models.BillingInfo) (ret graphql.Marshaler) {
@@ -4417,8 +4423,14 @@ func (ec *executionContext) _BillingInfo(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._BillingInfo_taxNumber(ctx, field, obj)
 		case "nextBillingTime":
 			out.Values[i] = ec._BillingInfo_nextBillingTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "lastInvoiceTime":
 			out.Values[i] = ec._BillingInfo_lastInvoiceTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "createdOn":
 			out.Values[i] = ec._BillingInfo_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5583,15 +5595,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
-}
-
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	return graphql.MarshalTime(v)
 }
 
 func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {

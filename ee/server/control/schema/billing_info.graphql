@@ -16,8 +16,8 @@ type BillingInfo {
   region: String
   companyName: String
   taxNumber: String
-  nextBillingTime: Time
-  lastInvoiceTime: Time
+  nextBillingTime: Time!
+  lastInvoiceTime: Time!
   createdOn: Time!
   updatedOn: Time!
 }
