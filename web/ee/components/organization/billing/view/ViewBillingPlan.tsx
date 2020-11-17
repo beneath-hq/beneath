@@ -11,12 +11,20 @@ import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import VSpace from "components/VSpace";
 import ViewNextBillDetails from "./ViewNextBillDetails";
 import ViewNextBillOverview from "./ViewNextBillOverview";
+import clsx from "clsx";
 
 
 const useStyles = makeStyles((theme) => ({
   paperPadding: {
     padding: theme.spacing(3)
   },
+  sectionTitle: {
+    marginTop: theme.spacing(6),
+    marginBottom: theme.spacing(3)
+  },
+  firstSectionTitle: {
+    marginTop: theme.spacing(0),
+  }
 }));
 
 export interface BillingInfoProps {
@@ -47,13 +55,9 @@ const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, cancelPlan, chang
 
   return (
     <>
-      <Typography variant="h2">
-        Billing plan
-      </Typography>
-      <VSpace units={2}/>
       <Grid container direction="column">
         <Grid item xs={12} md={8}>
-          <Typography variant="h3" gutterBottom>
+          <Typography variant="h3" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
             Your current plan
           </Typography>
           <Paper className={classes.paperPadding} variant="outlined">
@@ -104,17 +108,15 @@ const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, cancelPlan, chang
           </Paper>
         </Grid>
 
-        <VSpace units={3} />
         <Grid item xs={12} md={8}>
-          <Typography variant="h3" gutterBottom>
+          <Typography variant="h3" className={classes.sectionTitle}>
             Overview of your next bill
           </Typography>
           <ViewNextBillOverview organization={organization} billingInfo={billingInfo} />
         </Grid>
 
-        <VSpace units={3} />
         <Grid item xs={12} md={8}>
-          <Typography variant="h3" gutterBottom>
+          <Typography variant="h3" className={classes.sectionTitle}>
             Details of your next bill
           </Typography>
           <ViewNextBillDetails organization={organization} billingInfo={billingInfo} />

@@ -11,6 +11,9 @@ import VSpace from "components/VSpace";
 const useStyles = makeStyles((theme) => ({
   paperPadding: {
     padding: theme.spacing(3)
+  },
+  textData: {
+    fontWeight: "bold",
   }
 }));
 
@@ -40,45 +43,49 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
 
   const rows = [
     {key: "Country", value: data.billingInfo.country},
-    {key: "Region", value: data.billingInfo.region},
+    {key: "State", value: data.billingInfo.region},
     {key: "Company", value: data.billingInfo.companyName},
     {key: "Tax ID", value: data.billingInfo.taxNumber },
   ];
 
   return (
     <>
-      <Paper className={classes.paperPadding} variant="outlined">
-        {rows.map((row) => (
-          <React.Fragment key={row.key}>
-            <Grid container justify="space-between" alignItems="center">
-              <Grid item>
-                <Typography>
-                  {row.key}:
-                </Typography>
+    <Grid container>
+      <Grid item>
+        <Paper className={classes.paperPadding} variant="outlined">
+          {rows.map((row) => (
+            <React.Fragment key={row.key}>
+              <Grid container alignItems="center" spacing={1}>
+                <Grid item>
+                  <Typography>
+                    {row.key}:
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Typography className={classes.textData}>
+                    {row.value}
+                  </Typography>
+                </Grid>
               </Grid>
-              <Grid item>
-                <Typography>
-                  {row.value}
-                </Typography>
+              <VSpace units={1} />
+            </React.Fragment>
+          ))}
+          {editable && editTaxInfo && (
+            <>
+              <VSpace units={3} />
+              <Grid container justify="space-between">
+                {/* <Grid item></Grid> */}
+                <Grid item>
+                  <Button onClick={() => editTaxInfo(true)} variant="contained">
+                    Edit
+                  </Button>
+                </Grid>
               </Grid>
-            </Grid>
-            <VSpace units={1} />
-          </React.Fragment>
-        ))}
-        {editable && editTaxInfo && (
-          <>
-            <VSpace units={3} />
-            <Grid container justify="space-between">
-              <Grid item></Grid>
-              <Grid item>
-                <Button onClick={() => editTaxInfo(true)} variant="contained">
-                  Edit
-                </Button>
-              </Grid>
-            </Grid>
-          </>
-        )}
-      </Paper>
+            </>
+          )}
+        </Paper>
+      </Grid>
+    </Grid>
     </>
   );
 };

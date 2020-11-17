@@ -31,15 +31,24 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
+  const closeAndReset = () => {
+    setActiveStep(0);
+    setSelectedBillingPlan(null);
+    setChangePlanDialog(false);
+  };
+
   return (
     <>
     {/* should this be in a Dialog, or could it just replace the content on View Billing? or is that wrong to not explicitly change the url? */}
-      <Dialog open={changePlanDialog} fullWidth={true} maxWidth={"md"} onBackdropClick={() => setChangePlanDialog(false)}>
+      <Dialog
+        open={changePlanDialog}
+        fullWidth={true}
+        maxWidth={"md"}
+        onBackdropClick={() => closeAndReset()}
+      >
         <DialogTitle>
           Change your billing plan
-          <Typography>Choose the plan that best suits your needs.</Typography>
-        </DialogTitle>
-        <DialogContent dividers={false}>
+          <VSpace units={3} />
           <Stepper activeStep={activeStep}>
             {steps.map((step) => (
               <Step key={step}>
@@ -49,14 +58,16 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
               </Step>
             ))}
           </Stepper>
+        </DialogTitle>
+        <DialogContent dividers={false}>
           {activeStep === 0 && (
             <>
-              <SelectBillingPlan selectBillingPlan={setSelectedBillingPlan} billingInfo={billingInfo} />
+              <SelectBillingPlan selectBillingPlan={setSelectedBillingPlan} selectedBillingPlan={selectedBillingPlan} billingInfo={billingInfo} />
               <DialogActions>
-                <Button onClick={() => setChangePlanDialog(false)}>
+                <Button onClick={() => closeAndReset()}>
                   Cancel
                 </Button>
-                <Button onClick={handleNext} disabled={!selectedBillingPlan}>
+                <Button onClick={handleNext} disabled={!selectedBillingPlan || selectedBillingPlan.billingPlanID === billingInfo.billingPlan.billingPlanID}>
                   Next
                 </Button>
               </DialogActions>
@@ -64,12 +75,7 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
           )}
           {activeStep === 1 && (
             <>
-              <VSpace units={4} />
-              <Typography gutterBottom>
-                Select an active billing method
-              </Typography>
               <ViewBillingMethods organization={organization} billingInfo={billingInfo} addCard={addCard} />
-              <VSpace units={4} />
               <DialogActions>
                 <Button onClick={handleBack}>
                   Back
@@ -82,9 +88,7 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
           )}
           {activeStep === 2 && (
             <>
-              <VSpace units={4} />
               <ViewTaxInfo organization={organization} editable editTaxInfo={editTaxInfo} />
-              <VSpace units={4} />
               <DialogActions>
                 <Button onClick={handleBack}>
                   Back
@@ -97,8 +101,7 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
           )}
           {activeStep === 3 && selectedBillingPlan && billingInfo.billingMethod && (
             <>
-              <VSpace units={4} />
-              <Checkout organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} setChangePlanDialog={setChangePlanDialog} />
+              <Checkout organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} closeAndReset={closeAndReset} />
             </>
           )}
         </DialogContent>

@@ -1,15 +1,20 @@
 import {useQuery } from "@apollo/client";
 import _ from "lodash";
-import { Button, Table, TableBody, TableCell, TableHead, TableRow } from "@material-ui/core";
+import { Button, Grid, makeStyles, Table, TableBody, TableCell, TableHead, TableRow } from "@material-ui/core";
 import React, { FC } from "react";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import VSpace from "components/VSpace";
 import { QUERY_BILLING_METHODS } from "ee/apollo/queries/billingMethod";
 import { BillingMethods, BillingMethodsVariables } from "ee/apollo/types/BillingMethods";
 import {ANARCHISM_DRIVER, STRIPECARD_DRIVER, STRIPEWIRE_DRIVER} from "ee/lib/billing";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
+
+const useStyles = makeStyles((theme) => ({
+  button: {
+    marginTop: theme.spacing(3),
+  }
+}));
 
 export interface BillingMethodsProps {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
@@ -18,6 +23,7 @@ export interface BillingMethodsProps {
 }
 
 const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo, addCard }) => {
+  const classes = useStyles();
   const { loading, error, data } = useQuery<BillingMethods, BillingMethodsVariables>(QUERY_BILLING_METHODS, {
     context: { ee: true },
     variables: { organizationID: organization.organizationID },
@@ -64,28 +70,31 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
 
   return (
     <>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Type</TableCell>
-            <TableCell>Details</TableCell>
-            <TableCell>Active</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.billingMethods.map((billingMethod) => (
-            <TableRow
-              key={billingMethod.billingMethodID}
-            >
-              <TableCell>{formatDriver(billingMethod.paymentsDriver)}</TableCell>
-              <TableCell>{formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}</TableCell>
-              <TableCell>{billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <VSpace units={2} />
-      <Button variant="contained" onClick={() => addCard(true)}>Add card</Button>
+      <Grid container>
+        <Grid item>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Type</TableCell>
+                <TableCell>Details</TableCell>
+                <TableCell>Active</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.billingMethods.map((billingMethod) => (
+                <TableRow
+                  key={billingMethod.billingMethodID}
+                >
+                  <TableCell>{formatDriver(billingMethod.paymentsDriver)}</TableCell>
+                  <TableCell>{formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}</TableCell>
+                  <TableCell>{billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Grid>
+      </Grid>
+      <Button variant="contained" onClick={() => addCard(true)} className={classes.button}>Add card</Button>
     </>
   );
 };

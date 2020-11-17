@@ -1,9 +1,9 @@
 import _ from "lodash";
 import React, { FC } from "react";
 import {
-  Button,
-  Grid,
   Link,
+  makeStyles,
+  Theme,
   Typography,
 } from "@material-ui/core";
 
@@ -21,24 +21,36 @@ import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/U
 import { useMutation } from "@apollo/client";
 import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
+import clsx from "clsx";
+
+const useStyles = makeStyles((theme: Theme) => ({
+  sectionTitle: {
+    marginBottom: theme.spacing(3),
+    marginTop: theme.spacing(6),
+  },
+  firstSectionTitle: {
+    marginTop: theme.spacing(0),
+  }
+}));
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
   billingMethod: BillingInfo_billingInfo_billingMethod;
   selectedBillingPlan: BillingInfo_billingInfo_billingPlan;
   handleBack: () => void;
-  setChangePlanDialog: (value: boolean) => void;
+  closeAndReset: () => void;
   // closeDialogue: (confirmationMessage: string) => void;
 }
 
-const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack, setChangePlanDialog }) => {
+const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack, closeAndReset }) => {
+  const classes = useStyles();
   const [updateBillingPlan] = useMutation<UpdateBillingPlan, UpdateBillingPlanVariables>(
     UPDATE_BILLING_PLAN,
     {
       context: { ee: true },
       onCompleted: (data) => {
         if (data) {
-          setChangePlanDialog(false);
+          closeAndReset();
         }
       },
       refetchQueries: [
@@ -55,21 +67,19 @@ const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
         Billing plan
       </Typography>
       <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
-      <VSpace units={2} />
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h2" className={classes.sectionTitle}>
         Billing method
       </Typography>
       <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
-      <VSpace units={2} />
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h2" className={classes.sectionTitle}>
         Tax info
       </Typography>
       <ViewTaxInfo organization={organization} />
-      <VSpace units={2} />
+      <VSpace units={3} />
       <Formik
         initialValues={initialValues}
         onSubmit={(values, actions) =>

@@ -16,8 +16,16 @@ import CancelBillingPlan from "./edit/CancelBillingPlan";
 import ViewBillingMethods from "./view/ViewBillingMethods";
 import ViewTaxInfo from "./view/ViewTaxInfo";
 import EditTaxInfo from "./edit/EditTaxInfo";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
+  sectionTitle: {
+    marginTop: theme.spacing(6),
+    marginBottom: theme.spacing(3)
+  },
+  firstSectionTitle: {
+    marginTop: theme.spacing(4),
+  }
 }));
 
 export interface ViewBillingProps {
@@ -87,7 +95,9 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         You can find detailed information about our billing plans{" "}
         <Link href="https://about.beneath.dev/enterprise">here</Link>.
       </Alert>
-      <VSpace units={4} />
+      <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
+        Billing plan
+      </Typography>
       <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
       <ChangeBillingPlan
         organization={organization}
@@ -99,13 +109,11 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
       />
       <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
 
-      <VSpace units={6} />
       <Grid container>
         <Grid item xs={12} md={6}>
-          <Typography variant="h2">
+          <Typography variant="h2" className={classes.sectionTitle}>
             Billing methods
           </Typography>
-          <VSpace units={2} />
           {/* <Typography variant="body1" gutterBottom>
             You are signed up to pay with the active billing method at the end of each billing cycle. Cards will be charged on the day of, and wire payments will be expected within 15 days.
           </Typography> */}
@@ -126,13 +134,11 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         </Grid>
       </Grid>
 
-      <VSpace units={4} />
       <Grid container>
         <Grid item xs={12} md={6}>
-          <Typography variant="h2">
+          <Typography variant="h2" className={classes.sectionTitle}>
             Tax info
           </Typography>
-          <VSpace units={2} />
           {/* <Typography gutterBottom>
             For paid plans, this information is necessary to compute tax for customers in certain countries.
           </Typography> */}
