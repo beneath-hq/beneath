@@ -85,7 +85,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
         </TableBody>
       </Table>
       <VSpace units={2} />
-      <Button onClick={() => addCard(true)}>Add card</Button>
+      <Button variant="contained" onClick={() => addCard(true)}>Add card</Button>
     </>
   );
 };

@@ -16,7 +16,7 @@ import useMe from "hooks/useMe";
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
-  closeDialog: (value: boolean) => void;
+  openDialogFn: (value: boolean) => void;
 }
 
 interface Country {
@@ -24,7 +24,7 @@ interface Country {
   code: string;
 }
 
-const CardFormElement: FC<Props> = ({ organization, closeDialog }) => {
+const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
   const token = useToken();
   const me = useMe();
   const stripe = useStripe();
@@ -201,7 +201,7 @@ const CardFormElement: FC<Props> = ({ organization, closeDialog }) => {
                 base: { fontSize: "18px", color: "#FFFFFF" }
               }
             }} />
-          <SubmitControl label="Submit" errorAlert={status} disabled={isSubmitting} />
+          <SubmitControl label="Submit" errorAlert={status} disabled={isSubmitting} cancelFn={() => openDialogFn(false)} cancelLabel="Back" />
         </Form>
       )}
     </Formik>
@@ -210,10 +210,10 @@ const CardFormElement: FC<Props> = ({ organization, closeDialog }) => {
 
 const stripePromise = loadStripe(STRIPE_KEY);
 
-const CardForm: FC<Props> = ({ organization, closeDialog }) => {
+const CardForm: FC<Props> = ({ organization, openDialogFn }) => {
   return (
     <Elements stripe={stripePromise}>
-      <CardFormElement organization={organization} closeDialog={closeDialog} />
+      <CardFormElement organization={organization} openDialogFn={openDialogFn} />
     </Elements>
   );
 };

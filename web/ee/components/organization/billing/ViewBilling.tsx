@@ -88,7 +88,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         <Link href="https://about.beneath.dev/enterprise">here</Link>.
       </Alert>
       <VSpace units={4} />
-      <ViewBillingPlan organization={organization} setChangePlanDialog={setChangePlanDialog} />
+      <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
       <ChangeBillingPlan
         organization={organization}
         billingInfo={data.billingInfo}
@@ -97,7 +97,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         addCard={setAddCardDialog}
         editTaxInfo={setEditTaxInfoDialog}
       />
-      <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} closeDialog={setCancelPlanDialog} />
+      <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
 
       <VSpace units={6} />
       <Grid container>
@@ -120,7 +120,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           >
             <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
             <DialogContent>
-              <DynamicCardForm organization={organization} closeDialog={setAddCardDialog} />
+              <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
             </DialogContent>
           </Dialog>
         </Grid>

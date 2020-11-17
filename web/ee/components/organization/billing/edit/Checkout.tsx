@@ -19,7 +19,8 @@ import { Field, Form, Formik } from "formik";
 import { handleSubmitMutation } from "components/formik";
 import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/UpdateBillingPlan";
 import { useMutation } from "@apollo/client";
-import { UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
+import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
+import { QUERY_ORGANIZATION } from "apollo/queries/organization";
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
@@ -40,8 +41,11 @@ const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
           setChangePlanDialog(false);
         }
       },
-      // refetchQueries: [{ query: QUERY_ORGANIZATION, variables: { name: organization.name } }],
-      // awaitRefetchQueries: true,
+      refetchQueries: [
+        { query: QUERY_ORGANIZATION, variables: { name: organization.name } },
+        { query: QUERY_BILLING_INFO, variables: { organizationID: organization.organizationID }, context: { ee: true } },
+      ],
+      awaitRefetchQueries: true,
     }
   );
 
@@ -100,16 +104,7 @@ const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
                 </span>
               }
             />
-            <Grid container spacing={2} alignItems="center">
-              <Grid item>
-                <Button onClick={handleBack}>
-                  Back
-                </Button>
-              </Grid>
-              <Grid item>
-                <SubmitControl label="Purchase" errorAlert={status} disabled={!values.consentTerms || isSubmitting} />
-              </Grid>
-            </Grid>
+            <SubmitControl label="Purchase" cancelFn={handleBack} cancelLabel="Back" rightSide errorAlert={status} disabled={!values.consentTerms || isSubmitting} />
           </Form>
         )}
       </Formik>

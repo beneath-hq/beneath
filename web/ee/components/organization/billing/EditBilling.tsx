@@ -1,5 +1,5 @@
 import React, {FC} from "react";
-import { Button, Dialog, DialogContent, DialogTitle, Step, StepLabel, Stepper, Typography } from "@material-ui/core";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Step, StepLabel, Stepper, Typography } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
@@ -39,7 +39,7 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
           Change your billing plan
           <Typography>Choose the plan that best suits your needs.</Typography>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent dividers={false}>
           <Stepper activeStep={activeStep}>
             {steps.map((step) => (
               <Step key={step}>
@@ -52,12 +52,14 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
           {activeStep === 0 && (
             <>
               <SelectBillingPlan selectBillingPlan={setSelectedBillingPlan} billingInfo={billingInfo} />
-              <Button onClick={() => setChangePlanDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleNext} disabled={!selectedBillingPlan}>
-                Next
-              </Button>
+              <DialogActions>
+                <Button onClick={() => setChangePlanDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleNext} disabled={!selectedBillingPlan}>
+                  Next
+                </Button>
+              </DialogActions>
             </>
           )}
           {activeStep === 1 && (
@@ -68,12 +70,14 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
               </Typography>
               <ViewBillingMethods organization={organization} billingInfo={billingInfo} addCard={addCard} />
               <VSpace units={4} />
-              <Button onClick={handleBack}>
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!billingInfo.billingMethod}>
-                Next
-              </Button>
+              <DialogActions>
+                <Button onClick={handleBack}>
+                  Back
+                </Button>
+                <Button onClick={handleNext} disabled={!billingInfo.billingMethod}>
+                  Next
+                </Button>
+              </DialogActions>
             </>
           )}
           {activeStep === 2 && (
@@ -81,12 +85,14 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
               <VSpace units={4} />
               <ViewTaxInfo organization={organization} editable editTaxInfo={editTaxInfo} />
               <VSpace units={4} />
-              <Button onClick={handleBack}>
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!billingInfo.country}>
-                Next
-              </Button>
+              <DialogActions>
+                <Button onClick={handleBack}>
+                  Back
+                </Button>
+                <Button onClick={handleNext} disabled={!billingInfo.country}>
+                  Next
+                </Button>
+              </DialogActions>
             </>
           )}
           {activeStep === 3 && selectedBillingPlan && billingInfo.billingMethod && (
