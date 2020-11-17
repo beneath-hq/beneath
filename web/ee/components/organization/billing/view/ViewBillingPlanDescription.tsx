@@ -1,9 +1,10 @@
 import React, { FC } from "react";
 
 import { BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import { Grid, makeStyles, Paper, Typography } from "@material-ui/core";
+import { Grid, makeStyles, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
 import { prettyPrintBytes } from "components/metrics/util";
 import VSpace from "components/VSpace";
+import { PROFESSIONAL_BOOST_PLAN, PROFESSIONAL_PLAN } from "ee/lib/billing";
 
 const useStyles = makeStyles((theme) => ({
   paperPadding: {
@@ -17,57 +18,130 @@ interface Props {
 
 const ViewBillingPlanDescription: FC<Props> = ({billingPlan}) => {
   const classes = useStyles();
+  const currencyFormatter = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
-  const rows = [
-    {key: "Plan name", value: billingPlan.description},
-    {key: "Price", value: `$${billingPlan.basePriceCents / 100}`},
-    {key: "Read quota", value: prettyPrintBytes(billingPlan.readQuota)},
-    {key: "Write quota", value: prettyPrintBytes(billingPlan.writeQuota)},
-    {key: "Scan quota", value: prettyPrintBytes(billingPlan.scanQuota)},
-  ];
+  const isProfessional = (billingPlan.description === PROFESSIONAL_PLAN);
+  const isProfessionalBoost = (billingPlan.description === PROFESSIONAL_BOOST_PLAN);
+
+  let description;
+  if (isProfessional) {
+    description = "For professional data workers building meaningful data pipelines.";
+  }
+
+  let allowedReadOverage;
+  let allowedWriteOverage;
+  let allowedScanOverage;
+  let maximumReadOverageCharge;
+  let maximumWriteOverageCharge;
+  let maximumScanOverageCharge;
+  if (isProfessionalBoost) {
+    description = "The Boost allows you to outgrow the Professional plan. You get extra capacity (aka 'overage') on a pay-per-GB basis.";
+    allowedReadOverage = billingPlan.readQuota - billingPlan.baseReadQuota;
+    allowedWriteOverage = billingPlan.writeQuota - billingPlan.baseWriteQuota;
+    allowedScanOverage = billingPlan.scanQuota - billingPlan.baseScanQuota;
+    maximumReadOverageCharge = allowedReadOverage / 10**9 * billingPlan.readOveragePriceCents;
+    maximumWriteOverageCharge = allowedWriteOverage / 10**9 * billingPlan.writeOveragePriceCents;
+    maximumScanOverageCharge = allowedScanOverage / 10**9 * billingPlan.scanOveragePriceCents;
+  }
 
   return (
     <>
-      <Paper className={classes.paperPadding} variant="outlined">
-        {rows.map((row) => (
-          <React.Fragment key={row.key}>
-            <Grid container justify="space-between" alignItems="center">
+      <Grid container>
+        <Grid item>
+          <Paper className={classes.paperPadding} variant="outlined">
+            <Grid container alignItems="center" spacing={2} justify="space-between">
               <Grid item>
-                <Typography>
-                  {row.key}:
-                </Typography>
+                <Typography variant="h2">{billingPlan.description}</Typography>
               </Grid>
               <Grid item>
-                <Typography>
-                  {row.value}
+                <Typography>{(billingPlan.description === PROFESSIONAL_BOOST_PLAN ? "starting at " : "") + 
+                  currencyFormatter.format(billingPlan.basePriceCents / 100)} / month
                 </Typography>
               </Grid>
             </Grid>
-            <VSpace units={1} />
-          </React.Fragment>
-        ))}
-      </Paper>
+            <VSpace units={3} />
+            <Typography>{description}</Typography>
+            <VSpace units={5} />
+            <Typography variant="h3">Quotas</Typography>
+            <VSpace units={2} />
+            {isProfessional && (
+              <>
+              <Grid container>
+                <Grid item>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Operation</TableCell>
+                        <TableCell align="right">Quota</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>Reads</TableCell>
+                        <TableCell align="right">{prettyPrintBytes(billingPlan.baseReadQuota)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Writes</TableCell>
+                        <TableCell align="right">{prettyPrintBytes(billingPlan.baseWriteQuota)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Scans</TableCell>
+                        <TableCell align="right">{prettyPrintBytes(billingPlan.baseScanQuota)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Grid>
+              </Grid>
+              </>
+            )}
+            {isProfessionalBoost && (
+              <>
+                <Grid container>
+                  <Grid item>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Operation</TableCell>
+                          <TableCell align="right">Prepaid Quota</TableCell>
+                          <TableCell align="right">Allowed Overage</TableCell>
+                          <TableCell align="right">Price per overage GB</TableCell>
+                          <TableCell align="right">Maximum overage charge</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Reads</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(billingPlan.baseReadQuota)}</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(allowedReadOverage as number)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(billingPlan.readOveragePriceCents / 100)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(maximumReadOverageCharge as number / 100)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Writes</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(billingPlan.baseWriteQuota)}</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(allowedWriteOverage as number)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(billingPlan.writeOveragePriceCents / 100)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(maximumWriteOverageCharge as number / 100)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Scans</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(billingPlan.baseScanQuota)}</TableCell>
+                          <TableCell align="right">{prettyPrintBytes(allowedScanOverage as number)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(billingPlan.scanOveragePriceCents / 100)}</TableCell>
+                          <TableCell align="right">{currencyFormatter.format(maximumScanOverageCharge as number / 100)}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+
+                  </Grid>
+                </Grid>
+              </>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
     </>
   );
 };
 
 export default ViewBillingPlanDescription;
-
-// export const PROFESSIONAL = "feature1";
-// export const PROFESSIONAL_BOOST = "feature1";
-
-// {[
-//               "5 GB writes included in base. Then $2/GB.",
-//               "25 GB reads included in base. Then $1/GB.",
-//               "Private projects",
-//               "Role-based access controls",
-//             ].map((feature) => {
-//               return (
-//                 <React.Fragment key={feature}>
-//                   <ListItem dense>
-//                     <CheckIcon className={classes.icon} />
-//                     <Typography component="span">{feature}</Typography>
-//                   </ListItem>
-//                 </React.Fragment>
-//               );
-//             })}

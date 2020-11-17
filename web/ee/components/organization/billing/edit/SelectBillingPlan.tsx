@@ -5,22 +5,23 @@ import React, { FC } from "react";
 
 import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
 import { BillingPlans } from "ee/apollo/types/BillingPlans";
-import { Button, Grid, Typography } from "@material-ui/core";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import RadioGroup from "components/forms/RadioGroup";
 import { PROFESSIONAL_PLAN, PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
+import ViewBillingPlanDescription from "../view/ViewBillingPlanDescription";
+import VSpace from "components/VSpace";
 
 const useStyles = makeStyles((theme) => ({
 }));
 
 interface Props {
   selectBillingPlan: (value: BillingInfo_billingInfo_billingPlan | null) => void;
+  selectedBillingPlan: BillingInfo_billingInfo_billingPlan | null;
   billingInfo: BillingInfo_billingInfo;
 }
 
-const SelectBillingPlan: FC<Props> = ({selectBillingPlan, billingInfo}) => {
+const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, billingInfo}) => {
   const [selectedBillingPlanLabel, setSelectedBillingPlanLabel] = React.useState("");
-  // TODO: need to get the BillingPlanID, then I can use that in UpdateBillingInfo() in the ViewBilling/ChangeBillingPlan/Checkout component
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
   });
@@ -31,6 +32,8 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, billingInfo}) => {
 
   const professionalPlan = data.billingPlans.find((billingPlan) => billingPlan.description === PROFESSIONAL_PLAN);
   const professionalBoostPlan = data.billingPlans.find((billingPlan) => billingPlan.description === PROFESSIONAL_BOOST_PLAN);
+  const professionalPlanLabel = "Professional".concat(billingInfo.billingPlan.billingPlanID === professionalPlan?.billingPlanID ? " (current plan)" : "");
+  const professionalBoostPlanLabel = "Professional Boost".concat(billingInfo.billingPlan.billingPlanID === professionalBoostPlan?.billingPlanID ? " (current plan)" : "");
 
   return (
     <>
@@ -39,11 +42,10 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, billingInfo}) => {
       </Typography> */}
       <RadioGroup
         options={[
-          // {value: "Free", label: "Free plan"},
-          {value: PROFESSIONAL_PLAN, label: "Professional plan"},
-          {value: PROFESSIONAL_BOOST_PLAN, label: "Professional Boost plan"},
-          // {value: "Enterprise", label: "Enterprise plan"}
+          { value: PROFESSIONAL_PLAN, label: professionalPlanLabel },
+          { value: PROFESSIONAL_BOOST_PLAN, label: professionalBoostPlanLabel },
         ]}
+        row
         value={selectedBillingPlanLabel}
         onChange={(_, value) => {
           if (value === PROFESSIONAL_PLAN) {
@@ -55,6 +57,12 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, billingInfo}) => {
           }
         }}
       />
+      <VSpace units={2} />
+      {selectedBillingPlan && (
+        <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
+      )}
+      <VSpace units={2} />
+      {/* <ViewBillingPlanDescription billingPlan={professionalBoostPlan as BillingInfo_billingInfo_billingPlan} /> */}
     </>
   );
 };
