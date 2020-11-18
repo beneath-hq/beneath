@@ -11,6 +11,9 @@ import {ANARCHISM_DRIVER, STRIPECARD_DRIVER, STRIPEWIRE_DRIVER} from "ee/lib/bil
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
 
 const useStyles = makeStyles((theme) => ({
+  container: {
+    overflowX: "auto",
+  },
   button: {
     marginTop: theme.spacing(4),
   }
@@ -70,7 +73,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
 
   return (
     <>
-      <Grid container>
+      <Grid container className={classes.container}>
         <Grid item>
           <Table>
             <TableHead>

@@ -18,6 +18,9 @@ import ViewBillingMethods from "./billing-method/ViewBillingMethods";
 import EditBilling from "./EditBilling";
 
 const useStyles = makeStyles((theme) => ({
+  container: {
+    padding: "0px",
+  },
   sectionTitle: {
     marginTop: theme.spacing(8),
   },
@@ -62,100 +65,92 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
   return (
     <React.Fragment>
-      <Container maxWidth="md">
-      {specialCase && (
-        <>
-          <Alert severity="info">
-            Note that you are a member of the {organization.personalUser?.billingOrganization.displayName} organization,
-            and so {organization.personalUser?.billingOrganization.displayName} is billed for your Beneath usage.
-            However, you are individually billed for the activity of any services that you have not transferred to{" "}
-            {organization.personalUser?.billingOrganization.displayName}.
-            <br />
-            <br /> If you have no active services managed by your user, then make sure to cancel any active billing plan
-            on this page. Then you won't incur any unneccessary charges.
-            <br />
-            <br />
-            If you have active services that you would like {
-              organization.personalUser?.billingOrganization.displayName
-            }{" "}
-            to pay for, you need to transfer those services from your personal user to the{" "}
-            {organization.personalUser?.billingOrganization.displayName} organization. See the docs{" "}
-            <Link href="https://about.beneath.dev/docs/core-resources/services">here</Link>.
-            <br />
-            <br /> If you have active services that you would like to pay for yourself, and not assign to your
-            organization, then you must ensure the billing information on this page covers you. If the services' usage
-            exceeds the quotas of the Free tier, then you should upgrade your personal billing plan on this page.
-          </Alert>
-          <VSpace units={2} />
-        </>
-      )}
-      {/* {confirmationMessage && (
-        <Alert severity="info">{confirmationMessage}</Alert>
-      )} */}
+      <Container maxWidth="md" className={classes.container}>
+        {specialCase && (
+          <>
+            <Alert severity="info">
+              Note that you are a member of the {organization.personalUser?.billingOrganization.displayName} organization,
+              and so {organization.personalUser?.billingOrganization.displayName} is billed for your Beneath usage.
+              However, you are individually billed for the activity of any services that you have not transferred to{" "}
+              {organization.personalUser?.billingOrganization.displayName}.
+              <br />
+              <br /> If you have no active services managed by your user, then make sure to cancel any active billing plan
+              on this page. Then you won't incur any unneccessary charges.
+              <br />
+              <br />
+              If you have active services that you would like {
+                organization.personalUser?.billingOrganization.displayName
+              }{" "}
+              to pay for, you need to transfer those services from your personal user to the{" "}
+              {organization.personalUser?.billingOrganization.displayName} organization. See the docs{" "}
+              <Link href="https://about.beneath.dev/docs/core-resources/services">here</Link>.
+              <br />
+              <br /> If you have active services that you would like to pay for yourself, and not assign to your
+              organization, then you must ensure the billing information on this page covers you. If the services' usage
+              exceeds the quotas of the Free tier, then you should upgrade your personal billing plan on this page.
+            </Alert>
+            <VSpace units={2} />
+          </>
+        )}
+        {/* {confirmationMessage && (
+          <Alert severity="info">{confirmationMessage}</Alert>
+        )} */}
 
-      <Alert severity="info">
-        You can find detailed information about our billing plans{" "}
-        <Link href="https://about.beneath.dev/enterprise">here</Link>.
-      </Alert>
-      <Typography variant="h1" className={classes.firstSectionTitle} gutterBottom>
-        Billing plan
-      </Typography>
-      <Typography variant="body1" className={classes.sectionDescription}>
-        Your current billing plan and information about your next payment
-      </Typography>
-      <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
-      <EditBilling
-        organization={organization}
-        billingInfo={data.billingInfo}
-        changePlanDialog={changePlanDialog}
-        setChangePlanDialog={setChangePlanDialog}
-        addCard={setAddCardDialog}
-        editTaxInfo={setEditTaxInfoDialog}
-      />
-      <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
+        <Alert severity="info">
+          You can find detailed information about our billing plans{" "}
+          <Link href="https://about.beneath.dev/enterprise">here</Link>.
+        </Alert>
+        <Typography variant="h1" className={classes.firstSectionTitle} gutterBottom>
+          Billing plan
+        </Typography>
+        <Typography variant="body1" className={classes.sectionDescription}>
+          Your current billing plan and information about your next payment
+        </Typography>
+        <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
+        <EditBilling
+          organization={organization}
+          billingInfo={data.billingInfo}
+          changePlanDialog={changePlanDialog}
+          setChangePlanDialog={setChangePlanDialog}
+          addCard={setAddCardDialog}
+          editTaxInfo={setEditTaxInfoDialog}
+        />
+        <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
 
-      <Grid container>
-        <Grid item>
-          <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-            Billing methods
-          </Typography>
-          <Typography variant="body1" className={classes.sectionDescription}>
-            Payment information on file
-          </Typography>
-          <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
-          <Dialog
-            open={addCardDialog}
-            fullWidth={true}
-            maxWidth={"md"}
-            onBackdropClick={() => {
-              setAddCardDialog(false);
-            }}
-          >
-            <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
-            <DialogContent>
-              <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
-            </DialogContent>
-          </Dialog>
-        </Grid>
-      </Grid>
+        <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
+          Billing methods
+        </Typography>
+        <Typography variant="body1" className={classes.sectionDescription}>
+          Payment information on file
+        </Typography>
+        <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
+        <Dialog
+          open={addCardDialog}
+          fullWidth={true}
+          maxWidth={"md"}
+          onBackdropClick={() => {
+            setAddCardDialog(false);
+          }}
+        >
+          <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
+          <DialogContent>
+            <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
+          </DialogContent>
+        </Dialog>
 
-      <Grid container>
-        <Grid item>
-          <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-            Tax info
-          </Typography>
-          <Typography variant="body1" className={classes.sectionDescription}>
-            Information used to compute tax for customers in certain countries
-          </Typography>
-          <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
-          <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
-            <DialogTitle>Edit tax info</DialogTitle>
-            <DialogContent>
-              <EditTaxInfo organization={organization} billingInfo={data.billingInfo} editTaxInfo={setEditTaxInfoDialog}/>
-            </DialogContent>
-          </Dialog>
-        </Grid>
-      </Grid>
+        <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
+          Tax info
+        </Typography>
+        <Typography variant="body1" className={classes.sectionDescription}>
+          Information used to compute tax for customers in certain countries
+        </Typography>
+        <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
+        <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
+          <DialogTitle>Edit tax info</DialogTitle>
+          <DialogContent>
+            <EditTaxInfo organization={organization} billingInfo={data.billingInfo} editTaxInfo={setEditTaxInfoDialog}/>
+          </DialogContent>
+        </Dialog>
       </Container>
     </React.Fragment>
   );

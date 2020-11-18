@@ -55,39 +55,31 @@ const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, cancelPlan, chang
 
   return (
     <>
-      <Grid container direction="column">
-        <Grid item>
-          <Grid container spacing={2} alignItems="stretch">
-            <Grid item xs={12} md={8}>
-              <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
-                Your current plan
-              </Typography>
-              <ViewCurrentPlan billingInfo={billingInfo} cancelPlan={cancelPlan} changePlan={changePlan} />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
-                Contact us
-              </Typography>
-              <ContactUs />
-            </Grid>
-          </Grid>
+      <Grid container spacing={6} alignItems="stretch">
+        <Grid item xs={12} lg={8}>
+          <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
+            Your current plan
+          </Typography>
+          <ViewCurrentPlan billingInfo={billingInfo} cancelPlan={cancelPlan} changePlan={changePlan} />
         </Grid>
 
-        <Grid item>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Overview of your next bill
+        <Grid item xs={12} lg={4}>
+          <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
+            Contact us
           </Typography>
-          <ViewNextBillOverview organization={organization} billingInfo={billingInfo} />
-        </Grid>
-
-        <Grid item>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Details of your next bill
-          </Typography>
-          <ViewNextBillDetails organization={organization} billingInfo={billingInfo} />
+          <ContactUs billingInfo={billingInfo} />
         </Grid>
       </Grid>
+
+      <Typography variant="h2" className={classes.sectionTitle}>
+        Overview of your next bill
+      </Typography>
+      <ViewNextBillOverview organization={organization} billingInfo={billingInfo} />
+
+      <Typography variant="h2" className={classes.sectionTitle}>
+        Details of your next bill
+      </Typography>
+      <ViewNextBillDetails organization={organization} billingInfo={billingInfo} />
     </>
   );
 };

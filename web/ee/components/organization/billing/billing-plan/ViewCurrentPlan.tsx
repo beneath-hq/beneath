@@ -1,16 +1,22 @@
-import { Button, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
+import { Button, Grid, makeStyles, Paper, Typography, useMediaQuery, useTheme } from "@material-ui/core";
 import VSpace from "components/VSpace";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
+import { PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
 import { FC } from "react";
 import Moment from "react-moment";
 
 const useStyles = makeStyles((theme) => ({
-  paperPadding: {
-    padding: theme.spacing(3)
+  paper: {
+    padding: theme.spacing(3),
   },
   textData: {
     fontWeight: "bold"
   },
+  buttons: {
+    [theme.breakpoints.up("md")]: {
+      marginTop: theme.spacing(1),
+    },
+  }
 }));
 
 interface Props {
@@ -21,10 +27,12 @@ interface Props {
 
 const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down("xs"));
 
   return (
     <>
-      <Paper className={classes.paperPadding} variant="outlined">
+      <Paper className={classes.paper} variant="outlined">
         <Grid container spacing={1}  alignItems="center">
           <Grid item>
             <Typography>
@@ -51,16 +59,23 @@ const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
           </Grid>
         </Grid>
         <VSpace units={3} />
-        <Grid container spacing={2}>
+        <Grid container spacing={2} className={classes.buttons} alignItems="center">
           {!billingInfo.billingPlan.default && (
             <Grid item>
-              <Button onClick={() => cancelPlan(true)}>Cancel plan</Button>
+              <Button size={isXs ? 'small' : 'medium'} onClick={() => cancelPlan(true)}>Cancel plan</Button>
             </Grid>
           )}
           <Grid item>
-            <Button variant="contained" color="primary" onClick={() => changePlan(true)}>
-              Upgrade plan
-            </Button>
+            {billingInfo.billingPlan.description !== PROFESSIONAL_BOOST_PLAN && (
+              <Button size={isXs ? 'small' : 'medium'} variant="contained" color="primary" onClick={() => changePlan(true)}>
+                Upgrade plan
+              </Button>
+            )}
+            {billingInfo.billingPlan.description === PROFESSIONAL_BOOST_PLAN && (
+              <Button size={isXs ? 'small' : 'medium'} variant="contained" onClick={() => changePlan(true)}>
+                Change plan
+              </Button>
+            )}
           </Grid>
         </Grid>
       </Paper>
