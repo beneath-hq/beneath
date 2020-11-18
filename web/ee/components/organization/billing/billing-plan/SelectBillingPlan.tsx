@@ -8,7 +8,7 @@ import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import RadioGroup from "components/forms/RadioGroup";
 import { PROFESSIONAL_PLAN, PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
-import ViewBillingPlanDescription from "../view/ViewBillingPlanDescription";
+import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
 import VSpace from "components/VSpace";
 
 const useStyles = makeStyles((theme) => ({

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Dialog, DialogContent, DialogTitle, Grid, Link, Typography } from "@material-ui/core";
+import { Container, Dialog, DialogContent, DialogTitle, Grid, Link, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { makeStyles } from "@material-ui/core/styles";
 import dynamic from "next/dynamic";
@@ -10,21 +10,22 @@ import { useQuery } from "@apollo/client";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
-import ViewBillingPlan from "./view/ViewBillingPlan";
-import ChangeBillingPlan from "./EditBilling";
-import CancelBillingPlan from "./edit/CancelBillingPlan";
-import ViewBillingMethods from "./view/ViewBillingMethods";
-import ViewTaxInfo from "./view/ViewTaxInfo";
-import EditTaxInfo from "./edit/EditTaxInfo";
-import clsx from "clsx";
+import CancelBillingPlan from "./billing-plan/CancelBillingPlan";
+import ViewTaxInfo from "./tax-info/ViewTaxInfo";
+import EditTaxInfo from "./tax-info/EditTaxInfo";
+import ViewBillingPlan from "./billing-plan/ViewBillingPlan";
+import ViewBillingMethods from "./billing-method/ViewBillingMethods";
+import EditBilling from "./EditBilling";
 
 const useStyles = makeStyles((theme) => ({
   sectionTitle: {
-    marginTop: theme.spacing(6),
-    marginBottom: theme.spacing(3)
+    marginTop: theme.spacing(8),
   },
   firstSectionTitle: {
     marginTop: theme.spacing(4),
+  },
+  sectionDescription: {
+    marginBottom: theme.spacing(4),
   }
 }));
 
@@ -38,7 +39,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
   const [cancelPlanDialog, setCancelPlanDialog] = React.useState(false);
   const [addCardDialog, setAddCardDialog] = React.useState(false);
   const [editTaxInfoDialog, setEditTaxInfoDialog] = React.useState(false);
-  const DynamicCardForm = dynamic(() => import("./edit/CardForm"));
+  const DynamicCardForm = dynamic(() => import("./billing-method/CardForm"));
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     context: { ee: true },
@@ -61,6 +62,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
   return (
     <React.Fragment>
+      <Container maxWidth="md">
       {specialCase && (
         <>
           <Alert severity="info">
@@ -95,11 +97,14 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         You can find detailed information about our billing plans{" "}
         <Link href="https://about.beneath.dev/enterprise">here</Link>.
       </Alert>
-      <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
+      <Typography variant="h1" className={classes.firstSectionTitle} gutterBottom>
         Billing plan
       </Typography>
+      <Typography variant="body1" className={classes.sectionDescription}>
+        Your current billing plan and information about your next payment
+      </Typography>
       <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
-      <ChangeBillingPlan
+      <EditBilling
         organization={organization}
         billingInfo={data.billingInfo}
         changePlanDialog={changePlanDialog}
@@ -110,13 +115,13 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
       <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
 
       <Grid container>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h2" className={classes.sectionTitle}>
+        <Grid item>
+          <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
             Billing methods
           </Typography>
-          {/* <Typography variant="body1" gutterBottom>
-            You are signed up to pay with the active billing method at the end of each billing cycle. Cards will be charged on the day of, and wire payments will be expected within 15 days.
-          </Typography> */}
+          <Typography variant="body1" className={classes.sectionDescription}>
+            Payment information on file
+          </Typography>
           <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
           <Dialog
             open={addCardDialog}
@@ -135,13 +140,13 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
       </Grid>
 
       <Grid container>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h2" className={classes.sectionTitle}>
+        <Grid item>
+          <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
             Tax info
           </Typography>
-          {/* <Typography gutterBottom>
-            For paid plans, this information is necessary to compute tax for customers in certain countries.
-          </Typography> */}
+          <Typography variant="body1" className={classes.sectionDescription}>
+            Information used to compute tax for customers in certain countries
+          </Typography>
           <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
           <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
             <DialogTitle>Edit tax info</DialogTitle>
@@ -151,6 +156,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           </Dialog>
         </Grid>
       </Grid>
+      </Container>
     </React.Fragment>
   );
 };

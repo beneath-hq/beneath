@@ -8,9 +8,8 @@ import {
 } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
-import ViewTaxInfo from "../view/ViewTaxInfo";
-import ViewBillingPlanDescription from "../view/ViewBillingPlanDescription";
-import ViewBillingMethod from "../view/ViewBillingMethod";
+import ViewTaxInfo from "./tax-info/ViewTaxInfo";
+import ViewBillingMethod from "./billing-method/ViewBillingMethod";
 import { BillingInfo_billingInfo_billingMethod, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import VSpace from "components/VSpace";
 import FormikCheckbox from "components/formik/Checkbox";
@@ -22,6 +21,7 @@ import { useMutation } from "@apollo/client";
 import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
 import clsx from "clsx";
+import ViewBillingPlanDescription from "./billing-plan/ViewBillingPlanDescription";
 
 const useStyles = makeStyles((theme: Theme) => ({
   sectionTitle: {

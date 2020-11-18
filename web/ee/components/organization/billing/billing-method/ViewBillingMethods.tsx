@@ -12,7 +12,7 @@ import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
 
 const useStyles = makeStyles((theme) => ({
   button: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(4),
   }
 }));
 

@@ -3,11 +3,11 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Step, StepLa
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
-import SelectBillingPlan from "./edit/SelectBillingPlan";
+import SelectBillingPlan from "./billing-plan/SelectBillingPlan";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import Checkout from "./edit/Checkout";
-import ViewBillingMethods from "./view/ViewBillingMethods";
-import ViewTaxInfo from "./view/ViewTaxInfo";
+import Checkout from "./Checkout";
+import ViewTaxInfo from "./tax-info/ViewTaxInfo";
+import ViewBillingMethods from "./billing-method/ViewBillingMethods";
 
 interface EditBillingProps {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
