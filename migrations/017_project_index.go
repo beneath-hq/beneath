@@ -36,12 +36,12 @@ func init() {
 		}
 
 		// add (name) index
-		_, err = db.Exec(`
-			CREATE UNIQUE INDEX projects_name_key ON public.projects USING btree ((lower(name)));
-		`)
-		if err != nil {
-			return err
-		}
+		// _, err = db.Exec(`
+		// 	CREATE UNIQUE INDEX projects_name_key ON public.projects USING btree ((lower(name)));
+		// `)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Done
 		return nil
