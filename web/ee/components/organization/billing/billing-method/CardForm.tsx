@@ -1,4 +1,5 @@
-import { Grid, Typography} from "@material-ui/core";
+import { useApolloClient } from "@apollo/client";
+import { Grid, makeStyles, Typography} from "@material-ui/core";
 import _ from "lodash";
 import React, { FC } from "react";
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -13,6 +14,22 @@ import { COUNTRY_CODES, STRIPE_KEY } from "ee/lib/billing";
 import { API_URL } from "lib/connection";
 import { useToken } from "hooks/useToken";
 import useMe from "hooks/useMe";
+import Loading from "components/Loading";
+import VSpace from "components/VSpace";
+
+const useStyles = makeStyles((theme) => ({
+  sectionTitle: {
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing(3)
+  },
+  cardInput: {
+    marginBottom: theme.spacing(3)
+  },
+  loadingText: {
+    marginTop: theme.spacing(3),
+    fontWeight: "bold"
+  }
+}));
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
@@ -25,13 +42,33 @@ interface Country {
 }
 
 const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
+  const classes = useStyles();
   const token = useToken();
   const me = useMe();
   const stripe = useStripe();
   const elements = useElements();
+  const client = useApolloClient();
+  const [loading, setLoading] = React.useState(false);
+
+  if (loading) {
+    return (
+      <>
+        <VSpace units={10}/>
+        <Grid container direction="column" alignItems="center">
+          <Grid item>
+            <Loading justify="center" size={30}/>
+          </Grid>
+          <Grid item>
+            <Typography className={classes.loadingText}>Processing</Typography>
+          </Grid>
+        </Grid>
+        <VSpace units={15}/>
+      </>
+    );
+  }
 
   const initialValues = {
-    cardholder: "",
+    name: "",
     line1: "",
     line2: "",
     city: "",
@@ -79,7 +116,7 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
                   state: values.state,
                 },
                 email: me?.personalUser?.email, // Stripe receipts will be sent to the user's Beneath email address
-                name: values.cardholder,
+                name: values.name,
               }
             }
           });
@@ -87,16 +124,27 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
         if (response.error) {
           actions.setStatus(response.error.message);
         }
+
         if (response.setupIntent) {
-          actions.setStatus(response.setupIntent.status);
+          // sleep so that the Beneath backend can create the billing method and update billing info
+          // (another option is to poll until we get back a list of billing methods that is bigger than the original)
+          setLoading(true);
+          await new Promise(r => setTimeout(r, 3500));
+          setLoading(false);
+
+          // updates the billing method list
+          client.cache.evict({id: "ROOT_QUERY", fieldName: "billingMethods"});
+
+          // updates the "active" flag
+          client.cache.evict({id: "ROOT_QUERY", fieldName: "billingInfo"});
+
+          // close the dialog
+          openDialogFn(false);
+
+          // TODO: add an alert at the top of the page "billing method successfully added"
         }
 
-        // TODO:
-        // 1. when success, close the dialog and add an alert to the ViewBilling component "successful addition of card"
-        // trigger a refresh of the billingMethods() query
-
         // NOTES:
-        // - use actions.setFieldError() or actions.setStatus() (a global error or success)
         // - run onCompleted() (which should close the dialog and show a success message)
 
         return;
@@ -104,21 +152,18 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
     >
       {({ isSubmitting, status }) => (
         <Form title="Add a credit card">
-          {/* <Typography component="h2" variant="h1" gutterBottom>
-            Add a credit card
-          </Typography> */}
-          {/* <Typography component="h2" variant="h1" gutterBottom>
-            Billing information
-          </Typography> */}
+          <Typography variant="h2">
+            Billing address
+          </Typography>
           <Grid container justify="space-between" spacing={2}>
             <Grid item xs={12} md={6}>
               <Field
-                name="cardholder"
+                name="name"
                 validate={(val: string) => {
                   if (!val) return "Required field";
                 }}
                 component={FormikTextField}
-                label="Name on card"
+                label="Name"
                 required
               />
             </Grid>
@@ -192,16 +237,17 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
               />
             </Grid>
           </Grid>
-          <Typography component="h2" variant="h1" gutterBottom>
+          <Typography variant="h2" className={classes.sectionTitle}>
             Card details
           </Typography>
           <CardElement
+            className={classes.cardInput}
             options={{
               style: {
                 base: { fontSize: "18px", color: "#FFFFFF" }
               }
             }} />
-          <SubmitControl label="Submit" errorAlert={status} disabled={isSubmitting} cancelFn={() => openDialogFn(false)} cancelLabel="Back" />
+          <SubmitControl label="Submit" errorAlert={status} disabled={isSubmitting} cancelFn={() => openDialogFn(false)} cancelLabel="Back"/>
         </Form>
       )}
     </Formik>
