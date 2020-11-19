@@ -89,17 +89,15 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
               organization, then you must ensure the billing information on this page covers you. If the services' usage
               exceeds the quotas of the Free tier, then you should upgrade your personal billing plan on this page.
             </Alert>
-            <VSpace units={2} />
+            <VSpace units={1} />
           </>
         )}
-        {/* {confirmationMessage && (
-          <Alert severity="info">{confirmationMessage}</Alert>
-        )} */}
 
         <Alert severity="info">
           You can find detailed information about our billing plans{" "}
           <Link href="https://about.beneath.dev/enterprise">here</Link>.
         </Alert>
+
         <Typography variant="h1" className={classes.firstSectionTitle} gutterBottom>
           Billing plan
         </Typography>
@@ -128,9 +126,6 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           open={addCardDialog}
           fullWidth={true}
           maxWidth={"md"}
-          onBackdropClick={() => {
-            setAddCardDialog(false);
-          }}
         >
           <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
           <DialogContent>

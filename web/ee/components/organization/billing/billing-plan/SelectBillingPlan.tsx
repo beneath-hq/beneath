@@ -1,18 +1,14 @@
 import { useQuery } from "@apollo/client";
 import _ from "lodash";
-import { makeStyles } from "@material-ui/core/styles";
 import React, { FC } from "react";
 
 import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
 import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import RadioGroup from "components/forms/RadioGroup";
+import VSpace from "components/VSpace";
 import { PROFESSIONAL_PLAN, PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
 import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
-import VSpace from "components/VSpace";
-
-const useStyles = makeStyles((theme) => ({
-}));
 
 interface Props {
   selectBillingPlan: (value: BillingInfo_billingInfo_billingPlan | null) => void;
@@ -21,7 +17,7 @@ interface Props {
 }
 
 const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, billingInfo}) => {
-  const [selectedBillingPlanLabel, setSelectedBillingPlanLabel] = React.useState("");
+  const [selectedBillingPlanLabel, setSelectedBillingPlanLabel] = React.useState(selectedBillingPlan?.description || "");
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
   });
@@ -37,9 +33,6 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
 
   return (
     <>
-      {/* <Typography>
-        Current plan: {billingInfo.billingPlan.description}
-      </Typography> */}
       <RadioGroup
         options={[
           { value: PROFESSIONAL_PLAN, label: professionalPlanLabel },
@@ -48,21 +41,20 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
         row
         value={selectedBillingPlanLabel}
         onChange={(_, value) => {
+          setSelectedBillingPlanLabel(value);
           if (value === PROFESSIONAL_PLAN) {
-            setSelectedBillingPlanLabel(PROFESSIONAL_PLAN);
             selectBillingPlan(professionalPlan as BillingInfo_billingInfo_billingPlan);
           } else if (value === PROFESSIONAL_BOOST_PLAN) {
-            setSelectedBillingPlanLabel(PROFESSIONAL_BOOST_PLAN);
             selectBillingPlan(professionalBoostPlan as BillingInfo_billingInfo_billingPlan);
           }
         }}
       />
-      <VSpace units={2} />
       {selectedBillingPlan && (
-        <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
+        <>
+          <VSpace units={2} />
+          <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
+        </>
       )}
-      <VSpace units={2} />
-      {/* <ViewBillingPlanDescription billingPlan={professionalBoostPlan as BillingInfo_billingInfo_billingPlan} /> */}
     </>
   );
 };

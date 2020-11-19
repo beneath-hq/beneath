@@ -1,13 +1,20 @@
 import React, {FC} from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Step, StepLabel, Stepper, Typography } from "@material-ui/core";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, makeStyles, Step, StepLabel, Stepper } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
-import SelectBillingPlan from "./billing-plan/SelectBillingPlan";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
+import SelectBillingPlan from "./billing-plan/SelectBillingPlan";
+import ViewBillingMethods from "./billing-method/ViewBillingMethods";
 import Checkout from "./Checkout";
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
-import ViewBillingMethods from "./billing-method/ViewBillingMethods";
+
+const useStyles = makeStyles((theme) => ({
+  stepper: {
+    backgroundColor: theme.palette.background.default,
+    overflowX: "auto",
+  }
+}));
 
 interface EditBillingProps {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
@@ -19,6 +26,7 @@ interface EditBillingProps {
 }
 
 const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePlanDialog, setChangePlanDialog, addCard, editTaxInfo }) => {
+  const classes = useStyles();
   const [activeStep, setActiveStep] = React.useState(0);
   const [selectedBillingPlan, setSelectedBillingPlan] = React.useState<BillingInfo_billingInfo_billingPlan | null>(null);
 
@@ -44,12 +52,11 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
         open={changePlanDialog}
         fullWidth={true}
         maxWidth={"md"}
-        onBackdropClick={() => closeAndReset()}
       >
         <DialogTitle>
           Change your billing plan
           <VSpace units={3} />
-          <Stepper activeStep={activeStep}>
+          <Stepper activeStep={activeStep} className={classes.stepper}>
             {steps.map((step) => (
               <Step key={step}>
                 <StepLabel>
@@ -111,11 +118,3 @@ const EditBilling: FC<EditBillingProps> = ({organization, billingInfo, changePla
 };
 
 export default EditBilling;
-
-{/* <DialogContent>
-  <CancelPlan
-    organization={organization}
-    closeDialogue={(confirmationMessage) => handleCloseDialogue(confirmationMessage)}
-    billingInfo={billingInfo}
-  />
-</DialogContent> */}

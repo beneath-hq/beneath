@@ -67,7 +67,7 @@ const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
           )}
           <Grid item>
             {billingInfo.billingPlan.description !== PROFESSIONAL_BOOST_PLAN && (
-              <Button size={isXs ? 'small' : 'medium'} variant="contained" color="primary" onClick={() => changePlan(true)}>
+              <Button size={(isXs && !billingInfo.billingPlan.default) ? 'small' : 'medium'} variant="contained" color="primary" onClick={() => changePlan(true)}>
                 Upgrade plan
               </Button>
             )}

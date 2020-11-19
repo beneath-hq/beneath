@@ -9,6 +9,9 @@ import { PROFESSIONAL_BOOST_PLAN, PROFESSIONAL_PLAN } from "ee/lib/billing";
 const useStyles = makeStyles((theme) => ({
   paperPadding: {
     padding: theme.spacing(3)
+  },
+  container: {
+    overflowX: "auto"
   }
 }));
 
@@ -46,7 +49,7 @@ const ViewBillingPlanDescription: FC<Props> = ({billingPlan}) => {
 
   return (
     <>
-      <Grid container>
+      <Grid container className={classes.container}>
         <Grid item>
           <Paper className={classes.paperPadding} variant="outlined">
             <Grid container alignItems="center" spacing={2} justify="space-between">
@@ -54,8 +57,8 @@ const ViewBillingPlanDescription: FC<Props> = ({billingPlan}) => {
                 <Typography variant="h2">{billingPlan.description}</Typography>
               </Grid>
               <Grid item>
-                <Typography>{(billingPlan.description === PROFESSIONAL_BOOST_PLAN ? "starting at " : "") + 
-                  currencyFormatter.format(billingPlan.basePriceCents / 100)} / month
+                <Typography>
+                  {(billingPlan.description === PROFESSIONAL_BOOST_PLAN ? "starting at " : "") + currencyFormatter.format(billingPlan.basePriceCents / 100)} / month
                 </Typography>
               </Grid>
             </Grid>

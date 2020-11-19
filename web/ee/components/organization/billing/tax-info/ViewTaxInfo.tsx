@@ -7,6 +7,7 @@ import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
+import ContentContainer, { CallToAction } from "components/ContentContainer";
 
 const useStyles = makeStyles((theme) => ({
   paperPadding: {
@@ -41,12 +42,30 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
     return <></>;
   }
 
-  const rows = [
-    {key: "Country", value: data.billingInfo.country},
-    {key: "State", value: data.billingInfo.region},
-    {key: "Company", value: data.billingInfo.companyName},
-    {key: "Tax ID", value: data.billingInfo.taxNumber },
-  ];
+  // construct the table
+  let rows = [{key: "Country", value: data.billingInfo.country}];
+  if (data.billingInfo.country === "United States of America") {
+    rows = rows.concat({key: "State", value: data.billingInfo.region as string});
+  }
+  if (data.billingInfo.taxNumber) {
+    rows = rows.concat(
+      {key: "Entity", value: "Company"},
+      {key: "Company", value: data.billingInfo.companyName as string},
+      {key: "Tax ID", value: data.billingInfo.taxNumber as string},
+    );
+  } else {
+    rows = rows.concat({key: "Entity", value: "Individual"});
+  }
+
+  if (editable && editTaxInfo && !data.billingInfo.country && !data.billingInfo.companyName && !data.billingInfo.taxNumber) {
+    const cta: CallToAction = {
+      message: `You have not provided any tax information`,
+      buttons: [{ label: "Add tax info", onClick: () => editTaxInfo(true) }]
+    };
+    return (
+      <ContentContainer callToAction={cta} />
+    );
+  }
 
   return (
     <>
@@ -73,14 +92,9 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
           {editable && editTaxInfo && (
             <>
               <VSpace units={3} />
-              <Grid container justify="space-between">
-                {/* <Grid item></Grid> */}
-                <Grid item>
-                  <Button onClick={() => editTaxInfo(true)} variant="contained">
-                    Edit
-                  </Button>
-                </Grid>
-              </Grid>
+              <Button onClick={() => editTaxInfo(true)} variant="contained">
+                Edit
+              </Button>
             </>
           )}
         </Paper>
