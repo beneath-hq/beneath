@@ -70,7 +70,7 @@ const Welcome: FC = () => {
 
         <Grid item xs={12}>
           <Typography variant="h3" className={classes.sectionTitle}>
-            Featured projects and tutorials
+            Featured projects
           </Typography>
         </Grid>
         <ExploreProjectsTiles />
