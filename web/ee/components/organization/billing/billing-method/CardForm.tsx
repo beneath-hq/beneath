@@ -205,7 +205,8 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
                 name="state"
                 validate={(val: string) => {
                   if (!val) return "Required field";
-                }}                component={FormikTextField}
+                }}
+                component={FormikTextField}
                 label="State/Province/Region"
                 required
               />
@@ -226,6 +227,9 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
             <Grid item xs={12} md={6}>
               <Field
                 name="country"
+                validate={(val: Country) => {
+                  if (!val) return "Required field";
+                }}
                 component={FormikSelectField}
                 label="Country"
                 required

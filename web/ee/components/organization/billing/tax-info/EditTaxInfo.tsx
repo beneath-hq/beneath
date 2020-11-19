@@ -101,6 +101,11 @@ const EditTaxInfo: FC<Props> = ({organization, billingInfo, editTaxInfo}) => {
                   label="State"
                   required
                   options={US_STATES}
+                  validate={(region: string) => {
+                    if (!region || region === "") {
+                      return "Select a state";
+                    }
+                  }}
                   getOptionLabel={(option: string) => (option)}
                   getOptionSelected={(option: string, value: string) => {
                     return option === value;
