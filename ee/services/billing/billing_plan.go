@@ -27,7 +27,7 @@ func (s *Service) FindBillingPlansAvailableInUI(ctx context.Context) []*models.B
 	var billingPlans []*models.BillingPlan
 	err := s.DB.GetDB(ctx).ModelContext(ctx, &billingPlans).
 		Column("billing_plan.*").
-		Where("available_in_ui = true").
+		Where("ui_rank >= 0"). // WHERE ui_rank IS NOT NULL
 		Select()
 	if err != nil {
 		panic(err)
@@ -61,9 +61,11 @@ func (s *Service) FindDefaultBillingPlan(ctx context.Context) *models.BillingPla
 }
 
 func makeDefaultBillingPlan() *models.BillingPlan {
+	UIRank := 1
 	return &models.BillingPlan{
 		Default:        true,
-		Description:    "Free plan",
+		Name:           "Free",
+		Description:    "Nice little sales pitch about what the Free plan gets you",
 		Currency:       models.DollarCurrency,
 		Period:         timeutil.PeriodMonth,
 		BaseReadQuota:  2000000000,
@@ -73,6 +75,6 @@ func makeDefaultBillingPlan() *models.BillingPlan {
 		WriteQuota:     1000000000,
 		ScanQuota:      100000000000,
 		MultipleUsers:  false,
-		AvailableInUI:  true,
+		UIRank:         &UIRank,
 	}
 }

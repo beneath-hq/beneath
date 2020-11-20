@@ -11,6 +11,7 @@ export interface BillingPlans_billingPlans {
   __typename: "BillingPlan";
   billingPlanID: string;
   default: boolean;
+  name: string;
   description: string | null;
   currency: string;
   period: string;
@@ -28,7 +29,7 @@ export interface BillingPlans_billingPlans {
   readOveragePriceCents: number;
   writeOveragePriceCents: number;
   scanOveragePriceCents: number;
-  availableInUI: boolean;
+  UIRank: number | null;
 }
 
 export interface BillingPlans {

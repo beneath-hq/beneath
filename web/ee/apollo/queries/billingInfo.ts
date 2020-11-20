@@ -7,6 +7,7 @@ export const QUERY_BILLING_INFO = gql`
       billingPlan {
         billingPlanID
         default
+        name
         description
         currency
         period
@@ -24,7 +25,7 @@ export const QUERY_BILLING_INFO = gql`
         readOveragePriceCents
         writeOveragePriceCents
         scanOveragePriceCents
-        availableInUI
+        UIRank
       }
       billingMethod {
         billingMethodID
@@ -73,6 +74,7 @@ export const UPDATE_BILLING_PLAN = gql`
       billingPlan {
         billingPlanID
         default
+        name
         description
         currency
         period
@@ -90,7 +92,7 @@ export const UPDATE_BILLING_PLAN = gql`
         readOveragePriceCents
         writeOveragePriceCents
         scanOveragePriceCents
-        availableInUI
+        UIRank
       }
     }
   }

@@ -39,6 +39,7 @@ type BillingPlan struct {
 	_msgpack               struct{}        `msgpack:",omitempty"`
 	BillingPlanID          uuid.UUID       `sql:",pk,type:uuid,default:uuid_generate_v4()"`
 	Default                bool            `sql:",notnull,default:false"`
+	Name                   string          `sql:",notnull",validate:"required,gte=3,lte=50"`
 	Description            string          `validate:"omitempty,lte=255"`
 	CreatedOn              time.Time       `sql:",notnull,default:now()"`
 	UpdatedOn              time.Time       `sql:",notnull,default:now()"`
@@ -59,7 +60,7 @@ type BillingPlan struct {
 	WriteOveragePriceCents int64           `sql:",notnull"` // price per GB overage
 	ScanOveragePriceCents  int64           `sql:",notnull"` // price per GB overage
 	MultipleUsers          bool            `sql:",notnull"`
-	AvailableInUI          bool            `sql:",notnull,default:false"`
+	UIRank                 *int
 }
 
 // IsFree returns true if the billing plan can never need payment

@@ -5,6 +5,7 @@ export const QUERY_BILLING_PLANS = gql`
     billingPlans {
       billingPlanID
       default
+      name
       description
       currency
       period
@@ -22,7 +23,7 @@ export const QUERY_BILLING_PLANS = gql`
       readOveragePriceCents
       writeOveragePriceCents
       scanOveragePriceCents
-      availableInUI
+      UIRank
     }
   }
 `;

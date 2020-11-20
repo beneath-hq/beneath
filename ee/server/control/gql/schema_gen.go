@@ -89,7 +89,6 @@ type ComplexityRoot struct {
 	}
 
 	BillingPlan struct {
-		AvailableInUI          func(childComplexity int) int
 		BasePriceCents         func(childComplexity int) int
 		BaseReadQuota          func(childComplexity int) int
 		BaseScanQuota          func(childComplexity int) int
@@ -98,6 +97,7 @@ type ComplexityRoot struct {
 		Currency               func(childComplexity int) int
 		Default                func(childComplexity int) int
 		Description            func(childComplexity int) int
+		Name                   func(childComplexity int) int
 		Period                 func(childComplexity int) int
 		ReadOveragePriceCents  func(childComplexity int) int
 		ReadQuota              func(childComplexity int) int
@@ -107,6 +107,7 @@ type ComplexityRoot struct {
 		SeatReadQuota          func(childComplexity int) int
 		SeatScanQuota          func(childComplexity int) int
 		SeatWriteQuota         func(childComplexity int) int
+		UIRank                 func(childComplexity int) int
 		WriteOveragePriceCents func(childComplexity int) int
 		WriteQuota             func(childComplexity int) int
 	}
@@ -389,13 +390,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BillingMethod.UpdatedOn(childComplexity), true
 
-	case "BillingPlan.availableInUI":
-		if e.complexity.BillingPlan.AvailableInUI == nil {
-			break
-		}
-
-		return e.complexity.BillingPlan.AvailableInUI(childComplexity), true
-
 	case "BillingPlan.basePriceCents":
 		if e.complexity.BillingPlan.BasePriceCents == nil {
 			break
@@ -451,6 +445,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.Description(childComplexity), true
+
+	case "BillingPlan.name":
+		if e.complexity.BillingPlan.Name == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.Name(childComplexity), true
 
 	case "BillingPlan.period":
 		if e.complexity.BillingPlan.Period == nil {
@@ -514,6 +515,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BillingPlan.SeatWriteQuota(childComplexity), true
+
+	case "BillingPlan.UIRank":
+		if e.complexity.BillingPlan.UIRank == nil {
+			break
+		}
+
+		return e.complexity.BillingPlan.UIRank(childComplexity), true
 
 	case "BillingPlan.writeOveragePriceCents":
 		if e.complexity.BillingPlan.WriteOveragePriceCents == nil {
@@ -761,6 +769,7 @@ type BillingMethod {
 type BillingPlan {
   billingPlanID: ID!
 	default: Boolean!
+	name: String!
 	description: String
 	currency: String!
 	period: String!
@@ -778,7 +787,7 @@ type BillingPlan {
 	readOveragePriceCents: Int! 
 	writeOveragePriceCents: Int!
 	scanOveragePriceCents: Int!
-	availableInUI: Boolean!
+	UIRank: Int
 }
 `, BuiltIn: false},
 }
@@ -2111,6 +2120,41 @@ func (ec *executionContext) _BillingPlan_default(ctx context.Context, field grap
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _BillingPlan_name(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BillingPlan",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _BillingPlan_description(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2703,7 +2747,7 @@ func (ec *executionContext) _BillingPlan_scanOveragePriceCents(ctx context.Conte
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _BillingPlan_availableInUI(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
+func (ec *executionContext) _BillingPlan_UIRank(ctx context.Context, field graphql.CollectedField, obj *models.BillingPlan) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2721,21 +2765,18 @@ func (ec *executionContext) _BillingPlan_availableInUI(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AvailableInUI, nil
+		return obj.UIRank, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4552,6 +4593,11 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "name":
+			out.Values[i] = ec._BillingPlan_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "description":
 			out.Values[i] = ec._BillingPlan_description(ctx, field, obj)
 		case "currency":
@@ -4652,11 +4698,8 @@ func (ec *executionContext) _BillingPlan(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "availableInUI":
-			out.Values[i] = ec._BillingPlan_availableInUI(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+		case "UIRank":
+			out.Values[i] = ec._BillingPlan_UIRank(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5571,6 +5614,21 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

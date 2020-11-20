@@ -100,7 +100,7 @@ func (r *mutationResolver) UpdateBillingPlan(ctx context.Context, organizationID
 		return nil, gqlerror.Errorf("Billing plan %s not found", billingPlanID)
 	}
 
-	if !billingPlan.AvailableInUI {
+	if billingPlan.UIRank == nil {
 		if !secret.IsMaster() {
 			return nil, gqlerror.Errorf("The selected plan is not available for self-service, contact us to upgrade")
 		}

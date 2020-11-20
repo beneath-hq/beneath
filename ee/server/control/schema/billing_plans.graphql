@@ -5,6 +5,7 @@ extend type Query {
 type BillingPlan {
   billingPlanID: ID!
 	default: Boolean!
+	name: String!
 	description: String
 	currency: String!
 	period: String!
@@ -22,5 +23,5 @@ type BillingPlan {
 	readOveragePriceCents: Int! 
 	writeOveragePriceCents: Int!
 	scanOveragePriceCents: Int!
-	availableInUI: Boolean!
+	UIRank: Int
 }
