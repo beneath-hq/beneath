@@ -49,12 +49,12 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
   }
   if (data.billingInfo.taxNumber) {
     rows = rows.concat(
-      {key: "Entity", value: "Company"},
+      {key: "Tax entity", value: "Company"},
       {key: "Company", value: data.billingInfo.companyName as string},
       {key: "Tax ID", value: data.billingInfo.taxNumber as string},
     );
   } else {
-    rows = rows.concat({key: "Entity", value: "Individual"});
+    rows = rows.concat({key: "Tax entity", value: "Individual"});
   }
 
   if (editable && editTaxInfo && !data.billingInfo.country && !data.billingInfo.companyName && !data.billingInfo.taxNumber) {
@@ -69,37 +69,33 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
 
   return (
     <>
-    <Grid container>
-      <Grid item>
-        <Paper className={classes.paperPadding} variant="outlined">
-          {rows.map((row) => (
-            <React.Fragment key={row.key}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  <Typography>
-                    {row.key}:
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Typography className={classes.textData}>
-                    {row.value}
-                  </Typography>
-                </Grid>
+      <Paper className={classes.paperPadding} variant="outlined">
+        {rows.map((row) => (
+          <React.Fragment key={row.key}>
+            <Grid container alignItems="center" spacing={1}>
+              <Grid item>
+                <Typography>
+                  {row.key}:
+                </Typography>
               </Grid>
-              <VSpace units={1} />
-            </React.Fragment>
-          ))}
-          {editable && editTaxInfo && (
-            <>
-              <VSpace units={3} />
-              <Button onClick={() => editTaxInfo(true)} variant="contained">
-                Edit
-              </Button>
-            </>
-          )}
-        </Paper>
-      </Grid>
-    </Grid>
+              <Grid item>
+                <Typography className={classes.textData}>
+                  {row.value}
+                </Typography>
+              </Grid>
+            </Grid>
+            <VSpace units={1} />
+          </React.Fragment>
+        ))}
+        {editable && editTaxInfo && (
+          <>
+            <VSpace units={3} />
+            <Button onClick={() => editTaxInfo(true)} variant="contained">
+              Edit
+            </Button>
+          </>
+        )}
+      </Paper>
     </>
   );
 };

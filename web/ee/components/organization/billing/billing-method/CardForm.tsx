@@ -203,12 +203,8 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
             <Grid item xs={12} md={6}>
               <Field
                 name="state"
-                validate={(val: string) => {
-                  if (!val) return "Required field";
-                }}
                 component={FormikTextField}
                 label="State/Province/Region"
-                required
               />
             </Grid>
           </Grid>

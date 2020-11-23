@@ -40,33 +40,29 @@ const ViewBillingMethod: FC<Props> = ({paymentsDriver, driverPayload}) => {
 
   return (
     <>
-    <Grid container>
-      <Grid item>
-        <Paper className={classes.paperPadding} variant="outlined">
-          {paymentsDriver === STRIPECARD_DRIVER && rows && (
-            <>
-              {rows.map((row) => (
-                <React.Fragment key={row.key}>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item>
-                      <Typography>
-                        {row.key}:
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography className={classes.textData}>
-                        {row.value}
-                      </Typography>
-                    </Grid>
+      <Paper className={classes.paperPadding} variant="outlined">
+        {paymentsDriver === STRIPECARD_DRIVER && rows && (
+          <>
+            {rows.map((row) => (
+              <React.Fragment key={row.key}>
+                <Grid container alignItems="center" spacing={1}>
+                  <Grid item>
+                    <Typography>
+                      {row.key}:
+                    </Typography>
                   </Grid>
-                  <VSpace units={1} />
-                </React.Fragment>
-              ))}
-            </>
-          )}
-        </Paper>
-      </Grid>
-    </Grid>
+                  <Grid item>
+                    <Typography className={classes.textData}>
+                      {row.value}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <VSpace units={1} />
+              </React.Fragment>
+            ))}
+          </>
+        )}
+      </Paper>
     </>
   );
 };

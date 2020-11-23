@@ -100,41 +100,37 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
 
   return (
     <>
-      <Grid container className={classes.container}>
-        <Grid item>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Details</TableCell>
-                <TableCell>Active</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.billingMethods.map((billingMethod) => (
-                <TableRow
-                  key={billingMethod.billingMethodID}
+      <Table className={classes.container}>
+        <TableHead>
+          <TableRow>
+            <TableCell>Type</TableCell>
+            <TableCell>Details</TableCell>
+            <TableCell>Active</TableCell>
+            <TableCell></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.billingMethods.map((billingMethod) => (
+            <TableRow
+              key={billingMethod.billingMethodID}
+            >
+              <TableCell>{formatDriver(billingMethod.paymentsDriver)}</TableCell>
+              <TableCell>{formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}</TableCell>
+              <TableCell>{billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}</TableCell>
+              <TableCell>
+                <DropdownButton
+                  variant="contained"
+                  margin="dense"
+                  actions={getBillingMethodActions(billingMethod)}
+                  className={classes.dropdownButton}
                 >
-                  <TableCell>{formatDriver(billingMethod.paymentsDriver)}</TableCell>
-                  <TableCell>{formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}</TableCell>
-                  <TableCell>{billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}</TableCell>
-                  <TableCell>
-                    <DropdownButton
-                      variant="contained"
-                      margin="dense"
-                      actions={getBillingMethodActions(billingMethod)}
-                      className={classes.dropdownButton}
-                    >
-                      <MoreVert />
-                    </DropdownButton>
-                    </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Grid>
-      </Grid>
+                  <MoreVert />
+                </DropdownButton>
+                </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       <Button variant="contained" onClick={() => addCard(true)} className={classes.button}>Add card</Button>
     </>
   );

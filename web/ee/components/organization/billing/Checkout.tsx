@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React, { FC } from "react";
 import {
+  Grid,
   Link,
   makeStyles,
   Theme,
@@ -11,7 +12,6 @@ import { OrganizationByName_organizationByName_PrivateOrganization } from "apoll
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
 import ViewBillingMethod from "./billing-method/ViewBillingMethod";
 import { BillingInfo_billingInfo_billingMethod, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import VSpace from "components/VSpace";
 import FormikCheckbox from "components/formik/Checkbox";
 import SubmitControl from "components/forms/SubmitControl";
 import { Field, Form, Formik } from "formik";
@@ -20,17 +20,12 @@ import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/U
 import { useMutation } from "@apollo/client";
 import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
-import clsx from "clsx";
 import ViewBillingPlanDescription from "./billing-plan/ViewBillingPlanDescription";
 
 const useStyles = makeStyles((theme: Theme) => ({
   sectionTitle: {
-    marginBottom: theme.spacing(3),
-    marginTop: theme.spacing(6),
+    marginBottom: theme.spacing(2),
   },
-  firstSectionTitle: {
-    marginTop: theme.spacing(0),
-  }
 }));
 
 interface Props {
@@ -67,19 +62,26 @@ const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
 
   return (
     <>
-      <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
-        Billing plan
-      </Typography>
-      <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
-      <Typography variant="h2" className={classes.sectionTitle}>
-        Billing method
-      </Typography>
-      <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
-      <Typography variant="h2" className={classes.sectionTitle}>
-        Tax info
-      </Typography>
-      <ViewTaxInfo organization={organization} />
-      <VSpace units={3} />
+      <Grid container spacing={2}>
+        <Grid item xs={4}>
+          <Typography variant="h2" className={classes.sectionTitle}>
+            Billing plan
+          </Typography>
+          <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
+        </Grid>
+        <Grid item xs={4}>
+          <Typography variant="h2" className={classes.sectionTitle}>
+            Billing method
+          </Typography>
+          <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
+        </Grid>
+        <Grid item xs={4}>
+          <Typography variant="h2" className={classes.sectionTitle}>
+            Tax info
+          </Typography>
+          <ViewTaxInfo organization={organization} />
+        </Grid>
+      </Grid>
       <Formik
         initialValues={initialValues}
         onSubmit={(values, actions) =>

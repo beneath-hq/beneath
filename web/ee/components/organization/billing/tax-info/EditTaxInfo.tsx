@@ -117,7 +117,7 @@ const EditTaxInfo: FC<Props> = ({organization, billingInfo, editTaxInfo}) => {
           <Field
             name="taxEntity"
             component={FormikRadioGroup}
-            label="Tax Entity"
+            label="Tax entity"
             required
             options={[
               { value: "company", label: "Company" },
@@ -131,7 +131,7 @@ const EditTaxInfo: FC<Props> = ({organization, billingInfo, editTaxInfo}) => {
               <Grid item xs={6}>
                 <Field
                   name="companyName"
-                  label="Company Name"
+                  label="Company name"
                   component={FormikTextField}
                   required
                   validate={(val: string) => {
