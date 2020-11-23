@@ -7,6 +7,10 @@ import { FC } from "react";
 const useStyles = makeStyles((theme) => ({
   container: {
     overflowX: "auto",
+  },
+  tableKeyColumn: {
+    backgroundColor: theme.palette.background?.medium,
+    fontWeight: 500
   }
 }));
 
@@ -34,37 +38,37 @@ const ViewNextBillDetails: FC<Props> = ({organization, billingInfo}) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Operation</TableCell>
-              <TableCell align="right">Prepaid Quota</TableCell>
-              <TableCell align="right">Allowed Overage</TableCell>
-              <TableCell align="right">Used</TableCell>
+              <TableCell></TableCell>
+              <TableCell align="right">Prepaid quota</TableCell>
+              <TableCell align="right">Allowed overage</TableCell>
               <TableCell align="right">Price per overage GB</TableCell>
-              <TableCell align="right">Overage charge</TableCell>
+              <TableCell align="right">Your usage</TableCell>
+              <TableCell align="right">Your overage cost</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             <TableRow>
-              <TableCell>Reads</TableCell>
+              <TableCell className={classes.tableKeyColumn}>Reads</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.prepaidReadQuota)}</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.readQuota - organization.prepaidReadQuota)}</TableCell>
-              <TableCell align="right">{prettyPrintBytes(organization.readUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(billingInfo.billingPlan.readOveragePriceCents / 100)}</TableCell>
+              <TableCell align="right">{prettyPrintBytes(organization.readUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(readOverageTotal / 100)}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Writes</TableCell>
+              <TableCell className={classes.tableKeyColumn}>Writes</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.prepaidWriteQuota)}</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.writeQuota - organization.prepaidWriteQuota)}</TableCell>
-              <TableCell align="right">{prettyPrintBytes(organization.writeUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(billingInfo.billingPlan.writeOveragePriceCents / 100)}</TableCell>
+              <TableCell align="right">{prettyPrintBytes(organization.writeUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(writeOverageTotal / 100)}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Scans</TableCell>
+              <TableCell className={classes.tableKeyColumn}>Scans</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.prepaidScanQuota)}</TableCell>
               <TableCell align="right">{prettyPrintBytes(organization.scanQuota - organization.prepaidScanQuota)}</TableCell>
-              <TableCell align="right">{prettyPrintBytes(organization.scanUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(billingInfo.billingPlan.scanOveragePriceCents / 100)}</TableCell>
+              <TableCell align="right">{prettyPrintBytes(organization.scanUsage)}</TableCell>
               <TableCell align="right">{currencyFormatter.format(scanOverageTotal / 100)}</TableCell>
             </TableRow>
           </TableBody>

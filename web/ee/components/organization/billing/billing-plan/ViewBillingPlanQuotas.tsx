@@ -11,6 +11,10 @@ const useStyles = makeStyles((theme) => ({
   },
   container: {
     overflowX: "auto"
+  },
+  tableKeyColumn: {
+    backgroundColor: theme.palette.background?.medium,
+    fontWeight: 500
   }
 }));
 
@@ -52,21 +56,21 @@ const ViewBillingPlanQuotas: FC<Props> = ({billingPlan}) => {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Operation</TableCell>
+                        <TableCell></TableCell>
                         <TableCell align="right">Quota</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       <TableRow>
-                        <TableCell>Reads</TableCell>
+                        <TableCell className={classes.tableKeyColumn}>Reads</TableCell>
                         <TableCell align="right">{prettyPrintBytes(billingPlan.baseReadQuota)}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Writes</TableCell>
+                        <TableCell className={classes.tableKeyColumn}>Writes</TableCell>
                         <TableCell align="right">{prettyPrintBytes(billingPlan.baseWriteQuota)}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Scans</TableCell>
+                        <TableCell className={classes.tableKeyColumn}>Scans</TableCell>
                         <TableCell align="right">{prettyPrintBytes(billingPlan.baseScanQuota)}</TableCell>
                       </TableRow>
                     </TableBody>
@@ -82,30 +86,30 @@ const ViewBillingPlanQuotas: FC<Props> = ({billingPlan}) => {
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Operation</TableCell>
-                          <TableCell align="right">Prepaid Quota</TableCell>
-                          <TableCell align="right">Allowed Overage</TableCell>
+                          <TableCell></TableCell>
+                          <TableCell align="right">Prepaid quota</TableCell>
+                          <TableCell align="right">Allowed overage</TableCell>
                           <TableCell align="right">Price per overage GB</TableCell>
                           <TableCell align="right">Maximum overage charge</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell>Reads</TableCell>
+                          <TableCell className={classes.tableKeyColumn}>Reads</TableCell>
                           <TableCell align="right">{prettyPrintBytes(billingPlan.baseReadQuota)}</TableCell>
                           <TableCell align="right">{prettyPrintBytes(allowedReadOverage as number)}</TableCell>
                           <TableCell align="right">{currencyFormatter.format(billingPlan.readOveragePriceCents / 100)}</TableCell>
                           <TableCell align="right">{currencyFormatter.format(maximumReadOverageCharge as number / 100)}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell>Writes</TableCell>
+                          <TableCell className={classes.tableKeyColumn}>Writes</TableCell>
                           <TableCell align="right">{prettyPrintBytes(billingPlan.baseWriteQuota)}</TableCell>
                           <TableCell align="right">{prettyPrintBytes(allowedWriteOverage as number)}</TableCell>
                           <TableCell align="right">{currencyFormatter.format(billingPlan.writeOveragePriceCents / 100)}</TableCell>
                           <TableCell align="right">{currencyFormatter.format(maximumWriteOverageCharge as number / 100)}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell>Scans</TableCell>
+                          <TableCell className={classes.tableKeyColumn}>Scans</TableCell>
                           <TableCell align="right">{prettyPrintBytes(billingPlan.baseScanQuota)}</TableCell>
                           <TableCell align="right">{prettyPrintBytes(allowedScanOverage as number)}</TableCell>
                           <TableCell align="right">{currencyFormatter.format(billingPlan.scanOveragePriceCents / 100)}</TableCell>
