@@ -10,7 +10,6 @@ import { useQuery } from "@apollo/client";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
-import CancelBillingPlan from "./billing-plan/CancelBillingPlan";
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
 import EditTaxInfo from "./tax-info/EditTaxInfo";
 import ViewBillingPlan from "./billing-plan/ViewBillingPlan";
@@ -104,7 +103,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         <Typography variant="body1" className={classes.sectionDescription}>
           Your current billing plan and information about your next payment
         </Typography>
-        <ViewBillingPlan organization={organization} cancelPlan={setCancelPlanDialog} changePlan={setChangePlanDialog} />
+        <ViewBillingPlan organization={organization} changePlan={setChangePlanDialog} />
         <EditBilling
           organization={organization}
           billingInfo={data.billingInfo}
@@ -113,15 +112,18 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           addCard={setAddCardDialog}
           editTaxInfo={setEditTaxInfoDialog}
         />
-        <CancelBillingPlan organization={organization} openDialog={cancelPlanDialog} openDialogFn={setCancelPlanDialog} />
 
-        <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-          Billing methods
-        </Typography>
-        <Typography variant="body1" className={classes.sectionDescription}>
-          Payment information on file
-        </Typography>
-        <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
+        <Grid container>
+          <Grid item xs={6}>
+            <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
+              Billing methods
+            </Typography>
+            <Typography variant="body1" className={classes.sectionDescription}>
+              Payment information on file
+            </Typography>
+            <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
+          </Grid>
+        </Grid>
         <Dialog
           open={addCardDialog}
           fullWidth={true}
@@ -133,13 +135,17 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           </DialogContent>
         </Dialog>
 
-        <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-          Tax info
-        </Typography>
-        <Typography variant="body1" className={classes.sectionDescription}>
-          Information used to compute tax for customers in certain countries
-        </Typography>
-        <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
+        <Grid container>
+          <Grid item xs={6}>
+            <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
+              Tax info
+            </Typography>
+            <Typography variant="body1" className={classes.sectionDescription}>
+              Information used to compute tax for customers in certain countries
+            </Typography>
+            <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
+          </Grid>
+        </Grid>
         <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
           <DialogTitle>Edit tax info</DialogTitle>
           <DialogContent>

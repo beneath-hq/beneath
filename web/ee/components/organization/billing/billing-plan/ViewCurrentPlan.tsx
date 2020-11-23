@@ -1,7 +1,6 @@
-import { Button, Grid, makeStyles, Paper, Typography, useMediaQuery, useTheme } from "@material-ui/core";
+import { Button, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
 import VSpace from "components/VSpace";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
-import { PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
 import { FC } from "react";
 import Moment from "react-moment";
 
@@ -12,23 +11,15 @@ const useStyles = makeStyles((theme) => ({
   textData: {
     fontWeight: "bold"
   },
-  buttons: {
-    [theme.breakpoints.up("md")]: {
-      marginTop: theme.spacing(1),
-    },
-  }
 }));
 
 interface Props {
   billingInfo: BillingInfo_billingInfo;
-  cancelPlan: (value: boolean) => void;
   changePlan: (value: boolean) => void;
 }
 
-const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
+const ViewCurrentPlan: FC<Props> = ({billingInfo, changePlan}) => {
   const classes = useStyles();
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("xs"));
 
   return (
     <>
@@ -41,7 +32,7 @@ const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
           </Grid>
           <Grid item>
             <Typography className={classes.textData}>
-              {billingInfo.billingPlan.description}
+              {billingInfo.billingPlan.name}
             </Typography>
           </Grid>
         </Grid>
@@ -59,25 +50,16 @@ const ViewCurrentPlan: FC<Props> = ({billingInfo, cancelPlan, changePlan}) => {
           </Grid>
         </Grid>
         <VSpace units={3} />
-        <Grid container spacing={2} className={classes.buttons} alignItems="center">
-          {!billingInfo.billingPlan.default && (
-            <Grid item>
-              <Button size={isXs ? 'small' : 'medium'} onClick={() => cancelPlan(true)}>Cancel plan</Button>
-            </Grid>
-          )}
-          <Grid item>
-            {billingInfo.billingPlan.description !== PROFESSIONAL_BOOST_PLAN && (
-              <Button size={(isXs && !billingInfo.billingPlan.default) ? 'small' : 'medium'} variant="contained" color="primary" onClick={() => changePlan(true)}>
-                Upgrade plan
-              </Button>
-            )}
-            {billingInfo.billingPlan.description === PROFESSIONAL_BOOST_PLAN && (
-              <Button size={isXs ? 'small' : 'medium'} variant="contained" onClick={() => changePlan(true)}>
-                Change plan
-              </Button>
-            )}
-          </Grid>
-        </Grid>
+        {billingInfo.billingPlan.default && (
+          <Button variant="contained" color="primary" onClick={() => changePlan(true)}>
+            Upgrade plan
+          </Button>
+        )}
+        {!billingInfo.billingPlan.default && (
+          <Button variant="contained" onClick={() => changePlan(true)}>
+            Change plan
+          </Button>
+        )}
       </Paper>
     </>
   );

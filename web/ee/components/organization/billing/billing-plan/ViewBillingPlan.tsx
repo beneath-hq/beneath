@@ -29,11 +29,10 @@ const useStyles = makeStyles((theme) => ({
 
 export interface BillingInfoProps {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
-  cancelPlan: (value: boolean) => void;
   changePlan: (value: boolean) => void;
 }
 
-const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, cancelPlan, changePlan }) => {
+const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, changePlan }) => {
   const classes = useStyles();
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
@@ -60,14 +59,14 @@ const ViewBillingPlan: FC<BillingInfoProps> = ({ organization, cancelPlan, chang
           <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
             Your current plan
           </Typography>
-          <ViewCurrentPlan billingInfo={billingInfo} cancelPlan={cancelPlan} changePlan={changePlan} />
+          <ViewCurrentPlan billingInfo={billingInfo} changePlan={changePlan} />
         </Grid>
 
         <Grid item xs={12} lg={4}>
           <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
             Contact us
           </Typography>
-          <ContactUs billingInfo={billingInfo} />
+          <ContactUs />
         </Grid>
       </Grid>
 

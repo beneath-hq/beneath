@@ -3,8 +3,8 @@ import _ from "lodash";
 import React, { FC } from "react";
 import { Field, Formik } from "formik";
 import {
-  Dialog,
-  DialogContent,
+  Grid,
+  Typography,
 } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
@@ -19,11 +19,11 @@ import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/U
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
-  openDialog: boolean;
-  openDialogFn: (value: boolean) => void;
+  handleBack: () => void;
+  closeAndReset: () => void;
 }
 
-const CancelBillingPlan: FC<Props> = ({ organization, openDialog, openDialogFn }) => {
+const CancelBillingPlan: FC<Props> = ({ organization, handleBack, closeAndReset }) => {
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
   });
@@ -34,8 +34,7 @@ const CancelBillingPlan: FC<Props> = ({ organization, openDialog, openDialogFn }
       context: { ee: true },
       onCompleted: (data) => {
         if (data) {
-          // openDialogFn("Your plan has been canceled.");
-          openDialogFn(false); // close the dialog
+          closeAndReset(); // close the dialog
         }
       },
       refetchQueries: [
@@ -62,25 +61,28 @@ const CancelBillingPlan: FC<Props> = ({ organization, openDialog, openDialogFn }
 
   return (
     <>
-      <Dialog open={openDialog}>
-        <DialogContent>
-          <Formik
-            initialValues={initialValues}
-            onSubmit={(values, actions) =>
-              handleSubmitMutation(
-                values,
-                actions,
-                updateBillingPlan({
-                  variables: {
-                    organizationID: organization.organizationID,
-                    billingPlanID: freePlan.billingPlanID
-                  }
-                })
-              )
-            }
-          >
-            {({ isSubmitting, status, values }) => (
-              <Form title="Cancel plan">
+      <Formik
+        initialValues={initialValues}
+        onSubmit={(values, actions) =>
+          handleSubmitMutation(
+            values,
+            actions,
+            updateBillingPlan({
+              variables: {
+                organizationID: organization.organizationID,
+                billingPlanID: freePlan.billingPlanID
+              }
+            })
+          )
+        }
+      >
+        {({ isSubmitting, status, values }) => (
+          <Form>
+            <Grid container>
+              <Grid item xs={3}>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="h2">Cancel plan</Typography>
                 <Field
                   name="confirmCancel"
                   component={FormikCheckbox}
@@ -96,12 +98,12 @@ const CancelBillingPlan: FC<Props> = ({ organization, openDialog, openDialogFn }
                     </span>
                   }
                 />
-                <SubmitControl label="Cancel plan" severe cancelFn={() => openDialogFn(false)} cancelLabel="Back" errorAlert={status} disabled={!values.confirmCancel || isSubmitting} />
-              </Form>
-            )}
-          </Formik>
-        </DialogContent>
-      </Dialog>
+              </Grid>
+            </Grid>
+            <SubmitControl label="Cancel plan" severe rightSide cancelFn={handleBack} cancelLabel="Back" errorAlert={status} disabled={!values.confirmCancel || isSubmitting} />
+          </Form>
+        )}
+      </Formik>
     </>
   );
 };
