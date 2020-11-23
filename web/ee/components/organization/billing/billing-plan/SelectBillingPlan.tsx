@@ -5,10 +5,16 @@ import React, { FC } from "react";
 import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
 import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import RadioGroup from "components/forms/RadioGroup";
-import VSpace from "components/VSpace";
-import { PROFESSIONAL_PLAN, PROFESSIONAL_BOOST_PLAN } from "ee/lib/billing";
 import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
+import ViewBillingPlanQuotas from "./ViewBillingPlanQuotas";
+import { List, ListItem, makeStyles } from "@material-ui/core";
+import VSpace from "components/VSpace";
+
+const useStyles = makeStyles((theme) => ({
+  listItem: {
+    padding: "0px",
+  },
+}));
 
 interface Props {
   selectBillingPlan: (value: BillingInfo_billingInfo_billingPlan | null) => void;
@@ -17,7 +23,7 @@ interface Props {
 }
 
 const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, billingInfo}) => {
-  const [selectedBillingPlanLabel, setSelectedBillingPlanLabel] = React.useState(selectedBillingPlan?.description || "");
+  const classes = useStyles();
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
   });
@@ -26,33 +32,30 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
     return <></>;
   }
 
-  const professionalPlan = data.billingPlans.find((billingPlan) => billingPlan.description === PROFESSIONAL_PLAN);
-  const professionalBoostPlan = data.billingPlans.find((billingPlan) => billingPlan.description === PROFESSIONAL_BOOST_PLAN);
-  const professionalPlanLabel = "Professional".concat(billingInfo.billingPlan.billingPlanID === professionalPlan?.billingPlanID ? " (current plan)" : "");
-  const professionalBoostPlanLabel = "Professional Boost".concat(billingInfo.billingPlan.billingPlanID === professionalBoostPlan?.billingPlanID ? " (current plan)" : "");
-
   return (
     <>
-      <RadioGroup
-        options={[
-          { value: PROFESSIONAL_PLAN, label: professionalPlanLabel },
-          { value: PROFESSIONAL_BOOST_PLAN, label: professionalBoostPlanLabel },
-        ]}
-        row
-        value={selectedBillingPlanLabel}
-        onChange={(_, value) => {
-          setSelectedBillingPlanLabel(value);
-          if (value === PROFESSIONAL_PLAN) {
-            selectBillingPlan(professionalPlan as BillingInfo_billingInfo_billingPlan);
-          } else if (value === PROFESSIONAL_BOOST_PLAN) {
-            selectBillingPlan(professionalBoostPlan as BillingInfo_billingInfo_billingPlan);
-          }
-        }}
-      />
+      {data.billingPlans.map((billingPlan) => (
+        <React.Fragment key={billingPlan.billingPlanID}>
+          <List>
+            <ListItem
+              button
+              selected={selectedBillingPlan === billingPlan}
+              onClick={() => selectBillingPlan(billingPlan)}
+              className={classes.listItem}
+            >
+              <ViewBillingPlanDescription
+                billingPlan={billingPlan}
+                current={(billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID)}
+                selected={selectedBillingPlan === billingPlan}
+              />
+            </ListItem>
+          </List>
+        </React.Fragment>
+      ))}
       {selectedBillingPlan && (
         <>
-          <VSpace units={2} />
-          <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
+          <VSpace units={3} />
+          <ViewBillingPlanQuotas billingPlan={selectedBillingPlan} />
         </>
       )}
     </>
