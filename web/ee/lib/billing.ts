@@ -1,8 +1,5 @@
 import { IS_PRODUCTION } from "lib/connection";
 
-export const PROFESSIONAL_PLAN = "Professional";
-export const PROFESSIONAL_BOOST_PLAN = "Professional Boost";
-
 export const ANARCHISM_DRIVER = "anarchism";
 export const STRIPECARD_DRIVER = "stripecard";
 export const STRIPEWIRE_DRIVER = "stripewire";
@@ -571,8 +568,6 @@ export const US_STATES = [
 ];
 
 export default {
-  PROFESSIONAL_PLAN,
-  PROFESSIONAL_BOOST_PLAN,
   ANARCHISM_DRIVER,
   STRIPECARD_DRIVER,
   STRIPEWIRE_DRIVER,
