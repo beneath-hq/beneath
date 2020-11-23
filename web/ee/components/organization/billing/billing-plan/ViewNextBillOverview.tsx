@@ -57,31 +57,6 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
     <>
       <Paper className={classes.paperPadding} variant="outlined">
         <Grid container alignItems="center" spacing={3} justify="center">
-          {/* OVERAGE DETAIL */}
-          <>
-          {isOverageBased && (
-            <>
-            <Grid item>
-              <Grid container direction="column" alignItems="center">
-                <Grid item>
-                  <Typography className={clsx(classes.billItem)}>
-                    {currencyFormatter.format(overageTotal / 100)}
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Typography variant="caption">
-                    Overage
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item>
-              <Typography className={classes.mathOperator}>+</Typography>
-            </Grid>
-            </>
-          )}
-          </>
-
           {/* BASE PRICE DETAIL */}
           <>
             {(isSeatBased || isOverageBased) && (
@@ -101,9 +76,7 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Typography className={classes.mathOperator}>
-                    {isSeatBased ? "+" : "="}
-                  </Typography>
+                  <Typography className={classes.mathOperator}>+</Typography>
                 </Grid>
               </>
             )}
@@ -145,10 +118,37 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Typography className={classes.mathOperator}>=</Typography>
+                  <Typography className={classes.mathOperator}>
+                    {isOverageBased ? "+" : "="}
+                  </Typography>
                 </Grid>
               </>
             )}
+          </>
+
+          {/* OVERAGE DETAIL */}
+          <>
+          {isOverageBased && (
+            <>
+            <Grid item>
+              <Grid container direction="column" alignItems="center">
+                <Grid item>
+                  <Typography className={clsx(classes.billItem)}>
+                    {currencyFormatter.format(overageTotal / 100)}
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Typography variant="caption">
+                    Overage
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item>
+              <Typography className={classes.mathOperator}>=</Typography>
+            </Grid>
+            </>
+          )}
           </>
 
           {/* TOTAL */}
