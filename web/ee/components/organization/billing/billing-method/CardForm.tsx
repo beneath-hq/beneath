@@ -6,11 +6,9 @@ import { CardElement, Elements, useElements, useStripe } from "@stripe/react-str
 import { loadStripe } from "@stripe/stripe-js";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
-import { Formik, Form, Field } from "formik";
-import FormikTextField from "components/formik/TextField";
-import FormikSelectField from "components/formik/SelectField";
+import { Formik, Form } from "formik";
 import SubmitControl from "components/forms/SubmitControl";
-import { COUNTRY_CODES, STRIPE_KEY } from "ee/lib/billing";
+import { STRIPE_KEY } from "ee/lib/billing";
 import { API_URL } from "lib/connection";
 import { useToken } from "hooks/useToken";
 import useMe from "hooks/useMe";
@@ -34,11 +32,6 @@ const useStyles = makeStyles((theme) => ({
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
   openDialogFn: (value: boolean) => void;
-}
-
-interface Country {
-  label: string;
-  code: string;
 }
 
 const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
@@ -68,13 +61,6 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
   }
 
   const initialValues = {
-    name: "",
-    line1: "",
-    line2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: null as (null | Country)
   };
 
   return (
@@ -107,16 +93,7 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
             payment_method: {
               card: cardElement,
               billing_details: {
-                address: {
-                  city: values.city,
-                  country: values.country?.code,
-                  line1: values.line1,
-                  line2: values.line2,
-                  postal_code: values.postalCode,
-                  state: values.state,
-                },
                 email: me?.personalUser?.email, // Stripe receipts will be sent to the user's Beneath email address
-                name: values.name,
               }
             }
           });
@@ -151,95 +128,7 @@ const CardFormElement: FC<Props> = ({ organization, openDialogFn }) => {
       }}
     >
       {({ isSubmitting, status }) => (
-        <Form title="Add a credit card">
-          <Typography variant="h2">
-            Billing address
-          </Typography>
-          <Grid container justify="space-between" spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="name"
-                validate={(val: string) => {
-                  if (!val) return "Required field";
-                }}
-                component={FormikTextField}
-                label="Name"
-                required
-              />
-            </Grid>
-          </Grid>
-          <Grid container justify="space-between" spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="line1"
-                validate={(val: string) => {
-                  if (!val) return "Required field";
-                }}
-                component={FormikTextField}
-                label="Address line 1"
-                required
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="line2"
-                component={FormikTextField}
-                label="Address line 2"
-              />
-            </Grid>
-          </Grid>
-          <Grid container justify="space-between" spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="city"
-                validate={(val: string) => {
-                  if (!val) return "Required field";
-                }}
-                component={FormikTextField}
-                label="City"
-                required
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="state"
-                component={FormikTextField}
-                label="State/Province/Region"
-              />
-            </Grid>
-          </Grid>
-          <Grid container justify="space-between" spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="postalCode"
-                validate={(val: string) => {
-                  if (!val) return "Required field";
-                }}
-                component={FormikTextField}
-                label="Zip / Postal code"
-                required
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Field
-                name="country"
-                validate={(val: Country) => {
-                  if (!val) return "Required field";
-                }}
-                component={FormikSelectField}
-                label="Country"
-                required
-                options={COUNTRY_CODES}
-                getOptionLabel={(option: Country) => option.label}
-                getOptionSelected={(option: Country, value: Country) => {
-                  return option.code === value.code;
-                }}
-              />
-            </Grid>
-          </Grid>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Card details
-          </Typography>
+        <Form title="Add a card">
           <CardElement
             className={classes.cardInput}
             options={{

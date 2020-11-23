@@ -127,9 +127,9 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         <Dialog
           open={addCardDialog}
           fullWidth={true}
-          maxWidth={"md"}
+          maxWidth={"sm"}
         >
-          <DialogTitle id="alert-dialog-title">{"Add a credit card"}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
           <DialogContent>
             <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
           </DialogContent>
