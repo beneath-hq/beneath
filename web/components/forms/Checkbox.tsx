@@ -11,12 +11,16 @@ import {
 import FormControl, { FormControlProps } from "./FormControl";
 
 const useStyles = makeStyles((theme) => ({
-  checkbox: {
+  root: {
     "&&:hover": {
       color: theme.palette.primary.main,
       backgroundColor: "transparent",
     },
+    '&$checked': {
+      color: theme.palette.primary.main,
+    }
   },
+  checked: {},
   helper: {
     ...theme.typography.body2,
   },
@@ -51,7 +55,7 @@ const Checkbox: FC<CheckboxProps> = (props) => {
     >
       <FormControlLabel
         label={label}
-        control={<MuiCheckbox className={classes.checkbox} id={id} {...muiCheckboxProps} />}
+        control={<MuiCheckbox classes={{root: classes.root, checked: classes.checked}} id={id} {...muiCheckboxProps} />}
       />
       {helperText && <FormHelperText className={classes.helper}>{helperText}</FormHelperText>}
     </FormControl>
