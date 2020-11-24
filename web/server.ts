@@ -150,6 +150,7 @@ app.prepare().then(() => {
   addStaticRoute("/favicon.ico");
   addDynamicRoute("/:organization_name", "/organization");
   addDynamicRoute("/:organization_name/-/:tab", "/organization");
+  addDynamicRoute("/:organization_name/-/billing/checkout", "/-/billing/checkout");
   addDynamicRoute("/:organization_name/:project_name", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/services/:service_name", "/service");
@@ -157,6 +158,7 @@ app.prepare().then(() => {
   addDynamicRoute("/:organization_name/:project_name/:stream_name", "/stream");
   addDynamicRoute("/:organization_name/:project_name/:stream_name/-/:tab", "/stream");
   addStaticRoute("*"); // catchall
+
 
   // Run server
   server.listen(port, err => {

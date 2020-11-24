@@ -14,7 +14,6 @@ import ViewTaxInfo from "./tax-info/ViewTaxInfo";
 import EditTaxInfo from "./tax-info/EditTaxInfo";
 import ViewBillingPlan from "./billing-plan/ViewBillingPlan";
 import ViewBillingMethods from "./billing-method/ViewBillingMethods";
-import EditBilling from "./EditBilling";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -37,8 +36,6 @@ export interface ViewBillingProps {
 
 const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
   const classes = useStyles();
-  const [changePlanDialog, setChangePlanDialog] = React.useState(false);
-  const [cancelPlanDialog, setCancelPlanDialog] = React.useState(false);
   const [addCardDialog, setAddCardDialog] = React.useState(false);
   const [editTaxInfoDialog, setEditTaxInfoDialog] = React.useState(false);
   const DynamicCardForm = dynamic(() => import("./billing-method/CardForm"));
@@ -103,15 +100,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         <Typography variant="body1" className={classes.sectionDescription}>
           Your current billing plan and information about your next payment
         </Typography>
-        <ViewBillingPlan organization={organization} changePlan={setChangePlanDialog} />
-        <EditBilling
-          organization={organization}
-          billingInfo={data.billingInfo}
-          changePlanDialog={changePlanDialog}
-          setChangePlanDialog={setChangePlanDialog}
-          addCard={setAddCardDialog}
-          editTaxInfo={setEditTaxInfoDialog}
-        />
+        <ViewBillingPlan organization={organization} />
 
         <Grid container>
           <Grid item xs={6}>
@@ -128,6 +117,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           open={addCardDialog}
           fullWidth={true}
           maxWidth={"sm"}
+          onBackdropClick={() => setAddCardDialog(false)}
         >
           <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
           <DialogContent>

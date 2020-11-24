@@ -1,125 +1,191 @@
-import _ from "lodash";
-import React, { FC } from "react";
-import {
-  Grid,
-  Link,
-  makeStyles,
-  Theme,
-  Typography,
-} from "@material-ui/core";
+import { useQuery } from "@apollo/client";
+import dynamic from "next/dynamic";
+import React, {FC} from "react";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, makeStyles, Step, StepLabel, Stepper, Typography } from "@material-ui/core";
 
-import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import VSpace from "components/VSpace";
+import { BillingInfo, BillingInfoVariables, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
+import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
+import SelectBillingPlan from "./billing-plan/SelectBillingPlan";
+import ViewBillingMethods from "./billing-method/ViewBillingMethods";
+import Finalize from "./Finalize";
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
-import ViewBillingMethod from "./billing-method/ViewBillingMethod";
-import { BillingInfo_billingInfo_billingMethod, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import FormikCheckbox from "components/formik/Checkbox";
-import SubmitControl from "components/forms/SubmitControl";
-import { Field, Form, Formik } from "formik";
-import { handleSubmitMutation } from "components/formik";
-import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/UpdateBillingPlan";
-import { useMutation } from "@apollo/client";
-import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billingInfo";
-import { QUERY_ORGANIZATION } from "apollo/queries/organization";
-import ViewBillingPlanDescription from "./billing-plan/ViewBillingPlanDescription";
+import CancelBillingPlan from "./billing-plan/CancelBillingPlan";
+import EditTaxInfo from "./tax-info/EditTaxInfo";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 
-const useStyles = makeStyles((theme: Theme) => ({
-  sectionTitle: {
-    marginBottom: theme.spacing(2),
+const useStyles = makeStyles((theme) => ({
+  stepper: {
+    backgroundColor: theme.palette.background.default,
+    overflowX: "auto",
+    paddingLeft: theme.spacing(0),
+    paddingRight: theme.spacing(0),
   },
+  box: {
+    height: theme.spacing(70)
+  }
 }));
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
-  billingMethod: BillingInfo_billingInfo_billingMethod;
-  selectedBillingPlan: BillingInfo_billingInfo_billingPlan;
-  handleBack: () => void;
-  closeAndReset: () => void;
-  // closeDialogue: (confirmationMessage: string) => void;
 }
 
-const Checkout: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack, closeAndReset }) => {
+const Checkout: FC<Props> = ({organization}) => {
   const classes = useStyles();
-  const [updateBillingPlan] = useMutation<UpdateBillingPlan, UpdateBillingPlanVariables>(
-    UPDATE_BILLING_PLAN,
-    {
-      context: { ee: true },
-      onCompleted: (data) => {
-        if (data) {
-          closeAndReset();
-        }
-      },
-      refetchQueries: [
-        { query: QUERY_ORGANIZATION, variables: { name: organization.name } },
-        { query: QUERY_BILLING_INFO, variables: { organizationID: organization.organizationID }, context: { ee: true } },
-      ],
-      awaitRefetchQueries: true,
-    }
-  );
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [selectedBillingPlan, setSelectedBillingPlan] = React.useState<BillingInfo_billingInfo_billingPlan | null>(null);
+  const [addCardDialog, setAddCardDialog] = React.useState(false);
+  const [editTaxInfoDialog, setEditTaxInfoDialog] = React.useState(false);
+  const DynamicCardForm = dynamic(() => import("./billing-method/CardForm"));
 
-  const initialValues = {
-    consentTerms: false,
+  const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+    context: { ee: true },
+    variables: {
+      organizationID: organization.organizationID,
+    },
+  });
+
+  if (!data) {
+    return <></>;
+  }
+
+  const billingInfo = data.billingInfo;
+
+  const steps = ['Select a plan', 'Choose your billing method', 'Provide tax information', 'Finalize'];
+  const handleNext = () => {
+    // if the Free plan is selected, skip the steps for billing method & tax info
+    if (selectedBillingPlan && selectedBillingPlan.default && activeStep === 0) {
+      setActiveStep(3);
+      return;
+    }
+    setActiveStep(activeStep + 1);
+  };
+
+  const handleBack = () => {
+    // if the Free plan is selected, skip the steps for billing method & tax info
+    if (selectedBillingPlan && selectedBillingPlan.default && activeStep === 3) {
+      setActiveStep(0);
+      return;
+    }
+    setActiveStep(activeStep - 1);
+  };
+
+  const closeAndReset = () => {
+    setActiveStep(0);
+    setSelectedBillingPlan(null);
   };
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={4}>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Billing plan
-          </Typography>
-          <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
-        </Grid>
-        <Grid item xs={4}>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Billing method
-          </Typography>
-          <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
-        </Grid>
-        <Grid item xs={4}>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Tax info
-          </Typography>
-          <ViewTaxInfo organization={organization} />
-        </Grid>
-      </Grid>
-      <Formik
-        initialValues={initialValues}
-        onSubmit={(values, actions) =>
-          handleSubmitMutation(
-            values,
-            actions,
-            updateBillingPlan({
-              variables: {
-                organizationID: organization.organizationID,
-                billingPlanID: selectedBillingPlan.billingPlanID
-              }
-            })
-          )
-        }
-      >
-        {({ isSubmitting, status, values }) => (
-          <Form>
-            <Field
-              name="consentTerms"
-              component={FormikCheckbox}
-              type="checkbox"
-              validate={(checked: any) => {
-                if (!checked) {
-                  return "Cannot continue without consent to the terms of service";
-                }
-              }}
-              label={
-                <span>
-                  I authorise Beneath to send instructions to the financial institution that issued my card to take
-            payments from my card account in accordance with the
-            <Link href="https://about.beneath.dev/enterprise"> terms </Link> of my agreement with you.
-                </span>
-              }
-            />
-            <SubmitControl label="Purchase" cancelFn={handleBack} cancelLabel="Back" rightSide errorAlert={status} disabled={!values.consentTerms || isSubmitting} />
-          </Form>
+      <Typography variant="h1">
+        Change your billing plan
+      </Typography>
+      <VSpace units={3} />
+      <Stepper activeStep={activeStep} className={classes.stepper}>
+        {steps.map((step) => (
+          <Step key={step}>
+            <StepLabel>
+              {step}
+            </StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+      <VSpace units={6} />
+      <Box className={classes.box}>
+        {activeStep === 0 && (
+          <>
+            <SelectBillingPlan selectBillingPlan={setSelectedBillingPlan} selectedBillingPlan={selectedBillingPlan} billingInfo={billingInfo} />
+          </>
         )}
-      </Formik>
+        {activeStep === 1 && (
+          <>
+            <Grid container justify="center">
+              <Grid item xs={8}>
+                <ViewBillingMethods organization={organization} billingInfo={billingInfo} addCard={setAddCardDialog} />
+              </Grid>
+              <Dialog
+                open={addCardDialog}
+                fullWidth={true}
+                maxWidth={"sm"}
+                onBackdropClick={() => setAddCardDialog(false)}
+              >
+                <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
+                <DialogContent>
+                  <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
+                </DialogContent>
+              </Dialog>
+            </Grid>
+          </>
+        )}
+        {activeStep === 2 && (
+          <>
+            <Grid container justify="center">
+              <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog} />
+              <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Edit tax info</DialogTitle>
+                <DialogContent>
+                  <EditTaxInfo organization={organization} billingInfo={data.billingInfo} editTaxInfo={setEditTaxInfoDialog}/>
+                </DialogContent>
+              </Dialog>
+            </Grid>
+          </>
+        )}
+        {activeStep === 3 && selectedBillingPlan && billingInfo.billingMethod && (
+          <>
+            {!selectedBillingPlan.default && (
+              <Finalize organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} closeAndReset={closeAndReset} />
+            )}
+            {selectedBillingPlan.default && (
+              <CancelBillingPlan organization={organization} handleBack={handleBack} closeAndReset={closeAndReset} />
+            )}
+          </>
+        )}
+      </Box>
+
+      {/* Buttons */}
+      <Grid container justify="flex-end" spacing={2}>
+        {activeStep === 0 && (
+          <>
+            <Grid item>
+              <Button onClick={handleNext} disabled={!selectedBillingPlan || selectedBillingPlan.billingPlanID === billingInfo.billingPlan.billingPlanID}>
+                Next
+              </Button>
+            </Grid>
+          </>
+        )}
+        {activeStep === 1 && (
+          <>
+            <Grid item>
+              <Button onClick={handleBack}>
+                Back
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button onClick={handleNext} disabled={!billingInfo.billingMethod}>
+                Next
+              </Button>
+            </Grid>
+          </>
+        )}
+        {activeStep === 2 && (
+          <>
+            <Grid item>
+              <Button onClick={handleBack}>
+                Back
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button onClick={handleNext} disabled={!billingInfo.country}>
+                Next
+              </Button>
+            </Grid>
+          </>
+        )}
+        {activeStep === 3 && (
+          <>
+          </>
+        )}
+      </Grid>
     </>
   );
 };

@@ -1,8 +1,11 @@
 import { Button, Grid, makeStyles, Paper, Typography } from "@material-ui/core";
-import VSpace from "components/VSpace";
-import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
 import { FC } from "react";
 import Moment from "react-moment";
+
+import VSpace from "components/VSpace";
+import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
+import { toURLName } from "lib/names";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -15,10 +18,10 @@ const useStyles = makeStyles((theme) => ({
 
 interface Props {
   billingInfo: BillingInfo_billingInfo;
-  changePlan: (value: boolean) => void;
+  organization: OrganizationByName_organizationByName_PrivateOrganization;
 }
 
-const ViewCurrentPlan: FC<Props> = ({billingInfo, changePlan}) => {
+const ViewCurrentPlan: FC<Props> = ({billingInfo, organization}) => {
   const classes = useStyles();
 
   return (
@@ -51,12 +54,19 @@ const ViewCurrentPlan: FC<Props> = ({billingInfo, changePlan}) => {
         </Grid>
         <VSpace units={3} />
         {billingInfo.billingPlan.default && (
-          <Button variant="contained" color="primary" onClick={() => changePlan(true)}>
+          <Button
+            variant="contained"
+            color="primary"
+            href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+          >
             Upgrade plan
           </Button>
         )}
         {!billingInfo.billingPlan.default && (
-          <Button variant="contained" onClick={() => changePlan(true)}>
+          <Button
+            variant="contained"
+            href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+          >
             Change plan
           </Button>
         )}
