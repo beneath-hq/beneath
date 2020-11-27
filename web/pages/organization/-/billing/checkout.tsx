@@ -1,15 +1,15 @@
+import { useQuery } from "@apollo/client";
 import { NextPage } from "next";
+import { useRouter } from "next/router";
 
 import { withApollo } from "apollo/withApollo";
-import Page from "components/Page";
-import EditBilling from "ee/components/organization/billing/Checkout";
-import { useRouter } from "next/router";
-import { useQuery } from "@apollo/client";
 import { OrganizationByName, OrganizationByNameVariables } from "apollo/types/OrganizationByName";
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
-import { toBackendName } from "lib/names";
 import ErrorPage from "components/ErrorPage";
 import Loading from "components/Loading";
+import Page from "components/Page";
+import EditBilling from "ee/components/organization/billing/Checkout";
+import { toBackendName } from "lib/names";
 
 const CheckoutPage: NextPage = () => {
   const router = useRouter();

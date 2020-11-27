@@ -150,7 +150,7 @@ app.prepare().then(() => {
   addStaticRoute("/favicon.ico");
   addDynamicRoute("/:organization_name", "/organization");
   addDynamicRoute("/:organization_name/-/:tab", "/organization");
-  addDynamicRoute("/:organization_name/-/billing/checkout", "/-/billing/checkout");
+  addDynamicRoute("/:organization_name/-/billing/checkout", "/organization/-/billing/checkout");
   addDynamicRoute("/:organization_name/:project_name", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/services/:service_name", "/service");
