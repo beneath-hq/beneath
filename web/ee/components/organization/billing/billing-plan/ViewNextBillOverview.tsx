@@ -10,9 +10,6 @@ import { useQuery } from "@apollo/client";
 import { OrganizationMembers, OrganizationMembersVariables } from "apollo/types/OrganizationMembers";
 
 const useStyles = makeStyles((theme) => ({
-  paperPadding: {
-    padding: theme.spacing(3)
-  },
   billItem: {
     fontSize: theme.typography.pxToRem(36),
   },
@@ -38,7 +35,7 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
   });
 
   if (!data || !organization.readQuota || !organization.prepaidReadQuota || !organization.writeQuota || !organization.prepaidWriteQuota || !organization.scanQuota || !organization.prepaidScanQuota) {
-    return <></>;
+    return null;
   }
 
   const isOverageBased = billingInfo.billingPlan.readOveragePriceCents > 0 || billingInfo.billingPlan.writeOveragePriceCents > 0 || billingInfo.billingPlan.scanOveragePriceCents > 0;
@@ -55,119 +52,120 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
 
   return (
     <>
-      <Paper className={classes.paperPadding} variant="outlined">
-        <Grid container alignItems="center" spacing={3} justify="center">
-          {/* BASE PRICE DETAIL */}
-          <>
-            {(isSeatBased || isOverageBased) && (
-              <>
-                <Grid item>
-                  <Grid container direction="column" alignItems="center">
-                    <Grid item>
-                      <Typography className={classes.billItem}>
-                        {currencyFormatter.format(billingInfo.billingPlan.basePriceCents / 100)}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography variant="caption">
-                        Base price
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item>
-                  <Typography className={classes.mathOperator}>+</Typography>
-                </Grid>
-              </>
-            )}
-          </>
-
-          {/* SEAT DETAIL */}
-          <>
-            {isSeatBased && (
-              <>
-                <Grid item>
-                  <Grid container direction="column" alignItems="center">
-                    <Grid item>
-                      <Typography className={classes.billItem}>
-                        {currencyFormatter.format(billingInfo.billingPlan.seatPriceCents / 100)}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography variant="caption">
-                        Seat price
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item>
-                  <Typography className={classes.mathOperator}>x</Typography>
-                </Grid>
-                <Grid item>
-                  <Grid container direction="column" alignItems="center">
-                    <Grid item>
-                      <Typography className={classes.billItem}>
-                        {numSeats}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography variant="caption">
-                        Number of seats
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item>
-                  <Typography className={classes.mathOperator}>
-                    {isOverageBased ? "+" : "="}
-                  </Typography>
-                </Grid>
-              </>
-            )}
-          </>
-
-          {/* OVERAGE DETAIL */}
-          <>
-          {isOverageBased && (
+      <Typography variant="h2" gutterBottom>
+        Overview of your next bill
+      </Typography>
+      <Grid container alignItems="center" spacing={3} justify="center">
+        {/* BASE PRICE DETAIL */}
+        <>
+          {(isSeatBased || isOverageBased) && (
             <>
-            <Grid item>
-              <Grid container direction="column" alignItems="center">
-                <Grid item>
-                  <Typography className={clsx(classes.billItem)}>
-                    {currencyFormatter.format(overageTotal / 100)}
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Typography variant="caption">
-                    Overage
-                  </Typography>
+              <Grid item>
+                <Grid container direction="column" alignItems="center">
+                  <Grid item>
+                    <Typography className={classes.billItem}>
+                      {currencyFormatter.format(billingInfo.billingPlan.basePriceCents / 100)}
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="caption">
+                      Base price
+                    </Typography>
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
-            <Grid item>
-              <Typography className={classes.mathOperator}>=</Typography>
-            </Grid>
+              <Grid item>
+                <Typography className={classes.mathOperator}>+</Typography>
+              </Grid>
             </>
           )}
-          </>
+        </>
 
-          {/* TOTAL */}
-          <Grid item>
-            <Grid container direction="column" alignItems="center" justify="center">
+        {/* SEAT DETAIL */}
+        <>
+          {isSeatBased && (
+            <>
               <Grid item>
-                <Typography className={clsx(classes.billItem, classes.billTotal)}>
-                  {currencyFormatter.format(billTotal / 100)}
+                <Grid container direction="column" alignItems="center">
+                  <Grid item>
+                    <Typography className={classes.billItem}>
+                      {currencyFormatter.format(billingInfo.billingPlan.seatPriceCents / 100)}
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="caption">
+                      Seat price
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid item>
+                <Typography className={classes.mathOperator}>x</Typography>
+              </Grid>
+              <Grid item>
+                <Grid container direction="column" alignItems="center">
+                  <Grid item>
+                    <Typography className={classes.billItem}>
+                      {numSeats}
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="caption">
+                      Number of seats
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid item>
+                <Typography className={classes.mathOperator}>
+                  {isOverageBased ? "+" : "="}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
-                <Typography className={clsx(classes.billTotal)} variant="caption" align="center">
-                  Total billed on <Moment format="MMMM Do">{billingInfo.nextBillingTime}</Moment>
+            </>
+          )}
+        </>
+
+        {/* OVERAGE DETAIL */}
+        <>
+        {isOverageBased && (
+          <>
+          <Grid item>
+            <Grid container direction="column" alignItems="center">
+              <Grid item>
+                <Typography className={clsx(classes.billItem)}>
+                  {currencyFormatter.format(overageTotal / 100)}
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Typography variant="caption">
+                  Overage
                 </Typography>
               </Grid>
             </Grid>
           </Grid>
+          <Grid item>
+            <Typography className={classes.mathOperator}>=</Typography>
+          </Grid>
+          </>
+        )}
+        </>
+
+        {/* TOTAL */}
+        <Grid item>
+          <Grid container direction="column" alignItems="center" justify="center">
+            <Grid item>
+              <Typography className={clsx(classes.billItem, classes.billTotal)}>
+                {currencyFormatter.format(billTotal / 100)}
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography className={clsx(classes.billTotal)} variant="caption" align="center">
+                Total billed on <Moment format="MMMM Do">{billingInfo.nextBillingTime}</Moment>
+              </Typography>
+            </Grid>
+          </Grid>
         </Grid>
-      </Paper>
+      </Grid>
     </>
   );
 };

@@ -1,30 +1,23 @@
 import { useQuery } from "@apollo/client";
 import _ from "lodash";
-import {Grid, Typography } from "@material-ui/core";
+import {Paper, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import React, { FC } from "react";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
+import VSpace from "components/VSpace";
 import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import ViewNextBillDetails from "./ViewNextBillDetails";
 import ViewNextBillOverview from "./ViewNextBillOverview";
-import clsx from "clsx";
 import ViewCurrentPlan from "./ViewCurrentPlan";
-import ContactUs from "../ContactUs";
+import Actions from "./Actions";
 
 
 const useStyles = makeStyles((theme) => ({
-  paperPadding: {
+  paper: {
     padding: theme.spacing(3)
   },
-  sectionTitle: {
-    marginTop: theme.spacing(6),
-    marginBottom: theme.spacing(3)
-  },
-  firstSectionTitle: {
-    marginTop: theme.spacing(0),
-  }
 }));
 
 export interface BillingInfoProps {
@@ -41,43 +34,31 @@ const ViewBillingPlan: FC<BillingInfoProps> = ({ organization }) => {
     },
   });
 
-  if (error) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
-  if (!data || !organization.readQuota || !organization.prepaidReadQuota || !organization.writeQuota || !organization.prepaidWriteQuota || !organization.scanQuota || !organization.prepaidScanQuota) {
-    return <></>;
+  if (!data || error || !organization.readQuota || !organization.prepaidReadQuota || !organization.writeQuota || !organization.prepaidWriteQuota || !organization.scanQuota || !organization.prepaidScanQuota) {
+    return null;
   }
 
   const billingInfo = data.billingInfo;
 
   return (
     <>
-      <Grid container spacing={6} alignItems="stretch">
-        <Grid item xs={12} lg={8}>
-          <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
-            Your current plan
-          </Typography>
-          <ViewCurrentPlan billingInfo={billingInfo} organization={organization} />
-        </Grid>
+      <Paper variant="outlined" className={classes.paper}>
+        <Typography variant="h1" gutterBottom>
+          Billing plan
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Your current billing plan and information about your next payment
+        </Typography>
 
-        <Grid item xs={12} lg={4}>
-          <Typography variant="h2" className={clsx(classes.sectionTitle, classes.firstSectionTitle)}>
-            Contact us
-          </Typography>
-          <ContactUs />
-        </Grid>
-      </Grid>
-
-      <Typography variant="h2" className={classes.sectionTitle}>
-        Overview of your next bill
-      </Typography>
-      <ViewNextBillOverview organization={organization} billingInfo={billingInfo} />
-
-      <Typography variant="h2" className={classes.sectionTitle}>
-        Details of your next bill
-      </Typography>
-      <ViewNextBillDetails organization={organization} billingInfo={billingInfo} />
+        <VSpace units={3} />
+        <ViewCurrentPlan billingInfo={billingInfo} />
+        <VSpace units={3} />
+        <Actions billingInfo={billingInfo} organization={organization} />
+        <VSpace units={3} />
+        <ViewNextBillOverview organization={organization} billingInfo={billingInfo} />
+        <VSpace units={3} />
+        <ViewNextBillDetails organization={organization} billingInfo={billingInfo} />
+      </Paper>
     </>
   );
 };

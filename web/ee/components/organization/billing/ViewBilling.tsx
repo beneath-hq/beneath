@@ -1,15 +1,15 @@
+import { useQuery } from "@apollo/client";
 import _ from "lodash";
-import { Container, Dialog, DialogContent, DialogTitle, Grid, Link, Typography } from "@material-ui/core";
+import { Container, Dialog, DialogContent, DialogTitle, Link } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { makeStyles } from "@material-ui/core/styles";
 import dynamic from "next/dynamic";
 import React, { FC } from "react";
 
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
-import { useQuery } from "@apollo/client";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
 import EditTaxInfo from "./tax-info/EditTaxInfo";
 import ViewBillingPlan from "./billing-plan/ViewBillingPlan";
@@ -19,15 +19,6 @@ const useStyles = makeStyles((theme) => ({
   container: {
     padding: "0px",
   },
-  sectionTitle: {
-    marginTop: theme.spacing(8),
-  },
-  firstSectionTitle: {
-    marginTop: theme.spacing(4),
-  },
-  sectionDescription: {
-    marginBottom: theme.spacing(4),
-  }
 }));
 
 export interface ViewBillingProps {
@@ -47,13 +38,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
     },
   });
 
-  if (error) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
-  if (!data) {
-    return <></>;
-  }
+  if (!data ||error) return null;
 
   // alert when you're viewing billing for your personal organization but your main billing is handled by another org
   const specialCase =
@@ -61,7 +46,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
   return (
     <React.Fragment>
-      <Container maxWidth="md" className={classes.container}>
+      <Container maxWidth="sm" className={classes.container}>
         {specialCase && (
           <>
             <Alert severity="info">
@@ -94,25 +79,13 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           <Link href="https://about.beneath.dev/enterprise">here</Link>.
         </Alert>
 
-        <Typography variant="h1" className={classes.firstSectionTitle} gutterBottom>
-          Billing plan
-        </Typography>
-        <Typography variant="body1" className={classes.sectionDescription}>
-          Your current billing plan and information about your next payment
-        </Typography>
+        <VSpace units={3} />
+
         <ViewBillingPlan organization={organization} />
 
-        <Grid container>
-          <Grid item xs={6}>
-            <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-              Billing methods
-            </Typography>
-            <Typography variant="body1" className={classes.sectionDescription}>
-              Payment information on file
-            </Typography>
-            <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
-          </Grid>
-        </Grid>
+        <VSpace units={3} />
+
+        <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
         <Dialog
           open={addCardDialog}
           fullWidth={true}
@@ -125,17 +98,9 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
           </DialogContent>
         </Dialog>
 
-        <Grid container>
-          <Grid item xs={6}>
-            <Typography variant="h1" className={classes.sectionTitle} gutterBottom>
-              Tax info
-            </Typography>
-            <Typography variant="body1" className={classes.sectionDescription}>
-              Information used to compute tax for customers in certain countries
-            </Typography>
-            <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
-          </Grid>
-        </Grid>
+        <VSpace units={3} />
+
+        <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
         <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
           <DialogTitle>Edit tax info</DialogTitle>
           <DialogContent>
