@@ -37,27 +37,20 @@ const CancelBillingPlan: FC<Props> = ({ organization, handleBack }) => {
       onCompleted: (data) => {
         if (data) {
           const orgName = toURLName(organization.name);
-          const href = `/organization/-/billing?organization_name=${orgName}`;
+          const href = `/organization?organization_name=${orgName}&tab=billing`;
           const as = `/${orgName}/-/billing`;
-          router.replace(href, as, {shallow: true});
+          router.replace(href, as);
         }
       },
       refetchQueries: [
         { query: QUERY_ORGANIZATION, variables: { name: organization.name } },
         { query: QUERY_BILLING_INFO, variables: { organizationID: organization.organizationID }, context: { ee: true } },
       ],
-      awaitRefetchQueries: true,
+      // awaitRefetchQueries: true, // This causes a React error: "Can't perform a React state update on an unmounted component"
     }
   );
 
-  if (error) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
-  if (!data) {
-    return <></>;
-  }
-
+  if (!data || error) return null;
   const freePlan = data.billingPlans.filter((billingPlan) => billingPlan.default)[0];
 
   const initialValues = {
@@ -83,28 +76,22 @@ const CancelBillingPlan: FC<Props> = ({ organization, handleBack }) => {
       >
         {({ isSubmitting, status, values }) => (
           <Form>
-            <Grid container>
-              <Grid item xs={3}>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="h2">Cancel plan</Typography>
-                <Field
-                  name="confirmCancel"
-                  component={FormikCheckbox}
-                  type="checkbox"
-                  validate={(checked: any) => {
-                    if (!checked) {
-                      return "Cannot continue without confirming you want to cancel";
-                    }
-                  }}
-                  label={
-                    <span>
-                      I understand that my current usage will be assessed, and, if applicable, I'll be billed for any overages in the current period.
-                    </span>
-                  }
-                />
-              </Grid>
-            </Grid>
+            <Typography variant="h2">Cancel plan</Typography>
+            <Field
+              name="confirmCancel"
+              component={FormikCheckbox}
+              type="checkbox"
+              validate={(checked: any) => {
+                if (!checked) {
+                  return "Cannot continue without confirming you want to cancel";
+                }
+              }}
+              label={
+                <span>
+                  I understand that my current usage will be assessed, and, if applicable, I'll be billed for any overages in the current period.
+                </span>
+              }
+            />
             <SubmitControl label="Cancel plan" severe rightSide cancelFn={handleBack} cancelLabel="Back" errorAlert={status} disabled={!values.confirmCancel || isSubmitting} />
           </Form>
         )}

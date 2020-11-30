@@ -45,18 +45,18 @@ const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
     {
       context: { ee: true },
       onCompleted: (data) => {
-        if (data) {
+        if (data.updateBillingPlan) {
           const orgName = toURLName(organization.name);
           const href = `/organization?organization_name=${orgName}&tab=billing`;
           const as = `/${orgName}/-/billing`;
-          router.replace(href, as, {shallow: true});
+          router.replace(href, as);
         }
       },
       refetchQueries: [
         { query: QUERY_ORGANIZATION, variables: { name: organization.name } },
         { query: QUERY_BILLING_INFO, variables: { organizationID: organization.organizationID }, context: { ee: true } },
       ],
-      awaitRefetchQueries: true,
+      // awaitRefetchQueries: true, // This causes a React error: "Can't perform a React state update on an unmounted component"
     }
   );
 
