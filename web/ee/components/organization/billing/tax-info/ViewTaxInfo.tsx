@@ -11,7 +11,8 @@ import { CallToAction } from "components/ContentContainer";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
-    padding: theme.spacing(3)
+    padding: theme.spacing(3),
+    height: "100%"
   },
   textData: {
     fontWeight: "bold",
@@ -22,10 +23,10 @@ export interface BillingInfoProps {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
   editable?: boolean;
   editTaxInfo?: (value: boolean) => void;
-  noCaption?: boolean;
+  littleHeader?: boolean;
 }
 
-const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo, noCaption }) => {
+const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo, littleHeader }) => {
   const classes = useStyles();
 
   const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
@@ -68,7 +69,7 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
   return (
     <>
       <Paper variant="outlined" className={classes.paper}>
-        <Typography variant="h1" gutterBottom>Tax info</Typography>
+        <Typography variant={littleHeader ? "h2" : "h1"} gutterBottom>Tax info</Typography>
         <Typography variant="body2" color="textSecondary">
           Information used to compute tax for customers in certain countries
         </Typography>
@@ -87,7 +88,6 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
                 </Typography>
               </Grid>
             </Grid>
-            <VSpace units={1} />
           </React.Fragment>
         ))}
         {editable && editTaxInfo && (

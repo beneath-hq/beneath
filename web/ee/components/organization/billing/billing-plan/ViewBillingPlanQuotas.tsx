@@ -53,7 +53,7 @@ const ViewBillingPlanQuotas: FC<Props> = ({billingPlan}) => {
               <>
               <Grid container>
                 <Grid item>
-                  <Table size="small">
+                  <Table size="medium">
                     <TableHead>
                       <TableRow>
                         <TableCell></TableCell>
@@ -83,7 +83,7 @@ const ViewBillingPlanQuotas: FC<Props> = ({billingPlan}) => {
               <>
                 <Grid container>
                   <Grid item>
-                    <Table size="small">
+                    <Table size="medium">
                       <TableHead>
                         <TableRow>
                           <TableCell></TableCell>

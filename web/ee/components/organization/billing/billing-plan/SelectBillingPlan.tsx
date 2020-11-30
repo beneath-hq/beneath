@@ -7,12 +7,20 @@ import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
 import ViewBillingPlanQuotas from "./ViewBillingPlanQuotas";
-import { List, ListItem, makeStyles } from "@material-ui/core";
+import { Grid, List, ListItem, makeStyles } from "@material-ui/core";
 import VSpace from "components/VSpace";
 
 const useStyles = makeStyles((theme) => ({
+  list: {
+    display: 'flex',
+    flexDirection: 'row',
+    padding: theme.spacing(0),
+  },
   listItem: {
-    padding: "0px",
+    padding: theme.spacing(0),
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
+    borderRadius: "4px",
   },
 }));
 
@@ -28,15 +36,21 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
     context: { ee: true },
   });
 
-  if (!data) {
-    return <></>;
-  }
+  if (!data || error) return null;
+
+  const sortedBillingPlans = data.billingPlans.slice().sort((a, b) => {
+    if (a.UIRank && b.UIRank) {
+      return (a.UIRank > b.UIRank ? 1 : -1);
+    } else {
+      return 0;
+    }
+  });
 
   return (
     <>
-      {data.billingPlans.map((billingPlan) => (
-        <React.Fragment key={billingPlan.billingPlanID}>
-          <List>
+      <List className={classes.list}>
+        {sortedBillingPlans.map((billingPlan) => (
+          <React.Fragment key={billingPlan.billingPlanID}>
             <ListItem
               button
               selected={selectedBillingPlan === billingPlan}
@@ -45,17 +59,24 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
             >
               <ViewBillingPlanDescription
                 billingPlan={billingPlan}
-                current={(billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID)}
+                selectable
                 selected={selectedBillingPlan === billingPlan}
+                current={(billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID)}
               />
             </ListItem>
-          </List>
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        ))}
+      </List>
       {selectedBillingPlan && (
         <>
-          <VSpace units={3} />
-          <ViewBillingPlanQuotas billingPlan={selectedBillingPlan} />
+          <VSpace units={6} />
+          <Grid container>
+            <Grid item xs={2}>
+            </Grid>
+            <Grid item xs={8}>
+              <ViewBillingPlanQuotas billingPlan={selectedBillingPlan} />
+            </Grid>
+          </Grid>
         </>
       )}
     </>

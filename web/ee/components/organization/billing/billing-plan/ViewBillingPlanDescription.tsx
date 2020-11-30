@@ -9,7 +9,9 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(3),
     overflowX: "auto",
-    width: "inherit",
+    height: "100%",
+  },
+  selectablePaper: {
     "&:hover": {
       backgroundColor: theme.palette.primary.dark,
       borderColor: theme.palette.primary.dark
@@ -18,16 +20,17 @@ const useStyles = makeStyles((theme) => ({
   selectedPaper: {
     backgroundColor: theme.palette.primary.dark,
     borderColor: theme.palette.primary.dark
-  }
+  },
 }));
 
 interface Props {
   billingPlan: BillingInfo_billingInfo_billingPlan;
+  selectable?: boolean;
   current?: boolean;
   selected?: boolean;
 }
 
-const ViewBillingPlanDescription: FC<Props> = ({billingPlan, current, selected}) => {
+const ViewBillingPlanDescription: FC<Props> = ({billingPlan, selectable, selected, current}) => {
   const classes = useStyles();
   const currencyFormatter = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
@@ -35,28 +38,34 @@ const ViewBillingPlanDescription: FC<Props> = ({billingPlan, current, selected})
 
   return (
     <>
-      <Paper className={clsx(classes.paper, selected && classes.selectedPaper)} variant="outlined">
-        <Grid container alignItems="center" spacing={2} justify="space-between">
-          <Grid item>
-            <Grid container spacing={2}>
-              <Grid item>
-                <Typography variant="h3">{billingPlan.name}</Typography>
-              </Grid>
-              {current && (
-                <Grid item>
-                  <Typography>
-                    Current
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </Grid>
-          <Grid item>
-            <Typography>
-              {(isOverage ? "starting at " : "") + currencyFormatter.format(billingPlan.basePriceCents / 100)} / month
+      <Paper className={clsx(classes.paper, selectable && classes.selectablePaper, selected && classes.selectedPaper)} variant="outlined">
+        {!selectable && (
+          <>
+            <Typography variant="h2" gutterBottom>
+              Billing Plan
             </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Your new billing plan to begin immediately upon purchase
+            </Typography>
+            <VSpace units={3} />
+          </>
+        )}
+        <Grid container spacing={2} alignItems="center">
+          <Grid item>
+            <Typography><strong>{billingPlan.name}</strong></Typography>
           </Grid>
+          {current && (
+            <Grid item >
+              <Typography>
+                (Current plan)
+              </Typography>
+            </Grid>
+          )}
         </Grid>
+        <VSpace units={1} />
+        <Typography>
+          {(isOverage ? "starting at " : "") + currencyFormatter.format(billingPlan.basePriceCents / 100)} / month
+        </Typography>
         <VSpace units={3} />
         <Typography>{billingPlan.description}</Typography>
       </Paper>

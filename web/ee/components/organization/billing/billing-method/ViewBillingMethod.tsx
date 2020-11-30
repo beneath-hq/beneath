@@ -4,8 +4,9 @@ import { STRIPECARD_DRIVER } from "ee/lib/billing";
 import React, { FC } from "react";
 
 const useStyles = makeStyles((theme) => ({
-  paperPadding: {
-    padding: theme.spacing(3)
+  paper: {
+    padding: theme.spacing(3),
+    height: "100%"
   },
   textData: {
     fontWeight: "bold",
@@ -40,7 +41,14 @@ const ViewBillingMethod: FC<Props> = ({paymentsDriver, driverPayload}) => {
 
   return (
     <>
-      <Paper className={classes.paperPadding} variant="outlined">
+      <Paper variant="outlined" className={classes.paper}>
+        <Typography variant="h2" gutterBottom>
+          Billing method
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Your active billing method to be used for future payments
+        </Typography>
+        <VSpace units={3} />
         {paymentsDriver === STRIPECARD_DRIVER && rows && (
           <>
             {rows.map((row) => (
@@ -57,7 +65,6 @@ const ViewBillingMethod: FC<Props> = ({paymentsDriver, driverPayload}) => {
                     </Typography>
                   </Grid>
                 </Grid>
-                <VSpace units={1} />
               </React.Fragment>
             ))}
           </>
