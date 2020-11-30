@@ -16,14 +16,16 @@ import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
 import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { UpdateBillingPlan, UpdateBillingPlanVariables } from "ee/apollo/types/UpdateBillingPlan";
+import { toURLName } from "lib/names";
+import { useRouter } from "next/router";
 
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
   handleBack: () => void;
-  closeAndReset: () => void;
 }
 
-const CancelBillingPlan: FC<Props> = ({ organization, handleBack, closeAndReset }) => {
+const CancelBillingPlan: FC<Props> = ({ organization, handleBack }) => {
+  const router = useRouter();
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
   });
@@ -34,7 +36,10 @@ const CancelBillingPlan: FC<Props> = ({ organization, handleBack, closeAndReset 
       context: { ee: true },
       onCompleted: (data) => {
         if (data) {
-          closeAndReset(); // close the dialog
+          const orgName = toURLName(organization.name);
+          const href = `/organization/-/billing?organization_name=${orgName}`;
+          const as = `/${orgName}/-/billing`;
+          router.replace(href, as, {shallow: true});
         }
       },
       refetchQueries: [

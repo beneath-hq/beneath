@@ -75,6 +75,17 @@ const makeCrumbs = (router: NextRouter) => {
     return [
       <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
     ];
+  } else if (router.route === "/organization/-/billing/checkout") {
+    return [
+      <OrganizationCrumb key={1} organization={router.query.organization_name as string} tab="billing" />,
+      <Crumb
+        key={2}
+        href={`/organization/-/billing/checkout?organization_name=${router.query.organization_name}`}
+        as={`/${router.query.organization_name}/-/billing/checkout`}
+        label="Change plan"
+        isCurrent={true}
+      />
+    ];
   } else if (router.route === "/service") {
     return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,

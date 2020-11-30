@@ -4,6 +4,7 @@ import { FC } from "react";
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
 import { toURLName } from "lib/names";
+import { NakedLink } from "components/Link";
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -35,7 +36,9 @@ const Actions: FC<Props> = ({billingInfo, organization}) => {
                 variant="contained"
                 className={classes.button}
                 color="primary"
+                component={NakedLink}
                 href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+                as={`${toURLName(organization.name)}/-/billing/checkout`}
               >
                 Upgrade plan
               </Button>
@@ -49,7 +52,9 @@ const Actions: FC<Props> = ({billingInfo, organization}) => {
               <Button
                 variant="contained"
                 className={classes.button}
+                component={NakedLink}
                 href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+                as={`${toURLName(organization.name)}/-/billing/checkout`}
               >
                 Change plan
               </Button>

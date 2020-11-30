@@ -45,10 +45,7 @@ const Checkout: FC<Props> = ({organization}) => {
     },
   });
 
-  if (!data) {
-    return <></>;
-  }
-
+  if (!data) return null;
   const billingInfo = data.billingInfo;
 
   const steps = ['Select a plan', 'Choose your billing method', 'Provide tax information', 'Finalize'];
@@ -68,11 +65,6 @@ const Checkout: FC<Props> = ({organization}) => {
       return;
     }
     setActiveStep(activeStep - 1);
-  };
-
-  const closeAndReset = () => {
-    setActiveStep(0);
-    setSelectedBillingPlan(null);
   };
 
   return (
@@ -133,10 +125,10 @@ const Checkout: FC<Props> = ({organization}) => {
         {activeStep === 3 && selectedBillingPlan && billingInfo.billingMethod && (
           <>
             {!selectedBillingPlan.default && (
-              <Finalize organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} closeAndReset={closeAndReset} />
+              <Finalize organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} />
             )}
             {selectedBillingPlan.default && (
-              <CancelBillingPlan organization={organization} handleBack={handleBack} closeAndReset={closeAndReset} />
+              <CancelBillingPlan organization={organization} handleBack={handleBack} />
             )}
           </>
         )}

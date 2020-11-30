@@ -1,12 +1,10 @@
 import _ from "lodash";
 import React, { FC } from "react";
 import {
-  Box,
   Grid,
   Link,
   makeStyles,
   Theme,
-  Typography,
 } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
@@ -23,6 +21,8 @@ import { QUERY_BILLING_INFO, UPDATE_BILLING_PLAN } from "ee/apollo/queries/billi
 import { QUERY_ORGANIZATION } from "apollo/queries/organization";
 import ViewBillingPlanDescription from "./billing-plan/ViewBillingPlanDescription";
 import VSpace from "components/VSpace";
+import { useRouter } from "next/router";
+import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme: Theme) => ({
   sectionTitle: {
@@ -35,19 +35,21 @@ interface Props {
   billingMethod: BillingInfo_billingInfo_billingMethod;
   selectedBillingPlan: BillingInfo_billingInfo_billingPlan;
   handleBack: () => void;
-  closeAndReset: () => void;
-  // closeDialogue: (confirmationMessage: string) => void;
 }
 
-const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack, closeAndReset }) => {
+const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack }) => {
   const classes = useStyles();
+  const router = useRouter();
   const [updateBillingPlan] = useMutation<UpdateBillingPlan, UpdateBillingPlanVariables>(
     UPDATE_BILLING_PLAN,
     {
       context: { ee: true },
       onCompleted: (data) => {
         if (data) {
-          closeAndReset();
+          const orgName = toURLName(organization.name);
+          const href = `/organization?organization_name=${orgName}&tab=billing`;
+          const as = `/${orgName}/-/billing`;
+          router.replace(href, as, {shallow: true});
         }
       },
       refetchQueries: [
@@ -66,30 +68,13 @@ const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
     <>
       <Grid container spacing={2}>
         <Grid item xs={4}>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Billing plan
-          </Typography>
           <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
         </Grid>
         <Grid item xs={4}>
-          {/* <TitledPaper title="Billing method" titlePlacement="outside">  future props: caption, callToAction */}
-          {/* on grid item: display flex, flex-direction: column; on paper: flex-grow 1 */}
-            {/* <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} /> */}
-          {/* </TitledPaper> */}
-          <Box display="flex" flexDirection="column">
-            <Typography variant="h2" className={classes.sectionTitle}>
-              Billing method
-            </Typography>
-            <Box flexGrow="1">
-            <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
-            </Box>
-          </Box>
+          <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
         </Grid>
-        <Grid item xs={4}> 
-          <Typography variant="h2" className={classes.sectionTitle}>
-            Tax info
-          </Typography>
-          <ViewTaxInfo organization={organization} />
+        <Grid item xs={4}>
+          <ViewTaxInfo organization={organization} littleHeader />
         </Grid>
       </Grid>
       <VSpace units={9} />
