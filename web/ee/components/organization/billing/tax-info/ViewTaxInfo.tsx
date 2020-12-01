@@ -14,8 +14,14 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
     height: "100%"
   },
+  paperTitle: {
+    marginBottom: theme.spacing(1),
+  },
   textData: {
     fontWeight: "bold",
+  },
+  button: {
+    marginTop: theme.spacing(3)
   }
 }));
 
@@ -69,7 +75,7 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
   return (
     <>
       <Paper variant="outlined" className={classes.paper}>
-        <Typography variant={littleHeader ? "h2" : "h1"} gutterBottom>Tax info</Typography>
+        <Typography variant={littleHeader ? "h2" : "h1"} className={classes.paperTitle}>Tax info</Typography>
         <Typography variant="body2" color="textSecondary">
           Information used to compute tax for customers in certain countries
         </Typography>
@@ -92,8 +98,7 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, editable, editTaxInfo
         ))}
         {editable && editTaxInfo && (
           <>
-            <VSpace units={3} />
-            <Button onClick={() => editTaxInfo(true)} variant="contained">
+            <Button onClick={() => editTaxInfo(true)} variant="contained" className={classes.button}>
               Edit
             </Button>
           </>

@@ -67,17 +67,17 @@ const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <ViewBillingPlanDescription billingPlan={selectedBillingPlan} />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <ViewBillingMethod paymentsDriver={billingMethod.paymentsDriver} driverPayload={billingMethod.driverPayload} />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <ViewTaxInfo organization={organization} littleHeader />
         </Grid>
       </Grid>
-      <VSpace units={9} />
+      <VSpace units={3} />
       <Formik
         initialValues={initialValues}
         onSubmit={(values, actions) =>
@@ -113,7 +113,6 @@ const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
                 </span>
               }
             />
-            <VSpace units={3} />
             <SubmitControl label="Purchase" cancelFn={handleBack} cancelLabel="Back" rightSide errorAlert={status} disabled={!values.consentTerms || isSubmitting} />
           </Form>
         )}

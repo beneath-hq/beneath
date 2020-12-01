@@ -82,7 +82,7 @@ const makeCrumbs = (router: NextRouter) => {
         key={2}
         href={`/organization/-/billing/checkout?organization_name=${router.query.organization_name}`}
         as={`/${router.query.organization_name}/-/billing/checkout`}
-        label="Change plan"
+        label="Checkout"
         isCurrent={true}
       />
     ];

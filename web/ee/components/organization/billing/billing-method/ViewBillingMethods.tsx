@@ -1,6 +1,6 @@
 import {useMutation, useQuery } from "@apollo/client";
 import _ from "lodash";
-import { Button, makeStyles, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import { Button, Grid, makeStyles, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
 import { MoreVert } from "@material-ui/icons";
 import React, { FC } from "react";
 
@@ -14,16 +14,23 @@ import { UpdateBillingMethod, UpdateBillingMethodVariables } from "ee/apollo/typ
 import { UPDATE_BILLING_METHOD } from "ee/apollo/queries/billingInfo";
 import {ANARCHISM_DRIVER, STRIPECARD_DRIVER, STRIPEWIRE_DRIVER} from "ee/lib/billing";
 import VSpace from "components/VSpace";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(3)
   },
+  paperTitle: {
+    marginBottom: theme.spacing(1),
+  },
   container: {
     overflowX: "auto",
   },
+  active: {
+    fontWeight: "bold",
+  },
   button: {
-    marginTop: theme.spacing(4),
+    marginTop: theme.spacing(3),
   },
   dropdownButton: {
     backgroundColor: theme.palette.background.paper,
@@ -99,44 +106,54 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
   return (
     <>
       <Paper variant="outlined" className={classes.paper}>
-        <Typography variant="h1" gutterBottom>
+        <Typography variant="h1" className={classes.paperTitle}>
           Billing methods
         </Typography>
         <Typography variant="body2" color="textSecondary">
           Payment information on file
         </Typography>
         <VSpace units={3} />
-        <Table className={classes.container}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Type</TableCell>
-              <TableCell>Details</TableCell>
-              <TableCell>Active</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.billingMethods.map((billingMethod) => (
-              <TableRow
-                key={billingMethod.billingMethodID}
-              >
-                <TableCell>{formatDriver(billingMethod.paymentsDriver)}</TableCell>
-                <TableCell>{formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}</TableCell>
-                <TableCell>{billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}</TableCell>
-                <TableCell>
-                  <DropdownButton
-                    variant="contained"
-                    margin="dense"
-                    actions={getBillingMethodActions(billingMethod)}
-                    className={classes.dropdownButton}
+        <Grid container className={classes.container}>
+          <Grid item xs={12}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Details</TableCell>
+                  <TableCell>Active</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data.billingMethods.map((billingMethod) => (
+                  <TableRow
+                    key={billingMethod.billingMethodID}
                   >
-                    <MoreVert />
-                  </DropdownButton>
-                  </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
+                      {formatDriver(billingMethod.paymentsDriver)}
+                    </TableCell>
+                    <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
+                      {formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}
+                    </TableCell>
+                    <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
+                      {billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownButton
+                        variant="contained"
+                        margin="dense"
+                        actions={getBillingMethodActions(billingMethod)}
+                        className={classes.dropdownButton}
+                      >
+                        <MoreVert />
+                      </DropdownButton>
+                      </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Grid>
+        </Grid>
         <Button variant="contained" onClick={() => addCard(true)} className={classes.button}>Add card</Button>
       </Paper>
     </>

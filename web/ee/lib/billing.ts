@@ -8,6 +8,8 @@ export const STRIPE_KEY = IS_PRODUCTION
   ? "pk_live_fh1lh1v8DRZgX3zJ8IQKw2lu00ohe93Rdj"
   : "pk_test_L140lbWnkGmtqSiw8rH2wcNs00otQFgbbr";
 
+export const CONTACT_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSdsO3kcT3yk0Cgc4MzkPR_d16jZiYQd7L0M3ZxGwdOYycGhIg/viewform?usp=sf_link";
+
 export const COUNTRY_CODES = [
   {  value: "Afghanistan", label: "Afghanistan", code: "AF" },
   {  value: "Åland Islands", label: "Åland Islands", code: "AX"},
@@ -572,6 +574,7 @@ export default {
   STRIPECARD_DRIVER,
   STRIPEWIRE_DRIVER,
   STRIPE_KEY,
+  CONTACT_FORM_LINK,
   COUNTRIES,
   US_STATES
 };

@@ -1,10 +1,15 @@
 import { Grid, makeStyles, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import { FC } from "react";
+
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import { prettyPrintBytes } from "components/metrics/util";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
-import { FC } from "react";
 
 const useStyles = makeStyles((theme) => ({
+  sectionHeader: {
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(3)
+  },
   container: {
     overflowX: "auto",
   },
@@ -33,7 +38,7 @@ const ViewNextBillDetails: FC<Props> = ({organization, billingInfo}) => {
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h2" className={classes.sectionHeader} >
         Details of your next bill
       </Typography>
 

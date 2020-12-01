@@ -1,20 +1,24 @@
-import { Grid, makeStyles, Paper, Typography } from "@material-ui/core";
+import { useQuery } from "@apollo/client";
+import { Grid, makeStyles, Typography } from "@material-ui/core";
 import { FC } from "react";
 import Moment from "react-moment";
 
-import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
-import clsx from "clsx";
-import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import { QUERY_ORGANIZATION_MEMBERS } from "apollo/queries/organization";
-import { useQuery } from "@apollo/client";
+import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import { OrganizationMembers, OrganizationMembersVariables } from "apollo/types/OrganizationMembers";
+import clsx from "clsx";
+import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
 
 const useStyles = makeStyles((theme) => ({
+  sectionHeader: {
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(3)
+  },
   billItem: {
     fontSize: theme.typography.pxToRem(36),
   },
   billTotal: {
-    color: theme.palette.primary.dark,
+    color: theme.palette.primary.main,
   },
   mathOperator: {
     fontSize: theme.typography.pxToRem(36)
@@ -52,7 +56,7 @@ const ViewNextBillOverview: FC<Props> = ({organization, billingInfo}) => {
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>
+      <Typography variant="h2" className={classes.sectionHeader}>
         Overview of your next bill
       </Typography>
       <Grid container alignItems="center" spacing={3} justify="center">

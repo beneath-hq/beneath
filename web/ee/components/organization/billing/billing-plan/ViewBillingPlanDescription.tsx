@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 
 import { BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
-import { Grid, makeStyles, Paper, Typography } from "@material-ui/core";
+import { makeStyles, Paper, Typography } from "@material-ui/core";
 import VSpace from "components/VSpace";
 import clsx from "clsx";
 
@@ -10,6 +10,10 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
     overflowX: "auto",
     height: "100%",
+    width: "100%",
+  },
+  paperTitle: {
+    marginBottom: theme.spacing(1),
   },
   selectablePaper: {
     "&:hover": {
@@ -17,9 +21,19 @@ const useStyles = makeStyles((theme) => ({
       borderColor: theme.palette.primary.dark
     },
   },
+  currentSelectablePaper: {
+    "&:hover": {
+      backgroundColor: theme.palette.secondary.dark,
+      borderColor: theme.palette.secondary.dark
+    },
+  },
   selectedPaper: {
     backgroundColor: theme.palette.primary.dark,
     borderColor: theme.palette.primary.dark
+  },
+  currentSelectedPaper: {
+    backgroundColor: theme.palette.secondary.dark,
+    borderColor: theme.palette.secondary.dark
   },
 }));
 
@@ -38,10 +52,19 @@ const ViewBillingPlanDescription: FC<Props> = ({billingPlan, selectable, selecte
 
   return (
     <>
-      <Paper className={clsx(classes.paper, selectable && classes.selectablePaper, selected && classes.selectedPaper)} variant="outlined">
+      <Paper
+        className={clsx(
+          classes.paper,
+          selectable && classes.selectablePaper,
+          selected && classes.selectedPaper,
+          selectable && current && classes.currentSelectablePaper,
+          selected && current && classes.currentSelectedPaper
+        )}
+        variant="outlined"
+      >
         {!selectable && (
           <>
-            <Typography variant="h2" gutterBottom>
+            <Typography variant="h2" className={classes.paperTitle}>
               Billing Plan
             </Typography>
             <Typography variant="body2" color="textSecondary">
@@ -50,18 +73,7 @@ const ViewBillingPlanDescription: FC<Props> = ({billingPlan, selectable, selecte
             <VSpace units={3} />
           </>
         )}
-        <Grid container spacing={2} alignItems="center">
-          <Grid item>
-            <Typography><strong>{billingPlan.name}</strong></Typography>
-          </Grid>
-          {current && (
-            <Grid item >
-              <Typography>
-                (Current plan)
-              </Typography>
-            </Grid>
-          )}
-        </Grid>
+        <Typography><strong>{billingPlan.name}</strong></Typography>
         <VSpace units={1} />
         <Typography>
           {(isOverage ? "starting at " : "") + currencyFormatter.format(billingPlan.basePriceCents / 100)} / month

@@ -8,6 +8,9 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
     height: "100%"
   },
+  paperTitle: {
+    marginBottom: theme.spacing(1),
+  },
   textData: {
     fontWeight: "bold",
   }
@@ -42,7 +45,7 @@ const ViewBillingMethod: FC<Props> = ({paymentsDriver, driverPayload}) => {
   return (
     <>
       <Paper variant="outlined" className={classes.paper}>
-        <Typography variant="h2" gutterBottom>
+        <Typography variant="h2" className={classes.paperTitle}>
           Billing method
         </Typography>
         <Typography variant="body2" color="textSecondary">

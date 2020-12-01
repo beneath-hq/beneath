@@ -1,26 +1,45 @@
 import { useQuery } from "@apollo/client";
 import _ from "lodash";
+import { Link, List, ListItem, makeStyles } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
 import React, { FC } from "react";
 
 import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
-import { BillingPlans } from "ee/apollo/types/BillingPlans";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
+import { BillingPlans } from "ee/apollo/types/BillingPlans";
+import { CONTACT_FORM_LINK } from "ee/lib/billing";
+import VSpace from "components/VSpace";
 import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
 import ViewBillingPlanQuotas from "./ViewBillingPlanQuotas";
-import { Grid, List, ListItem, makeStyles } from "@material-ui/core";
-import VSpace from "components/VSpace";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
   list: {
     display: 'flex',
-    flexDirection: 'row',
     padding: theme.spacing(0),
+    [theme.breakpoints.down("xs")]: {
+      flexDirection: 'column',
+    },
+    [theme.breakpoints.up("sm")]: {
+      flexDirection: 'row',
+    },
   },
   listItem: {
     padding: theme.spacing(0),
     marginLeft: theme.spacing(2),
-    marginRight: theme.spacing(2),
+    [theme.breakpoints.down("xs")]: {
+      marginLeft: theme.spacing(0),
+      marginTop: theme.spacing(2),
+    },
     borderRadius: "4px",
+  },
+  firstListItem: {
+    [theme.breakpoints.down("xs")]: {
+      marginTop: theme.spacing(0),
+    },
+    [theme.breakpoints.up("sm")]: {
+      marginLeft: theme.spacing(0),
+    },
   },
 }));
 
@@ -48,19 +67,21 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
 
   return (
     <>
+      <Alert severity="info"><Link href={CONTACT_FORM_LINK}>Contact sales</Link> for Enterprise plans, which offer custom pricing, team billing, premium support, and more</Alert>
+      <VSpace units={3} />
       <List className={classes.list}>
-        {sortedBillingPlans.map((billingPlan) => (
+        {sortedBillingPlans.map((billingPlan, idx) => (
           <React.Fragment key={billingPlan.billingPlanID}>
             <ListItem
               button
-              selected={selectedBillingPlan === billingPlan}
+              selected={selectedBillingPlan?.billingPlanID === billingPlan.billingPlanID}
               onClick={() => selectBillingPlan(billingPlan)}
-              className={classes.listItem}
+              className={clsx(classes.listItem, idx===0 && classes.firstListItem)}
             >
               <ViewBillingPlanDescription
                 billingPlan={billingPlan}
                 selectable
-                selected={selectedBillingPlan === billingPlan}
+                selected={selectedBillingPlan?.billingPlanID === billingPlan.billingPlanID}
                 current={(billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID)}
               />
             </ListItem>
@@ -69,14 +90,8 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
       </List>
       {selectedBillingPlan && (
         <>
-          <VSpace units={6} />
-          <Grid container>
-            <Grid item xs={2}>
-            </Grid>
-            <Grid item xs={8}>
-              <ViewBillingPlanQuotas billingPlan={selectedBillingPlan} />
-            </Grid>
-          </Grid>
+          <VSpace units={4} />
+          <ViewBillingPlanQuotas billingPlan={selectedBillingPlan} />
         </>
       )}
     </>

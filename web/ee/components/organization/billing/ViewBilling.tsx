@@ -46,7 +46,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
   return (
     <React.Fragment>
-      <Container maxWidth="sm" className={classes.container}>
+      <Container maxWidth="md" className={classes.container}>
         {specialCase && (
           <>
             <Alert severity="info">

@@ -15,6 +15,9 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   severeButton: {
     backgroundColor: theme.palette.error.main,
+    "&:hover": {
+      backgroundColor: theme.palette.secondary.dark,
+    }
   },
   timestamps: {
     marginTop: 24,
