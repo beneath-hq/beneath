@@ -75,17 +75,30 @@ const makeCrumbs = (router: NextRouter) => {
     return [
       <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
     ];
-  } else if (router.route === "/organization/-/billing/checkout") {
-    return [
-      <OrganizationCrumb key={1} organization={router.query.organization_name as string} tab="billing" />,
-      <Crumb
-        key={2}
-        href={`/organization/-/billing/checkout?organization_name=${router.query.organization_name}`}
-        as={`/${router.query.organization_name}/-/billing/checkout`}
-        label="Checkout"
-        isCurrent={true}
-      />
-    ];
+  } else if (router.route === "/-/billing/checkout") {
+    if (typeof router.query.organization_name === "string") {
+      const organizationName = router.query.organization_name;
+      return [
+        <OrganizationCrumb key={1} organization={organizationName} tab="billing" />,
+        <Crumb
+          key={2}
+          href={`/-/billing/checkout?organization_name=${organizationName}`}
+          as={`/${organizationName}/-/billing/checkout`}
+          label="Billing checkout"
+          isCurrent={true}
+        />
+      ];
+    } else {
+      return [
+        <Crumb
+          key={1}
+          href={`/-/billing/checkout`}
+          as={`/-/billing/checkout`}
+          label="Billing checkout"
+          isCurrent={true}
+        />
+      ];
+    }
   } else if (router.route === "/service") {
     return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
@@ -110,9 +123,7 @@ const makeCrumbs = (router: NextRouter) => {
       />,
     ];
   } else if (router.route === "/-/create/project") {
-    return [
-      <Crumb key={0} href="/-/create/project" label="Create project" isCurrent={true} />
-    ];
+    return [<Crumb key={0} href="/-/create/project" label="Create project" isCurrent={true} />];
   } else if (router.route === "/-/create/stream") {
     return [<Crumb key={0} href="/-/create/stream" label="Create stream" isCurrent={true} />];
   } else if (router.route === "/-/sql") {

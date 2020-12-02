@@ -69,7 +69,7 @@ const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
                 variant="contained"
                 color="primary"
                 component={NakedLink}
-                href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+                href={`/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
                 as={`${toURLName(organization.name)}/-/billing/checkout`}
               >
                 Upgrade plan
@@ -81,7 +81,7 @@ const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
               <Button
                 variant="contained"
                 component={NakedLink}
-                href={`/organization/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
+                href={`/-/billing/checkout?organization_name=${toURLName(organization.name)}`}
                 as={`${toURLName(organization.name)}/-/billing/checkout`}
               >
                 Change plan

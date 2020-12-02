@@ -9,15 +9,28 @@ import ErrorPage from "components/ErrorPage";
 import Loading from "components/Loading";
 import Page from "components/Page";
 import EditBilling from "ee/components/organization/billing/Checkout";
+import { IS_EE } from "lib/connection";
 import { toBackendName } from "lib/names";
+import useMe from "hooks/useMe";
+
+// This page's route appears as /[organization]/-/billing/checkout
 
 const CheckoutPage: NextPage = () => {
   const router = useRouter();
+  const me = useMe();
 
-  if (typeof router.query.organization_name !== "string") {
+  if (!IS_EE) {
     return <ErrorPage statusCode={404} />;
   }
-  const organizationName = toBackendName(router.query.organization_name);
+
+  if (!me) return null;
+
+  let organizationName;
+  if (typeof router.query.organization_name !== "string") {
+    organizationName = me.name;
+  } else {
+    organizationName = toBackendName(router.query.organization_name);
+  }
 
   const { loading, error, data } = useQuery<OrganizationByName, OrganizationByNameVariables>(QUERY_ORGANIZATION, {
     variables: { name: organizationName },
@@ -46,10 +59,10 @@ const CheckoutPage: NextPage = () => {
     );
   } else {
     return (
+      // If a "PublicOrganization" is returned, you don't have permission to access this page
       <ErrorPage />
     );
   }
-
 };
 
 export default withApollo(CheckoutPage);
