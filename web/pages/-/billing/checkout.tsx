@@ -23,7 +23,9 @@ const CheckoutPage: NextPage = () => {
     return <ErrorPage statusCode={404} />;
   }
 
-  if (!me) return null;
+  if (!me) {
+    return <ErrorPage statusCode={401} />;
+  }
 
   let organizationName;
   if (typeof router.query.organization_name !== "string") {
