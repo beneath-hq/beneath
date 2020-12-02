@@ -100,7 +100,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
         <VSpace units={3} />
 
-        <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog}/>
+        <ViewTaxInfo organization={organization} onEdit={() => setEditTaxInfoDialog(true)}/>
         <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
           <DialogTitle>Edit tax info</DialogTitle>
           <DialogContent>

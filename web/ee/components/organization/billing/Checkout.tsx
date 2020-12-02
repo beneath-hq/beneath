@@ -115,7 +115,7 @@ const Checkout: FC<Props> = ({organization}) => {
       {activeStep === 2 && (
         <>
           <Grid container justify="center">
-            <ViewTaxInfo organization={organization} editable editTaxInfo={setEditTaxInfoDialog} />
+            <ViewTaxInfo organization={organization} onEdit={() => setEditTaxInfoDialog(true)} />
             <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
               <DialogTitle>Edit tax info</DialogTitle>
               <DialogContent>
