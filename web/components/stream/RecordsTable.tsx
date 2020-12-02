@@ -162,18 +162,6 @@ const RecordsTable: FC<RecordsTableProps> = ({
                     )}
                   </TableRow>
                 ))}
-                {records && records.length === 0 && times(3, (num) => (
-                  <TableRow key={num} hover={true}>
-                    {columns.map((column, idx) => (
-                      <TableCell
-                        key={idx}
-                        className={clsx(classes.cell, column.isKey && classes.keyCell, classes.emptyCell)}
-                        align={column.isNumeric ? "right" : "left"}
-                      >
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
             </TableBody>
           </Table>
         )}

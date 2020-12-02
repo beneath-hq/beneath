@@ -121,20 +121,21 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
   if (loading && records.length === 0) { loadingBool=true; }
 
   // CTAs
-  let cta: CallToAction | undefined;
+  let containerCta: CallToAction | undefined;
+  if (!fetchMore && fetchMoreChanges) {
+    containerCta = {
+      buttons: [
+        { label: "Fetch more changes", onClick: () => fetchMoreChanges() }
+      ]
+    };
+  }
+  let tableCta: CallToAction | undefined;
   if (!loading && filter === "" && records.length === 0) {
-    cta = {
+    tableCta = {
       message: `There's no data in this stream instance`,
       buttons: [
         // { label: "Write a record", onClick: () => setWriteDialog(true) },
         { label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" }
-      ]
-    };
-  }
-  if (!fetchMore && fetchMoreChanges) {
-    cta = {
-      buttons: [
-        { label: "Fetch more changes", onClick: () => fetchMoreChanges() }
       ]
     };
   }
@@ -151,7 +152,11 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
     note = "We removed some records from the bottom to fit new records in the table";
   }
   if (!fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
-    note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} ${filter !== "" ? "that match the filter" : ""}`;
+    if (filter === "") {
+      note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
+    } else {
+      note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} "that match the filter"`;
+    }
   }
 
   // Messages at the top of the table use this component
@@ -164,7 +169,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
   return (
     <>
       <ContentContainer
-        callToAction={cta}
+        callToAction={containerCta}
         loading={loadingBool}
         error={errorString}
         note={note}
@@ -338,7 +343,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
           fetchMore={fetchMore}
           showTimestamps={queryType === "log"}
           error={undefined} /* Todo */
-          callToAction={undefined} /* Todo */
+          callToAction={tableCta}
         />
       </ContentContainer>
     </>
