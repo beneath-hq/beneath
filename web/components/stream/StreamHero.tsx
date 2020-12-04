@@ -21,6 +21,7 @@ import CreateInstance from "./CreateInstance";
 import DeleteInstance from "./DeleteInstance";
 import PromoteInstance from "./PromoteInstance";
 import { Instance } from "pages/stream";
+import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -102,9 +103,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
           <Grid item>
             <Grid container alignItems="center" spacing={2}>
               <Grid item>
-                <Typography className={classes.streamName}>
-                  {streamName}
-                </Typography>
+                <Typography className={classes.streamName}>{toURLName(streamName)}</Typography>
               </Grid>
               <Grid item>
                 <Chip
@@ -133,7 +132,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
                       }}
                       value={instance}
                       multiple={false}
-                      onChange={( _, value ) => {
+                      onChange={(_, value) => {
                         if (value) {
                           setInstance(value as Instance);
                         }
@@ -153,19 +152,35 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
                   </Grid>
                   <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
                     <DialogContent>
-                      <CreateInstance stream={stream} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                      <CreateInstance
+                        stream={stream}
+                        instances={instances}
+                        setInstance={setInstance}
+                        setOpenDialogID={setOpenDialogID}
+                      />
                     </DialogContent>
                   </Dialog>
                   {instance && (
                     <>
                       <Dialog open={openDialogID === "promote"} onBackdropClick={() => setOpenDialogID(null)}>
                         <DialogContent>
-                          <PromoteInstance stream={stream} instance={instance} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                          <PromoteInstance
+                            stream={stream}
+                            instance={instance}
+                            setInstance={setInstance}
+                            setOpenDialogID={setOpenDialogID}
+                          />
                         </DialogContent>
                       </Dialog>
                       <Dialog open={openDialogID === "delete"} onBackdropClick={() => setOpenDialogID(null)}>
                         <DialogContent>
-                          <DeleteInstance stream={stream} instance={instance} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                          <DeleteInstance
+                            stream={stream}
+                            instance={instance}
+                            instances={instances}
+                            setInstance={setInstance}
+                            setOpenDialogID={setOpenDialogID}
+                          />
                         </DialogContent>
                       </Dialog>
                     </>
@@ -181,7 +196,9 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
       </Grid>
       <Grid item>
         <Chip
-          label={`${prettyPrintBytes(metrics.writeBytes)} written \xa0\xa0\ ${prettyPrintBytes(metrics.readBytes)} read`}
+          label={`${prettyPrintBytes(metrics.writeBytes)} written \xa0\xa0\ ${prettyPrintBytes(
+            metrics.readBytes
+          )} read`}
           clickable
           component={NakedLink}
           href={`/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`}
