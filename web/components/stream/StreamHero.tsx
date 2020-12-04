@@ -27,6 +27,10 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
+  streamName: {
+    fontSize: theme.typography.pxToRem(36),
+    fontWeight: "bold",
+  },
   site: {
     display: "block",
   },
@@ -98,7 +102,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
           <Grid item>
             <Grid container alignItems="center" spacing={2}>
               <Grid item>
-                <Typography component="h1" variant="h1">
+                <Typography className={classes.streamName}>
                   {streamName}
                 </Typography>
               </Grid>
@@ -112,22 +116,61 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
                 />
               </Grid>
               <Grid item>
-                <Chip
-                  label={prettyPrintBytes(metrics.writeBytes) + " written"}
-                  clickable
-                  component={NakedLink}
-                  href={`/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`}
-                  as={`/${organizationName}/${projectName}/${streamName}/-/monitoring`}
-                />
-              </Grid>
-              <Grid item>
-                <Chip
-                  label={prettyPrintBytes(metrics.readBytes) + " read"}
-                  clickable
-                  component={NakedLink}
-                  href={`/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`}
-                  as={`/${organizationName}/${projectName}/${streamName}/-/monitoring`}
-                />
+                <Grid container spacing={1} alignItems="center">
+                  <Grid item className={classes.selectField}>
+                    <SelectField
+                      id="instanceID"
+                      required
+                      options={instances}
+                      getOptionLabel={(option: Instance) => {
+                        const versionString = `v${option.version.toString()}`;
+                        const primaryTag = option.madePrimaryOn ? " (primary)" : "";
+                        const finalTag = option.madeFinalOn ? " (final)" : "";
+                        return versionString + primaryTag + finalTag;
+                      }}
+                      getOptionSelected={(option: Instance, value: Instance) => {
+                        return option.version === value.version;
+                      }}
+                      value={instance}
+                      multiple={false}
+                      onChange={( _, value ) => {
+                        if (value) {
+                          setInstance(value as Instance);
+                        }
+                      }}
+                      margin="none"
+                    />
+                  </Grid>
+                  <Grid item>
+                    <DropdownButton
+                      variant="contained"
+                      margin="dense"
+                      actions={instanceActions}
+                      className={classes.dropdownButton}
+                    >
+                      <MoreVert />
+                    </DropdownButton>
+                  </Grid>
+                  <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
+                    <DialogContent>
+                      <CreateInstance stream={stream} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                    </DialogContent>
+                  </Dialog>
+                  {instance && (
+                    <>
+                      <Dialog open={openDialogID === "promote"} onBackdropClick={() => setOpenDialogID(null)}>
+                        <DialogContent>
+                          <PromoteInstance stream={stream} instance={instance} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog open={openDialogID === "delete"} onBackdropClick={() => setOpenDialogID(null)}>
+                        <DialogContent>
+                          <DeleteInstance stream={stream} instance={instance} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
@@ -137,61 +180,13 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
         </Grid>
       </Grid>
       <Grid item>
-        <Grid container spacing={1} alignItems="center">
-          <Grid item className={classes.selectField}>
-            <SelectField
-              id="instanceID"
-              required
-              options={instances}
-              getOptionLabel={(option: Instance) => {
-                const versionString = `v${option.version.toString()}`;
-                const primaryTag = option.madePrimaryOn ? " (primary)" : "";
-                const finalTag = option.madeFinalOn ? " (final)" : "";
-                return versionString + primaryTag + finalTag;
-              }}
-              getOptionSelected={(option: Instance, value: Instance) => {
-                return option.version === value.version;
-              }}
-              value={instance}
-              multiple={false}
-              onChange={( _, value ) => {
-                if (value) {
-                  setInstance(value as Instance);
-                }
-              }}
-              margin="none"
-            />
-          </Grid>
-          <Grid item>
-            <DropdownButton
-              variant="contained"
-              margin="dense"
-              actions={instanceActions}
-              className={classes.dropdownButton}
-            >
-              <MoreVert />
-            </DropdownButton>
-          </Grid>
-          <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
-            <DialogContent>
-              <CreateInstance stream={stream} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
-            </DialogContent>
-          </Dialog>
-          {instance && (
-            <>
-              <Dialog open={openDialogID === "promote"} onBackdropClick={() => setOpenDialogID(null)}>
-                <DialogContent>
-                  <PromoteInstance stream={stream} instance={instance} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={openDialogID === "delete"} onBackdropClick={() => setOpenDialogID(null)}>
-                <DialogContent>
-                  <DeleteInstance stream={stream} instance={instance} instances={instances} setInstance={setInstance} setOpenDialogID={setOpenDialogID}/>
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
-        </Grid>
+        <Chip
+          label={`${prettyPrintBytes(metrics.writeBytes)} written \xa0\xa0\ ${prettyPrintBytes(metrics.readBytes)} read`}
+          clickable
+          component={NakedLink}
+          href={`/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`}
+          as={`/${organizationName}/${projectName}/${streamName}/-/monitoring`}
+        />
       </Grid>
     </Grid>
   );

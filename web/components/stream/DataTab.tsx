@@ -176,7 +176,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
       >
         {/* top-row buttons */}
         <Grid container justify="space-between" alignItems="flex-start" spacing={2}>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={6}>
             <Grid container direction="column">
               <Grid item>
                 <Grid container alignItems="flex-start" spacing={2}>
@@ -222,6 +222,65 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                       />
                     )}
                   </Grid>
+                  <Grid item>
+                    {queryType === "log" && (
+                      <>
+                        {logPeek && (
+                          <Button variant="outlined" onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
+                            Newest to Oldest
+                          </Button>
+                        )}
+                        {!logPeek && (
+                          <Button variant="outlined" onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
+                            Oldest to Newest
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {queryType === "index" && (
+                      <>
+                        <Grid
+                          container
+                          direction="row"
+                          alignItems="center"
+                          spacing={2}
+                        >
+                          <Grid item>
+                            <FilterForm
+                              index={schema.columns.filter((col) => col.isKey)}
+                              onChange={(filter) => setFilter(filter)}
+                            />
+                          </Grid>
+                          {filter && (
+                            <Grid item>
+                              <Button
+                                onClick={() => {
+                                  setIndexCodeDialog(true);
+                                }}
+                                size="small"
+                                endIcon={<Code />}
+                                className={classes.topRowHeight}
+                              >
+                                Filter
+                              </Button>
+                              <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
+                                <DialogContent>
+                                  <CodeBlock language={"python"}>
+                                    {`${filter}`}
+                                  </CodeBlock>
+                                </DialogContent>
+                                <DialogActions>
+                                  <Button onClick={() => setIndexCodeDialog(false)} color="primary">
+                                    Close
+                                  </Button>
+                                </DialogActions>
+                              </Dialog>
+                            </Grid>
+                          )}
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
                 </Grid>
               </Grid>
               <VSpace units={2} />
@@ -236,78 +295,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                 </Grid>
               )}
             </Grid>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            {queryType === "log" && (
-              <>
-                <Grid
-                  container
-                  direction="column"
-                  justify="center"
-                  alignItems="center"
-                  spacing={2}
-                  className={classes.justifyLeftXsSm}
-                >
-                  <Grid item>
-                    {logPeek && (
-                      <Button onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
-                        Newest to Oldest
-                      </Button>
-                    )}
-                    {!logPeek && (
-                      <Button onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
-                        Oldest to Newest
-                      </Button>
-                    )}
-                  </Grid>
-                </Grid>
-              </>
-            )}
-            {queryType === "index" && (
-              <>
-                <Grid
-                  container
-                  direction="row"
-                  justify="center"
-                  alignItems="center"
-                  spacing={2}
-                  className={classes.justifyLeftXsSm}
-                >
-                  <Grid item>
-                    <FilterForm
-                      index={schema.columns.filter((col) => col.isKey)}
-                      onChange={(filter) => setFilter(filter)}
-                    />
-                  </Grid>
-                  {filter && (
-                    <Grid item>
-                      <Button
-                        onClick={() => {
-                          setIndexCodeDialog(true);
-                        }}
-                        size="small"
-                        endIcon={<Code />}
-                        className={classes.topRowHeight}
-                      >
-                        Filter
-                      </Button>
-                      <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
-                        <DialogContent>
-                          <CodeBlock language={"python"}>
-                            {`${filter}`}
-                          </CodeBlock>
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={() => setIndexCodeDialog(false)} color="primary">
-                            Close
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
-                    </Grid>
-                  )}
-                </Grid>
-              </>
-            )}
           </Grid>
           <Grid item xs={12} md={3}>
             <Grid container spacing={2} justify="flex-end" className={classes.justifyLeftXsSm}>
