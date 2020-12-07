@@ -155,7 +155,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
     if (filter === "") {
       note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
     } else {
-      note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} "that match the filter"`;
+      note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} that match the filter`;
     }
   }
 
@@ -170,9 +170,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
     <>
       <ContentContainer
         callToAction={containerCta}
-        loading={loadingBool}
-        error={errorString}
-        note={note}
       >
         {/* top-row buttons */}
         <Grid container justify="space-between" alignItems="flex-start" spacing={2}>
@@ -329,8 +326,10 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
           records={records}
           fetchMore={fetchMore}
           showTimestamps={queryType === "log"}
-          error={undefined} /* Todo */
           callToAction={tableCta}
+          error={errorString}
+          note={note}
+          loading={loadingBool}
         />
       </ContentContainer>
     </>

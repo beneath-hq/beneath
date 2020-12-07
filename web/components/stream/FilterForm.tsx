@@ -1,8 +1,8 @@
-import { FC, useState, useEffect } from "react";
-import FilterField, { Operator, Field, Filter } from "./FilterField";
 import _ from "lodash";
 import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
+import { FC, useState, useEffect } from "react";
 
+import FilterField, { Operator, Field, Filter } from "./FilterField";
 import { Column, InputType } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -21,6 +21,8 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
   const classes = useStyles();
   const [fields, setFields] = useState<Field[]>([]);
   const [filter, setFilter] = useState<any>({});
+  // We additionally make a string version of the filter (called filterJSON) so we can use it as a dependency for useEffect
+  // Without it, we'd be forced to use the raw filter object as a dependency, and that doesn't work easily
   const [filterJSON, setFilterJSON] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
@@ -49,7 +51,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       }
     }
     setShowAdd(false);
-  }, [filterJSON, fields]);
+  }, [filterJSON, fields]); // REVIEW: having "fields" here, since it's an object, probably doesn't do anything
 
   const addField = () => {
     let col: Column | undefined;
