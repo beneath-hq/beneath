@@ -57,12 +57,12 @@ export interface StreamHeroProps {
 }
 
 const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDialogID, setOpenDialogID }) => {
-  const [firstLoad, setFirstLoad] = useState(true);
+  const classes = useStyles();
+  const metrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID).total;
+  const [instances, setInstances] = useState<Instance[]>([]);
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
-
-  const metrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID).total;
 
   const { error, data } = useQuery<
     StreamInstancesByOrganizationProjectAndStreamName,
@@ -74,18 +74,20 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
     console.error("Unexpected error loading instances: ", error);
   }
 
-  const instances: Instance[] = [];
-  if (data) {
-    instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
-    instances.sort((a, b) => a.version < b.version ? 1 : -1);
-  }
-
   useEffect(() => {
-    if (instances && !stream.primaryStreamInstanceID && firstLoad) {
-      setInstance(instances[0] ? instances[0] : null);
-      setFirstLoad(false);
+    if (data?.streamInstancesByOrganizationProjectAndStreamName && data.streamInstancesByOrganizationProjectAndStreamName.length > 0 ) {
+      // sort instances by version (so the SelectField shows them in a sensible order)
+      const instances: Instance[] = [];
+      instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
+      instances.sort((a, b) => a.version < b.version ? 1 : -1);
+      setInstances(instances);
+
+      // if there's no set instance (which happens when there's no primary instance), show the instance with the highest version
+      if (!instance && instances.length > 0) {
+        setInstance(instances[0]);
+      }
     }
-  }, [instances]);
+  }, [data?.streamInstancesByOrganizationProjectAndStreamName]);
 
   const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create")}];
   if (instance && !instance?.madePrimaryOn) {
@@ -95,7 +97,6 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
     instanceActions.push({ label: "Delete instance", onClick: () => setOpenDialogID("delete") });
   }
 
-  const classes = useStyles();
   return (
     <Grid container justify="space-between" alignItems="flex-start" spacing={4} className={classes.container}>
       <Grid item>
