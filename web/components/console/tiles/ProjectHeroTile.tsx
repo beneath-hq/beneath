@@ -3,6 +3,7 @@ import { Grid, makeStyles, Typography } from "@material-ui/core";
 
 import Avatar from "../../Avatar";
 import { Tile, TileProps } from "./Tile";
+import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({
   avatar: {
@@ -49,19 +50,17 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
           <Grid container className={classes.path}>
             <Grid item>
               <Typography color="textSecondary" className={classes.orgName}>
-                {organizationName} /
+                {toURLName(organizationName)} /
               </Typography>
             </Grid>
             <Grid item>
-              <Typography variant="h3">{name}</Typography>
+              <Typography variant="h3">{toURLName(name)}</Typography>
             </Grid>
           </Grid>
         </Grid>
         {description && (
           <Grid item xs={12}>
-            <Typography variant="body1">
-              {description}
-            </Typography>
+            <Typography variant="body1">{description}</Typography>
           </Grid>
         )}
       </Grid>

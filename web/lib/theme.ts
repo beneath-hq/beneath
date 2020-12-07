@@ -40,13 +40,11 @@ theme.typography = {
   h1: {
     fontWeight: 600,
     fontSize: "1.75rem",
-    // letterSpacing: ".05rem",
     wordSpacing: ".15rem",
   },
   h2: {
     fontWeight: 600,
     fontSize: "1.5rem",
-    // letterSpacing: ".05rem",
     wordSpacing: ".15rem",
   },
   h3: {
