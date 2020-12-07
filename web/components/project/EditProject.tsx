@@ -1,23 +1,21 @@
 import { useMutation } from "@apollo/client";
+import { Container, Typography } from "@material-ui/core";
 import { Field, Form, Formik } from "formik";
 import React, { FC } from "react";
 import validator from "validator";
 
-import { Container, Typography } from "@material-ui/core";
-
-import { STAGE_PROJECT } from "../../apollo/queries/project";
-import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "../../apollo/types/ProjectByOrganizationAndName";
-import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
-import { handleSubmitMutation, TextField as FormikTextField } from "../formik";
-import SubmitControl from "../forms/SubmitControl";
-import FormikRadioGroup from "components/formik/RadioGroup";
+import { UPDATE_PROJECT } from "apollo/queries/project";
+import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
+import { UpdateProject, UpdateProjectVariables } from "apollo/types/UpdateProject";
+import { handleSubmitMutation, RadioGroup as FormikRadioGroup, TextField as FormikTextField } from "components/formik";
+import SubmitControl from "components/forms/SubmitControl";
 
 interface EditProjectProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
 const EditProject: FC<EditProjectProps> = ({ project }) => {
-  const [stageProject] = useMutation<StageProject, StageProjectVariables>(STAGE_PROJECT);
+  const [updateProject] = useMutation<UpdateProject, UpdateProjectVariables>(UPDATE_PROJECT);
 
   const initialValues = {
     displayName: project.displayName || "",
@@ -35,15 +33,16 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
           handleSubmitMutation(
             values,
             actions,
-            stageProject({
+            updateProject({
               variables: {
-                organizationName: project.organization.name,
-                projectName: project.name,
-                displayName: values.displayName,
-                site: values.site,
-                description: values.description,
-                photoURL: values.photoURL,
-                public: values.public === "public" ? true : false,
+                input: {
+                  projectID: project.projectID,
+                  displayName: values.displayName,
+                  site: values.site,
+                  description: values.description,
+                  photoURL: values.photoURL,
+                  public: values.public === "public" ? true : false,
+                }
               },
             })
           )

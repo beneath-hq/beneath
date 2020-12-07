@@ -61,7 +61,8 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
-		DeleteProject                     func(childComplexity int, projectID uuid.UUID) int
+		CreateProject                     func(childComplexity int, input CreateProjectInput) int
+		DeleteProject                     func(childComplexity int, input DeleteProjectInput) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
 		DeleteStream                      func(childComplexity int, streamID uuid.UUID) int
 		DeleteStreamInstance              func(childComplexity int, instanceID uuid.UUID) int
@@ -73,13 +74,13 @@ type ComplexityRoot struct {
 		RegisterUserConsent               func(childComplexity int, userID uuid.UUID, terms *bool, newsletter *bool) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		StageProject                      func(childComplexity int, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) int
 		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) int
 		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
 		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
+		UpdateProject                     func(childComplexity int, input UpdateProjectInput) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 		UpdateStreamInstance              func(childComplexity int, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
@@ -347,8 +348,9 @@ type MutationResolver interface {
 	AcceptOrganizationInvite(ctx context.Context, organizationID uuid.UUID) (bool, error)
 	LeaveBillingOrganization(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	TransferProjectToOrganization(ctx context.Context, projectID uuid.UUID, organizationID uuid.UUID) (*models.Project, error)
-	StageProject(ctx context.Context, organizationName string, projectName string, displayName *string, public *bool, description *string, site *string, photoURL *string) (*models.Project, error)
-	DeleteProject(ctx context.Context, projectID uuid.UUID) (bool, error)
+	CreateProject(ctx context.Context, input CreateProjectInput) (*models.Project, error)
+	UpdateProject(ctx context.Context, input UpdateProjectInput) (*models.Project, error)
+	DeleteProject(ctx context.Context, input DeleteProjectInput) (bool, error)
 	IssueServiceSecret(ctx context.Context, serviceID uuid.UUID, description string) (*NewServiceSecret, error)
 	IssueUserSecret(ctx context.Context, description string, readOnly bool, publicOnly bool) (*NewUserSecret, error)
 	RevokeServiceSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
@@ -471,6 +473,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateOrganization(childComplexity, args["name"].(string)), true
 
+	case "Mutation.createProject":
+		if e.complexity.Mutation.CreateProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(CreateProjectInput)), true
+
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
 			break
@@ -481,7 +495,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteProject(childComplexity, args["projectID"].(uuid.UUID)), true
+		return e.complexity.Mutation.DeleteProject(childComplexity, args["input"].(DeleteProjectInput)), true
 
 	case "Mutation.deleteService":
 		if e.complexity.Mutation.DeleteService == nil {
@@ -610,18 +624,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
-	case "Mutation.stageProject":
-		if e.complexity.Mutation.StageProject == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_stageProject_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.StageProject(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["displayName"].(*string), args["public"].(*bool), args["description"].(*string), args["site"].(*string), args["photoURL"].(*string)), true
-
 	case "Mutation.stageService":
 		if e.complexity.Mutation.StageService == nil {
 			break
@@ -693,6 +695,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateOrganizationQuotas(childComplexity, args["organizationID"].(uuid.UUID), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int)), true
+
+	case "Mutation.updateProject":
+		if e.complexity.Mutation.UpdateProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProject(childComplexity, args["input"].(UpdateProjectInput)), true
 
 	case "Mutation.updateServiceStreamPermissions":
 		if e.complexity.Mutation.UpdateServiceStreamPermissions == nil {
@@ -2376,22 +2390,18 @@ type OrganizationMember {
 	{Name: "server/control/schema/projects.graphql", Input: `extend type Query {
   exploreProjects: [Project!]
   projectsForUser(userID: UUID!): [Project!]
-  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
+  projectByOrganizationAndName(
+    organizationName: String!
+    projectName: String!
+  ): Project!
   projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
 }
 
 extend type Mutation {
-  stageProject(
-    organizationName: String!,
-    projectName: String!,
-    displayName: String,
-    public: Boolean,
-    description: String,
-    site: String, 
-    photoURL: String,
-  ): Project!
-  deleteProject(projectID: UUID!): Boolean!
+  createProject(input: CreateProjectInput!): Project!
+  updateProject(input: UpdateProjectInput!): Project!
+  deleteProject(input: DeleteProjectInput!): Boolean!
 }
 
 type Project {
@@ -2419,6 +2429,29 @@ type ProjectMember {
   view: Boolean!
   create: Boolean!
   admin: Boolean!
+}
+
+input CreateProjectInput {
+  organizationID: UUID!
+  projectName: String!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+input UpdateProjectInput {
+  projectID: UUID!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+input DeleteProjectInput {
+  projectID: UUID!
 }
 `, BuiltIn: false},
 	{Name: "server/control/schema/secrets.graphql", Input: `extend type Query {
@@ -2700,18 +2733,33 @@ func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["projectID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 CreateProjectInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateProjectInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectID"] = arg0
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 DeleteProjectInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐDeleteProjectInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2943,75 +2991,6 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 		}
 	}
 	args["secretID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_stageProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["organizationName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["organizationName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["displayName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["displayName"] = arg2
-	var arg3 *bool
-	if tmp, ok := rawArgs["public"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("public"))
-		arg3, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["public"] = arg3
-	var arg4 *string
-	if tmp, ok := rawArgs["description"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["description"] = arg4
-	var arg5 *string
-	if tmp, ok := rawArgs["site"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("site"))
-		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["site"] = arg5
-	var arg6 *string
-	if tmp, ok := rawArgs["photoURL"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photoURL"))
-		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["photoURL"] = arg6
 	return args, nil
 }
 
@@ -3381,6 +3360,21 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 		}
 	}
 	args["photoURL"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdateProjectInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateProjectInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -4546,7 +4540,7 @@ func (ec *executionContext) _Mutation_transferProjectToOrganization(ctx context.
 	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐProject(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_stageProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4563,7 +4557,7 @@ func (ec *executionContext) _Mutation_stageProject(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_stageProject_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createProject_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -4571,7 +4565,49 @@ func (ec *executionContext) _Mutation_stageProject(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageProject(rctx, args["organizationName"].(string), args["projectName"].(string), args["displayName"].(*string), args["public"].(*bool), args["description"].(*string), args["site"].(*string), args["photoURL"].(*string))
+		return ec.resolvers.Mutation().CreateProject(rctx, args["input"].(CreateProjectInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateProject_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateProject(rctx, args["input"].(UpdateProjectInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4613,7 +4649,7 @@ func (ec *executionContext) _Mutation_deleteProject(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteProject(rctx, args["projectID"].(uuid.UUID))
+		return ec.resolvers.Mutation().DeleteProject(rctx, args["input"].(DeleteProjectInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13148,6 +13184,154 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateProjectInput(ctx context.Context, obj interface{}) (CreateProjectInput, error) {
+	var it CreateProjectInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "organizationID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationID"))
+			it.OrganizationID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			it.DisplayName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "public":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("public"))
+			it.Public, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "site":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("site"))
+			it.Site, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photoURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photoURL"))
+			it.PhotoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteProjectInput(ctx context.Context, obj interface{}) (DeleteProjectInput, error) {
+	var it DeleteProjectInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "projectID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
+			it.ProjectID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateProjectInput(ctx context.Context, obj interface{}) (UpdateProjectInput, error) {
+	var it UpdateProjectInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "projectID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
+			it.ProjectID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			it.DisplayName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "public":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("public"))
+			it.Public, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "site":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("site"))
+			it.Site, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photoURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photoURL"))
+			it.PhotoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -13229,8 +13413,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "stageProject":
-			out.Values[i] = ec._Mutation_stageProject(ctx, field)
+		case "createProject":
+			out.Values[i] = ec._Mutation_createProject(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateProject":
+			out.Values[i] = ec._Mutation_updateProject(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -15209,6 +15398,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateProjectInput(ctx context.Context, v interface{}) (CreateProjectInput, error) {
+	res, err := ec.unmarshalInputCreateProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDeleteProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐDeleteProjectInput(ctx context.Context, v interface{}) (DeleteProjectInput, error) {
+	res, err := ec.unmarshalInputDeleteProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, v interface{}) (EntityKind, error) {
 	var res EntityKind
 	err := res.UnmarshalGQL(v)
@@ -15884,6 +16083,11 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUI
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateProjectInput(ctx context.Context, v interface{}) (UpdateProjectInput, error) {
+	res, err := ec.unmarshalInputUpdateProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*Usage) graphql.Marshaler {

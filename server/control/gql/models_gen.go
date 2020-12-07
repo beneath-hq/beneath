@@ -16,6 +16,20 @@ type Organization interface {
 	IsOrganization()
 }
 
+type CreateProjectInput struct {
+	OrganizationID uuid.UUID `json:"organizationID"`
+	ProjectName    string    `json:"projectName"`
+	DisplayName    *string   `json:"displayName"`
+	Public         *bool     `json:"public"`
+	Description    *string   `json:"description"`
+	Site           *string   `json:"site"`
+	PhotoURL       *string   `json:"photoURL"`
+}
+
+type DeleteProjectInput struct {
+	ProjectID uuid.UUID `json:"projectID"`
+}
+
 type NewServiceSecret struct {
 	Secret *models.ServiceSecret `json:"secret"`
 	Token  string                `json:"token"`
@@ -51,6 +65,15 @@ type PrivateOrganization struct {
 }
 
 func (PrivateOrganization) IsOrganization() {}
+
+type UpdateProjectInput struct {
+	ProjectID   uuid.UUID `json:"projectID"`
+	DisplayName *string   `json:"displayName"`
+	Public      *bool     `json:"public"`
+	Description *string   `json:"description"`
+	Site        *string   `json:"site"`
+	PhotoURL    *string   `json:"photoURL"`
+}
 
 type Usage struct {
 	EntityID     uuid.UUID `json:"entityID"`

@@ -70,8 +70,8 @@ class Users:
         'until': format_graphql_time(until) if until else None
       },
       query="""
-        query GetUserMetrics($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
-          getUserMetrics(userID: $userID, period: $period, from: $from, until: $until) {
+        query GetUserUsage($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
+          getUserUsage(userID: $userID, period: $period, from: $from, until: $until) {
             entityID
             period
             time
@@ -85,4 +85,4 @@ class Users:
         }
       """
     )
-    return result['getUserMetrics']
+    return result['getUserUsage']

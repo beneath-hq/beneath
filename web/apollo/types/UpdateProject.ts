@@ -3,17 +3,19 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
+import { UpdateProjectInput } from "./globalTypes";
+
 // ====================================================
-// GraphQL mutation operation: StageProject
+// GraphQL mutation operation: UpdateProject
 // ====================================================
 
-export interface StageProject_stageProject_organization {
+export interface UpdateProject_updateProject_organization {
   __typename: "PublicOrganization";
   organizationID: string;
   name: string;
 }
 
-export interface StageProject_stageProject {
+export interface UpdateProject_updateProject {
   __typename: "Project";
   projectID: string;
   name: string;
@@ -23,19 +25,13 @@ export interface StageProject_stageProject {
   site: string | null;
   photoURL: string | null;
   updatedOn: ControlTime;
-  organization: StageProject_stageProject_organization;
+  organization: UpdateProject_updateProject_organization;
 }
 
-export interface StageProject {
-  stageProject: StageProject_stageProject;
+export interface UpdateProject {
+  updateProject: UpdateProject_updateProject;
 }
 
-export interface StageProjectVariables {
-  organizationName: string;
-  projectName: string;
-  displayName?: string | null;
-  public?: boolean | null;
-  description?: string | null;
-  site?: string | null;
-  photoURL?: string | null;
+export interface UpdateProjectVariables {
+  input: UpdateProjectInput;
 }

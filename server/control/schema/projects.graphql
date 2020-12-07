@@ -1,22 +1,18 @@
 extend type Query {
   exploreProjects: [Project!]
   projectsForUser(userID: UUID!): [Project!]
-  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
+  projectByOrganizationAndName(
+    organizationName: String!
+    projectName: String!
+  ): Project!
   projectByID(projectID: UUID!): Project!
   projectMembers(projectID: UUID!): [ProjectMember!]!
 }
 
 extend type Mutation {
-  stageProject(
-    organizationName: String!,
-    projectName: String!,
-    displayName: String,
-    public: Boolean,
-    description: String,
-    site: String, 
-    photoURL: String,
-  ): Project!
-  deleteProject(projectID: UUID!): Boolean!
+  createProject(input: CreateProjectInput!): Project!
+  updateProject(input: UpdateProjectInput!): Project!
+  deleteProject(input: DeleteProjectInput!): Boolean!
 }
 
 type Project {
@@ -44,4 +40,27 @@ type ProjectMember {
   view: Boolean!
   create: Boolean!
   admin: Boolean!
+}
+
+input CreateProjectInput {
+  organizationID: UUID!
+  projectName: String!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+input UpdateProjectInput {
+  projectID: UUID!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+input DeleteProjectInput {
+  projectID: UUID!
 }
