@@ -1,6 +1,6 @@
 import base64
 from datetime import datetime
-from decimal import *
+from decimal import Decimal, getcontext
 import apache_beam as beam
 
 """
@@ -13,54 +13,51 @@ import apache_beam as beam
 # set precision of Decimal to 128 as default of 28 is too small
 getcontext().prec = 128
 
+
 class ConvertFromJSONTypes(beam.PTransform):
-  def __init__(self, params):
-    self.params = params
+    def __init__(self, params):
+        self.params = params
 
-  def convert_to_bytes(self, element):
-    if not isinstance(element, str):
-      return element
-    
-    if (len(element) > 1) and (element[0:2] == '0x'):
-      return bytes.fromhex(element[2:])
+    def convert_to_bytes(self, element):
+        if not isinstance(element, str):
+            return element
 
-    return base64.b64decode(element)
+        if (len(element) > 1) and (element[0:2] == "0x"):
+            return bytes.fromhex(element[2:])
 
-  def convert_to_int(self, element):
-    return int(element)
+        return base64.b64decode(element)
 
-  def convert_to_ts(self, element):
-    if not isinstance(element, str):
-      return element
+    def convert_to_int(self, element):
+        return int(element)
 
-    return datetime.strptime(element, '%Y-%m-%d %H:%M:%S.%f %Z')
+    def convert_to_ts(self, element):
+        if not isinstance(element, str):
+            return element
 
-  def convert_to_numeric(self, element):
-    if isinstance(element, str):
-      return Decimal(element)
-    if isinstance(element, int):
-      return Decimal(element)
+        return datetime.strptime(element, "%Y-%m-%d %H:%M:%S.%f %Z")
 
-    return element
+    def convert_to_numeric(self, element):
+        if isinstance(element, str):
+            return Decimal(element)
+        if isinstance(element, int):
+            return Decimal(element)
 
+        return element
 
-  def _convert_types(self, row):
-    for field, to_type in self.params.items():
-      if row[field] is None:
-        continue
-      elif to_type == "bytes":
-        row[field] = self.convert_to_bytes(row[field])
-      elif to_type == "int":
-        row[field] = self.convert_to_int(row[field])
-      elif to_type == "timestamp":
-        row[field] = self.convert_to_ts(row[field])
-      elif to_type == "numeric":
-        row[field] = self.convert_to_numeric(row[field])
+    def _convert_types(self, row):
+        for field, to_type in self.params.items():
+            if row[field] is None:
+                continue
+            elif to_type == "bytes":
+                row[field] = self.convert_to_bytes(row[field])
+            elif to_type == "int":
+                row[field] = self.convert_to_int(row[field])
+            elif to_type == "timestamp":
+                row[field] = self.convert_to_ts(row[field])
+            elif to_type == "numeric":
+                row[field] = self.convert_to_numeric(row[field])
 
-    return row
+        return row
 
-  def expand(self, pvalue):   
-    return (
-      pvalue 
-      | beam.Map(self._convert_types)
-    )
+    def expand(self, pvalue):
+        return pvalue | beam.Map(self._convert_types)

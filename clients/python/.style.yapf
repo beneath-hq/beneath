@@ -1,8 +1,0 @@
-[style]
-based_on_style: google
-indent_width: 2
-continuation_indent_width: 2
-column_limit: 120
-dedent_closing_brackets: true
-EACH_DICT_ENTRY_ON_SEPARATE_LINE: true
-COALESCE_BRACKETS: true

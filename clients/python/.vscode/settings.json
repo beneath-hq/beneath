@@ -1,6 +1,7 @@
 {
-  "editor.formatOnPaste": true,
-  "editor.tabSize": 2,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
   "files.exclude": {
     "**/.venv": true,
     "**/__pycache__": true,
@@ -10,9 +11,10 @@
     "**/build": true,
     "**/*.egg-info": true,
   },
-  "python.formatting.provider": "yapf",
-  "python.linting.pylintEnabled": true,
+  "python.formatting.provider": "black",
   "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
   "python.testing.unittestArgs": [
     "-v",
     "-s",

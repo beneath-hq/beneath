@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "beneath"
+version = "1.2.9"
+description = "Python client and CLI for Beneath (https://beneath.dev/)"
+authors = ["Beneath Systems <hello@beneath.dev>"]
+license = "MIT License"
+repository = "https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python"
+documentation = "https://python.docs.beneath.dev"
+readme = "README.md"
+
+[tool.poetry.scripts]
+beneath = "beneath.cli:main"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+aiogrpc = "^1.7"
+aiohttp = "^3.6.2"
+argparse = "^1.4"
+Cython = "^0.29.15"
+fastavro = "^0.22"
+grpcio = "1.27.2"
+msgpack = "^1.0.0"
+pandas = "^1.0.1"
+protobuf = "^3.11.3"
+six = "^1.14.0"
+
+[tool.poetry.dev-dependencies]
+grpcio-tools = "^1.27.2"
+Sphinx = "^3.3.1"
+sphinx-autodoc-typehints = "^1.11.1"
+black = "^20.8b1"
+flake8 = "^3.8.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py38']

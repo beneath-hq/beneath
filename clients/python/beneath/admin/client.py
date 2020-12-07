@@ -8,18 +8,18 @@ from beneath.connection import Connection
 
 
 class AdminClient:
-  """
-  AdminClient isolates control-plane features.
+    """
+    AdminClient isolates control-plane features.
 
-  Args:
-      connection (Connection): An authenticated connection to Beneath.
-  """
+    Args:
+        connection (Connection): An authenticated connection to Beneath.
+    """
 
-  def __init__(self, connection: Connection):
-    self.connection = connection
-    self.organizations = Organizations(self.connection)
-    self.projects = Projects(self.connection)
-    self.secrets = Secrets(self.connection)
-    self.services = Services(self.connection)
-    self.streams = Streams(self.connection)
-    self.users = Users(self.connection)
+    def __init__(self, connection: Connection):
+        self.connection = connection
+        self.organizations = Organizations(self.connection)
+        self.projects = Projects(self.connection)
+        self.secrets = Secrets(self.connection)
+        self.services = Services(self.connection)
+        self.streams = Streams(self.connection)
+        self.users = Users(self.connection)

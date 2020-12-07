@@ -6,1062 +6,1562 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
 DESCRIPTOR = _descriptor.FileDescriptor(
-  name='beneath/proto/gateway.proto',
-  package='gateway.v1',
-  syntax='proto3',
-  serialized_options=b'Z0gitlab.com/beneath-hq/beneath/gateway/grpc/proto',
-  serialized_pb=b'\n\x1b\x62\x65neath/proto/gateway.proto\x12\ngateway.v1\".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"K\n\x0fInstanceRecords\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12#\n\x07records\x18\x02 \x03(\x0b\x32\x12.gateway.v1.Record\"\xb0\x02\n\x0cWarehouseJob\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c\x12/\n\x06status\x18\x02 \x01(\x0e\x32\x1f.gateway.v1.WarehouseJob.Status\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x1a\n\x12result_avro_schema\x18\x04 \x01(\t\x12\x16\n\x0ereplay_cursors\x18\x05 \x03(\x0c\x12\x1f\n\x17referenced_instance_ids\x18\x06 \x03(\x0c\x12\x15\n\rbytes_scanned\x18\x07 \x01(\x03\x12\x19\n\x11result_size_bytes\x18\x08 \x01(\x03\x12\x1b\n\x13result_size_records\x18\t \x01(\x03\",\n\x06Status\x12\x0b\n\x07PENDING\x10\x00\x12\x0b\n\x07RUNNING\x10\x01\x12\x08\n\x04\x44ONE\x10\x02\"8\n\x0bPingRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63lient_version\x18\x02 \x01(\t\"Z\n\x0cPingResponse\x12\x15\n\rauthenticated\x18\x01 \x01(\x08\x12\x16\n\x0eversion_status\x18\x02 \x01(\t\x12\x1b\n\x13recommended_version\x18\x03 \x01(\t\"E\n\x0cWriteRequest\x12\x35\n\x10instance_records\x18\x01 \x03(\x0b\x32\x1b.gateway.v1.InstanceRecords\"!\n\rWriteResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c\"H\n\x0fQueryLogRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0c\n\x04peek\x18\x03 \x01(\x08\"B\n\x10QueryLogResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c\"L\n\x11QueryIndexRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0e\n\x06\x66ilter\x18\x03 \x01(\t\"D\n\x12QueryIndexResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c\"z\n\x15QueryWarehouseRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0f\n\x07\x64ry_run\x18\x03 \x01(\x08\x12\x12\n\ntimeout_ms\x18\x04 \x01(\x05\x12\x19\n\x11max_bytes_scanned\x18\x05 \x01(\x03\"?\n\x16QueryWarehouseResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob\")\n\x17PollWarehouseJobRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c\"A\n\x18PollWarehouseJobResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob\",\n\x0bReadRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c\x12\r\n\x05limit\x18\x03 \x01(\x05\"H\n\x0cReadResponse\x12#\n\x07records\x18\x01 \x03(\x0b\x32\x12.gateway.v1.Record\x12\x13\n\x0bnext_cursor\x18\x02 \x01(\x0c\"\"\n\x10SubscribeRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c\"%\n\x11SubscribeResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c\x32\xe5\x04\n\x07Gateway\x12;\n\x04Ping\x12\x17.gateway.v1.PingRequest\x1a\x18.gateway.v1.PingResponse\"\x00\x12>\n\x05Write\x12\x18.gateway.v1.WriteRequest\x1a\x19.gateway.v1.WriteResponse\"\x00\x12G\n\x08QueryLog\x12\x1b.gateway.v1.QueryLogRequest\x1a\x1c.gateway.v1.QueryLogResponse\"\x00\x12M\n\nQueryIndex\x12\x1d.gateway.v1.QueryIndexRequest\x1a\x1e.gateway.v1.QueryIndexResponse\"\x00\x12Y\n\x0eQueryWarehouse\x12!.gateway.v1.QueryWarehouseRequest\x1a\".gateway.v1.QueryWarehouseResponse\"\x00\x12_\n\x10PollWarehouseJob\x12#.gateway.v1.PollWarehouseJobRequest\x1a$.gateway.v1.PollWarehouseJobResponse\"\x00\x12;\n\x04Read\x12\x17.gateway.v1.ReadRequest\x1a\x18.gateway.v1.ReadResponse\"\x00\x12L\n\tSubscribe\x12\x1c.gateway.v1.SubscribeRequest\x1a\x1d.gateway.v1.SubscribeResponse\"\x00\x30\x01\x42\x32Z0gitlab.com/beneath-hq/beneath/gateway/grpc/protob\x06proto3'
+    name="beneath/proto/gateway.proto",
+    package="gateway.v1",
+    syntax="proto3",
+    serialized_options=b"Z0gitlab.com/beneath-hq/beneath/gateway/grpc/proto",
+    serialized_pb=b'\n\x1b\x62\x65neath/proto/gateway.proto\x12\ngateway.v1".\n\x06Record\x12\x11\n\tavro_data\x18\x01 \x01(\x0c\x12\x11\n\ttimestamp\x18\x02 \x01(\x03"K\n\x0fInstanceRecords\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12#\n\x07records\x18\x02 \x03(\x0b\x32\x12.gateway.v1.Record"\xb0\x02\n\x0cWarehouseJob\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c\x12/\n\x06status\x18\x02 \x01(\x0e\x32\x1f.gateway.v1.WarehouseJob.Status\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x1a\n\x12result_avro_schema\x18\x04 \x01(\t\x12\x16\n\x0ereplay_cursors\x18\x05 \x03(\x0c\x12\x1f\n\x17referenced_instance_ids\x18\x06 \x03(\x0c\x12\x15\n\rbytes_scanned\x18\x07 \x01(\x03\x12\x19\n\x11result_size_bytes\x18\x08 \x01(\x03\x12\x1b\n\x13result_size_records\x18\t \x01(\x03",\n\x06Status\x12\x0b\n\x07PENDING\x10\x00\x12\x0b\n\x07RUNNING\x10\x01\x12\x08\n\x04\x44ONE\x10\x02"8\n\x0bPingRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63lient_version\x18\x02 \x01(\t"Z\n\x0cPingResponse\x12\x15\n\rauthenticated\x18\x01 \x01(\x08\x12\x16\n\x0eversion_status\x18\x02 \x01(\t\x12\x1b\n\x13recommended_version\x18\x03 \x01(\t"E\n\x0cWriteRequest\x12\x35\n\x10instance_records\x18\x01 \x03(\x0b\x32\x1b.gateway.v1.InstanceRecords"!\n\rWriteResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c"H\n\x0fQueryLogRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0c\n\x04peek\x18\x03 \x01(\x08"B\n\x10QueryLogResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c"L\n\x11QueryIndexRequest\x12\x13\n\x0binstance_id\x18\x01 \x01(\x0c\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0e\n\x06\x66ilter\x18\x03 \x01(\t"D\n\x12QueryIndexResponse\x12\x16\n\x0ereplay_cursors\x18\x01 \x03(\x0c\x12\x16\n\x0e\x63hange_cursors\x18\x02 \x03(\x0c"z\n\x15QueryWarehouseRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x12\n\npartitions\x18\x02 \x01(\x05\x12\x0f\n\x07\x64ry_run\x18\x03 \x01(\x08\x12\x12\n\ntimeout_ms\x18\x04 \x01(\x05\x12\x19\n\x11max_bytes_scanned\x18\x05 \x01(\x03"?\n\x16QueryWarehouseResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob")\n\x17PollWarehouseJobRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\x0c"A\n\x18PollWarehouseJobResponse\x12%\n\x03job\x18\x01 \x01(\x0b\x32\x18.gateway.v1.WarehouseJob",\n\x0bReadRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c\x12\r\n\x05limit\x18\x03 \x01(\x05"H\n\x0cReadResponse\x12#\n\x07records\x18\x01 \x03(\x0b\x32\x12.gateway.v1.Record\x12\x13\n\x0bnext_cursor\x18\x02 \x01(\x0c""\n\x10SubscribeRequest\x12\x0e\n\x06\x63ursor\x18\x02 \x01(\x0c"%\n\x11SubscribeResponse\x12\x10\n\x08write_id\x18\x01 \x01(\x0c\x32\xe5\x04\n\x07Gateway\x12;\n\x04Ping\x12\x17.gateway.v1.PingRequest\x1a\x18.gateway.v1.PingResponse"\x00\x12>\n\x05Write\x12\x18.gateway.v1.WriteRequest\x1a\x19.gateway.v1.WriteResponse"\x00\x12G\n\x08QueryLog\x12\x1b.gateway.v1.QueryLogRequest\x1a\x1c.gateway.v1.QueryLogResponse"\x00\x12M\n\nQueryIndex\x12\x1d.gateway.v1.QueryIndexRequest\x1a\x1e.gateway.v1.QueryIndexResponse"\x00\x12Y\n\x0eQueryWarehouse\x12!.gateway.v1.QueryWarehouseRequest\x1a".gateway.v1.QueryWarehouseResponse"\x00\x12_\n\x10PollWarehouseJob\x12#.gateway.v1.PollWarehouseJobRequest\x1a$.gateway.v1.PollWarehouseJobResponse"\x00\x12;\n\x04Read\x12\x17.gateway.v1.ReadRequest\x1a\x18.gateway.v1.ReadResponse"\x00\x12L\n\tSubscribe\x12\x1c.gateway.v1.SubscribeRequest\x1a\x1d.gateway.v1.SubscribeResponse"\x00\x30\x01\x42\x32Z0gitlab.com/beneath-hq/beneath/gateway/grpc/protob\x06proto3',
 )
 
 
-
 _WAREHOUSEJOB_STATUS = _descriptor.EnumDescriptor(
-  name='Status',
-  full_name='gateway.v1.WarehouseJob.Status',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='PENDING', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='RUNNING', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='DONE', index=2, number=2,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=429,
-  serialized_end=473,
+    name="Status",
+    full_name="gateway.v1.WarehouseJob.Status",
+    filename=None,
+    file=DESCRIPTOR,
+    values=[
+        _descriptor.EnumValueDescriptor(
+            name="PENDING", index=0, number=0, serialized_options=None, type=None
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="RUNNING", index=1, number=1, serialized_options=None, type=None
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="DONE", index=2, number=2, serialized_options=None, type=None
+        ),
+    ],
+    containing_type=None,
+    serialized_options=None,
+    serialized_start=429,
+    serialized_end=473,
 )
 _sym_db.RegisterEnumDescriptor(_WAREHOUSEJOB_STATUS)
 
 
 _RECORD = _descriptor.Descriptor(
-  name='Record',
-  full_name='gateway.v1.Record',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='avro_data', full_name='gateway.v1.Record.avro_data', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='timestamp', full_name='gateway.v1.Record.timestamp', index=1,
-      number=2, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=43,
-  serialized_end=89,
+    name="Record",
+    full_name="gateway.v1.Record",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="avro_data",
+            full_name="gateway.v1.Record.avro_data",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="timestamp",
+            full_name="gateway.v1.Record.timestamp",
+            index=1,
+            number=2,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=43,
+    serialized_end=89,
 )
 
 
 _INSTANCERECORDS = _descriptor.Descriptor(
-  name='InstanceRecords',
-  full_name='gateway.v1.InstanceRecords',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='instance_id', full_name='gateway.v1.InstanceRecords.instance_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='records', full_name='gateway.v1.InstanceRecords.records', index=1,
-      number=2, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=91,
-  serialized_end=166,
+    name="InstanceRecords",
+    full_name="gateway.v1.InstanceRecords",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="instance_id",
+            full_name="gateway.v1.InstanceRecords.instance_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="records",
+            full_name="gateway.v1.InstanceRecords.records",
+            index=1,
+            number=2,
+            type=11,
+            cpp_type=10,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=91,
+    serialized_end=166,
 )
 
 
 _WAREHOUSEJOB = _descriptor.Descriptor(
-  name='WarehouseJob',
-  full_name='gateway.v1.WarehouseJob',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='job_id', full_name='gateway.v1.WarehouseJob.job_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='status', full_name='gateway.v1.WarehouseJob.status', index=1,
-      number=2, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='error', full_name='gateway.v1.WarehouseJob.error', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='result_avro_schema', full_name='gateway.v1.WarehouseJob.result_avro_schema', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='replay_cursors', full_name='gateway.v1.WarehouseJob.replay_cursors', index=4,
-      number=5, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='referenced_instance_ids', full_name='gateway.v1.WarehouseJob.referenced_instance_ids', index=5,
-      number=6, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='bytes_scanned', full_name='gateway.v1.WarehouseJob.bytes_scanned', index=6,
-      number=7, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='result_size_bytes', full_name='gateway.v1.WarehouseJob.result_size_bytes', index=7,
-      number=8, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='result_size_records', full_name='gateway.v1.WarehouseJob.result_size_records', index=8,
-      number=9, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-    _WAREHOUSEJOB_STATUS,
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=169,
-  serialized_end=473,
+    name="WarehouseJob",
+    full_name="gateway.v1.WarehouseJob",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="job_id",
+            full_name="gateway.v1.WarehouseJob.job_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="status",
+            full_name="gateway.v1.WarehouseJob.status",
+            index=1,
+            number=2,
+            type=14,
+            cpp_type=8,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="error",
+            full_name="gateway.v1.WarehouseJob.error",
+            index=2,
+            number=3,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="result_avro_schema",
+            full_name="gateway.v1.WarehouseJob.result_avro_schema",
+            index=3,
+            number=4,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="replay_cursors",
+            full_name="gateway.v1.WarehouseJob.replay_cursors",
+            index=4,
+            number=5,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="referenced_instance_ids",
+            full_name="gateway.v1.WarehouseJob.referenced_instance_ids",
+            index=5,
+            number=6,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="bytes_scanned",
+            full_name="gateway.v1.WarehouseJob.bytes_scanned",
+            index=6,
+            number=7,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="result_size_bytes",
+            full_name="gateway.v1.WarehouseJob.result_size_bytes",
+            index=7,
+            number=8,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="result_size_records",
+            full_name="gateway.v1.WarehouseJob.result_size_records",
+            index=8,
+            number=9,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[
+        _WAREHOUSEJOB_STATUS,
+    ],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=169,
+    serialized_end=473,
 )
 
 
 _PINGREQUEST = _descriptor.Descriptor(
-  name='PingRequest',
-  full_name='gateway.v1.PingRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='client_id', full_name='gateway.v1.PingRequest.client_id', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='client_version', full_name='gateway.v1.PingRequest.client_version', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=475,
-  serialized_end=531,
+    name="PingRequest",
+    full_name="gateway.v1.PingRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="client_id",
+            full_name="gateway.v1.PingRequest.client_id",
+            index=0,
+            number=1,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="client_version",
+            full_name="gateway.v1.PingRequest.client_version",
+            index=1,
+            number=2,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=475,
+    serialized_end=531,
 )
 
 
 _PINGRESPONSE = _descriptor.Descriptor(
-  name='PingResponse',
-  full_name='gateway.v1.PingResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='authenticated', full_name='gateway.v1.PingResponse.authenticated', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='version_status', full_name='gateway.v1.PingResponse.version_status', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='recommended_version', full_name='gateway.v1.PingResponse.recommended_version', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=533,
-  serialized_end=623,
+    name="PingResponse",
+    full_name="gateway.v1.PingResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="authenticated",
+            full_name="gateway.v1.PingResponse.authenticated",
+            index=0,
+            number=1,
+            type=8,
+            cpp_type=7,
+            label=1,
+            has_default_value=False,
+            default_value=False,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="version_status",
+            full_name="gateway.v1.PingResponse.version_status",
+            index=1,
+            number=2,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="recommended_version",
+            full_name="gateway.v1.PingResponse.recommended_version",
+            index=2,
+            number=3,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=533,
+    serialized_end=623,
 )
 
 
 _WRITEREQUEST = _descriptor.Descriptor(
-  name='WriteRequest',
-  full_name='gateway.v1.WriteRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='instance_records', full_name='gateway.v1.WriteRequest.instance_records', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=625,
-  serialized_end=694,
+    name="WriteRequest",
+    full_name="gateway.v1.WriteRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="instance_records",
+            full_name="gateway.v1.WriteRequest.instance_records",
+            index=0,
+            number=1,
+            type=11,
+            cpp_type=10,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=625,
+    serialized_end=694,
 )
 
 
 _WRITERESPONSE = _descriptor.Descriptor(
-  name='WriteResponse',
-  full_name='gateway.v1.WriteResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='write_id', full_name='gateway.v1.WriteResponse.write_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=696,
-  serialized_end=729,
+    name="WriteResponse",
+    full_name="gateway.v1.WriteResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="write_id",
+            full_name="gateway.v1.WriteResponse.write_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=696,
+    serialized_end=729,
 )
 
 
 _QUERYLOGREQUEST = _descriptor.Descriptor(
-  name='QueryLogRequest',
-  full_name='gateway.v1.QueryLogRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='instance_id', full_name='gateway.v1.QueryLogRequest.instance_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='partitions', full_name='gateway.v1.QueryLogRequest.partitions', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='peek', full_name='gateway.v1.QueryLogRequest.peek', index=2,
-      number=3, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=731,
-  serialized_end=803,
+    name="QueryLogRequest",
+    full_name="gateway.v1.QueryLogRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="instance_id",
+            full_name="gateway.v1.QueryLogRequest.instance_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="partitions",
+            full_name="gateway.v1.QueryLogRequest.partitions",
+            index=1,
+            number=2,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="peek",
+            full_name="gateway.v1.QueryLogRequest.peek",
+            index=2,
+            number=3,
+            type=8,
+            cpp_type=7,
+            label=1,
+            has_default_value=False,
+            default_value=False,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=731,
+    serialized_end=803,
 )
 
 
 _QUERYLOGRESPONSE = _descriptor.Descriptor(
-  name='QueryLogResponse',
-  full_name='gateway.v1.QueryLogResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='replay_cursors', full_name='gateway.v1.QueryLogResponse.replay_cursors', index=0,
-      number=1, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='change_cursors', full_name='gateway.v1.QueryLogResponse.change_cursors', index=1,
-      number=2, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=805,
-  serialized_end=871,
+    name="QueryLogResponse",
+    full_name="gateway.v1.QueryLogResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="replay_cursors",
+            full_name="gateway.v1.QueryLogResponse.replay_cursors",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="change_cursors",
+            full_name="gateway.v1.QueryLogResponse.change_cursors",
+            index=1,
+            number=2,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=805,
+    serialized_end=871,
 )
 
 
 _QUERYINDEXREQUEST = _descriptor.Descriptor(
-  name='QueryIndexRequest',
-  full_name='gateway.v1.QueryIndexRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='instance_id', full_name='gateway.v1.QueryIndexRequest.instance_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='partitions', full_name='gateway.v1.QueryIndexRequest.partitions', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='filter', full_name='gateway.v1.QueryIndexRequest.filter', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=873,
-  serialized_end=949,
+    name="QueryIndexRequest",
+    full_name="gateway.v1.QueryIndexRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="instance_id",
+            full_name="gateway.v1.QueryIndexRequest.instance_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="partitions",
+            full_name="gateway.v1.QueryIndexRequest.partitions",
+            index=1,
+            number=2,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="filter",
+            full_name="gateway.v1.QueryIndexRequest.filter",
+            index=2,
+            number=3,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=873,
+    serialized_end=949,
 )
 
 
 _QUERYINDEXRESPONSE = _descriptor.Descriptor(
-  name='QueryIndexResponse',
-  full_name='gateway.v1.QueryIndexResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='replay_cursors', full_name='gateway.v1.QueryIndexResponse.replay_cursors', index=0,
-      number=1, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='change_cursors', full_name='gateway.v1.QueryIndexResponse.change_cursors', index=1,
-      number=2, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=951,
-  serialized_end=1019,
+    name="QueryIndexResponse",
+    full_name="gateway.v1.QueryIndexResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="replay_cursors",
+            full_name="gateway.v1.QueryIndexResponse.replay_cursors",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="change_cursors",
+            full_name="gateway.v1.QueryIndexResponse.change_cursors",
+            index=1,
+            number=2,
+            type=12,
+            cpp_type=9,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=951,
+    serialized_end=1019,
 )
 
 
 _QUERYWAREHOUSEREQUEST = _descriptor.Descriptor(
-  name='QueryWarehouseRequest',
-  full_name='gateway.v1.QueryWarehouseRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='query', full_name='gateway.v1.QueryWarehouseRequest.query', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='partitions', full_name='gateway.v1.QueryWarehouseRequest.partitions', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='dry_run', full_name='gateway.v1.QueryWarehouseRequest.dry_run', index=2,
-      number=3, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='timeout_ms', full_name='gateway.v1.QueryWarehouseRequest.timeout_ms', index=3,
-      number=4, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='max_bytes_scanned', full_name='gateway.v1.QueryWarehouseRequest.max_bytes_scanned', index=4,
-      number=5, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1021,
-  serialized_end=1143,
+    name="QueryWarehouseRequest",
+    full_name="gateway.v1.QueryWarehouseRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="query",
+            full_name="gateway.v1.QueryWarehouseRequest.query",
+            index=0,
+            number=1,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"".decode("utf-8"),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="partitions",
+            full_name="gateway.v1.QueryWarehouseRequest.partitions",
+            index=1,
+            number=2,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="dry_run",
+            full_name="gateway.v1.QueryWarehouseRequest.dry_run",
+            index=2,
+            number=3,
+            type=8,
+            cpp_type=7,
+            label=1,
+            has_default_value=False,
+            default_value=False,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="timeout_ms",
+            full_name="gateway.v1.QueryWarehouseRequest.timeout_ms",
+            index=3,
+            number=4,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="max_bytes_scanned",
+            full_name="gateway.v1.QueryWarehouseRequest.max_bytes_scanned",
+            index=4,
+            number=5,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1021,
+    serialized_end=1143,
 )
 
 
 _QUERYWAREHOUSERESPONSE = _descriptor.Descriptor(
-  name='QueryWarehouseResponse',
-  full_name='gateway.v1.QueryWarehouseResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='job', full_name='gateway.v1.QueryWarehouseResponse.job', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1145,
-  serialized_end=1208,
+    name="QueryWarehouseResponse",
+    full_name="gateway.v1.QueryWarehouseResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="job",
+            full_name="gateway.v1.QueryWarehouseResponse.job",
+            index=0,
+            number=1,
+            type=11,
+            cpp_type=10,
+            label=1,
+            has_default_value=False,
+            default_value=None,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1145,
+    serialized_end=1208,
 )
 
 
 _POLLWAREHOUSEJOBREQUEST = _descriptor.Descriptor(
-  name='PollWarehouseJobRequest',
-  full_name='gateway.v1.PollWarehouseJobRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='job_id', full_name='gateway.v1.PollWarehouseJobRequest.job_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1210,
-  serialized_end=1251,
+    name="PollWarehouseJobRequest",
+    full_name="gateway.v1.PollWarehouseJobRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="job_id",
+            full_name="gateway.v1.PollWarehouseJobRequest.job_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1210,
+    serialized_end=1251,
 )
 
 
 _POLLWAREHOUSEJOBRESPONSE = _descriptor.Descriptor(
-  name='PollWarehouseJobResponse',
-  full_name='gateway.v1.PollWarehouseJobResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='job', full_name='gateway.v1.PollWarehouseJobResponse.job', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1253,
-  serialized_end=1318,
+    name="PollWarehouseJobResponse",
+    full_name="gateway.v1.PollWarehouseJobResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="job",
+            full_name="gateway.v1.PollWarehouseJobResponse.job",
+            index=0,
+            number=1,
+            type=11,
+            cpp_type=10,
+            label=1,
+            has_default_value=False,
+            default_value=None,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1253,
+    serialized_end=1318,
 )
 
 
 _READREQUEST = _descriptor.Descriptor(
-  name='ReadRequest',
-  full_name='gateway.v1.ReadRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='cursor', full_name='gateway.v1.ReadRequest.cursor', index=0,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='limit', full_name='gateway.v1.ReadRequest.limit', index=1,
-      number=3, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1320,
-  serialized_end=1364,
+    name="ReadRequest",
+    full_name="gateway.v1.ReadRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="cursor",
+            full_name="gateway.v1.ReadRequest.cursor",
+            index=0,
+            number=2,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="limit",
+            full_name="gateway.v1.ReadRequest.limit",
+            index=1,
+            number=3,
+            type=5,
+            cpp_type=1,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1320,
+    serialized_end=1364,
 )
 
 
 _READRESPONSE = _descriptor.Descriptor(
-  name='ReadResponse',
-  full_name='gateway.v1.ReadResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='records', full_name='gateway.v1.ReadResponse.records', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='next_cursor', full_name='gateway.v1.ReadResponse.next_cursor', index=1,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1366,
-  serialized_end=1438,
+    name="ReadResponse",
+    full_name="gateway.v1.ReadResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="records",
+            full_name="gateway.v1.ReadResponse.records",
+            index=0,
+            number=1,
+            type=11,
+            cpp_type=10,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+        _descriptor.FieldDescriptor(
+            name="next_cursor",
+            full_name="gateway.v1.ReadResponse.next_cursor",
+            index=1,
+            number=2,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1366,
+    serialized_end=1438,
 )
 
 
 _SUBSCRIBEREQUEST = _descriptor.Descriptor(
-  name='SubscribeRequest',
-  full_name='gateway.v1.SubscribeRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='cursor', full_name='gateway.v1.SubscribeRequest.cursor', index=0,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1440,
-  serialized_end=1474,
+    name="SubscribeRequest",
+    full_name="gateway.v1.SubscribeRequest",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="cursor",
+            full_name="gateway.v1.SubscribeRequest.cursor",
+            index=0,
+            number=2,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1440,
+    serialized_end=1474,
 )
 
 
 _SUBSCRIBERESPONSE = _descriptor.Descriptor(
-  name='SubscribeResponse',
-  full_name='gateway.v1.SubscribeResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='write_id', full_name='gateway.v1.SubscribeResponse.write_id', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1476,
-  serialized_end=1513,
+    name="SubscribeResponse",
+    full_name="gateway.v1.SubscribeResponse",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="write_id",
+            full_name="gateway.v1.SubscribeResponse.write_id",
+            index=0,
+            number=1,
+            type=12,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=b"",
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1476,
+    serialized_end=1513,
 )
 
-_INSTANCERECORDS.fields_by_name['records'].message_type = _RECORD
-_WAREHOUSEJOB.fields_by_name['status'].enum_type = _WAREHOUSEJOB_STATUS
+_INSTANCERECORDS.fields_by_name["records"].message_type = _RECORD
+_WAREHOUSEJOB.fields_by_name["status"].enum_type = _WAREHOUSEJOB_STATUS
 _WAREHOUSEJOB_STATUS.containing_type = _WAREHOUSEJOB
-_WRITEREQUEST.fields_by_name['instance_records'].message_type = _INSTANCERECORDS
-_QUERYWAREHOUSERESPONSE.fields_by_name['job'].message_type = _WAREHOUSEJOB
-_POLLWAREHOUSEJOBRESPONSE.fields_by_name['job'].message_type = _WAREHOUSEJOB
-_READRESPONSE.fields_by_name['records'].message_type = _RECORD
-DESCRIPTOR.message_types_by_name['Record'] = _RECORD
-DESCRIPTOR.message_types_by_name['InstanceRecords'] = _INSTANCERECORDS
-DESCRIPTOR.message_types_by_name['WarehouseJob'] = _WAREHOUSEJOB
-DESCRIPTOR.message_types_by_name['PingRequest'] = _PINGREQUEST
-DESCRIPTOR.message_types_by_name['PingResponse'] = _PINGRESPONSE
-DESCRIPTOR.message_types_by_name['WriteRequest'] = _WRITEREQUEST
-DESCRIPTOR.message_types_by_name['WriteResponse'] = _WRITERESPONSE
-DESCRIPTOR.message_types_by_name['QueryLogRequest'] = _QUERYLOGREQUEST
-DESCRIPTOR.message_types_by_name['QueryLogResponse'] = _QUERYLOGRESPONSE
-DESCRIPTOR.message_types_by_name['QueryIndexRequest'] = _QUERYINDEXREQUEST
-DESCRIPTOR.message_types_by_name['QueryIndexResponse'] = _QUERYINDEXRESPONSE
-DESCRIPTOR.message_types_by_name['QueryWarehouseRequest'] = _QUERYWAREHOUSEREQUEST
-DESCRIPTOR.message_types_by_name['QueryWarehouseResponse'] = _QUERYWAREHOUSERESPONSE
-DESCRIPTOR.message_types_by_name['PollWarehouseJobRequest'] = _POLLWAREHOUSEJOBREQUEST
-DESCRIPTOR.message_types_by_name['PollWarehouseJobResponse'] = _POLLWAREHOUSEJOBRESPONSE
-DESCRIPTOR.message_types_by_name['ReadRequest'] = _READREQUEST
-DESCRIPTOR.message_types_by_name['ReadResponse'] = _READRESPONSE
-DESCRIPTOR.message_types_by_name['SubscribeRequest'] = _SUBSCRIBEREQUEST
-DESCRIPTOR.message_types_by_name['SubscribeResponse'] = _SUBSCRIBERESPONSE
+_WRITEREQUEST.fields_by_name["instance_records"].message_type = _INSTANCERECORDS
+_QUERYWAREHOUSERESPONSE.fields_by_name["job"].message_type = _WAREHOUSEJOB
+_POLLWAREHOUSEJOBRESPONSE.fields_by_name["job"].message_type = _WAREHOUSEJOB
+_READRESPONSE.fields_by_name["records"].message_type = _RECORD
+DESCRIPTOR.message_types_by_name["Record"] = _RECORD
+DESCRIPTOR.message_types_by_name["InstanceRecords"] = _INSTANCERECORDS
+DESCRIPTOR.message_types_by_name["WarehouseJob"] = _WAREHOUSEJOB
+DESCRIPTOR.message_types_by_name["PingRequest"] = _PINGREQUEST
+DESCRIPTOR.message_types_by_name["PingResponse"] = _PINGRESPONSE
+DESCRIPTOR.message_types_by_name["WriteRequest"] = _WRITEREQUEST
+DESCRIPTOR.message_types_by_name["WriteResponse"] = _WRITERESPONSE
+DESCRIPTOR.message_types_by_name["QueryLogRequest"] = _QUERYLOGREQUEST
+DESCRIPTOR.message_types_by_name["QueryLogResponse"] = _QUERYLOGRESPONSE
+DESCRIPTOR.message_types_by_name["QueryIndexRequest"] = _QUERYINDEXREQUEST
+DESCRIPTOR.message_types_by_name["QueryIndexResponse"] = _QUERYINDEXRESPONSE
+DESCRIPTOR.message_types_by_name["QueryWarehouseRequest"] = _QUERYWAREHOUSEREQUEST
+DESCRIPTOR.message_types_by_name["QueryWarehouseResponse"] = _QUERYWAREHOUSERESPONSE
+DESCRIPTOR.message_types_by_name["PollWarehouseJobRequest"] = _POLLWAREHOUSEJOBREQUEST
+DESCRIPTOR.message_types_by_name["PollWarehouseJobResponse"] = _POLLWAREHOUSEJOBRESPONSE
+DESCRIPTOR.message_types_by_name["ReadRequest"] = _READREQUEST
+DESCRIPTOR.message_types_by_name["ReadResponse"] = _READRESPONSE
+DESCRIPTOR.message_types_by_name["SubscribeRequest"] = _SUBSCRIBEREQUEST
+DESCRIPTOR.message_types_by_name["SubscribeResponse"] = _SUBSCRIBERESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-Record = _reflection.GeneratedProtocolMessageType('Record', (_message.Message,), {
-  'DESCRIPTOR' : _RECORD,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.Record)
-  })
+Record = _reflection.GeneratedProtocolMessageType(
+    "Record",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _RECORD,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.Record)
+    },
+)
 _sym_db.RegisterMessage(Record)
 
-InstanceRecords = _reflection.GeneratedProtocolMessageType('InstanceRecords', (_message.Message,), {
-  'DESCRIPTOR' : _INSTANCERECORDS,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.InstanceRecords)
-  })
+InstanceRecords = _reflection.GeneratedProtocolMessageType(
+    "InstanceRecords",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _INSTANCERECORDS,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.InstanceRecords)
+    },
+)
 _sym_db.RegisterMessage(InstanceRecords)
 
-WarehouseJob = _reflection.GeneratedProtocolMessageType('WarehouseJob', (_message.Message,), {
-  'DESCRIPTOR' : _WAREHOUSEJOB,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.WarehouseJob)
-  })
+WarehouseJob = _reflection.GeneratedProtocolMessageType(
+    "WarehouseJob",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _WAREHOUSEJOB,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.WarehouseJob)
+    },
+)
 _sym_db.RegisterMessage(WarehouseJob)
 
-PingRequest = _reflection.GeneratedProtocolMessageType('PingRequest', (_message.Message,), {
-  'DESCRIPTOR' : _PINGREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.PingRequest)
-  })
+PingRequest = _reflection.GeneratedProtocolMessageType(
+    "PingRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _PINGREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.PingRequest)
+    },
+)
 _sym_db.RegisterMessage(PingRequest)
 
-PingResponse = _reflection.GeneratedProtocolMessageType('PingResponse', (_message.Message,), {
-  'DESCRIPTOR' : _PINGRESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.PingResponse)
-  })
+PingResponse = _reflection.GeneratedProtocolMessageType(
+    "PingResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _PINGRESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.PingResponse)
+    },
+)
 _sym_db.RegisterMessage(PingResponse)
 
-WriteRequest = _reflection.GeneratedProtocolMessageType('WriteRequest', (_message.Message,), {
-  'DESCRIPTOR' : _WRITEREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.WriteRequest)
-  })
+WriteRequest = _reflection.GeneratedProtocolMessageType(
+    "WriteRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _WRITEREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.WriteRequest)
+    },
+)
 _sym_db.RegisterMessage(WriteRequest)
 
-WriteResponse = _reflection.GeneratedProtocolMessageType('WriteResponse', (_message.Message,), {
-  'DESCRIPTOR' : _WRITERESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.WriteResponse)
-  })
+WriteResponse = _reflection.GeneratedProtocolMessageType(
+    "WriteResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _WRITERESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.WriteResponse)
+    },
+)
 _sym_db.RegisterMessage(WriteResponse)
 
-QueryLogRequest = _reflection.GeneratedProtocolMessageType('QueryLogRequest', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYLOGREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryLogRequest)
-  })
+QueryLogRequest = _reflection.GeneratedProtocolMessageType(
+    "QueryLogRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYLOGREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryLogRequest)
+    },
+)
 _sym_db.RegisterMessage(QueryLogRequest)
 
-QueryLogResponse = _reflection.GeneratedProtocolMessageType('QueryLogResponse', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYLOGRESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryLogResponse)
-  })
+QueryLogResponse = _reflection.GeneratedProtocolMessageType(
+    "QueryLogResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYLOGRESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryLogResponse)
+    },
+)
 _sym_db.RegisterMessage(QueryLogResponse)
 
-QueryIndexRequest = _reflection.GeneratedProtocolMessageType('QueryIndexRequest', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYINDEXREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryIndexRequest)
-  })
+QueryIndexRequest = _reflection.GeneratedProtocolMessageType(
+    "QueryIndexRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYINDEXREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryIndexRequest)
+    },
+)
 _sym_db.RegisterMessage(QueryIndexRequest)
 
-QueryIndexResponse = _reflection.GeneratedProtocolMessageType('QueryIndexResponse', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYINDEXRESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryIndexResponse)
-  })
+QueryIndexResponse = _reflection.GeneratedProtocolMessageType(
+    "QueryIndexResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYINDEXRESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryIndexResponse)
+    },
+)
 _sym_db.RegisterMessage(QueryIndexResponse)
 
-QueryWarehouseRequest = _reflection.GeneratedProtocolMessageType('QueryWarehouseRequest', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYWAREHOUSEREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryWarehouseRequest)
-  })
+QueryWarehouseRequest = _reflection.GeneratedProtocolMessageType(
+    "QueryWarehouseRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYWAREHOUSEREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryWarehouseRequest)
+    },
+)
 _sym_db.RegisterMessage(QueryWarehouseRequest)
 
-QueryWarehouseResponse = _reflection.GeneratedProtocolMessageType('QueryWarehouseResponse', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYWAREHOUSERESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.QueryWarehouseResponse)
-  })
+QueryWarehouseResponse = _reflection.GeneratedProtocolMessageType(
+    "QueryWarehouseResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _QUERYWAREHOUSERESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.QueryWarehouseResponse)
+    },
+)
 _sym_db.RegisterMessage(QueryWarehouseResponse)
 
-PollWarehouseJobRequest = _reflection.GeneratedProtocolMessageType('PollWarehouseJobRequest', (_message.Message,), {
-  'DESCRIPTOR' : _POLLWAREHOUSEJOBREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.PollWarehouseJobRequest)
-  })
+PollWarehouseJobRequest = _reflection.GeneratedProtocolMessageType(
+    "PollWarehouseJobRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _POLLWAREHOUSEJOBREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.PollWarehouseJobRequest)
+    },
+)
 _sym_db.RegisterMessage(PollWarehouseJobRequest)
 
-PollWarehouseJobResponse = _reflection.GeneratedProtocolMessageType('PollWarehouseJobResponse', (_message.Message,), {
-  'DESCRIPTOR' : _POLLWAREHOUSEJOBRESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.PollWarehouseJobResponse)
-  })
+PollWarehouseJobResponse = _reflection.GeneratedProtocolMessageType(
+    "PollWarehouseJobResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _POLLWAREHOUSEJOBRESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.PollWarehouseJobResponse)
+    },
+)
 _sym_db.RegisterMessage(PollWarehouseJobResponse)
 
-ReadRequest = _reflection.GeneratedProtocolMessageType('ReadRequest', (_message.Message,), {
-  'DESCRIPTOR' : _READREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.ReadRequest)
-  })
+ReadRequest = _reflection.GeneratedProtocolMessageType(
+    "ReadRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _READREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.ReadRequest)
+    },
+)
 _sym_db.RegisterMessage(ReadRequest)
 
-ReadResponse = _reflection.GeneratedProtocolMessageType('ReadResponse', (_message.Message,), {
-  'DESCRIPTOR' : _READRESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.ReadResponse)
-  })
+ReadResponse = _reflection.GeneratedProtocolMessageType(
+    "ReadResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _READRESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.ReadResponse)
+    },
+)
 _sym_db.RegisterMessage(ReadResponse)
 
-SubscribeRequest = _reflection.GeneratedProtocolMessageType('SubscribeRequest', (_message.Message,), {
-  'DESCRIPTOR' : _SUBSCRIBEREQUEST,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.SubscribeRequest)
-  })
+SubscribeRequest = _reflection.GeneratedProtocolMessageType(
+    "SubscribeRequest",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _SUBSCRIBEREQUEST,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.SubscribeRequest)
+    },
+)
 _sym_db.RegisterMessage(SubscribeRequest)
 
-SubscribeResponse = _reflection.GeneratedProtocolMessageType('SubscribeResponse', (_message.Message,), {
-  'DESCRIPTOR' : _SUBSCRIBERESPONSE,
-  '__module__' : 'beneath.proto.gateway_pb2'
-  # @@protoc_insertion_point(class_scope:gateway.v1.SubscribeResponse)
-  })
+SubscribeResponse = _reflection.GeneratedProtocolMessageType(
+    "SubscribeResponse",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _SUBSCRIBERESPONSE,
+        "__module__": "beneath.proto.gateway_pb2"
+        # @@protoc_insertion_point(class_scope:gateway.v1.SubscribeResponse)
+    },
+)
 _sym_db.RegisterMessage(SubscribeResponse)
 
 
 DESCRIPTOR._options = None
 
 _GATEWAY = _descriptor.ServiceDescriptor(
-  name='Gateway',
-  full_name='gateway.v1.Gateway',
-  file=DESCRIPTOR,
-  index=0,
-  serialized_options=None,
-  serialized_start=1516,
-  serialized_end=2129,
-  methods=[
-  _descriptor.MethodDescriptor(
-    name='Ping',
-    full_name='gateway.v1.Gateway.Ping',
+    name="Gateway",
+    full_name="gateway.v1.Gateway",
+    file=DESCRIPTOR,
     index=0,
-    containing_service=None,
-    input_type=_PINGREQUEST,
-    output_type=_PINGRESPONSE,
     serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='Write',
-    full_name='gateway.v1.Gateway.Write',
-    index=1,
-    containing_service=None,
-    input_type=_WRITEREQUEST,
-    output_type=_WRITERESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='QueryLog',
-    full_name='gateway.v1.Gateway.QueryLog',
-    index=2,
-    containing_service=None,
-    input_type=_QUERYLOGREQUEST,
-    output_type=_QUERYLOGRESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='QueryIndex',
-    full_name='gateway.v1.Gateway.QueryIndex',
-    index=3,
-    containing_service=None,
-    input_type=_QUERYINDEXREQUEST,
-    output_type=_QUERYINDEXRESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='QueryWarehouse',
-    full_name='gateway.v1.Gateway.QueryWarehouse',
-    index=4,
-    containing_service=None,
-    input_type=_QUERYWAREHOUSEREQUEST,
-    output_type=_QUERYWAREHOUSERESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='PollWarehouseJob',
-    full_name='gateway.v1.Gateway.PollWarehouseJob',
-    index=5,
-    containing_service=None,
-    input_type=_POLLWAREHOUSEJOBREQUEST,
-    output_type=_POLLWAREHOUSEJOBRESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='Read',
-    full_name='gateway.v1.Gateway.Read',
-    index=6,
-    containing_service=None,
-    input_type=_READREQUEST,
-    output_type=_READRESPONSE,
-    serialized_options=None,
-  ),
-  _descriptor.MethodDescriptor(
-    name='Subscribe',
-    full_name='gateway.v1.Gateway.Subscribe',
-    index=7,
-    containing_service=None,
-    input_type=_SUBSCRIBEREQUEST,
-    output_type=_SUBSCRIBERESPONSE,
-    serialized_options=None,
-  ),
-])
+    serialized_start=1516,
+    serialized_end=2129,
+    methods=[
+        _descriptor.MethodDescriptor(
+            name="Ping",
+            full_name="gateway.v1.Gateway.Ping",
+            index=0,
+            containing_service=None,
+            input_type=_PINGREQUEST,
+            output_type=_PINGRESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="Write",
+            full_name="gateway.v1.Gateway.Write",
+            index=1,
+            containing_service=None,
+            input_type=_WRITEREQUEST,
+            output_type=_WRITERESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="QueryLog",
+            full_name="gateway.v1.Gateway.QueryLog",
+            index=2,
+            containing_service=None,
+            input_type=_QUERYLOGREQUEST,
+            output_type=_QUERYLOGRESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="QueryIndex",
+            full_name="gateway.v1.Gateway.QueryIndex",
+            index=3,
+            containing_service=None,
+            input_type=_QUERYINDEXREQUEST,
+            output_type=_QUERYINDEXRESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="QueryWarehouse",
+            full_name="gateway.v1.Gateway.QueryWarehouse",
+            index=4,
+            containing_service=None,
+            input_type=_QUERYWAREHOUSEREQUEST,
+            output_type=_QUERYWAREHOUSERESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="PollWarehouseJob",
+            full_name="gateway.v1.Gateway.PollWarehouseJob",
+            index=5,
+            containing_service=None,
+            input_type=_POLLWAREHOUSEJOBREQUEST,
+            output_type=_POLLWAREHOUSEJOBRESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="Read",
+            full_name="gateway.v1.Gateway.Read",
+            index=6,
+            containing_service=None,
+            input_type=_READREQUEST,
+            output_type=_READRESPONSE,
+            serialized_options=None,
+        ),
+        _descriptor.MethodDescriptor(
+            name="Subscribe",
+            full_name="gateway.v1.Gateway.Subscribe",
+            index=7,
+            containing_service=None,
+            input_type=_SUBSCRIBEREQUEST,
+            output_type=_SUBSCRIBERESPONSE,
+            serialized_options=None,
+        ),
+    ],
+)
 _sym_db.RegisterServiceDescriptor(_GATEWAY)
 
-DESCRIPTOR.services_by_name['Gateway'] = _GATEWAY
+DESCRIPTOR.services_by_name["Gateway"] = _GATEWAY
 
 # @@protoc_insertion_point(module_scope)
