@@ -30,6 +30,7 @@ export interface Instance {
 
 const StreamPage = () => {
   const router = useRouter();
+  const [instance, setInstance] = React.useState<Instance | null>(null);
   const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
   if (
     typeof router.query.organization_name !== "string" ||
@@ -51,15 +52,12 @@ const StreamPage = () => {
     variables: { organizationName, projectName, streamName },
   });
 
-  const [instance, setInstance] = React.useState<Instance | null>(
-    data?.streamByOrganizationProjectAndName.primaryStreamInstance || null
-  );
-
+  // set the instance to the primary one, if we have it
   useEffect(() => {
-    if (data?.streamByOrganizationProjectAndName.primaryStreamInstance) {
-      setInstance(data?.streamByOrganizationProjectAndName.primaryStreamInstance);
+    if (data?.streamByOrganizationProjectAndName.primaryStreamInstanceID) {
+      setInstance(data.streamByOrganizationProjectAndName.primaryStreamInstance);
     }
-  }, [data?.streamByOrganizationProjectAndName.streamID]);
+  }, [data?.streamByOrganizationProjectAndName.primaryStreamInstanceID]);
 
   if (loading) {
     return (
