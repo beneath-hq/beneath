@@ -37,9 +37,9 @@ class Projects:
     )
     return result['projectByOrganizationAndName']
 
-  async def stage(
+  async def create(
     self,
-    organization_name,
+    organization_id,
     project_name,
     display_name=None,
     public=None,
@@ -49,33 +49,19 @@ class Projects:
   ):
     result = await self.conn.query_control(
       variables={
-        "organizationName": format_entity_name(organization_name),
-        "projectName": format_entity_name(project_name),
-        "displayName": display_name,
-        "public": public,
-        "description": description,
-        "site": site_url,
-        "photoURL": photo_url,
+        "input": {
+          "organizationID": organization_id,
+          "projectName": format_entity_name(project_name),
+          "displayName": display_name,
+          "public": public,
+          "description": description,
+          "site": site_url,
+          "photoURL": photo_url,
+        },
       },
       query="""
-        mutation StageProject(
-          $organizationName: String!,
-          $projectName: String!,
-          $displayName: String,
-          $public: Boolean,
-          $description: String,
-          $site: String,
-          $photoURL: String,
-        ) {
-          stageProject(
-            organizationName: $organizationName,
-            projectName: $projectName,
-            displayName: $displayName,
-            public: $public,
-            description: $description,
-            site: $site,
-            photoURL: $photoURL,
-          ) {
+        mutation CreateProject($input: CreateProjectInput!) {
+          createProject(input: $input) {
             projectID
             name
             displayName
@@ -89,7 +75,45 @@ class Projects:
         }
       """
     )
-    return result['stageProject']
+    return result['createProject']
+
+  async def update(
+    self,
+    project_id,
+    display_name=None,
+    public=None,
+    description=None,
+    site_url=None,
+    photo_url=None,
+  ):
+    result = await self.conn.query_control(
+      variables={
+        "input": {
+          "projectID": project_id,
+          "displayName": display_name,
+          "public": public,
+          "description": description,
+          "site": site_url,
+          "photoURL": photo_url,
+        },
+      },
+      query="""
+        mutation UpdateProject($input: UpdateProjectInput!) {
+          updateProject(input: $input) {
+            projectID
+            name
+            displayName
+            public
+            site
+            description
+            photoURL
+            createdOn
+            updatedOn
+          }
+        }
+      """
+    )
+    return result['updateProject']
 
   async def get_member_permissions(self, project_id):
     result = await self.conn.query_control(

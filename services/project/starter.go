@@ -17,7 +17,7 @@ func (s *Service) CreateUserStarterProject(ctx context.Context, msg *models.User
 		OrganizationID: msg.User.BillingOrganizationID,
 	}
 
-	err := s.StageWithUser(ctx, starterProject, nil, nil, nil, nil, nil, msg.User.UserID, models.ProjectPermissions{
+	err := s.CreateWithUser(ctx, starterProject, nil, nil, nil, nil, nil, msg.User.UserID, models.ProjectPermissions{
 		View:   true,
 		Create: true,
 		Admin:  true,

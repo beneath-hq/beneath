@@ -1,1 +1,1 @@
-{"Query":[],"Int":[],"Boolean":[],"ID":[],"Time":[],"Mutation":[],"String":[],"BillingPlan":[],"Float":[],"UUID":[],"BillingMethod":[],"BilledResource":[],"BillingInfo":[]}
+{"ID":[],"UUID":[],"Mutation":[],"BillingMethod":[],"String":[],"BilledResource":[],"Int":[],"Float":[],"Time":[],"Query":[],"BillingInfo":[],"Boolean":[],"BillingPlan":[]}

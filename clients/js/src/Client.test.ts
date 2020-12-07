@@ -63,19 +63,19 @@ test("runs with authenticated CLI and BENEATH_ENV=dev", async () => {
 });
 
 test("creates test stream", async () => {
-  const meRes = await queryControl("query Me { me { name } }");
+  const meRes = await queryControl("query Me { me { organizationID name } }");
   const me = meRes.me;
   expect(me.name).toBeTruthy();
 
   const projectRes = await queryControl(`
-    mutation StageProject($organization: String!, $project: String!) {
-			stageProject(organizationName: $organization, projectName: $project) {
+    mutation CreateProject(input: CreateProjectInput!) {
+			createProject(input: $input) {
 				projectID
 				name
 			}
 		}
-  `, { organization: me.name, project: PROJECT_NAME });
-  const project = projectRes.stageProject;
+  `, { input: { organizationID: me.organizationID, project: PROJECT_NAME } });
+  const project = projectRes.createProject;
   expect(project.name).toBe(PROJECT_NAME);
 
   const streamRes = await queryControl(`

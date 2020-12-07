@@ -114,42 +114,23 @@ func (s *Service) FindProjectMembers(ctx context.Context, projectID uuid.UUID) (
 	return result, nil
 }
 
-// StageWithUser updates the project if it already exists or creates it with the given user as a member
-func (s *Service) StageWithUser(ctx context.Context, p *models.Project, displayName *string, public *bool, description *string, site *string, photoURL *string, userID uuid.UUID, perms models.ProjectPermissions) error {
-	// determine whether to insert or update
-	update := (p.ProjectID != uuid.Nil)
-
-	// tracks whether a save is necessary
-	save := !update
-
-	if displayName != nil && p.DisplayName != *displayName {
+// CreateWithUser creates a project with the given user as a member
+func (s *Service) CreateWithUser(ctx context.Context, p *models.Project, displayName *string, public *bool, description *string, site *string, photoURL *string, userID uuid.UUID, perms models.ProjectPermissions) error {
+	// assign
+	if displayName != nil {
 		p.DisplayName = *displayName
-		save = true
 	}
-
-	if public != nil && p.Public != *public {
+	if public != nil {
 		p.Public = *public
-		save = true
 	}
-
-	if description != nil && p.Description != *description {
+	if description != nil {
 		p.Description = *description
-		save = true
 	}
-
-	if site != nil && p.Site != *site {
+	if site != nil {
 		p.Site = *site
-		save = true
 	}
-
-	if photoURL != nil && p.PhotoURL != *photoURL {
+	if photoURL != nil {
 		p.PhotoURL = *photoURL
-		save = true
-	}
-
-	// quit if no changes
-	if !save {
-		return nil
 	}
 
 	// validate
@@ -158,45 +139,26 @@ func (s *Service) StageWithUser(ctx context.Context, p *models.Project, displayN
 		return err
 	}
 
-	// note: if we ever support renaming projects, must invalidate stream cache for all instances in project
-
+	// insert
 	err = s.DB.InTransaction(ctx, func(ctx context.Context) error {
 		tx := s.DB.GetDB(ctx)
-		if update {
-			// update
-			p.UpdatedOn = time.Now()
-			_, err = tx.Model(p).
-				Column("display_name", "public", "description", "site", "photo_url", "updated_on").
-				WherePK().
-				Update()
-			if err != nil {
-				return err
-			}
 
-			err = s.Bus.Publish(ctx, &models.ProjectUpdatedEvent{
-				Project: p,
-			})
-			if err != nil {
-				return err
-			}
-		} else {
-			// insert
-			_, err := tx.Model(p).Insert()
-			if err != nil {
-				return err
-			}
+		// insert
+		_, err := tx.Model(p).Insert()
+		if err != nil {
+			return err
+		}
 
-			// connect project to userID
-			err = tx.Insert(&models.PermissionsUsersProjects{
-				UserID:    userID,
-				ProjectID: p.ProjectID,
-				View:      perms.View,
-				Create:    perms.Create,
-				Admin:     perms.Admin,
-			})
-			if err != nil {
-				return err
-			}
+		// connect project to userID
+		err = tx.Insert(&models.PermissionsUsersProjects{
+			UserID:    userID,
+			ProjectID: p.ProjectID,
+			View:      perms.View,
+			Create:    perms.Create,
+			Admin:     perms.Admin,
+		})
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -204,6 +166,54 @@ func (s *Service) StageWithUser(ctx context.Context, p *models.Project, displayN
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// Update updates the project info
+func (s *Service) Update(ctx context.Context, p *models.Project, displayName *string, public *bool, description *string, site *string, photoURL *string) error {
+	// assign
+	if displayName != nil {
+		p.DisplayName = *displayName
+	}
+	if public != nil {
+		p.Public = *public
+	}
+	if description != nil {
+		p.Description = *description
+	}
+	if site != nil {
+		p.Site = *site
+	}
+	if photoURL != nil {
+		p.PhotoURL = *photoURL
+	}
+
+	// validate
+	err := p.Validate()
+	if err != nil {
+		return err
+	}
+
+	// update
+	p.UpdatedOn = time.Now()
+	_, err = s.DB.GetDB(ctx).ModelContext(ctx, p).
+		Column("display_name", "public", "description", "site", "photo_url", "updated_on").
+		WherePK().
+		Update()
+	if err != nil {
+		return err
+	}
+
+	// publish update event
+	err = s.Bus.Publish(ctx, &models.ProjectUpdatedEvent{
+		Project: p,
+	})
+	if err != nil {
+		return err
+	}
+
+	// note: if we ever support renaming projects, must invalidate stream cache for all instances in project
 
 	return nil
 }

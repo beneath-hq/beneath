@@ -1,16 +1,24 @@
 import { useMutation } from "@apollo/client";
+import { Typography } from "@material-ui/core";
 import { Field, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import { STAGE_PROJECT } from "../../apollo/queries/project";
-import { StageProject, StageProjectVariables } from "../../apollo/types/StageProject";
-import { toURLName, toBackendName } from "../../lib/names";
-import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
-import SubmitControl from "../forms/SubmitControl";
-import useMe from "../../hooks/useMe";
-import { Typography } from "@material-ui/core";
-import FormikRadioGroup from "components/formik/RadioGroup";
+import { CREATE_PROJECT } from "apollo/queries/project";
+import {
+  CreateProject as ApolloCreateProject,
+  CreateProjectVariables as ApolloCreateProjectVariables,
+} from "apollo/types/CreateProject";
+import {
+  Form,
+  handleSubmitMutation,
+  RadioGroup as FormikRadioGroup,
+  SelectField as FormikSelectField,
+  TextField as FormikTextField,
+} from "components/formik";
+import SubmitControl from "components/forms/SubmitControl";
+import useMe from "hooks/useMe";
+import { toURLName, toBackendName } from "lib/names";
 
 interface Organization {
   organizationID: string;
@@ -24,11 +32,11 @@ export interface CreateProjectProps {
 
 const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
   const router = useRouter();
-  const [stageProject] = useMutation<StageProject, StageProjectVariables>(STAGE_PROJECT, {
+  const [createProject] = useMutation<ApolloCreateProject, ApolloCreateProjectVariables>(CREATE_PROJECT, {
     onCompleted: (data) => {
-      if (data?.stageProject) {
-        const orgName = toURLName(data.stageProject.organization.name);
-        const projName = toURLName(data.stageProject.name);
+      if (data?.createProject) {
+        const orgName = toURLName(data.createProject.organization.name);
+        const projName = toURLName(data.createProject.name);
         const href = `/project?organization_name=${orgName}&project_name=${projName}`;
         const as = `/${orgName}/${projName}`;
         router.replace(href, as, { shallow: true });
@@ -64,14 +72,16 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
         handleSubmitMutation(
           values,
           actions,
-          stageProject({
+          createProject({
             variables: {
-              organizationName: values.organization ? toBackendName(values.organization.name) : "",
-              projectName: toBackendName(values.name),
-              displayName: values.displayName,
-              description: values.description,
-              photoURL: values.photoURL,
-              public: values.public === "public" ? true : false,
+              input: {
+                organizationID: values?.organization?.organizationID || "",
+                projectName: toBackendName(values.name),
+                displayName: values.displayName,
+                description: values.description,
+                photoURL: values.photoURL,
+                public: values.public === "public" ? true : false,
+              }
             },
           })
         )

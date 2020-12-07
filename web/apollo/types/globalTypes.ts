@@ -19,6 +19,25 @@ export enum StreamSchemaKind {
   GraphQL = "GraphQL",
 }
 
+export interface CreateProjectInput {
+  organizationID: ControlUUID;
+  projectName: string;
+  displayName?: string | null;
+  public?: boolean | null;
+  description?: string | null;
+  site?: string | null;
+  photoURL?: string | null;
+}
+
+export interface UpdateProjectInput {
+  projectID: ControlUUID;
+  displayName?: string | null;
+  public?: boolean | null;
+  description?: string | null;
+  site?: string | null;
+  photoURL?: string | null;
+}
+
 //==============================================================
 // END Enums and Input Objects
 //==============================================================

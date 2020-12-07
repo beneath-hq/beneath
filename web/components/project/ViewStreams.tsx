@@ -24,7 +24,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
         <>
           We didn't find any streams in{" "}
           <strong>
-            {project.organization.name}/{project.name}
+            {toURLName(project.organization.name)}/{toURLName(project.name)}
           </strong>
         </>
       ),

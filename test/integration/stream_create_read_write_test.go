@@ -18,8 +18,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	assert "github.com/stretchr/testify/require"
 
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 )
 
 func TestStreamCreateReadAndWrite(t *testing.T) {
@@ -27,15 +27,15 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 
 	// create project
 	res1 := queryGQL(`
-		mutation StageProject($organizationName: String!) {
-			stageProject(organizationName: $organizationName, projectName: "test", public: true) {
+		mutation CreateProject($organizationID: String!) {
+			createProject(organizationID: $organizationID, projectName: "test", public: true) {
 				projectID
 				name
 			}
 		}
-	`, map[string]interface{}{"organizationName": testOrg.Name})
+	`, map[string]interface{}{"organizationID": testOrg.OrganizationID})
 	assert.Empty(t, res1.Errors)
-	project := res1.Result()["stageProject"]
+	project := res1.Result()["createProject"]
 	assert.Equal(t, "test", project["name"])
 
 	// create stream
