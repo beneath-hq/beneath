@@ -1,4 +1,4 @@
-import { Container, makeStyles, Typography } from "@material-ui/core";
+import { Container, Grid, makeStyles, Typography } from "@material-ui/core";
 import Head from "next/head";
 import React from "react";
 
@@ -76,12 +76,18 @@ const Page: React.FC<IProps> = (props) => {
         </div>
       </div>
       <div className={classes.footer}>
-        <Typography variant="body1">
-          Powered by Beneath.&nbsp;
-          <Link href="https://about.beneath.dev/policies/terms/">Terms</Link>.&nbsp;
-          <Link href="https://about.beneath.dev/policies/privacy/">Privacy</Link>.&nbsp;
-          <Link href="https://about.beneath.dev/contact/">Contact</Link>.&nbsp;
-        </Typography>
+        <Grid container spacing={4} justify="center">
+          <Grid item>&copy; 2020 Beneath</Grid>
+          <Grid item>
+            <Link href="https://about.beneath.dev/policies/terms/">Terms of Service</Link>
+          </Grid>
+          <Grid item>
+            <Link href="https://about.beneath.dev/policies/privacy/">Privacy Policy</Link>
+          </Grid>
+          <Grid item>
+            <Link href="https://about.beneath.dev/contact/">Contact us</Link>
+          </Grid>
+        </Grid>
       </div>
     </div>
   );
