@@ -147,7 +147,7 @@ theme.overrides = {
   },
   MuiTypography: {
     gutterBottom: {
-      marginBottom: '0.5em',
+      marginBottom: '1.0rem',
     }
   },
   MuiButton: {
