@@ -1,0 +1,20 @@
+type Post
+    @stream
+    @key(fields: ["created_on", "id"])
+{
+    created_on: Timestamp!
+    id: String!
+    author: String!
+    subreddit: String!
+    title: String!
+    text: String
+    link: String
+    permalink: String
+    flair: String
+    is_over_18: Boolean!
+    is_original_content: Boolean!
+    is_self_post: Boolean!
+    is_distinguished: Boolean!
+    is_spoiler: Boolean!
+    is_stickied: Boolean!
+}
