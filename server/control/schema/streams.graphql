@@ -3,6 +3,7 @@ extend type Query {
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
   streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
+  compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
 
 extend type Mutation {
@@ -39,6 +40,7 @@ extend type Mutation {
 
 enum StreamSchemaKind {
   GraphQL
+  Avro
 }
 
 type Stream {
@@ -86,4 +88,14 @@ type StreamIndex {
   fields: [String!]!
   primary: Boolean!
   normalize: Boolean!
+}
+
+input CompileSchemaInput {
+  schemaKind: StreamSchemaKind!
+  schema: String!
+  indexes: String
+}
+
+type CompileSchemaOutput {
+  canonicalIndexes: String!
 }

@@ -58,6 +58,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CompileSchemaOutput struct {
+		CanonicalIndexes func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
@@ -215,6 +219,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		CompileSchema                                     func(childComplexity int, input CompileSchemaInput) int
 		Empty                                             func(childComplexity int) int
 		ExploreProjects                                   func(childComplexity int) int
 		GetOrganizationUsage                              func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
@@ -408,6 +413,7 @@ type QueryResolver interface {
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error)
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error)
 	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error)
+	CompileSchema(ctx context.Context, input CompileSchemaInput) (*CompileSchemaOutput, error)
 	GetUsage(ctx context.Context, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
 	GetOrganizationUsage(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
 	GetServiceUsage(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
@@ -448,6 +454,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CompileSchemaOutput.canonicalIndexes":
+		if e.complexity.CompileSchemaOutput.CanonicalIndexes == nil {
+			break
+		}
+
+		return e.complexity.CompileSchemaOutput.CanonicalIndexes(childComplexity), true
 
 	case "Mutation.acceptOrganizationInvite":
 		if e.complexity.Mutation.AcceptOrganizationInvite == nil {
@@ -1418,6 +1431,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PublicOrganization.Projects(childComplexity), true
+
+	case "Query.compileSchema":
+		if e.complexity.Query.CompileSchema == nil {
+			break
+		}
+
+		args, err := ec.field_Query_compileSchema_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CompileSchema(childComplexity, args["input"].(CompileSchemaInput)), true
 
 	case "Query.empty":
 		if e.complexity.Query.Empty == nil {
@@ -2541,6 +2566,7 @@ type PermissionsServicesStreams {
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
   streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
+  compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
 
 extend type Mutation {
@@ -2577,6 +2603,7 @@ extend type Mutation {
 
 enum StreamSchemaKind {
   GraphQL
+  Avro
 }
 
 type Stream {
@@ -2625,7 +2652,16 @@ type StreamIndex {
   primary: Boolean!
   normalize: Boolean!
 }
-`, BuiltIn: false},
+
+input CompileSchemaInput {
+  schemaKind: StreamSchemaKind!
+  schema: String!
+  indexes: String
+}
+
+type CompileSchemaOutput {
+  canonicalIndexes: String!
+}`, BuiltIn: false},
 	{Name: "server/control/schema/usage.graphql", Input: `extend type Query {
   getUsage(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
   getOrganizationUsage(organizationID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
@@ -3612,6 +3648,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_compileSchema_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CompileSchemaInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCompileSchemaInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCompileSchemaInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getOrganizationUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4213,6 +4264,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _CompileSchemaOutput_canonicalIndexes(ctx context.Context, field graphql.CollectedField, obj *CompileSchemaOutput) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompileSchemaOutput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CanonicalIndexes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Mutation_empty(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -9315,6 +9401,48 @@ func (ec *executionContext) _Query_streamInstancesByOrganizationProjectAndStream
 	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamInstanceᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_compileSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_compileSchema_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CompileSchema(rctx, args["input"].(CompileSchemaInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*CompileSchemaOutput)
+	fc.Result = res
+	return ec.marshalNCompileSchemaOutput2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCompileSchemaOutput(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -13184,6 +13312,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCompileSchemaInput(ctx context.Context, obj interface{}) (CompileSchemaInput, error) {
+	var it CompileSchemaInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "schemaKind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaKind"))
+			it.SchemaKind, err = ec.unmarshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schema":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+			it.Schema, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "indexes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexes"))
+			it.Indexes, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateProjectInput(ctx context.Context, obj interface{}) (CreateProjectInput, error) {
 	var it CreateProjectInput
 	var asMap = obj.(map[string]interface{})
@@ -13360,6 +13524,33 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var compileSchemaOutputImplementors = []string{"CompileSchemaOutput"}
+
+func (ec *executionContext) _CompileSchemaOutput(ctx context.Context, sel ast.SelectionSet, obj *CompileSchemaOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, compileSchemaOutputImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CompileSchemaOutput")
+		case "canonicalIndexes":
+			out.Values[i] = ec._CompileSchemaOutput_canonicalIndexes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var mutationImplementors = []string{"Mutation"}
 
@@ -14503,6 +14694,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "compileSchema":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_compileSchema(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "getUsage":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -15396,6 +15601,25 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNCompileSchemaInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCompileSchemaInput(ctx context.Context, v interface{}) (CompileSchemaInput, error) {
+	res, err := ec.unmarshalInputCompileSchemaInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCompileSchemaOutput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCompileSchemaOutput(ctx context.Context, sel ast.SelectionSet, v CompileSchemaOutput) graphql.Marshaler {
+	return ec._CompileSchemaOutput(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCompileSchemaOutput2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCompileSchemaOutput(ctx context.Context, sel ast.SelectionSet, v *CompileSchemaOutput) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._CompileSchemaOutput(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateProjectInput(ctx context.Context, v interface{}) (CreateProjectInput, error) {

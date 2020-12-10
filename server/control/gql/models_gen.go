@@ -16,6 +16,16 @@ type Organization interface {
 	IsOrganization()
 }
 
+type CompileSchemaInput struct {
+	SchemaKind models.StreamSchemaKind `json:"schemaKind"`
+	Schema     string                  `json:"schema"`
+	Indexes    *string                 `json:"indexes"`
+}
+
+type CompileSchemaOutput struct {
+	CanonicalIndexes string `json:"canonicalIndexes"`
+}
+
 type CreateProjectInput struct {
 	OrganizationID uuid.UUID `json:"organizationID"`
 	ProjectName    string    `json:"projectName"`

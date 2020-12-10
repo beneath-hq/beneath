@@ -64,6 +64,14 @@ export const QUERY_STREAM_INSTANCES = gql`
   }
 `;
 
+export const COMPILE_SCHEMA = gql`
+  query CompileSchema($input: CompileSchemaInput!) {
+    compileSchema(input: $input) {
+      canonicalIndexes
+    }
+  }
+`;
+
 export const STAGE_STREAM = gql`
   mutation StageStream(
     $organizationName: String!,

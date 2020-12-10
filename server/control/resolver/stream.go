@@ -84,6 +84,20 @@ func (r *queryResolver) StreamInstancesByOrganizationProjectAndStreamName(ctx co
 	return instances, nil
 }
 
+func (r *queryResolver) CompileSchema(ctx context.Context, input gql.CompileSchemaInput) (*gql.CompileSchemaOutput, error) {
+	stream := &models.Stream{}
+	err := r.Streams.CompileToStream(stream, input.SchemaKind, input.Schema, input.Indexes, nil)
+	if err != nil {
+		return nil, gqlerror.Errorf("Error compiling schema: %s", err.Error())
+	}
+
+	canonicalIndexes := &gql.CompileSchemaOutput{
+		CanonicalIndexes: stream.CanonicalIndexes,
+	}
+
+	return canonicalIndexes, nil
+}
+
 func (r *mutationResolver) StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*models.Stream, error) {
 	var project *models.Project
 	var stream *models.Stream

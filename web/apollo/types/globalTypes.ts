@@ -16,7 +16,14 @@ export enum EntityKind {
 }
 
 export enum StreamSchemaKind {
+  Avro = "Avro",
   GraphQL = "GraphQL",
+}
+
+export interface CompileSchemaInput {
+  schemaKind: StreamSchemaKind;
+  schema: string;
+  indexes?: string | null;
 }
 
 export interface CreateProjectInput {
