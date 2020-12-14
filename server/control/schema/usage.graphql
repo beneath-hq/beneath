@@ -1,15 +1,15 @@
 extend type Query {
-  getUsage(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getOrganizationUsage(organizationID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getServiceUsage(serviceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getStreamInstanceUsage(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getStreamUsage(streamID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getUserUsage(userID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getUsage(input: GetUsageInput!): [Usage!]!
+  getOrganizationUsage(input: GetEntityUsageInput!): [Usage!]!
+  getServiceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getStreamInstanceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getStreamUsage(input: GetEntityUsageInput!): [Usage!]!
+  getUserUsage(input: GetEntityUsageInput!): [Usage!]!
 }
 
 type Usage {
   entityID: UUID!
-  period: String!
+  label: UsageLabel!
   time: Time!
   readOps: Int!
   readBytes: Int!
@@ -27,4 +27,26 @@ enum EntityKind {
   StreamInstance
   Stream
   User
+}
+
+enum UsageLabel {
+  Total
+  QuotaMonth
+  Monthly
+  Hourly
+}
+
+input GetUsageInput {
+  entityKind: EntityKind!
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
+}
+
+input GetEntityUsageInput {
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
 }

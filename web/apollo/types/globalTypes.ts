@@ -20,6 +20,13 @@ export enum StreamSchemaKind {
   GraphQL = "GraphQL",
 }
 
+export enum UsageLabel {
+  Hourly = "Hourly",
+  Monthly = "Monthly",
+  QuotaMonth = "QuotaMonth",
+  Total = "Total",
+}
+
 export interface CompileSchemaInput {
   schemaKind: StreamSchemaKind;
   schema: string;
@@ -34,6 +41,21 @@ export interface CreateProjectInput {
   description?: string | null;
   site?: string | null;
   photoURL?: string | null;
+}
+
+export interface GetEntityUsageInput {
+  entityID: ControlUUID;
+  label: UsageLabel;
+  from?: ControlTime | null;
+  until?: ControlTime | null;
+}
+
+export interface GetUsageInput {
+  entityKind: EntityKind;
+  entityID: ControlUUID;
+  label: UsageLabel;
+  from?: ControlTime | null;
+  until?: ControlTime | null;
 }
 
 export interface UpdateProjectInput {

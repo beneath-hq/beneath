@@ -1,10 +1,10 @@
 import gql from "graphql-tag";
 
 export const GET_USAGE = gql`
-  query GetUsage($entityKind: EntityKind!, $entityID: UUID!, $period: String!, $from: Time!, $until: Time) {
-    getUsage(entityKind: $entityKind, entityID: $entityID, period: $period, from: $from, until: $until) {
+  query GetUsage($input: GetUsageInput!) {
+    getUsage(input: $input) {
       entityID
-      period
+      label
       time
       readOps
       readBytes
@@ -19,10 +19,10 @@ export const GET_USAGE = gql`
 `;
 
 export const GET_ORGANIZATION_USAGE = gql`
-  query GetOrganizationUsage($organizationID: UUID!, $period: String!, $from: Time!, $until: Time) {
-    getOrganizationUsage(organizationID: $organizationID, period: $period, from: $from, until: $until) {
+  query GetOrganizationUsage($input: GetEntityUsageInput!) {
+    getOrganizationUsage(input: $input) {
       entityID
-      period
+      label
       time
       readOps
       readBytes
@@ -37,10 +37,10 @@ export const GET_ORGANIZATION_USAGE = gql`
 `;
 
 export const GET_SERVICE_USAGE = gql`
-  query GetServiceUsage($serviceID: UUID!, $period: String!, $from: Time!, $until: Time) {
-    getServiceUsage(serviceID: $serviceID, period: $period, from: $from, until: $until) {
+  query GetServiceUsage($input: GetEntityUsageInput!) {
+    getServiceUsage(input: $input) {
       entityID
-      period
+      label
       time
       readOps
       readBytes
@@ -55,10 +55,10 @@ export const GET_SERVICE_USAGE = gql`
 `;
 
 export const GET_STREAM_USAGE = gql`
-  query GetStreamUsage($streamID: UUID!, $period: String!, $from: Time!, $until: Time) {
-    getStreamUsage(streamID: $streamID, period: $period, from: $from, until: $until) {
+  query GetStreamUsage($input: GetEntityUsageInput!) {
+    getStreamUsage(input: $input) {
       entityID
-      period
+      label
       time
       readOps
       readBytes
@@ -71,10 +71,10 @@ export const GET_STREAM_USAGE = gql`
 `;
 
 export const GET_USER_USAGE = gql`
-  query GetUserUsage($userID: UUID!, $period: String!, $from: Time!, $until: Time) {
-    getUserUsage(userID: $userID, period: $period, from: $from, until: $until) {
+  query GetUserUsage($input: GetEntityUsageInput!) {
+    getUserUsage(input: $input) {
       entityID
-      period
+      label
       time
       readOps
       readBytes
