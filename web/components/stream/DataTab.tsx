@@ -308,6 +308,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                   as={`/-/sql`}
                   size="small"
                   className={classes.topRowHeight}
+                  disabled={!stream.useWarehouse}
                 >
                   Query with SQL
                 </Button>
