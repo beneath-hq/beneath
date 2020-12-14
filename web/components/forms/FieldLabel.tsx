@@ -1,6 +1,5 @@
 import { FormHelperText, InputLabel, makeStyles, Theme } from "@material-ui/core";
 import { FC } from "react";
-import clsx from "clsx";
 
 const useStyles = makeStyles((theme: Theme) => ({
   label: {
@@ -19,7 +18,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 export type FieldLabelProps = {
   id?: string;
   label?: React.ReactNode;
-  helperText?: string;
+  helperText?: string | JSX.Element;
   required?: boolean;
 };
 
@@ -31,7 +30,7 @@ const FieldLabel: FC<FieldLabelProps> = ({ id, label, helperText, required }) =>
     <>
       {label && (
         <InputLabel
-          classes={{ formControl: clsx(classes.label, helperText) }}
+          classes={{ formControl: classes.label }}
           disableAnimation={true}
           shrink={false}
           id={inputLabelId}
