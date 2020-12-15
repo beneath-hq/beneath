@@ -39,7 +39,7 @@ class Services:
         )
         return result["serviceByOrganizationProjectAndName"]
 
-    async def stage(
+    async def create(
         self,
         organization_name,
         project_name,
@@ -52,48 +52,88 @@ class Services:
     ):
         result = await self.conn.query_control(
             variables={
-                "organizationName": format_entity_name(organization_name),
-                "projectName": format_entity_name(project_name),
-                "serviceName": format_entity_name(service_name),
-                "description": description,
-                "sourceURL": source_url,
-                "readQuota": read_quota_bytes,
-                "writeQuota": write_quota_bytes,
-                "scanQuota": scan_quota_bytes,
+                "input": {
+                    "organizationName": format_entity_name(organization_name),
+                    "projectName": format_entity_name(project_name),
+                    "serviceName": format_entity_name(service_name),
+                    "description": description,
+                    "sourceURL": source_url,
+                    "readQuota": read_quota_bytes,
+                    "writeQuota": write_quota_bytes,
+                    "scanQuota": scan_quota_bytes,
+                }
             },
             query="""
-                mutation StageService(
-                    $organizationName: String!
-                    $projectName: String!
-                    $serviceName: String!
-                    $description: String
-                    $sourceURL: String
-                    $readQuota: Int
-                    $writeQuota: Int
-                    $scanQuota: Int
-                ) {
-                    stageService(
-                        organizationName: $organizationName
-                        projectName: $projectName
-                        serviceName: $serviceName
-                        description: $description
-                        sourceURL: $sourceURL
-                        readQuota: $readQuota
-                        writeQuota: $writeQuota
-                        scanQuota: $scanQuota
-                    ) {
-                        serviceID
+                mutation CreateService($input: CreateServiceInput!) {
+                    createService(input: $input) {
+                    serviceID
+                    name
+                    description
+                    sourceURL
+                    readQuota
+                    writeQuota
+                    scanQuota
+                    project {
+                        projectID
                         name
-                        description
-                        sourceURL
-                        readQuota
-                        writeQuota
-                        scanQuota
+                        organization {
+                        organizationID
+                        name
+                        }
+                    }
                     }
                 }
             """,
         )
-        return result["stageService"]
+        return result["createService"]
+    
+    async def update(
+        self,
+        organization_name,
+        project_name,
+        service_name,
+        description=None,
+        source_url=None,
+        read_quota_bytes=None,
+        write_quota_bytes=None,
+        scan_quota_bytes=None,
+    ):
+        result = await self.conn.query_control(
+            variables={
+                "input": {
+                    "organizationName": format_entity_name(organization_name),
+                    "projectName": format_entity_name(project_name),
+                    "serviceName": format_entity_name(service_name),
+                    "description": description,
+                    "sourceURL": source_url,
+                    "readQuota": read_quota_bytes,
+                    "writeQuota": write_quota_bytes,
+                    "scanQuota": scan_quota_bytes,
+                }
+            },
+            query="""
+                mutation UpdateService($input: UpdateServiceInput!) {
+                    updateService(input: $input) {
+                    serviceID
+                    name
+                    description
+                    sourceURL
+                    readQuota
+                    writeQuota
+                    scanQuota
+                    project {
+                        projectID
+                        name
+                        organization {
+                        organizationID
+                        name
+                        }
+                    }
+                    }
+                }
+            """,
+        )
+        return result["updateService"]
 
     async def update_permissions_for_stream(self, service_id, stream_id, read, write):
         result = await self.conn.query_control(

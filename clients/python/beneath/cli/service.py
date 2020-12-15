@@ -10,13 +10,23 @@ def add_subparser(root):
     _list.set_defaults(func=async_cmd(show_list))
     _list.add_argument("project_path", type=str)
 
-    _stage = service.add_parser("stage")
-    _stage.set_defaults(func=async_cmd(stage))
-    _stage.add_argument("service_path", type=str)
-    _stage.add_argument("--description", type=str)
-    _stage.add_argument("--source-url", type=str)
-    _stage.add_argument("--read-quota-mb", type=int)
-    _stage.add_argument("--write-quota-mb", type=int)
+    _create = service.add_parser("create")
+    _create.set_defaults(func=async_cmd(create))
+    _create.add_argument("service_path", type=str)
+    _create.add_argument("--description", type=str)
+    _create.add_argument("--source-url", type=str)
+    _create.add_argument("--read-quota-mb", type=int)
+    _create.add_argument("--write-quota-mb", type=int)
+    _create.add_argument("--scan-quota-mb", type=int)
+    
+    _update = service.add_parser("update")
+    _update.set_defaults(func=async_cmd(update))
+    _update.add_argument("service_path", type=str)
+    _update.add_argument("--description", type=str)
+    _update.add_argument("--source-url", type=str)
+    _update.add_argument("--read-quota-mb", type=int)
+    _update.add_argument("--write-quota-mb", type=int)
+    _update.add_argument("--scan-quota-mb", type=int)
 
     _update_perms = service.add_parser("update-permissions")
     _update_perms.set_defaults(func=async_cmd(update_permissions))
@@ -55,10 +65,10 @@ async def show_list(args):
         pretty_print_graphql_result(service)
 
 
-async def stage(args):
+async def create(args):
     client = Client()
     seq = ServiceQualifier.from_path(args.service_path)
-    result = await client.admin.services.stage(
+    result = await client.admin.services.create(
         organization_name=seq.organization,
         project_name=seq.project,
         service_name=seq.service,
@@ -66,6 +76,23 @@ async def stage(args):
         source_url=args.source_url,
         read_quota_bytes=mb_to_bytes(args.read_quota_mb),
         write_quota_bytes=mb_to_bytes(args.write_quota_mb),
+        scan_quota_bytes=mb_to_bytes(args.scan_quota_mb),
+    )
+    pretty_print_graphql_result(result)
+
+
+async def update(args):
+    client = Client()
+    seq = ServiceQualifier.from_path(args.service_path)
+    result = await client.admin.services.update(
+        organization_name=seq.organization,
+        project_name=seq.project,
+        service_name=seq.service,
+        description=args.description,
+        source_url=args.source_url,
+        read_quota_bytes=mb_to_bytes(args.read_quota_mb),
+        write_quota_bytes=mb_to_bytes(args.write_quota_mb),
+        scan_quota_bytes=mb_to_bytes(args.scan_quota_mb),
     )
     pretty_print_graphql_result(result)
 
