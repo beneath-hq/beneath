@@ -3,7 +3,7 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
-import { EntityKind } from "./globalTypes";
+import { GetUsageInput, UsageLabel } from "./globalTypes";
 
 // ====================================================
 // GraphQL query operation: GetUsage
@@ -12,7 +12,7 @@ import { EntityKind } from "./globalTypes";
 export interface GetUsage_getUsage {
   __typename: "Usage";
   entityID: ControlUUID;
-  period: string;
+  label: UsageLabel;
   time: ControlTime;
   readOps: number;
   readBytes: number;
@@ -29,9 +29,5 @@ export interface GetUsage {
 }
 
 export interface GetUsageVariables {
-  entityKind: EntityKind;
-  entityID: ControlUUID;
-  period: string;
-  from: ControlTime;
-  until?: ControlTime | null;
+  input: GetUsageInput;
 }

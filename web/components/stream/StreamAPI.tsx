@@ -25,35 +25,35 @@ interface StreamAPIProps {
 }
 
 const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
-  const me = useMe();
-  const classes = useStyles();
-  const [language, setLanguage] = useState('Python');
-  const [pythonDetail, setPythonDetail] = useState('Reading');
-  const [javascriptDetail, setJavascriptDetail] = useState('Reading');
-  const [reactDetail, setReactDetail] = useState('Reading');
-
   const languageTabs = ["Python", "Javascript", "React", "SQL", "cURL"];
   const pythonTabs = ["Setup", "Reading", "Writing", "Pipelines"];
   const javascriptTabs = ["Setup", "Reading"];
   const reactTabs = ["Setup", "Reading"];
+  
+  const me = useMe();
+  const classes = useStyles();
+  const [language, setLanguage] = useState(languageTabs[0]);
+  const [pythonDetail, setPythonDetail] = useState(pythonTabs[1]);
+  const [javascriptDetail, setJavascriptDetail] = useState(javascriptTabs[1]);
+  const [reactDetail, setReactDetail] = useState(reactTabs[1]);
 
   return (
     <Container maxWidth="md" className={classes.container}>
       <Alert severity="info">
         {me && (
           <>
-            To create a secret for connecting to Beneath, head to your{" "}
+            To create a secret for connecting to Beneath, head to the{" "}
             <Link
               href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
               as={`/${toURLName(me.name)}/-/secrets`}
             >
-              profile page
+              secrets page
             </Link>
           </>
         )}
         {!me && (
           <>
-            You'll first have to <Link href="/-/auth">create a user</Link> to get a secret for
+            You'll first have to <Link href="/-/auth">login or signup</Link> to get a secret for
             connecting to Beneath (don't worry, it's free and we won't share your data with anyone)
           </>
         )}

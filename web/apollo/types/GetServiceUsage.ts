@@ -3,6 +3,8 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
+import { GetEntityUsageInput, UsageLabel } from "./globalTypes";
+
 // ====================================================
 // GraphQL query operation: GetServiceUsage
 // ====================================================
@@ -10,7 +12,7 @@
 export interface GetServiceUsage_getServiceUsage {
   __typename: "Usage";
   entityID: ControlUUID;
-  period: string;
+  label: UsageLabel;
   time: ControlTime;
   readOps: number;
   readBytes: number;
@@ -27,8 +29,5 @@ export interface GetServiceUsage {
 }
 
 export interface GetServiceUsageVariables {
-  serviceID: ControlUUID;
-  period: string;
-  from: ControlTime;
-  until?: ControlTime | null;
+  input: GetEntityUsageInput;
 }

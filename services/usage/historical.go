@@ -20,16 +20,20 @@ func (s *Service) GetHistoricalUsageSingle(ctx context.Context, entityID uuid.UU
 }
 
 // GetHistoricalUsageRange returns usage info for the given length of time
-func (s *Service) GetHistoricalUsageRange(ctx context.Context, entityID uuid.UUID, label driver.UsageLabel, from time.Time, until time.Time) ([]time.Time, []pb.QuotaUsage, error) {
-	// if "until" is 0, set it to the current time
-	if until.IsZero() {
-		until = time.Now()
+func (s *Service) GetHistoricalUsageRange(ctx context.Context, entityID uuid.UUID, label driver.UsageLabel, from *time.Time, until *time.Time) ([]time.Time, []pb.QuotaUsage, error) {
+	if from == nil {
+		t := time.Time{}
+		from = &t
+	}
+	if until == nil {
+		t := time.Now()
+		until = &t
 	}
 
 	// read and collect usage
 	var times []time.Time
 	var usages []pb.QuotaUsage
-	err := s.engine.Usage.ReadUsageRange(ctx, entityID, label, from, until, maxPeriods, func(ts time.Time, usage pb.QuotaUsage) error {
+	err := s.engine.Usage.ReadUsageRange(ctx, entityID, label, *from, *until, maxPeriods, func(ts time.Time, usage pb.QuotaUsage) error {
 		times = append(times, ts)
 		usages = append(usages, usage)
 		return nil

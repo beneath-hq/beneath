@@ -40,6 +40,21 @@ type DeleteProjectInput struct {
 	ProjectID uuid.UUID `json:"projectID"`
 }
 
+type GetEntityUsageInput struct {
+	EntityID uuid.UUID  `json:"entityID"`
+	Label    UsageLabel `json:"label"`
+	From     *time.Time `json:"from"`
+	Until    *time.Time `json:"until"`
+}
+
+type GetUsageInput struct {
+	EntityKind EntityKind `json:"entityKind"`
+	EntityID   uuid.UUID  `json:"entityID"`
+	Label      UsageLabel `json:"label"`
+	From       *time.Time `json:"from"`
+	Until      *time.Time `json:"until"`
+}
+
 type NewServiceSecret struct {
 	Secret *models.ServiceSecret `json:"secret"`
 	Token  string                `json:"token"`
@@ -86,17 +101,17 @@ type UpdateProjectInput struct {
 }
 
 type Usage struct {
-	EntityID     uuid.UUID `json:"entityID"`
-	Period       string    `json:"period"`
-	Time         time.Time `json:"time"`
-	ReadOps      int       `json:"readOps"`
-	ReadBytes    int       `json:"readBytes"`
-	ReadRecords  int       `json:"readRecords"`
-	WriteOps     int       `json:"writeOps"`
-	WriteBytes   int       `json:"writeBytes"`
-	WriteRecords int       `json:"writeRecords"`
-	ScanOps      int       `json:"scanOps"`
-	ScanBytes    int       `json:"scanBytes"`
+	EntityID     uuid.UUID  `json:"entityID"`
+	Label        UsageLabel `json:"label"`
+	Time         time.Time  `json:"time"`
+	ReadOps      int        `json:"readOps"`
+	ReadBytes    int        `json:"readBytes"`
+	ReadRecords  int        `json:"readRecords"`
+	WriteOps     int        `json:"writeOps"`
+	WriteBytes   int        `json:"writeBytes"`
+	WriteRecords int        `json:"writeRecords"`
+	ScanOps      int        `json:"scanOps"`
+	ScanBytes    int        `json:"scanBytes"`
 }
 
 type EntityKind string
@@ -143,5 +158,50 @@ func (e *EntityKind) UnmarshalGQL(v interface{}) error {
 }
 
 func (e EntityKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UsageLabel string
+
+const (
+	UsageLabelTotal      UsageLabel = "Total"
+	UsageLabelQuotaMonth UsageLabel = "QuotaMonth"
+	UsageLabelMonthly    UsageLabel = "Monthly"
+	UsageLabelHourly     UsageLabel = "Hourly"
+)
+
+var AllUsageLabel = []UsageLabel{
+	UsageLabelTotal,
+	UsageLabelQuotaMonth,
+	UsageLabelMonthly,
+	UsageLabelHourly,
+}
+
+func (e UsageLabel) IsValid() bool {
+	switch e {
+	case UsageLabelTotal, UsageLabelQuotaMonth, UsageLabelMonthly, UsageLabelHourly:
+		return true
+	}
+	return false
+}
+
+func (e UsageLabel) String() string {
+	return string(e)
+}
+
+func (e *UsageLabel) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UsageLabel(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UsageLabel", str)
+	}
+	return nil
+}
+
+func (e UsageLabel) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -222,12 +222,12 @@ type ComplexityRoot struct {
 		CompileSchema                                     func(childComplexity int, input CompileSchemaInput) int
 		Empty                                             func(childComplexity int) int
 		ExploreProjects                                   func(childComplexity int) int
-		GetOrganizationUsage                              func(childComplexity int, organizationID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetServiceUsage                                   func(childComplexity int, serviceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamInstanceUsage                            func(childComplexity int, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetStreamUsage                                    func(childComplexity int, streamID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetUsage                                          func(childComplexity int, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) int
-		GetUserUsage                                      func(childComplexity int, userID uuid.UUID, period string, from time.Time, until *time.Time) int
+		GetOrganizationUsage                              func(childComplexity int, input GetEntityUsageInput) int
+		GetServiceUsage                                   func(childComplexity int, input GetEntityUsageInput) int
+		GetStreamInstanceUsage                            func(childComplexity int, input GetEntityUsageInput) int
+		GetStreamUsage                                    func(childComplexity int, input GetEntityUsageInput) int
+		GetUsage                                          func(childComplexity int, input GetUsageInput) int
+		GetUserUsage                                      func(childComplexity int, input GetEntityUsageInput) int
 		Me                                                func(childComplexity int) int
 		OrganizationByID                                  func(childComplexity int, organizationID uuid.UUID) int
 		OrganizationByName                                func(childComplexity int, name string) int
@@ -321,7 +321,7 @@ type ComplexityRoot struct {
 
 	Usage struct {
 		EntityID     func(childComplexity int) int
-		Period       func(childComplexity int) int
+		Label        func(childComplexity int) int
 		ReadBytes    func(childComplexity int) int
 		ReadOps      func(childComplexity int) int
 		ReadRecords  func(childComplexity int) int
@@ -414,12 +414,12 @@ type QueryResolver interface {
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error)
 	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error)
 	CompileSchema(ctx context.Context, input CompileSchemaInput) (*CompileSchemaOutput, error)
-	GetUsage(ctx context.Context, entityKind EntityKind, entityID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
-	GetOrganizationUsage(ctx context.Context, organizationID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
-	GetServiceUsage(ctx context.Context, serviceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
-	GetStreamInstanceUsage(ctx context.Context, streamInstanceID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
-	GetStreamUsage(ctx context.Context, streamID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
-	GetUserUsage(ctx context.Context, userID uuid.UUID, period string, from time.Time, until *time.Time) ([]*Usage, error)
+	GetUsage(ctx context.Context, input GetUsageInput) ([]*Usage, error)
+	GetOrganizationUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
+	GetServiceUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
+	GetStreamInstanceUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
+	GetStreamUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
+	GetUserUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
 }
 type ServiceSecretResolver interface {
 	ServiceSecretID(ctx context.Context, obj *models.ServiceSecret) (string, error)
@@ -1468,7 +1468,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetOrganizationUsage(childComplexity, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetOrganizationUsage(childComplexity, args["input"].(GetEntityUsageInput)), true
 
 	case "Query.getServiceUsage":
 		if e.complexity.Query.GetServiceUsage == nil {
@@ -1480,7 +1480,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetServiceUsage(childComplexity, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetServiceUsage(childComplexity, args["input"].(GetEntityUsageInput)), true
 
 	case "Query.getStreamInstanceUsage":
 		if e.complexity.Query.GetStreamInstanceUsage == nil {
@@ -1492,7 +1492,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetStreamInstanceUsage(childComplexity, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetStreamInstanceUsage(childComplexity, args["input"].(GetEntityUsageInput)), true
 
 	case "Query.getStreamUsage":
 		if e.complexity.Query.GetStreamUsage == nil {
@@ -1504,7 +1504,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetStreamUsage(childComplexity, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetStreamUsage(childComplexity, args["input"].(GetEntityUsageInput)), true
 
 	case "Query.getUsage":
 		if e.complexity.Query.GetUsage == nil {
@@ -1516,7 +1516,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUsage(childComplexity, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetUsage(childComplexity, args["input"].(GetUsageInput)), true
 
 	case "Query.getUserUsage":
 		if e.complexity.Query.GetUserUsage == nil {
@@ -1528,7 +1528,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserUsage(childComplexity, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time)), true
+		return e.complexity.Query.GetUserUsage(childComplexity, args["input"].(GetEntityUsageInput)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -2114,12 +2114,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Usage.EntityID(childComplexity), true
 
-	case "Usage.period":
-		if e.complexity.Usage.Period == nil {
+	case "Usage.label":
+		if e.complexity.Usage.Label == nil {
 			break
 		}
 
-		return e.complexity.Usage.Period(childComplexity), true
+		return e.complexity.Usage.Label(childComplexity), true
 
 	case "Usage.readBytes":
 		if e.complexity.Usage.ReadBytes == nil {
@@ -2663,17 +2663,17 @@ type CompileSchemaOutput {
   canonicalIndexes: String!
 }`, BuiltIn: false},
 	{Name: "server/control/schema/usage.graphql", Input: `extend type Query {
-  getUsage(entityKind: EntityKind!, entityID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getOrganizationUsage(organizationID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getServiceUsage(serviceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getStreamInstanceUsage(streamInstanceID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getStreamUsage(streamID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
-  getUserUsage(userID: UUID!, period: String!, from: Time!, until: Time): [Usage!]!
+  getUsage(input: GetUsageInput!): [Usage!]!
+  getOrganizationUsage(input: GetEntityUsageInput!): [Usage!]!
+  getServiceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getStreamInstanceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getStreamUsage(input: GetEntityUsageInput!): [Usage!]!
+  getUserUsage(input: GetEntityUsageInput!): [Usage!]!
 }
 
 type Usage {
   entityID: UUID!
-  period: String!
+  label: UsageLabel!
   time: Time!
   readOps: Int!
   readBytes: Int!
@@ -2691,7 +2691,30 @@ enum EntityKind {
   StreamInstance
   Stream
   User
-}`, BuiltIn: false},
+}
+
+enum UsageLabel {
+  Total
+  QuotaMonth
+  Monthly
+  Hourly
+}
+
+input GetUsageInput {
+  entityKind: EntityKind!
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
+}
+
+input GetEntityUsageInput {
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
+}
+`, BuiltIn: false},
 	{Name: "server/control/schema/users.graphql", Input: `# extend type Query {}
 
 extend type Mutation {
@@ -3666,261 +3689,90 @@ func (ec *executionContext) field_Query_compileSchema_args(ctx context.Context, 
 func (ec *executionContext) field_Query_getOrganizationUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["organizationID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 GetEntityUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["organizationID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getServiceUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["serviceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 GetEntityUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["serviceID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getStreamInstanceUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamInstanceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamInstanceID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 GetEntityUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["streamInstanceID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getStreamUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 GetEntityUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["streamID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 EntityKind
-	if tmp, ok := rawArgs["entityKind"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entityKind"))
-		arg0, err = ec.unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐEntityKind(ctx, tmp)
+	var arg0 GetUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["entityKind"] = arg0
-	var arg1 uuid.UUID
-	if tmp, ok := rawArgs["entityID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entityID"))
-		arg1, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["entityID"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg2
-	var arg3 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg3, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg3
-	var arg4 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg4, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg4
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getUserUsage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["userID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 GetEntityUsageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["period"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["period"] = arg1
-	var arg2 time.Time
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg2, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg2
-	var arg3 *time.Time
-	if tmp, ok := rawArgs["until"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
-		arg3, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["until"] = arg3
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -9468,7 +9320,7 @@ func (ec *executionContext) _Query_getUsage(ctx context.Context, field graphql.C
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUsage(rctx, args["entityKind"].(EntityKind), args["entityID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetUsage(rctx, args["input"].(GetUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9510,7 +9362,7 @@ func (ec *executionContext) _Query_getOrganizationUsage(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetOrganizationUsage(rctx, args["organizationID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetOrganizationUsage(rctx, args["input"].(GetEntityUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9552,7 +9404,7 @@ func (ec *executionContext) _Query_getServiceUsage(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetServiceUsage(rctx, args["serviceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetServiceUsage(rctx, args["input"].(GetEntityUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9594,7 +9446,7 @@ func (ec *executionContext) _Query_getStreamInstanceUsage(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetStreamInstanceUsage(rctx, args["streamInstanceID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetStreamInstanceUsage(rctx, args["input"].(GetEntityUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9636,7 +9488,7 @@ func (ec *executionContext) _Query_getStreamUsage(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetStreamUsage(rctx, args["streamID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetStreamUsage(rctx, args["input"].(GetEntityUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9678,7 +9530,7 @@ func (ec *executionContext) _Query_getUserUsage(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserUsage(rctx, args["userID"].(uuid.UUID), args["period"].(string), args["from"].(time.Time), args["until"].(*time.Time))
+		return ec.resolvers.Query().GetUserUsage(rctx, args["input"].(GetEntityUsageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11630,7 +11482,7 @@ func (ec *executionContext) _Usage_entityID(ctx context.Context, field graphql.C
 	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Usage_period(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
+func (ec *executionContext) _Usage_label(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -11648,7 +11500,7 @@ func (ec *executionContext) _Usage_period(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Period, nil
+		return obj.Label, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11660,9 +11512,9 @@ func (ec *executionContext) _Usage_period(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(UsageLabel)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNUsageLabel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageLabel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Usage_time(ctx context.Context, field graphql.CollectedField, obj *Usage) (ret graphql.Marshaler) {
@@ -13427,6 +13279,102 @@ func (ec *executionContext) unmarshalInputDeleteProjectInput(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
 			it.ProjectID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGetEntityUsageInput(ctx context.Context, obj interface{}) (GetEntityUsageInput, error) {
+	var it GetEntityUsageInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "entityID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entityID"))
+			it.EntityID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "label":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			it.Label, err = ec.unmarshalNUsageLabel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageLabel(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "from":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			it.From, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "until":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+			it.Until, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGetUsageInput(ctx context.Context, obj interface{}) (GetUsageInput, error) {
+	var it GetUsageInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "entityKind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entityKind"))
+			it.EntityKind, err = ec.unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐEntityKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "entityID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entityID"))
+			it.EntityID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "label":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			it.Label, err = ec.unmarshalNUsageLabel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageLabel(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "from":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			it.From, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "until":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+			it.Until, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15216,8 +15164,8 @@ func (ec *executionContext) _Usage(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "period":
-			out.Values[i] = ec._Usage_period(ctx, field, obj)
+		case "label":
+			out.Values[i] = ec._Usage_label(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -15640,6 +15588,16 @@ func (ec *executionContext) unmarshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋb
 
 func (ec *executionContext) marshalNEntityKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐEntityKind(ctx context.Context, sel ast.SelectionSet, v EntityKind) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNGetEntityUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetEntityUsageInput(ctx context.Context, v interface{}) (GetEntityUsageInput, error) {
+	res, err := ec.unmarshalInputGetEntityUsageInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGetUsageInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐGetUsageInput(ctx context.Context, v interface{}) (GetUsageInput, error) {
+	res, err := ec.unmarshalInputGetUsageInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -16359,6 +16317,16 @@ func (ec *executionContext) marshalNUsage2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbenea
 		return graphql.Null
 	}
 	return ec._Usage(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUsageLabel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageLabel(ctx context.Context, v interface{}) (UsageLabel, error) {
+	var res UsageLabel
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUsageLabel2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageLabel(ctx context.Context, sel ast.SelectionSet, v UsageLabel) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNUserSecret2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐUserSecretᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.UserSecret) graphql.Marshaler {

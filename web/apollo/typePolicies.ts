@@ -4,7 +4,7 @@ import { TypePolicies } from "@apollo/client";
 // NOTE: setting keyFields to false causes objects to be embedded in the entry of their parent object, see: https://www.apollographql.com/docs/react/caching/cache-configuration/#disabling-normalization
 
 const typePolicies: TypePolicies = {
-  Metrics: { keyFields: ["entityID", "period", "time"] },
+  Usage: { keyFields: ["entityID", "label", "time"] },
   NewUserSecret: { keyFields: ["secret", ["userSecretID"]] },
   NewServiceSecret: { keyFields: ["secret", "serviceSecretID"] },
   Organization: { keyFields: ["organizationID"] },
