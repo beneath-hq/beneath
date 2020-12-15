@@ -126,6 +126,8 @@ const makeCrumbs = (router: NextRouter) => {
     return [<Crumb key={0} href="/-/create/project" label="Create project" isCurrent={true} />];
   } else if (router.route === "/-/create/stream") {
     return [<Crumb key={0} href="/-/create/stream" label="Create stream" isCurrent={true} />];
+  } else if (router.route === "/-/create/service") {
+    return [<Crumb key={0} href="/-/create/service" label="Create service" isCurrent={true} />];
   } else if (router.route === "/-/sql") {
     return [<Crumb key={0} href="/-/sql" label="SQL Editor" isCurrent={true} />];
   } else if (router.route === "/-/auth") {
