@@ -25,7 +25,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_services {
   __typename: "Service";
-  serviceID: ControlUUID;
+  serviceID: string;
   name: string;
   description: string | null;
   createdOn: ControlTime;

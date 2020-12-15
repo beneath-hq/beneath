@@ -12,6 +12,25 @@ import (
 	"gitlab.com/beneath-hq/beneath/services/middleware"
 )
 
+// Service returns gql.ServiceResolver implementation.
+func (r *Resolver) Service() gql.ServiceResolver { return &serviceResolver{r} }
+
+type serviceResolver struct{ *Resolver }
+
+func (r *serviceResolver) ServiceID(ctx context.Context, obj *models.Service) (string, error) {
+	return obj.ServiceID.String(), nil
+}
+
+func (r *serviceResolver) QuotaStartTime(ctx context.Context, obj *models.Service) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Floor(time.Now())
+	return &t, nil
+}
+
+func (r *serviceResolver) QuotaEndTime(ctx context.Context, obj *models.Service) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Next(time.Now())
+	return &t, nil
+}
+
 func (r *queryResolver) ServiceByID(ctx context.Context, serviceID uuid.UUID) (*models.Service, error) {
 	service := r.Services.FindService(ctx, serviceID)
 	if service == nil {

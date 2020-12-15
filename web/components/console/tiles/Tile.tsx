@@ -7,7 +7,6 @@ import clsx from "clsx";
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
     height: "100%",
-    border: `1px solid ${theme.palette.border.paper}`,
   },
   nopaper: {
     height: "100%",
@@ -21,17 +20,16 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-// tslint:disable-next-line: no-empty-interface
 export interface TileProps {
   shape?: "normal" | "wide" | "dense" | "full";
   href?: string;
   as?: string;
   nopaper?: boolean;
   responsive?: boolean;
-  styleClass?: string;
+  className?: string;
 }
 
-export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styleClass, children }) => {
+export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, className, children }) => {
   if (!shape) {
     shape = "normal";
   }
@@ -45,38 +43,49 @@ export const Tile: FC<TileProps> = ({ shape, href, as, nopaper, responsive, styl
   if (nopaper) {
     tile = <div className={clsx(classes.nopaper, href && classes.paperLink)}>{children}</div>;
   } else {
-    tile = <Paper className={clsx(classes.paper, href && classes.paperLink)}>{children}</Paper>;
+    tile = <Paper variant="outlined" className={clsx(classes.paper, href && classes.paperLink)}>{children}</Paper>;
   }
 
   if (href) {
     if (as) {
-      tile = <Link href={href} as={as}>{tile}</Link>;
+      tile = (
+        <Link href={href} as={as}>
+          {tile}
+        </Link>
+      );
     } else {
-      tile = <a className={classes.unstyledA} href={href}>{tile}</a>;
+      tile = (
+        <a className={classes.unstyledA} href={href}>
+          {tile}
+        </a>
+      );
     }
   }
+
   return (
     <>
-      {shape === "dense" && <Grid item>{tile}</Grid>}
+      {shape === "dense" && (
+        <Grid item className={className}>
+          {tile}
+        </Grid>
+      )}
       {shape === "normal" && responsive && (
-        <Grid item xs={12} sm={6} md={4} lg={4} className={styleClass}>
+        <Grid item xs={12} sm={6} md={4} lg={4} className={className}>
           {tile}
         </Grid>
       )}
       {shape === "normal" && !responsive && (
-        <>
-          <Grid item className={styleClass}>
-            {tile}
-          </Grid>
-        </>
+        <Grid item className={className}>
+          {tile}
+        </Grid>
       )}
       {shape === "wide" && (
-        <Grid item xs={12} sm={12} md={8} lg={6}>
+        <Grid item xs={12} sm={12} md={8} lg={6} className={className}>
           {tile}
         </Grid>
       )}
       {shape === "full" && (
-        <Grid item xs={12}>
+        <Grid item xs={12} className={className}>
           {tile}
         </Grid>
       )}

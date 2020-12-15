@@ -7,24 +7,20 @@ import useMe from "hooks/useMe";
 import { useQuery } from "@apollo/client";
 import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
 import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
+import { IS_EE } from "lib/connection";
+import { PaperGrid } from "components/Paper";
 
 const useStyles = makeStyles((theme: Theme) => ({
-  container: {
-    padding: theme.spacing(2),
+  title: {
+    marginBottom: "0.5rem",
   },
-  description: {
-    marginTop: theme.spacing(1.5),
-  },
-  buttons: {
-    marginTop: theme.spacing(1.5)
-  }
 }));
 
 export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
   const classes = useStyles();
   const me = useMe();
 
-  if (!me || !me.personalUserID) {
+  if (!IS_EE || !me || !me.personalUserID) {
     return <></>;
   }
 
@@ -35,45 +31,44 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
     },
   });
 
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
+  if (!data?.billingInfo.billingPlan.default) {
+    return <></>;
   }
 
   return (
-    <>
-      {data.billingInfo.billingPlan.default && (
-        <Tile {...tileProps}>
-          <Grid className={classes.container} container justify="center" alignContent="center" alignItems="center" direction="column">
-            <Grid item xs>
-              <Typography variant="h3" align="center">
-                Upgrade to Pro
-              </Typography>
-              <Typography  gutterBottom align="center" className={classes.description}>
-                Get higher quotas and premium support.
-              </Typography>
-              </Grid>
-            <Grid item>
-              <Grid container spacing={1} className={classes.buttons}>
-                <Grid item>
-                  <Button variant="contained" href={"https://about.beneath.dev/contact"}>Contact us</Button>
-                </Grid>
-                <Grid item>
-                  <Button
-                    color="primary"
-                    variant="contained"
-                    component={NakedLink}
-                    href={`/organization?organization_name=${me.name}&tab=billing`}
-                    as={`${me.name}/-/billing`}
-                    >
-                    Upgrade
-                  </Button>
-                </Grid>
-              </Grid>
+    <Tile {...tileProps} nopaper>
+      <PaperGrid variant="outlined" container direction="column" alignContent="stretch">
+        <Grid item>
+          <Typography variant="h3" align="center" className={classes.title}>
+            Upgrade to Pro
+          </Typography>
+          <Typography variant="body2" align="center" gutterBottom>
+            Get higher quotas and premium support
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <Button fullWidth variant="contained" href="https://about.beneath.dev/contact">
+                Contact&nbsp;us
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                fullWidth
+                color="primary"
+                variant="contained"
+                component={NakedLink}
+                href={`/organization?organization_name=${me.name}&tab=billing`}
+                as={`${me.name}/-/billing`}
+              >
+                Upgrade
+              </Button>
             </Grid>
           </Grid>
-        </Tile>
-      )}
-    </>
+        </Grid>
+      </PaperGrid>
+    </Tile>
   );
 };
 

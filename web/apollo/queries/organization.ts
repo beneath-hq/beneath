@@ -18,6 +18,8 @@ export const QUERY_ME = gql`
       }
       personalUserID
       updatedOn
+      quotaStartTime
+      quotaEndTime
       prepaidReadQuota
       prepaidWriteQuota
       prepaidScanQuota
@@ -26,6 +28,7 @@ export const QUERY_ME = gql`
       scanQuota
       readUsage
       writeUsage
+      scanUsage
       personalUser {
         userID
         email
@@ -71,6 +74,8 @@ export const QUERY_ORGANIZATION = gql`
       personalUserID
       ... on PrivateOrganization {
         updatedOn
+        quotaStartTime
+        quotaEndTime
         prepaidReadQuota
         prepaidWriteQuota
         prepaidScanQuota

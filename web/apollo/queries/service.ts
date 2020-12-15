@@ -11,6 +11,8 @@ export const QUERY_SERVICE = gql`
       name
       description
       sourceURL
+      quotaStartTime
+      quotaEndTime
       readQuota
       writeQuota
       scanQuota

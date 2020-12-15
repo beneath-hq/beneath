@@ -11,7 +11,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     height: "42px",
   },
   icon: {
-    fill: theme.palette.primary.dark
+    fill: theme.palette.primary.dark,
   },
 }));
 

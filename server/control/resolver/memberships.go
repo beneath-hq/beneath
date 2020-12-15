@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"time"
 
 	"gitlab.com/beneath-hq/beneath/models"
 	"gitlab.com/beneath-hq/beneath/server/control/gql"
@@ -35,4 +36,14 @@ func (r *organizationMemberResolver) OrganizationID(ctx context.Context, obj *mo
 
 func (r *organizationMemberResolver) UserID(ctx context.Context, obj *models.OrganizationMember) (string, error) {
 	return obj.UserID.String(), nil
+}
+
+func (r *organizationMemberResolver) QuotaStartTime(ctx context.Context, obj *models.OrganizationMember) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Floor(time.Now())
+	return &t, nil
+}
+
+func (r *organizationMemberResolver) QuotaEndTime(ctx context.Context, obj *models.OrganizationMember) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Next(time.Now())
+	return &t, nil
 }
