@@ -43,6 +43,17 @@ export interface CreateProjectInput {
   photoURL?: string | null;
 }
 
+export interface CreateServiceInput {
+  organizationName: string;
+  projectName: string;
+  serviceName: string;
+  description?: string | null;
+  sourceURL?: string | null;
+  readQuota?: number | null;
+  writeQuota?: number | null;
+  scanQuota?: number | null;
+}
+
 export interface GetEntityUsageInput {
   entityID: ControlUUID;
   label: UsageLabel;
@@ -65,6 +76,17 @@ export interface UpdateProjectInput {
   description?: string | null;
   site?: string | null;
   photoURL?: string | null;
+}
+
+export interface UpdateServiceInput {
+  organizationName: string;
+  projectName: string;
+  serviceName: string;
+  description?: string | null;
+  sourceURL?: string | null;
+  readQuota?: number | null;
+  writeQuota?: number | null;
+  scanQuota?: number | null;
 }
 
 //==============================================================

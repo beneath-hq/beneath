@@ -17,3 +17,47 @@ export const QUERY_SERVICE = gql`
     }
   }
 `;
+
+export const CREATE_SERVICE = gql`
+  mutation CreateService($input: CreateServiceInput!) {
+    createService(input: $input) {
+      serviceID
+      name
+      description
+      sourceURL
+      readQuota
+      writeQuota
+      scanQuota
+      project {
+        projectID
+        name
+        organization {
+          organizationID
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_SERVICE = gql`
+  mutation UpdateService($input: UpdateServiceInput!) {
+    updateService(input: $input) {
+      serviceID
+      name
+      description
+      sourceURL
+      readQuota
+      writeQuota
+      scanQuota
+      project {
+        projectID
+        name
+        organization {
+          organizationID
+          name
+        }
+      }
+    }
+  }
+`;

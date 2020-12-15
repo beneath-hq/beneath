@@ -4,16 +4,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  stageService(
-    organizationName: String!,
-    projectName: String!,
-    serviceName: String!,
-    description: String,
-    sourceURL: String,
-    readQuota: Int,
-    writeQuota: Int,
-    scanQuota: Int,
-  ): Service!
+  createService(input: CreateServiceInput!): Service!
+  updateService(input: UpdateServiceInput!): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
 }
@@ -37,4 +29,26 @@ type PermissionsServicesStreams {
   streamID: UUID!
   read: Boolean!
   write: Boolean!
+}
+
+input CreateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+}
+
+input UpdateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
 }

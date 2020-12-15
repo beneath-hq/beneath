@@ -65,58 +65,35 @@ func (s *Service) FindServiceByOrganizationProjectAndName(ctx context.Context, o
 	return service
 }
 
-// Stage creates or updates the service
-func (s *Service) Stage(ctx context.Context, service *models.Service, description *string, sourceURL *string, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
-	// determine whether to insert or update
-	update := (service.ServiceID != uuid.Nil)
-
-	// tracks whether a save is necessary
-	save := !update
-
+// Create creates the service
+func (s *Service) Create(ctx context.Context, service *models.Service, description *string, sourceURL *string, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
+	// assign
 	if description != nil {
-		if service.Description != *description {
-			service.Description = *description
-			save = true
-		}
+		service.Description = *description
 	}
-
 	if sourceURL != nil {
-		if service.SourceURL != *sourceURL {
-			service.SourceURL = *sourceURL
-			save = true
-		}
+		service.SourceURL = *sourceURL
 	}
-
 	if readQuota != nil {
 		if *readQuota == 0 {
 			service.ReadQuota = nil
 		} else {
 			service.ReadQuota = readQuota
 		}
-		save = true
 	}
-
 	if writeQuota != nil {
 		if *writeQuota == 0 {
 			service.WriteQuota = nil
 		} else {
 			service.WriteQuota = writeQuota
 		}
-		save = true
 	}
-
 	if scanQuota != nil {
 		if *scanQuota == 0 {
 			service.ScanQuota = nil
 		} else {
 			service.ScanQuota = scanQuota
 		}
-		save = true
-	}
-
-	// quit if no changes
-	if !save {
-		return nil
 	}
 
 	// validate
@@ -125,24 +102,65 @@ func (s *Service) Stage(ctx context.Context, service *models.Service, descriptio
 		return err
 	}
 
-	if update {
-		service.UpdatedOn = time.Now()
-		_, err := s.DB.GetDB(ctx).ModelContext(ctx, service).WherePK().Update()
-		if err != nil {
-			return err
-		}
+	// insert
+	_, err = s.DB.GetDB(ctx).ModelContext(ctx, service).Insert()
+	if err != nil {
+		return err
+	}
 
-		err = s.Bus.Publish(ctx, &models.ServiceUpdatedEvent{
-			Service: service,
-		})
-		if err != nil {
-			return err
+	return nil
+}
+
+// Update updates the service info
+func (s *Service) Update(ctx context.Context, service *models.Service, description *string, sourceURL *string, readQuota *int64, writeQuota *int64, scanQuota *int64) error {
+	// assign
+	if description != nil {
+		service.Description = *description
+	}
+	if sourceURL != nil {
+		service.SourceURL = *sourceURL
+	}
+	if readQuota != nil {
+		if *readQuota == 0 {
+			service.ReadQuota = nil
+		} else {
+			service.ReadQuota = readQuota
 		}
-	} else {
-		_, err := s.DB.GetDB(ctx).ModelContext(ctx, service).Insert()
-		if err != nil {
-			return err
+	}
+	if writeQuota != nil {
+		if *writeQuota == 0 {
+			service.WriteQuota = nil
+		} else {
+			service.WriteQuota = writeQuota
 		}
+	}
+	if scanQuota != nil {
+		if *scanQuota == 0 {
+			service.ScanQuota = nil
+		} else {
+			service.ScanQuota = scanQuota
+		}
+	}
+
+	// validate
+	err := service.Validate()
+	if err != nil {
+		return err
+	}
+
+	// update
+	service.UpdatedOn = time.Now()
+	_, err = s.DB.GetDB(ctx).ModelContext(ctx, service).WherePK().Update()
+	if err != nil {
+		return err
+	}
+
+	// publish update event
+	err = s.Bus.Publish(ctx, &models.ServiceUpdatedEvent{
+		Service: service,
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

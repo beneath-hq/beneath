@@ -66,6 +66,7 @@ type ComplexityRoot struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, input CreateProjectInput) int
+		CreateService                     func(childComplexity int, input CreateServiceInput) int
 		DeleteProject                     func(childComplexity int, input DeleteProjectInput) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
 		DeleteStream                      func(childComplexity int, streamID uuid.UUID) int
@@ -78,13 +79,13 @@ type ComplexityRoot struct {
 		RegisterUserConsent               func(childComplexity int, userID uuid.UUID, terms *bool, newsletter *bool) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		StageService                      func(childComplexity int, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) int
 		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
 		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
 		UpdateProject                     func(childComplexity int, input UpdateProjectInput) int
+		UpdateService                     func(childComplexity int, input UpdateServiceInput) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
 		UpdateStreamInstance              func(childComplexity int, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
@@ -360,7 +361,8 @@ type MutationResolver interface {
 	IssueUserSecret(ctx context.Context, description string, readOnly bool, publicOnly bool) (*NewUserSecret, error)
 	RevokeServiceSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
 	RevokeUserSecret(ctx context.Context, secretID uuid.UUID) (bool, error)
-	StageService(ctx context.Context, organizationName string, projectName string, serviceName string, description *string, sourceURL *string, readQuota *int, writeQuota *int, scanQuota *int) (*models.Service, error)
+	CreateService(ctx context.Context, input CreateServiceInput) (*models.Service, error)
+	UpdateService(ctx context.Context, input UpdateServiceInput) (*models.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*models.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
 	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*models.Stream, error)
@@ -497,6 +499,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(CreateProjectInput)), true
+
+	case "Mutation.createService":
+		if e.complexity.Mutation.CreateService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateService(childComplexity, args["input"].(CreateServiceInput)), true
 
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
@@ -637,18 +651,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
-	case "Mutation.stageService":
-		if e.complexity.Mutation.StageService == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_stageService_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.StageService(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int)), true
-
 	case "Mutation.stageStream":
 		if e.complexity.Mutation.StageStream == nil {
 			break
@@ -720,6 +722,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateProject(childComplexity, args["input"].(UpdateProjectInput)), true
+
+	case "Mutation.updateService":
+		if e.complexity.Mutation.UpdateService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateService(childComplexity, args["input"].(UpdateServiceInput)), true
 
 	case "Mutation.updateServiceStreamPermissions":
 		if e.complexity.Mutation.UpdateServiceStreamPermissions == nil {
@@ -2526,16 +2540,8 @@ type NewUserSecret {
 }
 
 extend type Mutation {
-  stageService(
-    organizationName: String!,
-    projectName: String!,
-    serviceName: String!,
-    description: String,
-    sourceURL: String,
-    readQuota: Int,
-    writeQuota: Int,
-    scanQuota: Int,
-  ): Service!
+  createService(input: CreateServiceInput!): Service!
+  updateService(input: UpdateServiceInput!): Service!
   updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
   deleteService(serviceID: UUID!): Boolean!
 }
@@ -2559,6 +2565,28 @@ type PermissionsServicesStreams {
   streamID: UUID!
   read: Boolean!
   write: Boolean!
+}
+
+input CreateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+}
+
+input UpdateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
 }
 `, BuiltIn: false},
 	{Name: "server/control/schema/streams.graphql", Input: `extend type Query {
@@ -2799,6 +2827,21 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCreateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateProjectInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateServiceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateServiceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateServiceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3050,84 +3093,6 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 		}
 	}
 	args["secretID"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_stageService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["organizationName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["organizationName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["serviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["serviceName"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["description"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["description"] = arg3
-	var arg4 *string
-	if tmp, ok := rawArgs["sourceURL"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceURL"))
-		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["sourceURL"] = arg4
-	var arg5 *int
-	if tmp, ok := rawArgs["readQuota"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readQuota"))
-		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["readQuota"] = arg5
-	var arg6 *int
-	if tmp, ok := rawArgs["writeQuota"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("writeQuota"))
-		arg6, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["writeQuota"] = arg6
-	var arg7 *int
-	if tmp, ok := rawArgs["scanQuota"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scanQuota"))
-		arg7, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["scanQuota"] = arg7
 	return args, nil
 }
 
@@ -3476,6 +3441,21 @@ func (ec *executionContext) field_Mutation_updateServiceStreamPermissions_args(c
 		}
 	}
 	args["write"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdateServiceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateServiceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateServiceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -4772,7 +4752,7 @@ func (ec *executionContext) _Mutation_revokeUserSecret(ctx context.Context, fiel
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_stageService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4789,7 +4769,7 @@ func (ec *executionContext) _Mutation_stageService(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_stageService_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createService_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -4797,7 +4777,49 @@ func (ec *executionContext) _Mutation_stageService(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageService(rctx, args["organizationName"].(string), args["projectName"].(string), args["serviceName"].(string), args["description"].(*string), args["sourceURL"].(*string), args["readQuota"].(*int), args["writeQuota"].(*int), args["scanQuota"].(*int))
+		return ec.resolvers.Mutation().CreateService(rctx, args["input"].(CreateServiceInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Service)
+	fc.Result = res
+	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateService_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateService(rctx, args["input"].(UpdateServiceInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13268,6 +13290,82 @@ func (ec *executionContext) unmarshalInputCreateProjectInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateServiceInput(ctx context.Context, obj interface{}) (CreateServiceInput, error) {
+	var it CreateServiceInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "organizationName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
+			it.OrganizationName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serviceName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceName"))
+			it.ServiceName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sourceURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceURL"))
+			it.SourceURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readQuota"))
+			it.ReadQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "writeQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("writeQuota"))
+			it.WriteQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "scanQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scanQuota"))
+			it.ScanQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteProjectInput(ctx context.Context, obj interface{}) (DeleteProjectInput, error) {
 	var it DeleteProjectInput
 	var asMap = obj.(map[string]interface{})
@@ -13444,6 +13542,82 @@ func (ec *executionContext) unmarshalInputUpdateProjectInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateServiceInput(ctx context.Context, obj interface{}) (UpdateServiceInput, error) {
+	var it UpdateServiceInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "organizationName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
+			it.OrganizationName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "serviceName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceName"))
+			it.ServiceName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sourceURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceURL"))
+			it.SourceURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readQuota"))
+			it.ReadQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "writeQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("writeQuota"))
+			it.WriteQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "scanQuota":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scanQuota"))
+			it.ScanQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -13587,8 +13761,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "stageService":
-			out.Values[i] = ec._Mutation_stageService(ctx, field)
+		case "createService":
+			out.Values[i] = ec._Mutation_createService(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateService":
+			out.Values[i] = ec._Mutation_updateService(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -15575,6 +15754,11 @@ func (ec *executionContext) unmarshalNCreateProjectInput2gitlabᚗcomᚋbeneath�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateServiceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateServiceInput(ctx context.Context, v interface{}) (CreateServiceInput, error) {
+	res, err := ec.unmarshalInputCreateServiceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNDeleteProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐDeleteProjectInput(ctx context.Context, v interface{}) (DeleteProjectInput, error) {
 	res, err := ec.unmarshalInputDeleteProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -16269,6 +16453,11 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUI
 
 func (ec *executionContext) unmarshalNUpdateProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateProjectInput(ctx context.Context, v interface{}) (UpdateProjectInput, error) {
 	res, err := ec.unmarshalInputUpdateProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateServiceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateServiceInput(ctx context.Context, v interface{}) (UpdateServiceInput, error) {
+	res, err := ec.unmarshalInputUpdateServiceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

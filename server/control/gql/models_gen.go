@@ -36,6 +36,17 @@ type CreateProjectInput struct {
 	PhotoURL       *string   `json:"photoURL"`
 }
 
+type CreateServiceInput struct {
+	OrganizationName string  `json:"organizationName"`
+	ProjectName      string  `json:"projectName"`
+	ServiceName      string  `json:"serviceName"`
+	Description      *string `json:"description"`
+	SourceURL        *string `json:"sourceURL"`
+	ReadQuota        *int    `json:"readQuota"`
+	WriteQuota       *int    `json:"writeQuota"`
+	ScanQuota        *int    `json:"scanQuota"`
+}
+
 type DeleteProjectInput struct {
 	ProjectID uuid.UUID `json:"projectID"`
 }
@@ -98,6 +109,17 @@ type UpdateProjectInput struct {
 	Description *string   `json:"description"`
 	Site        *string   `json:"site"`
 	PhotoURL    *string   `json:"photoURL"`
+}
+
+type UpdateServiceInput struct {
+	OrganizationName string  `json:"organizationName"`
+	ProjectName      string  `json:"projectName"`
+	ServiceName      string  `json:"serviceName"`
+	Description      *string `json:"description"`
+	SourceURL        *string `json:"sourceURL"`
+	ReadQuota        *int    `json:"readQuota"`
+	WriteQuota       *int    `json:"writeQuota"`
+	ScanQuota        *int    `json:"scanQuota"`
 }
 
 type Usage struct {
