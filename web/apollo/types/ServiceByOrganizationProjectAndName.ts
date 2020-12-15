@@ -9,10 +9,12 @@
 
 export interface ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName {
   __typename: "Service";
-  serviceID: ControlUUID;
+  serviceID: string;
   name: string;
   description: string | null;
   sourceURL: string | null;
+  quotaStartTime: ControlTime;
+  quotaEndTime: ControlTime;
   readQuota: number | null;
   writeQuota: number | null;
   scanQuota: number | null;

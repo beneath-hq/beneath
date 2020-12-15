@@ -77,6 +77,8 @@ export interface OrganizationByName_organizationByName_PrivateOrganization {
   projects: OrganizationByName_organizationByName_PrivateOrganization_projects[];
   personalUserID: ControlUUID | null;
   updatedOn: ControlTime;
+  quotaStartTime: ControlTime;
+  quotaEndTime: ControlTime;
   prepaidReadQuota: number | null;
   prepaidWriteQuota: number | null;
   prepaidScanQuota: number | null;

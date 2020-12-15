@@ -56,6 +56,8 @@ export interface Me_me {
   projects: Me_me_projects[];
   personalUserID: ControlUUID | null;
   updatedOn: ControlTime;
+  quotaStartTime: ControlTime;
+  quotaEndTime: ControlTime;
   prepaidReadQuota: number | null;
   prepaidWriteQuota: number | null;
   prepaidScanQuota: number | null;
@@ -64,6 +66,7 @@ export interface Me_me {
   scanQuota: number | null;
   readUsage: number;
   writeUsage: number;
+  scanUsage: number;
   personalUser: Me_me_personalUser | null;
   permissions: Me_me_permissions;
 }
