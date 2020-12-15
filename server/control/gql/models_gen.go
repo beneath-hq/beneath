@@ -73,7 +73,9 @@ type PrivateOrganization struct {
 	PhotoURL          *string                               `json:"photoURL"`
 	CreatedOn         time.Time                             `json:"createdOn"`
 	UpdatedOn         time.Time                             `json:"updatedOn"`
-	QuotaEpoch        *time.Time                            `json:"quotaEpoch"`
+	QuotaEpoch        time.Time                             `json:"quotaEpoch"`
+	QuotaStartTime    time.Time                             `json:"quotaStartTime"`
+	QuotaEndTime      time.Time                             `json:"quotaEndTime"`
 	ReadQuota         *int                                  `json:"readQuota"`
 	WriteQuota        *int                                  `json:"writeQuota"`
 	ScanQuota         *int                                  `json:"scanQuota"`

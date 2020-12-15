@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	uuid "github.com/satori/go.uuid"
@@ -339,6 +340,9 @@ func (r *Resolver) organizationToPrivateOrganization(ctx context.Context, o *mod
 		PhotoURL:          StrToPtr(o.PhotoURL),
 		CreatedOn:         o.CreatedOn,
 		UpdatedOn:         o.UpdatedOn,
+		QuotaEpoch:        o.QuotaEpoch,
+		QuotaStartTime:    r.Usage.GetQuotaPeriod(o.QuotaEpoch).Floor(time.Now()),
+		QuotaEndTime:      r.Usage.GetQuotaPeriod(o.QuotaEpoch).Next(time.Now()),
 		PrepaidReadQuota:  Int64ToInt(o.PrepaidReadQuota),
 		PrepaidWriteQuota: Int64ToInt(o.PrepaidWriteQuota),
 		PrepaidScanQuota:  Int64ToInt(o.PrepaidScanQuota),

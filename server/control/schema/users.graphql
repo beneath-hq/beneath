@@ -14,7 +14,9 @@ type PrivateUser {
   updatedOn: Time!
   consentTerms: Boolean!
   consentNewsletter: Boolean!
-  quotaEpoch: Time
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
   readQuota: Int
   writeQuota: Int
   scanQuota: Int

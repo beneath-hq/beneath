@@ -79,7 +79,7 @@ type OrganizationMember struct {
 	View                  bool
 	Create                bool
 	Admin                 bool
-	QuotaEpoch            *time.Time
+	QuotaEpoch            time.Time
 	ReadQuota             *int
 	WriteQuota            *int
 	ScanQuota             *int
@@ -130,6 +130,7 @@ type OrganizationTransferredUserEvent struct {
 var orgNameRegex = regexp.MustCompile("^[_a-z][_a-z0-9]*$")
 
 var orgNameBlacklist = []string{
+	"admin",
 	"api",
 	"auth",
 	"billing",
@@ -148,9 +149,13 @@ var orgNameBlacklist = []string{
 	"healthz",
 	"instance",
 	"instances",
+	"internal",
+	"master",
+	"ops",
 	"organization",
 	"organizations",
 	"permissions",
+	"platform",
 	"project",
 	"projects",
 	"redirects",

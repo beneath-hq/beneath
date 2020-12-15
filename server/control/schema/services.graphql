@@ -19,12 +19,14 @@ extend type Mutation {
 }
 
 type Service {
-  serviceID: UUID!
+  serviceID: ID!
   name: String!
   description: String
   sourceURL: String
   project: Project!
-  quotaEpoch: Time
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
   readQuota: Int
   writeQuota: Int
   scanQuota: Int

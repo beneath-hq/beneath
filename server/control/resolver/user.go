@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -20,6 +21,16 @@ type privateUserResolver struct{ *Resolver }
 
 func (r *privateUserResolver) UserID(ctx context.Context, obj *models.User) (string, error) {
 	return obj.UserID.String(), nil
+}
+
+func (r *privateUserResolver) QuotaStartTime(ctx context.Context, obj *models.User) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Floor(time.Now())
+	return &t, nil
+}
+
+func (r *privateUserResolver) QuotaEndTime(ctx context.Context, obj *models.User) (*time.Time, error) {
+	t := r.Usage.GetQuotaPeriod(obj.QuotaEpoch).Next(time.Now())
+	return &t, nil
 }
 
 func (r *mutationResolver) RegisterUserConsent(ctx context.Context, userID uuid.UUID, terms *bool, newsletter *bool) (*models.User, error) {

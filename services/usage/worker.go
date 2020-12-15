@@ -76,7 +76,7 @@ func (s *Service) commitToTable() error {
 			defer sem.Release(1)
 
 			// add usage to monthly count
-			err := s.engine.Usage.WriteUsage(ctx, id, driver.UsageLabelMonthly, timeutil.Floor(now, timeutil.PeriodDay), usage)
+			err := s.engine.Usage.WriteUsage(ctx, id, driver.UsageLabelMonthly, timeutil.Floor(now, timeutil.PeriodMonth), usage)
 			if err != nil {
 				return err
 			}
