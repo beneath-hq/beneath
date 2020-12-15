@@ -5,7 +5,7 @@ import useMe from "../../hooks/useMe";
 import { toURLName } from "../../lib/names";
 import ExploreProjectsTiles from "./ExploreProjectsTiles";
 import MyProjectsTiles from "./MyProjectsTiles";
-import UsageTile from "./tiles/UsageTile";
+import MyUsageTile from "./tiles/MyUsageTile";
 import ProfileHeroTile from "./tiles/ProfileHeroTile";
 import UpgradeTile from "./tiles/UpgradeTile";
 import ActionsTile from "./tiles/ActionsTile";
@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme: Theme) => ({
       position: "relative",
     },
   },
-  readUsage: {
+  usageTile: {
     [theme.breakpoints.up("md")]: {
       position: "absolute",
       right: 0,
@@ -32,19 +32,11 @@ const useStyles = makeStyles((theme: Theme) => ({
       width: 300,
     },
   },
-  writeUsage: {
+  upgradeTile: {
     [theme.breakpoints.up("md")]: {
       position: "absolute",
       right: 0,
-      top: 124,
-      width: 300,
-    },
-  },
-  usageUpgrade: {
-    [theme.breakpoints.up("md")]: {
-      position: "absolute",
-      right: 0,
-      top: 248,
+      top: 340,
       width: 300,
     },
   },
@@ -60,7 +52,6 @@ const Springboard: FC = () => {
     return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>;
   }
 
-
   return (
     <ContentContainer maxWidth="lg">
       <Grid container spacing={3} className={classes.positionAncestor}>
@@ -74,44 +65,13 @@ const Springboard: FC = () => {
           description={me.description}
           avatarURL={me.photoURL}
         />
-
         {me.organizationID === me.personalUser?.billingOrganizationID && (
           <>
-            {me.readQuota && (
-              <UsageTile
-                href={`/organization?organization_name=${me.name}&tab=monitoring`}
-                as={`/${me.name}/-/monitoring`}
-                title="Read quota usage"
-                usage={me.readUsage}
-                quota={me.readQuota}
-                styleClass={classes.readUsage}
-              />
-            )}
-            {me.writeQuota && (
-              <UsageTile
-                href={`/organization?organization_name=${me.name}&tab=monitoring`}
-                as={`/${me.name}/-/monitoring`}
-                title="Write quota usage"
-                usage={me.writeUsage}
-                quota={me.writeQuota}
-                styleClass={classes.writeUsage}
-              />
-            )}
-            {/* {me.scanQuota && (
-              <UsageTile
-                href={`/organization?organization_name=${me.name}&tab=monitoring`}
-                as={`/${me.name}/-/monitoring`}
-                title="Scan quota usage"
-                usage={me.scanUsage}
-                quota={me.scanQuota}
-              />
-            )} */}
-            <UpgradeTile styleClass={classes.usageUpgrade} />
+            <MyUsageTile className={classes.usageTile} />
+            <UpgradeTile className={classes.upgradeTile} />
           </>
         )}
-        {isMd && (
-          <Grid item md={4} lg={6} />
-        )}
+        {isMd && <Grid item md={4} lg={6} />}
         <ActionsTile shape="wide" nopaper />
         <Grid item xs={12}>
           <Typography variant="h3" className={classes.sectionTitle}>
