@@ -12,7 +12,7 @@ import Loading from "../components/Loading";
 import EditOrganization from "../components/organization/EditOrganization";
 import ViewBilling from "../ee/components/organization/billing/ViewBilling";
 import ViewMembers from "../components/organization/ViewMembers";
-import ViewMetrics from "../components/organization/ViewMetrics";
+import ViewUsage from "../components/organization/ViewUsage";
 import ViewProjects from "../components/organization/ViewProjects";
 import ViewSecrets from "../components/organization/ViewSecrets";
 import ViewSecurity from "../components/organization/ViewSecurity";
@@ -76,15 +76,10 @@ const OrganizationPage = () => {
       tabs.push({ value: "members", label: "Members", render: () => <ViewMembers organization={organization} /> });
     }
 
-    tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics organization={organization} /> });
+    tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewUsage organization={organization} /> });
 
     if (organization.permissions.admin) {
       tabs.push({ value: "edit", label: "Edit", render: () => <EditOrganization organization={organization} /> });
-      tabs.push({
-        value: "billing",
-        label: "Billing",
-        render: () => <ViewBilling organization={organization} />,
-      });
       if (organization.personalUserID) {
         const userID = organization.personalUserID;
         tabs.push({
@@ -98,6 +93,11 @@ const OrganizationPage = () => {
           render: () => <ViewSecurity userID={userID} />,
         });
       }
+      tabs.push({
+        value: "billing",
+        label: "Billing",
+        render: () => <ViewBilling organization={organization} />,
+      });
     }
   }
 

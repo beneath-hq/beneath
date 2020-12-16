@@ -5,7 +5,7 @@ import Moment from "react-moment";
 import { EntityKind } from "apollo/types/globalTypes";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { useMonthlyMetrics } from "components/metrics/hooks";
+import { useTotalUsage } from "components/usage/hooks";
 import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 
@@ -49,15 +49,13 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
             <TableCell>Total records</TableCell>
             <TableCell>Total bytes</TableCell>
             {/* <TableCell align="right">Instances</TableCell> */}
-            <TableCell align="right">
-              Created
-            </TableCell>
+            <TableCell align="right">Created</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {Array.from(project.streams)
             .sort((a, b) => a.name.localeCompare(b.name))
-            .map(({ streamID, name, createdOn, instancesCreatedCount, instancesDeletedCount }, idx) => (
+            .map(({ streamID, primaryStreamInstanceID, name, createdOn }, idx) => (
               <TableLinkRow
                 key={streamID}
                 href={
@@ -67,7 +65,7 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
                 as={`/${toURLName(project.organization.name)}/${toURLName(project.name)}/${toURLName(name)}`}
               >
                 <TableCell>{toURLName(name)}</TableCell>
-                <RecordsAndBytesCells skip={idx >= 25} streamID={streamID} />
+                <RecordsAndBytesCells skip={idx >= 25} streamInstanceID={primaryStreamInstanceID} />
                 {/* <TableCell align="right">{instancesCreatedCount - instancesDeletedCount}</TableCell> */}
                 <TableCell align="right">
                   <Moment fromNow>{createdOn}</Moment>
@@ -82,9 +80,9 @@ const ViewStreams: FC<ViewStreamsProps> = ({ project }) => {
 
 export default ViewStreams;
 
-// separate component to enable nested useMonthlyMetrics
-const RecordsAndBytesCells: FC<{ streamID: string; skip?: boolean }> = ({ streamID, skip }) => {
-  if (skip) {
+// separate component to enable nested useTotalUsage
+const RecordsAndBytesCells: FC<{ streamInstanceID: string | null; skip?: boolean }> = ({ streamInstanceID, skip }) => {
+  if (skip || !streamInstanceID) {
     return (
       <>
         <TableCell>–</TableCell>
@@ -93,11 +91,11 @@ const RecordsAndBytesCells: FC<{ streamID: string; skip?: boolean }> = ({ stream
     );
   }
 
-  const metrics = useMonthlyMetrics(EntityKind.Stream, streamID).total;
+  const { data } = useTotalUsage(EntityKind.StreamInstance, streamInstanceID);
   return (
     <>
-      <TableCell>{numbro(metrics.writeRecords).format(intFormat)}</TableCell>
-      <TableCell>{numbro(metrics.writeBytes).format(bytesFormat)}</TableCell>
+      <TableCell>{data && numbro(data.writeRecords).format(intFormat)}</TableCell>
+      <TableCell>{data && numbro(data.writeBytes).format(bytesFormat)}</TableCell>
     </>
   );
 };

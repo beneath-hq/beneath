@@ -3,34 +3,27 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 
-import { QUERY_STREAM } from "../apollo/queries/stream";
+import { QUERY_STREAM } from "apollo/queries/stream";
 import {
   StreamByOrganizationProjectAndName,
   StreamByOrganizationProjectAndNameVariables,
-} from "../apollo/types/StreamByOrganizationProjectAndName";
-import { withApollo } from "../apollo/withApollo";
-
-import ErrorPage from "../components/ErrorPage";
-import Loading from "../components/Loading";
-import StreamHero from "../components/stream/StreamHero";
-import Page from "../components/Page";
-import StreamAPI from "../components/stream/StreamAPI";
-import ViewMetrics from "../components/stream/ViewMetrics";
-import SubrouteTabs from "../components/SubrouteTabs";
-import { toBackendName, toURLName } from "../lib/names";
+} from "apollo/types/StreamByOrganizationProjectAndName";
+import { withApollo } from "apollo/withApollo";
+import ErrorPage from "components/ErrorPage";
+import Loading from "components/Loading";
+import Page from "components/Page";
+import StreamAPI from "components/stream/StreamAPI";
+import StreamHero from "components/stream/StreamHero";
+import SubrouteTabs from "components/SubrouteTabs";
+import { StreamInstance } from "components/stream/types";
+import ViewUsage from "components/stream/ViewUsage";
+import { toBackendName, toURLName } from "lib/names";
 
 const DataTab = dynamic(() => import("../components/stream/DataTab"), { ssr: false });
 
-export interface Instance {
-  streamInstanceID: string;
-  version: number;
-  madePrimaryOn: ControlTime | null;
-  madeFinalOn: ControlTime | null;
-}
-
 const StreamPage = () => {
   const router = useRouter();
-  const [instance, setInstance] = React.useState<Instance | null>(null);
+  const [instance, setInstance] = React.useState<StreamInstance | null>(null);
   const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
   if (
     typeof router.query.organization_name !== "string" ||
@@ -52,12 +45,12 @@ const StreamPage = () => {
     variables: { organizationName, projectName, streamName },
   });
 
-  // set the instance to the primary one, if we have it
+  // default to the primary instance, if there is one
   useEffect(() => {
-    if (data?.streamByOrganizationProjectAndName.primaryStreamInstanceID) {
+    if (data?.streamByOrganizationProjectAndName.primaryStreamInstance) {
       setInstance(data.streamByOrganizationProjectAndName.primaryStreamInstance);
     }
-  }, [data?.streamByOrganizationProjectAndName.primaryStreamInstanceID]);
+  }, [data?.streamByOrganizationProjectAndName.primaryStreamInstance?.streamInstanceID]);
 
   if (loading) {
     return (
@@ -74,13 +67,27 @@ const StreamPage = () => {
   const stream = data.streamByOrganizationProjectAndName;
 
   const tabs = [];
-  tabs.push({ value: "data", label: "Data", render: () => <DataTab stream={stream} instance={instance} setOpenDialogID={setOpenDialogID} /> });
+  tabs.push({
+    value: "data",
+    label: "Data",
+    render: () => <DataTab stream={stream} instance={instance} setOpenDialogID={setOpenDialogID} />,
+  });
   tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
-  tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics stream={stream} /> });
+  tabs.push({
+    value: "monitoring",
+    label: "Monitoring",
+    render: () => <>{instance && <ViewUsage stream={stream} instance={instance} />}</>,
+  });
 
   return (
     <Page title={title}>
-      <StreamHero stream={stream} instance={instance || null} setInstance={setInstance} openDialogID={openDialogID} setOpenDialogID={setOpenDialogID} />
+      <StreamHero
+        stream={stream}
+        instance={instance || null}
+        setInstance={setInstance}
+        openDialogID={openDialogID}
+        setOpenDialogID={setOpenDialogID}
+      />
       <SubrouteTabs defaultValue={"data"} tabs={tabs} />
     </Page>
   );

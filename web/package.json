@@ -45,13 +45,13 @@
     "react-dom": "^16.11.0",
     "react-moment": "^0.9.6",
     "react-monaco-editor": "^0.40.0",
-    "react-vega": "^7.4.1",
+    "react-vega": "^7.4.2",
     "subscriptions-transport-ws": "^0.9.16",
     "url-loader": "^4.1.0",
     "uuid": "^8.3.0",
     "validator": "^13.1.1",
-    "vega": "^5.9.1",
-    "vega-lite": "^4.4.0"
+    "vega": "^5.10.0",
+    "vega-lite": "^4.8.0"
   },
   "devDependencies": {
     "@types/compression": "^1.7.0",

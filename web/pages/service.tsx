@@ -15,7 +15,7 @@ import {
 } from "../apollo/types/ServiceByOrganizationProjectAndName";
 import { withApollo } from "../apollo/withApollo";
 import ErrorPage from "../components/ErrorPage";
-import ViewMetrics from "../components/service/ViewMetrics";
+import ViewUsage from "../components/service/ViewUsage";
 import { toBackendName, toURLName } from "../lib/names";
 
 const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
@@ -59,7 +59,7 @@ const ServicePage = () => {
   const service = data.serviceByOrganizationProjectAndName;
 
   const tabs = [];
-  tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics service={service} /> });
+  tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewUsage service={service} /> });
 
   return (
     <Page title={title}>

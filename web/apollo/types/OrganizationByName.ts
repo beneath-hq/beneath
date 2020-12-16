@@ -48,10 +48,12 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_perso
   __typename: "PrivateUser";
   userID: string;
   email: string;
-  createdOn: ControlTime;
-  updatedOn: ControlTime;
   consentTerms: boolean;
   consentNewsletter: boolean;
+  createdOn: ControlTime;
+  updatedOn: ControlTime;
+  quotaStartTime: ControlTime;
+  quotaEndTime: ControlTime;
   readQuota: number | null;
   writeQuota: number | null;
   scanQuota: number | null;

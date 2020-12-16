@@ -24,7 +24,7 @@ export interface UpdateService_updateService_project {
 
 export interface UpdateService_updateService {
   __typename: "Service";
-  serviceID: ControlUUID;
+  serviceID: string;
   name: string;
   description: string | null;
   sourceURL: string | null;

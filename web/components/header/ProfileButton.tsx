@@ -1,9 +1,3 @@
-import React, { FC } from "react";
-
-import { Me_me } from "../../apollo/types/Me";
-import UsageIndicator from "../metrics/user/UsageIndicator";
-import { NakedLink } from "../Link";
-
 import {
   Button,
   makeStyles,
@@ -11,9 +5,12 @@ import {
   MenuItem,
   Typography,
 } from "@material-ui/core";
-
-import Avatar from "components/Avatar";
 import clsx from "clsx";
+import React, { FC } from "react";
+
+import { Me_me } from "apollo/types/Me";
+import Avatar from "components/Avatar";
+import { NakedLink } from "components/Link";
 
 const useStyles = makeStyles((_) => ({
   avatarButton: {
@@ -26,9 +23,6 @@ const useStyles = makeStyles((_) => ({
     minWidth: "250px",
   },
   menuItemHeader: {
-    borderBottom: `1px solid rgba(255, 255, 255, 0.175)`,
-  },
-  menuItemUsage: {
     borderBottom: `1px solid rgba(255, 255, 255, 0.175)`,
   },
 }));
@@ -82,14 +76,6 @@ export const ProfileButton: FC<ProfileButtonProps> = ({ me, className }) => {
             </Typography>
           </div>
         </MenuItem>
-        {me.readQuota &&
-          me.personalUser?.billingOrganizationID === me.organizationID &&
-          makeMenuItem(<UsageIndicator standalone={false} kind="read" usage={me.readUsage} quota={me.readQuota} />, {
-            onClick: closeMenu,
-            as: `/${me.name}/-/monitoring`,
-            href: `/organization?organization_name=${me.name}&tab=monitoring`,
-            className: classes.menuItemUsage,
-          })}
         {makeMenuItem("Profile", {
           onClick: closeMenu,
           as: `/${me.name}`,

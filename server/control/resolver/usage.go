@@ -132,6 +132,7 @@ func (r *queryResolver) getUsage(ctx context.Context, entityID uuid.UUID, label 
 		res := &gql.Usage{
 			EntityID: entityID,
 			Label:    label,
+			Time:     time.Now(),
 		}
 		if len(times) > 0 {
 			res.Time = times[0]

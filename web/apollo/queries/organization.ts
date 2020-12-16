@@ -32,10 +32,12 @@ export const QUERY_ME = gql`
       personalUser {
         userID
         email
-        createdOn
-        updatedOn
         consentTerms
         consentNewsletter
+        createdOn
+        updatedOn
+        quotaStartTime
+        quotaEndTime
         readQuota
         writeQuota
         scanQuota
@@ -88,10 +90,12 @@ export const QUERY_ORGANIZATION = gql`
         personalUser {
           userID
           email
-          createdOn
-          updatedOn
           consentTerms
           consentNewsletter
+          createdOn
+          updatedOn
+          quotaStartTime
+          quotaEndTime
           readQuota
           writeQuota
           scanQuota

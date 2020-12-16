@@ -59,6 +59,7 @@ export const QUERY_PROJECT = gql`
         createdOn
         instancesCreatedCount
         instancesDeletedCount
+        primaryStreamInstanceID
       }
       services {
         serviceID

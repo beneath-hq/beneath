@@ -4,7 +4,7 @@ import Moment from "react-moment";
 
 import { Tile, TileProps } from "./Tile";
 import { PaperGrid } from "components/Paper";
-import QuotaUsageIndicator from "components/usage/QuotaUsageIndicator";
+import { QuotaUsageIndicator } from "components/usage/UsageIndicator";
 import useMe from "hooks/useMe";
 
 export const MyUsageTile: FC<TileProps> = (tileProps) => {
@@ -28,7 +28,7 @@ export const MyUsageTile: FC<TileProps> = (tileProps) => {
       <PaperGrid variant="outlined" container spacing={2}>
         <Grid item xs={12}>
           <QuotaUsageIndicator
-            label="Reads used"
+            label="Reads"
             dense
             usage={me.readUsage}
             quota={me.readQuota}
@@ -37,7 +37,7 @@ export const MyUsageTile: FC<TileProps> = (tileProps) => {
         </Grid>
         <Grid item xs={12}>
           <QuotaUsageIndicator
-            label="Writes used"
+            label="Writes"
             dense
             usage={me.writeUsage}
             quota={me.writeQuota}
@@ -46,7 +46,7 @@ export const MyUsageTile: FC<TileProps> = (tileProps) => {
         </Grid>
         <Grid item xs={12}>
           <QuotaUsageIndicator
-            label="Scans used"
+            label="Scans"
             dense
             usage={me.scanUsage}
             quota={me.scanQuota}

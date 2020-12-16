@@ -24,7 +24,7 @@ export interface CreateService_createService_project {
 
 export interface CreateService_createService {
   __typename: "Service";
-  serviceID: ControlUUID;
+  serviceID: string;
   name: string;
   description: string | null;
   sourceURL: string | null;

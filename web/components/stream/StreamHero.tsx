@@ -2,26 +2,27 @@ import { useQuery } from "@apollo/client";
 import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent } from "@material-ui/core";
 import { MoreVert } from "@material-ui/icons";
 import { FC, useEffect, useState } from "react";
+import numbro from "numbro";
 
-import { NakedLink } from "../Link";
-import { useMonthlyMetrics } from "../metrics/hooks";
-import { prettyPrintBytes } from "../metrics/util";
-import SelectField from "components/forms/SelectField";
-import { EntityKind } from "apollo/types/globalTypes";
 import { QUERY_STREAM_INSTANCES } from "apollo/queries/stream";
-import {
-  StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName,
-} from "apollo/types/StreamByOrganizationProjectAndName";
+import { EntityKind } from "apollo/types/globalTypes";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
 import {
   StreamInstancesByOrganizationProjectAndStreamNameVariables,
   StreamInstancesByOrganizationProjectAndStreamName,
 } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
 import DropdownButton from "components/DropdownButton";
-import CreateInstance from "./CreateInstance";
-import DeleteInstance from "./DeleteInstance";
-import PromoteInstance from "./PromoteInstance";
-import { Instance } from "pages/stream";
+import SelectField from "components/forms/SelectField";
+import { NakedLink } from "components/Link";
+import CreateInstance from "components/stream/CreateInstance";
+import DeleteInstance from "components/stream/DeleteInstance";
+import PromoteInstance from "components/stream/PromoteInstance";
+import { StreamInstance } from "components/stream/types";
+import { useTotalUsage } from "components/usage/hooks";
 import { toURLName } from "lib/names";
+
+const intFormat = { thousandSeparated: true };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -45,21 +46,20 @@ const useStyles = makeStyles((theme) => ({
     },
     border: `1px solid ${theme.palette.border.paper}`,
     color: theme.palette.common.white,
-  }
+  },
 }));
 
 export interface StreamHeroProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: Instance | null;
-  setInstance: (instance: Instance | null) => void;
+  instance: StreamInstance | null;
+  setInstance: (instance: StreamInstance | null) => void;
   openDialogID: string | null;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
 const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDialogID, setOpenDialogID }) => {
   const classes = useStyles();
-  const metrics = useMonthlyMetrics(EntityKind.Stream, stream.streamID).total;
-  const [instances, setInstances] = useState<Instance[]>([]);
+  const [instances, setInstances] = useState<StreamInstance[]>([]);
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
@@ -75,11 +75,14 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
   }
 
   useEffect(() => {
-    if (data?.streamInstancesByOrganizationProjectAndStreamName && data.streamInstancesByOrganizationProjectAndStreamName.length > 0 ) {
+    if (
+      data?.streamInstancesByOrganizationProjectAndStreamName &&
+      data.streamInstancesByOrganizationProjectAndStreamName.length > 0
+    ) {
       // sort instances by version (so the SelectField shows them in a sensible order)
-      const instances: Instance[] = [];
+      const instances: StreamInstance[] = [];
       instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
-      instances.sort((a, b) => a.version < b.version ? 1 : -1);
+      instances.sort((a, b) => (a.version < b.version ? 1 : -1));
       setInstances(instances);
 
       // if there's no set instance (which happens when there's no primary instance), show the instance with the highest version
@@ -89,7 +92,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
     }
   }, [data?.streamInstancesByOrganizationProjectAndStreamName]);
 
-  const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create")}];
+  const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create") }];
   if (instance && !instance?.madePrimaryOn) {
     instanceActions.push({ label: "Promote to primary", onClick: () => setOpenDialogID("promote") });
   }
@@ -115,6 +118,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
                   as={`/${organizationName}/${projectName}/-/members`}
                 />
               </Grid>
+              {instance && <InstanceUsageChips stream={stream} instance={instance} />}
               <Grid item>
                 <Grid container spacing={1} alignItems="center">
                   <Grid item className={classes.selectField}>
@@ -122,20 +126,20 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
                       id="instanceID"
                       required
                       options={instances}
-                      getOptionLabel={(option: Instance) => {
+                      getOptionLabel={(option: StreamInstance) => {
                         const versionString = `v${option.version.toString()}`;
                         const primaryTag = option.madePrimaryOn ? " (primary)" : "";
                         const finalTag = option.madeFinalOn ? " (final)" : "";
                         return versionString + primaryTag + finalTag;
                       }}
-                      getOptionSelected={(option: Instance, value: Instance) => {
+                      getOptionSelected={(option: StreamInstance, value: StreamInstance) => {
                         return option.version === value.version;
                       }}
                       value={instance}
                       multiple={false}
                       onChange={(_, value) => {
                         if (value) {
-                          setInstance(value as Instance);
+                          setInstance(value as StreamInstance);
                         }
                       }}
                       margin="none"
@@ -195,19 +199,44 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
           </Grid>
         </Grid>
       </Grid>
-      <Grid item>
-        <Chip
-          label={`${prettyPrintBytes(metrics.writeBytes)} written \xa0\xa0\ ${prettyPrintBytes(
-            metrics.readBytes
-          )} read`}
-          clickable
-          component={NakedLink}
-          href={`/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`}
-          as={`/${organizationName}/${projectName}/${streamName}/-/monitoring`}
-        />
-      </Grid>
     </Grid>
   );
 };
 
 export default StreamHero;
+
+interface InstanceUsageChips {
+  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  instance: StreamInstance;
+}
+
+// separate component to enable nested useTotalUsage
+const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
+  const { data, loading, error } = useTotalUsage(EntityKind.StreamInstance, instance.streamInstanceID);
+  if (!data) {
+    return <></>;
+  }
+
+  const organizationName = stream.project.organization.name;
+  const projectName = stream.project.name;
+  const streamName = stream.name;
+  const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`;
+  const as = `/${organizationName}/${projectName}/${streamName}/-/monitoring`;
+
+  return (
+    <>
+      <Grid item>
+        <Chip label={numbro(data.writeBytes).format(bytesFormat)} clickable component={NakedLink} href={href} as={as} />
+      </Grid>
+      <Grid item>
+        <Chip
+          label={numbro(data.writeRecords).format(intFormat) + " records"}
+          clickable
+          component={NakedLink}
+          href={href}
+          as={as}
+        />
+      </Grid>
+    </>
+  );
+};

@@ -21,6 +21,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   createdOn: ControlTime;
   instancesCreatedCount: number;
   instancesDeletedCount: number;
+  primaryStreamInstanceID: ControlUUID | null;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_services {
