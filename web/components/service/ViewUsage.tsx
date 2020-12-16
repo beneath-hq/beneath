@@ -11,7 +11,7 @@ export interface ViewUsageProps {
 const ViewUsage: FC<ViewUsageProps> = ({ service }) => {
   return (
     <OwnerUsageView
-      entityKind={EntityKind.Organization}
+      entityKind={EntityKind.Service}
       entityID={service.serviceID}
       readQuota={service.readQuota}
       writeQuota={service.writeQuota}

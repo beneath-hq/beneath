@@ -41,7 +41,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
         const projName = toURLName(data.createService.project.name);
         const serviceName = toURLName(data.createService.name);
         const href = `/service?organization_name=${orgName}&project_name=${projName}&service_name=${serviceName}`;
-        const as = `/${orgName}/${projName}/${serviceName}`;
+        const as = `/${orgName}/${projName}/-/services/${serviceName}`;
         router.replace(href, as, { shallow: true });
       }
     },

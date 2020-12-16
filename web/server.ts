@@ -161,10 +161,7 @@ app.prepare().then(() => {
 
 
   // Run server
-  server.listen(port, err => {
-    if (err) {
-      throw err;
-    }
+  server.listen(port, () => {
     console.log(`Ready on ${port}`);
   });
 });
