@@ -13,6 +13,17 @@ export const QUERY_USER_SECRETS = gql`
   }
 `;
 
+export const QUERY_SERVICE_SECRETS = gql`
+  query SecretsForService($serviceID: UUID!) {
+    secretsForService(serviceID: $serviceID) {
+      serviceSecretID
+      description
+      prefix
+      createdOn
+    }
+  }
+`;
+
 export const ISSUE_USER_SECRET = gql`
   mutation IssueUserSecret($description: String!, $readOnly: Boolean!, $publicOnly: Boolean!) {
     issueUserSecret(description: $description, readOnly: $readOnly, publicOnly: $publicOnly) {
@@ -29,8 +40,28 @@ export const ISSUE_USER_SECRET = gql`
   }
 `;
 
+export const ISSUE_SERVICE_SECRET = gql`
+  mutation IssueServiceSecret($serviceID: UUID!, $description: String!) {
+    issueServiceSecret(serviceID: $serviceID, description: $description) {
+      token
+      secret {
+        serviceSecretID
+        description
+        prefix
+        createdOn
+      }
+    }
+  }
+`;
+
 export const REVOKE_USER_SECRET = gql`
   mutation RevokeUserSecret($secretID: UUID!) {
     revokeUserSecret(secretID: $secretID)
+  }
+`;
+
+export const REVOKE_SERVICE_SECRET = gql`
+  mutation RevokeServiceSecret($secretID: UUID!) {
+    revokeServiceSecret(secretID: $secretID)
   }
 `;

@@ -17,6 +17,7 @@ import { withApollo } from "../apollo/withApollo";
 import ErrorPage from "../components/ErrorPage";
 import ViewMetrics from "../components/service/ViewMetrics";
 import { toBackendName, toURLName } from "../lib/names";
+import ViewAccess from "components/service/ViewAccess";
 
 const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
 
@@ -59,6 +60,7 @@ const ServicePage = () => {
   const service = data.serviceByOrganizationProjectAndName;
 
   const tabs = [];
+  tabs.push({ value: "access", label: "Access", render: () => <ViewAccess service={service} /> });
   tabs.push({ value: "monitoring", label: "Monitoring", render: () => <ViewMetrics service={service} /> });
 
   return (
@@ -74,7 +76,7 @@ const ServicePage = () => {
               `Scan quota ${service.scanQuota ? numbro(service.scanQuota).format(bytesFormat) : "not set"})`
         }
       />
-      <SubrouteTabs defaultValue="monitoring" tabs={tabs} />
+      <SubrouteTabs defaultValue="access" tabs={tabs} />
     </Page>
   );
 };

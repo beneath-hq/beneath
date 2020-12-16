@@ -8,7 +8,6 @@ import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "apollo/queries/secret";
 import { IssueUserSecret, IssueUserSecretVariables } from "apollo/types/IssueUserSecret";
 import { Form, handleSubmitMutation, RadioGroup as FormikRadioGroup, TextField as FormikTextField } from "components/formik";
 import SubmitControl from "components/forms/SubmitControl";
-import CodeBlock from "components/CodeBlock";
 
 const useStyles = makeStyles((theme) => ({
   newSecretCard: {
@@ -23,7 +22,7 @@ export interface IssueSecretProps {
 const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   const [newSecretString, setNewSecretString] = React.useState("");
 
-  const [issueSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(ISSUE_USER_SECRET, {
+  const [issueUserSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(ISSUE_USER_SECRET, {
     onCompleted: (data) => {
       setNewSecretString(data.issueUserSecret.token);
     },
@@ -45,7 +44,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
           handleSubmitMutation(
             values,
             actions,
-            issueSecret({
+            issueUserSecret({
               variables: {
                 description: values.description,
                 readOnly: values.access !== "full",
