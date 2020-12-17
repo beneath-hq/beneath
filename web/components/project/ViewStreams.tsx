@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "
 import { toURLName } from "lib/names";
 
 const intFormat = { thousandSeparated: true };
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
 
 export interface ViewStreamsProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;

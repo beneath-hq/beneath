@@ -20,7 +20,7 @@ export interface UsageChartProps {
 export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => {
   const y = usageFieldFor(unit, dimension);
   const yIsBytes = unit === "bytes";
-  const minY = yIsBytes ? 10000 : 10;
+  const minY = yIsBytes ? 1000 : 10;
   const classes = useStyles();
   return (
     <VegaLite

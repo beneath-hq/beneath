@@ -9,19 +9,32 @@ import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
+    marginLeft: "4px",
+    flexWrap: "nowrap",
   },
   link: {
     cursor: "pointer",
     color: theme.palette.text.secondary,
-    fontSize: theme.typography.body1.fontSize,
+    fontSize: theme.typography.body2.fontSize,
+    [theme.breakpoints.up("sm")]: {
+      fontSize: theme.typography.body1.fontSize,
+    },
   },
   currentLink: {
     color: theme.palette.text.primary,
     fontWeight: theme.typography.fontWeightBold,
   },
   crumbSeparator: {
-    fontSize: "1.5rem",
-    marginTop: "-0.3rem",
+    marginTop: "-0.1rem",
+    marginLeft: "4px",
+    marginRight: "4px",
+    fontSize: "1.35rem",
+    [theme.breakpoints.up("sm")]: {
+      marginTop: "-0.3rem",
+      marginLeft: "8px",
+      marginRight: "8px",
+      fontSize: "1.5rem",
+    },
   },
 }));
 
@@ -33,7 +46,8 @@ export const PathBreadcrumbs: FC = () => {
     <Breadcrumbs
       aria-label="Breadcrumbs"
       className={classes.breadcrumbs}
-      separator={<span className={classes.crumbSeparator}>/</span>}
+      classes={{ separator: classes.crumbSeparator }}
+      separator={"/"}
     >
       <span /> {/* To show a root "/" */}
       {crumbs.length === 0 && <span />} {/* Shows root "/" if there are no crumbs */}
