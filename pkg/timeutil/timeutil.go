@@ -95,6 +95,9 @@ func TotalDaysInPeriod(ts time.Time, p Period) int {
 
 // UnixMilli converts t to milliseconds since 1970
 func UnixMilli(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
 	return t.UnixNano() / int64(time.Millisecond)
 }
 

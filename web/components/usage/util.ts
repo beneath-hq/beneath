@@ -8,7 +8,8 @@ export const useHourlyUsage = (entityKind: EntityKind, entityID: string) => {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const from = hourFloor(weekAgo);
-  const until = hourFloor(now);
+  const untilInclusive = hourFloor(now);
+  const untilExclusive = hourFloor(new Date(now.getTime() + 60 * 60 * 1000));
 
   const { loading, error, data } = useQuery<GetUsage, GetUsageVariables>(GET_USAGE, {
     variables: {
@@ -17,14 +18,14 @@ export const useHourlyUsage = (entityKind: EntityKind, entityID: string) => {
         entityID: entityID,
         label: UsageLabel.Hourly,
         from: from.toISOString(),
-        until: until.toISOString(),
+        until: untilExclusive.toISOString(),
       },
     },
   });
 
   let usages: Usage[] | undefined;
   if (data) {
-    usages = imputeHourlyUsages(from, until, data.getUsage);
+    usages = imputeHourlyUsages(from, untilInclusive, data.getUsage);
   }
 
   return { data: usages, loading, error };
