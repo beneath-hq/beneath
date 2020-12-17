@@ -18,7 +18,7 @@ import CreateInstance from "components/stream/CreateInstance";
 import DeleteInstance from "components/stream/DeleteInstance";
 import PromoteInstance from "components/stream/PromoteInstance";
 import { StreamInstance } from "components/stream/types";
-import { useTotalUsage } from "components/usage/hooks";
+import { useTotalUsage } from "components/usage/util";
 import { toURLName } from "lib/names";
 
 const intFormat = { thousandSeparated: true };

@@ -23,12 +23,16 @@ export const vegaConfig: Config = {
   area: { fill: colors.mark },
   axis: {
     domain: false,
-    gridDash: [5],
-    gridColor: "rgba(255, 255, 255, 0.25)",
+    grid: false,
     labelFont: theme.typography.fontFamily,
     labelFontSize: 14,
     labelColor: theme.palette.text.secondary,
     tickColor: "transparent",
+  },
+  axisY: {
+    grid: true,
+    gridDash: [5],
+    gridColor: "rgba(255, 255, 255, 0.25)",
   },
   axisBand: { grid: false },
   background: theme.palette.background.paper,
