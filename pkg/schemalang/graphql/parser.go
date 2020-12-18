@@ -71,12 +71,14 @@ type Type struct {
 
 // Field is member of Type
 type Field struct {
-	Doc  string   "@String?"
-	Name string   `@Ident`
-	Type *TypeRef `":" @@`
+	Pos         lexer.Position
+	Doc         string        "@String?"
+	Name        string        `@Ident`
+	Type        *TypeRef      `":" @@`
+	Annotations []*Annotation `@@*`
 }
 
-// Annotation on Type
+// Annotation on Type or Field
 type Annotation struct {
 	Name      string      `"@" @Ident`
 	Arguments []*Argument `("(" (@@ ("," @@)*)? ")")?`
