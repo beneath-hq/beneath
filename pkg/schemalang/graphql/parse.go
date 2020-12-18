@@ -14,7 +14,7 @@ var (
 )
 
 // Schema represents a parsed and checked GraphQL schema where
-// the object annotated with "@stream" is assigned to Root (and
+// the object annotated with "@schema" is assigned to Root (and
 // its "@key" and "@index" annotations parsed accordingly).
 type Schema struct {
 	Root         *Declaration
@@ -59,9 +59,9 @@ func (s *Schema) parse(sdl string) error {
 		}
 	}
 
-	// check there's at least one stream
+	// check there's a schema
 	if s.Root == nil {
-		return fmt.Errorf("no streams declared in input")
+		return fmt.Errorf("no schema declared in input (use @schema annotation on the root type)")
 	}
 
 	// done
@@ -93,9 +93,9 @@ func (s *Schema) extractDeclaration(declaration *Declaration) error {
 	// save declaration
 	s.Declarations[name] = declaration
 
-	// if it's a stream (is a Type with annotations), parse it
+	// if it's a schema (is a Type with annotations), parse it
 	if declaration.Type != nil && len(declaration.Type.Annotations) != 0 {
-		err := s.parseStream(declaration)
+		err := s.parseRoot(declaration)
 		if err != nil {
 			return err
 		}
@@ -104,88 +104,103 @@ func (s *Schema) extractDeclaration(declaration *Declaration) error {
 	return nil
 }
 
-// parse declaration as stream if it has a stream annotation
-func (s *Schema) parseStream(declaration *Declaration) error {
-	// if we already parsed a stream, error
+// parse declaration as root if it has an @schema annotation
+func (s *Schema) parseRoot(declaration *Declaration) error {
+	// if we already parsed a root, error
 	if s.Root != nil {
-		return fmt.Errorf("found multiple objects in schema with '@stream' annotation - you can only define one stream in a schema")
+		return fmt.Errorf("found multiple types with '@schema' annotation - you can only define one root schema")
 	}
 
 	// prepare data to extract from annotations
-	var streamName string
-	var keyIndex Index
+	var schemaName string
+	var keyIndex *Index
 	var secondaryIndexes []Index
 
-	// parse annotations
+	// parse type annotations
 	for _, ann := range declaration.Type.Annotations {
 		switch ann.Name {
 		case "stream":
-			name, err := s.parseStreamAnnotation(declaration, ann)
+			fallthrough
+		case "schema":
+			name, err := s.parseSchemaAnnotation(declaration, ann)
 			if err != nil {
 				return err
 			}
-			streamName = name
+			schemaName = name
 		case "key":
-			index, err := s.parseIndexAnnotation(declaration, ann)
+			index, err := s.parseIndexAnnotationOnType(declaration, ann)
 			if err != nil {
 				return err
 			}
 			keyIndex = index
 		case "index":
-			index, err := s.parseIndexAnnotation(declaration, ann)
+			index, err := s.parseIndexAnnotationOnType(declaration, ann)
 			if err != nil {
 				return err
 			}
-			secondaryIndexes = append(secondaryIndexes, index)
+			secondaryIndexes = append(secondaryIndexes, *index)
 		default:
 			return fmt.Errorf("unknown annotation '@%v' at %v", ann.Name, declaration.Pos.String())
 		}
 	}
 
-	// if no streamName set, @stream annotation not found
-	if streamName == "" {
-		return fmt.Errorf("cannot have '@key' or '@index' annotations on non-stream declaration at %v -- are you missing an @stream annotation?", declaration.Pos.String())
+	// extract key based on @key annotations on specific fields
+	keyIndexFromFields, err := s.parseIndexAnnotationsOnFields(declaration.Type.Fields)
+	if err != nil {
+		return err
 	}
 
-	// check params
-	if len(keyIndex.Fields) == 0 {
-		return fmt.Errorf("missing annotation '@key' with 'fields' arg in stream declaration at %v", declaration.Pos.String())
+	// we only allow @key on either the type OR individual fields (not both)
+	if keyIndex == nil {
+		keyIndex = keyIndexFromFields
+	} else if keyIndexFromFields != nil {
+		return fmt.Errorf("cannot use @key annotation on both type and individual fields for declaration at %v", declaration.Pos.String())
+	}
+
+	// if no schema name set, @schema annotation not found
+	if schemaName == "" {
+		return fmt.Errorf("cannot have '@key' or '@index' annotations on non-schema declaration at %v -- are you missing an @schema annotation?", declaration.Pos.String())
+	}
+
+	// check key is correctly set
+	if keyIndex == nil || len(keyIndex.Fields) == 0 {
+		return fmt.Errorf("missing or incomplete '@key' annotation(s) in schema declaration at %v", declaration.Pos.String())
 	}
 
 	// done
 	s.Root = declaration
-	s.Name = streamName
-	s.Key = keyIndex
+	s.Name = schemaName
+	s.Key = *keyIndex
 	s.Indexes = secondaryIndexes
 
 	return nil
 }
 
-func (s *Schema) parseStreamAnnotation(declaration *Declaration, annotation *Annotation) (string, error) {
+func (s *Schema) parseSchemaAnnotation(declaration *Declaration, annotation *Annotation) (string, error) {
 	// default name is snake cased plural
-	streamName := strcase.ToSnake(inflection.Plural(declaration.Type.Name))
+	schemaName := strcase.ToSnake(inflection.Plural(declaration.Type.Name))
 
 	// parse for "name" arg
 	for _, arg := range annotation.Arguments {
 		switch arg.Name {
 		case "name":
 			if arg.Value.String == "" {
-				return "", fmt.Errorf("stream arg 'name' at %v must be a non-empty string", arg.Pos.String())
+				return "", fmt.Errorf("@schema argument 'name' at %v must be a non-empty string", arg.Pos.String())
 			}
 
-			streamName = strings.ReplaceAll(arg.Value.String, "-", "_")
-			if !snakeCaseRegex.MatchString(streamName) {
-				return "", fmt.Errorf("stream name '%v' at %v is not a valid stream name (only alphanumeric characters, '-' and '_' allowed)", arg.Value.String, arg.Pos.String())
+			schemaName = strings.ReplaceAll(arg.Value.String, "-", "_")
+			if !snakeCaseRegex.MatchString(schemaName) {
+				return "", fmt.Errorf("schema name='%v' at %v is not a valid schema name (only alphanumeric characters, '-' and '_' allowed)", arg.Value.String, arg.Pos.String())
 			}
 		default:
 			return "", fmt.Errorf("unknown arg '%v' for annotation '@%v' at %v", arg.Name, annotation.Name, arg.Pos.String())
 		}
 	}
 
-	return streamName, nil
+	return schemaName, nil
 }
 
-func (s *Schema) parseIndexAnnotation(declaration *Declaration, annotation *Annotation) (Index, error) {
+func (s *Schema) parseIndexAnnotationOnType(declaration *Declaration, annotation *Annotation) (*Index, error) {
 	// parse "fields" and "normalize" args
 	var index Index
 	for _, arg := range annotation.Arguments {
@@ -193,7 +208,7 @@ func (s *Schema) parseIndexAnnotation(declaration *Declaration, annotation *Anno
 		case "normalize":
 			// must be boolean symbol
 			if arg.Value.Symbol == "" {
-				return index, fmt.Errorf("key arg 'normalize' at %v must be a boolean", arg.Pos.String())
+				return nil, fmt.Errorf("key arg 'normalize' at %v must be a boolean", arg.Pos.String())
 			}
 			// parse as "true" or "false"
 			index.Normalize = arg.Value.Symbol == "true"
@@ -205,17 +220,40 @@ func (s *Schema) parseIndexAnnotation(declaration *Declaration, annotation *Anno
 				index.Fields = make([]string, len(arg.Value.Array))
 				for idx, val := range arg.Value.Array {
 					if val.String == "" {
-						return index, err
+						return nil, err
 					}
 					index.Fields[idx] = val.String
 				}
 			} else {
-				return index, err
+				return nil, err
 			}
 		default:
-			return index, fmt.Errorf("unknown arg '%v' for annotation '@%v' at %v", arg.Name, annotation.Name, arg.Pos.String())
+			return nil, fmt.Errorf("unknown arg '%v' for annotation '@%v' at %v", arg.Name, annotation.Name, arg.Pos.String())
 		}
 	}
 
-	return index, nil
+	return &index, nil
+}
+
+func (s *Schema) parseIndexAnnotationsOnFields(fields []*Field) (*Index, error) {
+	// extracts key based on @key annotations on fields in the order they appear
+	var key []string
+	for _, field := range fields {
+		for _, ann := range field.Annotations {
+			if ann.Name == "key" {
+				if len(ann.Arguments) != 0 {
+					return nil, fmt.Errorf("unexpected arguments to @key annotation at %v", field.Pos.String())
+				}
+				key = append(key, field.Name)
+			} else {
+				return nil, fmt.Errorf("unknown annotation '@%v' at %v", ann.Name, field.Pos.String())
+			}
+		}
+	}
+
+	if len(key) > 0 {
+		return &Index{Fields: key}, nil
+	}
+
+	return nil, nil
 }
