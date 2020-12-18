@@ -51,6 +51,22 @@ func (s *Service) FindStreamByOrganizationProjectAndName(ctx context.Context, or
 	return stream
 }
 
+// FindStreamsForUser finds the streams that the user has access to
+func (s *Service) FindStreamsForUser(ctx context.Context, userID uuid.UUID) []*models.Stream {
+	var streams []*models.Stream
+	err := s.DB.GetDB(ctx).ModelContext(ctx, &streams).
+		Column("stream.*", "Project.project_id", "Project.name", "Project.Organization.organization_id", "Project.Organization.name").
+		Join("JOIN permissions_users_projects AS pup ON pup.project_id = stream.project_id").
+		Where("pup.user_id = ?", userID).
+		Order("project__organization.name", "project.name", "stream.name").
+		Limit(200).
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return streams
+}
+
 // CreateStream compiles and creates a new stream
 func (s *Service) CreateStream(ctx context.Context, msg *models.CreateStreamCommand) (*models.Stream, error) {
 	stream := &models.Stream{

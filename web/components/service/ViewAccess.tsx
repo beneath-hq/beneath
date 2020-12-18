@@ -3,7 +3,7 @@ import { FC } from "react";
 
 import { ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName } from "../../apollo/types/ServiceByOrganizationProjectAndName";
 import ListSecrets from "./access/ListSecrets";
-import ListStreamPermissions from "./access/ListStreamPermissions";
+import ListPermissions from "./access/ListPermissions";
 
 export interface Props {
   service: ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName;
@@ -13,7 +13,7 @@ const ViewAccess: FC<Props> = ({ service }) => {
   return (
     <>
       <Container maxWidth="md">
-        {/* <ListStreamPermissions serviceID={service.serviceID} /> */}
+        <ListPermissions serviceID={service.serviceID} />
         <Box m={4} />
         <ListSecrets serviceID={service.serviceID} />
       </Container>

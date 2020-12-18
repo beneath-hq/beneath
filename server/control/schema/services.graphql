@@ -1,6 +1,7 @@
 extend type Query {
   serviceByID(serviceID: UUID!): Service!
   serviceByOrganizationProjectAndName(organizationName: String!, projectName: String!, serviceName: String!): Service!
+  streamPermissionsForService(serviceID: UUID!): [PermissionsServicesStreams!]!
 }
 
 extend type Mutation {
@@ -31,6 +32,7 @@ type PermissionsServicesStreams {
   streamID: UUID!
   read: Boolean!
   write: Boolean!
+  stream: Stream
 }
 
 input CreateServiceInput {

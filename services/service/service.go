@@ -177,3 +177,24 @@ func (s *Service) Delete(ctx context.Context, service *models.Service) error {
 		ServiceID: service.ServiceID,
 	})
 }
+
+// FindStreamPermissionsForService finds every stream the service has permissions for
+func (s *Service) FindStreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) []*models.PermissionsServicesStreams {
+	var perms []*models.PermissionsServicesStreams
+	err := s.DB.GetDB(ctx).ModelContext(ctx, &perms).
+		Column(
+			"permissions_services_streams.*",
+			"Stream",
+			"Stream.Project.project_id",
+			"Stream.Project.name",
+			"Stream.Project.Organization.organization_id",
+			"Stream.Project.Organization.name",
+		).
+		Where("service_id = ?", serviceID).
+		Limit(200).
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return perms
+}

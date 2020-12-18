@@ -125,6 +125,7 @@ type ComplexityRoot struct {
 	PermissionsServicesStreams struct {
 		Read      func(childComplexity int) int
 		ServiceID func(childComplexity int) int
+		Stream    func(childComplexity int) int
 		StreamID  func(childComplexity int) int
 		Write     func(childComplexity int) int
 	}
@@ -254,6 +255,8 @@ type ComplexityRoot struct {
 		StreamByOrganizationProjectAndName                func(childComplexity int, organizationName string, projectName string, streamName string) int
 		StreamInstancesByOrganizationProjectAndStreamName func(childComplexity int, organizationName string, projectName string, streamName string) int
 		StreamInstancesForStream                          func(childComplexity int, streamID uuid.UUID) int
+		StreamPermissionsForService                       func(childComplexity int, serviceID uuid.UUID) int
+		StreamsForUser                                    func(childComplexity int, userID uuid.UUID) int
 	}
 
 	Service struct {
@@ -426,10 +429,12 @@ type QueryResolver interface {
 	SecretsForUser(ctx context.Context, userID uuid.UUID) ([]*models.UserSecret, error)
 	ServiceByID(ctx context.Context, serviceID uuid.UUID) (*models.Service, error)
 	ServiceByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, serviceName string) (*models.Service, error)
+	StreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) ([]*models.PermissionsServicesStreams, error)
 	StreamByID(ctx context.Context, streamID uuid.UUID) (*models.Stream, error)
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error)
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error)
 	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error)
+	StreamsForUser(ctx context.Context, userID uuid.UUID) ([]*models.Stream, error)
 	CompileSchema(ctx context.Context, input CompileSchemaInput) (*CompileSchemaOutput, error)
 	GetUsage(ctx context.Context, input GetUsageInput) ([]*Usage, error)
 	GetOrganizationUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
@@ -962,6 +967,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PermissionsServicesStreams.ServiceID(childComplexity), true
+
+	case "PermissionsServicesStreams.stream":
+		if e.complexity.PermissionsServicesStreams.Stream == nil {
+			break
+		}
+
+		return e.complexity.PermissionsServicesStreams.Stream(childComplexity), true
 
 	case "PermissionsServicesStreams.streamID":
 		if e.complexity.PermissionsServicesStreams.StreamID == nil {
@@ -1813,6 +1825,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.StreamInstancesForStream(childComplexity, args["streamID"].(uuid.UUID)), true
 
+	case "Query.streamPermissionsForService":
+		if e.complexity.Query.StreamPermissionsForService == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamPermissionsForService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamPermissionsForService(childComplexity, args["serviceID"].(uuid.UUID)), true
+
+	case "Query.streamsForUser":
+		if e.complexity.Query.StreamsForUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamsForUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamsForUser(childComplexity, args["userID"].(uuid.UUID)), true
+
 	case "Service.createdOn":
 		if e.complexity.Service.CreatedOn == nil {
 			break
@@ -2618,6 +2654,7 @@ type NewUserSecret {
 	{Name: "server/control/schema/services.graphql", Input: `extend type Query {
   serviceByID(serviceID: UUID!): Service!
   serviceByOrganizationProjectAndName(organizationName: String!, projectName: String!, serviceName: String!): Service!
+  streamPermissionsForService(serviceID: UUID!): [PermissionsServicesStreams!]!
 }
 
 extend type Mutation {
@@ -2648,6 +2685,7 @@ type PermissionsServicesStreams {
   streamID: UUID!
   read: Boolean!
   write: Boolean!
+  stream: Stream
 }
 
 input CreateServiceInput {
@@ -2677,6 +2715,7 @@ input UpdateServiceInput {
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
   streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
+  streamsForUser(userID: UUID!): [Stream!]!
   compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
 
@@ -4141,6 +4180,36 @@ func (ec *executionContext) field_Query_streamInstancesForStream_args(ctx contex
 		}
 	}
 	args["streamID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamPermissionsForService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamsForUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
 	return args, nil
 }
 
@@ -6174,6 +6243,38 @@ func (ec *executionContext) _PermissionsServicesStreams_write(ctx context.Contex
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PermissionsServicesStreams_stream(ctx context.Context, field graphql.CollectedField, obj *models.PermissionsServicesStreams) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PermissionsServicesStreams",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Stream, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Stream)
+	fc.Result = res
+	return ec.marshalOStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStream(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PermissionsUsersOrganizations_userID(ctx context.Context, field graphql.CollectedField, obj *models.PermissionsUsersOrganizations) (ret graphql.Marshaler) {
@@ -9408,6 +9509,48 @@ func (ec *executionContext) _Query_serviceByOrganizationProjectAndName(ctx conte
 	return ec.marshalNService2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐService(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_streamPermissionsForService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamPermissionsForService_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamPermissionsForService(rctx, args["serviceID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.PermissionsServicesStreams)
+	fc.Result = res
+	return ec.marshalNPermissionsServicesStreams2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐPermissionsServicesStreamsᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_streamByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -9574,6 +9717,48 @@ func (ec *executionContext) _Query_streamInstancesByOrganizationProjectAndStream
 	res := resTmp.([]*models.StreamInstance)
 	fc.Result = res
 	return ec.marshalNStreamInstance2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamInstanceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_streamsForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamsForUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamsForUser(rctx, args["userID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Stream)
+	fc.Result = res
+	return ec.marshalNStream2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_compileSchema(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -14427,6 +14612,8 @@ func (ec *executionContext) _PermissionsServicesStreams(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "stream":
+			out.Values[i] = ec._PermissionsServicesStreams_stream(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15211,6 +15398,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "streamPermissionsForService":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamPermissionsForService(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "streamByID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -15262,6 +15463,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_streamInstancesByOrganizationProjectAndStreamName(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "streamsForUser":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamsForUser(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -16404,6 +16619,43 @@ func (ec *executionContext) marshalNPermissionsServicesStreams2gitlabᚗcomᚋbe
 	return ec._PermissionsServicesStreams(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNPermissionsServicesStreams2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐPermissionsServicesStreamsᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.PermissionsServicesStreams) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPermissionsServicesStreams2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐPermissionsServicesStreams(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNPermissionsServicesStreams2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐPermissionsServicesStreams(ctx context.Context, sel ast.SelectionSet, v *models.PermissionsServicesStreams) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17386,6 +17638,13 @@ func (ec *executionContext) marshalOProject2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋ
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalOStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStream(ctx context.Context, sel ast.SelectionSet, v *models.Stream) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Stream(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamInstance(ctx context.Context, sel ast.SelectionSet, v *models.StreamInstance) graphql.Marshaler {

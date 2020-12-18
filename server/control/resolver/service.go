@@ -40,7 +40,7 @@ func (r *queryResolver) ServiceByID(ctx context.Context, serviceID uuid.UUID) (*
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
 	if !perms.View {
-		return nil, gqlerror.Errorf("You are not allowed to view organization resources")
+		return nil, gqlerror.Errorf("You are not allowed to view project resources")
 	}
 
 	return service, nil
@@ -62,6 +62,22 @@ func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context,
 	}
 
 	return service, nil
+}
+func (r *queryResolver) StreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) ([]*models.PermissionsServicesStreams, error) {
+	service := r.Services.FindService(ctx, serviceID)
+	if service == nil {
+		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
+	}
+
+	secret := middleware.GetSecret(ctx)
+	projectPerms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
+	if !projectPerms.View {
+		return nil, gqlerror.Errorf("You are not allowed to view project resources")
+	}
+
+	servicePerms := r.Services.FindStreamPermissionsForService(ctx, serviceID)
+
+	return servicePerms, nil
 }
 
 func (r *mutationResolver) CreateService(ctx context.Context, input gql.CreateServiceInput) (*models.Service, error) {
@@ -150,6 +166,8 @@ func (r *mutationResolver) UpdateServiceStreamPermissions(ctx context.Context, s
 	if err != nil {
 		return nil, err
 	}
+
+	pss.Stream = stream
 
 	return pss, nil
 }

@@ -20,6 +20,29 @@ export const QUERY_SERVICE = gql`
   }
 `;
 
+export const QUERY_STREAM_PERMISSIONS_FOR_SERVICE = gql`
+  query StreamPermissionsForService($serviceID: UUID!) {
+    streamPermissionsForService(serviceID: $serviceID) {
+      serviceID
+    	streamID
+      read
+      write
+      stream {
+        streamID
+        name
+        project {
+          projectID
+          name
+          organization {
+            organizationID
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const CREATE_SERVICE = gql`
   mutation CreateService($input: CreateServiceInput!) {
     createService(input: $input) {
@@ -58,6 +81,29 @@ export const UPDATE_SERVICE = gql`
         organization {
           organizationID
           name
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_SERVICE_STREAM_PERMISSIONS = gql`
+  mutation UpdateServiceStreamPermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean, $write: Boolean) {
+    updateServiceStreamPermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
+      serviceID
+      streamID
+      read
+      write
+      stream {
+        streamID
+        name
+        project {
+          projectID
+          name
+          organization {
+            organizationID
+            name
+          }
         }
       }
     }
