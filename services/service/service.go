@@ -191,6 +191,7 @@ func (s *Service) FindStreamPermissionsForService(ctx context.Context, serviceID
 			"Stream.Project.Organization.name",
 		).
 		Where("service_id = ?", serviceID).
+		Order("stream__project__organization.name", "stream__project.name", "stream.name").
 		Limit(200).
 		Select()
 	if err != nil {

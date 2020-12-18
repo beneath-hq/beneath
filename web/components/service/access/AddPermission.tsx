@@ -8,15 +8,18 @@ import FormikSelectField from "components/formik/SelectField";
 import useMe from "hooks/useMe";
 import { StreamsForUser, StreamsForUserVariables } from "apollo/types/StreamsForUser";
 import { QUERY_STREAMS_FOR_USER } from "apollo/queries/stream";
-import { UpdateServiceStreamPermissions, UpdateServiceStreamPermissionsVariables } from "apollo/types/UpdateServiceStreamPermissions";
-import { UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
+import {
+  UpdateServiceStreamPermissions,
+  UpdateServiceStreamPermissionsVariables,
+} from "apollo/types/UpdateServiceStreamPermissions";
+import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE, UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
 import { toURLName } from "lib/names";
 import FormikRadioGroup from "components/formik/RadioGroup";
 
 interface Stream {
   streamID: string;
   name: string;
-  project: { name: string, organization: { name: string } };
+  project: { name: string; organization: { name: string } };
 }
 
 export interface Props {
@@ -31,20 +34,21 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
     skip: !me,
   });
 
-  const [updateServiceStreamPermissions] = useMutation<UpdateServiceStreamPermissions, UpdateServiceStreamPermissionsVariables>(
-    UPDATE_SERVICE_STREAM_PERMISSIONS, {
-      onCompleted: (data) => {
-        if (data.updateServiceStreamPermissions) {
-          onCompleted()
-        }
+  const [updateServiceStreamPermissions] = useMutation<
+    UpdateServiceStreamPermissions,
+    UpdateServiceStreamPermissionsVariables
+  >(UPDATE_SERVICE_STREAM_PERMISSIONS, {
+    onCompleted: (data) => {
+      if (data.updateServiceStreamPermissions) {
+        onCompleted();
       }
-    }
-  );
+    },
+  });
 
   const initialValues = {
-    stream: null as (Stream | null),
-    read: "",
-    write: "",
+    stream: null as Stream | null,
+    read: "false",
+    write: "false",
   };
 
   return (
@@ -62,15 +66,13 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
                 read: values.read === "true" ? true : false,
                 write: values.write === "true" ? true : false,
               },
+              refetchQueries: [{ query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE, variables: { serviceID: serviceID } }],
             })
           )
         }
       >
         {({ isSubmitting, status }) => (
-          <Form
-            title="Add permission"
-            variant="embedded"
-          >
+          <Form title="Add permission" variant="embedded">
             <Field
               name="stream"
               validate={(stream?: Stream) => {
@@ -83,7 +85,11 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
               required
               loading={loading}
               options={data?.streamsForUser || []}
-              getOptionLabel={(option: Stream) => `${toURLName(option.project.organization.name)}/${toURLName(option.project.name)}/${toURLName(option.name)}`}
+              getOptionLabel={(option: Stream) =>
+                `${toURLName(option.project.organization.name)}/${toURLName(option.project.name)}/${toURLName(
+                  option.name
+                )}`
+              }
               getOptionSelected={(option: Stream, value: Stream) => {
                 return option.name === value.name;
               }}
@@ -93,11 +99,6 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
               component={FormikRadioGroup}
               label="Read access"
               required
-              validate={(value: string) => {
-                if (value === "") {
-                  return "Select an option"
-                }
-              }}
               options={[
                 { value: "true", label: "True" },
                 { value: "false", label: "False" },
@@ -109,11 +110,6 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
               component={FormikRadioGroup}
               label="Write access"
               required
-              validate={(value: string) => {
-                if (value === "") {
-                  return "Select an option"
-                }
-              }}
               options={[
                 { value: "true", label: "True" },
                 { value: "false", label: "False" },
