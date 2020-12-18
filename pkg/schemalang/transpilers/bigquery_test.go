@@ -16,7 +16,8 @@ func TestBigQuery(t *testing.T) {
 
 	// lossy
 	bq := ToBigQuery(s, true)
-	s = FromBigQuery(bq)
+	s, err = FromBigQuery(bq)
+	assert.Nil(t, err)
 
 	err = schemalang.Check(s)
 	assert.Nil(t, err)
@@ -25,7 +26,8 @@ func TestBigQuery(t *testing.T) {
 
 	// non-lossy
 	bq = ToBigQuery(s, true)
-	s = FromBigQuery(bq)
+	s, err = FromBigQuery(bq)
+	assert.Nil(t, err)
 
 	err = schemalang.Check(s)
 	assert.Nil(t, err)

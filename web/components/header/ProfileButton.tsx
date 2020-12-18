@@ -71,7 +71,7 @@ export const ProfileButton: FC<ProfileButtonProps> = ({ me, className }) => {
         <MenuItem disabled className={classes.menuItemHeader}>
           <div>
             <Typography variant="h4">{me.displayName}</Typography>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle1">
               @{me.name}
             </Typography>
           </div>

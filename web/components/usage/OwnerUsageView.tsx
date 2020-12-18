@@ -1,14 +1,15 @@
 import { Grid, makeStyles, Tab, Tabs, Theme, Typography } from "@material-ui/core";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import Moment from "react-moment";
 
 import { EntityKind } from "apollo/types/globalTypes";
 import ErrorNote from "components/ErrorNote";
-import { useHourlyUsage, useQuotaUsage } from "components/usage/hooks";
+import { usageDescriptionFor, UsageDimension, UsageUnit, useHourlyUsage, useQuotaUsage } from "components/usage/util";
 import { UsageIndicator, QuotaUsageIndicator } from "components/usage/UsageIndicator";
 import { PaperGrid } from "components/Paper";
 import Loading from "components/Loading";
-import UsageChart, { UsageDimension, UsageUnit } from "./UsageChart";
+import UsageChart from "./UsageChart";
+import {  } from "./util";
 
 const useStyles = makeStyles((theme: Theme) => ({
   tab: {
@@ -38,6 +39,12 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
 
   const dimensions: UsageDimension[] = ["read", "write", "scan"];
   const [dimension, setDimension] = useState(dimensions[0]);
+
+  useEffect(() => {
+    if (unit === "records" && dimension === "scan") {
+      setDimension("read");
+    }
+  }, [unit]);
 
   const { data: quotaUsage, loading: quotaUsageLoading, error: quotaUsageError } = useQuotaUsage(
     props.entityKind,
@@ -153,6 +160,7 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
                   className={classes.tab}
                   value={dimension}
                   label={dimension === "read" ? "Reads" : dimension === "write" ? "Writes" : "Scans"}
+                  disabled={dimension === "scan" && unit === "records"}
                 />
               ))}
             </Tabs>

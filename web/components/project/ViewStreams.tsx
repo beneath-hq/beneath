@@ -5,12 +5,12 @@ import Moment from "react-moment";
 import { EntityKind } from "apollo/types/globalTypes";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { useTotalUsage } from "components/usage/hooks";
+import { useTotalUsage } from "components/usage/util";
 import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 
 const intFormat = { thousandSeparated: true };
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
 
 export interface ViewStreamsProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;

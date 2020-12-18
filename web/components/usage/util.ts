@@ -8,7 +8,8 @@ export const useHourlyUsage = (entityKind: EntityKind, entityID: string) => {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const from = hourFloor(weekAgo);
-  const until = hourFloor(now);
+  const untilInclusive = hourFloor(now);
+  const untilExclusive = hourFloor(new Date(now.getTime() + 60 * 60 * 1000));
 
   const { loading, error, data } = useQuery<GetUsage, GetUsageVariables>(GET_USAGE, {
     variables: {
@@ -17,14 +18,14 @@ export const useHourlyUsage = (entityKind: EntityKind, entityID: string) => {
         entityID: entityID,
         label: UsageLabel.Hourly,
         from: from.toISOString(),
-        until: until.toISOString(),
+        until: untilExclusive.toISOString(),
       },
     },
   });
 
   let usages: Usage[] | undefined;
   if (data) {
-    usages = imputeHourlyUsages(from, until, data.getUsage);
+    usages = imputeHourlyUsages(from, untilInclusive, data.getUsage);
   }
 
   return { data: usages, loading, error };
@@ -162,4 +163,61 @@ export const hourFloor = (date: Date | string): Date => {
     date = new Date(date);
   }
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), 0, 0, 0));
+};
+
+export type UsageUnit = "bytes" | "ops" | "records";
+export type UsageDimension = "read" | "write" | "scan";
+
+export const usageFieldFor = (unit: UsageUnit, dimension: UsageDimension) => {
+  if (dimension === "read") {
+    if (unit === "bytes") {
+      return "readBytes";
+    } else if (unit === "ops") {
+      return "readOps";
+    } else if (unit === "records") {
+      return "readRecords";
+    }
+  } else if (dimension === "write") {
+    if (unit === "bytes") {
+      return "writeBytes";
+    } else if (unit === "ops") {
+      return "writeOps";
+    } else if (unit === "records") {
+      return "writeRecords";
+    }
+  } else if (dimension === "scan") {
+    if (unit === "bytes") {
+      return "scanBytes";
+    } else if (unit === "ops") {
+      return "scanOps";
+    }
+  }
+  return "readBytes";
+}
+
+export const usageDescriptionFor = (unit: UsageUnit, dimension: UsageDimension) => {
+  if (dimension === "read") {
+    if (unit === "bytes") {
+      return "bytes read";
+    } else if (unit === "ops") {
+      return "read requests";
+    } else if (unit === "records") {
+      return "records read";
+    }
+  } else if (dimension === "write") {
+    if (unit === "bytes") {
+      return "bytes written";
+    } else if (unit === "ops") {
+      return "write requests";
+    } else if (unit === "records") {
+      return "records written";
+    }
+  } else if (dimension === "scan") {
+    if (unit === "bytes") {
+      return "bytes scanned";
+    } else if (unit === "ops") {
+      return "scan requests";
+    }
+  }
+  return "";
 };

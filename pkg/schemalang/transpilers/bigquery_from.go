@@ -9,27 +9,31 @@ import (
 )
 
 // FromBigQuery transpiles a BigQuery schema to an Avro schema
-func FromBigQuery(schema bigquery.Schema) schemalang.Schema {
+func FromBigQuery(schema bigquery.Schema) (schemalang.Schema, error) {
 	if len(schema) == 0 {
-		return nil
+		return nil, nil
 	}
 	return fromBigQuery{}.fromSchema(schema, "schema")
 }
 
 type fromBigQuery struct{}
 
-func (t fromBigQuery) fromSchema(bq bigquery.Schema, path string) schemalang.Schema {
+func (t fromBigQuery) fromSchema(bq bigquery.Schema, path string) (schemalang.Schema, error) {
 	fields := make([]*schemalang.RecordField, len(bq))
 	for idx, field := range bq {
-		fields[idx] = t.fromField(field, path)
+		conv, err := t.fromField(field, path)
+		if err != nil {
+			return nil, err
+		}
+		fields[idx] = conv
 	}
 	return &schemalang.Record{
 		Name:   path,
 		Fields: fields,
-	}
+	}, nil
 }
 
-func (t fromBigQuery) fromField(field *bigquery.FieldSchema, path string) *schemalang.RecordField {
+func (t fromBigQuery) fromField(field *bigquery.FieldSchema, path string) (*schemalang.RecordField, error) {
 	var fieldSchema schemalang.Schema
 
 	switch field.Type {
@@ -49,22 +53,17 @@ func (t fromBigQuery) fromField(field *bigquery.FieldSchema, path string) *schem
 			LogicalType: schemalang.TimestampMillisLogicalType,
 		}
 	case bigquery.RecordFieldType:
-		fieldSchema = t.fromSchema(field.Schema, fmt.Sprintf("%s_%s", path, field.Name))
-	case bigquery.DateFieldType:
-		fieldSchema = &schemalang.Primitive{
-			Type:        schemalang.LongType,
-			LogicalType: schemalang.TimestampMillisLogicalType,
+		conv, err := t.fromSchema(field.Schema, fmt.Sprintf("%s_%s", path, field.Name))
+		if err != nil {
+			return nil, err
 		}
-	case bigquery.TimeFieldType:
-		fieldSchema = &schemalang.Primitive{
-			Type:        schemalang.LongType,
-			LogicalType: schemalang.TimestampMillisLogicalType,
-		}
+		fieldSchema = conv
 	case bigquery.DateTimeFieldType:
-		fieldSchema = &schemalang.Primitive{
-			Type:        schemalang.LongType,
-			LogicalType: schemalang.TimestampMillisLogicalType,
-		}
+		return nil, fmt.Errorf("Use of data type DATETIME for field '%s' not supported; use TIMESTAMP instead", field.Name)
+	case bigquery.DateFieldType:
+		return nil, fmt.Errorf("Use of data type DATE for field '%s' not supported; use TIMESTAMP instead", field.Name)
+	case bigquery.TimeFieldType:
+		return nil, fmt.Errorf("Use of data type TIME for field '%s' not supported; use TIMESTAMP instead", field.Name)
 	case bigquery.NumericFieldType:
 		fieldSchema = &schemalang.Primitive{
 			Type:        schemalang.BytesType,
@@ -88,5 +87,5 @@ func (t fromBigQuery) fromField(field *bigquery.FieldSchema, path string) *schem
 		Name: field.Name,
 		Doc:  field.Description,
 		Type: fieldSchema,
-	}
+	}, nil
 }

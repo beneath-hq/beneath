@@ -2,7 +2,7 @@ import { FC } from "react";
 import { makeStyles, Theme } from "@material-ui/core";
 import { VegaLite } from "react-vega";
 
-import { Usage } from "./hooks";
+import { Usage, UsageUnit, UsageDimension, usageFieldFor } from "./util";
 import { vegaConfig } from "lib/vega";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -11,9 +11,6 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export type UsageUnit = "bytes" | "ops" | "records";
-export type UsageDimension = "read" | "write" | "scan";
-
 export interface UsageChartProps {
   usages: Usage[];
   unit: UsageUnit;
@@ -21,37 +18,13 @@ export interface UsageChartProps {
 }
 
 export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => {
-  let y = "";
-  if (dimension === "read") {
-    if (unit === "bytes") {
-      y = "readBytes";
-    } else if (unit === "ops") {
-      y = "readOps";
-    } else if (unit === "records") {
-      y = "readRecords";
-    }
-  } else if (dimension === "write") {
-    if (unit === "bytes") {
-      y = "writeBytes";
-    } else if (unit === "ops") {
-      y = "writeOps";
-    } else if (unit === "records") {
-      y = "writeRecords";
-    }
-  } else if (dimension === "scan") {
-    if (unit === "bytes") {
-      y = "scanBytes";
-    } else if (unit === "ops") {
-      y = "scanOps";
-    }
-  }
-  
-  const yIsBytes = y === "readBytes" || y === "writeBytes" || y === "scanBytes";
+  const y = usageFieldFor(unit, dimension);
+  const yIsBytes = unit === "bytes";
+  const minY = yIsBytes ? 1000 : 10;
   const classes = useStyles();
   return (
     <VegaLite
       className={classes.chart}
-      data={{ usages }}
       actions={false}
       renderer="svg"
       // onNewView={(view) => {}} // HINT: To do SSR, must not return until this has triggered
@@ -61,7 +34,7 @@ export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => 
         height: 400,
         width: "container",
         autosize: { type: "fit", resize: true },
-        data: { name: "usages" },
+        data: { values: usages },
         encoding: {
           x: {
             field: "time",
@@ -101,7 +74,7 @@ export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => 
                   labelExpr: yIsBytes ? "datum.label + 'B'" : undefined,
                 },
                 scale: {
-                  zero: true,
+                  domain: { unionWith: [0, minY] },
                 },
               },
             },

@@ -6,10 +6,10 @@ import { StreamInstance } from "./types";
 import { EntityKind } from "apollo/types/globalTypes";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
 import ErrorNote from "components/ErrorNote";
-import { useHourlyUsage, useTotalUsage } from "components/usage/hooks";
+import { UsageUnit, useHourlyUsage, useTotalUsage } from "components/usage/util";
+import UsageChart from "components/usage/UsageChart";
 import { UsageIndicator } from "components/usage/UsageIndicator";
 import { PaperGrid } from "components/Paper";
-import UsageChart, { UsageUnit } from "components/usage/UsageChart";
 
 const useStyles = makeStyles((theme: Theme) => ({
   tab: {

@@ -216,7 +216,11 @@ func (b BigQuery) convertToAvroSchema(bqSchema bigquery.Schema, checkSchema bool
 	}
 
 	// transpile and check
-	schema := transpilers.FromBigQuery(trimmed)
+	schema, err := transpilers.FromBigQuery(trimmed)
+	if err != nil {
+		return "", err
+	}
+
 	if checkSchema {
 		err := schemalang.Check(schema)
 		if err != nil {
