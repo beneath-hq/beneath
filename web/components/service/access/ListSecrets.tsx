@@ -10,6 +10,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  makeStyles,
   Typography,
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -20,12 +21,21 @@ import { SecretsForService, SecretsForServiceVariables } from "apollo/types/Secr
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
 import IssueSecret from "./IssueSecret";
+import { Alert, AlertTitle } from "@material-ui/lab";
+
+const useStyles = makeStyles((theme) => ({
+  newSecretCard: {
+    marginTop: theme.spacing(3),
+  },
+}));
 
 export interface ListSecretsProps {
   serviceID: string;
 }
 
 const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
+  const classes = useStyles();
+  const [newSecretString, setNewSecretString] = React.useState("");
   const [issueSecretDialog, setIssueSecretDialog] = React.useState(false);
   const [deleteSecretID, setDeleteSecretID] = React.useState<string | undefined>(undefined);
 
@@ -48,7 +58,13 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
   const issueDialog = (
     <Dialog open={issueSecretDialog} onBackdropClick={() => setIssueSecretDialog(false)}>
       <DialogContent>
-        <IssueSecret serviceID={serviceID} />
+        <IssueSecret 
+          serviceID={serviceID} 
+          onCompleted={(newSecretString) => {
+            setNewSecretString(newSecretString);
+            setIssueSecretDialog(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -109,6 +125,17 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
       <Typography variant="h2" gutterBottom>Service secrets</Typography>
       <Typography variant="body2">Service secrets should be used when deploying to production or embedding secrets in public code. 
       The associated usage gets counted against both the service's individual quotas and the organization's overall quotas.</Typography>
+      {newSecretString !== "" && (
+        <Alert severity="success" className={classes.newSecretCard}>
+          <AlertTitle>Here is your new secret!</AlertTitle>
+          <Typography gutterBottom variant="body2">
+            {newSecretString}
+          </Typography>
+          <Typography>
+            The secret will only be shown this once – remember to keep it safe!
+          </Typography>
+        </Alert>
+      )}
       <ContentContainer paper margin="normal" loading={loading} error={error && JSON.stringify(error)} callToAction={cta}>
         <Table>
           <TableHead>
