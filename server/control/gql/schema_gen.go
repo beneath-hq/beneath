@@ -68,6 +68,8 @@ type ComplexityRoot struct {
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, input CreateProjectInput) int
 		CreateService                     func(childComplexity int, input CreateServiceInput) int
+		CreateStream                      func(childComplexity int, input CreateStreamInput) int
+		CreateStreamInstance              func(childComplexity int, input CreateStreamInstanceInput) int
 		DeleteProject                     func(childComplexity int, input DeleteProjectInput) int
 		DeleteService                     func(childComplexity int, serviceID uuid.UUID) int
 		DeleteStream                      func(childComplexity int, streamID uuid.UUID) int
@@ -80,15 +82,14 @@ type ComplexityRoot struct {
 		RegisterUserConsent               func(childComplexity int, userID uuid.UUID, terms *bool, newsletter *bool) int
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
-		StageStream                       func(childComplexity int, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) int
-		StageStreamInstance               func(childComplexity int, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
 		UpdateProject                     func(childComplexity int, input UpdateProjectInput) int
 		UpdateService                     func(childComplexity int, input UpdateServiceInput) int
 		UpdateServiceStreamPermissions    func(childComplexity int, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) int
-		UpdateStreamInstance              func(childComplexity int, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) int
+		UpdateStream                      func(childComplexity int, input UpdateStreamInput) int
+		UpdateStreamInstance              func(childComplexity int, input UpdateStreamInstanceInput) int
 		UpdateUserOrganizationPermissions func(childComplexity int, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserProjectPermissions      func(childComplexity int, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) int
 		UpdateUserQuotas                  func(childComplexity int, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
@@ -374,10 +375,11 @@ type MutationResolver interface {
 	UpdateService(ctx context.Context, input UpdateServiceInput) (*models.Service, error)
 	UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*models.PermissionsServicesStreams, error)
 	DeleteService(ctx context.Context, serviceID uuid.UUID) (bool, error)
-	StageStream(ctx context.Context, organizationName string, projectName string, streamName string, schemaKind models.StreamSchemaKind, schema string, indexes *string, description *string, allowManualWrites *bool, useLog *bool, useIndex *bool, useWarehouse *bool, logRetentionSeconds *int, indexRetentionSeconds *int, warehouseRetentionSeconds *int) (*models.Stream, error)
+	CreateStream(ctx context.Context, input CreateStreamInput) (*models.Stream, error)
+	UpdateStream(ctx context.Context, input UpdateStreamInput) (*models.Stream, error)
 	DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error)
-	StageStreamInstance(ctx context.Context, streamID uuid.UUID, version int, makeFinal *bool, makePrimary *bool) (*models.StreamInstance, error)
-	UpdateStreamInstance(ctx context.Context, instanceID uuid.UUID, makeFinal *bool, makePrimary *bool) (*models.StreamInstance, error)
+	CreateStreamInstance(ctx context.Context, input CreateStreamInstanceInput) (*models.StreamInstance, error)
+	UpdateStreamInstance(ctx context.Context, input UpdateStreamInstanceInput) (*models.StreamInstance, error)
 	DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error)
 	RegisterUserConsent(ctx context.Context, userID uuid.UUID, terms *bool, newsletter *bool) (*models.User, error)
 	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*models.User, error)
@@ -533,6 +535,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateService(childComplexity, args["input"].(CreateServiceInput)), true
 
+	case "Mutation.createStream":
+		if e.complexity.Mutation.CreateStream == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateStream(childComplexity, args["input"].(CreateStreamInput)), true
+
+	case "Mutation.createStreamInstance":
+		if e.complexity.Mutation.CreateStreamInstance == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createStreamInstance_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateStreamInstance(childComplexity, args["input"].(CreateStreamInstanceInput)), true
+
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
 			break
@@ -672,30 +698,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeUserSecret(childComplexity, args["secretID"].(uuid.UUID)), true
 
-	case "Mutation.stageStream":
-		if e.complexity.Mutation.StageStream == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_stageStream_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.StageStream(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(models.StreamSchemaKind), args["schema"].(string), args["indexes"].(*string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int)), true
-
-	case "Mutation.stageStreamInstance":
-		if e.complexity.Mutation.StageStreamInstance == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_stageStreamInstance_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.StageStreamInstance(childComplexity, args["streamID"].(uuid.UUID), args["version"].(int), args["makeFinal"].(*bool), args["makePrimary"].(*bool)), true
-
 	case "Mutation.transferProjectToOrganization":
 		if e.complexity.Mutation.TransferProjectToOrganization == nil {
 			break
@@ -768,6 +770,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateServiceStreamPermissions(childComplexity, args["serviceID"].(uuid.UUID), args["streamID"].(uuid.UUID), args["read"].(*bool), args["write"].(*bool)), true
 
+	case "Mutation.updateStream":
+		if e.complexity.Mutation.UpdateStream == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateStream_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateStream(childComplexity, args["input"].(UpdateStreamInput)), true
+
 	case "Mutation.updateStreamInstance":
 		if e.complexity.Mutation.UpdateStreamInstance == nil {
 			break
@@ -778,7 +792,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateStreamInstance(childComplexity, args["instanceID"].(uuid.UUID), args["makeFinal"].(*bool), args["makePrimary"].(*bool)), true
+		return e.complexity.Mutation.UpdateStreamInstance(childComplexity, args["input"].(UpdateStreamInstanceInput)), true
 
 	case "Mutation.updateUserOrganizationPermissions":
 		if e.complexity.Mutation.UpdateUserOrganizationPermissions == nil {
@@ -2681,34 +2695,11 @@ input UpdateServiceInput {
 }
 
 extend type Mutation {
-  stageStream(
-    organizationName: String!,
-    projectName: String!,
-    streamName: String!,
-    schemaKind: StreamSchemaKind!,
-    schema: String!,
-    indexes: String,
-    description: String,
-    allowManualWrites: Boolean,
-    useLog: Boolean,
-    useIndex: Boolean,
-    useWarehouse: Boolean,
-    logRetentionSeconds: Int,
-    indexRetentionSeconds: Int,
-    warehouseRetentionSeconds: Int,
-  ): Stream!
+  createStream(input: CreateStreamInput!): Stream!
+  updateStream(input: UpdateStreamInput!): Stream!
   deleteStream(streamID: UUID!): Boolean!
-  stageStreamInstance(
-    streamID: UUID!,
-    version: Int!,
-    makeFinal: Boolean,
-    makePrimary: Boolean,
-  ): StreamInstance!
-  updateStreamInstance(
-    instanceID: UUID!,
-    makeFinal: Boolean,
-    makePrimary: Boolean,
-  ): StreamInstance!
+  createStreamInstance(input: CreateStreamInstanceInput!): StreamInstance!
+  updateStreamInstance(input: UpdateStreamInstanceInput!): StreamInstance!
   deleteStreamInstance(instanceID: UUID!): Boolean!
 }
 
@@ -2772,7 +2763,49 @@ input CompileSchemaInput {
 
 type CompileSchemaOutput {
   canonicalIndexes: String!
-}`, BuiltIn: false},
+}
+
+input CreateStreamInput {
+  organizationName: String!
+  projectName: String!
+  streamName: String!
+  schemaKind: StreamSchemaKind!
+  schema: String!
+  indexes: String
+  description: String
+  allowManualWrites: Boolean
+  useLog: Boolean
+  useIndex: Boolean
+  useWarehouse: Boolean
+  logRetentionSeconds: Int
+  indexRetentionSeconds: Int
+  warehouseRetentionSeconds: Int
+
+  updateIfExists: Boolean
+}
+
+input UpdateStreamInput {
+  streamID: UUID!
+  schemaKind: StreamSchemaKind
+  schema: String
+  indexes: String
+  description: String
+  allowManualWrites: Boolean
+}
+
+input CreateStreamInstanceInput {
+  streamID: UUID!
+  version: Int!
+  makePrimary: Boolean
+  updateIfExists: Boolean
+}
+
+input UpdateStreamInstanceInput {
+  streamInstanceID: UUID!
+  makeFinal: Boolean
+  makePrimary: Boolean
+}
+`, BuiltIn: false},
 	{Name: "server/control/schema/usage.graphql", Input: `extend type Query {
   getUsage(input: GetUsageInput!): [Usage!]!
   getOrganizationUsage(input: GetEntityUsageInput!): [Usage!]!
@@ -2927,6 +2960,36 @@ func (ec *executionContext) field_Mutation_createService_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCreateServiceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateServiceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateStreamInstanceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateStreamInstanceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateStreamInstanceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateStreamInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateStreamInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateStreamInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3181,180 +3244,6 @@ func (ec *executionContext) field_Mutation_revokeUserSecret_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_stageStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["streamID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamID"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["version"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["version"] = arg1
-	var arg2 *bool
-	if tmp, ok := rawArgs["makeFinal"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makeFinal"))
-		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["makeFinal"] = arg2
-	var arg3 *bool
-	if tmp, ok := rawArgs["makePrimary"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makePrimary"))
-		arg3, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["makePrimary"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_stageStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["organizationName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["organizationName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["streamName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["streamName"] = arg2
-	var arg3 models.StreamSchemaKind
-	if tmp, ok := rawArgs["schemaKind"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaKind"))
-		arg3, err = ec.unmarshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["schemaKind"] = arg3
-	var arg4 string
-	if tmp, ok := rawArgs["schema"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
-		arg4, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["schema"] = arg4
-	var arg5 *string
-	if tmp, ok := rawArgs["indexes"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexes"))
-		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["indexes"] = arg5
-	var arg6 *string
-	if tmp, ok := rawArgs["description"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["description"] = arg6
-	var arg7 *bool
-	if tmp, ok := rawArgs["allowManualWrites"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowManualWrites"))
-		arg7, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["allowManualWrites"] = arg7
-	var arg8 *bool
-	if tmp, ok := rawArgs["useLog"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useLog"))
-		arg8, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["useLog"] = arg8
-	var arg9 *bool
-	if tmp, ok := rawArgs["useIndex"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useIndex"))
-		arg9, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["useIndex"] = arg9
-	var arg10 *bool
-	if tmp, ok := rawArgs["useWarehouse"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useWarehouse"))
-		arg10, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["useWarehouse"] = arg10
-	var arg11 *int
-	if tmp, ok := rawArgs["logRetentionSeconds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logRetentionSeconds"))
-		arg11, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["logRetentionSeconds"] = arg11
-	var arg12 *int
-	if tmp, ok := rawArgs["indexRetentionSeconds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexRetentionSeconds"))
-		arg12, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["indexRetentionSeconds"] = arg12
-	var arg13 *int
-	if tmp, ok := rawArgs["warehouseRetentionSeconds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("warehouseRetentionSeconds"))
-		arg13, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["warehouseRetentionSeconds"] = arg13
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_transferProjectToOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3547,33 +3436,30 @@ func (ec *executionContext) field_Mutation_updateService_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_updateStreamInstance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["instanceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceID"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+	var arg0 UpdateStreamInstanceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateStreamInstanceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateStreamInstanceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["instanceID"] = arg0
-	var arg1 *bool
-	if tmp, ok := rawArgs["makeFinal"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makeFinal"))
-		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateStream_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdateStreamInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateStreamInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateStreamInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["makeFinal"] = arg1
-	var arg2 *bool
-	if tmp, ok := rawArgs["makePrimary"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makePrimary"))
-		arg2, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["makePrimary"] = arg2
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -5005,7 +4891,7 @@ func (ec *executionContext) _Mutation_deleteService(ctx context.Context, field g
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -5022,7 +4908,7 @@ func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_stageStream_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createStream_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5030,7 +4916,49 @@ func (ec *executionContext) _Mutation_stageStream(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageStream(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["schemaKind"].(models.StreamSchemaKind), args["schema"].(string), args["indexes"].(*string), args["description"].(*string), args["allowManualWrites"].(*bool), args["useLog"].(*bool), args["useIndex"].(*bool), args["useWarehouse"].(*bool), args["logRetentionSeconds"].(*int), args["indexRetentionSeconds"].(*int), args["warehouseRetentionSeconds"].(*int))
+		return ec.resolvers.Mutation().CreateStream(rctx, args["input"].(CreateStreamInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Stream)
+	fc.Result = res
+	return ec.marshalNStream2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStream(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateStream(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateStream_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateStream(rctx, args["input"].(UpdateStreamInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5089,7 +5017,7 @@ func (ec *executionContext) _Mutation_deleteStream(ctx context.Context, field gr
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_stageStreamInstance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createStreamInstance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -5106,7 +5034,7 @@ func (ec *executionContext) _Mutation_stageStreamInstance(ctx context.Context, f
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_stageStreamInstance_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createStreamInstance_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5114,7 +5042,7 @@ func (ec *executionContext) _Mutation_stageStreamInstance(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StageStreamInstance(rctx, args["streamID"].(uuid.UUID), args["version"].(int), args["makeFinal"].(*bool), args["makePrimary"].(*bool))
+		return ec.resolvers.Mutation().CreateStreamInstance(rctx, args["input"].(CreateStreamInstanceInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5156,7 +5084,7 @@ func (ec *executionContext) _Mutation_updateStreamInstance(ctx context.Context, 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateStreamInstance(rctx, args["instanceID"].(uuid.UUID), args["makeFinal"].(*bool), args["makePrimary"].(*bool))
+		return ec.resolvers.Mutation().UpdateStreamInstance(rctx, args["input"].(UpdateStreamInstanceInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13740,6 +13668,182 @@ func (ec *executionContext) unmarshalInputCreateServiceInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateStreamInput(ctx context.Context, obj interface{}) (CreateStreamInput, error) {
+	var it CreateStreamInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "organizationName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationName"))
+			it.OrganizationName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "streamName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamName"))
+			it.StreamName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schemaKind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaKind"))
+			it.SchemaKind, err = ec.unmarshalNStreamSchemaKind2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schema":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+			it.Schema, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "indexes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexes"))
+			it.Indexes, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "allowManualWrites":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowManualWrites"))
+			it.AllowManualWrites, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "useLog":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useLog"))
+			it.UseLog, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "useIndex":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useIndex"))
+			it.UseIndex, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "useWarehouse":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useWarehouse"))
+			it.UseWarehouse, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "logRetentionSeconds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logRetentionSeconds"))
+			it.LogRetentionSeconds, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "indexRetentionSeconds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexRetentionSeconds"))
+			it.IndexRetentionSeconds, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "warehouseRetentionSeconds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("warehouseRetentionSeconds"))
+			it.WarehouseRetentionSeconds, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "updateIfExists":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updateIfExists"))
+			it.UpdateIfExists, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateStreamInstanceInput(ctx context.Context, obj interface{}) (CreateStreamInstanceInput, error) {
+	var it CreateStreamInstanceInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "streamID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
+			it.StreamID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "version":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			it.Version, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "makePrimary":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makePrimary"))
+			it.MakePrimary, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "updateIfExists":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updateIfExists"))
+			it.UpdateIfExists, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteProjectInput(ctx context.Context, obj interface{}) (DeleteProjectInput, error) {
 	var it DeleteProjectInput
 	var asMap = obj.(map[string]interface{})
@@ -13992,6 +14096,102 @@ func (ec *executionContext) unmarshalInputUpdateServiceInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateStreamInput(ctx context.Context, obj interface{}) (UpdateStreamInput, error) {
+	var it UpdateStreamInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "streamID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
+			it.StreamID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schemaKind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schemaKind"))
+			it.SchemaKind, err = ec.unmarshalOStreamSchemaKind2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schema":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schema"))
+			it.Schema, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "indexes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("indexes"))
+			it.Indexes, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "allowManualWrites":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowManualWrites"))
+			it.AllowManualWrites, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateStreamInstanceInput(ctx context.Context, obj interface{}) (UpdateStreamInstanceInput, error) {
+	var it UpdateStreamInstanceInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "streamInstanceID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamInstanceID"))
+			it.StreamInstanceID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "makeFinal":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makeFinal"))
+			it.MakeFinal, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "makePrimary":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("makePrimary"))
+			it.MakePrimary, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -14155,8 +14355,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "stageStream":
-			out.Values[i] = ec._Mutation_stageStream(ctx, field)
+		case "createStream":
+			out.Values[i] = ec._Mutation_createStream(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateStream":
+			out.Values[i] = ec._Mutation_updateStream(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -14165,8 +14370,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "stageStreamInstance":
-			out.Values[i] = ec._Mutation_stageStreamInstance(ctx, field)
+		case "createStreamInstance":
+			out.Values[i] = ec._Mutation_createStreamInstance(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -16245,6 +16450,16 @@ func (ec *executionContext) unmarshalNCreateServiceInput2gitlabᚗcomᚋbeneath�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateStreamInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateStreamInput(ctx context.Context, v interface{}) (CreateStreamInput, error) {
+	res, err := ec.unmarshalInputCreateStreamInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateStreamInstanceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateStreamInstanceInput(ctx context.Context, v interface{}) (CreateStreamInstanceInput, error) {
+	res, err := ec.unmarshalInputCreateStreamInstanceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNDeleteProjectInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐDeleteProjectInput(ctx context.Context, v interface{}) (DeleteProjectInput, error) {
 	res, err := ec.unmarshalInputDeleteProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -16947,6 +17162,16 @@ func (ec *executionContext) unmarshalNUpdateServiceInput2gitlabᚗcomᚋbeneath�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpdateStreamInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateStreamInput(ctx context.Context, v interface{}) (UpdateStreamInput, error) {
+	res, err := ec.unmarshalInputUpdateStreamInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateStreamInstanceInput2gitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateStreamInstanceInput(ctx context.Context, v interface{}) (UpdateStreamInstanceInput, error) {
+	res, err := ec.unmarshalInputUpdateStreamInstanceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNUsage2ᚕᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*Usage) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -17393,6 +17618,22 @@ func (ec *executionContext) marshalOStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑh
 		return graphql.Null
 	}
 	return ec._StreamInstance(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOStreamSchemaKind2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx context.Context, v interface{}) (*models.StreamSchemaKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := models.StreamSchemaKind(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStreamSchemaKind2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamSchemaKind(ctx context.Context, sel ast.SelectionSet, v *models.StreamSchemaKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalString(string(*v))
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

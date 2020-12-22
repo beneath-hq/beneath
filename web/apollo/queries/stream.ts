@@ -72,39 +72,9 @@ export const COMPILE_SCHEMA = gql`
   }
 `;
 
-export const STAGE_STREAM = gql`
-  mutation StageStream(
-    $organizationName: String!,
-    $projectName: String!,
-    $streamName: String!
-    $schemaKind: StreamSchemaKind!,
-    $schema: String!,
-    $indexes: String,
-    $description: String,
-    $allowManualWrites: Boolean,
-    $useLog: Boolean,
-    $useIndex: Boolean,
-    $useWarehouse: Boolean,
-    $logRetentionSeconds: Int,
-    $indexRetentionSeconds: Int,
-    $warehouseRetentionSeconds: Int,
-  ) {
-    stageStream(
-      organizationName: $organizationName,
-      projectName: $projectName,
-      streamName: $streamName,
-      schemaKind: $schemaKind,
-      schema: $schema,
-      indexes: $indexes,
-      description: $description,
-      allowManualWrites: $allowManualWrites,
-      useLog: $useLog,
-      useIndex: $useIndex,
-      useWarehouse: $useWarehouse,
-      logRetentionSeconds: $logRetentionSeconds,
-      indexRetentionSeconds: $indexRetentionSeconds,
-      warehouseRetentionSeconds: $warehouseRetentionSeconds,
-    ) {
+export const CREATE_STREAM = gql`
+  mutation CreateStream($input: CreateStreamInput!) {
+    createStream(input: $input) {
       streamID
       name
       description
@@ -143,28 +113,36 @@ export const STAGE_STREAM = gql`
   }
 `;
 
-export const STAGE_STREAM_INSTANCE = gql`
-  mutation StageStreamInstance($streamID: UUID!, $version: Int!, $makeFinal: Boolean, $makePrimary: Boolean){
-  stageStreamInstance(
-    streamID: $streamID,
-    version: $version,
-    makeFinal: $makeFinal,
-    makePrimary: $makePrimary,
-  ) {
-    streamInstanceID
-    streamID
-    version
-    createdOn
-    madePrimaryOn
-    madeFinalOn
+export const CREATE_STREAM_INSTANCE = gql`
+  mutation CreateStreamInstance($input: CreateStreamInstanceInput!) {
+    createStreamInstance(input: $input) {
+      streamInstanceID
+      streamID
+      version
+      createdOn
+      madePrimaryOn
+      madeFinalOn
+    }
   }
-}
+`;
+
+export const UPDATE_STREAM_INSTANCE = gql`
+  mutation UpdateStreamInstance($input: UpdateStreamInstanceInput!) {
+    updateStreamInstance(input: $input) {
+      streamInstanceID
+      streamID
+      version
+      createdOn
+      madePrimaryOn
+      madeFinalOn
+    }
+  }
 `;
 
 export const DELETE_STREAM_INSTANCE = gql`
   mutation DeleteStreamInstance($instanceID: UUID!){
-  deleteStreamInstance(
-    instanceID: $instanceID,
-  )
-}
+    deleteStreamInstance(
+      instanceID: $instanceID,
+    )
+  }
 `;

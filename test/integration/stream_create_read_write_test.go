@@ -41,13 +41,16 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// create stream
 	schema := readTestdata("foobar.graphql")
 	res2 := queryGQL(`
-		mutation StageStream($organization: String!, $schema: String!) {
-			stageStream(
-				organizationName: $organization,
-				projectName: "test",
-				streamName: "foo_bar",
-				schemaKind: GraphQL,
-				schema: $schema,
+		mutation CreateStream($organization: String!, $schema: String!) {
+			createStream(
+				input: {
+					organizationName: $organization,
+					projectName: "test",
+					streamName: "foo_bar",
+					schemaKind: GraphQL,
+					schema: $schema,
+					updateIfExists: true,
+				}
 			) {
 				streamID
 				avroSchema
@@ -61,17 +64,20 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"schema":       schema,
 	})
 	assert.Empty(t, res2.Errors)
-	stream := res2.Result()["stageStream"]
+	stream := res2.Result()["createStream"]
 	assert.Equal(t, "foo_bar", stream["name"])
 	assert.Len(t, stream["project"], 1)
 
 	//
 	res2_1 := queryGQL(`
-		mutation stageStreamInstance($streamID: UUID!) {
-			stageStreamInstance(
-				streamID: $streamID,
-				version: 0,
-				makePrimary: true,
+		mutation CreateStreamInstance($streamID: UUID!) {
+			createStreamInstance(
+				input: {
+					streamID: $streamID,
+					version: 0,
+					makePrimary: true,
+					updateIfExists: true,
+				}
 			) {
 				streamInstanceID
 				streamID
@@ -85,7 +91,7 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"streamID": stream["streamID"],
 	})
 	assert.Empty(t, res2_1.Errors)
-	instance := res2_1.Result()["stageStreamInstance"]
+	instance := res2_1.Result()["createStreamInstance"]
 	instanceID := uuid.FromStringOrNil(instance["streamInstanceID"].(string))
 	assert.False(t, instanceID == uuid.Nil)
 	assert.Equal(t, float64(0), instance["version"])

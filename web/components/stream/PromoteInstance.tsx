@@ -1,28 +1,31 @@
 import { useMutation } from "@apollo/client";
+import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import React, { FC } from "react";
 
+import { QUERY_STREAM, UPDATE_STREAM_INSTANCE } from "apollo/queries/stream";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
-import { Instance } from "pages/stream";
-import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
-import { StageStreamInstance, StageStreamInstanceVariables } from "apollo/types/StageStreamInstance";
-import { QUERY_STREAM_INSTANCES, STAGE_STREAM_INSTANCE } from "apollo/queries/stream";
+import { UpdateStreamInstance, UpdateStreamInstanceVariables } from "apollo/types/UpdateStreamInstance";
+import { StreamInstance } from "components/stream/types";
 
 export interface PromoteInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: Instance;
-  setInstance: (instance: Instance | null) => void;
+  instance: StreamInstance;
+  setInstance: (instance: StreamInstance | null) => void;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
 const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setInstance, setOpenDialogID }) => {
-  const [stageStreamInstance] = useMutation<StageStreamInstance, StageStreamInstanceVariables>(STAGE_STREAM_INSTANCE, {
-    onCompleted: (data) => {
-      if (data?.stageStreamInstance) {
-        setInstance(data.stageStreamInstance);
-      }
-      setOpenDialogID(null);
-    },
-  });
+  const [updateStreamInstance] = useMutation<UpdateStreamInstance, UpdateStreamInstanceVariables>(
+    UPDATE_STREAM_INSTANCE,
+    {
+      onCompleted: (data) => {
+        if (data?.updateStreamInstance) {
+          setInstance(data.updateStreamInstance);
+        }
+        setOpenDialogID(null);
+      },
+    }
+  );
 
   return (
     <>
@@ -33,44 +36,31 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setInstan
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="primary"
-          autoFocus
-          onClick={() => setOpenDialogID(null)}
-        >
+        <Button color="primary" autoFocus onClick={() => setOpenDialogID(null)}>
           No, go back
-          </Button>
+        </Button>
         <Button
           color="primary"
           autoFocus
           onClick={() => {
-            stageStreamInstance({
-              variables: {streamID: stream.streamID, version: instance.version, makePrimary: true},
-              update: (cache, { data }) => {
-                if (data && data.stageStreamInstance) {
-                  const queryData = cache.readQuery({
-                    query: QUERY_STREAM_INSTANCES,
-                    variables: { organizationName: stream.project.organization.name, projectName: stream.project.name, streamName: stream.name },
-                  }) as any;
-
-                  const filtered = queryData.streamInstancesByOrganizationProjectAndStreamName.filter(
-                    (instnc: Instance) => instnc.version >= instance.version
-                  );
-
-                  cache.writeQuery({
-                    query: QUERY_STREAM_INSTANCES,
-                    variables: { organizationName: stream.project.organization.name, projectName: stream.project.name, streamName: stream.name },
-                    data: { streamInstancesByOrganizationProjectAndStreamName: filtered },
-                  });
-                }
-              },
+            updateStreamInstance({
+              variables: { input: { streamInstanceID: instance.streamInstanceID, makePrimary: true } },
+              refetchQueries: [
+                {
+                  query: QUERY_STREAM,
+                  variables: {
+                    organizationName: stream.project.organization.name,
+                    projectName: stream.project.name,
+                    streamName: stream.name,
+                  },
+                },
+              ],
             });
             setOpenDialogID(null);
-            }
-          }
+          }}
         >
           Yes, I'm sure
-          </Button>
+        </Button>
       </DialogActions>
     </>
   );

@@ -307,6 +307,7 @@ type UpdateStreamCommand struct {
 	Stream            *Stream
 	SchemaKind        *StreamSchemaKind
 	Schema            *string
+	Indexes           *string
 	Description       *string
 	AllowManualWrites *bool
 }

@@ -3,11 +3,13 @@
 // @generated
 // This file was automatically generated and should not be edited.
 
+import { UpdateStreamInstanceInput } from "./globalTypes";
+
 // ====================================================
-// GraphQL mutation operation: StageStreamInstance
+// GraphQL mutation operation: UpdateStreamInstance
 // ====================================================
 
-export interface StageStreamInstance_stageStreamInstance {
+export interface UpdateStreamInstance_updateStreamInstance {
   __typename: "StreamInstance";
   streamInstanceID: string;
   streamID: ControlUUID;
@@ -17,13 +19,10 @@ export interface StageStreamInstance_stageStreamInstance {
   madeFinalOn: ControlTime | null;
 }
 
-export interface StageStreamInstance {
-  stageStreamInstance: StageStreamInstance_stageStreamInstance;
+export interface UpdateStreamInstance {
+  updateStreamInstance: UpdateStreamInstance_updateStreamInstance;
 }
 
-export interface StageStreamInstanceVariables {
-  streamID: ControlUUID;
-  version: number;
-  makeFinal?: boolean | null;
-  makePrimary?: boolean | null;
+export interface UpdateStreamInstanceVariables {
+  input: UpdateStreamInstanceInput;
 }

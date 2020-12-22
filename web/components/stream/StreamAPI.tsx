@@ -187,8 +187,8 @@ schema = """
 ${stream.schema}
 """
 
-stream = await client.stage_stream(stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}", schema=schema)
-instance = await stream.stage_instance(version=VERSION)
+stream = await client.create_stream(stream_path="${toURLName(stream.project.organization.name)}/${toURLName(stream.project.name)}/${toURLName(stream.name)}", schema=schema)
+instance = await stream.create_instance(version=VERSION)
 async with instance.writer() as w:
     await w.write(LIST_OF_RECORDS)`}
               </CodeBlock>

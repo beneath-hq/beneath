@@ -84,16 +84,22 @@ class Stream:
         instances = [StreamInstance(stream=self, admin_data=i) for i in instances]
         return instances
 
-    async def stage_instance(
-        self, version: int, make_primary=None, make_final=None, dry=False
+    async def create_instance(
+        self,
+        version: int,
+        make_primary=None,
+        make_final=None,
+        update_if_exists=None,
+        dry=False,
     ) -> StreamInstance:
         if dry:
             return DryStreamInstance(self, version=version, primary=make_primary, final=make_final)
-        instance = await self.client.admin.streams.stage_instance(
+        instance = await self.client.admin.streams.create_instance(
             stream_id=self.admin_data["streamID"],
             version=version,
             make_final=make_final,
             make_primary=make_primary,
+            update_if_exists=update_if_exists,
         )
         instance = StreamInstance(stream=self, admin_data=instance)
         return instance

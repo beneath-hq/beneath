@@ -7,34 +7,11 @@ extend type Query {
 }
 
 extend type Mutation {
-  stageStream(
-    organizationName: String!,
-    projectName: String!,
-    streamName: String!,
-    schemaKind: StreamSchemaKind!,
-    schema: String!,
-    indexes: String,
-    description: String,
-    allowManualWrites: Boolean,
-    useLog: Boolean,
-    useIndex: Boolean,
-    useWarehouse: Boolean,
-    logRetentionSeconds: Int,
-    indexRetentionSeconds: Int,
-    warehouseRetentionSeconds: Int,
-  ): Stream!
+  createStream(input: CreateStreamInput!): Stream!
+  updateStream(input: UpdateStreamInput!): Stream!
   deleteStream(streamID: UUID!): Boolean!
-  stageStreamInstance(
-    streamID: UUID!,
-    version: Int!,
-    makeFinal: Boolean,
-    makePrimary: Boolean,
-  ): StreamInstance!
-  updateStreamInstance(
-    instanceID: UUID!,
-    makeFinal: Boolean,
-    makePrimary: Boolean,
-  ): StreamInstance!
+  createStreamInstance(input: CreateStreamInstanceInput!): StreamInstance!
+  updateStreamInstance(input: UpdateStreamInstanceInput!): StreamInstance!
   deleteStreamInstance(instanceID: UUID!): Boolean!
 }
 
@@ -98,4 +75,45 @@ input CompileSchemaInput {
 
 type CompileSchemaOutput {
   canonicalIndexes: String!
+}
+
+input CreateStreamInput {
+  organizationName: String!
+  projectName: String!
+  streamName: String!
+  schemaKind: StreamSchemaKind!
+  schema: String!
+  indexes: String
+  description: String
+  allowManualWrites: Boolean
+  useLog: Boolean
+  useIndex: Boolean
+  useWarehouse: Boolean
+  logRetentionSeconds: Int
+  indexRetentionSeconds: Int
+  warehouseRetentionSeconds: Int
+
+  updateIfExists: Boolean
+}
+
+input UpdateStreamInput {
+  streamID: UUID!
+  schemaKind: StreamSchemaKind
+  schema: String
+  indexes: String
+  description: String
+  allowManualWrites: Boolean
+}
+
+input CreateStreamInstanceInput {
+  streamID: UUID!
+  version: Int!
+  makePrimary: Boolean
+  updateIfExists: Boolean
+}
+
+input UpdateStreamInstanceInput {
+  streamInstanceID: UUID!
+  makeFinal: Boolean
+  makePrimary: Boolean
 }

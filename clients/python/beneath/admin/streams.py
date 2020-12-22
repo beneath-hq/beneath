@@ -130,7 +130,7 @@ class Streams:
         )
         return result["streamInstancesForStream"]
 
-    async def stage(
+    async def create(
         self,
         organization_name,
         project_name,
@@ -146,57 +146,31 @@ class Streams:
         log_retention_seconds=None,
         index_retention_seconds=None,
         warehouse_retention_seconds=None,
+        update_if_exists=None,
     ):
         result = await self.conn.query_control(
             variables={
-                "organizationName": format_entity_name(organization_name),
-                "projectName": format_entity_name(project_name),
-                "streamName": format_entity_name(stream_name),
-                "schemaKind": schema_kind,
-                "schema": schema,
-                "indexes": indexes,
-                "description": description,
-                "allowManualWrites": allow_manual_writes,
-                "useLog": use_log,
-                "useIndex": use_index,
-                "useWarehouse": use_warehouse,
-                "logRetentionSeconds": log_retention_seconds,
-                "indexRetentionSeconds": index_retention_seconds,
-                "warehouseRetentionSeconds": warehouse_retention_seconds,
+                "input": {
+                    "organizationName": format_entity_name(organization_name),
+                    "projectName": format_entity_name(project_name),
+                    "streamName": format_entity_name(stream_name),
+                    "schemaKind": schema_kind,
+                    "schema": schema,
+                    "indexes": indexes,
+                    "description": description,
+                    "allowManualWrites": allow_manual_writes,
+                    "useLog": use_log,
+                    "useIndex": use_index,
+                    "useWarehouse": use_warehouse,
+                    "logRetentionSeconds": log_retention_seconds,
+                    "indexRetentionSeconds": index_retention_seconds,
+                    "warehouseRetentionSeconds": warehouse_retention_seconds,
+                    "updateIfExists": update_if_exists,
+                },
             },
             query="""
-                mutation stageStream(
-                    $organizationName: String!
-                    $projectName: String!
-                    $streamName: String!
-                    $schemaKind: StreamSchemaKind!
-                    $schema: String!
-                    $indexes: String
-                    $description: String
-                    $allowManualWrites: Boolean
-                    $useLog: Boolean
-                    $useIndex: Boolean
-                    $useWarehouse: Boolean
-                    $logRetentionSeconds: Int
-                    $indexRetentionSeconds: Int
-                    $warehouseRetentionSeconds: Int
-                ) {
-                    stageStream(
-                        organizationName: $organizationName
-                        projectName: $projectName
-                        streamName: $streamName
-                        schemaKind: $schemaKind
-                        schema: $schema
-                        indexes: $indexes
-                        description: $description
-                        allowManualWrites: $allowManualWrites
-                        useLog: $useLog
-                        useIndex: $useIndex
-                        useWarehouse: $useWarehouse
-                        logRetentionSeconds: $logRetentionSeconds
-                        indexRetentionSeconds: $indexRetentionSeconds
-                        warehouseRetentionSeconds: $warehouseRetentionSeconds
-                    ) {
+                mutation CreateStream($input: CreateStreamInput!) {
+                    createStream(input: $input) {
                         streamID
                         name
                         description
@@ -230,7 +204,7 @@ class Streams:
                 }
             """,
         )
-        return result["stageStream"]
+        return result["createStream"]
 
     async def delete(self, stream_id):
         result = await self.conn.query_control(
@@ -245,27 +219,25 @@ class Streams:
         )
         return result["deleteStream"]
 
-    async def stage_instance(self, stream_id, version: int, make_final=None, make_primary=None):
+    async def create_instance(
+        self,
+        stream_id,
+        version: int,
+        make_primary=None,
+        update_if_exists=None,
+    ):
         result = await self.conn.query_control(
             variables={
-                "streamID": stream_id,
-                "version": version,
-                "makeFinal": make_final,
-                "makePrimary": make_primary,
+                "input": {
+                    "streamID": stream_id,
+                    "version": version,
+                    "makePrimary": make_primary,
+                    "updateIfExists": update_if_exists,
+                },
             },
             query="""
-                mutation stageStreamInstance(
-                    $streamID: UUID!
-                    $version: Int!
-                    $makeFinal: Boolean
-                    $makePrimary: Boolean
-                ) {
-                    stageStreamInstance(
-                        streamID: $streamID
-                        version: $version
-                        makeFinal: $makeFinal
-                        makePrimary: $makePrimary
-                    ) {
+                mutation CreateStreamInstance($input: CreateStreamInstanceInput!) {
+                    createStreamInstance(input: $input) {
                         streamInstanceID
                         streamID
                         createdOn
@@ -276,26 +248,20 @@ class Streams:
                 }
             """,
         )
-        return result["stageStreamInstance"]
+        return result["createStreamInstance"]
 
     async def update_instance(self, instance_id, make_final=None, make_primary=None):
         result = await self.conn.query_control(
             variables={
-                "instanceID": instance_id,
-                "makeFinal": make_final,
-                "makePrimary": make_primary,
+                "input": {
+                    "instanceID": instance_id,
+                    "makeFinal": make_final,
+                    "makePrimary": make_primary,
+                },
             },
             query="""
-                mutation updateStreamInstance(
-                    $instanceID: UUID!
-                    $makeFinal: Boolean
-                    $makePrimary: Boolean
-                ) {
-                    updateStreamInstance(
-                        instanceID: $instanceID
-                        makeFinal: $makeFinal
-                        makePrimary: $makePrimary
-                    ) {
+                mutation UpdateStreamInstance($input: UpdateStreamInstanceInput!) {
+                    updateStreamInstance(input: $input) {
                         streamInstanceID
                         streamID
                         createdOn

@@ -47,6 +47,31 @@ type CreateServiceInput struct {
 	ScanQuota        *int    `json:"scanQuota"`
 }
 
+type CreateStreamInput struct {
+	OrganizationName          string                  `json:"organizationName"`
+	ProjectName               string                  `json:"projectName"`
+	StreamName                string                  `json:"streamName"`
+	SchemaKind                models.StreamSchemaKind `json:"schemaKind"`
+	Schema                    string                  `json:"schema"`
+	Indexes                   *string                 `json:"indexes"`
+	Description               *string                 `json:"description"`
+	AllowManualWrites         *bool                   `json:"allowManualWrites"`
+	UseLog                    *bool                   `json:"useLog"`
+	UseIndex                  *bool                   `json:"useIndex"`
+	UseWarehouse              *bool                   `json:"useWarehouse"`
+	LogRetentionSeconds       *int                    `json:"logRetentionSeconds"`
+	IndexRetentionSeconds     *int                    `json:"indexRetentionSeconds"`
+	WarehouseRetentionSeconds *int                    `json:"warehouseRetentionSeconds"`
+	UpdateIfExists            *bool                   `json:"updateIfExists"`
+}
+
+type CreateStreamInstanceInput struct {
+	StreamID       uuid.UUID `json:"streamID"`
+	Version        int       `json:"version"`
+	MakePrimary    *bool     `json:"makePrimary"`
+	UpdateIfExists *bool     `json:"updateIfExists"`
+}
+
 type DeleteProjectInput struct {
 	ProjectID uuid.UUID `json:"projectID"`
 }
@@ -122,6 +147,21 @@ type UpdateServiceInput struct {
 	ReadQuota        *int    `json:"readQuota"`
 	WriteQuota       *int    `json:"writeQuota"`
 	ScanQuota        *int    `json:"scanQuota"`
+}
+
+type UpdateStreamInput struct {
+	StreamID          uuid.UUID                `json:"streamID"`
+	SchemaKind        *models.StreamSchemaKind `json:"schemaKind"`
+	Schema            *string                  `json:"schema"`
+	Indexes           *string                  `json:"indexes"`
+	Description       *string                  `json:"description"`
+	AllowManualWrites *bool                    `json:"allowManualWrites"`
+}
+
+type UpdateStreamInstanceInput struct {
+	StreamInstanceID uuid.UUID `json:"streamInstanceID"`
+	MakeFinal        *bool     `json:"makeFinal"`
+	MakePrimary      *bool     `json:"makePrimary"`
 }
 
 type Usage struct {

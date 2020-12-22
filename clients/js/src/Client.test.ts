@@ -79,31 +79,34 @@ test("creates test stream", async () => {
   expect(project.name).toBe(PROJECT_NAME);
 
   const streamRes = await queryControl(`
-    mutation StageStream($organization: String!, $project: String!, $stream: String!, $schema: String!) {
-			stageStream(
-				organizationName: $organization,
-				projectName: $project,
-				streamName: $stream,
-				schemaKind: GraphQL,
-				schema: $schema,
+    mutation CreateStream($organization: String!, $project: String!, $stream: String!, $schema: String!) {
+			createStream(
+        input: {
+          organizationName: $organization,
+          projectName: $project,
+          streamName: $stream,
+          schemaKind: GraphQL,
+          schema: $schema,
+          updateIfExists: true,
+        }
 			) {
 				streamID
 				name
 			}
 		}
   `, { organization: me.name, project: project.name, stream: STREAM_NAME, schema: STREAM_SCHEMA });
-  const stream = streamRes.stageStream;
+  const stream = streamRes.createStream;
   expect(stream.name).toBe(STREAM_NAME);
 
   const instanceRes = await queryControl(`
-    mutation stageStreamInstance($streamID: UUID!) {
-			stageStreamInstance(streamID: $streamID, version: 0, makePrimary: true) {
+    mutation CreateStreamInstance($streamID: UUID!) {
+			createStreamInstance(input: { streamID: $streamID, version: 0, makePrimary: true, updateIfExists: true }) {
         streamInstanceID
         streamID
 			}
 		}
   `, { streamID: stream.streamID });
-  const instance = instanceRes.stageStreamInstance;
+  const instance = instanceRes.createStreamInstance;
   expect(instance.streamID).toBe(stream.streamID);
 
   streamQualifier = {

@@ -310,16 +310,21 @@ class BasePipeline:
             stream=stream_name,
         )
         if self.is_stage:
-            stream = await self.client.stage_stream(
+            stream = await self.client.create_stream(
                 stream_path=str(qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
                 log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
                 use_warehouse=False,
+                update_if_exists=True,
             )
             await self._update_service_permissions(stream, read=True, write=True)
         else:
             stream = await self.client.find_stream(stream_path=str(qualifier))
-        instance = await stream.stage_instance(version=self.version, dry=self.dry)
+        instance = await stream.create_instance(
+            version=self.version,
+            dry=self.dry,
+            update_if_exists=True,
+        )
         self.checkpoint_instance = instance
         logger.info(
             "Staged stream for pipeline checkpoint '%s' (using version %i)", qualifier, self.version
@@ -409,7 +414,7 @@ class BasePipeline:
             stream = await self.client.find_stream(stream_path)
         else:
             if self.is_stage:
-                stream = await self.client.stage_stream(
+                stream = await self.client.create_stream(
                     stream_path=stream_path,
                     schema=schema,
                     description=description,
@@ -419,11 +424,14 @@ class BasePipeline:
                     log_retention=log_retention,
                     index_retention=index_retention,
                     warehouse_retention=warehouse_retention,
+                    update_if_exists=True,
                 )
             else:
                 stream = await self.client.find_stream(stream_path=stream_path)
         assert stream.qualifier not in self.instances
-        instance = await stream.stage_instance(version=self.version, dry=self.dry)
+        instance = await stream.create_instance(
+            version=self.version, dry=self.dry, update_if_exists=True
+        )
         if self.is_stage:
             await self._update_service_permissions(stream, write=True)
         self.instances[stream.qualifier] = instance

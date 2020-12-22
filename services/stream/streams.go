@@ -55,6 +55,7 @@ func (s *Service) FindStreamByOrganizationProjectAndName(ctx context.Context, or
 func (s *Service) CreateStream(ctx context.Context, msg *models.CreateStreamCommand) (*models.Stream, error) {
 	stream := &models.Stream{
 		Name:      msg.Name,
+		Project:   msg.Project,
 		ProjectID: msg.Project.ProjectID,
 	}
 
@@ -153,7 +154,7 @@ func (s *Service) UpdateStream(ctx context.Context, msg *models.UpdateStreamComm
 
 	// re-compile and set updates if schema changed
 	if msg.SchemaKind != nil && msg.Schema != nil {
-		schemaMD5 := s.ComputeSchemaMD5(*msg.Schema, &stream.CanonicalIndexes)
+		schemaMD5 := s.ComputeSchemaMD5(*msg.Schema, msg.Indexes)
 		if !bytes.Equal(schemaMD5, stream.SchemaMD5) {
 			err := s.CompileToStream(stream, *msg.SchemaKind, *msg.Schema, &stream.CanonicalIndexes, msg.Description)
 			if err != nil {

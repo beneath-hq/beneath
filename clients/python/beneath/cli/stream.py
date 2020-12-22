@@ -15,26 +15,28 @@ def add_subparser(root):
     _show.set_defaults(func=async_cmd(show_stream))
     _show.add_argument("stream_path", type=str)
 
-    _stage = stream.add_parser("stage")
-    _stage.set_defaults(func=async_cmd(stage))
-    _stage.add_argument("stream_path", type=str)
-    _stage.add_argument(
+    _create = stream.add_parser("create")
+    _create.set_defaults(func=async_cmd(create))
+    _create.add_argument("stream_path", type=str)
+    _create.add_argument(
         "-f",
         "--file",
         type=str,
         required=True,
         help="This file should contain the GraphQL schema for the stream you would like to create",
     )
-    _stage.add_argument("--allow-manual-writes", type=str2bool, nargs="?", const=True, default=None)
-    _stage.add_argument("--use-index", type=str2bool, nargs="?", const=True, default=None)
-    _stage.add_argument("--use-warehouse", type=str2bool, nargs="?", const=True, default=None)
-    _stage.add_argument(
+    _create.add_argument(
+        "--allow-manual-writes", type=str2bool, nargs="?", const=True, default=None
+    )
+    _create.add_argument("--use-index", type=str2bool, nargs="?", const=True, default=None)
+    _create.add_argument("--use-warehouse", type=str2bool, nargs="?", const=True, default=None)
+    _create.add_argument(
         "--log-retention", type=int, help="Retention in seconds or 0 for infinite retention"
     )
-    _stage.add_argument(
+    _create.add_argument(
         "--index-retention", type=int, help="Retention in seconds or 0 for infinite retention"
     )
-    _stage.add_argument(
+    _create.add_argument(
         "--warehouse-retention", type=int, help="Retention in seconds or 0 for infinite retention"
     )
 
@@ -46,12 +48,11 @@ def add_subparser(root):
     _instance_list.set_defaults(func=async_cmd(instance_list))
     _instance_list.add_argument("stream_path", type=str)
 
-    _instance_stage = stream_instance.add_parser("stage")
-    _instance_stage.set_defaults(func=async_cmd(instance_stage))
-    _instance_stage.add_argument("stream_path", type=str)
-    _instance_stage.add_argument("--version", type=int, default=0)
-    _instance_stage.add_argument("--make-final", type=str2bool, nargs="?", const=True, default=None)
-    _instance_stage.add_argument(
+    _instance_create = stream_instance.add_parser("create")
+    _instance_create.set_defaults(func=async_cmd(instance_create))
+    _instance_create.add_argument("stream_path", type=str)
+    _instance_create.add_argument("--version", type=int, default=0)
+    _instance_create.add_argument(
         "--make-primary", type=str2bool, nargs="?", const=True, default=None
     )
 
@@ -91,12 +92,12 @@ async def show_stream(args):
     _pretty_print_stream(stream)
 
 
-async def stage(args):
+async def create(args):
     with open(args.file, "r") as f:
         schema = f.read()
     client = Client()
     sq = StreamQualifier.from_path(args.stream_path)
-    stream = await client.admin.streams.stage(
+    stream = await client.admin.streams.create(
         organization_name=sq.organization,
         project_name=sq.project,
         stream_name=sq.stream,
@@ -109,16 +110,6 @@ async def stage(args):
         index_retention_seconds=args.index_retention,
         warehouse_retention_seconds=args.warehouse_retention,
     )
-    if not stream.get("primaryStreamInstanceID"):
-        instance = await client.admin.streams.stage_instance(
-            stream_id=stream["streamID"],
-            version=0,
-            make_primary=True,
-        )
-        stream["primaryStreamInstanceID"] = instance["streamInstanceID"]
-        stream["primaryStreamInstance"] = instance
-        stream["instancesCreatedCount"] += 1
-        stream["instancesMadePrimaryCount"] += 1
     _pretty_print_stream(stream)
 
 
@@ -146,7 +137,7 @@ async def instance_list(args):
     pretty_print_graphql_result(result)
 
 
-async def instance_stage(args):
+async def instance_create(args):
     client = Client()
     sq = StreamQualifier.from_path(args.stream_path)
     stream = await client.admin.streams.find_by_organization_project_and_name(
@@ -154,10 +145,9 @@ async def instance_stage(args):
         project_name=sq.project,
         stream_name=sq.stream,
     )
-    result = await client.admin.streams.stage_instance(
+    result = await client.admin.streams.create_instance(
         stream_id=stream["streamID"],
         version=args.version,
-        make_final=args.make_final,
         make_primary=args.make_primary,
     )
     pretty_print_graphql_result(result)

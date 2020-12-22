@@ -5,10 +5,10 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Link, 
 import React, { FC, useState } from "react";
 
 import { QUERY_PROJECTS_FOR_USER } from "../../apollo/queries/project";
-import { STAGE_STREAM } from "../../apollo/queries/stream";
+import { CREATE_STREAM } from "../../apollo/queries/stream";
 import { StreamSchemaKind } from "../../apollo/types/globalTypes";
 import { ProjectsForUser, ProjectsForUserVariables } from "../../apollo/types/ProjectsForUser";
-import { StageStream, StageStreamVariables } from "../../apollo/types/StageStream";
+import { CreateStream, CreateStreamVariables } from "../../apollo/types/CreateStream";
 import useMe from "../../hooks/useMe";
 import { toURLName, toBackendName } from "../../lib/names";
 import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
@@ -43,18 +43,18 @@ interface Props {
   preselectedProject?: Project;
 }
 
-const CreateStream: FC<Props> = ({ preselectedProject }) => {
+const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
   const me = useMe();
   const router = useRouter();
   const classes = useStyles();
   const [examplesDialog, setExamplesDialog] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [stageStream] = useMutation<StageStream, StageStreamVariables>(STAGE_STREAM, {
+  const [createStream] = useMutation<CreateStream, CreateStreamVariables>(CREATE_STREAM, {
     onCompleted: (data) => {
-      if (data?.stageStream) {
-        const orgName = toURLName(data.stageStream.project.organization.name);
-        const projName = toURLName(data.stageStream.project.name);
-        const streamName = toURLName(data.stageStream.name);
+      if (data?.createStream) {
+        const orgName = toURLName(data.createStream.project.organization.name);
+        const projName = toURLName(data.createStream.project.name);
+        const streamName = toURLName(data.createStream.name);
         const href = `/stream?organization_name=${orgName}&project_name=${projName}&stream_name=${streamName}`;
         const as = `/${orgName}/${projName}/${streamName}`;
         router.replace(href, as, { shallow: true });
@@ -95,20 +95,22 @@ const CreateStream: FC<Props> = ({ preselectedProject }) => {
         handleSubmitMutation(
           values,
           actions,
-          stageStream({
+          createStream({
             variables: {
-              organizationName: toBackendName(values.project?.organization.name || ""),
-              projectName: toBackendName(values.project?.name || ""),
-              streamName: toBackendName(values.name),
-              schemaKind: values.schemaKind,
-              schema: values.schema,
-              allowManualWrites: true,
-              useLog: values.useLog,
-              useIndex: values.useIndex,
-              useWarehouse: values.useWarehouse,
-              logRetentionSeconds: values.logRetentionHours !== "" ? Number(values.logRetentionHours) * 60 * 60 : null,
-              indexRetentionSeconds: values.indexRetentionHours !== "" ? Number(values.indexRetentionHours) * 60 * 60 : null,
-              warehouseRetentionSeconds: values.warehouseRetentionHours !== "" ? Number(values.warehouseRetentionHours) * 60 * 60 : null,
+              input: {
+                organizationName: toBackendName(values.project?.organization.name || ""),
+                projectName: toBackendName(values.project?.name || ""),
+                streamName: toBackendName(values.name),
+                schemaKind: values.schemaKind,
+                schema: values.schema,
+                allowManualWrites: true,
+                useLog: values.useLog,
+                useIndex: values.useIndex,
+                useWarehouse: values.useWarehouse,
+                logRetentionSeconds: values.logRetentionHours !== "" ? Number(values.logRetentionHours) * 60 * 60 : null,
+                indexRetentionSeconds: values.indexRetentionHours !== "" ? Number(values.indexRetentionHours) * 60 * 60 : null,
+                warehouseRetentionSeconds: values.warehouseRetentionHours !== "" ? Number(values.warehouseRetentionHours) * 60 * 60 : null,
+              },
             },
           })
         )
@@ -328,4 +330,4 @@ const CreateStream: FC<Props> = ({ preselectedProject }) => {
   );
 };
 
-export default CreateStream;
+export default CreateStreamView;

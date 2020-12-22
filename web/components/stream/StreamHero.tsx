@@ -93,7 +93,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
   }, [data?.streamInstancesByOrganizationProjectAndStreamName]);
 
   const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create") }];
-  if (instance && !instance?.madePrimaryOn) {
+  if (instance && instance.streamInstanceID !== stream.primaryStreamInstanceID) {
     instanceActions.push({ label: "Promote to primary", onClick: () => setOpenDialogID("promote") });
   }
   if (instance) {
@@ -129,7 +129,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
               options={instances}
               getOptionLabel={(option: StreamInstance) => {
                 const versionString = `v${option.version.toString()}`;
-                const primaryTag = option.madePrimaryOn ? " (primary)" : "";
+                const primaryTag = option.streamInstanceID === stream.primaryStreamInstanceID ? " (primary)" : "";
                 const finalTag = option.madeFinalOn ? " (final)" : "";
                 return versionString + primaryTag + finalTag;
               }}

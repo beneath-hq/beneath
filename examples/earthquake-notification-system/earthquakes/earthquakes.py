@@ -9,7 +9,7 @@ To run this example:
     beneath auth SECRET
 
   3. Create a project for your data:
-    beneath project stage USERNAME/earthquakes
+    beneath project create USERNAME/earthquakes
   
   4. Stage the pipeline
     python earthquakes.py stage USERNAME/earthquakes/get-earthquakes

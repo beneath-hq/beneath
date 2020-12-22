@@ -2,30 +2,33 @@ import { useMutation } from "@apollo/client";
 import { Field, Formik } from "formik";
 import React, { FC } from "react";
 
-import { QUERY_STREAM_INSTANCES, STAGE_STREAM_INSTANCE } from "../../apollo/queries/stream";
-import { StageStreamInstance, StageStreamInstanceVariables } from "../../apollo/types/StageStreamInstance";
+import { QUERY_STREAM_INSTANCES, CREATE_STREAM_INSTANCE } from "../../apollo/queries/stream";
+import { CreateStreamInstance, CreateStreamInstanceVariables } from "../../apollo/types/CreateStreamInstance";
 import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
 import FormikRadioGroup from "components/formik/RadioGroup";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
-import { Instance } from "pages/stream";
+import { StreamInstance } from "components/stream/types";
 
 export interface CreateInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instances: Instance[];
-  setInstance: (instance: Instance | null) => void;
+  instances: StreamInstance[];
+  setInstance: (instance: StreamInstance | null) => void;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
 const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setInstance, setOpenDialogID }) => {
-  const [stageStreamInstance] = useMutation<StageStreamInstance, StageStreamInstanceVariables>(STAGE_STREAM_INSTANCE, {
-    onCompleted: (data) => {
-      if (data?.stageStreamInstance) {
-        setInstance(data.stageStreamInstance);
-      }
-      setOpenDialogID(null);
-    },
-  });
+  const [createStreamInstance] = useMutation<CreateStreamInstance, CreateStreamInstanceVariables>(
+    CREATE_STREAM_INSTANCE,
+    {
+      onCompleted: (data) => {
+        if (data?.createStreamInstance) {
+          setInstance(data.createStreamInstance);
+        }
+        setOpenDialogID(null);
+      },
+    }
+  );
 
   const highestVersion = instances[0] ? instances[0].version : -1;
   const newVersionSuggestion = highestVersion + 1;
@@ -43,35 +46,24 @@ const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setInstanc
         handleSubmitMutation(
           values,
           actions,
-          stageStreamInstance({
+          createStreamInstance({
             variables: {
-              streamID: stream.streamID,
-              version: values.version,
-              makePrimary: values.makePrimary==="true",
+              input: {
+                streamID: stream.streamID,
+                version: values.version,
+                makePrimary: values.makePrimary === "true",
+              },
             },
-            update: (cache, { data }) => {
-              if (data && data.stageStreamInstance) {
-                const queryData = cache.readQuery({
-                  query: QUERY_STREAM_INSTANCES,
-                  variables: {organizationName: stream.project.organization.name, projectName: stream.project.name, streamName: stream.name },
-                }) as any;
-
-                let newInstanceList = [data.stageStreamInstance].concat(queryData.streamInstancesByOrganizationProjectAndStreamName);
-
-                // if the instance was made primary, remove old instances
-                if (data.stageStreamInstance.madePrimaryOn) {
-                  newInstanceList = newInstanceList.filter(
-                    (instnc: Instance) => instnc.version >= data.stageStreamInstance.version
-                  );
-                }
-
-                cache.writeQuery({
-                  query: QUERY_STREAM_INSTANCES,
-                  variables: {organizationName: stream.project.organization.name, projectName: stream.project.name, streamName: stream.name },
-                  data: {streamInstancesByOrganizationProjectAndStreamName: newInstanceList },
-                });
-              }
-            },
+            refetchQueries: [
+              {
+                query: QUERY_STREAM_INSTANCES,
+                variables: {
+                  organizationName: stream.project.organization.name,
+                  projectName: stream.project.name,
+                  streamName: stream.name,
+                },
+              },
+            ],
           })
         )
       }

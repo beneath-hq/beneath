@@ -55,7 +55,7 @@ class Client:
         stream = await Stream.make(client=self, qualifier=qualifier)
         return stream
 
-    async def stage_stream(
+    async def create_stream(
         self,
         stream_path: str,
         schema: str,
@@ -66,6 +66,7 @@ class Client:
         log_retention: timedelta = None,
         index_retention: timedelta = None,
         warehouse_retention: timedelta = None,
+        update_if_exists: bool = None,
     ) -> Stream:
         """
         The one-stop call for creating, updating and getting a stream:
@@ -87,7 +88,7 @@ class Client:
             If not set, records will be stored forever.
         """
         qualifier = StreamQualifier.from_path(stream_path)
-        data = await self.admin.streams.stage(
+        data = await self.admin.streams.create(
             organization_name=qualifier.organization,
             project_name=qualifier.project,
             stream_name=qualifier.stream,
@@ -105,6 +106,7 @@ class Client:
             warehouse_retention_seconds=self._timedelta_to_seconds(
                 warehouse_retention if warehouse_retention else retention
             ),
+            update_if_exists=update_if_exists,
         )
         stream = await Stream.make(client=self, qualifier=qualifier, admin_data=data)
         return stream

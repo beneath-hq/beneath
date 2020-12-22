@@ -54,6 +54,31 @@ export interface CreateServiceInput {
   scanQuota?: number | null;
 }
 
+export interface CreateStreamInput {
+  organizationName: string;
+  projectName: string;
+  streamName: string;
+  schemaKind: StreamSchemaKind;
+  schema: string;
+  indexes?: string | null;
+  description?: string | null;
+  allowManualWrites?: boolean | null;
+  useLog?: boolean | null;
+  useIndex?: boolean | null;
+  useWarehouse?: boolean | null;
+  logRetentionSeconds?: number | null;
+  indexRetentionSeconds?: number | null;
+  warehouseRetentionSeconds?: number | null;
+  updateIfExists?: boolean | null;
+}
+
+export interface CreateStreamInstanceInput {
+  streamID: ControlUUID;
+  version: number;
+  makePrimary?: boolean | null;
+  updateIfExists?: boolean | null;
+}
+
 export interface GetEntityUsageInput {
   entityID: ControlUUID;
   label: UsageLabel;
@@ -87,6 +112,12 @@ export interface UpdateServiceInput {
   readQuota?: number | null;
   writeQuota?: number | null;
   scanQuota?: number | null;
+}
+
+export interface UpdateStreamInstanceInput {
+  streamInstanceID: ControlUUID;
+  makeFinal?: boolean | null;
+  makePrimary?: boolean | null;
 }
 
 //==============================================================

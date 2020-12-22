@@ -126,6 +126,9 @@ export class Column {
     if (avro.Type.isType(type, "logical:uuid")) {
       return { name: "UUID", description: "16-byte unique identifier" };
     }
+    if (avro.Type.isType(type, "boolean")) {
+      return { name: "Bool", description: "True or false" };
+    }
     if (avro.Type.isType(type, "int")) {
       return { name: "Int", description: "32-bit integer" };
     }

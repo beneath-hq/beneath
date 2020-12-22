@@ -99,12 +99,13 @@ func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Strea
 			return err
 		}
 
-		updateCountsQuery := tx.Model(stream).WherePK()
-		updateCountsQuery.Set("instances_created_count = instances_created_count + 1")
+		streamQuery := tx.Model(stream).WherePK()
+		streamQuery.Set("instances_created_count = instances_created_count + 1")
 		if makePrimary {
-			updateCountsQuery.Set("instances_made_primary_count = instances_made_primary_count + 1")
+			streamQuery.Set("primary_stream_instance_id = ?", instance.StreamInstanceID)
+			streamQuery.Set("instances_made_primary_count = instances_made_primary_count + 1")
 		}
-		_, err = updateCountsQuery.Update()
+		_, err = streamQuery.Update()
 		if err != nil {
 			return err
 		}
