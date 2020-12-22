@@ -64,6 +64,27 @@ export const QUERY_STREAM_INSTANCES = gql`
   }
 `;
 
+export const QUERY_STREAMS_FOR_USER = gql`
+  query StreamsForUser($userID: UUID!) {
+    streamsForUser(userID: $userID) {
+      streamID
+      name
+      description
+      createdOn
+      updatedOn
+      project {
+        projectID
+        name
+        public
+        organization {
+          organizationID
+          name
+        }
+      }
+    }
+  }
+`
+
 export const COMPILE_SCHEMA = gql`
   query CompileSchema($input: CompileSchemaInput!) {
     compileSchema(input: $input) {

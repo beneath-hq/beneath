@@ -3,6 +3,7 @@ extend type Query {
   streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
   streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
+  streamsForUser(userID: UUID!): [Stream!]!
   compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
 

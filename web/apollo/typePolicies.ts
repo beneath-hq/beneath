@@ -6,10 +6,10 @@ import { TypePolicies } from "@apollo/client";
 const typePolicies: TypePolicies = {
   Usage: { keyFields: ["entityID", "label", "time"] },
   NewUserSecret: { keyFields: ["secret", ["userSecretID"]] },
-  NewServiceSecret: { keyFields: ["secret", "serviceSecretID"] },
+  NewServiceSecret: { keyFields: ["secret", ["serviceSecretID"]] },
   Organization: { keyFields: ["organizationID"] },
   OrganizationMember: { keyFields: ["organizationID", "userID"] },
-  PermissionsServicesStreams: { keyFields: false },
+  PermissionsServicesStreams: { keyFields: ["serviceID", "streamID"] },
   PermissionsUsersOrganizations: { keyFields: false },
   PermissionsUsersProjects: { keyFields: false },
   PrivateOrganization: { keyFields: ["organizationID"] },

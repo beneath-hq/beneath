@@ -84,6 +84,14 @@ func (r *queryResolver) StreamInstancesByOrganizationProjectAndStreamName(ctx co
 	return instances, nil
 }
 
+func (r *queryResolver) StreamsForUser(ctx context.Context, userID uuid.UUID) ([]*models.Stream, error) {
+	secret := middleware.GetSecret(ctx)
+	if !(secret.IsUser() && secret.GetOwnerID() == userID) {
+		return nil, gqlerror.Errorf("StreamsForUser can only be called for the calling user")
+	}
+	return r.Streams.FindStreamsForUser(ctx, userID), nil
+}
+
 func (r *queryResolver) CompileSchema(ctx context.Context, input gql.CompileSchemaInput) (*gql.CompileSchemaOutput, error) {
 	stream := &models.Stream{}
 	err := r.Streams.CompileToStream(stream, input.SchemaKind, input.Schema, input.Indexes, nil)

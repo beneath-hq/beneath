@@ -1,6 +1,4 @@
 import { useMutation } from "@apollo/client";
-import { makeStyles, Typography } from "@material-ui/core";
-import { Alert, AlertTitle } from "@material-ui/lab";
 import { Field, Formik } from "formik";
 import React, { FC } from "react";
 
@@ -9,22 +7,15 @@ import { IssueServiceSecret, IssueServiceSecretVariables } from "apollo/types/Is
 import { Form, handleSubmitMutation, TextField as FormikTextField } from "components/formik";
 import SubmitControl from "components/forms/SubmitControl";
 
-const useStyles = makeStyles((theme) => ({
-  newSecretCard: {
-    marginTop: theme.spacing(3),
-  },
-}));
-
 export interface Props {
   serviceID: string;
+  onCompleted: (newSecretString: string) => void;
 }
 
-const IssueSecret: FC<Props> = ({ serviceID }) => {
-  const [newSecretString, setNewSecretString] = React.useState("");
-
+const IssueSecret: FC<Props> = ({ serviceID, onCompleted }) => {
   const [issueServiceSecret, { loading, error }] = useMutation<IssueServiceSecret, IssueServiceSecretVariables>(ISSUE_SERVICE_SECRET, {
     onCompleted: (data) => {
-      setNewSecretString(data.issueServiceSecret.token);
+      onCompleted(data.issueServiceSecret.token);
     },
   });
 
@@ -32,7 +23,6 @@ const IssueSecret: FC<Props> = ({ serviceID }) => {
     description: "",
   };
 
-  const classes = useStyles();
   return (
     <>
       <Formik
@@ -48,9 +38,6 @@ const IssueSecret: FC<Props> = ({ serviceID }) => {
               },
               update: (cache, { data }) => {
                 if (data) {
-                  // reset form
-                  actions.resetForm();
-
                   // update cache
                   const queryData = cache.readQuery({
                     query: QUERY_SERVICE_SECRETS,
@@ -84,24 +71,13 @@ const IssueSecret: FC<Props> = ({ serviceID }) => {
               }}
               component={FormikTextField}
               label="Description"
-              placeholder="My personal secret"
+              placeholder="My service secret"
               required
             />
             <SubmitControl label="Create secret" errorAlert={status} disabled={isSubmitting} />
           </Form>
         )}
       </Formik>
-      {newSecretString !== "" && (
-        <Alert severity="success" className={classes.newSecretCard}>
-          <AlertTitle>Here is your new secret!</AlertTitle>
-          <Typography gutterBottom variant="body2">
-            {newSecretString}
-          </Typography>
-          <Typography>
-            The secret will only be shown this once – remember to keep it safe!
-          </Typography>
-        </Alert>
-      )}
     </>
   );
 };

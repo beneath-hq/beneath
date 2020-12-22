@@ -32,10 +32,8 @@ const useStyles = makeStyles((theme) => ({
   linkCell: {
     display: "inline-block",
     width: "100%",
+    color: theme.palette.primary.main,
     textDecoration: "inherit",
-    "&:visited": {
-      color: "inherit",
-    },
     "&:hover": {
       textDecoration: "underline",
     },
