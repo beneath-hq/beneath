@@ -10,7 +10,7 @@ weight: 400
 
 ## Documenting your code
 
-Please first read the section "Documentation for contributors" in `docs/contributing/00-introduction.md`.
+Please first read the section "Documentation for contributors" in `contributing/00-introduction.md`.
 
 We believe documentation should exist as close to the source code as possible. That makes it more likely to be seen and kept updated.
 

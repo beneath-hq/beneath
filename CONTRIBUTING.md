@@ -1,1 +1,1 @@
-Please refer to `docs/contributing/introduction.md`
+Please see `contributing/00-introduction.md`

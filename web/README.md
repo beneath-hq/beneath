@@ -1,6 +1,6 @@
 # `web/`
 
-This directory contains the Beneath frontend (console) code. As always, refer to `docs/contributing/02-project-structure.md` for an introduction to the repository.
+This directory contains the Beneath frontend (console) code. As always, refer to `contributing/02-project-structure.md` for an introduction to the repository.
 
 ## Stack
 
