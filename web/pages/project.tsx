@@ -9,8 +9,7 @@ import SubrouteTabs from "../components/SubrouteTabs";
 
 import EditProject from "../components/project/EditProject";
 import ViewMembers from "../components/project/ViewMembers";
-import ViewServices from "../components/project/ViewServices";
-import ViewStreams from "../components/project/ViewStreams";
+import ViewOverview from "../components/project/ViewOverview";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
 import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
@@ -53,11 +52,10 @@ const ProjectPage = () => {
 
   const project = data.projectByOrganizationAndName;
 
-  const tabs = [{ value: "streams", label: "Streams", render: () => <ViewStreams project={project} /> }];
+  const tabs = [{ value: "overview", label: "Overview", render: () => <ViewOverview project={project} /> }];
   if (project.permissions.view) {
     tabs.push({ value: "members", label: "Members", render: () => <ViewMembers project={project} /> });
   }
-  tabs.push({ value: "services", label: "Services", render: () => <ViewServices project={project} /> });
   if (project.permissions.admin) {
     tabs.push({ value: "edit", label: "Edit", render: () => <EditProject project={project} /> });
   }
@@ -71,7 +69,7 @@ const ProjectPage = () => {
         description={project.description}
         avatarURL={project.photoURL}
       />
-      <SubrouteTabs defaultValue="streams" tabs={tabs} />
+      <SubrouteTabs defaultValue="overview" tabs={tabs} />
     </Page>
   );
 };
