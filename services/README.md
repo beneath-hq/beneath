@@ -1,6 +1,6 @@
 # `services/`
 
-As always, refer to `docs/contributing/02-project-structure.md` for an introduction to the repository.
+As always, refer to `contributing/02-project-structure.md` for an introduction to the repository.
 
 In Beneath, "services" are domain-specific packages for operations involving persistant data. They operate on models and infrastructure (`models/` and `infra/`), and communicate via the bus (`bus/`) or direct dependency injection.
 

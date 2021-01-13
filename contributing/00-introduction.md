@@ -19,12 +19,12 @@ It's our ambition that all information relevant to developing the core Beneath p
 
 The documentation for contributors is structured as follows:
 
-- This directory (`docs/contributing/`) provides general information for contributors, including an overview of the codebase and a guideline to setting up a development environment
+- This directory (`contributing/`) provides general information for contributors, including an overview of the codebase and a guideline to setting up a development environment
 - The `README.md` file in each subdirectory provides implementation details about the specific module, such as its purpose, design decisions, and notes for contributors
 
 The only files in this repository that are considered user-facing (i.e. *not* for contributors) are:
 
-- The documentation files in `docs/` outside of `docs/contributing/`
+- The documentation files in `docs/`
 - The `README.md` file at the root of the repository
 - The `README.md` files at the root of each client library directory (e.g. `clients/python/`)
 

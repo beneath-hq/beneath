@@ -40,7 +40,7 @@ Here's a rough guide to the project structure (each folder has a `README.md` wit
 - `clients`: Language-specific libraries used to interface with Beneath, including reading and writing data
 - `cmd`: Contains the `main.go` for the backend executable
 - `config`: Contains a YAML config template, and may contain local development config (e.g. `.development.yaml`, which is ignored by Git)
-- `docs/contributing`: Documentation that describes how the codebase is structured and how to contribute to it
+- `contributing`: Documentation that describes how the codebase is structured and how to contribute to it
 - `ee`: Enterprise-edition functionality, such as billing
 - `infra`: Packages for connecting to external systems / infrastructure, such as Postgres, Redis, MQ, and notably the "engine", which has drivers for the data systems used in the data-plane 
 - `migrations`: Postgres migrations for the control-plane models in `models/`
