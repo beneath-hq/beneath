@@ -18,11 +18,17 @@ declare module "@material-ui/core/styles/createPalette" {
       background: string;
       paper: string;
     };
+    purple: {
+      main: string;
+    };
   }
   interface Palette {
     border: {
       background: string;
       paper: string;
+    };
+    purple: {
+      main: string;
     };
   }
 }
@@ -84,6 +90,9 @@ theme.palette = {
     main: "rgba(44, 58, 86, 1)",
     dark: "rgba(80, 95, 120, 1)",
     contrastText: "#fff",
+  },
+  purple: {
+    main: "rgba(146, 0, 255, 1)",
   },
   error: {
     light: "rgba(252, 86, 50, 1)",
