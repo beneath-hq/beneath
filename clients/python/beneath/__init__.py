@@ -7,19 +7,23 @@ __version__ = importlib_metadata.version(__name__)
 
 from beneath.client import Client
 from beneath.connection import AuthenticationError, GraphQLError
+from beneath.cursor import Cursor
 from beneath.easy import (
     easy_consume_stream,
     easy_derive_stream,
     easy_generate_stream,
     easy_read,
 )
+from beneath.instance import StreamInstance
 from beneath.logging import logger
 from beneath.pipeline import Pipeline, PIPELINE_IDLE
+from beneath.stream import Stream
 
 __all__ = [
     "__version__",
     "AuthenticationError",
     "Client",
+    "Cursor",
     "easy_consume_stream",
     "easy_derive_stream",
     "easy_generate_stream",
@@ -28,4 +32,6 @@ __all__ = [
     "Pipeline",
     "PIPELINE_IDLE",
     "GraphQLError",
+    "Stream",
+    "StreamInstance",
 ]
