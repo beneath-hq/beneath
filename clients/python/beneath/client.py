@@ -17,7 +17,7 @@ class Client:
     directly on `Client`, while control-plane features (like creating projects) are isolated in
     the `admin` member.
 
-    Kwargs:
+    Args:
         secret (str):
             A beneath secret to use for authentication.
             If not set, reads secret from ``~/.beneath`` (the secret authenticated in the CLI).
@@ -80,8 +80,6 @@ class Client:
             schema (str):
                 The GraphQL schema for the stream. To learn about the schema definition language,
                 see https://about.beneath.dev/docs/reading-writing-data/schema-definition/.
-
-        Kwargs:
             retention (timedelta):
                 The amount of time to retain records written to the stream.
                 If not set, records will be stored forever.
@@ -130,7 +128,7 @@ class Client:
         A ``Writer`` buffers records in memory for up to 1 second (by default) before
         sending them in batches over the network.
 
-        Kwargs:
+        Args:
             dry (bool):
                 If true, written records will be printed, not transmitted to the server.
                 Useful for testing.
@@ -158,8 +156,6 @@ class Client:
             query (str):
                 The analytical SQL query to run. To learn about the query language,
                 see https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/.
-
-        Kwargs:
             dry (bool):
                 If true, analyzes the query and returns info about referenced streams
                 and expected bytes scanned, but doesn't actually run the query.

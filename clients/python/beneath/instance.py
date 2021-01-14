@@ -66,7 +66,7 @@ class StreamInstance:
         Queries the stream's log, returning a cursor for replaying every record
         written to the instance or for subscribing to new changes records in the stream.
 
-        Kwargs:
+        Args:
             peek (bool):
                 If true, returns a cursor for the most recent records and
                 lets you page through the log in reverse order.
@@ -91,7 +91,7 @@ class StreamInstance:
         the newest record for each record key (see the stream's schema for the key). Returns
         a cursor for paging through the index.
 
-        Kwargs:
+        Args:
             filter (str):
                 A filter to apply to the index. Filters allow you to quickly
                 find specific record(s) in the index based on the record key.
@@ -119,7 +119,7 @@ class StreamInstance:
         A ``Writer`` buffers records in memory for up to 1 second (by default) before
         sending them in batches over the network.
 
-        Kwargs:
+        Args:
             dry (bool):
                 If true, written records will be printed, not transmitted to the server.
                 Useful for testing.
