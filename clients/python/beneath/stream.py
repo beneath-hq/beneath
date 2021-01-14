@@ -17,9 +17,12 @@ from beneath.utils import StreamQualifier
 
 class Stream:
     """
-    Represents a data-plane connection to a stream. I.e., this class is used to
-    query, peek, consume and write to a stream. You cannot use this class to do control-plane
-    actions like creating streams or updating their details (use `client.admin.streams` directly).
+    Represents a data-plane connection to a stream. Use it to get a StreamInstance, which
+    you can query, replay, subscribe and write to.
+    Learn more about streams and instances at https://about.beneath.dev/docs/concepts/streams/.
+
+    You cannot use this class to do control-plane actions like creating streams or
+    updating their details (use `client` directly for that).
     """
 
     client: Client
@@ -38,6 +41,10 @@ class Stream:
         self.stream_id: uuid.UUID = None
         self.schema: Schema = None
         self.primary_instance: StreamInstance = None
+        """
+        The current primary stream instance.
+        This is probably the object you will use to write/query the stream.
+        """
 
     @classmethod
     async def make(cls, client: Client, qualifier: StreamQualifier, admin_data=None) -> Stream:
@@ -75,11 +82,18 @@ class Stream:
     # MANAGEMENT
 
     async def delete(self):
+        """
+        Deletes the stream and all its instances and data.
+        """
         await self.client.admin.streams.delete(self.stream_id)
 
     # INSTANCES
 
     async def find_instances(self) -> Iterable[StreamInstance]:
+        """
+        Returns a list of all the stream's instances.
+        Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
+        """
         instances = await self.client.admin.streams.find_instances(self.admin_data["streamID"])
         instances = [StreamInstance(stream=self, admin_data=i) for i in instances]
         return instances
@@ -88,16 +102,28 @@ class Stream:
         self,
         version: int,
         make_primary=None,
-        make_final=None,
         update_if_exists=None,
         dry=False,
     ) -> StreamInstance:
+        """
+        Creates and returns a new instance for the stream.
+        Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
+
+        Args:
+            version (int): The version number to assign to the instance
+
+        Kwargs:
+            make_primary (bool):
+                Immediately make the new instance the stream's primary instance
+            update_if_exists (bool):
+                If true and an instance for ``version`` already exists, will update and return the
+                existing instance.
+        """
         if dry:
-            return DryStreamInstance(self, version=version, primary=make_primary, final=make_final)
+            return DryStreamInstance(self, version=version, primary=make_primary)
         instance = await self.client.admin.streams.create_instance(
             stream_id=self.admin_data["streamID"],
             version=version,
-            make_final=make_final,
             make_primary=make_primary,
             update_if_exists=update_if_exists,
         )

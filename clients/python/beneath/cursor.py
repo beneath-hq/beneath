@@ -19,6 +19,10 @@ from beneath.utils import AIOTicker
 
 
 class Cursor:
+    """
+    A cursor allows you to page through the results from of a query in Beneath.
+    """
+
     def __init__(
         self,
         connection: Connection,
@@ -29,7 +33,9 @@ class Cursor:
         self.connection = connection
         self.schema = schema
         self.replay_cursor = replay_cursor
+        """ The replay cursor, which pages through the initial query results """
         self.changes_cursor = changes_cursor
+        """ The change cursor, which can return updates since the query was started """
 
     @property
     def _top_level_columns(self):
@@ -40,6 +46,7 @@ class Cursor:
     async def read_next(
         self, limit: int = config.DEFAULT_READ_BATCH_SIZE, to_dataframe=False
     ) -> Iterable[Mapping]:
+        """ Returns a new page of results and advances the replay cursor """
         batch = await self._read_next_replay(limit=limit)
         if batch is None:
             return None
@@ -53,6 +60,7 @@ class Cursor:
         limit: int = config.DEFAULT_READ_BATCH_SIZE,
         to_dataframe=False,
     ) -> Iterable[Mapping]:
+        """ Returns a new page of changes and advances the change cursor """
         batch = await self._read_next_changes(limit=limit)
         if batch is None:
             return None
@@ -69,6 +77,7 @@ class Cursor:
         warn_max=True,
         to_dataframe=False,
     ) -> Iterable[Mapping]:
+        """ Returns all records in the cursor (up to the limits of max_records and max_bytes) """
         # compute limits
         max_records = max_records if max_records else sys.maxsize
         max_bytes = max_bytes if max_bytes else sys.maxsize
@@ -135,8 +144,10 @@ class Cursor:
         batch_size=config.DEFAULT_READ_BATCH_SIZE,
         poll_at_most_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS,
     ) -> AsyncIterator[List[Mapping]]:
-        """Wraps subscribe_changes_with_callback as an async iterator.
-        Note that yielded values are batches, not individual records."""
+        """
+        Similar to subscribe_changes_with_callback, but as an async iterator.
+        Note that yielded values are batches, not individual records.
+        """
         queue = asyncio.Queue()
         done = Exception("DONE")
 
@@ -172,6 +183,9 @@ class Cursor:
         batch_size=config.DEFAULT_READ_BATCH_SIZE,
         poll_at_most_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS,
     ):
+        """
+        Subscribes to new changes and calls ``callback`` with new batches of records.
+        """
         ticker = AIOTicker(
             at_least_every_ms=config.DEFAULT_SUBSCRIBE_POLL_AT_LEAST_EVERY_MS,
             at_most_every_ms=poll_at_most_every_ms,

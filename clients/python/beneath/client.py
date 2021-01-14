@@ -18,8 +18,9 @@ class Client:
     the `admin` member.
 
     Kwargs:
-        secret (str): A beneath secret to use for authentication.
-            If not set, reads secret from ``~/.beneath``.
+        secret (str):
+            A beneath secret to use for authentication.
+            If not set, reads secret from ``~/.beneath`` (the secret authenticated in the CLI).
     """
 
     def __init__(self, secret=None):
@@ -49,7 +50,8 @@ class Client:
         read and write from/to the stream.
 
         Args:
-            path (str): The path to the stream in the format of "ORGANIZATION/PROJECT/STREAM"
+            path (str):
+                The path to the stream in the format of "USERNAME/PROJECT/STREAM"
         """
         qualifier = StreamQualifier.from_path(stream_path)
         stream = await Stream.make(client=self, qualifier=qualifier)
@@ -69,23 +71,23 @@ class Client:
         update_if_exists: bool = None,
     ) -> Stream:
         """
-        The one-stop call for creating, updating and getting a stream:
-        a) If the stream doesn't exist, it creates it, then returns it.
-        b) If the stream exists and you have changed the schema, it updates the stream's schema
-        (only supports non-breaking changes), then returns it.
-        c) If the stream exists and the schema matches, it fetches the stream and returns it.
+        Creates (or optionally updates if ``update_if_exists=True``) a stream and returns it.
 
         Args:
-            path (str): The (desired) path to the stream in the format of
-                "ORGANIZATION/PROJECT/STREAM". The project must already exist. If the stream
-                doesn't exist yet, it creates it.
-            schema (str): The GraphQL schema for the stream.
-                To learn about the schema definition language, see
-                https://about.beneath.dev/docs/reading-writing-data/creating-streams/).
+            stream_path (str):
+                The (desired) path to the stream in the format of "USERNAME/PROJECT/STREAM".
+                The project must already exist. If the stream doesn't exist yet, it creates it.
+            schema (str):
+                The GraphQL schema for the stream. To learn about the schema definition language,
+                see https://about.beneath.dev/docs/reading-writing-data/schema-definition/.
 
         Kwargs:
-          retention (timedelta): The amount of time to retain records written to the stream.
-            If not set, records will be stored forever.
+            retention (timedelta):
+                The amount of time to retain records written to the stream.
+                If not set, records will be stored forever.
+            update_if_exists (bool):
+                If true and the stream already exists, the provided info will be used to update
+                the stream (only supports non-breaking schema changes) before returning it.
         """
         qualifier = StreamQualifier.from_path(stream_path)
         data = await self.admin.streams.create(
@@ -123,6 +125,19 @@ class Client:
     # WRITING
 
     def writer(self, dry=False, write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS) -> Writer:
+        """
+        Return a ``Writer`` object for writing data to multiple streams at once.
+        A ``Writer`` buffers records in memory for up to 1 second (by default) before
+        sending them in batches over the network.
+
+        Kwargs:
+            dry (bool):
+                If true, written records will be printed, not transmitted to the server.
+                Useful for testing.
+            write_delay_ms (int):
+                The maximum amount of time to buffer records before sending a
+                batch write over the network. Defaults to 1 second (1000 ms).
+        """
         if dry:
             return DryWriter(max_delay_ms=write_delay_ms)
         return Writer(connection=self.connection, max_delay_ms=write_delay_ms)
@@ -136,6 +151,22 @@ class Client:
         max_bytes_scanned: int = config.DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED,
         timeout_ms: int = config.DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS,
     ):
+        """
+        Starts a warehouse (OLAP) SQL query, and returns a job for tracking its progress
+
+        Args:
+            query (str):
+                The analytical SQL query to run. To learn about the query language,
+                see https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/.
+
+        Kwargs:
+            dry (bool):
+                If true, analyzes the query and returns info about referenced streams
+                and expected bytes scanned, but doesn't actually run the query.
+            max_bytes_scanned (int):
+                Sets a limit on the number of bytes the query can scan.
+                If exceeded, the job will fail with an error.
+        """
         resp = await self.connection.query_warehouse(
             query=query,
             dry_run=dry,

@@ -107,9 +107,12 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
                 useLog: values.useLog,
                 useIndex: values.useIndex,
                 useWarehouse: values.useWarehouse,
-                logRetentionSeconds: values.logRetentionHours !== "" ? Number(values.logRetentionHours) * 60 * 60 : null,
-                indexRetentionSeconds: values.indexRetentionHours !== "" ? Number(values.indexRetentionHours) * 60 * 60 : null,
-                warehouseRetentionSeconds: values.warehouseRetentionHours !== "" ? Number(values.warehouseRetentionHours) * 60 * 60 : null,
+                logRetentionSeconds:
+                  values.logRetentionHours !== "" ? Number(values.logRetentionHours) * 60 * 60 : null,
+                indexRetentionSeconds:
+                  values.indexRetentionHours !== "" ? Number(values.indexRetentionHours) * 60 * 60 : null,
+                warehouseRetentionSeconds:
+                  values.warehouseRetentionHours !== "" ? Number(values.warehouseRetentionHours) * 60 * 60 : null,
               },
             },
           })
@@ -119,7 +122,8 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
       {({ values, setFieldValue, isSubmitting, status }) => (
         <Form title="Create stream">
           <Typography>
-            Streams in Beneath have a predefined schema. Submit this form and you'll be ready to write data to your stream.
+            Streams in Beneath have a predefined schema. Submit this form and you'll be ready to write data to your
+            stream.
           </Typography>
           {/* TEMPORARY: Hide this dropdown while there's only one option */}
           {/* <Grid container>
@@ -152,28 +156,36 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
             multiline
             rows={20}
             language={"graphql"}
-            helperText={<>Check out the <Link href="https://about.beneath.dev/docs/reading-writing-data/creating-streams/">schema docs</Link> or
-            start with an <Link onClick={() => setExamplesDialog(true)} className={classes.link}>example schema</Link></>}
+            helperText={
+              <>
+                Check out the{" "}
+                <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/">schema docs</Link>{" "}
+                or start with an{" "}
+                <Link onClick={() => setExamplesDialog(true)} className={classes.link}>
+                  example schema
+                </Link>
+              </>
+            }
           />
           <SchemaEditorFooter schemaKind={values.schemaKind} schema={values.schema} />
           <Dialog open={examplesDialog} onBackdropClick={() => setExamplesDialog(false)} maxWidth="xs" fullWidth>
-            <DialogTitle>Load example schema
-              <Typography variant="body2">
-                Select a template to modify
-            </Typography>
+            <DialogTitle>
+              Load example schema
+              <Typography variant="body2">Select a template to modify</Typography>
             </DialogTitle>
             <DialogContent>
               <List className={classes.list}>
                 {EXAMPLE_SCHEMAS.map((exampleSchema) => (
-                    <ListItem
-                      key={exampleSchema.name}
-                      button
-                      onClick={() => {
-                        setFieldValue("schema", exampleSchema.schema);
-                        setExamplesDialog(false);
-                    }}>
-                      <ListItemText primary={exampleSchema.name} secondary={exampleSchema.language}/>
-                    </ListItem>
+                  <ListItem
+                    key={exampleSchema.name}
+                    button
+                    onClick={() => {
+                      setFieldValue("schema", exampleSchema.schema);
+                      setExamplesDialog(false);
+                    }}
+                  >
+                    <ListItemText primary={exampleSchema.name} secondary={exampleSchema.language} />
+                  </ListItem>
                 ))}
               </List>
             </DialogContent>
@@ -219,23 +231,14 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
             </Grid>
           </Grid>
           <Typography>
-          URL preview: https://beneath.dev/{values.project?.organization.name ? toURLName(values.project?.organization.name) : ""}
-          /{values.project?.name ? toURLName(values.project?.name) : ""}/{values.name ? toURLName(values.name) : ""}
+            URL preview: https://beneath.dev/
+            {values.project?.organization.name ? toURLName(values.project?.organization.name) : ""}/
+            {values.project?.name ? toURLName(values.project?.name) : ""}/{values.name ? toURLName(values.name) : ""}
           </Typography>
           <VSpace units={3} />
           <Collapse title="Advanced settings" in={showAdvancedSettings}>
-            <Field
-              name="useIndex"
-              component={FormikCheckbox}
-              type="checkbox"
-              label="Enable indexing"
-            />
-            <Field
-              name="useWarehouse"
-              component={FormikCheckbox}
-              type="checkbox"
-              label="Enable SQL (warehouse)"
-            />
+            <Field name="useIndex" component={FormikCheckbox} type="checkbox" label="Enable indexing" />
+            <Field name="useWarehouse" component={FormikCheckbox} type="checkbox" label="Enable SQL (warehouse)" />
             <Field
               name="isLogRetentionFinite"
               component={FormikRadioGroup}
@@ -247,21 +250,21 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
               ]}
               row
             />
-              {values.isLogRetentionFinite === "true" && (
-                <Grid item xs={12} sm={6} md={3}>
-                  <Field
-                    name="logRetentionHours"
-                    component={FormikTextField}
-                    label="Hours"
-                    required
-                    validate={(val: string) => {
-                      if (!val.match(/^[0-9]*$/)) {
-                        return "Numbers only";
-                      }
-                    }}
-                  />
-                </Grid>
-              )}
+            {values.isLogRetentionFinite === "true" && (
+              <Grid item xs={12} sm={6} md={3}>
+                <Field
+                  name="logRetentionHours"
+                  component={FormikTextField}
+                  label="Hours"
+                  required
+                  validate={(val: string) => {
+                    if (!val.match(/^[0-9]*$/)) {
+                      return "Numbers only";
+                    }
+                  }}
+                />
+              </Grid>
+            )}
             {values.useIndex && (
               <>
                 <Field
@@ -308,16 +311,16 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
                 {values.isWarehouseRetentionFinite === "true" && (
                   <Grid item xs={12} sm={6} md={3}>
                     <Field
-                        name="warehouseRetentionHours"
-                        component={FormikTextField}
-                        label="Hours"
-                        required
-                        validate={(val: string) => {
-                          if (!val.match(/^[0-9]*$/)) {
-                            return "Numbers only";
-                          }
-                        }}
-                      />
+                      name="warehouseRetentionHours"
+                      component={FormikTextField}
+                      label="Hours"
+                      required
+                      validate={(val: string) => {
+                        if (!val.match(/^[0-9]*$/)) {
+                          return "Numbers only";
+                        }
+                      }}
+                    />
                   </Grid>
                 )}
               </>

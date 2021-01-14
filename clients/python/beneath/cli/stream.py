@@ -5,7 +5,6 @@ from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
 
 def add_subparser(root):
     stream = root.add_parser("stream").add_subparsers()
-    stream_instance = stream.add_parser("instance").add_subparsers()
 
     _list = stream.add_parser("list")
     _list.set_defaults(func=async_cmd(show_list))
@@ -43,6 +42,8 @@ def add_subparser(root):
     _delete = stream.add_parser("delete")
     _delete.set_defaults(func=async_cmd(delete))
     _delete.add_argument("stream_path", type=str)
+
+    stream_instance = stream.add_parser("instance").add_subparsers()
 
     _instance_list = stream_instance.add_parser("list")
     _instance_list.set_defaults(func=async_cmd(instance_list))

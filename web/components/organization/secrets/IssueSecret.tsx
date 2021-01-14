@@ -104,7 +104,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
               label="Access"
               required
               options={[
-                { value: "full", label: "Full" },
+                { value: "full", label: "Full (CLI)" },
                 { value: "readonly", label: "Private read" },
                 { value: "readpublic", label: "Public read" },
               ]}
