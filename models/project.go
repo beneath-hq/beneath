@@ -17,7 +17,7 @@ type Project struct {
 	Site           string    `validate:"omitempty,url,lte=255"`
 	Description    string    `validate:"omitempty,lte=255"`
 	PhotoURL       string    `validate:"omitempty,url,lte=255"`
-	Public         bool      `sql:",notnull,default:true"`
+	Public         bool      `sql:",notnull,default:false"`
 	Locked         bool      `sql:",notnull,default:false"`
 	ExploreRank    int
 	OrganizationID uuid.UUID     `sql:",on_delete:restrict,notnull,type:uuid"`
