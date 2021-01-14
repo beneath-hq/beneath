@@ -186,16 +186,29 @@ theme.overrides = {
   },
   MuiChip: {
     root: {
-      backgroundColor: theme.palette.background?.paper,
+      backgroundColor: theme.palette.border.background,
       borderRadius: "4px",
+      height: "28px",
+    },
+    sizeSmall: {
+      height: "18px",
+    },
+    label: {
+      fontSize: theme.typography.caption?.fontSize,
+      paddingLeft: "8px",
+      paddingRight: "8px",
+    },
+    labelSmall: {
+      fontSize: theme.typography.caption?.fontSize,
+      paddingLeft: "6px",
+      paddingRight: "6px",
     },
     clickable: {
       "&:hover": {
         background: "none",
-        // textDecoration: `underline ${theme.palette.common?.white}`,
         color: theme.palette.text?.primary,
       }
-    }
+    },
   },
   MuiLinearProgress: {
     colorPrimary: {

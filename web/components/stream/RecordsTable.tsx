@@ -2,12 +2,12 @@ import { Record } from "beneath-react";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 import React, { FC } from "react";
-import times from 'lodash/times';
 
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import {
   Button,
+  Chip,
   makeStyles,
   Table,
   TableBody,
@@ -16,8 +16,9 @@ import {
   TableRow,
   Theme,
   Tooltip,
-  Box, Typography, Paper,
+  Box, Typography,
   fade,
+  Grid,
 } from "@material-ui/core";
 import InfoIcon from "@material-ui/icons/InfoSharp";
 
@@ -41,47 +42,18 @@ const useStyles = makeStyles((theme: Theme) => ({
     padding: "6px 16px 6px 16px",
     whiteSpace: "nowrap",
   },
-  headerCellContent: {
-    display: "inline-flex",
-    alignItems: "center"
-  },
   headerCellText: {
-    flex: "1",
     marginRight: theme.spacing(1),
     fontSize: theme.typography.pxToRem(16),
     fontWeight: "bold"
   },
-  headerCellPaper: {
-    marginLeft: theme.spacing(1),
-    paddingLeft: theme.spacing(.75),
-    paddingRight: theme.spacing(.75),
-    cursor: "default",
-    height: "18px",
-  },
-  headerCellPaperText: {
-    display: "table-cell",
-    textAlign: "center",
-    verticalAlign: "middle",
-    lineHeight: "18px",
-  },
-  headerCellPaperKey: {
-    backgroundColor: theme.palette.primary.dark,
-  },
-  headerCellPaperType: {
-    backgroundColor: theme.palette.border.background
-  },
-  headerCellPaperInfo: {
-    backgroundColor: theme.palette.border.background,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-  },
   headerCellInfo: {
     fontSize: theme.typography.h3.fontSize,
+    marginTop: theme.spacing(.9), // total hack to center the InfoIcon in the Chip
   },
-  emptyCell: {
-    height: theme.spacing(4)
-  }
+  primaryDarkColor: {
+    backgroundColor: theme.palette.primary.dark,
+  },
 }));
 
 export interface RecordsTableProps extends ContentContainerProps {
@@ -108,32 +80,34 @@ const RecordsTable: FC<RecordsTableProps> = ({
           <Table size="small">
             <TableHead>
               <TableRow>
-                {columns.map((column) => (
+                {columns.map((column) => (                  
                   <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
-                    <div className={classes.headerCellContent}>
-                      <span className={classes.headerCellText}>{column.displayName}</span>
+                    <Grid container spacing={1} wrap="nowrap">
+                      <Grid item>
+                        <Typography className={classes.headerCellText}>{column.displayName}</Typography>
+                      </Grid>
                       {column.isKey && (
-                        <Tooltip title={"Column is part of an index"} interactive>
-                          <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperKey)}>
-                            <Typography variant="caption" className={classes.headerCellPaperText}>Key</Typography>
-                          </Paper>
-                        </Tooltip>
+                        <Grid item>
+                          <Tooltip title={"Column is part of an index"} interactive>
+                            <Chip label="Key" size="small" className={classes.primaryDarkColor} />
+                          </Tooltip>
+                        </Grid>
                       )}
                       {column.displayName !== "Time ago" && (
-                        <Tooltip title={column.typeDescription} interactive>
-                          <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperType)}>
-                            <Typography variant="caption" className={classes.headerCellPaperText}>{column.typeName}</Typography>
-                          </Paper>
-                        </Tooltip>
+                        <Grid item>
+                          <Tooltip title={column.typeDescription} interactive>
+                            <Chip label={column.typeName} size="small" />
+                          </Tooltip>
+                        </Grid>
                       )}
                       {column.doc && (
-                        <Tooltip title={column.doc} interactive>
-                          <Paper className={clsx(classes.headerCellPaper, classes.headerCellPaperInfo)}>
-                            <InfoIcon className={classes.headerCellInfo}/>
-                          </Paper>
-                        </Tooltip>
+                        <Grid item>
+                          <Tooltip title={column.doc} interactive>
+                            <Chip label={<InfoIcon className={classes.headerCellInfo} />} size="small" />
+                          </Tooltip>
+                        </Grid>
                       )}
-                    </div>
+                    </Grid>
                   </TableCell>
                 ))}
               </TableRow>
@@ -147,19 +121,18 @@ const RecordsTable: FC<RecordsTableProps> = ({
                     hover={true}
                   >
                     {columns.map((column) => (
-                          <TableCell
-                            key={column.name}
-                            className={clsx(classes.cell, column.isKey && classes.keyCell)}
-                            align={column.isNumeric ? "right" : "left"}
-                          >
-                            {column.type === "timeago" ? (
-                              <Moment fromNow ago date={column.formatRecord(record)} />
-                            ) : (
-                                column.formatRecord(record)
-                              )}
-                          </TableCell>
-                        )
-                    )}
+                      <TableCell
+                        key={column.name}
+                        className={clsx(classes.cell, column.isKey && classes.keyCell)}
+                        align={column.isNumeric ? "right" : "left"}
+                      >
+                        {column.type === "timeago" ? (
+                          <Moment fromNow ago date={column.formatRecord(record)} />
+                        ) : (
+                          column.formatRecord(record)
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
             </TableBody>
