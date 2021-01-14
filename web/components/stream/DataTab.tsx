@@ -26,12 +26,12 @@ import FilterForm from "./FilterForm";
 import { NakedLink } from "components/Link";
 import VSpace from "components/VSpace";
 import clsx from "clsx";
-import { Instance } from "pages/stream";
+import { StreamInstance } from "components/stream/types";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 
 interface DataTabProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: Instance | null;
+  instance: StreamInstance | null;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
