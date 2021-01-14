@@ -4,16 +4,16 @@ import React, { FC } from "react";
 
 import useMe from "../../hooks/useMe";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
-import { Instance } from "pages/stream";
+import { StreamInstance } from "components/stream/types";
 import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import { DeleteStreamInstance, DeleteStreamInstanceVariables } from "apollo/types/DeleteStreamInstance";
 import { DELETE_STREAM_INSTANCE, QUERY_STREAM_INSTANCES } from "apollo/queries/stream";
 
 export interface DeleteInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: Instance;
-  instances: Instance[];
-  setInstance: (instance: Instance | null) => void;
+  instance: StreamInstance;
+  instances: StreamInstance[];
+  setInstance: (instance: StreamInstance | null) => void;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
@@ -59,7 +59,7 @@ const DeleteInstance: FC<DeleteInstanceProps> = ({ stream, instance, instances, 
                     }) as any;
 
                     const filtered = queryData.streamInstancesByOrganizationProjectAndStreamName.filter(
-                      (instnc: Instance) => instnc.streamInstanceID !== instance.streamInstanceID
+                      (instnc: StreamInstance) => instnc.streamInstanceID !== instance.streamInstanceID
                     );
 
                     cache.writeQuery({
