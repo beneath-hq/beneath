@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(2),
   },
   streamName: {
-    fontSize: theme.typography.pxToRem(36),
+    fontSize: theme.typography.pxToRem(30),
     fontWeight: "bold",
   },
   site: {
@@ -232,7 +232,13 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
         />
       </Grid>
       <Grid item>
-        <Chip label={numbro(data.writeBytes).format(bytesFormat)} clickable component={NakedLink} href={href} as={as} />
+        <Chip 
+          label={numbro(data.writeBytes).format(bytesFormat)} 
+          clickable 
+          component={NakedLink} 
+          href={href} 
+          as={as} 
+        />
       </Grid>
     </>
   );

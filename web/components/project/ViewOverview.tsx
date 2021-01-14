@@ -3,36 +3,16 @@ import React, { FC } from "react";
 
 import { EntityKind } from "apollo/types/globalTypes";
 import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
+import clsx from "clsx";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { useTotalUsage } from "components/usage/util";
 import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
-import { Chip, Grid, Hidden, makeStyles, Paper, Typography } from "@material-ui/core";
-import clsx from "clsx";
+import { Chip, Grid, Hidden, makeStyles } from "@material-ui/core";
 
-// TODO (maybe): make a "Tag(text, color, size)" component to use instead of the wacky Paper styling for resourceType. 
-// We have similar styling for the "tags" in the header of RecordsTable
 const useStyles = makeStyles((theme) => ({
   resourceTypeCell: {
     maxWidth: "80px",
-  },
-  resourceTypePaper: {
-    height: "20px",
-    width: "60px",
-    padding: theme.spacing(0.5),
-  },
-  resourceTypePaperText: {
-    display: "table-cell",
-    textAlign: "center",
-    verticalAlign: "middle",
-    lineHeight: "12px",
-    fontWeight: "bold",
-  },
-  streamPaper: {
-    backgroundColor: theme.palette.primary.dark,
-  },
-  servicePaper: {
-    backgroundColor: theme.palette.purple.main,
   },
   nameCell: {
     whiteSpace: "nowrap",
@@ -44,11 +24,16 @@ const useStyles = makeStyles((theme) => ({
     textOverflow: "ellipsis",
   },
   chipsCell: {
-    whiteSpace: "nowrap"
+    whiteSpace: "nowrap",
   },
-  chip: {
-    backgroundColor: theme.palette.secondary.dark,
+  pointer: {
     cursor: "pointer",
+  },
+  streamChip: {
+    backgroundColor: theme.palette.primary.dark,
+  },
+  serviceChip: {
+    backgroundColor: theme.palette.purple.main,
   },
 }));
 
@@ -136,17 +121,10 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
             .map(({ type, name, description, resourceID }, idx) => (
               <TableLinkRow key={resourceID} href={makeHref(type, name)} as={makeAs(type, name)}>
                 <TableCell className={classes.resourceTypeCell}>
-                  <Paper
-                    className={clsx(
-                      classes.resourceTypePaper,
-                      type === "stream" && classes.streamPaper,
-                      type === "service" && classes.servicePaper
-                    )}
-                  >
-                    <Typography variant="body2" className={classes.resourceTypePaperText}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </Typography>
-                  </Paper>
+                  <Chip 
+                    label={<strong>{type.charAt(0).toUpperCase() + type.slice(1)}</strong>} 
+                    className={clsx(classes.pointer, type === "stream" && classes.streamChip, type === "service" && classes.serviceChip)}
+                  />
                 </TableCell>
                 <TableCell className={classes.nameCell}>{toURLName(name)}</TableCell>
                 <Hidden smDown>
@@ -168,6 +146,7 @@ export default ViewOverview;
 // separate component to enable nested useTotalUsage
 const ChipsCell: FC<{ resourceType: string; resourceID: string; }> = ({ resourceType, resourceID }) => {
   const classes = useStyles();
+
   if (resourceType === "stream") {
     const { data } = useTotalUsage(EntityKind.Stream, resourceID);
     if (!data) {
@@ -178,12 +157,15 @@ const ChipsCell: FC<{ resourceType: string; resourceID: string; }> = ({ resource
 
     return (
       <TableCell align="right" className={classes.chipsCell}>
-        <Grid container spacing={2} justify="flex-end">
+        <Grid container spacing={2} justify="flex-end" wrap="nowrap">
           <Grid item>
-            <Chip label={numbro(data.writeRecords).format(intFormat) + " records"} className={classes.chip} />
+            <Chip
+              label={numbro(data.writeRecords).format(intFormat) + " records"}
+              className={classes.pointer}
+            />
           </Grid>
           <Grid item>
-            <Chip label={numbro(data.writeBytes).format(bytesFormat)} className={classes.chip} />
+            <Chip label={numbro(data.writeBytes).format(bytesFormat)} className={classes.pointer} />
           </Grid>
         </Grid>
       </TableCell>
