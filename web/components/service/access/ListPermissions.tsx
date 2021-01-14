@@ -96,8 +96,13 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>Permissions</Typography>
-      <Typography variant="body2">Services should have minimally viable permissions. This service will only be able to access the resources in this table.</Typography>
+      <Typography variant="h2" gutterBottom>
+        Permissions
+      </Typography>
+      <Typography variant="body2">
+        Services should have minimally viable permissions. This service will only be able to access the resources in
+        this table.
+      </Typography>
       <ContentContainer
         paper
         margin="normal"
@@ -122,14 +127,26 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
                 {perms.stream && (
                   <TableRow>
                     <TableCell>Stream</TableCell>
-                    <TableLinkCell href={`/stream?organization_name=${toURLName(perms.stream.project.organization.name)}&project_name=${toURLName(perms.stream.project.name)}&stream_name=${toURLName(perms.stream.name)}`}>{`/${toURLName(perms.stream.project.organization.name)}/${toURLName(perms.stream.project.name)}/${toURLName(perms.stream.name)}`}</TableLinkCell>
+                    <TableLinkCell
+                      href={`/stream?organization_name=${toURLName(
+                        perms.stream.project.organization.name
+                      )}&project_name=${toURLName(perms.stream.project.name)}&stream_name=${toURLName(
+                        perms.stream.name
+                      )}`}
+                      as={`/${toURLName(
+                        perms.stream.project.organization.name
+                      )}/${toURLName(perms.stream.project.name)}/${toURLName(
+                        perms.stream.name
+                      )}`}
+                    >
+                      {`/${toURLName(perms.stream.project.organization.name)}/${toURLName(
+                        perms.stream.project.name
+                      )}/${toURLName(perms.stream.name)}`}
+                    </TableLinkCell>
                     <TableCell align="center">{perms.read && "✓"}</TableCell>
                     <TableCell align="center">{perms.write && "✓"}</TableCell>
                     <TableCell padding="checkbox" align="right">
-                      <IconButton
-                        disabled={mutLoading}
-                        onClick={() => setShowRevokePermissionDialog(perms.streamID)}
-                      >
+                      <IconButton disabled={mutLoading} onClick={() => setShowRevokePermissionDialog(perms.streamID)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -143,7 +160,9 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
         {revokePermissionDialog}
       </ContentContainer>
       {!cta && (
-        <Button variant="contained" onClick={() => setShowAddPermissionDialog(true)}>Add permission</Button>
+        <Button variant="contained" onClick={() => setShowAddPermissionDialog(true)}>
+          Add permission
+        </Button>
       )}
     </>
   );
