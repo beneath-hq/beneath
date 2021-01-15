@@ -69,7 +69,7 @@ weight: 100
 
 ## Streams
 
-**Definition:** A [stream]({{< relref "#streams" >}}) is the prototype of a collection of records with a common schema. For more information about [streams]({{< relref "#streams" >}}) and the related [stream instances]({{< relref "#stream-instances" >}}), see [Streams]({{< ref "/docs/reading-writing-data/understanding-streams" >}}).
+**Definition:** A [stream]({{< relref "#streams" >}}) is the prototype of a collection of records with a common schema. For more information about [streams]({{< relref "#streams" >}}) and the related [stream instances]({{< relref "#stream-instances" >}}), see [Streams]({{< ref "/docs/concepts/streams" >}}).
 
 **Relations:**
 
@@ -91,7 +91,7 @@ weight: 100
 
 ## Stream instances
 
-**Definition:** A [stream instance]({{< relref "#stream-instances" >}}) represents a single version of a [stream]({{< relref "#streams" >}}). For more information, see [Streams]({{< ref "/docs/reading-writing-data/understanding-streams" >}}).
+**Definition:** A [stream instance]({{< relref "#stream-instances" >}}) represents a single version of a [stream]({{< relref "#streams" >}}). For more information, see [Streams]({{< ref "/docs/concepts/streams" >}}).
 
 **Relations:**
 

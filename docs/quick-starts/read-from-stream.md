@@ -1,5 +1,5 @@
 ---
-title: Create stream and write data
+title: Read from a stream
 description: A guide to loading, replaying or subscribing to data from an existing stream
 menu:
   docs:
@@ -8,7 +8,7 @@ menu:
 weight: 400
 ---
 
-This quick start will help you read data from a stream on Beneath. 
+This quick start will help you read data from a stream on Beneath.
 
 ## Install the Beneath SDK
 
@@ -23,4 +23,3 @@ Browse the Beneath web [console](https://beneath.dev/?noredirect=1) and navigate
 Once you've found a stream, click over to the "API" tab (next to the "Data" tab). Here you will find language-specific code snippets that you can easily copy and paste into your code environment.
 
 If you just want to get started analyzing some data, we recommend you open a [Jupyter](https://jupyter.org/) notebook and try the easy Python reads.
-

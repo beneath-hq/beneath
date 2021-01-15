@@ -16,7 +16,7 @@ When you give someone (or the public!) access to your streams, they don't just g
 
 ## Don't worry about scalability or costs
 
-On Beneath, all users are accountable for their own data consumption (with a [free monthly quota]({{< ref "/docs/billing" >}})), so you don't have to worry about excessive interest causing your quotas to be exhausted. Beneath also has a good mix of scalability and safety features built in, which ensure that performance doesn't suffer even though many people are using a stream simultaneously.
+On Beneath, all users are accountable for their own data consumption (with a [free monthly quota]({{< ref "/docs/usage" >}})), so you don't have to worry about excessive interest causing your quotas to be exhausted. Beneath also has a good mix of scalability and safety features built in, which ensure that performance doesn't suffer even though many people are using a stream simultaneously.
 
 ## One source-of-truth
 
