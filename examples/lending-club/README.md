@@ -1,9 +1,10 @@
 # Lending Club historical loan analysis and realtime assessment
 
 The code in these folders produces the three data streams in the [Beneath Lending Club project](https://beneath.dev/epg/lending-club):
-- [historical loans with performance data](https://beneath.dev/epg/lending-club/loans-history)
-- [real-time loans listed on the Lending Club website 4x per day](https://beneath.dev/epg/lending-club/loans)
-- [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/loans-enriched)
+
+- [historical loans with performance data](https://beneath.dev/epg/lending-club/stream:loans-history)
+- [real-time loans listed on the Lending Club website 4x per day](https://beneath.dev/epg/lending-club/stream:loans)
+- [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/stream:loans-enriched)
 
 ### Developing the streams
 
@@ -26,7 +27,7 @@ To stage the Beneath services:
 
     python ./loans/fetch-new-loans.py stage epg/lending-club/fetch-new-loans --read-quota-mb 10000 --write-quota-mb 10000
     python ./loans-enriched/enrich-loans.py stage epg/lending-club/enrich-loans --read-quota-mb 10000 --write-quota-mb 10000
-    
+
 The secrets used to connect to Beneath were issued with:
 
     beneath service issue-secret epg/lending-club/fetch-new-loans --description kubernetes
@@ -38,6 +39,7 @@ Then apply the service secrets to Kubernetes (we're using a namespace called `mo
     kubectl create secret generic lending-club-loans-enriched-service-secret -n models --from-literal secret=SECRET
 
 To connect to Lending Club's API for newly-listed loans:
+
 - Create a Lending Club account, register as an Investor, and request API access. Save the API key.
 
 Then apply the API key to Kubernetes:
@@ -51,7 +53,7 @@ To rebuild the Docker images:
 
     docker build -t gcr.io/beneath/lending-club-loans-enriched:latest .
     docker push gcr.io/beneath/lending-club-loans-enriched:latest
-   
+
 To deploy to Kubernetes:
 
     kubectl apply -f loans/kube.yaml -n models

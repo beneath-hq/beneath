@@ -3,7 +3,7 @@
 - The code here produces a stream of Reddit posts from the r/Coronavirus subreddit.
 - We interface with Reddit via [PRAW: The Python Reddit API Wrapper](https://praw.readthedocs.io/en/latest/index.html).
 - Each post is analyzed for its polarity and its subjectivty, using the [textblob](https://textblob.readthedocs.io/en/dev/) Python library.
-- The streams are deployed at [beneath.dev/epg/reddit/coronavirus-posts-sentiment](https://beneath.dev/epg/reddit/coronavirus-posts-sentiment)
+- The streams are deployed at [beneath.dev/epg/reddit/stream:coronavirus-posts-sentiment](https://beneath.dev/epg/reddit/stream:coronavirus-posts-sentiment)
 
 ### Developing the stream
 
@@ -24,6 +24,7 @@ To stage the Beneath stream:
     beneath stream stage epg/reddit/coronavirus-posts-sentiment
 
 To connect to Reddit:
+
 - the PRAW quickstart's [prerequisites section](https://praw.readthedocs.io/en/latest/getting_started/quick_start.html#prerequisites) has instructions to create a Client ID and Client Secret
 - Reddit credentials are provided in the `stream_submissions.py` script
 
@@ -35,7 +36,7 @@ To rebuild the Docker image:
 
     docker build -t gcr.io/beneath/reddit-coronavirus-posts:latest .
     docker push gcr.io/beneath/reddit-coronavirus-posts:latest
-   
+
 To deploy to Kubernetes:
 
     kubectl apply -f kube.yaml -n models
@@ -45,7 +46,7 @@ Important: There must ever only be one replica of the script running at a time. 
 The secret used to connect to Beneath was issued with:
 
     beneath service create epg/reddit --read-quota-mb 100 --write-quota-mb 2000
-    beneath service update-permissions epg/reddit epg/reddit/coronavirus-posts-sentiment --read --write 
+    beneath service update-permissions epg/reddit epg/reddit/coronavirus-posts-sentiment --read --write
     beneath service issue-secret epg/reddit --description kubernetes
 
 And applied to Kubernetes with:
