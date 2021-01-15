@@ -19,8 +19,9 @@ class Client:
 
     Args:
         secret (str):
-            A beneath secret to use for authentication.
-            If not set, reads secret from ``~/.beneath`` (the secret authenticated in the CLI).
+            A beneath secret to use for authentication. If not set, uses the
+            ``BENEATH_SECRET`` environment variable, and if that is not set either, uses the secret
+            authenticated in the CLI (stored in ``~/.beneath``).
     """
 
     def __init__(self, secret=None):
