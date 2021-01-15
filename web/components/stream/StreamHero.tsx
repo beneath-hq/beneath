@@ -218,7 +218,7 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
   const projectName = stream.project.name;
   const streamName = stream.name;
   const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`;
-  const as = `/${organizationName}/${projectName}/${streamName}/-/monitoring`;
+  const as = `/${organizationName}/${projectName}/stream:${streamName}/-/monitoring`;
 
   return (
     <>
@@ -232,13 +232,7 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
         />
       </Grid>
       <Grid item>
-        <Chip 
-          label={numbro(data.writeBytes).format(bytesFormat)} 
-          clickable 
-          component={NakedLink} 
-          href={href} 
-          as={as} 
-        />
+        <Chip label={numbro(data.writeBytes).format(bytesFormat)} clickable component={NakedLink} href={href} as={as} />
       </Grid>
     </>
   );

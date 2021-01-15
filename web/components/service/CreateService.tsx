@@ -41,7 +41,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
         const projName = toURLName(data.createService.project.name);
         const serviceName = toURLName(data.createService.name);
         const href = `/service?organization_name=${orgName}&project_name=${projName}&service_name=${serviceName}`;
-        const as = `/${orgName}/${projName}/-/services/${serviceName}`;
+        const as = `/${orgName}/${projName}/service:${serviceName}`;
         router.replace(href, as, { shallow: true });
       }
     },
@@ -77,10 +77,10 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
                 serviceName: toBackendName(values.name),
                 description: values.description,
                 sourceURL: values.sourceURL,
-                readQuota: values.readQuota ? Number(values.readQuota) * 10**9 : null,
-                writeQuota: values.writeQuota ? Number(values.writeQuota) * 10**9 : null,
-                scanQuota: values.scanQuota ? Number(values.scanQuota) * 10**9 : null,
-              }
+                readQuota: values.readQuota ? Number(values.readQuota) * 10 ** 9 : null,
+                writeQuota: values.writeQuota ? Number(values.writeQuota) * 10 ** 9 : null,
+                scanQuota: values.scanQuota ? Number(values.scanQuota) * 10 ** 9 : null,
+              },
             },
           })
         )
@@ -89,10 +89,13 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
       {({ values, isSubmitting, status }) => (
         <Form title="Create service">
           <Typography variant="body2">
-            A service in Beneath is a *non-user account* (also known as a "service account" in e.g. GCP). 
-            Services are used to isolate the activity of a production piece of code. A service has its own quotas and (minimally viable) permissions.
-            <br /><br />
-            After creating a service with this form, you can grant it permissions and issue a secret to use in production.
+            A service in Beneath is a *non-user account* (also known as a "service account" in e.g. GCP). Services are
+            used to isolate the activity of a production piece of code. A service has its own quotas and (minimally
+            viable) permissions.
+            <br />
+            <br />
+            After creating a service with this form, you can grant it permissions and issue a secret to use in
+            production.
           </Typography>
           <Field
             name="project"
@@ -124,7 +127,11 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
             component={FormikTextField}
             label="Service name"
             required
-            helperText={`URL preview: https://beneath.dev/${values.project?.organization.name ? toURLName(values.project.organization.name) : ""}/${values.project?.name ? toURLName(values.project.name) : ""}/-/services/${values.name ? toURLName(values.name) : ""}`}
+            helperText={`URL preview: https://beneath.dev/${
+              values.project?.organization.name ? toURLName(values.project.organization.name) : ""
+            }/${values.project?.name ? toURLName(values.project.name) : ""}/service:${
+              values.name ? toURLName(values.name) : ""
+            }`}
           />
           <Field
             name="description"

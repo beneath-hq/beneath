@@ -86,9 +86,7 @@ const makeCrumbs = (router: NextRouter) => {
       />,
     ];
   } else if (router.route === "/organization") {
-    return [
-      <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
-    ];
+    return [<OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />];
   } else if (router.route === "/-/billing/checkout") {
     if (typeof router.query.organization_name === "string") {
       const organizationName = router.query.organization_name;
@@ -100,7 +98,7 @@ const makeCrumbs = (router: NextRouter) => {
           as={`/${organizationName}/-/billing/checkout`}
           label="Billing checkout"
           isCurrent={true}
-        />
+        />,
       ];
     } else {
       return [
@@ -110,7 +108,7 @@ const makeCrumbs = (router: NextRouter) => {
           as={`/-/billing/checkout`}
           label="Billing checkout"
           isCurrent={true}
-        />
+        />,
       ];
     }
   } else if (router.route === "/service") {
@@ -121,15 +119,8 @@ const makeCrumbs = (router: NextRouter) => {
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
       />,
-      <ProjectCrumb
-        key={3}
-        organization={router.query.organization_name as string}
-        project={router.query.project_name as string}
-        tab="services"
-        tabLabel="Services"
-      />,
       <ServiceCrumb
-        key={4}
+        key={3}
         isCurrent
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
@@ -201,14 +192,16 @@ interface StreamCrumbProps {
   isCurrent?: boolean;
 }
 
-const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => (
-  <Crumb
-    href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
-    as={`/${organization}/${project}/${stream}`}
-    label={stream}
-    isCurrent={isCurrent}
-  />
-);
+const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => {
+  return (
+    <Crumb
+      href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
+      as={`/${organization}/${project}/stream:${stream}`}
+      label={`stream:` + stream}
+      isCurrent={isCurrent}
+    />
+  );
+};
 
 interface OrganizationCrumbProps {
   organization: string;
@@ -239,8 +232,8 @@ const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, i
     <Crumb
       isCurrent={isCurrent}
       href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
-      as={`/${organization}/${project}/-/services/${service}`}
-      label={service}
+      as={`/${organization}/${project}/service:${service}`}
+      label={`service:` + service}
     />
   );
 };

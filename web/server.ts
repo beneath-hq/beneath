@@ -98,11 +98,13 @@ app.prepare().then(() => {
     const token = req.cookies.token;
     if (token) {
       const headers = { authorization: `Bearer ${token}` };
-      fetch(`${API_URL}/auth/logout`, { headers }).then((_) => {
-        console.log(`Successfully logged out ${token}`);
-      }).catch((e) => {
-        console.error("Error occurred calling backend /auth/logout: ", e);
-      });
+      fetch(`${API_URL}/auth/logout`, { headers })
+        .then((_) => {
+          console.log(`Successfully logged out ${token}`);
+        })
+        .catch((e) => {
+          console.error("Error occurred calling backend /auth/logout: ", e);
+        });
     }
     res.clearCookie("token");
     res.redirect("/");
@@ -153,12 +155,11 @@ app.prepare().then(() => {
   addDynamicRoute("/:organization_name/-/billing/checkout", "/-/billing/checkout");
   addDynamicRoute("/:organization_name/:project_name", "/project");
   addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
-  addDynamicRoute("/:organization_name/:project_name/-/services/:service_name", "/service");
-  addDynamicRoute("/:organization_name/:project_name/-/services/:service_name/-/:tab", "/service");
-  addDynamicRoute("/:organization_name/:project_name/:stream_name", "/stream");
-  addDynamicRoute("/:organization_name/:project_name/:stream_name/-/:tab", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/service::service_name", "/service");
+  addDynamicRoute("/:organization_name/:project_name/service::service_name/-/:tab", "/service");
+  addDynamicRoute("/:organization_name/:project_name/stream::stream_name", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/-/:tab", "/stream");
   addStaticRoute("*"); // catchall
-
 
   // Run server
   server.listen(port, () => {

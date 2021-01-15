@@ -4,11 +4,26 @@ import React, { FC, useState } from "react";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { Table, TableBody, TableCell, TableHead, TableLinkCell, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Typography } from "@material-ui/core";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
-import { StreamPermissionsForService, StreamPermissionsForServiceVariables } from "apollo/types/StreamPermissionsForService";
+import {
+  StreamPermissionsForService,
+  StreamPermissionsForServiceVariables,
+} from "apollo/types/StreamPermissionsForService";
 import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE } from "apollo/queries/service";
-import { UpdateServiceStreamPermissions, UpdateServiceStreamPermissionsVariables } from "apollo/types/UpdateServiceStreamPermissions";
+import {
+  UpdateServiceStreamPermissions,
+  UpdateServiceStreamPermissionsVariables,
+} from "apollo/types/UpdateServiceStreamPermissions";
 import { UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
 import AddPermission from "./AddPermission";
 
@@ -19,24 +34,33 @@ export interface Props {
 const ListPermissions: FC<Props> = ({ serviceID }) => {
   const [showAddPermissionDialog, setShowAddPermissionDialog] = useState(false);
   const [showRevokePermissionDialog, setShowRevokePermissionDialog] = useState<string | undefined>(undefined);
-  const { loading, error, data } = useQuery<StreamPermissionsForService, StreamPermissionsForServiceVariables>(QUERY_STREAM_PERMISSIONS_FOR_SERVICE, {
-    variables: { serviceID },
-  });
-
-  const [updateServiceStreamPermissions, { loading: mutLoading }] = useMutation<UpdateServiceStreamPermissions, UpdateServiceStreamPermissionsVariables>(
-    UPDATE_SERVICE_STREAM_PERMISSIONS
+  const { loading, error, data } = useQuery<StreamPermissionsForService, StreamPermissionsForServiceVariables>(
+    QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
+    {
+      variables: { serviceID },
+    }
   );
+
+  const [updateServiceStreamPermissions, { loading: mutLoading }] = useMutation<
+    UpdateServiceStreamPermissions,
+    UpdateServiceStreamPermissionsVariables
+  >(UPDATE_SERVICE_STREAM_PERMISSIONS);
 
   let cta: CallToAction | undefined;
   if (!data?.streamPermissionsForService.length) {
     cta = {
       message: `This service currently has no permissions for any resources`,
-      buttons: [{ label: "Add stream permission", onClick: () => setShowAddPermissionDialog(true)}] 
+      buttons: [{ label: "Add stream permission", onClick: () => setShowAddPermissionDialog(true) }],
     };
   }
 
   const addPermissionDialog = (
-    <Dialog open={showAddPermissionDialog} onBackdropClick={() => setShowAddPermissionDialog(false)} maxWidth="sm" fullWidth>
+    <Dialog
+      open={showAddPermissionDialog}
+      onBackdropClick={() => setShowAddPermissionDialog(false)}
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogContent>
         <AddPermission serviceID={serviceID} onCompleted={() => setShowAddPermissionDialog(false)} />
       </DialogContent>
@@ -52,11 +76,7 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="primary"
-          autoFocus
-          onClick={() => setShowRevokePermissionDialog(undefined)}
-        >
+        <Button color="primary" autoFocus onClick={() => setShowRevokePermissionDialog(undefined)}>
           No, go back
         </Button>
         <Button
@@ -133,15 +153,13 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
                       )}&project_name=${toURLName(perms.stream.project.name)}&stream_name=${toURLName(
                         perms.stream.name
                       )}`}
-                      as={`/${toURLName(
-                        perms.stream.project.organization.name
-                      )}/${toURLName(perms.stream.project.name)}/${toURLName(
-                        perms.stream.name
-                      )}`}
+                      as={`/${toURLName(perms.stream.project.organization.name)}/${toURLName(
+                        perms.stream.project.name
+                      )}/stream:${toURLName(perms.stream.name)}`}
                     >
                       {`/${toURLName(perms.stream.project.organization.name)}/${toURLName(
                         perms.stream.project.name
-                      )}/${toURLName(perms.stream.name)}`}
+                      )}/stream:${toURLName(perms.stream.name)}`}
                     </TableLinkCell>
                     <TableCell align="center">{perms.read && "✓"}</TableCell>
                     <TableCell align="center">{perms.write && "✓"}</TableCell>
