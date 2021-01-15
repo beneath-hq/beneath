@@ -6,6 +6,7 @@ import React, { FC } from "react";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
+import { Chip, Grid } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -35,6 +36,14 @@ const useStyles = makeStyles((theme) => ({
       marginRight: "8px",
       fontSize: "1.5rem",
     },
+  },
+  streamChip: {
+    backgroundColor: theme.palette.primary.dark,
+    marginBottom: "2px", // hack to fix a Chip bug
+  },
+  serviceChip: {
+    backgroundColor: theme.palette.purple.main,
+    marginBottom: "2px", // hack to fix a Chip bug
   },
 }));
 
@@ -193,13 +202,21 @@ interface StreamCrumbProps {
 }
 
 const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => {
+  const classes = useStyles();
   return (
-    <Crumb
-      href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
-      as={`/${organization}/${project}/stream:${stream}`}
-      label={`stream:` + stream}
-      isCurrent={isCurrent}
-    />
+    <Grid container alignItems="center" spacing={1}>
+      <Grid item>
+        <Crumb
+          href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
+          as={`/${organization}/${project}/stream:${stream}`}
+          label={stream}
+          isCurrent={isCurrent}
+        />
+      </Grid>
+      <Grid item>
+        <Chip label="Stream" size="small" className={classes.streamChip} />
+      </Grid>
+    </Grid>
   );
 };
 
@@ -228,12 +245,21 @@ interface ServiceCrumbProps {
 }
 
 const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, isCurrent }) => {
+  const classes = useStyles();
+
   return (
-    <Crumb
-      isCurrent={isCurrent}
-      href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
-      as={`/${organization}/${project}/service:${service}`}
-      label={`service:` + service}
-    />
+    <Grid container alignItems="center" spacing={1}>
+      <Grid item>
+        <Crumb
+          isCurrent={isCurrent}
+          href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
+          as={`/${organization}/${project}/service:${service}`}
+          label={service}
+        />
+      </Grid>
+      <Grid item>
+        <Chip label="Service" size="small" className={classes.serviceChip} />
+      </Grid>
+    </Grid>
   );
 };

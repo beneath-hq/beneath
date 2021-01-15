@@ -191,18 +191,18 @@ theme.overrides = {
       fontSize: "1.2rem",
     },
     outlined: {
-      borderWidth: 2,
+      borderWidth: 1,
     },
     outlinedPrimary: {
-      borderWidth: 2,
+      borderWidth: 1,
       "&:hover": {
-        borderWidth: 2,
+        borderWidth: 1,
       },
     },
     outlinedSecondary: {
-      borderWidth: 2,
+      borderWidth: 1,
       "&:hover": {
-        borderWidth: 2,
+        borderWidth: 1,
       },
     },
   },
@@ -224,6 +224,9 @@ theme.overrides = {
       fontSize: theme.typography.caption?.fontSize,
       paddingLeft: "6px",
       paddingRight: "6px",
+    },
+    outlined: {
+      borderWidth: 1,
     },
     clickable: {
       "&:hover": {
