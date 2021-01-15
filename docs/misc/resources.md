@@ -3,9 +3,9 @@ title: Resources
 description: An overview of every resource that can be created and managed in Beneath
 menu:
   docs:
-    parent: managing-resources
-    weight: 300
-weight: 300
+    parent: misc
+    weight: 100
+weight: 100
 ---
 
 ## Users
@@ -26,17 +26,16 @@ weight: 300
 
 ## Organizations
 
-**Definition:** An [organization]({{< relref "#organizations" >}}) is the top-level owner of [users]({{< relref "#users" >}}), [services]({{< relref "#services" >}}) and [projects]({{< relref "#projects" >}}). Billing is managed at the [organization]({{< relref "#organizations" >}}) level, which means that every resource that can accrue bills is directly or indirectly linked to exactly one [organization]({{< relref "#organizations" >}}). 
+**Definition:** An [organization]({{< relref "#organizations" >}}) is the top-level owner of [users]({{< relref "#users" >}}) and [projects]({{< relref "#projects" >}}). Billing is managed at the [organization]({{< relref "#organizations" >}}) level, which means that every resource that can accrue bills is directly or indirectly linked to exactly one [organization]({{< relref "#organizations" >}}). 
 
 **Relations:**
 - An [organization]({{< relref "#organizations" >}}) has many (one or more) [users]({{< relref "#users" >}}). Since all [users]({{< relref "#users" >}}) must belong to an [organization]({{< relref "#organizations" >}}), when a [user]({{< relref "#users" >}}) is created, they're added to a "personal" [organization]({{< relref "#organizations" >}}) that is automatically and transparently created with the same name as the username.
 - An [organization]({{< relref "#organizations" >}}) has many (zero or more) [projects]({{< relref "#projects" >}}).
-- An [organization]({{< relref "#organizations" >}}) has many (zero or more) [services]({{< relref "#services" >}}).
 
 **Access management:**
 - A [user]({{< relref "#users" >}}) can access an [organization]({{< relref "#organizations" >}}).
   - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the members and projects in the organization.
-  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and manipulate projects and services in the organization.
+  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and manipulate projects in the organization.
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add and delete members, monitor members' usage, and to change billing information.
 
 **Console:** Go to `https://beneath.dev/ORGANIZATION`
@@ -45,16 +44,17 @@ weight: 300
 
 ## Projects
 
-**Definition:** A [project]({{< relref "#projects" >}}) is a collection of [streams]({{< relref "#streams" >}}). You can think of them like repositories in Git.
+**Definition:** A [project]({{< relref "#projects" >}}) is a collection of [streams]({{< relref "#streams" >}}) and [services]({{< relref "#services" >}}). You can think of them like repositories in Git.
 
 **Relations:**
 - A [project]({{< relref "#projects" >}}) belongs to one [organization]({{< relref "#organizations" >}}).
 - A [project]({{< relref "#projects" >}}) has many (zero or more) [streams]({{< relref "#streams" >}}).
+- An [project]({{< relref "#projects" >}}) has many (zero or more) [services]({{< relref "#services" >}}).
 
 **Access management:**
 - A [user]({{< relref "#users" >}}) can access a [project]({{< relref "#projects" >}}).
   - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the contents of the project, including viewing and querying records in its [streams]({{< relref "#streams" >}}).
-  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and delete [streams]({{< relref "#streams" >}}) in the project, including writing data directly to (non-derived) [streams]({{< relref "#streams" >}}).
+  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and edit [streams]({{< relref "#streams" >}}) and [services]({{< relref "#services" >}}) in the project, including writing data directly to (non-derived) [streams]({{< relref "#streams" >}}).
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add, remove and change permissions for other [users]({{< relref "#users" >}}).
 
 **Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT`
@@ -106,7 +106,7 @@ A [service]({{< relref "#services" >}}) has the following properties:
 - You have to explicitly grant permissions to access public streams (unlike [users]({{< relref "#users" >}}), which automatically have access to public streams)
 
 **Relations:**
-- A [service]({{< relref "#services" >}}) belongs to one [organization]({{< relref "#organizations" >}}), which handles billing for the [service]({{< relref "#services" >}}).
+- A [service]({{< relref "#services" >}}) belongs to one [project]({{< relref "#projects" >}}), whose owner handles billing for the [service]({{< relref "#services" >}}).
 - A [service]({{< relref "#services" >}}) has many (zero or more) [secrets]({{< relref "#secrets" >}}).
 
 **Access management:**
@@ -127,7 +127,7 @@ If you need to expose a secret publicly (e.g. in your front-end code), make sure
 
 **Access management:**
 - A [user]({{< relref "#users" >}}) can create [secrets]({{< relref "#secrets" >}}) for themself.
-- A [user]({{< relref "#users" >}}) can create [secrets]({{< relref "#secrets" >}}) for [services]({{< relref "#services" >}}) that belong to an organization that they have `admin` permissions on.
+- A [user]({{< relref "#users" >}}) can create [secrets]({{< relref "#secrets" >}}) for [services]({{< relref "#services" >}}) that belong to a project that they have `admin` permissions on.
 
 **Console:** For user-owned [secrets]({{< relref "#secrets" >}}), go to `https://beneath.dev/USERNAME/-/secrets`. (Not available for service-owned [secrets]({{< relref "#secrets" >}}).)
 

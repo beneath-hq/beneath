@@ -1,8 +1,8 @@
 ---
 menu:
   docs:
-    identifier: billing
-    name: Billing & Usage
+    identifier: usage
+    name: Usage & Billing
     weight: 800
 weight: 800
 ---

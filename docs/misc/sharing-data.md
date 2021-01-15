@@ -3,7 +3,7 @@ title: Data sharing
 description: How you can use Beneath to bridge data between colleagues, external partners and the public
 menu:
   docs:
-    parent: introduction
+    parent: misc
     weight: 500
 weight: 500
 ---

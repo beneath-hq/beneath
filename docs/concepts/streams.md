@@ -1,11 +1,11 @@
 ---
-title: Understanding streams
+title: Streams and stream instances
 description: Everything you need to understand about streams in Beneath
 menu:
   docs:
-    parent: reading-writing-data
-    weight: 100
-weight: 100
+    parent: concepts
+    weight: 200
+weight: 200
 ---
 
 To clear out any confusion: Beneath has a broad interpretation of the term "stream" that includes *bounded* data collections (also known as *batch data* or *static data*). This interpretation is based on the philosophy that even bounded collections comes into existance, and will in turn be consumed, in some kind of sequence.
@@ -14,13 +14,13 @@ Streams in Beneath have some unique properties that you can learn more about bel
 
 ## Streams have a schema and a unique key
 
-All *streams* have an associated schema that defines the fields of its records. The schema must also define a *key* comprised of one or more columns (also known as a *primary key* or *unique key*). Beneath rejects records that do not adhere to the stream's schema. 
+All *streams* have an associated schema that defines the fields of its records. The schema must also define a *key* comprised of one or more columns (also known as a *primary key* or *unique key*). Beneath rejects records that do not adhere to the stream's schema. See [Schema definition]({{< ref "/docs/reading-writing-data/schema-definition" >}}) for more details.
 
 ## Streams can have multiple versions, known as *instances*
 
-Records are not stored directly in a *stream*, but rather in a *stream instance*, which a stream can have many of. You can think of them as different versions of the stream.
+Records are not stored directly in a *stream*, but rather in a *stream instance*, which a stream can have many of. Each instance has an associated *version* number, which is a positive integer.
 
-Every stream instance has two boolean flags: a) It can be marked as *finalized*, which indicates that no more records will be written to it, and b) it can be marked as *primary*, which makes it the default instance for the stream, causing it to be shown in the Console.
+Every stream instance has two boolean flags: a) It can be marked as *finalized*, which indicates that no more records will be written to it, and b) it can be marked as *primary*, which makes it the default instance for the stream.
 
 The following list gives some examples that clarify the usefulness of *stream instances*:
 
@@ -40,6 +40,6 @@ Records written to Beneath are automatically made stored in several systems, whi
 - An operational data index, which stores data for low-latency (milliseconds) filtered lookups based on the unique key 
 - A data warehouse, for analytical SQL-based queries that process a large slice of the stream instance in one go
 
-To learn more about these systems, see [unified data system]({{< ref "/docs/introduction/unified-data-system" >}}).
+To learn more about these systems, see [unified data system]({{< ref "/docs/concepts/unified-data-system" >}}).
 
 The following pages in this section explain more about how to use these systems in practice.

@@ -3,9 +3,9 @@ title: Value proposition
 description: Who Beneath is for and what problems it solves
 menu:
   docs:
-    parent: introduction
-    weight: 200
-weight: 200
+    parent: misc
+    weight: 600
+weight: 600
 ---
 
 Beneath is a full, transparent and stable data system in-a-box. Its aim is to make it as easy as possible to turn good *ad-hoc* data science into good data-driven *products and services*.

@@ -92,15 +92,16 @@ stream_name = "loans-history"
 STREAM_PATH = f"{username}/{project_name}/{stream_name}"
 SCHEMA = open("loans_history.graphql", "r").read()
 
-stream = await client.stage_stream(
+stream = await client.create_stream(
     stream_path=STREAM_PATH, 
     schema=SCHEMA,
+    update_if_exists=True,
 )
 ```
 
 Lastly, streams have *instances*, which allow for versioning. We actually write data, not to a stream, but to a stream instance. We stage our first stream instance like so:
 ```python
-instance = await stream.stage_instance(version=0, make_primary=True)
+instance = await stream.create_instance(version=0, make_primary=True, update_if_exists=True)
 ```
 
 
