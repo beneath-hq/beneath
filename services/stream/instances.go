@@ -110,6 +110,12 @@ func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Strea
 			return err
 		}
 
+		// modify stream to reflect changes without refetching
+		stream.InstancesCreatedCount++
+		stream.InstancesMadePrimaryCount++
+		stream.PrimaryStreamInstance = instance
+		stream.PrimaryStreamInstanceID = &instance.StreamInstanceID
+
 		return nil
 	})
 	if err != nil {
