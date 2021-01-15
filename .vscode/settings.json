@@ -24,8 +24,7 @@
     "ENV": "test"
   },
   "go.inferGopath": false,
-  "tslint.jsEnable": true,
-  "python.formatting.provider": "yapf",
+  "python.formatting.provider": "black",
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
   "python.pythonPath": "clients/python/.venv/bin/python",
