@@ -15,6 +15,7 @@ from beneath.easy import (
     easy_read,
 )
 from beneath.instance import StreamInstance
+from beneath.job import Job, JobStatus
 from beneath.logging import logger
 from beneath.pipeline import Pipeline, PIPELINE_IDLE
 from beneath.stream import Stream
@@ -28,6 +29,8 @@ __all__ = [
     "easy_derive_stream",
     "easy_generate_stream",
     "easy_read",
+    "Job",
+    "JobStatus",
     "logger",
     "Pipeline",
     "PIPELINE_IDLE",

@@ -24,9 +24,10 @@ author = "Beneath Systems"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
-    # "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    # "sphinx_autodoc_typehints",
 ]
 
 # List of patterns, relative to source directory, that match files and
@@ -46,3 +47,12 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+html_theme_options = {
+    "description": "Python client for Beneath",
+    "code_font_size": "0.8em",
+}
+
+# -- Options autodoc ---------------------------------------------------------
+
+autodoc_member_order = "bysource"

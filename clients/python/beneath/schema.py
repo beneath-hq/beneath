@@ -16,8 +16,11 @@ from beneath.utils import (
 
 
 class Schema:
+    """ Represents a stream's parsed Avro schema """
+
     def __init__(self, avro: str):
         self.parsed_avro = parse_schema(json.loads(avro))
+        """ The parsed avro schema """
 
     def record_to_pb(self, record: Mapping) -> Tuple[gateway_pb2.Record, int]:
         if not isinstance(record, Mapping):

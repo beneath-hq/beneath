@@ -17,20 +17,34 @@ from beneath.utils import StreamQualifier
 
 class Stream:
     """
-    Represents a data-plane connection to a stream. Use it to get a StreamInstance, which
-    you can query, replay, subscribe and write to.
-    Learn more about streams and instances at https://about.beneath.dev/docs/concepts/streams/.
+    Represents a data-plane connection to a stream.
+    To find or create a stream, see :class:`beneath.Client`.
 
-    You cannot use this class to do control-plane actions like creating streams or
-    updating their details (use `client` directly for that).
+    Use it to get a StreamInstance, which you can query, replay, subscribe and write to.
+    Learn more about streams and instances at https://about.beneath.dev/docs/concepts/streams/.
     """
 
     client: Client
+
     qualifier: StreamQualifier
+
     admin_data: dict
+
     stream_id: uuid.UUID
+    """
+    The stream ID
+    """
+
     schema: Schema
+    """
+    The stream's schema
+    """
+
     primary_instance: StreamInstance
+    """
+    The current primary stream instance.
+    This is probably the object you will use to write/query the stream.
+    """
 
     # INITIALIZATION
 
@@ -41,10 +55,6 @@ class Stream:
         self.stream_id: uuid.UUID = None
         self.schema: Schema = None
         self.primary_instance: StreamInstance = None
-        """
-        The current primary stream instance.
-        This is probably the object you will use to write/query the stream.
-        """
 
     @classmethod
     async def make(cls, client: Client, qualifier: StreamQualifier, admin_data=None) -> Stream:
@@ -110,9 +120,8 @@ class Stream:
         Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
 
         Args:
-            version (int): The version number to assign to the instance
-
-        Kwargs:
+            version (int):
+                The version number to assign to the instance
             make_primary (bool):
                 Immediately make the new instance the stream's primary instance
             update_if_exists (bool):

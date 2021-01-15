@@ -39,6 +39,13 @@ class Streams:
                         indexRetentionSeconds
                         warehouseRetentionSeconds
                         primaryStreamInstanceID
+                        primaryStreamInstance {
+                            streamInstanceID
+                            createdOn
+                            version
+                            madePrimaryOn
+                            madeFinalOn
+                        }
                         instancesCreatedCount
                         instancesDeletedCount
                         instancesMadeFinalCount
@@ -196,6 +203,13 @@ class Streams:
                         indexRetentionSeconds
                         warehouseRetentionSeconds
                         primaryStreamInstanceID
+                        primaryStreamInstance {
+                            streamInstanceID
+                            createdOn
+                            version
+                            madePrimaryOn
+                            madeFinalOn
+                        }
                         instancesCreatedCount
                         instancesDeletedCount
                         instancesMadeFinalCount

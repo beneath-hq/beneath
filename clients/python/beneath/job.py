@@ -18,25 +18,46 @@ from beneath.schema import Schema
 
 
 class JobStatus(Enum):
-    pending = "pending"
-    running = "running"
-    done = "done"
+    """ Represents the status of a Job """
+
+    pending = "pending"  #: Query is waiting to be scheduled
+    running = "running"  #: Query is running
+    done = "done"  #: Query has finished running
 
 
 POLL_FREQUENCY = 1.0
 
 
 class Job:
+    """
+    Job represents a warehouse (OLAP) SQL query job. Unlike index queries, warehouse queries
+    take seconds or minutes to execute, so we use a Job to follow their progress until we can
+    fetch the results.
+    """
 
     client: Client
+
     job_id: bytes
+    """ The unique job identifier """
 
     schema: Schema
+    """ The schema of the query result """
+
     status: JobStatus
+    """ The current status of the job """
+
     referenced_instance_ids: List[uuid.UUID]
+    """ The IDs of the stream instances referenced in the query """
+
     bytes_scanned: int
+    """ The number of bytes scanned by the query """
+
     result_size_bytes: int
+    """ The number of bytes in the query result (not always accurate) """
+
     result_size_records: int
+    """ The number of records in the query result (not always accurate) """
+
     _job_data: gateway_pb2.WarehouseJob
 
     # INITIALIZATION
@@ -52,6 +73,7 @@ class Job:
         self._set_job_data(job_data)
 
     async def poll(self):
+        """ Polls for updates to the job. Throws an exception if the job errored. """
         self._check_is_not_dry()
         resp = await self.client.connection.poll_warehouse_job(self.job_id)
         self._set_job_data(resp.job)
@@ -89,6 +111,7 @@ class Job:
     # READ
 
     async def get_cursor(self) -> Cursor:
+        """ Returns a cursor for paging through the query results """
         self._check_is_not_dry()
         # poll until completed
         while self.status != JobStatus.done:  # not completed
