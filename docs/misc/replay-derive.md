@@ -3,14 +3,14 @@ title: Replay and derive streams
 description: How Beneath uses event logs to make it easy to derive streams and synchronize systems
 menu:
   docs:
-    parent: introduction
+    parent: misc
     weight: 400
 weight: 400
 ---
 
-In Beneath, there's an *event log* at the heart of every data stream. An event log keeps real-time, ordered track of every record written to a stream, allowing you to read new data starting from any point in time *without missing a single change*. 
+In Beneath, there's an _event log_ at the heart of every data stream. An event log keeps real-time, ordered track of every record written to a stream, allowing you to read new data starting from any point in time _without missing a single change_.
 
-In practice, it means you can replay the history of a stream as if you had been subscribed since its beginning, then stay subscribed to get every new change within milliseconds of it happening. And if you're unsubscribed for a while, you can get every change that happened during your downtime once you resubscribe (it's an *at-least-once guarantee*).
+In practice, it means you can replay the history of a stream as if you had been subscribed since its beginning, then stay subscribed to get every new change within milliseconds of it happening. And if you're unsubscribed for a while, you can get every change that happened during your downtime once you resubscribe (it's an _at-least-once guarantee_).
 
 With event logs, it becomes really easy to create transformations that derive from one stream and produce a new one. Here we give just a few examples that illustrate the virtually endless opportunities that affords.
 
@@ -18,7 +18,7 @@ With event logs, it becomes really easy to create transformations that derive fr
 
 ### Applying a machine learning model to uploaded data
 
-Let's say you've created a machine learning model that can tell if an image has been manipulated. Now you want to turn it into a production service where users can upload their own images. Every time a user uploads an image, you write it to a stream called `images`. Separately, you run a small service that uses the `images` event log to get every new image, run the model on it to determine if the image has been manipulated, then writes the result to a new stream `labeled-images`. Since Beneath automatically [provides indexed lookups]({{< ref "/docs/concepts/unified-data-system" >}}), your UI can just ping the `labeled-images` index for the result, which will likely appear within milliseconds. 
+Let's say you've created a machine learning model that can tell if an image has been manipulated. Now you want to turn it into a production service where users can upload their own images. Every time a user uploads an image, you write it to a stream called `images`. Separately, you run a small service that uses the `images` event log to get every new image, run the model on it to determine if the image has been manipulated, then writes the result to a new stream `labeled-images`. Since Beneath automatically [provides indexed lookups]({{< ref "/docs/concepts/unified-data-system" >}}), your UI can just ping the `labeled-images` index for the result, which will likely appear within milliseconds.
 
 This workflow also makes it easy to improve your machine learning model and update your results. When you've trained an improved model, just update your service and reset its subscription to replay every past image into the model!
 

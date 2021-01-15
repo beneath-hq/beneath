@@ -8,11 +8,12 @@ menu:
 weight: 500
 ---
 
-Beneath automatically writes records to a data warehouse to enable analytical SQL queries (OLAP). Check out [Unified data system]({{< ref "/concepts/unified-data-system" >}}) to learn more about the different formats Beneath stores data in. 
+Beneath automatically writes records to a data warehouse to enable analytical SQL queries (OLAP). Check out [Unified data system]({{< ref "/docs/concepts/unified-data-system" >}}) to learn more about the different formats Beneath stores data in.
 
 ## Query examples
 
 Assume we have a stream of page views `example/project/page-views` with the schema:
+
 ```graphql
 type PageView @schema {
   user_id: Int! @key
@@ -22,12 +23,14 @@ type PageView @schema {
 ```
 
 We can count the total number of page views:
+
 ```sql
 SELECT count(*)
 FROM `example/project/page-views`
 ```
 
 We can count the number of unique visitors per day:
+
 ```sql
 SELECT timestamp_trunc(time, DAY), count(distinct user_id)
 FROM `example/project/page-views`
