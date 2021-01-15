@@ -1,12 +1,12 @@
 # Ethereum Blocks from the Ethereum Mainnet
 
 - The code here produces two streams of Ethereum blocks: `blocks-stable` and `blocks-unstable`. The unstable stream provides blocks in real time and will frequently fork. The stable stream provide blocks at a 12 block delay and is unlikely to ever fork.
-- When a fork occurs in `blocks-unstable`, the forked block(s) will quickly be overriden by the new branch, but there will be a brief inconsistency (on the order of seconds). The streaming view and BigQuery datasets will continue to contain the forked blocks, but with a lower data `@meta.timestamp` (which is the time the record was written to Beneath -- don't mistake it for the *block* timestamp, which is when a block was mined).
+- When a fork occurs in `blocks-unstable`, the forked block(s) will quickly be overriden by the new branch, but there will be a brief inconsistency (on the order of seconds). The streaming view and BigQuery datasets will continue to contain the forked blocks, but with a lower data `@meta.timestamp` (which is the time the record was written to Beneath -- don't mistake it for the _block_ timestamp, which is when a block was mined).
 
 The streams are deployed as root streams at:
 
-- [beneath.dev/beneath/ethereum/blocks-stable](https://beneath.dev/beneath/ethereum/blocks-stable)
-- [beneath.dev/beneath/ethereum/blocks-unstable](https://beneath.dev/beneath/ethereum/blocks-unstable)
+- [beneath.dev/beneath/ethereum/stream:blocks-stable](https://beneath.dev/beneath/ethereum/stream:blocks-stable)
+- [beneath.dev/beneath/ethereum/stream:blocks-unstable](https://beneath.dev/beneath/ethereum/stream:blocks-unstable)
 
 ### Developing the stream
 
@@ -22,7 +22,7 @@ To rebuild the Docker image:
 
     docker build -t gcr.io/beneath/ethereum-blocks:latest .
     docker push gcr.io/beneath/ethereum-blocks:latest
-   
+
 To create the Beneath project where the streams are stored:
 
     beneath project create beneath/ethereum

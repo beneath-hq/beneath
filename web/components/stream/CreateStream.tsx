@@ -1,7 +1,20 @@
 import { useMutation, useQuery } from "@apollo/client";
 import { Field, Formik } from "formik";
 import { useRouter } from "next/router";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Link, List, ListItem, ListItemText, makeStyles, Typography } from "@material-ui/core";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Link,
+  List,
+  ListItem,
+  ListItemText,
+  makeStyles,
+  Typography,
+} from "@material-ui/core";
 import React, { FC, useState } from "react";
 
 import { QUERY_PROJECTS_FOR_USER } from "../../apollo/queries/project";
@@ -24,13 +37,13 @@ import SchemaEditorFooter from "./SchemaEditorFooter";
 
 const useStyles = makeStyles((theme) => ({
   list: {
-    width: '100%',
+    width: "100%",
     paddingTop: theme.spacing(0),
     paddingBottom: theme.spacing(0),
   },
   link: {
-    cursor: "pointer"
-  }
+    cursor: "pointer",
+  },
 }));
 
 interface Project {
@@ -56,7 +69,7 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
         const projName = toURLName(data.createStream.project.name);
         const streamName = toURLName(data.createStream.name);
         const href = `/stream?organization_name=${orgName}&project_name=${projName}&stream_name=${streamName}`;
-        const as = `/${orgName}/${projName}/${streamName}`;
+        const as = `/${orgName}/${projName}/stream:${streamName}`;
         router.replace(href, as, { shallow: true });
       }
     },
@@ -233,7 +246,8 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
           <Typography>
             URL preview: https://beneath.dev/
             {values.project?.organization.name ? toURLName(values.project?.organization.name) : ""}/
-            {values.project?.name ? toURLName(values.project?.name) : ""}/{values.name ? toURLName(values.name) : ""}
+            {values.project?.name ? toURLName(values.project?.name) : ""}/stream:
+            {values.name ? toURLName(values.name) : ""}
           </Typography>
           <VSpace units={3} />
           <Collapse title="Advanced settings" in={showAdvancedSettings}>

@@ -51,7 +51,7 @@ export const StreamPreview: FC<StreamPreviewProps> = ({ result: { data, error, e
             variant="h3"
             gutterBottom
             href={`/stream?organization_name=${orgName}&project_name=${projName}&stream_name=${stream.name}`}
-            as={`/${orgName}/${projName}/${stream.name}`}
+            as={`/${orgName}/${projName}/stream:${stream.name}`}
           >
             {orgName}/{projName}/{toURLName(stream.name)}
           </Link>

@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 
 import Avatar, { AvatarProps } from "@material-ui/core/Avatar";
-import { makeStyles, Theme } from "@material-ui/core/styles";
+import { makeStyles, Theme, useTheme } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme: Theme) => ({
   hero: {
@@ -40,6 +40,7 @@ export interface BetterAvatarProps extends Omit<AvatarProps, "src"> {
 
 const BetterAvatar: FC<BetterAvatarProps> = ({ size, label, src, ...other }) => {
   const classes = useStyles();
+  const theme = useTheme();
 
   let className;
   if (size === "hero") {
@@ -52,8 +53,25 @@ const BetterAvatar: FC<BetterAvatarProps> = ({ size, label, src, ...other }) => 
     className = classes.toolbar;
   }
 
+  // generate a fallback backgroundColor when the user doesn't provide a picture
+  let backgroundColor;
+  if (!src) {
+    let hash = 0;
+    for (let i = 0; i < label.length; i++) {
+      hash += label.charCodeAt(i);
+    }
+    const idx = hash % theme.palette.rainbow.length;
+    backgroundColor = theme.palette.rainbow[idx];
+  }
+
   return (
-    <Avatar className={className} src={src || undefined} alt={label} {...other}>
+    <Avatar
+      className={className}
+      src={src || undefined}
+      alt={label}
+      {...other}
+      style={{ backgroundColor: backgroundColor }}
+    >
       {!src && !!label && label.slice(0, 2)}
     </Avatar>
   );

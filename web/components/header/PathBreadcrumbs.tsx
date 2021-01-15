@@ -6,6 +6,7 @@ import React, { FC } from "react";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
+import { Chip, Grid } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -35,6 +36,14 @@ const useStyles = makeStyles((theme) => ({
       marginRight: "8px",
       fontSize: "1.5rem",
     },
+  },
+  streamChip: {
+    backgroundColor: theme.palette.primary.dark,
+    marginBottom: "2px", // hack to fix a Chip bug
+  },
+  serviceChip: {
+    backgroundColor: theme.palette.purple.main,
+    marginBottom: "2px", // hack to fix a Chip bug
   },
 }));
 
@@ -86,9 +95,7 @@ const makeCrumbs = (router: NextRouter) => {
       />,
     ];
   } else if (router.route === "/organization") {
-    return [
-      <OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />,
-    ];
+    return [<OrganizationCrumb key={1} isCurrent organization={router.query.organization_name as string} />];
   } else if (router.route === "/-/billing/checkout") {
     if (typeof router.query.organization_name === "string") {
       const organizationName = router.query.organization_name;
@@ -100,7 +107,7 @@ const makeCrumbs = (router: NextRouter) => {
           as={`/${organizationName}/-/billing/checkout`}
           label="Billing checkout"
           isCurrent={true}
-        />
+        />,
       ];
     } else {
       return [
@@ -110,7 +117,7 @@ const makeCrumbs = (router: NextRouter) => {
           as={`/-/billing/checkout`}
           label="Billing checkout"
           isCurrent={true}
-        />
+        />,
       ];
     }
   } else if (router.route === "/service") {
@@ -121,15 +128,8 @@ const makeCrumbs = (router: NextRouter) => {
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
       />,
-      <ProjectCrumb
-        key={3}
-        organization={router.query.organization_name as string}
-        project={router.query.project_name as string}
-        tab="services"
-        tabLabel="Services"
-      />,
       <ServiceCrumb
-        key={4}
+        key={3}
         isCurrent
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
@@ -201,14 +201,24 @@ interface StreamCrumbProps {
   isCurrent?: boolean;
 }
 
-const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => (
-  <Crumb
-    href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
-    as={`/${organization}/${project}/${stream}`}
-    label={stream}
-    isCurrent={isCurrent}
-  />
-);
+const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => {
+  const classes = useStyles();
+  return (
+    <Grid container alignItems="center" spacing={1}>
+      <Grid item>
+        <Crumb
+          href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
+          as={`/${organization}/${project}/stream:${stream}`}
+          label={stream}
+          isCurrent={isCurrent}
+        />
+      </Grid>
+      <Grid item>
+        <Chip label="Stream" size="small" className={classes.streamChip} />
+      </Grid>
+    </Grid>
+  );
+};
 
 interface OrganizationCrumbProps {
   organization: string;
@@ -235,12 +245,21 @@ interface ServiceCrumbProps {
 }
 
 const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, isCurrent }) => {
+  const classes = useStyles();
+
   return (
-    <Crumb
-      isCurrent={isCurrent}
-      href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
-      as={`/${organization}/${project}/-/services/${service}`}
-      label={service}
-    />
+    <Grid container alignItems="center" spacing={1}>
+      <Grid item>
+        <Crumb
+          isCurrent={isCurrent}
+          href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
+          as={`/${organization}/${project}/service:${service}`}
+          label={service}
+        />
+      </Grid>
+      <Grid item>
+        <Chip label="Service" size="small" className={classes.serviceChip} />
+      </Grid>
+    </Grid>
   );
 };

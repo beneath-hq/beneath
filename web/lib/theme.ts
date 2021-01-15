@@ -1,12 +1,13 @@
+import { colors } from "@material-ui/core";
 import { createMuiTheme, ThemeOptions, responsiveFontSizes, rgbToHex } from "@material-ui/core/styles";
 
 // "hack" to add custom properties to MUI theme
 declare module "@material-ui/core/styles/createTypography" {
   interface TypographyOptions {
-    fontFamilyMonospaced: React.CSSProperties['fontFamily'];
+    fontFamilyMonospaced: React.CSSProperties["fontFamily"];
   }
   interface Typography {
-    fontFamilyMonospaced: React.CSSProperties['fontFamily'];
+    fontFamilyMonospaced: React.CSSProperties["fontFamily"];
   }
 }
 declare module "@material-ui/core/styles/createPalette" {
@@ -21,6 +22,7 @@ declare module "@material-ui/core/styles/createPalette" {
     purple: {
       main: string;
     };
+    rainbow: string[];
   }
   interface Palette {
     border: {
@@ -30,6 +32,7 @@ declare module "@material-ui/core/styles/createPalette" {
     purple: {
       main: string;
     };
+    rainbow: string[];
   }
 }
 
@@ -94,6 +97,25 @@ theme.palette = {
   purple: {
     main: "rgba(146, 0, 255, 1)",
   },
+  rainbow: [
+    colors.amber["A100"],
+    colors.blue["A100"],
+    colors.blueGrey["A100"],
+    colors.brown["A100"],
+    colors.cyan["A100"],
+    colors.deepOrange["A100"],
+    colors.deepPurple["A100"],
+    colors.green["A100"],
+    colors.indigo["A100"],
+    colors.lightBlue["A100"],
+    colors.lime["A100"],
+    colors.orange["A100"],
+    colors.pink["A100"],
+    colors.purple["A100"],
+    colors.red["A100"],
+    colors.teal["A100"],
+    colors.yellow["A100"],
+  ],
   error: {
     light: "rgba(252, 86, 50, 1)",
     main: "rgba(235, 30, 7, 1)",
@@ -156,8 +178,8 @@ theme.overrides = {
   },
   MuiTypography: {
     gutterBottom: {
-      marginBottom: '1.0rem',
-    }
+      marginBottom: "1.0rem",
+    },
   },
   MuiButton: {
     root: {
@@ -169,18 +191,18 @@ theme.overrides = {
       fontSize: "1.2rem",
     },
     outlined: {
-      borderWidth: 2,
+      borderWidth: 1,
     },
     outlinedPrimary: {
-      borderWidth: 2,
+      borderWidth: 1,
       "&:hover": {
-        borderWidth: 2,
+        borderWidth: 1,
       },
     },
     outlinedSecondary: {
-      borderWidth: 2,
+      borderWidth: 1,
       "&:hover": {
-        borderWidth: 2,
+        borderWidth: 1,
       },
     },
   },
@@ -203,11 +225,14 @@ theme.overrides = {
       paddingLeft: "6px",
       paddingRight: "6px",
     },
+    outlined: {
+      borderWidth: 1,
+    },
     clickable: {
       "&:hover": {
         background: "none",
         color: theme.palette.text?.primary,
-      }
+      },
     },
   },
   MuiLinearProgress: {

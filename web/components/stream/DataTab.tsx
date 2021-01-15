@@ -16,7 +16,7 @@ import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName} from "../../apollo/types/StreamByOrganizationProjectAndName";
+import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
@@ -56,8 +56,8 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   justifyLeftXsSm: {
     [theme.breakpoints.down("sm")]: {
-      justifyContent: "left"
-    }
+      justifyContent: "left",
+    },
   },
   fetchMoreButton: {},
 }));
@@ -66,7 +66,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
   if (!instance) {
     const cta: CallToAction = {
       message: `The stream has no instances`,
-      buttons: [{ label: "Create instance", onClick: () => setOpenDialogID("create") }]
+      buttons: [{ label: "Create instance", onClick: () => setOpenDialogID("create") }],
     };
     return (
       <>
@@ -118,15 +118,15 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
 
   // LOADING
   let loadingBool: boolean | undefined;
-  if (loading && records.length === 0) { loadingBool=true; }
+  if (loading && records.length === 0) {
+    loadingBool = true;
+  }
 
   // CTAs
   let containerCta: CallToAction | undefined;
   if (!fetchMore && fetchMoreChanges) {
     containerCta = {
-      buttons: [
-        { label: "Fetch more changes", onClick: () => fetchMoreChanges() }
-      ]
+      buttons: [{ label: "Fetch more changes", onClick: () => fetchMoreChanges() }],
     };
   }
   let tableCta: CallToAction | undefined;
@@ -135,8 +135,8 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
       message: `There's no data in this stream instance`,
       buttons: [
         // { label: "Write a record", onClick: () => setWriteDialog(true) },
-        { label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" }
-      ]
+        { label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" },
+      ],
     };
   }
 
@@ -168,9 +168,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
 
   return (
     <>
-      <ContentContainer
-        callToAction={containerCta}
-      >
+      <ContentContainer callToAction={containerCta}>
         {/* top-row buttons */}
         <Grid container justify="space-between" alignItems="flex-start" spacing={2}>
           <Grid item xs={12} md={6}>
@@ -186,8 +184,12 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                         if (value !== null) setQueryType(value);
                       }}
                     >
-                      <ToggleButton value="log" className={clsx(classes.topRowHeight, classes.toggleButton)}>Log</ToggleButton>
-                      <ToggleButton value="index" className={clsx(classes.topRowHeight, classes.toggleButton)}>Index</ToggleButton>
+                      <ToggleButton value="log" className={clsx(classes.topRowHeight, classes.toggleButton)}>
+                        Log
+                      </ToggleButton>
+                      <ToggleButton value="index" className={clsx(classes.topRowHeight, classes.toggleButton)}>
+                        Index
+                      </ToggleButton>
                     </ToggleButtonGroup>
                   </Grid>
                   <Grid item>
@@ -223,12 +225,24 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                     {queryType === "log" && (
                       <>
                         {logPeek && (
-                          <Button variant="outlined" onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setLogPeek(!logPeek)}
+                            size="small"
+                            startIcon={<ArrowDownwardIcon />}
+                            className={classes.topRowHeight}
+                          >
                             Newest to Oldest
                           </Button>
                         )}
                         {!logPeek && (
-                          <Button variant="outlined" onClick={() => setLogPeek(!logPeek)} size="small" startIcon={<ArrowDownwardIcon />} className={classes.topRowHeight}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setLogPeek(!logPeek)}
+                            size="small"
+                            startIcon={<ArrowDownwardIcon />}
+                            className={classes.topRowHeight}
+                          >
                             Oldest to Newest
                           </Button>
                         )}
@@ -236,12 +250,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                     )}
                     {queryType === "index" && (
                       <>
-                        <Grid
-                          container
-                          direction="row"
-                          alignItems="center"
-                          spacing={2}
-                        >
+                        <Grid container direction="row" alignItems="center" spacing={2}>
                           <Grid item>
                             <FilterForm
                               index={schema.columns.filter((col) => col.isKey)}
@@ -262,9 +271,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTa
                               </Button>
                               <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
                                 <DialogContent>
-                                  <CodeBlock language={"python"}>
-                                    {`${filter}`}
-                                  </CodeBlock>
+                                  <CodeBlock language={"python"}>{`${filter}`}</CodeBlock>
                                 </DialogContent>
                                 <DialogActions>
                                   <Button onClick={() => setIndexCodeDialog(false)} color="primary">
