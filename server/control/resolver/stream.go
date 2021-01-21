@@ -52,6 +52,21 @@ func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, 
 	return stream, nil
 }
 
+func (r *queryResolver) StreamInstanceByOrganizationProjectStreamAndVersion(ctx context.Context, organizationName string, projectName string, streamName string, version int) (*models.StreamInstance, error) {
+	instance := r.Streams.FindStreamInstanceByOrganizationProjectStreamAndVersion(ctx, organizationName, projectName, streamName, version)
+	if instance == nil {
+		return nil, gqlerror.Errorf("Stream instance %s/%s/%s version %d not found", organizationName, projectName, streamName, version)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, instance.Stream.StreamID, instance.Stream.ProjectID, instance.Stream.Project.Public)
+	if !perms.Read {
+		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s/%s", organizationName, projectName, streamName)
+	}
+
+	return instance, nil
+}
+
 func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error) {
 	stream := r.Streams.FindStream(ctx, streamID)
 	if stream == nil {

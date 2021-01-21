@@ -2,7 +2,11 @@ import gql from "graphql-tag";
 
 export const QUERY_STREAM = gql`
   query StreamByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $streamName: String!) {
-    streamByOrganizationProjectAndName(organizationName: $organizationName, projectName: $projectName, streamName: $streamName) {
+    streamByOrganizationProjectAndName(
+      organizationName: $organizationName
+      projectName: $projectName
+      streamName: $streamName
+    ) {
       streamID
       name
       description
@@ -49,10 +53,83 @@ export const QUERY_STREAM = gql`
   }
 `;
 
+export const QUERY_STREAM_INSTANCE = gql`
+  query StreamInstanceByOrganizationProjectStreamAndVersion(
+    $organizationName: String!
+    $projectName: String!
+    $streamName: String!
+    $version: Int!
+  ) {
+    streamInstanceByOrganizationProjectStreamAndVersion(
+      organizationName: $organizationName
+      projectName: $projectName
+      streamName: $streamName
+      version: $version
+    ) {
+      streamInstanceID
+      stream {
+        streamID
+        name
+        description
+        createdOn
+        updatedOn
+        project {
+          projectID
+          name
+          public
+          organization {
+            organizationID
+            name
+          }
+        }
+        schemaKind
+        schema
+        avroSchema
+        streamIndexes {
+          indexID
+          fields
+          primary
+          normalize
+        }
+        allowManualWrites
+        useLog
+        useIndex
+        useWarehouse
+        logRetentionSeconds
+        indexRetentionSeconds
+        warehouseRetentionSeconds
+        primaryStreamInstanceID
+        primaryStreamInstance {
+          streamInstanceID
+          createdOn
+          version
+          madePrimaryOn
+          madeFinalOn
+        }
+        instancesCreatedCount
+        instancesDeletedCount
+        instancesMadeFinalCount
+        instancesMadePrimaryCount
+      }
+      streamID
+      version
+      createdOn
+      madePrimaryOn
+      madeFinalOn
+    }
+  }
+`;
+
 export const QUERY_STREAM_INSTANCES = gql`
-  query StreamInstancesByOrganizationProjectAndStreamName($organizationName: String!, $projectName: String!, $streamName: String!) {
+  query StreamInstancesByOrganizationProjectAndStreamName(
+    $organizationName: String!
+    $projectName: String!
+    $streamName: String!
+  ) {
     streamInstancesByOrganizationProjectAndStreamName(
-      organizationName: $organizationName, projectName: $projectName, streamName: $streamName
+      organizationName: $organizationName
+      projectName: $projectName
+      streamName: $streamName
     ) {
       streamInstanceID
       streamID
@@ -83,7 +160,7 @@ export const QUERY_STREAMS_FOR_USER = gql`
       }
     }
   }
-`
+`;
 
 export const COMPILE_SCHEMA = gql`
   query CompileSchema($input: CompileSchemaInput!) {
@@ -161,9 +238,7 @@ export const UPDATE_STREAM_INSTANCE = gql`
 `;
 
 export const DELETE_STREAM_INSTANCE = gql`
-  mutation DeleteStreamInstance($instanceID: UUID!){
-    deleteStreamInstance(
-      instanceID: $instanceID,
-    )
+  mutation DeleteStreamInstance($instanceID: UUID!) {
+    deleteStreamInstance(instanceID: $instanceID)
   }
 `;

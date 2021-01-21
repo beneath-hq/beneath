@@ -16,7 +16,6 @@ import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
 import { useRecords } from "beneath-react";
 import React, { FC, useEffect, useState } from "react";
 
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
 import { useToken } from "../../hooks/useToken";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
@@ -28,11 +27,11 @@ import VSpace from "components/VSpace";
 import clsx from "clsx";
 import { StreamInstance } from "components/stream/types";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
+import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 
 interface DataTabProps {
-  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  stream: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream;
   instance: StreamInstance | null;
-  setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -62,11 +61,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   fetchMoreButton: {},
 }));
 
-const DataTab: FC<DataTabProps> = ({ stream, instance, setOpenDialogID }: DataTabProps) => {
+const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   if (!instance) {
     const cta: CallToAction = {
-      message: `The stream has no instances`,
-      buttons: [{ label: "Create instance", onClick: () => setOpenDialogID("create") }],
+      message: `Please select a stream version`,
     };
     return (
       <>

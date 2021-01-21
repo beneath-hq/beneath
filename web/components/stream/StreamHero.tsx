@@ -1,25 +1,15 @@
-import { useQuery } from "@apollo/client";
-import { Chip, Grid, Typography, makeStyles, Dialog, DialogContent } from "@material-ui/core";
-import { MoreVert } from "@material-ui/icons";
-import { FC, useEffect, useState } from "react";
+import { Chip, Grid, Typography, makeStyles } from "@material-ui/core";
+import { FC } from "react";
 import numbro from "numbro";
 
-import { QUERY_STREAM_INSTANCES } from "apollo/queries/stream";
 import { EntityKind } from "apollo/types/globalTypes";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
-import {
-  StreamInstancesByOrganizationProjectAndStreamNameVariables,
-  StreamInstancesByOrganizationProjectAndStreamName,
-} from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
-import DropdownButton from "components/DropdownButton";
-import SelectField from "components/forms/SelectField";
 import { NakedLink } from "components/Link";
-import CreateInstance from "components/stream/CreateInstance";
-import DeleteInstance from "components/stream/DeleteInstance";
-import PromoteInstance from "components/stream/PromoteInstance";
 import { StreamInstance } from "components/stream/types";
 import { useTotalUsage } from "components/usage/util";
 import { toURLName } from "lib/names";
+import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
+import StreamInstanceSelector from "./StreamInstanceSelector";
 
 const intFormat = { thousandSeparated: true };
 const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
@@ -50,55 +40,15 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export interface StreamHeroProps {
-  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  stream: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream;
   instance: StreamInstance | null;
-  setInstance: (instance: StreamInstance | null) => void;
-  openDialogID: string | null;
-  setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
-const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDialogID, setOpenDialogID }) => {
+const StreamHero: FC<StreamHeroProps> = ({ stream, instance }) => {
   const classes = useStyles();
-  const [instances, setInstances] = useState<StreamInstance[]>([]);
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
-
-  const { error, data } = useQuery<
-    StreamInstancesByOrganizationProjectAndStreamName,
-    StreamInstancesByOrganizationProjectAndStreamNameVariables
-  >(QUERY_STREAM_INSTANCES, {
-    variables: { organizationName, projectName, streamName },
-  });
-  if (error) {
-    console.error("Unexpected error loading instances: ", error);
-  }
-
-  useEffect(() => {
-    if (
-      data?.streamInstancesByOrganizationProjectAndStreamName &&
-      data.streamInstancesByOrganizationProjectAndStreamName.length > 0
-    ) {
-      // sort instances by version (so the SelectField shows them in a sensible order)
-      const instances: StreamInstance[] = [];
-      instances.push(...data.streamInstancesByOrganizationProjectAndStreamName);
-      instances.sort((a, b) => (a.version < b.version ? 1 : -1));
-      setInstances(instances);
-
-      // if there's no set instance (which happens when there's no primary instance), show the instance with the highest version
-      if (!instance && instances.length > 0) {
-        setInstance(instances[0]);
-      }
-    }
-  }, [data?.streamInstancesByOrganizationProjectAndStreamName]);
-
-  const instanceActions = [{ label: "Create instance", onClick: () => setOpenDialogID("create") }];
-  if (instance && instance.streamInstanceID !== stream.primaryStreamInstanceID) {
-    instanceActions.push({ label: "Promote to primary", onClick: () => setOpenDialogID("promote") });
-  }
-  if (instance) {
-    instanceActions.push({ label: "Delete instance", onClick: () => setOpenDialogID("delete") });
-  }
 
   return (
     <Grid className={classes.container} container alignItems="center" spacing={2}>
@@ -121,77 +71,7 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance, setInstance, openDi
       </Grid>
       <Grid item sm />
       <Grid item>
-        <Grid container spacing={1} alignItems="center">
-          <Grid item className={classes.selectField}>
-            <SelectField
-              id="instanceID"
-              required
-              options={instances}
-              getOptionLabel={(option: StreamInstance) => {
-                const versionString = `v${option.version.toString()}`;
-                const primaryTag = option.streamInstanceID === stream.primaryStreamInstanceID ? " (primary)" : "";
-                const finalTag = option.madeFinalOn ? " (final)" : "";
-                return versionString + primaryTag + finalTag;
-              }}
-              getOptionSelected={(option: StreamInstance, value: StreamInstance) => {
-                return option.version === value.version;
-              }}
-              value={instance}
-              multiple={false}
-              onChange={(_, value) => {
-                if (value) {
-                  setInstance(value as StreamInstance);
-                }
-              }}
-              margin="none"
-            />
-          </Grid>
-          <Grid item>
-            <DropdownButton
-              variant="contained"
-              margin="dense"
-              actions={instanceActions}
-              className={classes.dropdownButton}
-            >
-              <MoreVert />
-            </DropdownButton>
-          </Grid>
-          <Dialog open={openDialogID === "create"} onBackdropClick={() => setOpenDialogID(null)}>
-            <DialogContent>
-              <CreateInstance
-                stream={stream}
-                instances={instances}
-                setInstance={setInstance}
-                setOpenDialogID={setOpenDialogID}
-              />
-            </DialogContent>
-          </Dialog>
-          {instance && (
-            <>
-              <Dialog open={openDialogID === "promote"} onBackdropClick={() => setOpenDialogID(null)}>
-                <DialogContent>
-                  <PromoteInstance
-                    stream={stream}
-                    instance={instance}
-                    setInstance={setInstance}
-                    setOpenDialogID={setOpenDialogID}
-                  />
-                </DialogContent>
-              </Dialog>
-              <Dialog open={openDialogID === "delete"} onBackdropClick={() => setOpenDialogID(null)}>
-                <DialogContent>
-                  <DeleteInstance
-                    stream={stream}
-                    instance={instance}
-                    instances={instances}
-                    setInstance={setInstance}
-                    setOpenDialogID={setOpenDialogID}
-                  />
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
-        </Grid>
+        <StreamInstanceSelector stream={stream} currentInstance={instance} />
       </Grid>
       <Grid item xs={12}>
         <Typography variant="body1">{stream.description}</Typography>
@@ -211,7 +91,7 @@ interface InstanceUsageChips {
 const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
   const { data, loading, error } = useTotalUsage(EntityKind.StreamInstance, instance.streamInstanceID);
   if (!data) {
-    return <></>;
+    return null;
   }
 
   const organizationName = stream.project.organization.name;

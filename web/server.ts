@@ -159,6 +159,8 @@ app.prepare().then(() => {
   addDynamicRoute("/:organization_name/:project_name/service::service_name/-/:tab", "/service");
   addDynamicRoute("/:organization_name/:project_name/stream::stream_name", "/stream");
   addDynamicRoute("/:organization_name/:project_name/stream::stream_name/-/:tab", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/:version", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/:version/-/:tab", "/stream");
   addStaticRoute("*"); // catchall
 
   // Run server

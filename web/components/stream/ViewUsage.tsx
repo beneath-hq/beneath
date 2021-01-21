@@ -4,12 +4,12 @@ import Moment from "react-moment";
 
 import { StreamInstance } from "./types";
 import { EntityKind } from "apollo/types/globalTypes";
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
 import ErrorNote from "components/ErrorNote";
 import { UsageUnit, useHourlyUsage, useTotalUsage } from "components/usage/util";
 import UsageChart from "components/usage/UsageChart";
 import { UsageIndicator } from "components/usage/UsageIndicator";
 import { PaperGrid } from "components/Paper";
+import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 
 const useStyles = makeStyles((theme: Theme) => ({
   tab: {
@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export interface StreamUsageViewProps {
-  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  stream: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream;
   instance: StreamInstance;
 }
 

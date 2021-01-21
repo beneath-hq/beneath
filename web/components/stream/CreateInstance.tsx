@@ -1,10 +1,11 @@
 import { useMutation } from "@apollo/client";
 import { Field, Formik } from "formik";
+import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import { QUERY_STREAM_INSTANCES, CREATE_STREAM_INSTANCE } from "../../apollo/queries/stream";
+import { QUERY_STREAM_INSTANCES, CREATE_STREAM_INSTANCE, QUERY_STREAM } from "../../apollo/queries/stream";
 import { CreateStreamInstance, CreateStreamInstanceVariables } from "../../apollo/types/CreateStreamInstance";
-import { Form, handleSubmitMutation, SelectField as FormikSelectField, TextField as FormikTextField } from "../formik";
+import { Form, handleSubmitMutation, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
 import FormikRadioGroup from "components/formik/RadioGroup";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
@@ -13,17 +14,22 @@ import { StreamInstance } from "components/stream/types";
 export interface CreateInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instances: StreamInstance[];
-  setInstance: (instance: StreamInstance | null) => void;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
-const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setInstance, setOpenDialogID }) => {
+const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setOpenDialogID }) => {
+  const router = useRouter();
   const [createStreamInstance] = useMutation<CreateStreamInstance, CreateStreamInstanceVariables>(
     CREATE_STREAM_INSTANCE,
     {
       onCompleted: (data) => {
         if (data?.createStreamInstance) {
-          setInstance(data.createStreamInstance);
+          const organizationName = stream.project.organization.name;
+          const projectName = stream.project.name;
+          const streamName = stream.name;
+          const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${data.createStreamInstance.version.toString()}`;
+          const as = `${organizationName}/${projectName}/stream:${streamName}/${data.createStreamInstance.version}`;
+          router.replace(href, as);
         }
         setOpenDialogID(null);
       },
@@ -40,7 +46,6 @@ const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setInstanc
 
   return (
     <Formik
-      // initialStatus={error?.message}
       initialValues={initialValues}
       onSubmit={async (values, actions) =>
         handleSubmitMutation(
@@ -55,6 +60,15 @@ const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setInstanc
               },
             },
             refetchQueries: [
+              {
+                query: QUERY_STREAM,
+                variables: {
+                  organizationName: stream.project.organization.name,
+                  projectName: stream.project.name,
+                  streamName: stream.name,
+                },
+              },
+              // TODO: instead, we should use Apollo's "update()" to update the cache for the list of instances
               {
                 query: QUERY_STREAM_INSTANCES,
                 variables: {

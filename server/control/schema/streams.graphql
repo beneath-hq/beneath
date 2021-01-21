@@ -1,8 +1,22 @@
 extend type Query {
   streamByID(streamID: UUID!): Stream!
-  streamByOrganizationProjectAndName(organizationName: String!, projectName: String!, streamName: String!): Stream!
+  streamByOrganizationProjectAndName(
+    organizationName: String!
+    projectName: String!
+    streamName: String!
+  ): Stream!
+  streamInstanceByOrganizationProjectStreamAndVersion(
+    organizationName: String!
+    projectName: String!
+    streamName: String!
+    version: Int!
+  ): StreamInstance!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
-  streamInstancesByOrganizationProjectAndStreamName(organizationName: String!, projectName: String!, streamName: String!): [StreamInstance!]!
+  streamInstancesByOrganizationProjectAndStreamName(
+    organizationName: String!
+    projectName: String!
+    streamName: String!
+  ): [StreamInstance!]!
   streamsForUser(userID: UUID!): [Stream!]!
   compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
@@ -54,6 +68,7 @@ type Stream {
 
 type StreamInstance {
   streamInstanceID: ID!
+  stream: Stream!
   streamID: UUID!
   version: Int!
   createdOn: Time!

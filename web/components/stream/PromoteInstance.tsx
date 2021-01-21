@@ -2,7 +2,12 @@ import { useMutation } from "@apollo/client";
 import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import React, { FC } from "react";
 
-import { QUERY_STREAM, UPDATE_STREAM_INSTANCE } from "apollo/queries/stream";
+import {
+  QUERY_STREAM,
+  QUERY_STREAM_INSTANCE,
+  QUERY_STREAM_INSTANCES,
+  UPDATE_STREAM_INSTANCE,
+} from "apollo/queries/stream";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
 import { UpdateStreamInstance, UpdateStreamInstanceVariables } from "apollo/types/UpdateStreamInstance";
 import { StreamInstance } from "components/stream/types";
@@ -10,20 +15,14 @@ import { StreamInstance } from "components/stream/types";
 export interface PromoteInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instance: StreamInstance;
-  setInstance: (instance: StreamInstance | null) => void;
   setOpenDialogID: (dialogID: "create" | "promote" | "delete" | null) => void;
 }
 
-const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setInstance, setOpenDialogID }) => {
+const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setOpenDialogID }) => {
   const [updateStreamInstance] = useMutation<UpdateStreamInstance, UpdateStreamInstanceVariables>(
     UPDATE_STREAM_INSTANCE,
     {
-      onCompleted: (data) => {
-        if (data?.updateStreamInstance) {
-          setInstance(data.updateStreamInstance);
-        }
-        setOpenDialogID(null);
-      },
+      onCompleted: () => setOpenDialogID(null),
     }
   );
 
@@ -42,7 +41,7 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setInstan
         <Button
           color="primary"
           autoFocus
-          onClick={() => {
+          onClick={() =>
             updateStreamInstance({
               variables: { input: { streamInstanceID: instance.streamInstanceID, makePrimary: true } },
               refetchQueries: [
@@ -54,10 +53,26 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ stream, instance, setInstan
                     streamName: stream.name,
                   },
                 },
+                {
+                  query: QUERY_STREAM_INSTANCE,
+                  variables: {
+                    organizationName: stream.project.organization.name,
+                    projectName: stream.project.name,
+                    streamName: stream.name,
+                    version: instance.version,
+                  },
+                },
+                {
+                  query: QUERY_STREAM_INSTANCES,
+                  variables: {
+                    organizationName: stream.project.organization.name,
+                    projectName: stream.project.name,
+                    streamName: stream.name,
+                  },
+                },
               ],
-            });
-            setOpenDialogID(null);
-          }}
+            })
+          }
         >
           Yes, I'm sure
         </Button>

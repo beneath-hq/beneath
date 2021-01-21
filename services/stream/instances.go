@@ -26,6 +26,28 @@ func (s *Service) FindStreamInstance(ctx context.Context, instanceID uuid.UUID) 
 	return si
 }
 
+// FindStreamInstanceByOrganizationProjectStreamAndVersion finds an instance and related stream details
+func (s *Service) FindStreamInstanceByOrganizationProjectStreamAndVersion(ctx context.Context, organizationName string, projectName string, streamName string, version int) *models.StreamInstance {
+	si := &models.StreamInstance{}
+	err := s.DB.GetDB(ctx).ModelContext(ctx, si).
+		Column(
+			"stream_instance.*",
+			"Stream",
+			"Stream.StreamIndexes",
+			"Stream.Project",
+			"Stream.Project.Organization",
+		).
+		Where("lower(stream__project__organization.name) = lower(?)", organizationName).
+		Where("lower(stream__project.name) = lower(?)", projectName).
+		Where("lower(stream.name) = lower(?)", streamName).
+		Where("version = ?", version).
+		Select()
+	if !db.AssertFoundOne(err) {
+		return nil
+	}
+	return si
+}
+
 // FindStreamInstanceByVersion finds an instance by version in its parent stream
 func (s *Service) FindStreamInstanceByVersion(ctx context.Context, streamID uuid.UUID, version int) *models.StreamInstance {
 	si := &models.StreamInstance{}
@@ -65,7 +87,7 @@ func (s *Service) FindStreamInstances(ctx context.Context, streamID uuid.UUID, f
 	}
 
 	// select
-	err := query.Select()
+	err := query.Order("version DESC").Select()
 	if err != nil {
 		panic(fmt.Errorf("error fetching stream instances: %s", err.Error()))
 	}
