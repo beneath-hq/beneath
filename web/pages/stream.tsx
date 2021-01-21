@@ -45,7 +45,7 @@ const StreamPage = () => {
   const version = typeof router.query.version === "string" ? parseInt(router.query.version) : null;
   const title =
     `${toURLName(organizationName)}/${toURLName(projectName)}/stream:${toURLName(streamName)}` +
-    (version ? `/${version}` : "");
+    (version !== null ? `/${version}` : "");
 
   const { loading: loadingInstance, error: errorInstance, data: dataInstance } = useQuery<
     StreamInstanceByOrganizationProjectStreamAndVersion,
@@ -65,7 +65,7 @@ const StreamPage = () => {
 
   let stream: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream;
   let instance: StreamInstance | null;
-  if (version) {
+  if (version !== null) {
     if (loadingInstance) {
       return (
         <Page title={title}>

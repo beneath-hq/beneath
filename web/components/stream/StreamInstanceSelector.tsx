@@ -114,7 +114,7 @@ const StreamInstanceSelector: FC<Props> = ({ stream, currentInstance }) => {
       <ButtonGroup disableElevation>
         <Button className={classes.leftPanel}>Version</Button>
         <Button onClick={openMenu1} className={classes.middleButton}>
-          {`${currentInstance?.version ? currentInstance.version : ""}` +
+          {`${currentInstance?.version !== undefined ? currentInstance.version : ""}` +
             (currentInstance?.streamInstanceID === stream.primaryStreamInstanceID ? " (Primary)" : "")}
         </Button>
         <Button className={classes.rightButton} onClick={openMenu2}>
