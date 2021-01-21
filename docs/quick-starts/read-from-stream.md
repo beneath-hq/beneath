@@ -18,7 +18,7 @@ If you haven't already, follow the [Install the Beneath SDK]({{< ref "/docs/quic
 
 Browse the Beneath web [console](https://beneath.dev/?noredirect=1) and navigate to a stream you want to read from. In addition to streams in your own projects, there are several public streams you can explore.
 
-## Use the API tab
+## Use the API tab on the stream page
 
 Once you've found a stream, click over to the "API" tab (next to the "Data" tab). Here you will find language-specific code snippets that you can easily copy and paste into your code environment.
 

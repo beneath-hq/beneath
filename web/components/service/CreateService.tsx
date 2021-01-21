@@ -89,13 +89,11 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
       {({ values, isSubmitting, status }) => (
         <Form title="Create service">
           <Typography variant="body2">
-            A service in Beneath is a *non-user account* (also known as a "service account" in e.g. GCP). Services are
-            used to isolate the activity of a production piece of code. A service has its own quotas and (minimally
-            viable) permissions.
+            A service in Beneath is a <em>non-user account</em> (also known as a "service account"). Services represent
+            production code and have their own permissions, secrets, quotas and monitoring.
             <br />
             <br />
-            After creating a service with this form, you can grant it permissions and issue a secret to use in
-            production.
+            After creating a service, you can grant it permissions and issue a secret to use in production.
           </Typography>
           <Field
             name="project"
@@ -160,7 +158,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
           <Field
             name="readQuota"
             component={FormikTextField}
-            label="Read Quota (GB)"
+            label="Read quota (GB)"
             validate={(val: string) => {
               if (!val.match(/^[0-9]*$/)) {
                 return "Numbers only";
@@ -170,7 +168,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
           <Field
             name="writeQuota"
             component={FormikTextField}
-            label="Write Quota (GB)"
+            label="Write quota (GB)"
             validate={(val: string) => {
               if (!val.match(/^[0-9]*$/)) {
                 return "Numbers only";
@@ -180,7 +178,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
           <Field
             name="scanQuota"
             component={FormikTextField}
-            label="Scan Quota (GB)"
+            label="Scan quota (GB)"
             validate={(val: string) => {
               if (!val.match(/^[0-9]*$/)) {
                 return "Numbers only";

@@ -7,7 +7,7 @@ menu:
 weight: 200
 
 title: Quick starts
-description: Tutorial to learn how to interact with Beneath
+description: Tutorials get started with Beneath
 ---
 
 What do you want to do?

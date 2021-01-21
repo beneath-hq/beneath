@@ -116,12 +116,8 @@ A [service]({{< relref "#services" >}}) has the following properties:
 - You have to explicitly grant permissions to access public streams (unlike [users]({{< relref "#users" >}}), which automatically have access to public streams)
 
 **Relations:**
-<<<<<<< HEAD:docs/misc/resources.md
 
-- # A [service]({{< relref "#services" >}}) belongs to one [project]({{< relref "#projects" >}}), whose owner handles billing for the [service]({{< relref "#services" >}}).
-
-- A [service]({{< relref "#services" >}}) belongs to one [organization]({{< relref "#organizations" >}}), which handles billing for the [service]({{< relref "#services" >}}).
-  > > > > > > > 935a23dbb140ed57ecb6c091eecf363758308a06:docs/managing-resources/resources.md
+- A [service]({{< relref "#services" >}}) belongs to one [project]({{< relref "#projects" >}}), whose owner handles billing for the [service]({{< relref "#services" >}}).
 - A [service]({{< relref "#services" >}}) has many (zero or more) [secrets]({{< relref "#secrets" >}}).
 
 **Access management:**

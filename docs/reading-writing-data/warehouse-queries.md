@@ -12,7 +12,7 @@ Beneath automatically writes records to a data warehouse to enable analytical SQ
 
 ## Query examples
 
-Assume we have a stream of page views `example/project/page-views` with the schema:
+Assume we have a stream of page views with path `example/project/page-views` and schema:
 
 ```graphql
 type PageView @schema {
@@ -29,7 +29,7 @@ SELECT count(*)
 FROM `example/project/page-views`
 ```
 
-We can count the number of unique visitors per day:
+or count the number of unique visitors per day:
 
 ```sql
 SELECT timestamp_trunc(time, DAY), count(distinct user_id)
@@ -45,7 +45,7 @@ The main deviation from BigQuery is in how you reference streams: Streams are gi
 
 ## Deduplicating by key
 
-Every record in a stream is added to the warehouse. That means if you write multiple records with the same schema key, they will all be counted in the query results. To enable deduplication of records with the same key, we include two hidden columns for each record:
+Every record in a stream is added to the warehouse. That means if you write multiple records with the same schema key, they will all be processed by the query. To support deduplication of records with the same key, we include two hidden columns for each record:
 
 - `__key` contains a bytes-serialized representation of the record's unique key
 - `__timestamp` contains the write timestamp for the record
@@ -55,8 +55,8 @@ So the following pattern can be used to deduplicate records:
 ```sql
 WITH deduplicated AS (
   SELECT r.* FROM (
-    SELECT ARRAY_AGG(t ORDER BY t.__timestamp DESC LIMIT 1)[OFFSET(0)] r
-    FROM `beneath.instances.1a5175fea4eb4a68947ac12249c27ae2` t
+    SELECT array_agg(t ORDER BY t.__timestamp DESC LIMIT 1)[OFFSET(0)] r
+    FROM `username/project/stream` t
     GROUP BY t.__key
   )
 )

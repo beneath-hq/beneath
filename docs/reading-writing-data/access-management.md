@@ -16,7 +16,7 @@ You issue and use [secrets]({{< ref "/docs/misc/resources.md#secrets" >}}) to au
 
 ### Authenticating in Beneath CLI
 
-See example in [the CLI installation guide]({{< ref "/docs/quick-starts/install-sdk.md" >}}).
+See [the CLI installation guide]({{< ref "/docs/quick-starts/install-sdk.md" >}}).
 
 ### Creating a secret for a user
 
@@ -30,17 +30,17 @@ There are three types of secrets:
 
 **Never share your user secrets!** You should not share or expose user secrets nor use them in production systems. Use a service secret if you need a secret in a production system or if you need to expose a secret (e.g. in a shared notebook or in your frontend code).
 
-### Using services and granting them permissions
+### Creating services, setting quotas and granting permissions
 
 Services are useful when deploying or publishing code that reads or writes to Beneath. You can control their access permissions, and monitor and limit their usage. Read ["Services"]({{< ref "/docs/misc/resources.md#services" >}}) for more details.
 
-By default, a service cannot read any streams, and you must set all service permissions manually (unlike users), _including permissions for public streams_.
+By default, a service cannot read any streams, and you must set all service permissions manually, _including permissions for public streams_ (unlike users).
 
-You can create services in the web console or using the CLI. For example, to create a service and grant read and write permissions to a stream from the CLI, run:
+You can create services in the web console or using the CLI. For example, to create a service and grant read and write permissions to a stream from the CLI, run (change or remove the flags depending on your use case):
 
 ```bash
-beneath service create ORGANIZATION/NEW_SERVICE --read-quota-mb 100 --write-quota-mb 100
-beneath service update-permissions ORGANIZATION/SERVICE ORGANIZATION/PROJECT/STREAM --read --write
+beneath service create ORGANIZATION/PROJECT/NEW_SERVICE --read-quota-mb 100 --write-quota-mb 100
+beneath service update-permissions ORGANIZATION/PROJECT/NEW_SERVICE ORGANIZATION/PROJECT/STREAM --read --write
 ```
 
 You're now ready to issue a secret for the service.
@@ -50,12 +50,12 @@ You're now ready to issue a secret for the service.
 You can create secrets for services using the web console or the CLI. For example, to create a service secret from the CLI, run the following command:
 
 ```bash
-beneath service issue-secret ORGANIZATION/SERVICE --description "YOUR SECRET DESCRIPTION"
+beneath service issue-secret ORGANIZATION/PROJECT/SERVICE --description "YOUR SECRET DESCRIPTION"
 ```
 
 You can now use the secret to connect to Beneath from your code. Most client libraries will automatically use your secret if you set it in the `BENEATH_SECRET` environment variable (see the documentation for your client library for other ways of passing the secret).
 
-**Think carefully before sharing sharing service secrets!** If you need to expose a secret publicly (e.g. in your front-end code or in a notebook), make sure it belongs to a service with sensible usage quotas and only `read` permissions. In all other cases, keep your secret very safe and do not commit it into Git.
+**Think carefully before sharing service secrets!** If you need to expose a secret publicly (e.g. in your front-end code or in a notebook), make sure it belongs to a service with sensible usage quotas and only `read` permissions. In all other cases, keep your secret very safe and do not commit it into Git.
 
 ### Inviting a user to an organization
 
@@ -87,12 +87,12 @@ The user doesn't have to be a part of the organization in advance.
 
 ### Granting a user access to a project and its streams
 
-In Beneath, _user_ access to streams is managed at the project-level. You cannot grant a _user_ access to only one stream (however, if you need a secret with permissions for just a single stream, use a _service_).
+In Beneath, _user_ access to streams is managed at the project-level. You cannot grant a user access to only one stream (however, if you need a secret with permissions for just a single stream, use a _service_).
 
 To add a user to a project, use the Beneath CLI to run the following command (change the flags to configure permissions):
 
 ```bash
-beneath project update-permissions ORGANIZATION/PROJECT USERNAME --view true --create true --admin true
+beneath project update-permissions ORGANIZATION/PROJECT USERNAME --view --create --admin
 ```
 
 The user doesn't have to be a part of the same organization as you or the project to get access.

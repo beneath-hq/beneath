@@ -81,7 +81,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
                 description: values.description,
                 photoURL: values.photoURL,
                 public: values.public === "public" ? true : false,
-              }
+              },
             },
           })
         )
@@ -90,7 +90,8 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
       {({ values, isSubmitting, status }) => (
         <Form title="Create project">
           <Typography variant="body2">
-            A project in Beneath is like a repository on GitHub. A project contains streams and services (like a GitHub repository contains code files), and every project has its own access management.
+            Projects contain streams and services, and every project has its own access management. A project in Beneath
+            is like a repo in Git.
           </Typography>
           <Field
             name="organization"
@@ -120,7 +121,9 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
               }
             }}
             component={FormikTextField}
-            helperText={`Your project URL will be https://beneath.dev/${values.organization ? toURLName(values.organization.name) : "USERNAME"}/${values.name ? toURLName(values.name) : "NAME"}`}
+            helperText={`Your project URL will be https://beneath.dev/${
+              values.organization ? toURLName(values.organization.name) : "USERNAME"
+            }/${values.name ? toURLName(values.name) : "NAME"}`}
             label="Name"
             required
           />
@@ -148,16 +151,16 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
             rowsMax={3}
           />
           <Field
-              name="public"
-              component={FormikRadioGroup}
-              label="Access"
-              required
-              options={[
-                { value: "public", label: "Public" },
-                { value: "private", label: "Private" },
-              ]}
-              row
-            />
+            name="public"
+            component={FormikRadioGroup}
+            label="Access"
+            required
+            options={[
+              { value: "public", label: "Public" },
+              { value: "private", label: "Private" },
+            ]}
+            row
+          />
           {values.public === "public" && (
             <Typography variant="body2" color="textSecondary">
               Open your data streams to the world and see what people build!

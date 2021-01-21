@@ -2,7 +2,7 @@
 menu:
   docs:
     identifier: usage
-    name: Usage & Billing
+    name: Usage & billing
     weight: 800
 weight: 800
 ---

@@ -1,6 +1,6 @@
 ---
-title: Usage and billing model
-description: A description of how Beneath calculates usage for billing purposes
+title: Usage, monitoring and quotas
+description: A description of how Beneath tracks and monitors usage
 menu:
   docs:
     parent: usage
@@ -8,17 +8,28 @@ menu:
 weight: 100
 ---
 
-TODO
+Beneath tracks stream reads, writes and scans to provide granular usage monitoring and billing.
 
-For the Professional and Enterprise plans, you are allotted monthly quotas for both Reads and Writes. At the beginning of each month, you are charged your plan's base price. At the end of the month, if your Read or Write usage exceeds your monthly quota, then you will be charged an "overage" fee.
-
-## The overage formula
-
-The overage fee is simply calculated for both Reads and Writes:<br>
-overageFee = (usageGB - quotaGB) \* overagePricePerGB
+Every stream, user and service in Beneath has a "Monitoring" tab in the web [console](https://beneath.dev/?noredirect=1) where you can see usage breakdowns, including hour-by-hour usage and quota usage in the current period.
 
 ## How usage is calculated
 
-The usage of every row of data is measured as the sum of [Avro](https://en.wikipedia.org/wiki/Apache_Avro)-serialized bytes.
+For **reads and writes**, the usage in _bytes_ is calculated as the total Avro-encoded bytes transferred. Avro uses a stream's schema to achieve a very compact encoding, which can easily be 80% smaller than JSON. Using Avro-encoded size means you can expect to get a (much) higher mileage out of your Beneath quota than you might expect. For easy comparison, we count the Avro size even for requests that use the JSON-based REST API for streams.
 
-Avro serialization is a way to quickly and cost-efficiently transmit data across the internet. Avro uses JSON encoding to transmit the stream schema and uses binary encoding to compress and transmit the stream data.
+For SQL warehouse query **scans**, the usage depends on the underlying data warehouse, but will typically be calculated based on the number of bytes loaded from a compressed columnar format.
+
+## Quotas and quota periods
+
+Organizations, users and services can have usage quotas to prevent abuse or unexpected bills. Quotas operate on 31-day cycles starting on the day they're set. Your billing plan dictates your top-level quotas, but you can set lower quotas for specific services (or for specific users in multi-user organizations). Note that the billing quota and service-specific quotas therefore do not cover the same periods, as they depend on when you created or changed them.
+
+When you set a quota or change billing plans, the quota usage resets and the quota period cycle is updated to start at the change time.
+
+## Service quotas
+
+It is especially good practice to set custom, reasonable quotas for your [services]({{< ref "/docs/misc/resources.md#services" >}}) in order to prevent any unexpected use.
+
+You can set quotas from the web console or the command-line. To set a quota from the command-line, run the following command for details:
+
+```bash
+beneath service update -h
+```

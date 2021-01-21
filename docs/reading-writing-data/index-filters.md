@@ -30,41 +30,41 @@ type StockPrice @schema {
 }
 ```
 
-**Filter for a key field**
+Filtering for a key field:
 
 ```json
 { "symbol": "AAPL" }
 ```
 
-Returns all stock prices for symbol `AAPL`.
+returns all stock prices for symbol `AAPL`.
 
-**Filter for a compound key**
+Filtering for a compound key:
 
 ```json
 { "symbol": "AAPL", "day": "2020-03-11T19:00:00" }
 ```
 
-Returns the stock price for symbol `AAPL` at 7pm on 11th March 2020.
+returns the stock price for symbol `AAPL` at 7pm on 11th March 2020.
 
-**Filter for a range in a compound key**
+Filtering for a range in a compound key:
 
 ```json
 { "symbol": "AAPL", "day": { "_gte": "2020-03-09", "_lt": "2020-03-16" } }
 ```
 
-Returns all stock prices for symbol `AAPL` between 9th and 16th March 2020 (`_gte` means "greater than or equal to" and `_lt` means "less than").
+returns all stock prices for symbol `AAPL` between 9th and 16th March 2020 (`_gte` means "greater than or equal to" and `_lt` means "less than").
 
-**Filter by prefix**
+Filtering by prefix:
 
 ```json
 { "symbol": { "_prefix": "A" } }
 ```
 
-Returns all stock prices for all symbols starting with `A`.
+returns all stock prices for all symbols starting with `A`.
 
 ## Representing data types as JSON
 
-Not every schema field type can be natively represented in JSON. The table below shows how to encode every data type
+Not every schema field type can be natively represented in JSON. The table below shows how to encode Beneath's supported data types in JSON:
 
 | Type        | Definition                                                                                                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
