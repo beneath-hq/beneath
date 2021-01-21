@@ -24,11 +24,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     alignItems: "center",
     borderRadius: "4px",
     position: "relative",
-    backgroundColor: theme.palette.background.paper,
     border: "1px solid",
-    borderColor: "rgba(35, 48, 70, 1)",
+    borderColor: "rgba(83, 87, 101, 1)",
     padding: "0 12px",
-    height: 28
+    height: 28,
   },
   focused: {
     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
