@@ -1,13 +1,24 @@
 import _ from "lodash";
-import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Grid,
+  makeStyles,
+  Theme,
+} from "@material-ui/core";
 import { FC, useState, useEffect } from "react";
 
 import FilterField, { Operator, Field, Filter } from "./FilterField";
 import { Column, InputType } from "./schema";
+import CodeBlock from "components/CodeBlock";
 
 const useStyles = makeStyles((theme: Theme) => ({
   height: {
-    height: 28
+    height: 28,
   },
 }));
 
@@ -25,6 +36,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
   // Without it, we'd be forced to use the raw filter object as a dependency, and that doesn't work easily
   const [filterJSON, setFilterJSON] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
   // trigger filter update
   useEffect(() => {
@@ -126,7 +138,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
 
     // if field is not the last one in the index, then remove subsequent fields
     // this ensures that, when editing a field's filter, no subsequent fields maintain their filter
-    const idx = index.findIndex(col => col.name === field.name);
+    const idx = index.findIndex((col) => col.name === field.name);
     if (idx < index.length - 1) {
       removeField(idx + 1);
     }
@@ -139,17 +151,33 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
     <Grid container spacing={1} alignItems="center">
       {fields.map((field, index) => (
         <Grid item key={index}>
-          <FilterField
-            fields={[field]}
-            cancellable={index !== 0}
-            onBlur={onBlur}
-            onCancel={() => removeField(index)}
-          />
+          <FilterField fields={[field]} cancellable={index !== 0} onBlur={onBlur} onCancel={() => removeField(index)} />
         </Grid>
       ))}
       {showAdd && (
         <Grid item>
-          <Button onClick={addField} size="small" className={classes.height}>Add</Button>
+          <Button onClick={addField} size="small" className={classes.height} variant="outlined">
+            Add
+          </Button>
+        </Grid>
+      )}
+      {filterJSON !== "" && filterJSON !== "{}" && (
+        <Grid item>
+          <Button onClick={() => setShowFilter(true)} size="small" className={classes.height} variant="outlined">
+            View filter
+          </Button>
+          <Dialog open={showFilter} onBackdropClick={() => setShowFilter(false)}>
+            <DialogTitle>Filter</DialogTitle>
+            <DialogContent>
+              <DialogContentText>Use this filter with the Beneath SDK to fetch the subset of records</DialogContentText>
+              <CodeBlock language={"python"}>{`${filterJSON}`}</CodeBlock>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowFilter(false)} color="primary">
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Grid>
       )}
     </Grid>
@@ -165,7 +193,6 @@ const getOperators = (type: InputType) => {
   }
   return operators;
 };
-
 
 const convertSymbolsToCodes = (fieldFilter: Filter) => {
   return _.mapKeys(fieldFilter, (_, key) => {

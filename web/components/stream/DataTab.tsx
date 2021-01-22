@@ -1,15 +1,4 @@
-import {
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Grid,
-  makeStyles,
-  Theme,
-  Typography,
-} from "@material-ui/core";
-import { Code } from "@material-ui/icons";
+import { Button, Chip, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
@@ -20,7 +9,6 @@ import { useToken } from "../../hooks/useToken";
 import RecordsTable from "./RecordsTable";
 import { Schema } from "./schema";
 import WriteStream from "./WriteStream";
-import CodeBlock from "components/CodeBlock";
 import FilterForm from "./FilterForm";
 import { NakedLink } from "components/Link";
 import VSpace from "components/VSpace";
@@ -53,12 +41,6 @@ const useStyles = makeStyles((theme: Theme) => ({
   errorCaption: {
     color: theme.palette.error.main,
   },
-  justifyLeftXsSm: {
-    [theme.breakpoints.down("sm")]: {
-      justifyContent: "left",
-    },
-  },
-  fetchMoreButton: {},
 }));
 
 const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
@@ -79,7 +61,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   // state
   const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
-  const [indexCodeDialog, setIndexCodeDialog] = React.useState(false); // opens up the See-the-Code dialog for the Index view
   const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
   const [filter, setFilter] = React.useState(""); // used in call to useRecords
 
@@ -168,143 +149,94 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     <>
       <ContentContainer callToAction={containerCta}>
         {/* top-row buttons */}
-        <Grid container justify="space-between" alignItems="flex-start" spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Grid container direction="column">
-              <Grid item>
-                <Grid container alignItems="flex-start" spacing={2}>
-                  <Grid item>
-                    <ToggleButtonGroup
-                      exclusive
-                      size="small"
-                      value={queryType}
-                      onChange={(_, value: "log" | "index" | null) => {
-                        if (value !== null) setQueryType(value);
-                      }}
-                    >
-                      <ToggleButton value="log" className={clsx(classes.topRowHeight, classes.toggleButton)}>
-                        Log
-                      </ToggleButton>
-                      <ToggleButton value="index" className={clsx(classes.topRowHeight, classes.toggleButton)}>
-                        Index
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </Grid>
-                  <Grid item>
-                    {isSubscribed(finalized, subscribeToggle) && (
-                      <Chip
-                        label="Live"
-                        variant="outlined"
-                        size="small"
-                        clickable
-                        onClick={() => setSubscribeToggle(false)}
-                        icon={<FiberManualRecordIcon className={classes.liveIcon} />}
-                        className={classes.topRowHeight}
-                      />
-                    )}
-                    {!isSubscribed(finalized, subscribeToggle) && (
-                      <Chip
-                        label="Paused"
-                        variant="outlined"
-                        size="small"
-                        clickable={isSubscribeable(finalized) ? true : false}
-                        onClick={() => {
-                          if (isSubscribeable(finalized)) {
-                            setSubscribeToggle(true);
-                          }
-                          return;
-                        }}
-                        icon={<FiberManualRecordIcon className={classes.pausedIcon} />}
-                        className={classes.topRowHeight}
-                      />
-                    )}
-                  </Grid>
-                  <Grid item>
-                    {queryType === "log" && (
-                      <>
-                        {logPeek && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => setLogPeek(!logPeek)}
-                            size="small"
-                            startIcon={<ArrowDownwardIcon />}
-                            className={classes.topRowHeight}
-                          >
-                            Newest to Oldest
-                          </Button>
-                        )}
-                        {!logPeek && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => setLogPeek(!logPeek)}
-                            size="small"
-                            startIcon={<ArrowDownwardIcon />}
-                            className={classes.topRowHeight}
-                          >
-                            Oldest to Newest
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    {queryType === "index" && (
-                      <>
-                        <Grid container direction="row" alignItems="center" spacing={2}>
-                          <Grid item>
-                            <FilterForm
-                              index={schema.columns.filter((col) => col.isKey)}
-                              onChange={(filter) => setFilter(filter)}
-                            />
-                          </Grid>
-                          {filter && (
-                            <Grid item>
-                              <Button
-                                onClick={() => {
-                                  setIndexCodeDialog(true);
-                                }}
-                                size="small"
-                                endIcon={<Code />}
-                                className={classes.topRowHeight}
-                              >
-                                Filter
-                              </Button>
-                              <Dialog open={indexCodeDialog} onBackdropClick={() => setIndexCodeDialog(false)}>
-                                <DialogContent>
-                                  <CodeBlock language={"python"}>{`${filter}`}</CodeBlock>
-                                </DialogContent>
-                                <DialogActions>
-                                  <Button onClick={() => setIndexCodeDialog(false)} color="primary">
-                                    Close
-                                  </Button>
-                                </DialogActions>
-                              </Dialog>
-                            </Grid>
-                          )}
-                        </Grid>
-                      </>
-                    )}
-                  </Grid>
-                </Grid>
-              </Grid>
-              <VSpace units={2} />
-              {queryType === "log" && (
-                <Grid item>
-                  <Typography variant="caption">Sort the stream by timestamp of each write.</Typography>
-                </Grid>
-              )}
-              {queryType === "index" && (
-                <Grid item>
-                  <Typography variant="caption">Query the stream by the key fields.</Typography>
-                </Grid>
-              )}
-            </Grid>
+        <Grid container spacing={1} alignItems="center">
+          <Grid item>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={queryType}
+              onChange={(_, value: "log" | "index" | null) => {
+                if (value !== null) setQueryType(value);
+              }}
+            >
+              <ToggleButton value="log" className={clsx(classes.topRowHeight, classes.toggleButton)}>
+                Log
+              </ToggleButton>
+              <ToggleButton value="index" className={clsx(classes.topRowHeight, classes.toggleButton)}>
+                Index
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Grid container spacing={2} justify="flex-end" className={classes.justifyLeftXsSm}>
-              <WriteStream
-                stream={stream}
-                instanceID={instance.streamInstanceID}
-                buttonStyleClass={classes.topRowHeight}
+          <Grid item>
+            {isSubscribed(finalized, subscribeToggle) && (
+              <Chip
+                label="Live"
+                variant="outlined"
+                size="small"
+                clickable
+                onClick={() => setSubscribeToggle(false)}
+                icon={<FiberManualRecordIcon className={classes.liveIcon} />}
+                className={classes.topRowHeight}
               />
+            )}
+            {!isSubscribed(finalized, subscribeToggle) && (
+              <Chip
+                label="Paused"
+                variant="outlined"
+                size="small"
+                clickable={isSubscribeable(finalized) ? true : false}
+                onClick={() => {
+                  if (isSubscribeable(finalized)) {
+                    setSubscribeToggle(true);
+                  }
+                  return;
+                }}
+                icon={<FiberManualRecordIcon className={classes.pausedIcon} />}
+                className={classes.topRowHeight}
+              />
+            )}
+          </Grid>
+          <Grid item>
+            {queryType === "log" && (
+              <>
+                {logPeek && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setLogPeek(!logPeek)}
+                    size="small"
+                    startIcon={<ArrowDownwardIcon />}
+                    className={classes.topRowHeight}
+                  >
+                    Newest to Oldest
+                  </Button>
+                )}
+                {!logPeek && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setLogPeek(!logPeek)}
+                    size="small"
+                    startIcon={<ArrowDownwardIcon />}
+                    className={classes.topRowHeight}
+                  >
+                    Oldest to Newest
+                  </Button>
+                )}
+              </>
+            )}
+            {queryType === "index" && (
+              <FilterForm index={schema.columns.filter((col) => col.isKey)} onChange={(filter) => setFilter(filter)} />
+            )}
+          </Grid>
+          <Grid item xs />
+          <Grid item>
+            <Grid container spacing={1}>
+              <Grid item>
+                <WriteStream
+                  stream={stream}
+                  instanceID={instance.streamInstanceID}
+                  buttonStyleClass={classes.topRowHeight}
+                />
+              </Grid>
               <Grid item>
                 <Button
                   variant="outlined"
@@ -321,6 +253,10 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
             </Grid>
           </Grid>
         </Grid>
+        <VSpace units={2} />
+        <Typography variant="caption">
+          {queryType === "log" ? "Sort the stream by timestamp of each write." : "Query the stream by the key fields."}
+        </Typography>
         {/* records table */}
         <VSpace units={2} />
         {filter !== "" && error && <Message error={true}>{error.message}</Message>}
