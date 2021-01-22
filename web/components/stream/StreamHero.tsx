@@ -37,6 +37,14 @@ const useStyles = makeStyles((theme) => ({
     border: `1px solid ${theme.palette.border.paper}`,
     color: theme.palette.common.white,
   },
+  verticalBar: {
+    display: "inline-block",
+    width: "1px",
+    height: "18px",
+    marginRight: "12px",
+    marginLeft: "12px",
+    backgroundColor: theme.palette.text.disabled,
+  },
 }));
 
 export interface StreamHeroProps {
@@ -89,6 +97,7 @@ interface InstanceUsageChips {
 
 // separate component to enable nested useTotalUsage
 const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
+  const classes = useStyles();
   const { data, loading, error } = useTotalUsage(EntityKind.StreamInstance, instance.streamInstanceID);
   if (!data) {
     return null;
@@ -97,22 +106,27 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
   const organizationName = stream.project.organization.name;
   const projectName = stream.project.name;
   const streamName = stream.name;
-  const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&tab=monitoring`;
+  const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${instance.version}&tab=monitoring`;
   const as = `/${organizationName}/${projectName}/stream:${streamName}/-/monitoring`;
 
   return (
     <>
       <Grid item>
         <Chip
-          label={numbro(data.writeRecords).format(intFormat) + " records"}
+          label={
+            <>
+              <Grid container alignItems="center">
+                <Grid item>{numbro(data.writeRecords).format(intFormat) + " records"}</Grid>
+                <Grid item className={classes.verticalBar} />
+                <Grid item>{numbro(data.writeBytes).format(bytesFormat)}</Grid>
+              </Grid>
+            </>
+          }
           clickable
           component={NakedLink}
           href={href}
           as={as}
         />
-      </Grid>
-      <Grid item>
-        <Chip label={numbro(data.writeBytes).format(bytesFormat)} clickable component={NakedLink} href={href} as={as} />
       </Grid>
     </>
   );
