@@ -3,17 +3,13 @@ from beneath.cli.utils import async_cmd, mb_to_bytes, pretty_print_graphql_resul
 
 
 def add_subparser(root):
-    organization = root.add_parser("organization").add_subparsers()
+    organization = root.add_parser(
+        "organization",
+        help="Manage users and organizations",
+        description="Manage users and organizations",
+    ).add_subparsers()
 
-    _show = organization.add_parser("show")
-    _show.set_defaults(func=async_cmd(show))
-    _show.add_argument("organization", type=str)
-
-    _member_permissions = organization.add_parser("show-members")
-    _member_permissions.set_defaults(func=async_cmd(show_member_permissions))
-    _member_permissions.add_argument("organization", type=str)
-
-    _update = organization.add_parser("update")
+    _update = organization.add_parser("update", help="Update a user or organization")
     _update.set_defaults(func=async_cmd(update))
     _update.add_argument("organization", type=str)
     _update.add_argument("--new-name", type=str)
@@ -21,11 +17,21 @@ def add_subparser(root):
     _update.add_argument("--description", type=str)
     _update.add_argument("--photo-url", type=str)
 
-    _create = organization.add_parser("create")
-    _create.set_defaults(func=async_cmd(create))
-    _create.add_argument("name", type=str)
+    _show = organization.add_parser("show", help="Show info about a user or organization")
+    _show.set_defaults(func=async_cmd(show))
+    _show.add_argument("organization", type=str)
 
-    _invite_user = organization.add_parser("invite-member")
+    _member_permissions = organization.add_parser(
+        "show-members",
+        help="List the users in an organization",
+    )
+    _member_permissions.set_defaults(func=async_cmd(show_member_permissions))
+    _member_permissions.add_argument("organization", type=str)
+
+    _invite_user = organization.add_parser(
+        "invite-member",
+        help="Invite user to join an organization",
+    )
     _invite_user.set_defaults(func=async_cmd(invite_user))
     _invite_user.add_argument("organization", type=str)
     _invite_user.add_argument("username", type=str)
@@ -39,24 +45,37 @@ def add_subparser(root):
         default=False,
     )
 
-    _accept_invite = organization.add_parser("accept-invite")
+    _accept_invite = organization.add_parser(
+        "accept-invite",
+        help="Accept an organization invite",
+    )
     _accept_invite.set_defaults(func=async_cmd(accept_invite))
     _accept_invite.add_argument("organization", type=str)
 
-    _update_member_quota = organization.add_parser("update-member-quota")
+    _update_member_quota = organization.add_parser(
+        "update-member-quota",
+        help="Update usage quotas for an organization member",
+    )
     _update_member_quota.set_defaults(func=async_cmd(update_member_quota))
     _update_member_quota.add_argument("username", type=str)
     _update_member_quota.add_argument("--read-quota-mb", type=int, required=True)
     _update_member_quota.add_argument("--write-quota-mb", type=int, required=True)
+    _update_member_quota.add_argument("--scan-quota-mb", type=int, required=True)
 
-    _leave = organization.add_parser("leave")
+    _leave = organization.add_parser("leave", help="Leave your current billing organization")
     _leave.set_defaults(func=async_cmd(leave))
 
-    _remove_member = organization.add_parser("remove-member")
+    _remove_member = organization.add_parser(
+        "remove-member",
+        help="Remove member from organization",
+    )
     _remove_member.set_defaults(func=async_cmd(remove_member))
     _remove_member.add_argument("username", type=str)
 
-    _update_member_permissions = organization.add_parser("update-permissions")
+    _update_member_permissions = organization.add_parser(
+        "update-permissions",
+        help="Update organization permissions for member",
+    )
     _update_member_permissions.set_defaults(func=async_cmd(update_member_permissions))
     _update_member_permissions.add_argument("organization", type=str)
     _update_member_permissions.add_argument("username", type=str)
@@ -82,11 +101,22 @@ def add_subparser(root):
         default=None,
     )
 
-    _update_org_quota = organization.add_parser("update-quota")
+    _create = organization.add_parser(
+        "create",
+        help="Create a new multi-user organization (master only)",
+    )
+    _create.set_defaults(func=async_cmd(create))
+    _create.add_argument("name", type=str)
+
+    _update_org_quota = organization.add_parser(
+        "update-quota",
+        help="Update an organization's quota hard cap (master only)",
+    )
     _update_org_quota.set_defaults(func=async_cmd(update_org_quota))
     _update_org_quota.add_argument("organization", type=str)
     _update_org_quota.add_argument("--read-quota-mb", type=int, required=True)
     _update_org_quota.add_argument("--write-quota-mb", type=int, required=True)
+    _update_org_quota.add_argument("--scan-quota-mb", type=int, required=True)
 
 
 async def show(args):
@@ -124,6 +154,7 @@ async def update_org_quota(args):
         organization_id=organization["organizationID"],
         read_quota_bytes=mb_to_bytes(args.read_quota_mb),
         write_quota_bytes=mb_to_bytes(args.write_quota_mb),
+        scan_quota_bytes=mb_to_bytes(args.scan_quota_mb),
     )
     pretty_print_graphql_result(result)
 
@@ -164,6 +195,7 @@ async def update_member_quota(args):
         user_id=user["personalUserID"],
         read_quota_bytes=mb_to_bytes(args.read_quota_mb) if args.read_quota_mb >= 0 else None,
         write_quota_bytes=mb_to_bytes(args.write_quota_mb) if args.write_quota_mb >= 0 else None,
+        scan_quota_bytes=mb_to_bytes(args.scan_quota_mb) if args.scan_quota_mb >= 0 else None,
     )
     pretty_print_graphql_result(result)
 

@@ -1,54 +1,70 @@
 from beneath.client import Client
 from beneath.utils import ProjectQualifier, ServiceQualifier, StreamQualifier
-from beneath.cli.utils import async_cmd, mb_to_bytes, pretty_print_graphql_result, str2bool
+from beneath.cli.utils import (
+    async_cmd,
+    mb_to_bytes,
+    pretty_print_graphql_result,
+    str2bool,
+    project_path_help,
+    service_path_help,
+    stream_path_help,
+)
 
 
 def add_subparser(root):
-    service = root.add_parser("service").add_subparsers()
+    service = root.add_parser(
+        "service",
+        help="Create and manage services",
+        description="A service represents a non-user account with its own permissions, secrets, "
+        "quotas and monitoring. They're used to access Beneath from production code.",
+    ).add_subparsers()
 
-    _list = service.add_parser("list")
+    _list = service.add_parser("list", help="List services in a project")
     _list.set_defaults(func=async_cmd(show_list))
-    _list.add_argument("project_path", type=str)
+    _list.add_argument("project_path", type=str, help=project_path_help)
 
-    _create = service.add_parser("create")
+    _create = service.add_parser("create", help="Create a new service")
     _create.set_defaults(func=async_cmd(create))
-    _create.add_argument("service_path", type=str)
+    _create.add_argument("service_path", type=str, help=service_path_help)
     _create.add_argument("--description", type=str)
     _create.add_argument("--source-url", type=str)
     _create.add_argument("--read-quota-mb", type=int)
     _create.add_argument("--write-quota-mb", type=int)
     _create.add_argument("--scan-quota-mb", type=int)
-    
-    _update = service.add_parser("update")
+
+    _update = service.add_parser("update", help="Update a service")
     _update.set_defaults(func=async_cmd(update))
-    _update.add_argument("service_path", type=str)
+    _update.add_argument("service_path", type=str, help=service_path_help)
     _update.add_argument("--description", type=str)
     _update.add_argument("--source-url", type=str)
     _update.add_argument("--read-quota-mb", type=int)
     _update.add_argument("--write-quota-mb", type=int)
     _update.add_argument("--scan-quota-mb", type=int)
 
-    _update_perms = service.add_parser("update-permissions")
+    _update_perms = service.add_parser(
+        "update-permissions",
+        help="Add/remove service permissions for streams",
+    )
     _update_perms.set_defaults(func=async_cmd(update_permissions))
-    _update_perms.add_argument("service_path", type=str)
-    _update_perms.add_argument("stream_path", type=str)
+    _update_perms.add_argument("service_path", type=str, help=service_path_help)
+    _update_perms.add_argument("stream_path", type=str, help=stream_path_help)
     _update_perms.add_argument("--read", type=str2bool, nargs="?", const=True, default=None)
     _update_perms.add_argument("--write", type=str2bool, nargs="?", const=True, default=None)
 
-    _delete = service.add_parser("delete")
+    _delete = service.add_parser("delete", help="Delete a service")
     _delete.set_defaults(func=async_cmd(delete))
-    _delete.add_argument("service_path", type=str)
+    _delete.add_argument("service_path", type=str, help=service_path_help)
 
-    _issue_secret = service.add_parser("issue-secret")
+    _issue_secret = service.add_parser("issue-secret", help="Issue a new service secret")
     _issue_secret.set_defaults(func=async_cmd(issue_secret))
-    _issue_secret.add_argument("service_path", type=str)
+    _issue_secret.add_argument("service_path", type=str, help=service_path_help)
     _issue_secret.add_argument("--description", type=str)
 
-    _list_secrets = service.add_parser("list-secrets")
+    _list_secrets = service.add_parser("list-secrets", help="List active secrets")
     _list_secrets.set_defaults(func=async_cmd(list_secrets))
-    _list_secrets.add_argument("service_path", type=str)
+    _list_secrets.add_argument("service_path", type=str, help=service_path_help)
 
-    _revoke_secret = service.add_parser("revoke-secret")
+    _revoke_secret = service.add_parser("revoke-secret", help="Revoke a service secret")
     _revoke_secret.set_defaults(func=async_cmd(revoke_secret))
     _revoke_secret.add_argument("secret_id", type=str)
 

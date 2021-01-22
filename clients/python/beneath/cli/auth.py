@@ -5,9 +5,18 @@ from beneath.connection import AuthenticationError
 
 
 def add_subparser(root):
-    _auth = root.add_parser("auth")
+    _auth = root.add_parser(
+        "auth",
+        help="Login to your Beneath account",
+        description="For authentication instructions, visit "
+        "https://about.beneath.dev/docs/quick-starts/install-sdk/",
+    )
     _auth.set_defaults(func=async_cmd(auth))
-    _auth.add_argument("secret", type=str)
+    _auth.add_argument(
+        "secret",
+        type=str,
+        help="Secret to use when making requests",
+    )
 
 
 async def auth(args):

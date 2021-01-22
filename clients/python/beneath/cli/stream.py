@@ -1,22 +1,34 @@
 from beneath.client import Client
 from beneath.utils import ProjectQualifier, StreamQualifier
-from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool
+from beneath.cli.utils import (
+    async_cmd,
+    pretty_print_graphql_result,
+    str2bool,
+    project_path_help,
+    stream_path_help,
+)
 
 
 def add_subparser(root):
-    stream = root.add_parser("stream").add_subparsers()
+    stream = root.add_parser(
+        "stream",
+        help="Create and manage streams and stream instances",
+        description="Create and manage streams and stream instances. Streams can have multiple "
+        "versions, known as instances. Learn more about streams at "
+        "https://about.beneath.dev/docs/concepts/streams/",
+    ).add_subparsers()
 
-    _list = stream.add_parser("list")
+    _list = stream.add_parser("list", help="List streams in a project")
     _list.set_defaults(func=async_cmd(show_list))
-    _list.add_argument("project_path", type=str)
+    _list.add_argument("project_path", type=str, help=project_path_help)
 
-    _show = stream.add_parser("show")
+    _show = stream.add_parser("show", help="Show info about a stream")
     _show.set_defaults(func=async_cmd(show_stream))
-    _show.add_argument("stream_path", type=str)
+    _show.add_argument("stream_path", type=str, help=stream_path_help)
 
-    _create = stream.add_parser("create")
+    _create = stream.add_parser("create", help="Create a new stream")
     _create.set_defaults(func=async_cmd(create))
-    _create.add_argument("stream_path", type=str)
+    _create.add_argument("stream_path", type=str, help=stream_path_help)
     _create.add_argument(
         "-f",
         "--file",
@@ -39,27 +51,32 @@ def add_subparser(root):
         "--warehouse-retention", type=int, help="Retention in seconds or 0 for infinite retention"
     )
 
-    _delete = stream.add_parser("delete")
+    _delete = stream.add_parser("delete", help="Delete a stream and its instances")
     _delete.set_defaults(func=async_cmd(delete))
-    _delete.add_argument("stream_path", type=str)
+    _delete.add_argument("stream_path", type=str, help=stream_path_help)
 
-    stream_instance = stream.add_parser("instance").add_subparsers()
+    stream_instance = stream.add_parser(
+        "instance",
+        help="Manage stream instances (versions)",
+        description="Manage stream instances (versions). "
+        "Learn more about stream instances at https://about.beneath.dev/docs/concepts/streams/",
+    ).add_subparsers()
 
-    _instance_list = stream_instance.add_parser("list")
+    _instance_list = stream_instance.add_parser("list", help="List all instances for stream")
     _instance_list.set_defaults(func=async_cmd(instance_list))
-    _instance_list.add_argument("stream_path", type=str)
+    _instance_list.add_argument("stream_path", type=str, help=stream_path_help)
 
-    _instance_create = stream_instance.add_parser("create")
+    _instance_create = stream_instance.add_parser("create", help="Create new instance")
     _instance_create.set_defaults(func=async_cmd(instance_create))
-    _instance_create.add_argument("stream_path", type=str)
+    _instance_create.add_argument("stream_path", type=str, help=stream_path_help)
     _instance_create.add_argument("--version", type=int, default=0)
     _instance_create.add_argument(
         "--make-primary", type=str2bool, nargs="?", const=True, default=None
     )
 
-    _instance_update = stream_instance.add_parser("update")
+    _instance_update = stream_instance.add_parser("update", help="Update instance")
     _instance_update.set_defaults(func=async_cmd(instance_update))
-    _instance_update.add_argument("instance", type=str)
+    _instance_update.add_argument("instance_id", type=str)
     _instance_update.add_argument(
         "--make-final", type=str2bool, nargs="?", const=True, default=None
     )
@@ -67,9 +84,9 @@ def add_subparser(root):
         "--make-primary", type=str2bool, nargs="?", const=True, default=None
     )
 
-    _instance_clear = stream_instance.add_parser("delete")
+    _instance_clear = stream_instance.add_parser("delete", help="Delete instance")
     _instance_clear.set_defaults(func=async_cmd(instance_delete))
-    _instance_clear.add_argument("instance", type=str)
+    _instance_clear.add_argument("instance_id", type=str)
 
 
 async def show_list(args):

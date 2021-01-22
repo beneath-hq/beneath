@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from beneath import __version__
 from beneath.cli import auth
@@ -10,6 +11,12 @@ from beneath.cli import stream
 
 def main():
     parser = create_argument_parser()
+
+    # print help if no args were provided
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
     args = parser.parse_args()
     try:
         func = args.func
@@ -19,7 +26,7 @@ def main():
 
 
 def create_argument_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Beneath command line interface")
     parser.add_argument("-v", "--version", action="version", version=__version__)
     root = parser.add_subparsers()
     auth.add_subparser(root)

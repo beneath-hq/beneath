@@ -42,6 +42,37 @@ class Projects:
         )
         return result["projectByOrganizationAndName"]
 
+    async def list_for_user(self, user_id):
+        result = await self.conn.query_control(
+            variables={
+                "userID": user_id,
+            },
+            query="""
+                query ProjectsForUser(
+                    $userID: UUID!
+                ) {
+                    projectsForUser(
+                        userID: $userID
+                    ) {
+                        projectID
+                        name
+                        displayName
+                        site
+                        description
+                        photoURL
+                        public
+                        organization {
+                            organizationID
+                            name
+                        }
+                        createdOn
+                        updatedOn
+                    }
+                }
+            """,
+        )
+        return result["projectsForUser"]
+
     async def create(
         self,
         organization_id,
