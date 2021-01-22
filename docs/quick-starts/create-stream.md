@@ -134,6 +134,6 @@ Then you can delete the empty project:
 beneath project delete USERNAME/PROJECT_NAME
 ```
 
-## Further examples
+## More info
 
-More examples of the Python SDK in action can be found in the [examples repo](https://gitlab.com/beneath-hq/beneath/-/tree/master/examples).
+More examples of the Python SDK in action can be found in the [examples repo](https://gitlab.com/beneath-hq/beneath/-/tree/master/examples). For full details about available classes and functions, check out the [Python client API reference](https://python.docs.beneath.dev/).

@@ -4,8 +4,8 @@ description: An overview of every resource that can be created and managed in Be
 menu:
   docs:
     parent: misc
-    weight: 100
-weight: 100
+    weight: 200
+weight: 200
 ---
 
 ## Users
