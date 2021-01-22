@@ -35,6 +35,14 @@ const useStyles = makeStyles((theme) => ({
   serviceChip: {
     backgroundColor: theme.palette.purple.main,
   },
+  verticalBar: {
+    display: "inline-block",
+    width: "1px",
+    height: "18px",
+    marginRight: "12px",
+    marginLeft: "12px",
+    backgroundColor: theme.palette.text.disabled,
+  },
 }));
 
 const intFormat = { thousandSeparated: true };
@@ -165,14 +173,18 @@ const ChipsCell: FC<{ resourceType: string; resourceID: string }> = ({ resourceT
 
     return (
       <TableCell align="right" className={classes.chipsCell}>
-        <Grid container spacing={2} justify="flex-end" wrap="nowrap">
-          <Grid item>
-            <Chip label={numbro(data.writeRecords).format(intFormat) + " records"} className={classes.pointer} />
-          </Grid>
-          <Grid item>
-            <Chip label={numbro(data.writeBytes).format(bytesFormat)} className={classes.pointer} />
-          </Grid>
-        </Grid>
+        <Chip
+          className={classes.pointer}
+          label={
+            <>
+              <Grid container alignItems="center">
+                <Grid item>{numbro(data.writeRecords).format(intFormat) + " records"}</Grid>
+                <Grid item className={classes.verticalBar} />
+                <Grid item>{numbro(data.writeBytes).format(bytesFormat)}</Grid>
+              </Grid>
+            </>
+          }
+        />
       </TableCell>
     );
   } else {
