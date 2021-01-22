@@ -12,9 +12,9 @@ weight: 200
 
 Every user and organization has a free quota included in their billing plan, and can upgrade to a paid plan to get larger fixed or pay-per-GB quotas.
 
-If you select a pay-per-GB plan, your monthly bill will include the next month's service and the previous month's GB usage. Note that the default pay-per-GB plans have hard caps to prevent you from racking up a planet-scale bill.
+If you select a pay-per-GB plan, your monthly bill will include the next month's base fee and the previous month's GB usage. Note that the default pay-per-GB plans have hard caps to prevent you from racking up a planet-scale bill ([contact us]({{< ref "/contact" >}}) to get a higher cap).
 
-All usage from services is counted against the project owner's billing quota. For multi-user organizations, each member user's usage is counted against the organization's billing plan.
+All usage from services is counted against the owner's billing quota. For multi-user organizations, each member's usage is also counted against the organization's billing plan.
 
 ## Billing periods
 

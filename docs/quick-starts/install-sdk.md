@@ -13,6 +13,7 @@ Install and authenticate with Beneath from your local machine to use the CLI (co
 ## Install with pip
 
 Run the following command at the terminal to install Beneath. You must have Python 3.7 or greater installed.
+
 ```bash
 pip3 install --upgrade beneath
 ```
@@ -29,20 +30,27 @@ To authenticate with Beneath from the command-line, you need a command-line secr
 ## Authenticate your local environment
 
 Run the following command, replacing `SECRET` with the secret you just obtained from the web console:
+
 ```bash
 beneath auth SECRET
-``` 
+```
 
 Now, when you use Beneath on your local machine (such as the CLI or in Python), it will automatically authenticate with this secret.
 
 ## Docs for the CLI
 
 To get an overview of the CLI, run:
+
 ```bash
 beneath --help
 ```
 
 To learn more about a specific command, run:
+
 ```bash
 beneath SUBCOMMAND --help
 ```
+
+## Docs for the Python client
+
+We recommend you check out the next quick start to get started with the Beneath client for Python, but if you want the full details about available classes and functions, you can also check out the [Python client API reference](https://python.docs.beneath.dev/).
