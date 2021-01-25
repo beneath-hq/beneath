@@ -141,7 +141,17 @@ app.prepare().then(() => {
 
   const addDynamicRoute = (route: string, page: string) => {
     server.get(route, (req, res) => {
-      app.render(req, res, page, req.params);
+      const params = { ...req.params };
+
+      // add query args to route params
+      for (const key in req.query) {
+        const value = req.query[key]
+        if (typeof value === "string") {
+          params[key] = value;
+        }
+      }
+
+      app.render(req, res, page, params);
     });
   };
 
