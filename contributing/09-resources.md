@@ -1,6 +1,6 @@
 ---
 title: Links and resources
-description: 
+description:
 menu:
   docs:
     parent: contributing
@@ -8,7 +8,7 @@ menu:
 weight: 900
 ---
 
-Use this document to track interesting resources (articles, videos, books, etc.) on topics relevant to the development of Beneath. 
+Use this document to track interesting resources (articles, videos, books, etc.) on topics relevant to the development of Beneath.
 
 ## Architecture
 
@@ -51,6 +51,8 @@ Use this document to track interesting resources (articles, videos, books, etc.)
 
 ## Log streaming
 
+- (Article) [The Log: What every software engineer should know about real-time data's unifying abstraction](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying)
+- (Article) [Online Event Processing](https://queue.acm.org/detail.cfm?id=3321612)
 - (Article) [Kafka Exactly Once Semantics](https://hevodata.com/blog/kafka-exactly-once/). Decent introduction to idempotency and atomic transactions in Kafka.
 - (Documentation) [Docs for `aiokafka`](https://aiokafka.readthedocs.io/en/stable/index.html). Good Python examples of stream processing with `await`s in Python
 
