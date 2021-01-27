@@ -8,30 +8,44 @@ menu:
 weight: 100
 ---
 
-Modern data systems often need to integrate several data technologies that serve different purposes. It quickly becomes non-trivial to integrate and maintain these technologies – indeed, that's the essence of the *data engineering* discipline.
+We have found that many production data science projects need to integrate several different data technologies to adequately consume and query data. To provide a seamless experience, when you write data to a stream in Beneath, it automatically replicates it to:
 
-Beneath aims to eliminate data engineering overhead for the majority of production data science projects. So in order to provide a seamless experience, Beneath bundles three of the most common kinds of data technologies and automatically integrates them.
+- a **streaming log** for replay/subscribe (e.g. to sync or enrich data)
+- a **data warehouse** for OLAP queries with SQL (e.g. to render dashboards)
+- an **operational data store** for scalable, indexed lookups (e.g. to render data in your frontend)
 
-## Data technologies
+Beneath lets you access these sources through a single layer of abstraction, so you can focus on your use cases without getting bogged down in integration and maintenance. The following section explains each of these technologies in more detail.
 
-The three *kinds* of data technologies Beneath bundles are:
+## Streaming log
 
-- **Streaming log:** A system that receives and stores *messages* (also called *events*) and streams them in real-time to other systems (called *subscribers*). Examples include Apache Kafka, RabbitMQ, Google Pub/Sub and Amazon Kinesis. Also (depending on its properties) called an *event log*,  *message queue* or *message broker*.
-- **Operational data index:** A system that stores data with a focus on fast indexed lookups of individual records. It allows you to fetch data in milliseconds, thousand of times per second, which is useful when rendering a website or serving an API. Examples include Bigtable, Cassandra, MongoDB and Postgres. Also (depending on its properties) called a *key-value store*, *relational database* or *OLTP database*.
-- **Data warehouse:** A system that stores data with a focus on analytical processing, for example business intelligence. It's slow if you need to quickly find individual rows, but very fast when you need to analyze an entire dataset. Examples include BigQuery, Redshift, Hive and Snowflake. Also (with some variation) called a *data lake* or *OLAP database*.
+The streaming log keeps real-time, ordered track of every record written to a stream, allowing you to read new data starting from any point in time _without missing a single change_.
 
-When you write data to Beneath, it consistently becomes available in an instance of each of these three systems.
+In practice, it means you can replay the history of a stream as if you had been subscribed since its beginning, then stay subscribed to get every new change within milliseconds of it happening. If your code is down for a while or only runs periodically, you can get every change that happened in the meantime once you resubscribe (it's an _at-least-once guarantee_).
 
-By automatically configuring and integrating these different technologies, Beneath allows you to get started working on your data sourcing and transformations right away. Not only do you save months of wiring data technologies, you also get a stable data system that's continuously updated with new best practices.
+(Systems that can serve as a streaming log are sometimes called an _event log_ or _message queue_, and stand-alone implementations include Apache Kafka, Amazon Kinesis, Cloud Pubsub and RabbitMQ).
+
+## Data warehouse
+
+The data warehouse stores records with a focus on analytical processing with SQL, making it ideal for business intelligence and ad-hoc exploration. It's slow for finding individual records, but lets you scan and analyze an entire stream in seconds.
+
+(Systems that serve as a data warehouse are sometimes called a _data lake_ or _OLAP database_, and stand-alone implementations include BigQuery, Snowflake, Redshift and Hive).
+
+## Operational data store
+
+The operational data store enables fast, indexed lookups of individual records or specific ranges of records. It allows you to fetch records in milliseconds, thousand of times per second, which is useful when rendering a website or serving an API.
+
+In Beneath, records are currently indexed based on their unique key (see [Streams]({{< ref "/docs/concepts/streams" >}}) for more). For streams that contain multiple records with the same unique key (for example due to updates), the operational data store only indexes the most recent record.
+
+(While broader categories, _key-value stores_ and _OLTP databases_ often serve as operational data stores, and popular stand-alone implementations include MongoDB, Postgres, Cassandra and Bigtable).
 
 ## Example
 
-To illustrate how these systems work in tandem, imagine you're building a weather forecasting website. Every time you get new weather data, you write it to Beneath and it becomes available in every system. The *streaming log* instantly pushes the data to your weather prediction model, which uses it to compute an updated forecast that it writes back into Beneath. Every time someone visits your website, you serve them the most recent forecast from the *operational data index*. Once a day, you re-train your weather prediction model with a complex query that runs in the *data warehouse*.
+To illustrate how these systems work in tandem, imagine you're building a weather forecasting website. Every time you get new weather data, you write it to Beneath and it becomes available in every system. The _streaming log_ instantly pushes the data to your weather prediction model, which uses it to compute an updated forecast that it writes back into Beneath. Every time someone visits your website, you serve them the most recent forecast from the _operational data index_. Once a day, you re-train your weather prediction model with a complex SQL query that runs in the _data warehouse_.
 
 ## Technologies Beneath uses under the hood
 
-Under the hood, the cloud version of Beneath uses Google Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as an operational data index. If you self-host Beneath, we provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
+We're not interested in reinventing the wheel, so under the hood, Beneath uses battle-tested data technologies. The cloud version of Beneath uses a combination of Google Bigtable and Cloud Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as an operational data store. If you self-host Beneath, we provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
 
 ## Other data technologies
 
-In addition to the three categories mentioned above, there are some rarer categories that are also worth mentioning. They include stream processing engines (for running your data transformation code), graph databases (for querying networks of data), and full-text search systems (for advanced search). Beneath doesn't currently bundle them, but we're working on changing that!
+In addition to the three data technologies mentioned above, there are some rarer technologies worth mentioning, such as graph databases (for querying networks of data) and full-text search systems (for advanced search). We're devoted to covering more data access paradigms, so if Beneath doesn't currently serve your use case, we would love to [hear from you]({{< ref "/contact" >}}).
