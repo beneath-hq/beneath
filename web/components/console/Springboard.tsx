@@ -46,7 +46,7 @@ const Springboard: FC = () => {
   const me = useMe();
   const classes = useStyles();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up("md"));
+  const isMd = useMediaQuery(theme.breakpoints.up("md"), { defaultMatches: true });
 
   if (!me || !me.personalUserID) {
     return <p>Need to log in to view your dashboard -- this shouldn't ever get hit</p>;

@@ -35,7 +35,10 @@ export default class MyDocument extends Document {
           {/* This should really be the only place you make any changes */}
 
           {/* Description tag */}
-          <meta name="description" content="Beneath is a single platform for building data apps" />
+          <meta
+            name="description"
+            content="Streams you can replay, subscribe, query, and share. We're building a better developer experience for data apps."
+          />
 
           {/* Blog RSS feed */}
           <link
