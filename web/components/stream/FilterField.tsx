@@ -1,3 +1,4 @@
+import _ from "lodash";
 import {
   Divider,
   Icon,
@@ -90,8 +91,8 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export type Operator = "" | "=" | ">" | "<" | "<=" | ">=" | "prefix";
-export type Filter = { [key in Operator]: string };
+export type Operator = "" | "_eq" | "_gt" | "_lt" | "_lte" | "_gte" | "_prefix";
+export type FieldFilter = { [key in Operator]: string };
 
 export interface Field {
   name: string;
@@ -100,87 +101,41 @@ export interface Field {
 }
 
 export interface FilterFieldProps {
+  filter: any;
   fields: Field[];
+  initialField: Field;
+  initialOperator?: Operator;
+  initialFieldValue?: string;
   cancellable?: boolean;
-  onBlur?: (field: Field, filter: Filter) => void;
+  onBlur?: (field: Field, fieldFilter: FieldFilter) => void;
   onCancel?: () => void;
 }
 
-const getOperators = (type: InputType, firstOperator?: Operator): Operator[] | null => {
-  if (firstOperator) {
-    if (firstOperator === "<" || firstOperator === "<=") {
-      return ["", ">", ">="];
-    } else if (firstOperator === ">" || firstOperator === ">=") {
-      return ["", "<", "<="];
-    }
-    return null;
-  }
-
-  const operators: Operator[] = ["=", "<", ">", "<=", ">="];
-  if (type === "text" || type === "hex") {
-    operators.push("prefix");
-  }
-  return operators;
-};
-
-export const getPlaceholder = (type: InputType) => {
-  if (type === "text") {
-    return "Abcd...";
-  } else if (type === "hex") {
-    return "0x12ab...";
-  } else if (type === "integer") {
-    return "1234...";
-  } else if (type === "float") {
-    return "1.234...";
-  } else if (type === "datetime") {
-    return "2006-01-02T15:04:05";
-  }
-  return "";
-};
-
-export const validateValue = (type: InputType, value: string): string | null => {
-  if (!value || value.length === 0 || type === "text") {
-    return null;
-  }
-
-  if (type === "hex") {
-    if (!value.match(/^0x[0-9a-fA-F]+$/)) {
-      return "Expected a hexadecimal value starting with '0x'";
-    }
-  } else if (type === "integer") {
-    if (!value.match(/^[0-9]+$/)) {
-      return "Expected an integer";
-    }
-  } else if (type === "float") {
-    if (isNaN(parseFloat(value))) {
-      return "Expected a floating-point number";
-    }
-  } else if (type === "datetime") {
-    const t = new Date(value);
-    if (isNaN(t.valueOf())) {
-      return "Expected a valid timestamp";
-    }
-  }
-  return null;
-};
-
-const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCancel }) => {
+const FilterField: FC<FilterFieldProps> = ({
+  fields,
+  initialField,
+  initialOperator,
+  initialFieldValue,
+  cancellable,
+  onBlur,
+  onCancel,
+}) => {
   const classes = useStyles();
   const [focused, setFocused] = useState(false);
-  const [field, setField] = useState(fields[0]);
-  const [firstOperator, setFirstOperator] = useState<Operator>("=");
-  const [firstValue, setFirstValue] = useState("");
+  const [field, setField] = useState<Field>(initialField);
+  const [firstOperator, setFirstOperator] = useState<Operator>(initialOperator ? initialOperator : "_eq");
+  const [firstValue, setFirstValue] = useState(initialFieldValue ? initialFieldValue : "");
   const [firstHasError, setFirstHasError] = useState(false);
   // TODO: add secondary operators in the future (e.g. greater than and less than)
 
   const blur = () => {
     if (onBlur) {
       if (!firstHasError) {
-        const filter = {} as Filter;
+        const fieldFilter = {} as FieldFilter;
         if (firstValue) {
-          filter[firstOperator] = firstValue;
+          fieldFilter[firstOperator] = firstValue;
         }
-        onBlur(field, filter);
+        onBlur(field, fieldFilter);
       }
     }
   };
@@ -199,7 +154,7 @@ const FilterField: FC<FilterFieldProps> = ({ fields, cancellable, onBlur, onCanc
           for (const field of fields) {
             if (field.name === e.target.value) {
               setField(field);
-              setFirstOperator("=");
+              setFirstOperator("_eq");
               setFirstValue("");
               setFirstHasError(false);
               break;
@@ -299,7 +254,7 @@ const OperatorValueField: FC<OperatorValueField> = ({
       >
         {operators.map((op) => (
           <MenuItem key={op} value={op}>
-            {op}
+            {getOpSymbol(op)}
           </MenuItem>
         ))}
       </Select>
@@ -345,4 +300,86 @@ const OperatorValueField: FC<OperatorValueField> = ({
       )}
     </>
   );
+};
+
+const getOperators = (type: InputType, firstOperator?: Operator): Operator[] | null => {
+  if (firstOperator) {
+    if (firstOperator === "_lt" || firstOperator === "_lte") {
+      return ["", "_gt", "_gte"];
+    } else if (firstOperator === "_gt" || firstOperator === "_gte") {
+      return ["", "_lt", "_lte"];
+    }
+    return null;
+  }
+
+  const operators: Operator[] = ["_eq", "_lt", "_gt", "_lte", "_gte"];
+  if (type === "text" || type === "hex") {
+    operators.push("_prefix");
+  }
+  return operators;
+};
+
+export const getPlaceholder = (type: InputType) => {
+  if (type === "text") {
+    return "Abcd...";
+  } else if (type === "hex") {
+    return "0x12ab...";
+  } else if (type === "integer") {
+    return "1234...";
+  } else if (type === "float") {
+    return "1.234...";
+  } else if (type === "datetime") {
+    return "2006-01-02T15:04:05";
+  }
+  return "";
+};
+
+export const validateValue = (type: InputType, value: string): string | null => {
+  if (!value || value.length === 0 || type === "text") {
+    return null;
+  }
+
+  if (type === "hex") {
+    if (!value.match(/^0x[0-9a-fA-F]+$/)) {
+      return "Expected a hexadecimal value starting with '0x'";
+    }
+  } else if (type === "integer") {
+    if (!value.match(/^[0-9]+$/)) {
+      return "Expected an integer";
+    }
+  } else if (type === "float") {
+    if (isNaN(parseFloat(value))) {
+      return "Expected a floating-point number";
+    }
+  } else if (type === "datetime") {
+    const t = new Date(value);
+    if (isNaN(t.valueOf())) {
+      return "Expected a valid timestamp";
+    }
+  }
+  return null;
+};
+
+const getOpSymbol = (op: Operator) => {
+  switch (op) {
+    case "_eq": {
+      return "=";
+    }
+    case "_gt": {
+      return ">";
+    }
+    case "_lt": {
+      return "<";
+    }
+    case "_lte": {
+      return "<=";
+    }
+    case "_gte": {
+      return ">=";
+    }
+    case "_prefix": {
+      return "prefix";
+    }
+  }
+  console.error("unexpected op: ", op);
 };

@@ -1,8 +1,10 @@
+import { useRecords } from "beneath-react";
+import _ from "lodash";
 import { Button, Chip, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
-import { useRecords } from "beneath-react";
+import { useRouter } from "next/router";
 import React, { FC, useEffect, useState } from "react";
 
 import { useToken } from "../../hooks/useToken";
@@ -59,16 +61,49 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   const finalized = !!instance.madeFinalOn;
 
   // state
-  const [queryType, setQueryType] = useState<"log" | "index">(finalized ? "index" : "log");
   const [logPeek, setLogPeek] = useState(finalized ? false : true);
   const [subscribeToggle, setSubscribeToggle] = React.useState(true); // updated by the LIVE/PAUSED toggle (used in call to useRecords)
-  const [filter, setFilter] = React.useState(""); // used in call to useRecords
 
   // optimization: initializing a schema is expensive, so we keep it as state and reload it if stream changes
   const [schema, setSchema] = useState(() => new Schema(stream.avroSchema, stream.streamIndexes));
   useEffect(() => {
     setSchema(new Schema(stream.avroSchema, stream.streamIndexes));
   }, [stream.streamID]);
+
+  const router = useRouter();
+  const [filter, setFilter] = useState<any>(() => {
+    const emptyFilter = {};
+
+    // checks to see if a filter was provided in the URL
+    if (typeof router.query.filter !== "string") return emptyFilter;
+
+    // attempts to parse JSON
+    let filter: any;
+    try {
+      filter = JSON.parse(router.query.filter);
+    } catch {
+      return emptyFilter;
+    }
+
+    // checks that the filter's keys are in the stream's index
+    const keys = Object.keys(filter);
+    const index = schema.columns.filter((col) => col.isKey);
+    for (const key of keys) {
+      const col = index.find((col) => col.name === key);
+      if (typeof col === "undefined") return emptyFilter;
+    }
+
+    // if query submitted in form {"key": "value"}, convert it to form {"key": {"_eq": "value"}}
+    for (const key of keys) {
+      const val = filter[key];
+      if (typeof val !== "object") {
+        filter[key] = { _eq: val };
+      }
+    }
+
+    return filter;
+  });
+  const [queryType, setQueryType] = useState<"log" | "index">(finalized || !_.isEmpty(filter) ? "index" : "log");
 
   // get records
   const token = useToken();
@@ -79,7 +114,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     },
     query:
       queryType === "index"
-        ? { type: "index", filter: filter === "" ? undefined : filter }
+        ? { type: "index", filter: _.isEmpty(filter) ? undefined : JSON.stringify(filter) }
         : { type: "log", peek: logPeek },
     pageSize: 25,
     subscribe: isSubscribed(finalized, subscribeToggle)
@@ -94,6 +129,22 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   });
 
   const classes = useStyles();
+
+  // set filter in URL
+  useEffect(() => {
+    const organizationName = stream.project.organization.name;
+    const projectName = stream.project.name;
+    const streamName = stream.name;
+    const filterJSON = JSON.stringify(filter);
+
+    const href =
+      `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${instance.version.toString()}` +
+      (filterJSON !== "{}" ? `&filter=${filterJSON}` : "");
+    const as =
+      `${organizationName}/${projectName}/stream:${streamName}/${instance.version}` +
+      (filterJSON !== "{}" ? `?filter=${encodeURIComponent(filterJSON)}` : "");
+    router.replace(href, as);
+  }, [JSON.stringify(filter)]);
 
   // LOADING
   let loadingBool: boolean | undefined;
@@ -224,7 +275,11 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
               </>
             )}
             {queryType === "index" && (
-              <FilterForm index={schema.columns.filter((col) => col.isKey)} onChange={(filter) => setFilter(filter)} />
+              <FilterForm
+                filter={filter}
+                index={schema.columns.filter((col) => col.isKey)}
+                onChange={(filter: any) => setFilter({ ...filter })}
+              />
             )}
           </Grid>
           <Grid item xs />

@@ -12,8 +12,8 @@ import {
 } from "@material-ui/core";
 import { FC, useState, useEffect } from "react";
 
-import FilterField, { Operator, Field, Filter } from "./FilterField";
-import { Column, InputType } from "./schema";
+import FilterField, { Operator, Field, FieldFilter } from "./FilterField";
+import { Column } from "./schema";
 import CodeBlock from "components/CodeBlock";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -24,29 +24,47 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 // the form
 interface FilterFormProps {
+  filter: any;
   index: Column[];
-  onChange: (filter: string) => void;
+  onChange: (filter: any) => void;
 }
 
-const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
+const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
   const classes = useStyles();
-  const [fields, setFields] = useState<Field[]>([]);
-  const [filter, setFilter] = useState<any>({});
-  // We additionally make a string version of the filter (called filterJSON) so we can use it as a dependency for useEffect
-  // Without it, we'd be forced to use the raw filter object as a dependency, and that doesn't work easily
-  const [filterJSON, setFilterJSON] = useState("");
+  const [fields, setFields] = useState<Field[]>(() => {
+    // filter is not empty; initialize fields with the keys present in the filter
+    if (!_.isEmpty(filter)) {
+      const keys = Object.keys(filter);
+      let fields: Field[] = [];
+      for (const key of keys) {
+        const col = index.find((col) => col.name === key) as Column;
+        const field = {
+          name: col.name,
+          type: col.inputType,
+          description: col.doc,
+        };
+        fields.push(field);
+      }
+      return fields;
+    }
+
+    // filter is empty; initialize fields with the first key in the index
+    const col = index[0];
+    return [
+      {
+        name: col.name,
+        type: col.inputType,
+        description: col.doc,
+      },
+    ];
+  });
+
   const [showAdd, setShowAdd] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
-  // trigger filter update
-  useEffect(() => {
-    const submit = filterJSON === "{}" ? "" : filterJSON;
-    onChange(submit);
-  }, [filterJSON]);
-
   // assess whether the Add button should be shown
   useEffect(() => {
-    if (filterJSON !== "" && filterJSON !== "{}") {
+    if (!_.isEmpty(filter)) {
       // Look at fields and index. If there are more fields in the index, then continue.
       if (fields.length === index.length) {
         setShowAdd(false);
@@ -63,7 +81,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       }
     }
     setShowAdd(false);
-  }, [filterJSON, fields]); // REVIEW: having "fields" here, since it's an object, probably doesn't do anything
+  }, [JSON.stringify(filter), fields]);
 
   const addField = () => {
     let col: Column | undefined;
@@ -87,12 +105,10 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
       return;
     }
 
-    const operators = getOperators(col.inputType);
     const field = {
       name: col.name,
-      description: col.doc,
       type: col.inputType,
-      operators,
+      description: col.doc,
     };
     setFields([...fields, field]);
   };
@@ -112,29 +128,26 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
         break;
       }
       delete filter[field.name];
+      onChange(filter);
     }
     setFields(fields.slice(0, idx));
-    setFilter(filter);
-    setFilterJSON(JSON.stringify(filter));
   };
 
-  const onBlur = (field: Field, fieldFilter: Filter) => {
-    // map fieldFilter operators to strings
-    const fieldFilterStrings = convertSymbolsToCodes(fieldFilter);
-
+  const onBlur = (field: Field, fieldFilter: FieldFilter) => {
     // delete all the keys from fieldFilter if there is no associated value
-    for (const op in fieldFilterStrings) {
-      if (fieldFilterStrings[op] === "") {
-        delete fieldFilterStrings[op];
+    for (const op in fieldFilter) {
+      if (fieldFilter[op as Operator] === "") {
+        delete fieldFilter[op as Operator];
       }
     }
 
-    // if the fieldFilterStrings is empty, then delete the field from the filter
-    if (_.isEmpty(fieldFilterStrings)) {
+    // if the fieldFilter is empty, then delete the field from the filter
+    if (_.isEmpty(fieldFilter)) {
       delete filter[field.name];
     } else {
-      filter[field.name] = fieldFilterStrings;
+      filter[field.name] = fieldFilter;
     }
+    onChange(filter);
 
     // if field is not the last one in the index, then remove subsequent fields
     // this ensures that, when editing a field's filter, no subsequent fields maintain their filter
@@ -142,18 +155,35 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
     if (idx < index.length - 1) {
       removeField(idx + 1);
     }
-
-    setFilter(filter);
-    setFilterJSON(JSON.stringify(filter));
   };
 
   return (
     <Grid container spacing={1} alignItems="center">
-      {fields.map((field, index) => (
-        <Grid item key={index}>
-          <FilterField fields={[field]} cancellable={index !== 0} onBlur={onBlur} onCancel={() => removeField(index)} />
-        </Grid>
-      ))}
+      {fields.map((field, index) => {
+        let initialOperator: Operator | undefined;
+        let initialFieldValue: string | undefined;
+
+        // if the filter already includes the field, it'll populate the component with the values
+        if (Object.keys(filter).includes(field.name)) {
+          initialOperator = Object.keys(filter[field.name])[0] as Operator;
+          initialFieldValue = filter[field.name][initialOperator];
+        }
+
+        return (
+          <Grid item key={index}>
+            <FilterField
+              filter={filter}
+              fields={[field]}
+              initialField={field}
+              initialOperator={initialOperator}
+              initialFieldValue={initialFieldValue}
+              cancellable={index !== 0}
+              onBlur={onBlur}
+              onCancel={() => removeField(index)}
+            />
+          </Grid>
+        );
+      })}
       {showAdd && (
         <Grid item>
           <Button onClick={addField} size="small" className={classes.height} variant="outlined">
@@ -161,7 +191,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
           </Button>
         </Grid>
       )}
-      {filterJSON !== "" && filterJSON !== "{}" && (
+      {!_.isEmpty(filter) && (
         <Grid item>
           <Button onClick={() => setShowFilter(true)} size="small" className={classes.height} variant="outlined">
             View filter
@@ -170,7 +200,7 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
             <DialogTitle>Filter</DialogTitle>
             <DialogContent>
               <DialogContentText>Use this filter with the Beneath SDK to fetch the subset of records</DialogContentText>
-              <CodeBlock language={"python"}>{`${filterJSON}`}</CodeBlock>
+              <CodeBlock language={"python"}>{`${JSON.stringify(filter)}`}</CodeBlock>
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setShowFilter(false)} color="primary">
@@ -185,41 +215,3 @@ const FilterForm: FC<FilterFormProps> = ({ index, onChange }) => {
 };
 
 export default FilterForm;
-
-const getOperators = (type: InputType) => {
-  const operators: Operator[] = ["=", "<", ">", "<=", ">="];
-  if (type === "text" || type === "hex") {
-    operators.push("prefix");
-  }
-  return operators;
-};
-
-const convertSymbolsToCodes = (fieldFilter: Filter) => {
-  return _.mapKeys(fieldFilter, (_, key) => {
-    return getOp(key as Operator);
-  });
-};
-
-const getOp = (op: Operator) => {
-  switch (op) {
-    case "=": {
-      return "_eq";
-    }
-    case ">": {
-      return "_gt";
-    }
-    case "<": {
-      return "_lt";
-    }
-    case "<=": {
-      return "_lte";
-    }
-    case ">=": {
-      return "_gte";
-    }
-    case "prefix": {
-      return "_prefix";
-    }
-  }
-  console.error("unexpected op: ", op);
-};
