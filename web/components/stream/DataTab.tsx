@@ -72,28 +72,36 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
 
   const router = useRouter();
   const [filter, setFilter] = useState<any>(() => {
-    const emptyFilterObj = {};
+    const emptyFilter = {};
 
     // checks to see if a filter was provided in the URL
-    if (typeof router.query.filter !== "string") return emptyFilterObj;
+    if (typeof router.query.filter !== "string") return emptyFilter;
 
     // attempts to parse JSON
-    let filterObj: any;
+    let filter: any;
     try {
-      filterObj = JSON.parse(router.query.filter);
+      filter = JSON.parse(router.query.filter);
     } catch {
-      return emptyFilterObj;
+      return emptyFilter;
     }
 
     // checks that the filter's keys are in the stream's index
-    const keys = Object.keys(filterObj);
+    const keys = Object.keys(filter);
     const index = schema.columns.filter((col) => col.isKey);
     for (const key of keys) {
       const col = index.find((col) => col.name === key);
-      if (typeof col === "undefined") return emptyFilterObj;
+      if (typeof col === "undefined") return emptyFilter;
     }
 
-    return filterObj;
+    // if query submitted in form {"key": "value"}, convert it to form {"key": {"_eq": "value"}}
+    for (const key of keys) {
+      const val = filter[key];
+      if (typeof val !== "object") {
+        filter[key] = { _eq: val };
+      }
+    }
+
+    return filter;
   });
   const [queryType, setQueryType] = useState<"log" | "index">(finalized || !_.isEmpty(filter) ? "index" : "log");
 
@@ -134,7 +142,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
       (filterJSON !== "{}" ? `&filter=${filterJSON}` : "");
     const as =
       `${organizationName}/${projectName}/stream:${streamName}/${instance.version}` +
-      (filterJSON !== "{}" ? `?filter=${filterJSON}` : "");
+      (filterJSON !== "{}" ? `?filter=${encodeURIComponent(filterJSON)}` : "");
     router.replace(href, as);
   }, [JSON.stringify(filter)]);
 
