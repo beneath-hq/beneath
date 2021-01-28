@@ -134,21 +134,18 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
   };
 
   const onBlur = (field: Field, fieldFilter: FieldFilter) => {
-    // map fieldFilter operators to strings
-    const fieldFilterStrings = convertSymbolsToCodes(fieldFilter);
-
     // delete all the keys from fieldFilter if there is no associated value
-    for (const op in fieldFilterStrings) {
-      if (fieldFilterStrings[op] === "") {
-        delete fieldFilterStrings[op];
+    for (const op in fieldFilter) {
+      if (fieldFilter[op as Operator] === "") {
+        delete fieldFilter[op as Operator];
       }
     }
 
-    // if the fieldFilterStrings is empty, then delete the field from the filter
-    if (_.isEmpty(fieldFilterStrings)) {
+    // if the fieldFilter is empty, then delete the field from the filter
+    if (_.isEmpty(fieldFilter)) {
       delete filter[field.name];
     } else {
-      filter[field.name] = fieldFilterStrings;
+      filter[field.name] = fieldFilter;
     }
     onChange(filter);
 
@@ -163,15 +160,13 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
   return (
     <Grid container spacing={1} alignItems="center">
       {fields.map((field, index) => {
-        let firstOperatorSymbol: Operator | undefined;
-        let firstOperatorText: string | undefined;
+        let initialOperator: Operator | undefined;
         let initialFieldValue: string | undefined;
 
         // if the filter already includes the field, it'll populate the component with the values
         if (Object.keys(filter).includes(field.name)) {
-          firstOperatorSymbol = getOpSymbol(Object.keys(filter[field.name])[0]) as Operator;
-          firstOperatorText = Object.keys(filter[field.name])[0];
-          initialFieldValue = filter[field.name][firstOperatorText];
+          initialOperator = Object.keys(filter[field.name])[0] as Operator;
+          initialFieldValue = filter[field.name][initialOperator];
         }
 
         return (
@@ -180,7 +175,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
               filter={filter}
               fields={[field]}
               initialField={field}
-              initialOperator={firstOperatorSymbol}
+              initialOperator={initialOperator}
               initialFieldValue={initialFieldValue}
               cancellable={index !== 0}
               onBlur={onBlur}
@@ -220,57 +215,3 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
 };
 
 export default FilterForm;
-
-const convertSymbolsToCodes = (fieldFilter: FieldFilter) => {
-  return _.mapKeys(fieldFilter, (_, key) => {
-    return getOpText(key as Operator);
-  });
-};
-
-const getOpText = (op: Operator) => {
-  switch (op) {
-    case "=": {
-      return "_eq";
-    }
-    case ">": {
-      return "_gt";
-    }
-    case "<": {
-      return "_lt";
-    }
-    case "<=": {
-      return "_lte";
-    }
-    case ">=": {
-      return "_gte";
-    }
-    case "prefix": {
-      return "_prefix";
-    }
-  }
-  console.error("unexpected op: ", op);
-};
-
-const getOpSymbol = (opText: string) => {
-  switch (opText) {
-    case "_eq": {
-      return "=";
-    }
-    case "_gt": {
-      return ">";
-    }
-    case "_lt": {
-      return "<";
-    }
-    case "_lte": {
-      return "<=";
-    }
-    case "_gte": {
-      return ">=";
-    }
-    case "_prefix": {
-      return "prefix";
-    }
-  }
-  console.error("unexpected opText: ", opText);
-};

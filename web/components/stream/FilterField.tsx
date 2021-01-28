@@ -1,3 +1,4 @@
+import _ from "lodash";
 import {
   Divider,
   Icon,
@@ -90,7 +91,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export type Operator = "" | "=" | ">" | "<" | "<=" | ">=" | "prefix";
+export type Operator = "" | "_eq" | "_gt" | "_lt" | "_lte" | "_gte" | "_prefix";
 export type FieldFilter = { [key in Operator]: string };
 
 export interface Field {
@@ -122,7 +123,7 @@ const FilterField: FC<FilterFieldProps> = ({
   const classes = useStyles();
   const [focused, setFocused] = useState(false);
   const [field, setField] = useState<Field>(initialField);
-  const [firstOperator, setFirstOperator] = useState<Operator>(initialOperator ? initialOperator : "=");
+  const [firstOperator, setFirstOperator] = useState<Operator>(initialOperator ? initialOperator : "_eq");
   const [firstValue, setFirstValue] = useState(initialFieldValue ? initialFieldValue : "");
   const [firstHasError, setFirstHasError] = useState(false);
   // TODO: add secondary operators in the future (e.g. greater than and less than)
@@ -153,7 +154,7 @@ const FilterField: FC<FilterFieldProps> = ({
           for (const field of fields) {
             if (field.name === e.target.value) {
               setField(field);
-              setFirstOperator("=");
+              setFirstOperator("_eq");
               setFirstValue("");
               setFirstHasError(false);
               break;
@@ -253,7 +254,7 @@ const OperatorValueField: FC<OperatorValueField> = ({
       >
         {operators.map((op) => (
           <MenuItem key={op} value={op}>
-            {op}
+            {getOpSymbol(op)}
           </MenuItem>
         ))}
       </Select>
@@ -303,17 +304,17 @@ const OperatorValueField: FC<OperatorValueField> = ({
 
 const getOperators = (type: InputType, firstOperator?: Operator): Operator[] | null => {
   if (firstOperator) {
-    if (firstOperator === "<" || firstOperator === "<=") {
-      return ["", ">", ">="];
-    } else if (firstOperator === ">" || firstOperator === ">=") {
-      return ["", "<", "<="];
+    if (firstOperator === "_lt" || firstOperator === "_lte") {
+      return ["", "_gt", "_gte"];
+    } else if (firstOperator === "_gt" || firstOperator === "_gte") {
+      return ["", "_lt", "_lte"];
     }
     return null;
   }
 
-  const operators: Operator[] = ["=", "<", ">", "<=", ">="];
+  const operators: Operator[] = ["_eq", "_lt", "_gt", "_lte", "_gte"];
   if (type === "text" || type === "hex") {
-    operators.push("prefix");
+    operators.push("_prefix");
   }
   return operators;
 };
@@ -357,4 +358,28 @@ export const validateValue = (type: InputType, value: string): string | null => 
     }
   }
   return null;
+};
+
+const getOpSymbol = (op: Operator) => {
+  switch (op) {
+    case "_eq": {
+      return "=";
+    }
+    case "_gt": {
+      return ">";
+    }
+    case "_lt": {
+      return "<";
+    }
+    case "_lte": {
+      return "<=";
+    }
+    case "_gte": {
+      return ">=";
+    }
+    case "_prefix": {
+      return "prefix";
+    }
+  }
+  console.error("unexpected op: ", op);
 };
