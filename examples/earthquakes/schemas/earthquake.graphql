@@ -1,0 +1,13 @@
+type Earthquake @schema {
+  " Time of earthquake "
+  time: Timestamp! @key
+
+  " Richter scale magnitude "
+  mag: Float32
+
+  " Location of earthquake "
+  place: String!
+
+  " Link for more information "
+  detail: String
+}
