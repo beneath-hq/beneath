@@ -49,6 +49,7 @@ class Services:
         read_quota_bytes=None,
         write_quota_bytes=None,
         scan_quota_bytes=None,
+        update_if_exists=None,
     ):
         result = await self.conn.query_control(
             variables={
@@ -61,6 +62,7 @@ class Services:
                     "readQuota": read_quota_bytes,
                     "writeQuota": write_quota_bytes,
                     "scanQuota": scan_quota_bytes,
+                    "updateIfExists": update_if_exists,
                 }
             },
             query="""

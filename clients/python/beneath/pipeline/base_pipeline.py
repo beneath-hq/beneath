@@ -74,6 +74,7 @@ class BasePipeline:
         service_path: str = None,
         service_read_quota: int = None,
         service_write_quota: int = None,
+        service_scan_quota: int = None,
         parse_args: bool = False,
         client: Client = None,
         write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
@@ -106,6 +107,13 @@ class BasePipeline:
             fn=int,
             default=lambda: None,
         )
+        self.service_scan_quota = self._arg_or_env(
+            "service_scan_quota",
+            service_scan_quota,
+            "BENEATH_PIPELINE_SERVICE_SCAN_QUOTA",
+            fn=int,
+            default=lambda: None,
+        )
         self.client = client if client else Client()
         self.write_delay_ms = write_delay_ms
         self.write_checkpoint_delay_ms = write_checkpoint_delay_ms
@@ -115,6 +123,7 @@ class BasePipeline:
         self.checkpoint_writer = None
         self.service_id = None
         self.description = None
+        self.source_url = None
         self._stage_tasks = []
         self._input_qualifiers = set()
         self._output_qualifiers = set()
@@ -286,13 +295,16 @@ class BasePipeline:
 
     async def _stage_service(self):
         if self.is_stage:
-            admin_data = await self.client.admin.services.stage(
+            admin_data = await self.client.admin.services.create(
                 organization_name=self.service_qualifier.organization,
                 project_name=self.service_qualifier.project,
                 service_name=self.service_qualifier.service,
                 description=self.description,
+                source_url=self.source_url,
                 read_quota_bytes=self.service_read_quota,
                 write_quota_bytes=self.service_write_quota,
+                scan_quota_bytes=self.service_scan_quota,
+                update_if_exists=True,
             )
         else:
             admin_data = await self.client.admin.services.find_by_organization_project_and_name(
