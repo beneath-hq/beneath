@@ -38,7 +38,13 @@ def parse_pipeline_args():
         "--write-quota-mb",
         type=mb_to_bytes,
         default=None,
-        help="sets a limit on the pipeline's monthly read quota (set to 0 for unlimited quota)",
+        help="sets a limit on the pipeline's monthly write quota (set to 0 for unlimited quota)",
+    )
+    parser.add_argument(
+        "--scan-quota-mb",
+        type=mb_to_bytes,
+        default=None,
+        help="sets a limit on the pipeline's monthly scan quota (set to 0 for unlimited quota)",
     )
 
     args = parser.parse_args()
@@ -52,3 +58,5 @@ def parse_pipeline_args():
         os.environ["BENEATH_PIPELINE_SERVICE_READ_QUOTA"] = str(args.read_quota_mb)
     if args.write_quota_mb is not None:
         os.environ["BENEATH_PIPELINE_SERVICE_WRITE_QUOTA"] = str(args.write_quota_mb)
+    if args.scan_quota_mb is not None:
+        os.environ["BENEATH_PIPELINE_SERVICE_SCAN_QUOTA"] = str(args.scan_quota_mb)
