@@ -129,7 +129,7 @@ class Stream:
                 existing instance.
         """
         if dry:
-            return DryStreamInstance(self, version=version, primary=make_primary)
+            return DryStreamInstance(self, version=version, primary=make_primary, final=None)
         instance = await self.client.admin.streams.create_instance(
             stream_id=self.admin_data["streamID"],
             version=version,
