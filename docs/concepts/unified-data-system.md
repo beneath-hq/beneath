@@ -8,19 +8,19 @@ menu:
 weight: 100
 ---
 
-We have found that many production data science projects need to integrate several different data technologies to adequately consume and query data. To provide a seamless experience, when you write data to a stream in Beneath, it automatically replicates it to:
+Production data science projects often need to integrate several different data technologies to adequately consume and query data. To provide a seamless experience, when you write data to a stream in Beneath, it automatically replicates it to:
 
 - a **streaming log** for replay/subscribe (e.g. to sync or enrich data)
-- a **data warehouse** for OLAP queries with SQL (e.g. to render dashboards)
-- an **operational data store** for scalable, indexed lookups (e.g. to render data in your frontend)
+- a **data warehouse** for analytical (OLAP) queries with SQL (e.g. to build dashboards)
+- an **operational data store** for scalable, indexed lookups (e.g. to serve data in your frontend)
 
-Beneath lets you access these sources through a single layer of abstraction, so you can focus on your use cases without getting bogged down in integration and maintenance. The following section explains each of these technologies in more detail.
+Beneath lets you access these systems through a single layer of abstraction, so you can focus on your use cases without getting bogged down in integration and maintenance. The following sections explain each of these technologies in more detail.
 
 ## Streaming log
 
-The streaming log keeps real-time, ordered track of every record written to a stream, allowing you to read new data starting from any point in time _without missing a single change_.
+The streaming log keeps real-time, ordered track of every record written to a stream, allowing you to replay the history of a stream as if you had been subscribed since its beginning, and then stay subscribed for updates _without missing a single change_. If your code is down for a while or only runs periodically, you can get every change that happened in the meantime once you reconnect (it's an _at-least-once guarantee_).
 
-In practice, it means you can replay the history of a stream as if you had been subscribed since its beginning, then stay subscribed to get every new change within milliseconds of it happening. If your code is down for a while or only runs periodically, you can get every change that happened in the meantime once you resubscribe (it's an _at-least-once guarantee_).
+The streaming log makes many things simpler, like filtering data in real-time, enriching incoming data with machine learning, or synchronizing data to an external system.
 
 (Systems that can serve as a streaming log are sometimes called an _event log_ or _message queue_, and stand-alone implementations include Apache Kafka, Amazon Kinesis, Cloud Pubsub and RabbitMQ).
 
@@ -44,7 +44,7 @@ To illustrate how these systems work in tandem, imagine you're building a weathe
 
 ## Technologies Beneath uses under the hood
 
-We're not interested in reinventing the wheel, so under the hood, Beneath uses battle-tested data technologies. The cloud version of Beneath uses a combination of Google Bigtable and Cloud Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as an operational data store. If you self-host Beneath, we provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
+We're not interested in reinventing the wheel, so under the hood, Beneath uses battle-tested data technologies. The cloud version of Beneath uses a combination of Google Bigtable and Cloud Pub/Sub for log streaming, Google BigQuery as its data warehouse and Google Bigtable as the operational data store. If you self-host Beneath, we can provide drivers for a variety of other technologies. While the choice of underlying technologies have certain implications, Beneath generally abstracts away many of the differences.
 
 ## Other data technologies
 
