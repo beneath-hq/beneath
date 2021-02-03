@@ -44,6 +44,8 @@ input CreateServiceInput {
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+
+  updateIfExists: Boolean
 }
 
 input UpdateServiceInput {

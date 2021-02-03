@@ -2733,6 +2733,8 @@ input CreateServiceInput {
   readQuota: Int
   writeQuota: Int
   scanQuota: Int
+
+  updateIfExists: Boolean
 }
 
 input UpdateServiceInput {
@@ -14000,6 +14002,14 @@ func (ec *executionContext) unmarshalInputCreateServiceInput(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scanQuota"))
 			it.ScanQuota, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "updateIfExists":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updateIfExists"))
+			it.UpdateIfExists, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -45,6 +45,7 @@ type CreateServiceInput struct {
 	ReadQuota        *int    `json:"readQuota"`
 	WriteQuota       *int    `json:"writeQuota"`
 	ScanQuota        *int    `json:"scanQuota"`
+	UpdateIfExists   *bool   `json:"updateIfExists"`
 }
 
 type CreateStreamInput struct {

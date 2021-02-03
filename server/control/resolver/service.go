@@ -81,6 +81,14 @@ func (r *queryResolver) StreamPermissionsForService(ctx context.Context, service
 }
 
 func (r *mutationResolver) CreateService(ctx context.Context, input gql.CreateServiceInput) (*models.Service, error) {
+	// Handle UpdateIfExists (returns if exists)
+	if input.UpdateIfExists != nil && *input.UpdateIfExists {
+		service := r.Services.FindServiceByOrganizationProjectAndName(ctx, input.OrganizationName, input.ProjectName, input.ServiceName)
+		if service != nil {
+			return r.updateExistingFromCreateService(ctx, service, input)
+		}
+	}
+
 	project := r.Projects.FindProjectByOrganizationAndName(ctx, input.OrganizationName, input.ProjectName)
 	if project == nil {
 		return nil, gqlerror.Errorf("Project %s/%s not found", input.OrganizationName, input.ProjectName)
@@ -102,6 +110,26 @@ func (r *mutationResolver) CreateService(ctx context.Context, input gql.CreateSe
 	err := r.Services.Create(ctx, service, input.Description, input.SourceURL, IntToInt64(input.ReadQuota), IntToInt64(input.WriteQuota), IntToInt64(input.ScanQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error creating service: %s", err.Error())
+	}
+
+	return service, nil
+}
+
+func (r *mutationResolver) updateExistingFromCreateService(ctx context.Context, service *models.Service, input gql.CreateServiceInput) (*models.Service, error) {
+	project := r.Projects.FindProjectByOrganizationAndName(ctx, input.OrganizationName, input.ProjectName)
+	if project == nil {
+		return nil, gqlerror.Errorf("Project %s/%s not found", input.OrganizationName, input.ProjectName)
+	}
+
+	secret := middleware.GetSecret(ctx)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, project.ProjectID, project.Public)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", input.OrganizationName, input.ProjectName)
+	}
+
+	err := r.Services.Update(ctx, service, input.Description, input.SourceURL, IntToInt64(input.ReadQuota), IntToInt64(input.WriteQuota), IntToInt64(input.ScanQuota))
+	if err != nil {
+		return nil, gqlerror.Errorf("Error updating service: %s", err.Error())
 	}
 
 	return service, nil
