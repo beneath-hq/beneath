@@ -38,7 +38,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
     },
   });
 
-  if (!data ||error) return null;
+  if (!data || error) return null;
 
   // alert when you're viewing billing for your personal organization but your main billing is handled by another org
   const specialCase =
@@ -50,21 +50,20 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         {specialCase && (
           <>
             <Alert severity="info">
-              Note that you are a member of the {organization.personalUser?.billingOrganization.displayName} organization,
-              and so {organization.personalUser?.billingOrganization.displayName} is billed for your Beneath usage.
-              However, you are individually billed for the activity of any services that you have not transferred to{" "}
-              {organization.personalUser?.billingOrganization.displayName}.
+              Note that you are a member of the {organization.personalUser?.billingOrganization.displayName}{" "}
+              organization, and so {organization.personalUser?.billingOrganization.displayName} is billed for your
+              Beneath usage. However, you are individually billed for the activity of any services that you have not
+              transferred to {organization.personalUser?.billingOrganization.displayName}.
               <br />
-              <br /> If you have no active services managed by your user, then make sure to cancel any active billing plan
-              on this page. Then you won't incur any unneccessary charges.
+              <br /> If you have no active services managed by your user, then make sure to cancel any active billing
+              plan on this page. Then you won't incur any unneccessary charges.
               <br />
               <br />
-              If you have active services that you would like {
-                organization.personalUser?.billingOrganization.displayName
-              }{" "}
-              to pay for, you need to transfer those services from your personal user to the{" "}
-              {organization.personalUser?.billingOrganization.displayName} organization. See the docs{" "}
-              <Link href="https://about.beneath.dev/docs/core-resources/services">here</Link>.
+              If you have active services that you would like{" "}
+              {organization.personalUser?.billingOrganization.displayName} to pay for, you need to transfer those
+              services from your personal user to the {organization.personalUser?.billingOrganization.displayName}{" "}
+              organization. See the docs <Link href="https://about.beneath.dev/docs/core-resources/services">here</Link>
+              .
               <br />
               <br /> If you have active services that you would like to pay for yourself, and not assign to your
               organization, then you must ensure the billing information on this page covers you. If the services' usage
@@ -76,7 +75,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
         <Alert severity="info">
           You can find detailed information about our billing plans{" "}
-          <Link href="https://about.beneath.dev/enterprise">here</Link>.
+          <Link href="https://about.beneath.dev/pricing/">here</Link>.
         </Alert>
 
         <VSpace units={3} />
@@ -85,13 +84,8 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
         <VSpace units={3} />
 
-        <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog}/>
-        <Dialog
-          open={addCardDialog}
-          fullWidth={true}
-          maxWidth={"sm"}
-          onBackdropClick={() => setAddCardDialog(false)}
-        >
+        <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog} />
+        <Dialog open={addCardDialog} fullWidth={true} maxWidth={"sm"} onBackdropClick={() => setAddCardDialog(false)}>
           <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
           <DialogContent>
             <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
@@ -100,11 +94,15 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
         <VSpace units={3} />
 
-        <ViewTaxInfo organization={organization} onEdit={() => setEditTaxInfoDialog(true)}/>
+        <ViewTaxInfo organization={organization} onEdit={() => setEditTaxInfoDialog(true)} />
         <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
           <DialogTitle>Edit tax info</DialogTitle>
           <DialogContent>
-            <EditTaxInfo organization={organization} billingInfo={data.billingInfo} editTaxInfo={setEditTaxInfoDialog}/>
+            <EditTaxInfo
+              organization={organization}
+              billingInfo={data.billingInfo}
+              editTaxInfo={setEditTaxInfoDialog}
+            />
           </DialogContent>
         </Dialog>
       </Container>

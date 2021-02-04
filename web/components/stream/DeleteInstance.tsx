@@ -7,6 +7,8 @@ import { StreamInstance } from "components/stream/types";
 import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import { DeleteStreamInstance, DeleteStreamInstanceVariables } from "apollo/types/DeleteStreamInstance";
 import { DELETE_STREAM_INSTANCE, QUERY_STREAM } from "apollo/queries/stream";
+import { toURLName } from "lib/names";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 export interface DeleteInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -21,12 +23,7 @@ const DeleteInstance: FC<DeleteInstanceProps> = ({ stream, instance, setOpenDial
     {
       onCompleted: (data) => {
         if (data?.deleteStreamInstance) {
-          const organizationName = stream.project.organization.name;
-          const projectName = stream.project.name;
-          const streamName = stream.name;
-          const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}`;
-          const as = `${organizationName}/${projectName}/stream:${streamName}`;
-          router.replace(href, as);
+          router.replace(makeStreamHref(stream), makeStreamAs(stream));
         }
         setOpenDialogID(null);
       },

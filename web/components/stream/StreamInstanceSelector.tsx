@@ -7,12 +7,14 @@ import {
   StreamInstancesByOrganizationProjectAndStreamName,
   StreamInstancesByOrganizationProjectAndStreamNameVariables,
 } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
+import { toURLName } from "lib/names";
 import { useRouter } from "next/router";
 import { FC, useState } from "react";
 import CreateInstance from "./CreateInstance";
 import DeleteInstance from "./DeleteInstance";
 import PromoteInstance from "./PromoteInstance";
 import { StreamInstance } from "./types";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 const useStyles = makeStyles((theme) => ({
   leftPanel: {
@@ -143,10 +145,7 @@ const StreamInstanceSelector: FC<Props> = ({ stream, currentInstance }) => {
             key={idx}
             onClick={() => {
               closeMenu1();
-              const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${instance.version.toString()}`;
-              // TODO: can we get the "as" to show up on hover?
-              const as = `${organizationName}/${projectName}/stream:${streamName}/${instance.version}`;
-              router.replace(href, as);
+              router.replace(makeStreamHref(stream, instance), makeStreamAs(stream, instance));
             }}
           >
             {`${instance.version}` + (instance.streamInstanceID === stream.primaryStreamInstanceID ? " (Primary)" : "")}

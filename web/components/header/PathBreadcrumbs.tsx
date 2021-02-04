@@ -7,6 +7,7 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
 import { Chip, Grid } from "@material-ui/core";
+import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -103,8 +104,8 @@ const makeCrumbs = (router: NextRouter) => {
         <OrganizationCrumb key={1} organization={organizationName} tab="billing" />,
         <Crumb
           key={2}
-          href={`/-/billing/checkout?organization_name=${organizationName}`}
-          as={`/${organizationName}/-/billing/checkout`}
+          href={`/-/billing/checkout?organization_name=${toURLName(organizationName)}`}
+          as={`/${toURLName(organizationName)}/-/billing/checkout`}
           label="Billing checkout"
           isCurrent={true}
         />,

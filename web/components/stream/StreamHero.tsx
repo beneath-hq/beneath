@@ -10,6 +10,7 @@ import { useTotalUsage } from "components/usage/util";
 import { toURLName } from "lib/names";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import StreamInstanceSelector from "./StreamInstanceSelector";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 const intFormat = { thousandSeparated: true };
 const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
@@ -70,8 +71,8 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance }) => {
               label={stream.project.public ? "Public" : "Private"}
               clickable
               component={NakedLink}
-              href={`/project?organization_name=${organizationName}&project_name=${projectName}&tab=members`}
-              as={`/${organizationName}/${projectName}/-/members`}
+              href={`/project?organization_name=${toURLName(organizationName)}&project_name=${toURLName(projectName)}`}
+              as={`/${toURLName(organizationName)}/${toURLName(projectName)}`}
             />
           </Grid>
           {instance && <InstanceUsageChips stream={stream} instance={instance} />}
@@ -103,12 +104,6 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
     return null;
   }
 
-  const organizationName = stream.project.organization.name;
-  const projectName = stream.project.name;
-  const streamName = stream.name;
-  const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${instance.version}&tab=monitoring`;
-  const as = `/${organizationName}/${projectName}/stream:${streamName}/-/monitoring`;
-
   return (
     <>
       <Grid item>
@@ -124,8 +119,8 @@ const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
           }
           clickable
           component={NakedLink}
-          href={href}
-          as={as}
+          href={makeStreamHref(stream, instance, "monitoring")}
+          as={makeStreamAs(stream, instance, "monitoring")}
         />
       </Grid>
     </>
