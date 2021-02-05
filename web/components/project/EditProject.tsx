@@ -50,7 +50,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
       >
         {({ values, isSubmitting, status }) => (
           <Form>
-            <Field
+            {/* <Field
               name="displayName"
               validate={(val: string) => {
                 if (val && val.length > 50) {
@@ -59,7 +59,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
               }}
               component={FormikTextField}
               label="Display Name"
-            />
+            /> */}
             <Field
               name="site"
               validate={(val: string) => {
