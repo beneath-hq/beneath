@@ -26,6 +26,16 @@ import { toBackendName, toURLName } from "lib/names";
 
 const DataTab = dynamic(() => import("../components/stream/DataTab"), { ssr: false });
 
+const safeParseInt = (val: any) => {
+  if (typeof val === "string") {
+    const int = parseInt(val);
+    if (!isNaN(int)) {
+      return int;
+    }
+  }
+  return null;
+};
+
 // Note: this page is made more complicated because we choose which GraphQL query to run based
 // on whether or not the user provides a version in the URL
 
@@ -42,7 +52,7 @@ const StreamPage = () => {
   const organizationName = toBackendName(router.query.organization_name);
   const projectName = toBackendName(router.query.project_name);
   const streamName = toBackendName(router.query.stream_name);
-  const version = typeof router.query.version === "string" ? parseInt(router.query.version) : null;
+  const version = safeParseInt(router.query.version);
   const title =
     `${toURLName(organizationName)}/${toURLName(projectName)}/stream:${toURLName(streamName)}` +
     (version !== null ? `/${version}` : "");

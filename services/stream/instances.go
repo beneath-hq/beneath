@@ -17,6 +17,7 @@ func (s *Service) FindStreamInstance(ctx context.Context, instanceID uuid.UUID) 
 		"stream_instance.*",
 		"Stream",
 		"Stream.StreamIndexes",
+		"Stream.PrimaryStreamInstance",
 		"Stream.Project",
 		"Stream.Project.Organization",
 	).WherePK().Select()
@@ -34,13 +35,14 @@ func (s *Service) FindStreamInstanceByOrganizationProjectStreamAndVersion(ctx co
 			"stream_instance.*",
 			"Stream",
 			"Stream.StreamIndexes",
+			"Stream.PrimaryStreamInstance",
 			"Stream.Project",
 			"Stream.Project.Organization",
 		).
 		Where("lower(stream__project__organization.name) = lower(?)", organizationName).
 		Where("lower(stream__project.name) = lower(?)", projectName).
 		Where("lower(stream.name) = lower(?)", streamName).
-		Where("version = ?", version).
+		Where("stream_instance.version = ?", version).
 		Select()
 	if !db.AssertFoundOne(err) {
 		return nil
@@ -56,11 +58,12 @@ func (s *Service) FindStreamInstanceByVersion(ctx context.Context, streamID uuid
 			"stream_instance.*",
 			"Stream",
 			"Stream.StreamIndexes",
+			"Stream.PrimaryStreamInstance",
 			"Stream.Project",
 			"Stream.Project.Organization",
 		).
 		Where("stream_instance.stream_id = ?", streamID).
-		Where("version = ?", version).
+		Where("stream_instance.version = ?", version).
 		Select()
 	if !db.AssertFoundOne(err) {
 		return nil

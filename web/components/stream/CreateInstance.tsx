@@ -10,6 +10,7 @@ import SubmitControl from "../forms/SubmitControl";
 import FormikRadioGroup from "components/formik/RadioGroup";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
 import { StreamInstance } from "components/stream/types";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 export interface CreateInstanceProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -24,12 +25,10 @@ const CreateInstance: FC<CreateInstanceProps> = ({ stream, instances, setOpenDia
     {
       onCompleted: (data) => {
         if (data?.createStreamInstance) {
-          const organizationName = stream.project.organization.name;
-          const projectName = stream.project.name;
-          const streamName = stream.name;
-          const href = `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${data.createStreamInstance.version.toString()}`;
-          const as = `${organizationName}/${projectName}/stream:${streamName}/${data.createStreamInstance.version}`;
-          router.replace(href, as);
+          router.replace(
+            makeStreamHref(stream, data.createStreamInstance),
+            makeStreamAs(stream, data.createStreamInstance)
+          );
         }
         setOpenDialogID(null);
       },

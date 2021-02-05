@@ -18,6 +18,8 @@ import clsx from "clsx";
 import { StreamInstance } from "components/stream/types";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
+import { toURLName } from "lib/names";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 interface DataTabProps {
   stream: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream;
@@ -132,18 +134,14 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
 
   // set filter in URL
   useEffect(() => {
-    const organizationName = stream.project.organization.name;
-    const projectName = stream.project.name;
-    const streamName = stream.name;
-    const filterJSON = JSON.stringify(filter);
-
-    const href =
-      `/stream?organization_name=${organizationName}&project_name=${projectName}&stream_name=${streamName}&version=${instance.version.toString()}` +
-      (filterJSON !== "{}" ? `&filter=${filterJSON}` : "");
-    const as =
-      `${organizationName}/${projectName}/stream:${streamName}/${instance.version}` +
-      (filterJSON !== "{}" ? `?filter=${encodeURIComponent(filterJSON)}` : "");
-    router.replace(href, as);
+    if (queryType === "index") {
+      const filterJSON = JSON.stringify(filter);
+      const href =
+        makeStreamHref(stream, instance) + (filterJSON !== "{}" ? `&filter=${encodeURIComponent(filterJSON)}` : "");
+      const as =
+        makeStreamAs(stream, instance) + (filterJSON !== "{}" ? `?filter=${encodeURIComponent(filterJSON)}` : "");
+      router.replace(href, as);
+    }
   }, [JSON.stringify(filter)]);
 
   // LOADING

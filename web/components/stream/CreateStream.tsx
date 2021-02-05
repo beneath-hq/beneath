@@ -34,6 +34,7 @@ import VSpace from "components/VSpace";
 import Collapse from "components/Collapse";
 import EXAMPLE_SCHEMAS from "lib/exampleSchemas";
 import SchemaEditorFooter from "./SchemaEditorFooter";
+import { makeStreamAs, makeStreamHref } from "./urls";
 
 const useStyles = makeStyles((theme) => ({
   list: {
@@ -65,12 +66,7 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
   const [createStream] = useMutation<CreateStream, CreateStreamVariables>(CREATE_STREAM, {
     onCompleted: (data) => {
       if (data?.createStream) {
-        const orgName = toURLName(data.createStream.project.organization.name);
-        const projName = toURLName(data.createStream.project.name);
-        const streamName = toURLName(data.createStream.name);
-        const href = `/stream?organization_name=${orgName}&project_name=${projName}&stream_name=${streamName}`;
-        const as = `/${orgName}/${projName}/stream:${streamName}`;
-        router.replace(href, as, { shallow: true });
+        router.replace(makeStreamHref(data.createStream), makeStreamAs(data.createStream), { shallow: true });
       }
     },
   });
