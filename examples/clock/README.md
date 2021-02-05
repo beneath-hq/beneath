@@ -7,11 +7,9 @@ poetry install
 poetry shell
 ```
 
-Stage the pipeline with a new service, and run
+Stage the streams and a service for the pipeline, then run it
 
 ```bash
-python clock.py stage SERVICE_PATH --read-quota-mb 1000 --write-quota-mb 10000
-python clock.py run SERVICE_PATH
+python clock.py stage USERNAME/PROJECT/clock --read-quota-mb 1000 --write-quota-mb 2000
+python clock.py run USERNAME/PROJECT/clock
 ```
-
-Where `SERVICE_PATH` = `USERNAME/PROJECT/YOUR_NEW_SERVICE_NAME`

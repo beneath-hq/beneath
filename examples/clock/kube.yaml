@@ -19,12 +19,13 @@ spec:
         app.kubernetes.io/instance: clock
     spec:
       containers:
-      - name: clock
-        image: gcr.io/beneath/clock:latest
-        imagePullPolicy: Always
-        env:
-        - name: BENEATH_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: clock
-              key: secret
+        - name: clock
+          image: gcr.io/beneath/examples-clock:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/clock/ticker"]
+          env:
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clock
+                  key: secret

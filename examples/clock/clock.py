@@ -4,7 +4,7 @@ import math
 from datetime import datetime, timedelta, timezone
 
 SCHEMA = """
-    type Tick @schema {
+    type Clock @schema {
         time: Timestamp! @key
     }
 """
@@ -28,6 +28,7 @@ def make_clock(name: str, start: datetime, delta: timedelta):
 
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True)
+
     start = datetime(year=2021, month=1, day=1, tzinfo=timezone.utc)
 
     name = "1m"

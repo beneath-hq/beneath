@@ -5,4 +5,4 @@ COPY poetry.lock pyproject.toml /app/
 RUN poetry config virtualenvs.create false \
   && poetry install --no-dev --no-interaction --no-ansi
 COPY . .
-CMD ["python", "main.py", "run", "examples/clock/ticker"]
+ENTRYPOINT ["python", "main.py"]
