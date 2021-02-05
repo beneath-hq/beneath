@@ -244,7 +244,7 @@ class BasePipeline:
             records = (
                 {
                     "key": key,
-                    "value": msgpack.packb(checkpoint),
+                    "value": msgpack.packb(checkpoint, datetime=True),
                 }
                 for (key, checkpoint) in self.checkpoint.items()
             )
@@ -274,7 +274,7 @@ class BasePipeline:
             records = list(batch)
             if len(records) > 0:
                 value = records[0]["value"]
-                value = msgpack.unpackb(value)
+                value = msgpack.unpackb(value, timestamp=3)
 
         return value
 
@@ -295,11 +295,12 @@ class BasePipeline:
 
     async def _stage_service(self):
         if self.is_stage:
+            description = self.description if self.description else "Service for running pipeline"
             admin_data = await self.client.admin.services.create(
                 organization_name=self.service_qualifier.organization,
                 project_name=self.service_qualifier.project,
                 service_name=self.service_qualifier.service,
-                description=self.description,
+                description=description,
                 source_url=self.source_url,
                 read_quota_bytes=self.service_read_quota,
                 write_quota_bytes=self.service_write_quota,
@@ -322,9 +323,14 @@ class BasePipeline:
             stream=stream_name,
         )
         if self.is_stage:
+            description = (
+                "Stores pipeline checkpoints for service "
+                f"'{self.service_qualifier.service}' (automatically created)"
+            )
             stream = await self.client.create_stream(
                 stream_path=str(qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
+                description=description,
                 log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
                 use_warehouse=False,
                 update_if_exists=True,
