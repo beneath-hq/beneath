@@ -28,19 +28,35 @@ def make_clock(name: str, start: datetime, delta: timedelta):
 
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True)
+    p.description = "Generates timestamps at fixed intervals"
 
     start = datetime(year=2021, month=1, day=1, tzinfo=timezone.utc)
 
     name = "1m"
     clock = p.generate(make_clock(name, start, timedelta(minutes=1)))
-    p.write_stream(clock, stream_path=f"clock-{name}", schema=SCHEMA)
+    p.write_stream(
+        clock,
+        stream_path=f"clock-{name}",
+        schema=SCHEMA,
+        description="Clock that ticks every minute",
+    )
 
     name = "1h"
     clock = p.generate(make_clock(name, start, timedelta(hours=1)))
-    p.write_stream(clock, stream_path=f"clock-{name}", schema=SCHEMA)
+    p.write_stream(
+        clock,
+        stream_path=f"clock-{name}",
+        schema=SCHEMA,
+        description="Clock that ticks every hour",
+    )
 
     name = "1d"
     clock = p.generate(make_clock(name, start, timedelta(days=1)))
-    p.write_stream(clock, stream_path=f"clock-{name}", schema=SCHEMA)
+    p.write_stream(
+        clock,
+        stream_path=f"clock-{name}",
+        schema=SCHEMA,
+        description="Clock that ticks every day",
+    )
 
     p.main()
