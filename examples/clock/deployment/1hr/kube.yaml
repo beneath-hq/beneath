@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clock-1h
+  labels:
+    app.kubernetes.io/name: clock-1h
+    app.kubernetes.io/instance: clock-1h
+    app.kubernetes.io/managed-by: Manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clock-1h
+      app.kubernetes.io/instance: clock-1h
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clock-1h
+        app.kubernetes.io/instance: clock-1h
+    spec:
+      containers:
+      - name: clock-1h
+        image: gcr.io/beneath/clock-1h:latest
+        imagePullPolicy: Always
+        env:
+        - name: BENEATH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: clock-1h
+              key: secret
