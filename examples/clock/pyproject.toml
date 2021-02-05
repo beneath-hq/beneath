@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-beneath = "^1.2.13"
+beneath = "^1.2.14"
 asyncio = "^3.4.3"
 DateTime = "^4.3"
 

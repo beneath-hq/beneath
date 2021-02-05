@@ -1,10 +1,17 @@
-Run with:
+To run locally:
+
+Set up poetry virtual environment
 
 ```bash
-FREQUENCY="" START_TIME="" poetry run python main.py
+poetry install
+poetry shell
 ```
 
-Where:
+Stage the pipeline with a new service, and run
 
-- `FREQUENCY` is the number of seconds between each tick
-- `START_TIME` is an ISO timestamp like "2021-01-01T12:00:00+00:00"
+```bash
+python clock.py stage SERVICE_PATH --read-quota-mb 1000 --write-quota-mb 10000
+python clock.py run SERVICE_PATH
+```
+
+Where `SERVICE_PATH` = `USERNAME/PROJECT/YOUR_NEW_SERVICE_NAME`

@@ -1,3 +1,0 @@
-type Tick @schema {
-  time: Timestamp! @key
-}
