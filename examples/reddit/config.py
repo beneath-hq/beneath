@@ -23,3 +23,5 @@ reddit = asyncpraw.Reddit(
     username=USERNAME,
     password=PASSWORD,
 )
+
+MAX_CHARACTERS = 5000

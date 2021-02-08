@@ -3,9 +3,9 @@ type Comment @schema {
   id: String! @key
   author: String!
   subreddit: String!
-  post: String!
+  post_id: String!
   parent_id: String!
-  body: String
+  text: String
   permalink: String
   is_submitter: Boolean!
   is_distinguished: Boolean!

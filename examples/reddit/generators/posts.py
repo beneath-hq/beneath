@@ -1,8 +1,6 @@
 from datetime import datetime
 
-from config import reddit, SUBREDDIT
-
-MAX_CHARACTERS = 5000
+from config import reddit, SUBREDDIT, MAX_CHARACTERS
 
 
 async def generate_posts(p):
