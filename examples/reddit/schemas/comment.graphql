@@ -1,0 +1,13 @@
+type Comment @schema {
+  created_on: Timestamp! @key
+  id: String! @key
+  author: String!
+  subreddit: String!
+  post: String!
+  parent_id: String!
+  body: String
+  permalink: String
+  is_submitter: Boolean!
+  is_distinguished: Boolean!
+  is_stickied: Boolean!
+}

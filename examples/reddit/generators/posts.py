@@ -2,6 +2,9 @@ from datetime import datetime
 
 from config import reddit, SUBREDDIT
 
+MAX_CHARACTERS = 5000
+
+
 async def generate_posts(p):
     sub = await reddit.subreddit(SUBREDDIT)
     async for post in sub.stream.submissions():
@@ -11,8 +14,12 @@ async def generate_posts(p):
             "author": post.author.name,
             "subreddit": post.subreddit.display_name,
             "title": post.title,
-            "text": post.selftext,
-            "link": post.url if post.url.replace("https://www.reddit.com", "") != post.permalink else None,
+            "text": post.selftext[:MAX_CHARACTERS] + " [CONTENT TRUNCATED]"
+            if len(post.selftext) > MAX_CHARACTERS
+            else post.selftext,
+            "link": post.url
+            if post.url.replace("https://www.reddit.com", "") != post.permalink
+            else None,
             "permalink": post.permalink,
             "flair": post.link_flair_text,
             "is_over_18": not not post.over_18,

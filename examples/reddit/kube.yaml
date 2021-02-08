@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallstreetbets-scraper
+  labels:
+    app.kubernetes.io/name: wallstreetbets-scraper
+    app.kubernetes.io/instance: wallstreetbets-scraper
+    app.kubernetes.io/managed-by: Manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wallstreetbets-scraper
+      app.kubernetes.io/instance: wallstreetbets-scraper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wallstreetbets-scraper
+        app.kubernetes.io/instance: wallstreetbets-scraper
+    spec:
+      containers:
+        - name: wallstreetbets-scraper
+          image: gcr.io/beneath/examples-wallstreetbets-scraper:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/reddit/wallstreetbets-scraper"]
+          env:
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-beneath-secret
+                  key: secret
+            - name: REDDIT_USER_AGENT
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-user-agent
+                  key: secret
+            - name: REDDIT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-client-id
+                  key: secret
+            - name: REDDIT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-client-secret
+                  key: secret
+            - name: REDDIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-username
+                  key: secret
+            - name: REDDIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-password
+                  key: secret
+            - name: REDDIT_SUBREDDIT
+              valueFrom:
+                secretKeyRef:
+                  name: wallstreetbets-scraper-reddit-subreddit
+                  key: secret
