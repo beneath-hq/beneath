@@ -9,9 +9,9 @@ const EXAMPLE_SCHEMAS = [
     name: "Movies",
     language: "GraphQL",
     schema: `" Description of the stream goes here "
-type Movie @stream @key(fields: ["title", "released_on"]) {
-  title: String!
-  released_on: Timestamp!
+type Movie @schema {
+  title: String! @key
+  released_on: Timestamp! @key
   director: String!
   platform: Platform!
   description: String # optional field (no '!' after the type)
@@ -28,12 +28,9 @@ enum Platform {
   {
     name: "Reddit posts",
     language: "GraphQL",
-    schema: `type Post
-  @stream
-  @key(fields: ["created_on", "id"])
-{
-  created_on: Timestamp!
-  id: String!
+    schema: `type Post @schema {
+  created_on: Timestamp! @key
+  id: String! @key
   author: String!
   subreddit: String!
   title: String!
