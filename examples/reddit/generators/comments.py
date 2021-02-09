@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from config import reddit, SUBREDDIT, MAX_CHARACTERS
+from config import reddit, SUBREDDIT, truncate_text
 
 
 async def generate_comments(p):
@@ -13,9 +13,7 @@ async def generate_comments(p):
             "subreddit": comment.subreddit.display_name,
             "post_id": comment.submission.id,
             "parent_id": comment.parent_id,
-            "text": comment.body[:MAX_CHARACTERS] + " [CONTENT TRUNCATED]"
-            if len(comment.body) > MAX_CHARACTERS
-            else comment.body,
+            "text": truncate_text(comment.body),
             "permalink": comment.permalink,
             "is_submitter": not not comment.is_submitter,
             "is_distinguished": not not comment.distinguished,
