@@ -14,7 +14,7 @@ import { FC, useState, useEffect } from "react";
 
 import FilterField, { Operator, Field, FieldFilter } from "./FilterField";
 import { Column } from "./schema";
-import CodeBlock from "components/CodeBlock";
+import CodePaper from "components/CodePaper";
 
 const useStyles = makeStyles((theme: Theme) => ({
   height: {
@@ -35,7 +35,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
     // filter is not empty; initialize fields with the keys present in the filter
     if (!_.isEmpty(filter)) {
       const keys = Object.keys(filter);
-      let fields: Field[] = [];
+      const fields: Field[] = [];
       for (const key of keys) {
         const col = index.find((col) => col.name === key) as Column;
         const field = {
@@ -200,7 +200,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
             <DialogTitle>Filter</DialogTitle>
             <DialogContent>
               <DialogContentText>Use this filter with the Beneath SDK to fetch the subset of records</DialogContentText>
-              <CodeBlock language={"python"}>{`${JSON.stringify(filter)}`}</CodeBlock>
+              <CodePaper language={"python"}>{`${JSON.stringify(filter)}`}</CodePaper>
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setShowFilter(false)} color="primary">
