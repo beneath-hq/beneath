@@ -13,39 +13,54 @@ const DEFAULT_SUBSCRIBE_POLL_FREQUENCY = 250;
  * Options passed to {@linkcode useRecords}
  */
 export interface UseRecordsOptions {
+  /** Secret to use for authentication */
   secret?: string;
+  /** Identifier for the stream or instance to query */
   stream: StreamQualifier;
+  /** Query to run. Defaults to an unfiltered index query. */
   query?: { type: "index", filter?: string } | { type: "log", peek?: boolean };
+  /** Number of records to fetch per request (limit). Defaults to 25. */
   pageSize?: number;
-  subscribe?: boolean | SubscribeOptions;
-  maxRecords?: number;
+  /** If configured, will open a websocket and trigger a re-render when new records are received. */
+  subscribe?: boolean | { pageSize?: number, pollFrequencyMs?: number };
+  /** If set, will truncate results to `maxRecords` by removing records */
   truncatePolicy?: "start" | "end" | "auto";
+  /** Max number of records to keep in memory before applying `truncatePolicy` */
+  maxRecords?: number;
+  /** If subscribed to websockets, sets the duration that each new record will have `record["@meta"].flash === true` */
   flashDurationMs?: number;
+  /** If subscribed to websockets, sets the max frequency at which re-renders are triggered (to prevent lagging) */
   renderFrequencyMs?: number;
 }
 
 export interface UseRecordsResult<TRecord> {
+  /** Client used to connect (see the non-react beneath library) */
   client?: Client;
+  /** Records returned by query. If subscribed to websockets, may change on re-renders */
   records: Record<TRecord>[];
+  /** Error returned by the query */
   error?: Error;
+  /** Callback to trigger fetching another page */
   fetchMore?: FetchMoreFunction;
+  /** Callback to trigger fetching changes (not applicable if subscribed to websockets) */
   fetchMoreChanges?: FetchMoreFunction;
+  /** True if currently loading for the first time (not if subscribed to websockets) */
   loading: boolean;
+  /** Status on the websockets subscription */
   subscription: {
+    /** True if a websocket connection is open */
     online: boolean;
+    /** Error returned from the websocket connection */
     error?: Error;
   };
+  /** Status on whether records have been truncated under the truncation policy */
   truncation: {
+    /** True if records were truncated from the start */
     start: boolean;
+    /** True if records were truncated from the start */
     end: boolean;
   };
 }
-
-export interface SubscribeOptions {
-  pageSize?: number;
-  pollFrequencyMs?: number;
-}
-
 
 // like beneath.Record, but with @meta.flash added
 export type Record<TRecord = any> = TRecord & {
@@ -121,10 +136,10 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       // query stream
       const query =
         queryType === "index"
-        ? await stream.queryIndex({ filter: queryFilter, pageSize })
-        : queryType === "log"
-        ? await stream.queryLog({ pageSize, peek: queryPeek })
-        : undefined;
+          ? await stream.queryIndex({ filter: queryFilter, pageSize })
+          : queryType === "log"
+            ? await stream.queryLog({ pageSize, peek: queryPeek })
+            : undefined;
       if (!query) {
         throw Error(`invalid view option <${queryType}>`);
       }

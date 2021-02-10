@@ -1,9 +1,5 @@
 {
-  "inputFiles": ["./src/index.ts"],
+  "entryPoints": ["./src/index.ts"],
   "out": "docs/",
-  "mode": "file",
-  "theme": "minimal",
-  "excludeExternals": true,
-  "excludeNotDocumented": true,
-  "excludeNotExported": true
+  "theme": "minimal"
 }
