@@ -104,10 +104,8 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
           </Grid>
           <VSpace units={4} />
           {language.tabs.map(({ label, content }) => (
-            <Grid item xs={12}>
-              <TabPanel key={label} value={label}>
-                {content}
-              </TabPanel>
+            <Grid key={label} item xs={12}>
+              <TabPanel value={label}>{content}</TabPanel>
             </Grid>
           ))}
         </TabContext>

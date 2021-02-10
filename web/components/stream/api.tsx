@@ -1,9 +1,49 @@
-import { Container, Grid, makeStyles, Tab, Tabs, Theme, Typography } from "@material-ui/core";
-import { toURLName } from "lib/names";
+import { Typography } from "@material-ui/core";
+import { makeStyles, Theme } from "@material-ui/core/styles";
+import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
 import CodePaper from "components/CodePaper";
 import { Link } from "components/Link";
 import { GATEWAY_URL } from "lib/connection";
+import { toURLName } from "lib/names";
 import { FC } from "react";
+
+const useStyles = makeStyles((theme: Theme) => ({
+  heading: {
+    "&:not(:first-child)": {
+      marginTop: "2.5rem",
+    },
+  },
+}));
+
+const Para: FC = (props) => <Typography paragraph {...props} />;
+const Heading: FC = (props) => {
+  const classes = useStyles();
+  return <Typography className={classes.heading} variant="h2" paragraph {...props} />;
+};
+
+/**
+- Python
+  - Reading
+  - Writing
+- JavaScript
+  - JS
+    - Example
+    - Link to ref
+  - React
+    - Example
+    - Link to ref
+- SQL
+  - Simple example
+  - Link to docs (copy important sections?)
+  - Mention special columns
+- REST
+  - Reading
+    - Curl based
+    - Log
+    - Filter
+  - Writing
+    - Curl based
+ */
 
 export interface TemplateArgs {
   organization: string;
@@ -24,7 +64,7 @@ export const buildTemplate = (args: TemplateArgs) => {
           label: "Reading",
           content: (
             <>
-              <Typography paragraph>Install the Beneath Python library:</Typography>
+              <Para>Install the Beneath Python library:</Para>
               <CodePaper language="bash" paragraph>{`pip install beneath`}</CodePaper>
               <Typography paragraph>Authenticate your environment:</Typography>
               <CodePaper language="bash" paragraph>{`beneath auth SECRET`}</CodePaper>
@@ -195,45 +235,179 @@ const App = () => {
       ],
     },
     {
-      label: "SQL",
-      tabs: [
-        {
-          label: "Reading",
-          content: (
-            <>
-              <Typography variant="body1" paragraph>
-                You can query this stream in the <Link href="/-/sql">Beneath SQL Editor</Link> like this:
-              </Typography>
-              <CodePaper
-                language={"sql"}
-              >{`select * from \`${args.organization}/${args.project}/${args.stream}\``}</CodePaper>
-              <Typography variant="body1">
-                Additionally, you can connect any business intelligence tool that you'd like, such as Metabase, Tableau,
-                Mode, etc. Please reach out if you'd to do this, as it currently takes just a little hand-holding.
-              </Typography>
-            </>
-          ),
-        },
-      ],
-    },
-    {
       label: "REST",
       tabs: [
-        {
-          label: "Reading",
-          content: (
-            <>
-              <Typography variant="body1" paragraph>
-                You can query this data stream from anywhere using the REST API. Here's an example using cURL from the
-                command line:
-              </Typography>
-              <CodePaper language="bash" paragraph>
-                {`curl -H "Authorization: Bearer SECRET" ${GATEWAY_URL}/v1/${args.organization}/${args.project}/${args.stream}`}
-              </CodePaper>
-            </>
-          ),
-        },
+        { label: "Reading", content: buildRESTReading(args) },
+        { label: "Writing", content: buildRESTWriting(args) },
       ],
     },
   ];
+};
+
+const buildRESTReading = (args: TemplateArgs) => {
+  const url = `${GATEWAY_URL}/v1/${args.organization}/${args.project}/${args.stream}`;
+  return (
+    <>
+      <Heading>Reading basics</Heading>
+      <Para>
+        Query the stream <strong>log</strong> with cURL:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        {`
+curl ${url} \\
+  -H "Authorization: Bearer SECRET" \\
+  -d type=log \\
+  -d limit=25 \\
+  -G
+`}
+      </CodePaper>
+      <Para>
+        Query the stream <strong>index</strong> with cURL (the filter is optional):
+      </Para>
+      <CodePaper language="bash" paragraph>
+        {`
+curl ${url} \\
+  -H "Authorization: Bearer SECRET" \\
+  -d type=index \\
+  -d filter=FILTER \\
+  -d limit=25 \\
+  -G
+`}
+      </CodePaper>
+      <Para>Sample response:</Para>
+      <CodePaper language="json" paragraph>{`
+{
+    "data": [
+        {
+            "@meta": {
+                "key": "AkhlbGxvABYH4w==",
+                "timestamp": 1612947705590
+            },
+            ....
+        },
+        ...
+    ],
+    "meta": {
+        "instance_id": "e144393c-6fd8-4e56-b9e5-e994c90f4bda",
+        "next_cursor": "3Fd28XgzvydG755KnfRQugHqiAzoH61",
+        "change_cursor": "7ht7w4GiRcQztEEdzEG8gif4g4yX",
+    }
+}
+      `}</CodePaper>
+      <Heading>Cursors (pagination and changes)</Heading>
+      <Para>
+        You can use <code>next_cursor</code> to get the next page of results and <code>change_cursor</code> to
+        fetch/poll for new records in the stream's log. To fetch records with a cursor:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        {`
+curl ${url} \\
+  -H "Authorization: Bearer SECRET" \\
+  -d cursor=CURSOR \\
+  -d limit=25 \\
+  -G
+`}
+      </CodePaper>
+      <Para>
+        When you use <code>change_cursor</code>, the response will place the next change cursor in the{" "}
+        <code>next_cursor</code> field.
+      </Para>
+      <Para>
+        Note: The <code>change_cursor</code> returned from filtered index queries will match all new records, not just
+        the filter.
+      </Para>
+      <Heading>Parameters</Heading>
+      <Para>Here follows a full list of parameters for reading data from streams over REST.</Para>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Parameter</TableCell>
+            <TableCell>Value</TableCell>
+            <TableCell>Description</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow>
+            <TableCell>
+              <code>limit</code>
+            </TableCell>
+            <TableCell>integer</TableCell>
+            <TableCell>The maximum number of records to return per page</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <code>cursor</code>
+            </TableCell>
+            <TableCell>string</TableCell>
+            <TableCell>
+              A cursor to fetch more records from. Cursors are returned from paginated log or index requests.
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <code>type</code>
+            </TableCell>
+            <TableCell>"log" or "index"</TableCell>
+            <TableCell>
+              The type of query to run. "log" queries return all records in write order. "index" queries return the most
+              recent record for each key, sorted and optionally filtered by key. See the{" "}
+              <Link href="https://about.beneath.dev/docs/concepts/unified-data-system/">docs</Link> for more.
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <code>peek</code>
+            </TableCell>
+            <TableCell>"true" or "false"</TableCell>
+            <TableCell>
+              Only applies if <code>type=log</code>. If false, returns log records from oldest to newest. If true,
+              returns from newest to oldest.
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              <code>filter</code>
+            </TableCell>
+            <TableCell>JSON</TableCell>
+            <TableCell>
+              Only applies if type=index. If set, the filter is applied to the index and only matching record(s)
+              returned. See the{" "}
+              <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter docs</Link> for
+              syntax.
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </>
+  );
+};
+
+const buildRESTWriting = (args: TemplateArgs) => {
+  const url = `${GATEWAY_URL}/v1/${args.organization}/${args.project}/${args.stream}`;
+  return (
+    <>
+      <Heading>Writing basics</Heading>
+      <Para>Post records with cURL:</Para>
+      <CodePaper language="bash" paragraph>
+        {`
+curl ${url} \\
+  -X POST \\
+  -H "Authorization: Bearer SECRET" \\
+  -H "Content-Type: application/json" \\
+  -d '[{"field": "value", ...}, ...]'
+`}
+      </CodePaper>
+      <Para>
+        A succesful write returns HTTP status code 200. You should see the records appear in the stream shortly after.
+      </Para>
+      <Heading>Encoding records as JSON</Heading>
+      <Para>
+        Beneath's schemas support more data types than JSON. The{" "}
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/#representing-data-types-as-json">
+          Representing data types as JSON
+        </Link>{" "}
+        section of the filtering documentation shows how to encode different data types as JSON.
+      </Para>
+    </>
+  );
 };
