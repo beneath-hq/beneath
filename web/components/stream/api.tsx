@@ -6,6 +6,7 @@ import { Link } from "components/Link";
 import { GATEWAY_URL } from "lib/connection";
 import { toURLName } from "lib/names";
 import { FC } from "react";
+import useMe from "hooks/useMe";
 
 const useStyles = makeStyles((theme: Theme) => ({
   heading: {
@@ -15,10 +16,25 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const Para: FC = (props) => <Typography paragraph {...props} />;
 const Heading: FC = (props) => {
   const classes = useStyles();
   return <Typography className={classes.heading} variant="h2" paragraph {...props} />;
+};
+
+const Para: FC = (props) => <Typography paragraph {...props} />;
+
+const SecretsLink: FC = (props) => {
+  const me = useMe();
+  if (!me) {
+    return <Link href="/-/auth" {...props} />;
+  }
+  return (
+    <Link
+      href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
+      as={`/${toURLName(me.name)}/-/secrets`}
+      {...props}
+    />
+  );
 };
 
 /**
@@ -169,70 +185,8 @@ beneath.easy_derive_stream(
       ],
     },
     {
-      label: "JavaScript",
-      tabs: [
-        {
-          label: "Reading",
-          content: (
-            <>
-              <Typography variant="body1" paragraph>
-                Install the Javascript library with npm:
-              </Typography>
-              <CodePaper language="bash" paragraph>{`npm install beneath`}</CodePaper>
-              <Typography variant="body1" paragraph>
-                Or install with yarn:
-              </Typography>
-              <CodePaper language="bash" paragraph>{`yarn install beneath`}</CodePaper>
-              <Typography variant="body1" paragraph>
-                You can query this stream directly from your frontend. It's very important to use permissioned
-                "read-only" secrets in your frontend code.
-              </Typography>
-              <CodePaper language={"javascript"}>
-                {`fetch("${GATEWAY_URL}/v1/${args.organization}/${args.project}/${args.stream}", {
-    "Authorization": "Bearer SECRET",
-    "Content-Type": "application/json",
-  })
-  .then(res => res.json())
-  .then(data => {
-    // TODO: Add your logic here
-    console.log(data)
-  })`}
-              </CodePaper>
-            </>
-          ),
-        },
-        {
-          label: "React",
-          content: (
-            <>
-              <Typography variant="body1" paragraph>
-                Install the React library with npm:
-              </Typography>
-              <CodePaper language="bash" paragraph>{`npm install beneath-react`}</CodePaper>
-
-              <Typography variant="body1" paragraph>
-                Or install with yarn:
-              </Typography>
-              <CodePaper language="bash" paragraph>{`yarn install beneath-react`}</CodePaper>
-              <Typography variant="body1" paragraph>
-                You can query this stream directly from your frontend. It's very important to use permissioned
-                "read-only" secrets in your frontend code.
-              </Typography>
-              <CodePaper language={"javascript"}>
-                {`import { useRecords } from "beneath-react";
-
-const App = () => {
-  const { records, error, loading } = useRecords({
-    stream: "${args.organization}/${args.project}/${args.stream}",
-    query: {type: "log", peek: "true"},
-    pageSize: 500,
-  });
-}`}
-              </CodePaper>
-            </>
-          ),
-        },
-      ],
+      label: "React",
+      tabs: [{ label: "Reading", content: buildJavaScriptReact(args) }],
     },
     {
       label: "REST",
@@ -242,6 +196,69 @@ const App = () => {
       ],
     },
   ];
+};
+
+const buildJavaScriptReact = (args: TemplateArgs) => {
+  return (
+    <>
+      <Heading>Setup</Heading>
+      <Para>First, add the Beneath react client to your project:</Para>
+      <CodePaper language="bash" paragraph>{`npm install beneath-react`}</CodePaper>
+      <Para>
+        To query private streams, create a read-only secret on your <SecretsLink>secrets</SecretsLink> page. If you're
+        going to use it in production, create a{" "}
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/access-management/#creating-services-setting-quotas-and-granting-permissions">
+          service secret
+        </Link>
+        .
+      </Para>
+      <Heading>Reading</Heading>
+      <Para>
+        The <code>useRecords</code> hook allows you to run log and index queries, paginate results, and subscribe to
+        changes with websockets. Use the example below to get started:
+      </Para>
+      <CodePaper language="jsx">
+        {`
+import { useRecords } from "beneath-react";
+
+const App = () => {
+  const { records, loading, error } = useRecords({
+    stream: "${args.organization}/${args.project}/${args.stream}",
+    // Other useful options:
+    // secret: "INSERT",
+    // query: { type: "log", peek: false },
+    // query: { type: "index", filter: { ... } },
+    // subscribe: true,
+  })
+
+  if (loading) {
+    return <p>Loading...</p>;
+  } else if (error) {
+    return <p>Error: {error}</p>;
+  }
+
+  return (
+    <div>
+      <h1>${args.stream}</h1>
+      <ul>
+        {records.map((record) => (
+          <li key={record["@meta"].key}>
+            {JSON.stringify(record)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+        `}
+      </CodePaper>
+      <Heading>Reference</Heading>
+      <Para>
+        Consult the <Link href="https://react.docs.beneath.dev">Beneath React client API reference</Link> for details.
+        There's also a lower-level <Link href="https://js.docs.beneath.dev">vanilla JavaScript client</Link>.
+      </Para>
+    </>
+  );
 };
 
 const buildRESTReading = (args: TemplateArgs) => {
