@@ -299,6 +299,7 @@ type ComplexityRoot struct {
 		InstancesMadeFinalCount   func(childComplexity int) int
 		InstancesMadePrimaryCount func(childComplexity int) int
 		LogRetentionSeconds       func(childComplexity int) int
+		Meta                      func(childComplexity int) int
 		Name                      func(childComplexity int) int
 		PrimaryStreamInstance     func(childComplexity int) int
 		PrimaryStreamInstanceID   func(childComplexity int) int
@@ -2095,6 +2096,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stream.LogRetentionSeconds(childComplexity), true
 
+	case "Stream.meta":
+		if e.complexity.Stream.Meta == nil {
+			break
+		}
+
+		return e.complexity.Stream.Meta(childComplexity), true
+
 	case "Stream.name":
 		if e.complexity.Stream.Name == nil {
 			break
@@ -2792,6 +2800,7 @@ type Stream {
   createdOn: Time!
   updatedOn: Time!
   project: Project!
+  meta: Boolean!
   allowManualWrites: Boolean!
 
   schemaKind: StreamSchemaKind!
@@ -2851,6 +2860,7 @@ input CreateStreamInput {
   schema: String!
   indexes: String
   description: String
+  meta: Boolean
   allowManualWrites: Boolean
   useLog: Boolean
   useIndex: Boolean
@@ -11034,6 +11044,41 @@ func (ec *executionContext) _Stream_project(ctx context.Context, field graphql.C
 	return ec.marshalNProject2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐProject(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Stream_meta(ctx context.Context, field graphql.CollectedField, obj *models.Stream) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Stream",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Stream_allowManualWrites(ctx context.Context, field graphql.CollectedField, obj *models.Stream) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -14081,6 +14126,14 @@ func (ec *executionContext) unmarshalInputCreateStreamInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
+		case "meta":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("meta"))
+			it.Meta, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "allowManualWrites":
 			var err error
 
@@ -16184,6 +16237,11 @@ func (ec *executionContext) _Stream(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "project":
 			out.Values[i] = ec._Stream_project(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "meta":
+			out.Values[i] = ec._Stream_meta(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

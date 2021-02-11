@@ -32,6 +32,7 @@ type Stream struct {
 	UpdatedOn         time.Time `sql:",default:now()"`
 	ProjectID         uuid.UUID `sql:"on_delete:RESTRICT,notnull,type:uuid"`
 	Project           *Project  `msgpack:"-"`
+	Meta              bool      `sql:",notnull"`
 	AllowManualWrites bool      `sql:",notnull"`
 
 	// Schema-related fields (note: some are used in stream cache)
@@ -293,6 +294,7 @@ type CreateStreamCommand struct {
 	Schema                    string
 	Indexes                   *string
 	Description               *string
+	Meta                      *bool
 	AllowManualWrites         *bool
 	UseLog                    *bool
 	UseIndex                  *bool
@@ -309,6 +311,7 @@ type UpdateStreamCommand struct {
 	Schema            *string
 	Indexes           *string
 	Description       *string
+	Meta              *bool
 	AllowManualWrites *bool
 }
 

@@ -165,6 +165,11 @@ theme.overrides = {
       borderRadius: "4px",
     },
   },
+  MuiGrid: {
+    item: {
+      lineHeight: "100%",
+    },
+  },
   MuiIconButton: {
     root: {
       color: theme.palette.text?.secondary,

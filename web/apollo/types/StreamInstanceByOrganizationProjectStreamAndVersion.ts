@@ -52,6 +52,7 @@ export interface StreamInstanceByOrganizationProjectStreamAndVersion_streamInsta
   schema: string;
   avroSchema: string;
   streamIndexes: StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream_streamIndexes[];
+  meta: boolean;
   allowManualWrites: boolean;
   useLog: boolean;
   useIndex: boolean;

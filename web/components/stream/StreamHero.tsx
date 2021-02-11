@@ -1,6 +1,5 @@
-import { Chip, Grid, Typography, makeStyles } from "@material-ui/core";
+import { Chip, Grid, Typography, makeStyles, Tooltip } from "@material-ui/core";
 import { FC } from "react";
-import numbro from "numbro";
 
 import { EntityKind } from "apollo/types/globalTypes";
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
@@ -11,9 +10,7 @@ import { toURLName } from "lib/names";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import StreamInstanceSelector from "./StreamInstanceSelector";
 import { makeStreamAs, makeStreamHref } from "./urls";
-
-const intFormat = { thousandSeparated: true };
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
+import { MetaChip, StreamUsageChip } from "./chips";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -65,17 +62,28 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance }) => {
         <Typography className={classes.streamName}>{toURLName(streamName)}</Typography>
       </Grid>
       <Grid item>
-        <Grid container spacing={1}>
+        <Grid container spacing={1} wrap="nowrap">
+          {stream.meta && (
+            <Grid item>
+              <MetaChip />
+            </Grid>
+          )}
           <Grid item>
-            <Chip
-              label={stream.project.public ? "Public" : "Private"}
-              clickable
-              component={NakedLink}
-              href={`/project?organization_name=${toURLName(organizationName)}&project_name=${toURLName(projectName)}`}
-              as={`/${toURLName(organizationName)}/${toURLName(projectName)}`}
-            />
+            <Tooltip
+              title={
+                stream.project.public
+                  ? "The stream belongs to a public project and can be accessed by anyone without permission"
+                  : "The stream belongs to a private project and cannot be accessed without permission"
+              }
+            >
+              <Chip label={stream.project.public ? "Public" : "Private"} />
+            </Tooltip>
           </Grid>
-          {instance && <InstanceUsageChips stream={stream} instance={instance} />}
+          {instance && (
+            <Grid item>
+              <StreamUsageChip stream={stream} instance={instance} />
+            </Grid>
+          )}
         </Grid>
       </Grid>
       <Grid item sm />
@@ -90,39 +98,3 @@ const StreamHero: FC<StreamHeroProps> = ({ stream, instance }) => {
 };
 
 export default StreamHero;
-
-interface InstanceUsageChips {
-  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
-  instance: StreamInstance;
-}
-
-// separate component to enable nested useTotalUsage
-const InstanceUsageChips: FC<InstanceUsageChips> = ({ stream, instance }) => {
-  const classes = useStyles();
-  const { data, loading, error } = useTotalUsage(EntityKind.StreamInstance, instance.streamInstanceID);
-  if (!data) {
-    return null;
-  }
-
-  return (
-    <>
-      <Grid item>
-        <Chip
-          label={
-            <>
-              <Grid container alignItems="center">
-                <Grid item>{numbro(data.writeRecords).format(intFormat) + " records"}</Grid>
-                <Grid item className={classes.verticalBar} />
-                <Grid item>{numbro(data.writeBytes).format(bytesFormat)}</Grid>
-              </Grid>
-            </>
-          }
-          clickable
-          component={NakedLink}
-          href={makeStreamHref(stream, instance, "monitoring")}
-          as={makeStreamAs(stream, instance, "monitoring")}
-        />
-      </Grid>
-    </>
-  );
-};

@@ -148,6 +148,7 @@ func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStr
 		Schema:                    input.Schema,
 		Indexes:                   input.Indexes,
 		Description:               input.Description,
+		Meta:                      input.Meta,
 		AllowManualWrites:         input.AllowManualWrites,
 		UseLog:                    input.UseLog,
 		UseIndex:                  input.UseIndex,
@@ -202,6 +203,7 @@ func (r *mutationResolver) updateExistingFromCreateStream(ctx context.Context, s
 		Schema:            &input.Schema,
 		Indexes:           input.Indexes,
 		Description:       input.Description,
+		Meta:              input.Meta,
 		AllowManualWrites: input.AllowManualWrites,
 	})
 	if err != nil {

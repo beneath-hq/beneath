@@ -56,6 +56,7 @@ type CreateStreamInput struct {
 	Schema                    string                  `json:"schema"`
 	Indexes                   *string                 `json:"indexes"`
 	Description               *string                 `json:"description"`
+	Meta                      *bool                   `json:"meta"`
 	AllowManualWrites         *bool                   `json:"allowManualWrites"`
 	UseLog                    *bool                   `json:"useLog"`
 	UseIndex                  *bool                   `json:"useIndex"`

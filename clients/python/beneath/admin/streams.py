@@ -31,6 +31,7 @@ class Streams:
                             primary
                             normalize
                         }
+                        meta
                         allowManualWrites
                         useLog
                         useIndex
@@ -93,6 +94,7 @@ class Streams:
                             primary
                             normalize
                         }
+                        meta
                         allowManualWrites
                         useLog
                         useIndex
@@ -146,6 +148,7 @@ class Streams:
         schema,
         indexes=None,
         description=None,
+        meta=None,
         allow_manual_writes=None,
         use_log=None,
         use_index=None,
@@ -165,6 +168,7 @@ class Streams:
                     "schema": schema,
                     "indexes": indexes,
                     "description": description,
+                    "meta": meta,
                     "allowManualWrites": allow_manual_writes,
                     "useLog": use_log,
                     "useIndex": use_index,
@@ -195,6 +199,7 @@ class Streams:
                             primary
                             normalize
                         }
+                        meta
                         allowManualWrites
                         useLog
                         useIndex

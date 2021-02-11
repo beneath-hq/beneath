@@ -83,6 +83,7 @@ func (s *Service) CreateStream(ctx context.Context, msg *models.CreateStreamComm
 	stream.SchemaMD5 = s.ComputeSchemaMD5(msg.Schema, msg.Indexes)
 
 	// set other values
+	stream.Meta = derefBool(msg.Meta, false)
 	stream.AllowManualWrites = derefBool(msg.AllowManualWrites, false)
 	stream.UseLog = derefBool(msg.UseLog, true)
 	stream.UseIndex = derefBool(msg.UseIndex, true)
@@ -196,6 +197,12 @@ func (s *Service) UpdateStream(ctx context.Context, msg *models.UpdateStreamComm
 	if msg.Description != nil && *msg.Description != stream.Description {
 		stream.Description = *msg.Description
 		updateFields = append(updateFields, "description")
+	}
+
+	// update meta
+	if msg.Meta != nil && *msg.Meta != stream.Meta {
+		stream.Meta = *msg.Meta
+		updateFields = append(updateFields, "meta")
 	}
 
 	// update manual writes
