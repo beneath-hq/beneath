@@ -1,57 +1,57 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wallstreetbets-scraper
+  name: r-trendingreddits-scraper
   labels:
-    app.kubernetes.io/name: wallstreetbets-scraper
+    app.kubernetes.io/name: r-trendingreddits-scraper
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: wallstreetbets-scraper
+      app.kubernetes.io/name: r-trendingreddits-scraper
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: wallstreetbets-scraper
+        app.kubernetes.io/name: r-trendingreddits-scraper
     spec:
       containers:
         - name: reddit-scraper
           image: gcr.io/beneath/examples-reddit-scraper:latest
           imagePullPolicy: Always
-          args: ["run", "examples/reddit/wallstreetbets-scraper"]
+          args: ["run", "examples/reddit/r-trendingreddits-scraper"]
           env:
             - name: BENEATH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: beneath-secret
             - name: REDDIT_USER_AGENT
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-user-agent
             - name: REDDIT_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-client-id
             - name: REDDIT_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-client-secret
             - name: REDDIT_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-username
             - name: REDDIT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-password
             - name: REDDIT_SUBREDDIT
               valueFrom:
                 secretKeyRef:
-                  name: wallstreetbets-scraper
+                  name: r-trendingreddits-scraper
                   key: reddit-subreddit

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r-politicaldiscussion-scraper
+  labels:
+    app.kubernetes.io/name: r-politicaldiscussion-scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: r-politicaldiscussion-scraper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: r-politicaldiscussion-scraper
+    spec:
+      containers:
+        - name: reddit-scraper
+          image: gcr.io/beneath/examples-reddit-scraper:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/reddit/r-politicaldiscussion-scraper"]
+          env:
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: beneath-secret
+            - name: REDDIT_USER_AGENT
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-user-agent
+            - name: REDDIT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-client-id
+            - name: REDDIT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-client-secret
+            - name: REDDIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-username
+            - name: REDDIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-password
+            - name: REDDIT_SUBREDDIT
+              valueFrom:
+                secretKeyRef:
+                  name: r-politicaldiscussion-scraper
+                  key: reddit-subreddit

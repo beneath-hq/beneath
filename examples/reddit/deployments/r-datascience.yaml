@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r-datascience-scraper
+  labels:
+    app.kubernetes.io/name: r-datascience-scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: r-datascience-scraper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: r-datascience-scraper
+    spec:
+      containers:
+        - name: reddit-scraper
+          image: gcr.io/beneath/examples-reddit-scraper:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/reddit/r-datascience-scraper"]
+          env:
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: beneath-secret
+            - name: REDDIT_USER_AGENT
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-user-agent
+            - name: REDDIT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-client-id
+            - name: REDDIT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-client-secret
+            - name: REDDIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-username
+            - name: REDDIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-password
+            - name: REDDIT_SUBREDDIT
+              valueFrom:
+                secretKeyRef:
+                  name: r-datascience-scraper
+                  key: reddit-subreddit
