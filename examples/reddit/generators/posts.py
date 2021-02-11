@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from config import reddit, SUBREDDIT, MAX_CHARACTERS, truncate_text
+from config import reddit, SUBREDDIT, truncate_text
 
 
 async def generate_posts(p):
@@ -14,7 +14,7 @@ async def generate_posts(p):
         yield {
             "created_on": datetime.utcfromtimestamp(post.created_utc),
             "id": post.id,
-            "author": post.author.name,
+            "author": post.author.name if post.author else "[deleted]",
             "subreddit": post.subreddit.display_name,
             "title": post.title,
             "text": truncate_text(post.selftext),

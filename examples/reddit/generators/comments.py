@@ -9,7 +9,7 @@ async def generate_comments(p):
         yield {
             "created_on": datetime.utcfromtimestamp(comment.created_utc),
             "id": comment.id,
-            "author": comment.author.name,
+            "author": comment.author.name if comment.author else "[deleted]",
             "subreddit": comment.subreddit.display_name,
             "post_id": comment.submission.id,
             "parent_id": comment.parent_id,

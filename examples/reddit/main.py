@@ -13,7 +13,7 @@ with open("schemas/comment.graphql", "r") as file:
 
 def make_stream_name(subreddit, kind):
     name = subreddit.replace("+", "-")
-    return f"{name}-{kind}"
+    return f"r-{name}-{kind}"
 
 
 def make_subreddit_description(subreddit, kind):
