@@ -1,19 +1,18 @@
-import numbro from "numbro";
 import React, { FC } from "react";
 
-import { EntityKind } from "apollo/types/globalTypes";
-import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apollo/types/ProjectByOrganizationAndName";
+import {
+  ProjectByOrganizationAndName_projectByOrganizationAndName,
+  ProjectByOrganizationAndName_projectByOrganizationAndName_streams,
+  ProjectByOrganizationAndName_projectByOrganizationAndName_services,
+} from "apollo/types/ProjectByOrganizationAndName";
 import clsx from "clsx";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { useTotalUsage } from "components/usage/util";
 import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 import { Chip, Grid, Hidden, makeStyles } from "@material-ui/core";
+import { MetaChip, StreamUsageChip } from "components/stream/chips";
 
 const useStyles = makeStyles((theme) => ({
-  resourceTypeCell: {
-    // maxWidth: "80px",
-  },
   nameCell: {
     whiteSpace: "nowrap",
   },
@@ -22,9 +21,6 @@ const useStyles = makeStyles((theme) => ({
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-  },
-  chipsCell: {
-    whiteSpace: "nowrap",
   },
   pointer: {
     cursor: "pointer",
@@ -35,39 +31,20 @@ const useStyles = makeStyles((theme) => ({
   serviceChip: {
     backgroundColor: theme.palette.purple.main,
   },
-  verticalBar: {
-    display: "inline-block",
-    width: "1px",
-    height: "18px",
-    marginRight: "12px",
-    marginLeft: "12px",
-    backgroundColor: theme.palette.text.disabled,
-  },
 }));
-
-const intFormat = { thousandSeparated: true };
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
 
 export interface ViewOverviewProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
-interface resource {
-  type: string;
-  name: string;
-  description: string | null;
-  resourceID: string;
-}
+type Stream = ProjectByOrganizationAndName_projectByOrganizationAndName_streams;
+type Service = ProjectByOrganizationAndName_projectByOrganizationAndName_services;
+type Resource = Stream | Service;
 
 const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
   const classes = useStyles();
-  const streams: resource[] = project.streams.map((stream) => {
-    return { type: "stream", name: stream.name, description: stream.description, resourceID: stream.streamID };
-  });
-  const services: resource[] = project.services.map((service) => {
-    return { type: "service", name: service.name, description: service.description, resourceID: service.serviceID };
-  });
-  const resources: resource[] = streams.concat(services);
+
+  const resources: Resource[] = [...project.streams, ...project.services];
 
   let cta: CallToAction | undefined;
   if (!resources.length) {
@@ -92,26 +69,26 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
     }
   }
 
-  const makeHref = (resourceType: string, name: string) => {
-    if (resourceType === "stream") {
+  const makeHref = (resource: Resource) => {
+    if (resource.__typename === "Stream") {
       return `/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
         project.name
-      )}&stream_name=${toURLName(name)}`;
-    } else {
-      // resourceType === "service"
+      )}&stream_name=${toURLName(resource.name)}`;
+    } else if (resource.__typename === "Service") {
       return `/service?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
         project.name
-      )}&service_name=${toURLName(name)}`;
+      )}&service_name=${toURLName(resource.name)}`;
     }
+    return "";
   };
 
-  const makeAs = (resourceType: string, name: string) => {
-    if (resourceType === "stream") {
-      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/stream:${toURLName(name)}`;
-    } else {
-      // resourceType === "service"
-      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/service:${toURLName(name)}`;
+  const makeAs = (resource: Resource) => {
+    if (resource.__typename === "Stream") {
+      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/stream:${toURLName(resource.name)}`;
+    } else if (resource.__typename === "Service") {
+      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/service:${toURLName(resource.name)}`;
     }
+    return "";
   };
 
   return (
@@ -122,7 +99,7 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
             <TableCell></TableCell>
             <TableCell>Name</TableCell>
             <Hidden smDown>
-              <TableCell>Description</TableCell>
+              <TableCell expand>Description</TableCell>
             </Hidden>
             <Hidden xsDown>
               <TableCell></TableCell>
@@ -132,24 +109,28 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
         <TableBody>
           {Array.from(resources)
             .sort((a, b) => a.name.localeCompare(b.name))
-            .map(({ type, name, description, resourceID }, idx) => (
-              <TableLinkRow key={resourceID} href={makeHref(type, name)} as={makeAs(type, name)}>
-                <TableCell className={classes.resourceTypeCell}>
-                  <Chip
-                    label={<strong>{type.charAt(0).toUpperCase() + type.slice(1)}</strong>}
-                    className={clsx(
-                      classes.pointer,
-                      type === "stream" && classes.streamChip,
-                      type === "service" && classes.serviceChip
-                    )}
-                  />
-                </TableCell>
-                <TableCell className={classes.nameCell}>{toURLName(name)}</TableCell>
+            .map((resource) => (
+              <TableLinkRow key={resource.name + resource.createdOn} href={makeHref(resource)} as={makeAs(resource)}>
+                <TypeTableCell resource={resource} />
+                <TableCell className={classes.nameCell}>{toURLName(resource.name)}</TableCell>
                 <Hidden smDown>
-                  <TableCell className={classes.descriptionCell}>{description}</TableCell>
+                  <TableCell className={classes.descriptionCell}>{resource.description}</TableCell>
                 </Hidden>
                 <Hidden xsDown>
-                  <ChipsCell resourceType={type} resourceID={resourceID} />
+                  <TableCell align="right">
+                    {resource.__typename === "Stream" && (
+                      <Grid container wrap="nowrap" justify="flex-end" spacing={1}>
+                        {resource.meta && (
+                          <Grid item>
+                            <MetaChip />
+                          </Grid>
+                        )}
+                        <Grid item>
+                          <StreamUsageChip stream={{ ...resource, project }} />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </TableCell>
                 </Hidden>
               </TableLinkRow>
             ))}
@@ -161,34 +142,18 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
 
 export default ViewOverview;
 
-// separate component to enable nested useTotalUsage
-const ChipsCell: FC<{ resourceType: string; resourceID: string }> = ({ resourceType, resourceID }) => {
+const TypeTableCell: FC<{ resource: Resource }> = ({ resource }) => {
   const classes = useStyles();
-
-  if (resourceType === "stream") {
-    const { data } = useTotalUsage(EntityKind.Stream, resourceID);
-    if (!data) {
-      return <TableCell></TableCell>;
-    }
-
-    return (
-      <TableCell align="right" className={classes.chipsCell}>
-        <Chip
-          className={classes.pointer}
-          label={
-            <>
-              <Grid container alignItems="center">
-                <Grid item>{numbro(data.writeRecords).format(intFormat) + " records"}</Grid>
-                <Grid item className={classes.verticalBar} />
-                <Grid item>{numbro(data.writeBytes).format(bytesFormat)}</Grid>
-              </Grid>
-            </>
-          }
-        />
-      </TableCell>
-    );
-  } else {
-    // No chips for services for now
-    return <TableCell></TableCell>;
-  }
+  return (
+    <TableCell>
+      <Chip
+        label={<strong>{resource.__typename}</strong>}
+        className={clsx(
+          classes.pointer,
+          resource.__typename === "Stream" && classes.streamChip,
+          resource.__typename === "Service" && classes.serviceChip
+        )}
+      />
+    </TableCell>
+  );
 };

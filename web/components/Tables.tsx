@@ -38,6 +38,9 @@ const useStyles = makeStyles((theme) => ({
       textDecoration: "underline",
     },
   },
+  cellExpand: {
+    width: "100%",
+  },
 }));
 
 // Adds textSize option to table (similar to the material-ui "size" option, but it only changes row height)
@@ -69,8 +72,13 @@ export const TableRow: FC<MuiTableRowProps> = (props) => {
   return <MuiTableRow component="div" {...props} />;
 };
 
-export const TableCell: FC<MuiTableCellProps> = (props) => {
-  return <MuiTableCell component="div" {...props} />;
+export interface TableCellProps extends MuiTableCellProps {
+  expand?: boolean;
+}
+
+export const TableCell: FC<TableCellProps> = ({ className, expand, ...props }) => {
+  const classes = useStyles();
+  return <MuiTableCell component="div" className={clsx(className, expand && classes.cellExpand)} {...props} />;
 };
 
 // TableRow that's a link

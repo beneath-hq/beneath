@@ -42,6 +42,7 @@ type Stream {
   createdOn: Time!
   updatedOn: Time!
   project: Project!
+  meta: Boolean!
   allowManualWrites: Boolean!
 
   schemaKind: StreamSchemaKind!
@@ -101,6 +102,7 @@ input CreateStreamInput {
   schema: String!
   indexes: String
   description: String
+  meta: Boolean
   allowManualWrites: Boolean
   useLog: Boolean
   useIndex: Boolean

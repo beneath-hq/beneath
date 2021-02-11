@@ -52,6 +52,7 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   schema: string;
   avroSchema: string;
   streamIndexes: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes[];
+  meta: boolean;
   allowManualWrites: boolean;
   useLog: boolean;
   useIndex: boolean;

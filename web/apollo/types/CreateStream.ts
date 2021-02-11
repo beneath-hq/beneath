@@ -42,6 +42,7 @@ export interface CreateStream_createStream {
   schema: string;
   avroSchema: string;
   streamIndexes: CreateStream_createStream_streamIndexes[];
+  meta: boolean;
   allowManualWrites: boolean;
   useLog: boolean;
   useIndex: boolean;

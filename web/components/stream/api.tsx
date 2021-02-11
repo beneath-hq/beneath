@@ -37,30 +37,6 @@ const SecretsLink: FC = (props) => {
   );
 };
 
-/**
-- Python
-  - Reading
-  - Writing
-- JavaScript
-  - JS
-    - Example
-    - Link to ref
-  - React
-    - Example
-    - Link to ref
-- SQL
-  - Simple example
-  - Link to docs (copy important sections?)
-  - Mention special columns
-- REST
-  - Reading
-    - Curl based
-    - Log
-    - Filter
-  - Writing
-    - Curl based
- */
-
 export interface TemplateArgs {
   organization: string;
   project: string;
@@ -404,7 +380,7 @@ const buildRESTWriting = (args: TemplateArgs) => {
   return (
     <>
       <Heading>Writing basics</Heading>
-      <Para>Post records with cURL:</Para>
+      <Para>Write records with cURL:</Para>
       <CodePaper language="bash" paragraph>
         {`
 curl ${url} \\

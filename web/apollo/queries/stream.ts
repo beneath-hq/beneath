@@ -30,6 +30,7 @@ export const QUERY_STREAM = gql`
         primary
         normalize
       }
+      meta
       allowManualWrites
       useLog
       useIndex
@@ -91,6 +92,7 @@ export const QUERY_STREAM_INSTANCE = gql`
           primary
           normalize
         }
+        meta
         allowManualWrites
         useLog
         useIndex
@@ -195,6 +197,7 @@ export const CREATE_STREAM = gql`
         primary
         normalize
       }
+      meta
       allowManualWrites
       useLog
       useIndex

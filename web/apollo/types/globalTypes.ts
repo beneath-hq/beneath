@@ -52,6 +52,7 @@ export interface CreateServiceInput {
   readQuota?: number | null;
   writeQuota?: number | null;
   scanQuota?: number | null;
+  updateIfExists?: boolean | null;
 }
 
 export interface CreateStreamInput {
@@ -62,6 +63,7 @@ export interface CreateStreamInput {
   schema: string;
   indexes?: string | null;
   description?: string | null;
+  meta?: boolean | null;
   allowManualWrites?: boolean | null;
   useLog?: boolean | null;
   useIndex?: boolean | null;

@@ -1,6 +1,7 @@
 import { toURLName } from "lib/names";
 
-interface Stream {
+export interface Stream {
+  streamID: string;
   name: string;
   project: {
     name: string;
@@ -9,7 +10,7 @@ interface Stream {
   primaryStreamInstance?: Instance | null;
 }
 
-interface Instance {
+export interface Instance {
   version: number;
   streamInstanceID?: string;
 }

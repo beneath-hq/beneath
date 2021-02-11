@@ -200,6 +200,7 @@ def _pretty_print_stream(stream):
             "schemaKind",
             "schema",
             "streamIndexes",
+            "meta",
             "allowManualWrites",
             "useLog",
             "useIndex",

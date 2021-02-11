@@ -57,6 +57,7 @@ export const QUERY_PROJECT = gql`
         name
         description
         createdOn
+        meta
         instancesCreatedCount
         instancesDeletedCount
         primaryStreamInstanceID

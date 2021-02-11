@@ -19,6 +19,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_strea
   name: string;
   description: string | null;
   createdOn: ControlTime;
+  meta: boolean;
   instancesCreatedCount: number;
   instancesDeletedCount: number;
   primaryStreamInstanceID: ControlUUID | null;

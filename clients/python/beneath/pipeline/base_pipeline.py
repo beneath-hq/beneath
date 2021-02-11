@@ -331,6 +331,7 @@ class BasePipeline:
                 stream_path=str(qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
                 description=description,
+                meta=True,
                 log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
                 use_warehouse=False,
                 update_if_exists=True,

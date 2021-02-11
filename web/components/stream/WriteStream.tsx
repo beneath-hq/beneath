@@ -28,7 +28,7 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
   const token = useToken();
   const [writeDialog, setWriteDialog] = React.useState(false);
 
-  if (!streamMetadata.allowManualWrites || !me || !token) {
+  if (streamMetadata.meta || !streamMetadata.allowManualWrites || !me || !token) {
     return <></>;
   }
 
