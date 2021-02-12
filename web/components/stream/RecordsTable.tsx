@@ -82,7 +82,7 @@ const RecordsTable: FC<RecordsTableProps> = ({
               <TableRow>
                 {columns.map((column) => (                  
                   <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
-                    <Grid container spacing={1} wrap="nowrap">
+                    <Grid container spacing={1} alignItems="center" wrap="nowrap">
                       <Grid item>
                         <Typography className={classes.headerCellText}>{column.displayName}</Typography>
                       </Grid>

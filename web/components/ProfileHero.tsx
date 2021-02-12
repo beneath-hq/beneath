@@ -1,5 +1,5 @@
+import clsx from "clsx";
 import { FC } from "react";
-
 import { Grid, Link, makeStyles, Typography } from "@material-ui/core";
 
 import Avatar from "./Avatar";
@@ -13,9 +13,11 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(4),
   },
   site: {
-    marginTop: theme.spacing(0.5),
     display: "block",
   },
+  gutterBottom: {
+    marginBottom: theme.spacing(1),
+  }
 }));
 
 export interface ProfileHeroProps {
@@ -34,11 +36,11 @@ const ProfileHero: FC<ProfileHeroProps> = ({ name, displayName, description, sit
         <Avatar size="hero" label={displayName || name} src={avatarURL} />
       </Grid>
       <Grid item>
-        <Typography component="h1" variant="h1" gutterBottom={!site}>
+        <Typography component="h1" variant="h1" className={classes.gutterBottom}>
           {displayName || name}
         </Typography>
         {site && (
-          <Link href={site} variant="subtitle2" className={classes.site} gutterBottom>
+          <Link href={site} variant="subtitle2" className={clsx(classes.site, classes.gutterBottom)}>
             {site}
           </Link>
         )}

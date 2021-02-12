@@ -205,7 +205,7 @@ interface StreamCrumbProps {
 const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => {
   const classes = useStyles();
   return (
-    <Grid container alignItems="center" spacing={1}>
+    <Grid container alignItems="center" spacing={1} wrap="nowrap">
       <Grid item>
         <Crumb
           href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
@@ -249,7 +249,7 @@ const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, i
   const classes = useStyles();
 
   return (
-    <Grid container alignItems="center" spacing={1}>
+    <Grid container alignItems="center" spacing={1} wrap="nowrap">
       <Grid item>
         <Crumb
           isCurrent={isCurrent}

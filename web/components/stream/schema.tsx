@@ -243,6 +243,12 @@ export class Column {
     if (avro.Type.isType(this.type, "array", "record")) {
       return (val: any) => JSON.stringify(val);
     }
+    if (avro.Type.isType(this.type, "boolean")) {
+      return (val: any) => {
+        const boolString = val.toString()
+        return boolString.charAt(0).toUpperCase() + boolString.slice(1)
+      }
+    }
     return (val: any) => val;
   }
 }

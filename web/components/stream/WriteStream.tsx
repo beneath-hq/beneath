@@ -19,10 +19,10 @@ import useMe from "hooks/useMe";
 interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
   instanceID: string;
-  buttonStyleClass: string;
+  buttonClassName: string;
 }
 
-const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, buttonStyleClass }) => {
+const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, buttonClassName }) => {
   const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
   const me = useMe();
   const token = useToken();
@@ -75,7 +75,7 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
         onClick={() => setWriteDialog(true)}
         endIcon={<AddBoxIcon />}
         size="small"
-        className={buttonStyleClass}
+        classes={{ root: buttonClassName }}
       >
         Write record
       </Button>

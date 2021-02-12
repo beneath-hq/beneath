@@ -18,7 +18,6 @@ import clsx from "clsx";
 import { StreamInstance } from "components/stream/types";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
-import { toURLName } from "lib/names";
 import { makeStreamAs, makeStreamHref } from "./urls";
 
 interface DataTabProps {
@@ -45,6 +44,9 @@ const useStyles = makeStyles((theme: Theme) => ({
   errorCaption: {
     color: theme.palette.error.main,
   },
+  safariButtonFix: {
+    whiteSpace: "nowrap"
+  }
 }));
 
 const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
@@ -158,7 +160,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     };
   }
   let tableCta: CallToAction | undefined;
-  if (!loading && filter === "" && records.length === 0) {
+  if (!loading && _.isEmpty(filter) && records.length === 0) {
     tableCta = {
       message: `There's no data in this stream instance`,
       buttons: [
@@ -170,7 +172,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
 
   // ERRORS
   let errorString: string | undefined;
-  if (error && filter === "") {
+  if (error && _.isEmpty(filter)) {
     errorString = error.message;
   }
 
@@ -180,7 +182,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     note = "We removed some records from the bottom to fit new records in the table";
   }
   if (!fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
-    if (filter === "") {
+    if (_.isEmpty(filter)) {
       note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
     } else {
       note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} that match the filter`;
@@ -282,12 +284,12 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
           </Grid>
           <Grid item xs />
           <Grid item>
-            <Grid container spacing={1}>
+            <Grid container spacing={1} wrap="nowrap">
               <Grid item>
                 <WriteStream
                   stream={stream}
                   instanceID={instance.streamInstanceID}
-                  buttonStyleClass={classes.topRowHeight}
+                  buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
                 />
               </Grid>
               <Grid item>
@@ -297,7 +299,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
                   href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
                   as={`/-/sql`}
                   size="small"
-                  className={classes.topRowHeight}
+                  classes={{ root: clsx(classes.topRowHeight, classes.safariButtonFix) }}
                   disabled={!stream.useWarehouse}
                 >
                   Query with SQL
