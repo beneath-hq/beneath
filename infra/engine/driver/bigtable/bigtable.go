@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -257,7 +258,7 @@ func (b BigTable) dropRowRange(ctx context.Context, table string, rowKeyPrefix s
 	err := b.Admin.DropRowRange(ctx, table, rowKeyPrefix)
 	if err != nil {
 		// Return the error only if necessary
-		if err.Error() != "A DropRowRange operation is already ongoing." {
+		if !strings.Contains(err.Error(), "A DropRowRange operation is already ongoing.") {
 			return err
 		}
 	}
