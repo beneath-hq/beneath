@@ -252,3 +252,14 @@ func (b BigTable) readFilter(expires bool) bigtable.ReadOption {
 	}
 	return bigtable.RowFilter(filter)
 }
+
+func (b BigTable) dropRowRange(ctx context.Context, table string, rowKeyPrefix string) error {
+	err := b.Admin.DropRowRange(ctx, table, rowKeyPrefix)
+	if err != nil {
+		// Return the error only if necessary
+		if err.Error() != "A DropRowRange operation is already ongoing." {
+			return err
+		}
+	}
+	return nil
+}

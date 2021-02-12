@@ -44,13 +44,13 @@ func (b BigTable) WriteUsage(ctx context.Context, id uuid.UUID, label driver.Usa
 // ClearUsage clears all usage data saved for the id
 func (b BigTable) ClearUsage(ctx context.Context, id uuid.UUID) error {
 	// clear usage table
-	err := b.Admin.DropRowRange(ctx, usageTableName, string(id.Bytes()))
+	err := b.dropRowRange(ctx, usageTableName, string(id.Bytes()))
 	if err != nil {
 		return err
 	}
 
 	// clear temp usage table
-	err = b.Admin.DropRowRange(ctx, usageTempTableName, string(id.Bytes()))
+	err = b.dropRowRange(ctx, usageTempTableName, string(id.Bytes()))
 	if err != nil {
 		return err
 	}
