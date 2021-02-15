@@ -1,9 +1,6 @@
 import { Record } from "beneath-react";
 import clsx from "clsx";
-import dynamic from "next/dynamic";
 import React, { FC } from "react";
-
-const Moment = dynamic(import("react-moment"), { ssr: false });
 
 import {
   Button,
@@ -75,7 +72,7 @@ const RecordsTable: FC<RecordsTableProps> = ({
   const columns = schema?.getColumns(showTimestamps);
   return (
     <>
-      <ContentContainer {...containerProps}>
+      <ContentContainer loading={loading} {...containerProps}>
         {columns && (
           <Table size="small">
             <TableHead>
@@ -126,11 +123,7 @@ const RecordsTable: FC<RecordsTableProps> = ({
                         className={clsx(classes.cell, column.isKey && classes.keyCell)}
                         align={column.isNumeric ? "right" : "left"}
                       >
-                        {column.type === "timeago" ? (
-                          <Moment fromNow ago date={column.formatRecord(record)} />
-                        ) : (
-                          column.formatRecord(record)
-                        )}
+                        {column.formatRecord(record)}
                       </TableCell>
                     ))}
                   </TableRow>

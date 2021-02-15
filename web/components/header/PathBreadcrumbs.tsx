@@ -40,11 +40,9 @@ const useStyles = makeStyles((theme) => ({
   },
   streamChip: {
     backgroundColor: theme.palette.primary.dark,
-    marginBottom: "2px", // hack to fix a Chip bug
   },
   serviceChip: {
     backgroundColor: theme.palette.purple.main,
-    marginBottom: "2px", // hack to fix a Chip bug
   },
 }));
 

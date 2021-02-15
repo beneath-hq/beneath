@@ -1,6 +1,9 @@
 import avro from "avsc";
 import _ from "lodash";
+import dynamic from "next/dynamic";
 import numbro from "numbro";
+
+const Moment = dynamic(import("react-moment"), { ssr: false });
 
 type TimeagoType = "timeago";
 export type InputType = "text" | "hex" | "integer" | "float" | "datetime";
@@ -115,10 +118,10 @@ export class Column {
 
   private makeTypeDescription = (type: avro.Type | TimeagoType): { name: string, description: string }  => {
     if (type === "timeago") {
-      return { name: "Timestamp", description: "Date and time with millisecond-precision" };
+      return { name: "Timestamp", description: "Date and time with millisecond-precision, displayed as relative time" };
     }
     if (avro.Type.isType(type, "logical:timestamp-millis")) {
-      return { name: "Timestamp", description: "Date and time with millisecond-precision" };
+      return { name: "Timestamp", description: "Date and time with millisecond-precision, displayed in your local timezone" };
     }
     if (avro.Type.isType(type, "logical:decimal")) {
       return { name: "Numeric", description: "Integer with up to 128 digits" };
@@ -207,10 +210,10 @@ export class Column {
 
   private makeNonNullFormatter() {
     if (this.type === "timeago") {
-      return (val: any) => new Date(val);
+      return (val: any) => <Moment fromNow ago date={val}/>;
     }
     if (avro.Type.isType(this.type, "logical:timestamp-millis")) {
-      return (val: any) => new Date(val).toISOString().slice(0, 19);
+      return (val: any) => <Moment date={val} format="YYYY-MM-DDTHH:mm:ssZ" />;
     }
     if (avro.Type.isType(this.type, "int", "long")) {
       return (val: any) => {

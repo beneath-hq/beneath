@@ -146,12 +146,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     }
   }, [JSON.stringify(filter)]);
 
-  // LOADING
-  let loadingBool: boolean | undefined;
-  if (loading && records.length === 0) {
-    loadingBool = true;
-  }
-
   // CTAs
   let containerCta: CallToAction | undefined;
   if (!fetchMore && fetchMoreChanges) {
@@ -170,18 +164,12 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     };
   }
 
-  // ERRORS
-  let errorString: string | undefined;
-  if (error && _.isEmpty(filter)) {
-    errorString = error.message;
-  }
-
   // NOTES
   let note: string | undefined;
   if (truncation.end) {
     note = "We removed some records from the bottom to fit new records in the table";
   }
-  if (!fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
+  if (!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
     if (_.isEmpty(filter)) {
       note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
     } else {
@@ -314,7 +302,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
         </Typography>
         {/* records table */}
         <VSpace units={2} />
-        {filter !== "" && error && <Message error={true}>{error.message}</Message>}
         {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
         {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
         <RecordsTable
@@ -324,9 +311,9 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
           fetchMore={fetchMore}
           showTimestamps={queryType === "log"}
           callToAction={tableCta}
-          error={errorString}
+          error={error?.message}
           note={note}
-          loading={loadingBool}
+          loading={loading}
         />
       </ContentContainer>
     </>
