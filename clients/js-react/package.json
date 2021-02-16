@@ -1,6 +1,6 @@
 {
   "name": "beneath-react",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "React bindings for the Beneath javascript library (https://www.npmjs.com/package/beneath)",
   "url": "https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/js-react",
   "main": "dist/index.js",

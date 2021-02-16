@@ -148,6 +148,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
       // parse query
       if (query.error) {
         setError(query.error);
+        setLoading(false);
         return;
       }
       const cursor = query.cursor;
@@ -161,6 +162,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
         if (cancel) { return; } // check cancel after await
         if (read.error) {
           setError(read.error);
+          setLoading(false);
           return;
         }
         setData({ records: read.data || [] });
@@ -343,6 +345,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
           if (cancel) { return; } // check cancel after await
           if (read.error) {
             setError(read.error);
+            setLoading(false);
             return;
           }
 
@@ -396,6 +399,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
             if (cancel) { return; } // check cancel after await
             if (read.error) {
               setError(read.error);
+              setLoading(false);
               return;
             }
 
