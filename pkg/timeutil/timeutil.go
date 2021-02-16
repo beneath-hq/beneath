@@ -145,6 +145,18 @@ func Parse(val interface{}, allowNil bool) (time.Time, error) {
 		if err == nil {
 			return t, nil
 		}
+
+		// try "2006-01"
+		t, err = time.Parse("2006-01", str)
+		if err == nil {
+			return t, nil
+		}
+
+		// try "2006"
+		t, err = time.Parse("2006", str)
+		if err == nil {
+			return t, nil
+		}
 	}
 
 	// try parsing as milliseconds
