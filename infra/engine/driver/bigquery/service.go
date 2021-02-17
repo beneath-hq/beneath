@@ -51,15 +51,24 @@ func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Stream, i drive
 		Expiration: s.GetWarehouseRetention(),
 	}
 
-	// create table
-	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
-	err = table.Create(ctx, &bigquery.TableMetadata{
+	// create clustering config
+	fieldsForClustering := computeFieldsForClustering(s.GetCodec())
+	clustering := &bigquery.Clustering{
+		Fields: fieldsForClustering,
+	}
+
+	// compose relevant metadata
+	tableMetadata := &bigquery.TableMetadata{
 		Schema:           bqSchema,
 		TimePartitioning: timePartitioning,
-		Clustering: &bigquery.Clustering{
-			Fields: computeFieldsForClustering(s.GetCodec()),
-		},
-	})
+	}
+	if len(fieldsForClustering) > 0 {
+		tableMetadata.Clustering = clustering
+	}
+
+	// create table
+	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
+	err = table.Create(ctx, tableMetadata)
 	if err != nil && !isAlreadyExists(err) { // for idempotency, we don't care if it exists
 		return err
 	}
