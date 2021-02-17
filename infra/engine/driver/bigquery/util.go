@@ -9,6 +9,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 func isAlreadyExists(err error) bool {
@@ -57,4 +60,33 @@ func parseInstanceTableName(tableName string) (uuid.UUID, error) {
 
 func fullyQualifiedName(table *bigquery.Table) string {
 	return strings.ReplaceAll(table.FullyQualifiedName(), ":", ".")
+}
+
+// BigQuery has some limitations for clustering (see https://cloud.google.com/bigquery/docs/creating-clustered-tables#limitations):
+// - it clusters on a maximum of 4 columns
+// - it does not cluster on bytes types
+func computeFieldsForClustering(codec *codec.Codec) []string {
+	recordSchema := codec.Schema.(*schemalang.Record)
+	indexFields := codec.PrimaryIndex.GetFields()
+	var fieldsForClustering []string
+	maxClusterFields := 4
+
+	for i, indexField := range indexFields {
+		if i == maxClusterFields {
+			break
+		}
+		var indexFieldType schemalang.Type
+		for _, field := range recordSchema.Fields {
+			if field.Name == indexField {
+				indexFieldType = field.Type.GetType()
+				break
+			}
+		}
+		if indexFieldType == schemalang.BytesType || indexFieldType == schemalang.FixedType {
+			break
+		}
+		fieldsForClustering = append(fieldsForClustering, indexField)
+	}
+
+	return fieldsForClustering
 }

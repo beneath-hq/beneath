@@ -57,7 +57,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Stream, i drive
 		Schema:           bqSchema,
 		TimePartitioning: timePartitioning,
 		Clustering: &bigquery.Clustering{
-			Fields: s.GetCodec().PrimaryIndex.GetFields(),
+			Fields: computeFieldsForClustering(s.GetCodec()),
 		},
 	})
 	if err != nil && !isAlreadyExists(err) { // for idempotency, we don't care if it exists
