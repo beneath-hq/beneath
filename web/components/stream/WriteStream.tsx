@@ -5,11 +5,10 @@ import AddBoxIcon from "@material-ui/icons/AddBox";
 import { Client } from "beneath";
 
 import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "../../apollo/types/StreamByOrganizationProjectAndName";
-import { Schema } from "./schema";
+import { Schema, validateValue, serializeValue } from "./schema";
 import { Formik, Form, Field } from "formik";
 import FormikTextField from "components/formik/TextField";
 import SubmitControl from "components/forms/SubmitControl";
-import { validateValue } from "./FilterField";
 import { useToken } from "hooks/useToken";
 import { useQuery } from "@apollo/client";
 import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
@@ -28,8 +27,9 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
   const token = useToken();
   const [writeDialog, setWriteDialog] = React.useState(false);
 
+  // hide the button under a few circumstances
   if (streamMetadata.meta || !streamMetadata.allowManualWrites || !me || !token) {
-    return <></>;
+    return null;
   }
 
   const { error, data } = useQuery<ProjectMembers, ProjectMembersVariables>(QUERY_PROJECT_MEMBERS, {
@@ -40,10 +40,10 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
     return <p>Error: {JSON.stringify(error)}</p>;
   }
 
+  // hide the button if no Create permission in the project
   const user = data.projectMembers.find((user) => user.userID === me?.personalUserID);
-  // if not allowed to create in the project, don't show the Write Record button
   if (!user?.create) {
-    return <></>;
+    return null;
   }
 
   const client = new Client({ secret: token || undefined });
@@ -57,16 +57,6 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
   schema.columns.map((col) => {
     initialValues.data[col.name] = "";
   });
-
-  const sanitize = (schema: Schema, data: any) => {
-    // when a field is optional or a key, and an empty string, remove the field from the record object
-    // note: a required string field, which isn't a key, CAN be an empty string, so we don't remove it
-    schema.columns.map((col) => {
-      if ((col.isNullable || col.isKey) && data[col.name] === "") {
-        delete data[col.name];
-      }
-    });
-  };
 
   return (
     <>
@@ -87,8 +77,13 @@ const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID,
               // clear any previous error
               actions.setStatus(null);
 
-              sanitize(schema, values.data);
-              const { writeID, error } = await stream.write(values.data);
+              // serialize the values
+              const data: { [key: string]: any } = {};
+              schema.columns.map((col) => {
+                data[col.name] = serializeValue(col.inputType, values.data[col.name], col.isNullable);
+              });
+
+              const { writeID, error } = await stream.write([data]);
               if (error) {
                 actions.setStatus(error.message);
               }

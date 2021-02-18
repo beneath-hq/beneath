@@ -16,7 +16,7 @@ import WarningIcon from "@material-ui/icons/Error";
 import clsx from "clsx";
 import { FC, useState, useEffect } from "react";
 
-import { InputType } from "./schema";
+import { InputType, serializeValue, validateValue, getPlaceholder } from "./schema";
 
 const useStyles = makeStyles((theme: Theme) => ({
   control: {
@@ -92,7 +92,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export type Operator = "" | "_eq" | "_gt" | "_lt" | "_lte" | "_gte" | "_prefix";
-export type FieldFilter = { [key in Operator]: string };
+export type FieldFilter = { [key in Operator]: any };
 
 export interface Field {
   name: string;
@@ -133,7 +133,7 @@ const FilterField: FC<FilterFieldProps> = ({
       if (!firstHasError) {
         const fieldFilter = {} as FieldFilter;
         if (firstValue) {
-          fieldFilter[firstOperator] = firstValue;
+          fieldFilter[firstOperator] = serializeValue(field.type, firstValue, false);
         }
         onBlur(field, fieldFilter);
       }
@@ -317,47 +317,6 @@ const getOperators = (type: InputType, firstOperator?: Operator): Operator[] | n
     operators.push("_prefix");
   }
   return operators;
-};
-
-export const getPlaceholder = (type: InputType) => {
-  if (type === "text") {
-    return "Abcd...";
-  } else if (type === "hex") {
-    return "0x12ab...";
-  } else if (type === "integer") {
-    return "1234...";
-  } else if (type === "float") {
-    return "1.234...";
-  } else if (type === "datetime") {
-    return "2006-01-02T15:04:05";
-  }
-  return "";
-};
-
-export const validateValue = (type: InputType, value: string): string | null => {
-  if (!value || value.length === 0 || type === "text") {
-    return null;
-  }
-
-  if (type === "hex") {
-    if (!value.match(/^0x[0-9a-fA-F]+$/)) {
-      return "Expected a hexadecimal value starting with '0x'";
-    }
-  } else if (type === "integer") {
-    if (!value.match(/^[0-9]+$/)) {
-      return "Expected an integer";
-    }
-  } else if (type === "float") {
-    if (isNaN(parseFloat(value))) {
-      return "Expected a floating-point number";
-    }
-  } else if (type === "datetime") {
-    const t = new Date(value);
-    if (isNaN(t.valueOf())) {
-      return "Expected a valid timestamp";
-    }
-  }
-  return null;
 };
 
 const getOpSymbol = (op: Operator) => {

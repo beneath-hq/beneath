@@ -6,7 +6,7 @@ import numbro from "numbro";
 const Moment = dynamic(import("react-moment"), { ssr: false });
 
 type TimeagoType = "timeago";
-export type InputType = "text" | "hex" | "integer" | "float" | "datetime";
+export type InputType = "text" | "hex" | "integer" | "float" | "datetime" | "boolean" | "numeric" | "uuid";
 
 export interface Index {
   fields: string[];
@@ -116,12 +116,15 @@ export class Column {
     return this.formatter(_.get(record, this.name));
   }
 
-  private makeTypeDescription = (type: avro.Type | TimeagoType): { name: string, description: string }  => {
+  private makeTypeDescription = (type: avro.Type | TimeagoType): { name: string; description: string } => {
     if (type === "timeago") {
       return { name: "Timestamp", description: "Date and time with millisecond-precision, displayed as relative time" };
     }
     if (avro.Type.isType(type, "logical:timestamp-millis")) {
-      return { name: "Timestamp", description: "Date and time with millisecond-precision, displayed in your local timezone" };
+      return {
+        name: "Timestamp",
+        description: "Date and time with millisecond-precision, displayed in your local timezone",
+      };
     }
     if (avro.Type.isType(type, "logical:decimal")) {
       return { name: "Numeric", description: "Integer with up to 128 digits" };
@@ -145,7 +148,7 @@ export class Column {
       return { name: "Double", description: "64-bit float" };
     }
     if (avro.Type.isType(type, "bytes")) {
-      return { name: "Bytes", description: "Variable-length byte array" };
+      return { name: "Bytes", description: "Variable-length byte array, displayed in base64" };
     }
     if (avro.Type.isType(type, "fixed")) {
       const fixed = this.type as avro.types.FixedType;
@@ -173,13 +176,13 @@ export class Column {
     }
     console.error("Unrecognized type: ", type);
     return { name: "Unknown", description: "Type not known" };
-  }
+  };
 
   private makeInputType = (type: avro.Type | TimeagoType) => {
     if (avro.Type.isType(type, "logical:timestamp-millis")) {
       return "datetime";
     }
-    if (avro.Type.isType(type, "int", "long", "logical:decimal")) {
+    if (avro.Type.isType(type, "int", "long")) {
       return "integer";
     }
     if (avro.Type.isType(type, "float", "double")) {
@@ -191,12 +194,21 @@ export class Column {
     if (avro.Type.isType(type, "string", "enum")) {
       return "text";
     }
+    if (avro.Type.isType(type, "boolean")) {
+      return "boolean";
+    }
+    if (avro.Type.isType(type, "logical:decimal")) {
+      return "numeric";
+    }
+    if (avro.Type.isType(type, "logical:uuid")) {
+      return "uuid";
+    }
     if (type === "timeago") {
       // shouldn't ever need this
       return "datetime";
     }
     return "text";
-  }
+  };
 
   private makeFormatter() {
     const nonNullFormatter = this.makeNonNullFormatter();
@@ -210,7 +222,7 @@ export class Column {
 
   private makeNonNullFormatter() {
     if (this.type === "timeago") {
-      return (val: any) => <Moment fromNow ago date={val}/>;
+      return (val: any) => <Moment fromNow ago date={val} />;
     }
     if (avro.Type.isType(this.type, "logical:timestamp-millis")) {
       return (val: any) => <Moment date={val} format="YYYY-MM-DDTHH:mm:ssZ" />;
@@ -248,9 +260,9 @@ export class Column {
     }
     if (avro.Type.isType(this.type, "boolean")) {
       return (val: any) => {
-        const boolString = val.toString()
-        return boolString.charAt(0).toUpperCase() + boolString.slice(1)
-      }
+        const boolString = val.toString();
+        return boolString.charAt(0).toUpperCase() + boolString.slice(1);
+      };
     }
     return (val: any) => val;
   }
@@ -297,3 +309,125 @@ class UUID extends avro.types.LogicalType {
     }
   }
 }
+
+export const getPlaceholder = (type: InputType) => {
+  if (type === "text") {
+    return "Abcd...";
+  } else if (type === "hex") {
+    return "0x12ab...";
+  } else if (type === "integer" || type === "numeric") {
+    return "1234...";
+  } else if (type === "float") {
+    return "1.234...";
+  } else if (type === "datetime") {
+    return "2006-01-02T15:04:05";
+  } else if (type === "boolean") {
+    return "true";
+  } else if (type === "uuid") {
+    return "00000000-0000-0000-0000-000000000000";
+  }
+  return "";
+};
+
+export const validateValue = (type: InputType, value: string): string | null => {
+  if (!value || value.length === 0 || type === "text") {
+    return null;
+  }
+
+  if (type === "hex") {
+    if (!value.match(/^0x[0-9a-fA-F]+$/) || value.length % 2 !== 0) {
+      return "Expected a hexadecimal value starting with '0x'";
+    }
+  } else if (type === "integer") {
+    if (!value.match(/^[0-9]+$/)) {
+      return "Expected an integer";
+    }
+  } else if (type === "float") {
+    if (isNaN(parseFloat(value))) {
+      return "Expected a floating-point number";
+    }
+  } else if (type === "datetime") {
+    const t = new Date(value);
+    if (isNaN(t.valueOf())) {
+      return "Expected a valid timestamp";
+    }
+  } else if (type === "boolean") {
+    if (!["true", "false"].includes(value.toLowerCase())) {
+      return "Expected a boolean";
+    }
+  } else if (type === "numeric") {
+    if (!value.match(/^[0-9]+$/)) {
+      return "Expected a whole number";
+    }
+  } else if (type === "uuid") {
+    if (
+      !(
+        value.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i) ||
+        value.match(/[0-9a-f]{32}/i) ||
+        value.match(/{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}/i)
+      )
+    ) {
+      return "Expected a UUID";
+    }
+  }
+  return null;
+};
+
+export const serializeValue = (type: InputType, value: string, isNullable: boolean): any => {
+  // Remove optional empty strings from the record object
+  if (isNullable && value === "") {
+    return null;
+  } else if (type === "text") {
+    return value;
+  } else if (type === "uuid") {
+    return value;
+  } else if (type === "integer") {
+    return parseInt(value);
+  } else if (type === "float") {
+    return parseFloat(value);
+  } else if (type === "datetime") {
+    const date = new Date(value);
+    return date.toISOString();
+  } else if (type === "boolean") {
+    return value.toLowerCase() === "true";
+  } else if (type === "hex") {
+    return hexToBase64(value);
+  } else if (type === "numeric") {
+    return value;
+  } else {
+    return value;
+  }
+};
+
+export const deserializeValue = (type: avro.Type, value: any) => {
+  if (avro.Type.isType(type, "string", "logical:uuid", "logical:timestamp-millis")) {
+    return value;
+  }
+  if (avro.Type.isType(type, "int", "long")) {
+    return (value as number).toString();
+  }
+  if (avro.Type.isType(type, "bytes", "fixed")) {
+    return base64ToHex(value);
+  }
+};
+
+const hexToBase64 = (hex: string) => {
+  if (hex.substr(0, 2) === "0x") {
+    hex = hex.substr(2);
+  }
+  let parsed = "";
+  for (let n = 0; n < hex.length; n += 2) {
+    parsed += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+  }
+  return btoa(parsed);
+};
+
+const base64ToHex = (base64: string) => {
+  const raw = atob(base64);
+  let result = "";
+  for (let n = 0; n < raw.length; n++) {
+    const hex = raw.charCodeAt(n).toString(16);
+    result += hex.length === 2 ? hex : "0" + hex;
+  }
+  return "0x".concat(result);
+};

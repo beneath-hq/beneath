@@ -1,3 +1,4 @@
+import avro from "avsc";
 import _ from "lodash";
 import {
   Button,
@@ -13,12 +14,16 @@ import {
 import { FC, useState, useEffect } from "react";
 
 import FilterField, { Operator, Field, FieldFilter } from "./FilterField";
-import { Column } from "./schema";
+import { Column, deserializeValue } from "./schema";
 import CodePaper from "components/CodePaper";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme: Theme) => ({
   height: {
     height: 28,
+  },
+  safariButtonFix: {
+    whiteSpace: "nowrap",
   },
 }));
 
@@ -158,28 +163,30 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
   };
 
   return (
-    <Grid container spacing={1} alignItems="center">
-      {fields.map((field, index) => {
+    <Grid container spacing={1} alignItems="center" wrap="nowrap">
+      {fields.map((field, idx) => {
         let initialOperator: Operator | undefined;
         let initialFieldValue: string | undefined;
 
         // if the filter already includes the field, it'll populate the component with the values
         if (Object.keys(filter).includes(field.name)) {
           initialOperator = Object.keys(filter[field.name])[0] as Operator;
-          initialFieldValue = filter[field.name][initialOperator];
+          const serializedVal = filter[field.name][initialOperator];
+          const avroType = index.find((col) => col.name === field.name)?.type as avro.Type;
+          initialFieldValue = deserializeValue(avroType, serializedVal);
         }
 
         return (
-          <Grid item key={index}>
+          <Grid item key={idx}>
             <FilterField
               filter={filter}
               fields={[field]}
               initialField={field}
               initialOperator={initialOperator}
               initialFieldValue={initialFieldValue}
-              cancellable={index !== 0}
+              cancellable={idx !== 0}
               onBlur={onBlur}
-              onCancel={() => removeField(index)}
+              onCancel={() => removeField(idx)}
             />
           </Grid>
         );
@@ -193,7 +200,12 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
       )}
       {!_.isEmpty(filter) && (
         <Grid item>
-          <Button onClick={() => setShowFilter(true)} size="small" className={classes.height} variant="outlined">
+          <Button
+            onClick={() => setShowFilter(true)}
+            size="small"
+            className={clsx(classes.height, classes.safariButtonFix)}
+            variant="outlined"
+          >
             View filter
           </Button>
           <Dialog open={showFilter} onBackdropClick={() => setShowFilter(false)}>
