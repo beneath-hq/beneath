@@ -3,6 +3,8 @@ package codec
 import (
 	"fmt"
 
+	uuid "github.com/satori/go.uuid"
+
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang/avro"
 )
@@ -76,7 +78,10 @@ func (c avroNativeConverter) convert(schema schemalang.Schema, val interface{}, 
 		// this case we just need to recurse on
 		return c.convert(c.Refs[s.Name], val, fromAvroNative)
 	case *schemalang.Primitive:
-		return val, nil
+		if fromAvroNative {
+			return c.convertPrimitiveFromAvroNative(s, val)
+		}
+		return c.convertPrimitiveToAvroNative(s, val)
 	case *schemalang.Fixed:
 		return val, nil
 	case *schemalang.Enum:
@@ -160,4 +165,28 @@ func (c avroNativeConverter) unionNameForNullable(schema *schemalang.Nullable) s
 		panic(fmt.Errorf("unexpected underlying type for nullable: %T", nonNullSchema))
 	}
 	return name
+}
+
+func (c avroNativeConverter) convertPrimitiveFromAvroNative(schema *schemalang.Primitive, val interface{}) (interface{}, error) {
+	// the avro library uses strings for UUIDs; we convert to type github.com/satori/go.uuid
+	if schema.LogicalType == schemalang.UUIDLogicalType {
+		if val, ok := val.(string); ok {
+			return uuid.FromString(val)
+		}
+	}
+
+	// fallback for all other types
+	return val, nil
+}
+
+func (c avroNativeConverter) convertPrimitiveToAvroNative(schema *schemalang.Primitive, val interface{}) (interface{}, error) {
+	// the avro library expects strings for UUID; we convert from type github.com/satori/go.uuid
+	if schema.LogicalType == schemalang.UUIDLogicalType {
+		if val, ok := val.(uuid.UUID); ok {
+			return val.String(), nil
+		}
+	}
+
+	// fallback for all other types
+	return val, nil
 }
