@@ -179,6 +179,12 @@ func (c *Codec) MarshalKey(index Index, record map[string]interface{}) ([]byte, 
 		if val == nil {
 			return nil, fmt.Errorf("Value for index field '%s' is nil", field)
 		}
+
+		// convert UUID because package tuple has its own UUID type
+		if uuidVal, ok := val.(uuid.UUID); ok {
+			val = tuple.UUID(uuidVal)
+		}
+
 		t[idx] = val
 	}
 
