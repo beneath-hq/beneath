@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	uuid "github.com/satori/go.uuid"
 	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
 	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
 	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
@@ -85,6 +86,11 @@ func newKeyRange(c *Codec, index Index, q queryparse.Query) (r KeyRange, err err
 		arg1, err := parseJSONValue(fieldType, cond.Arg1)
 		if err != nil {
 			return KeyRange{}, err
+		}
+
+		// convert UUID because package tuple has its own UUID type
+		if uuidVal, ok := arg1.(uuid.UUID); ok {
+			arg1 = tuple.UUID(uuidVal)
 		}
 
 		// set val in key we're building
