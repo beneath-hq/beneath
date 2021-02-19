@@ -1,6 +1,6 @@
 import { useRecords } from "beneath-react";
 import _ from "lodash";
-import { Button, Chip, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, Chip, Grid, Hidden, makeStyles, Theme, Typography } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
@@ -45,8 +45,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.error.main,
   },
   safariButtonFix: {
-    whiteSpace: "nowrap"
-  }
+    whiteSpace: "nowrap",
+  },
 }));
 
 const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
@@ -235,65 +235,59 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
               />
             )}
           </Grid>
-          <Grid item>
-            {queryType === "log" && (
-              <>
-                {logPeek && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => setLogPeek(!logPeek)}
-                    size="small"
-                    startIcon={<ArrowDownwardIcon />}
-                    className={classes.topRowHeight}
-                  >
-                    Newest to Oldest
-                  </Button>
-                )}
-                {!logPeek && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => setLogPeek(!logPeek)}
-                    size="small"
-                    startIcon={<ArrowDownwardIcon />}
-                    className={classes.topRowHeight}
-                  >
-                    Oldest to Newest
-                  </Button>
-                )}
-              </>
-            )}
-            {queryType === "index" && (
-              <FilterForm
-                filter={filter}
-                index={schema.columns.filter((col) => col.isKey)}
-                onChange={(filter: any) => setFilter({ ...filter })}
-              />
-            )}
-          </Grid>
-          <Grid item xs />
-          <Grid item>
-            <Grid container spacing={1} wrap="nowrap">
-              <Grid item>
-                <WriteStream
-                  stream={stream}
-                  instanceID={instance.streamInstanceID}
-                  buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
-                />
-              </Grid>
-              <Grid item>
+          {queryType === "log" && (
+            <Grid item>
+              {logPeek && (
                 <Button
                   variant="outlined"
-                  component={NakedLink}
-                  href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
-                  as={`/-/sql`}
+                  onClick={() => setLogPeek(!logPeek)}
                   size="small"
-                  classes={{ root: clsx(classes.topRowHeight, classes.safariButtonFix) }}
-                  disabled={!stream.useWarehouse}
+                  startIcon={<ArrowDownwardIcon />}
+                  className={classes.topRowHeight}
                 >
-                  Query with SQL
+                  Newest to Oldest
                 </Button>
-              </Grid>
+              )}
+              {!logPeek && (
+                <Button
+                  variant="outlined"
+                  onClick={() => setLogPeek(!logPeek)}
+                  size="small"
+                  startIcon={<ArrowDownwardIcon />}
+                  className={classes.topRowHeight}
+                >
+                  Oldest to Newest
+                </Button>
+              )}
             </Grid>
+          )}
+          {queryType === "index" && (
+            <FilterForm
+              filter={filter}
+              index={schema.columns.filter((col) => col.isKey)}
+              onChange={(filter: any) => setFilter({ ...filter })}
+            />
+          )}
+          {/* <Hidden smDown><Grid item xs /></Hidden> */}
+          <Grid item>
+            <WriteStream
+              stream={stream}
+              instanceID={instance.streamInstanceID}
+              buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
+            />
+          </Grid>
+          <Grid item>
+            <Button
+              variant="outlined"
+              component={NakedLink}
+              href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
+              as={`/-/sql`}
+              size="small"
+              classes={{ root: clsx(classes.topRowHeight, classes.safariButtonFix) }}
+              disabled={!stream.useWarehouse}
+            >
+              Query with SQL
+            </Button>
           </Grid>
         </Grid>
         <VSpace units={2} />
