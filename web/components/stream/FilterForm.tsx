@@ -69,21 +69,17 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
 
   // assess whether the Add button should be shown
   useEffect(() => {
-    if (!_.isEmpty(filter)) {
-      // Look at fields and index. If there are more fields in the index, then continue.
-      if (fields.length === index.length) {
-        setShowAdd(false);
-        return;
-      }
-
+    if (fields.length < index.length) {
       // Look at previousOp. If =, then show the Add button.
-      const previous = fields[fields.length - 1];
-      const previousFilter = filter[previous.name];
-      const previousOp = Object.keys(previousFilter)[0];
-      if (previousOp === "_eq") {
-        setShowAdd(true);
-        return;
-      }
+      try {
+        const previous = fields[fields.length - 1];
+        const previousFilter = filter[previous.name];
+        const previousOp = Object.keys(previousFilter)[0];
+        if (previousOp === "_eq") {
+          setShowAdd(true);
+          return;
+        }
+      } catch {}
     }
     setShowAdd(false);
   }, [JSON.stringify(filter), fields]);
@@ -163,7 +159,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
   };
 
   return (
-    <Grid container spacing={1} alignItems="center" wrap="nowrap">
+    <>
       {fields.map((field, idx) => {
         let initialOperator: Operator | undefined;
         let initialFieldValue: string | undefined;
@@ -222,7 +218,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
           </Dialog>
         </Grid>
       )}
-    </Grid>
+    </>
   );
 };
 
