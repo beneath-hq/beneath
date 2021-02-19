@@ -4,15 +4,7 @@ import useMe from "../../hooks/useMe";
 import BeneathLogo from "./BeneathLogo";
 import { NakedLink } from "../Link";
 
-import {
-  AppBar,
-  Button,
-  Link,
-  makeStyles,
-  Toolbar,
-  useMediaQuery,
-  useTheme,
-} from "@material-ui/core";
+import { AppBar, Button, Grid, Link, makeStyles, Toolbar, useMediaQuery, useTheme } from "@material-ui/core";
 
 import { Menu as MenuIcon, Add } from "@material-ui/icons";
 import PathBreadcrumbs from "./PathBreadcrumbs";
@@ -33,6 +25,9 @@ const useStyles = makeStyles((_) => ({
   },
   rightButton: {
     height: "32px",
+  },
+  noWrap: {
+    whiteSpace: "nowrap",
   },
 }));
 
@@ -63,94 +58,103 @@ const Header: FC = () => {
 
   return (
     <AppBar position="sticky" title="Beneath">
-      <Toolbar variant="dense">
-        {/* Logo */}
-        <Link
-          className={classes.logo}
-          component={NakedLink}
-          href="/"
-          variant="h6"
-          color="inherit"
-          underline="none"
-          noWrap
-        >
-          <BeneathLogo />
-        </Link>
-        {/* Path */}
-        <PathBreadcrumbs />
-        {/* Change to right-hand side */}
-        <div className={classes.grow} />
-        {/* Create stream/project/etc. button */}
-        {me &&
-          (isSm ? (
-            <SplitButton
-              margin="dense"
-              className={clsx(classes.rightItem, classes.rightButton)}
-              color="secondary"
-              variant="contained"
-              mainActionIdx={1}
-              actions={createActions}
-            />
-          ) : (
-            <DropdownButton
-              className={clsx(classes.rightItem, classes.rightButton)}
-              color="secondary"
-              variant="contained"
-              margin="dense"
-              actions={createActions}
-            >
-              <Add />
-            </DropdownButton>
-          ))}
-        {/* Links (desktop) */}
-        {isSm &&
-          linkActions.map((action, idx) => (
-            <Button
-              key={idx}
-              className={clsx(classes.rightItem, classes.rightButton)}
+      <Grid container alignItems="center">
+        <Grid item>
+          <Toolbar variant="dense">
+            {/* Logo */}
+            <Link
+              className={classes.logo}
               component={NakedLink}
-              href={action.href}
+              href="/"
+              variant="h6"
+              color="inherit"
+              underline="none"
+              noWrap
             >
-              {action.label}
-            </Button>
-          ))}
+              <BeneathLogo />
+            </Link>
+            {/* Path */}
+            <PathBreadcrumbs />
+          </Toolbar>
+        </Grid>
+        <Grid item xs />
+        <Grid item xs>
+          <Toolbar>
+            {/* Spacer to move the remaining contents to right-hand side */}
+            <div className={classes.grow} />
+            {/* Create stream/project/etc. button */}
+            {me &&
+              (isSm ? (
+                <SplitButton
+                  margin="dense"
+                  className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
+                  color="secondary"
+                  variant="contained"
+                  mainActionIdx={1}
+                  actions={createActions}
+                />
+              ) : (
+                <DropdownButton
+                  className={clsx(classes.rightItem, classes.rightButton)}
+                  color="secondary"
+                  variant="contained"
+                  margin="dense"
+                  actions={createActions}
+                >
+                  <Add />
+                </DropdownButton>
+              ))}
+            {/* Links (desktop) */}
+            {isSm &&
+              linkActions.map((action, idx) => (
+                <Button
+                  key={idx}
+                  className={clsx(classes.rightItem, classes.rightButton)}
+                  component={NakedLink}
+                  href={action.href}
+                >
+                  {action.label}
+                </Button>
+              ))}
 
-        {/* Login button */}
-        {!me && (
-          <Button
-            className={clsx(classes.rightItem, classes.rightButton)}
-            component={NakedLink}
-            variant="contained"
-            href="/-/auth"
-          >
-            Login
-          </Button>
-        )}
-        {/* Signup button */}
-        {!me && (
-          <Button
-            className={clsx(classes.rightItem, classes.rightButton)}
-            component={NakedLink}
-            variant="contained"
-            href="/-/auth"
-            color="primary"
-          >
-            Sign up
-          </Button>
-        )}
-        {me && <ProfileButton className={classes.rightItem} me={me} />}
-        {/* Links (mobile) */}
-        {!isSm && (
-          <DropdownButton
-            className={clsx(classes.rightItem, classes.rightButton)}
-            variant="text"
-            margin="dense"
-            actions={linkActions}
-          >
-            <MenuIcon />
-          </DropdownButton>
-        )}
-      </Toolbar>
+            {/* Login button */}
+            {!me && (
+              <Button
+                className={clsx(classes.rightItem, classes.rightButton)}
+                component={NakedLink}
+                variant="contained"
+                href="/-/auth"
+              >
+                Login
+              </Button>
+            )}
+            {/* Signup button */}
+            {!me && (
+              <Button
+                className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
+                component={NakedLink}
+                variant="contained"
+                href="/-/auth"
+                color="primary"
+              >
+                Sign up
+              </Button>
+            )}
+            {me && <ProfileButton className={classes.rightItem} me={me} />}
+            {/* Links (mobile) */}
+            {!isSm && (
+              <DropdownButton
+                className={clsx(classes.rightItem, classes.rightButton)}
+                variant="text"
+                margin="dense"
+                actions={linkActions}
+              >
+                <MenuIcon />
+              </DropdownButton>
+            )}
+          </Toolbar>
+        </Grid>
+      </Grid>
     </AppBar>
   );
 };

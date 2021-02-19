@@ -6,7 +6,7 @@ import React, { FC } from "react";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
-import { Chip, Grid } from "@material-ui/core";
+import { Chip, Grid, Hidden, Typography } from "@material-ui/core";
 import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({
@@ -14,19 +14,10 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "4px",
     flexWrap: "nowrap",
   },
-  link: {
-    cursor: "pointer",
-    color: theme.palette.text.secondary,
-    fontSize: theme.typography.body2.fontSize,
-    [theme.breakpoints.up("sm")]: {
-      fontSize: theme.typography.body1.fontSize,
-    },
+  breadcrumbsOl: {
+    flexWrap: "nowrap",
   },
-  currentLink: {
-    color: theme.palette.text.primary,
-    fontWeight: theme.typography.fontWeightBold,
-  },
-  crumbSeparator: {
+  breadcrumbsSeparator: {
     marginTop: "-0.1rem",
     marginLeft: "4px",
     marginRight: "4px",
@@ -37,6 +28,19 @@ const useStyles = makeStyles((theme) => ({
       marginRight: "8px",
       fontSize: "1.5rem",
     },
+  },
+  link: {
+    cursor: "pointer",
+    color: theme.palette.text.secondary,
+    whiteSpace: "nowrap",
+    fontSize: theme.typography.body2.fontSize,
+    [theme.breakpoints.up("sm")]: {
+      fontSize: theme.typography.body1.fontSize,
+    },
+  },
+  currentLink: {
+    color: theme.palette.text.primary,
+    fontWeight: theme.typography.fontWeightBold,
   },
   streamChip: {
     backgroundColor: theme.palette.primary.dark,
@@ -54,7 +58,7 @@ export const PathBreadcrumbs: FC = () => {
     <Breadcrumbs
       aria-label="Breadcrumbs"
       className={classes.breadcrumbs}
-      classes={{ separator: classes.crumbSeparator }}
+      classes={{ ol: classes.breadcrumbsOl, separator: classes.breadcrumbsSeparator }}
       separator={"/"}
     >
       <span /> {/* To show a root "/" */}
@@ -204,17 +208,24 @@ const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCu
   const classes = useStyles();
   return (
     <Grid container alignItems="center" spacing={1} wrap="nowrap">
-      <Grid item>
-        <Crumb
-          href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
-          as={`/${organization}/${project}/stream:${stream}`}
-          label={stream}
-          isCurrent={isCurrent}
-        />
-      </Grid>
-      <Grid item>
-        <Chip label="Stream" size="small" className={classes.streamChip} />
-      </Grid>
+      <Hidden xsDown>
+        <Grid item>
+          <Crumb
+            href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
+            as={`/${organization}/${project}/stream:${stream}`}
+            label={stream}
+            isCurrent={isCurrent}
+          />
+        </Grid>
+        <Grid item>
+          <Chip label="Stream" size="small" className={classes.streamChip} />
+        </Grid>
+      </Hidden>
+      <Hidden smUp>
+        <Grid item>
+          <Typography>...</Typography>
+        </Grid>
+      </Hidden>
     </Grid>
   );
 };
@@ -248,17 +259,24 @@ const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, i
 
   return (
     <Grid container alignItems="center" spacing={1} wrap="nowrap">
-      <Grid item>
-        <Crumb
-          isCurrent={isCurrent}
-          href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
-          as={`/${organization}/${project}/service:${service}`}
-          label={service}
-        />
-      </Grid>
-      <Grid item>
-        <Chip label="Service" size="small" className={classes.serviceChip} />
-      </Grid>
+      <Hidden xsDown>
+        <Grid item>
+          <Crumb
+            isCurrent={isCurrent}
+            href={`/service?organization_name=${organization}&project_name=${project}&service_name=${service}`}
+            as={`/${organization}/${project}/service:${service}`}
+            label={service}
+          />
+        </Grid>
+        <Grid item>
+          <Chip label="Service" size="small" className={classes.serviceChip} />
+        </Grid>
+      </Hidden>
+      <Hidden smUp>
+        <Grid item>
+          <Typography>...</Typography>
+        </Grid>
+      </Hidden>
     </Grid>
   );
 };
