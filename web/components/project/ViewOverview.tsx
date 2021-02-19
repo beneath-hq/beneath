@@ -126,7 +126,7 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
                           </Grid>
                         )}
                         <Grid item>
-                          <StreamUsageChip stream={{ ...resource, project }} />
+                          <StreamUsageChip stream={{ ...resource, project }} notClickable />
                         </Grid>
                       </Grid>
                     )}

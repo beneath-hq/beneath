@@ -6,6 +6,7 @@ import { EntityKind } from "apollo/types/globalTypes";
 import { useTotalUsage } from "components/usage/util";
 import { Stream, Instance, makeStreamHref, makeStreamAs } from "./urls";
 import { NakedLink } from "components/Link";
+import clsx from "clsx";
 
 const intFormat = { thousandSeparated: true };
 const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
@@ -33,9 +34,10 @@ export const MetaChip: FC = (props) => (
 export interface StreamUsageChipProps {
   stream: Stream;
   instance?: Instance;
+  notClickable?: Boolean;
 }
 
-export const StreamUsageChip: FC<StreamUsageChipProps> = ({ stream, instance }) => {
+export const StreamUsageChip: FC<StreamUsageChipProps> = ({ stream, instance, notClickable }) => {
   let entityKind: EntityKind;
   let entityID: string;
   if (instance?.streamInstanceID) {
@@ -66,10 +68,12 @@ export const StreamUsageChip: FC<StreamUsageChipProps> = ({ stream, instance }) 
           </Grid>
         </>
       }
-      clickable
-      component={NakedLink}
+      clickable={!notClickable}
+      component={!notClickable ? NakedLink : "div"}
       href={makeStreamHref(stream, instance, "monitoring")}
       as={makeStreamAs(stream, instance, "monitoring")}
+      // we use notClickable when the parent component *is* clickable, so we want to keep a pointer on hover
+      className={clsx(notClickable && classes.pointer)}
     />
   );
 };
