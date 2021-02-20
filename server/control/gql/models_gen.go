@@ -23,7 +23,8 @@ type CompileSchemaInput struct {
 }
 
 type CompileSchemaOutput struct {
-	CanonicalIndexes string `json:"canonicalIndexes"`
+	CanonicalAvroSchema string `json:"canonicalAvroSchema"`
+	CanonicalIndexes    string `json:"canonicalIndexes"`
 }
 
 type CreateProjectInput struct {

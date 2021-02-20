@@ -15,11 +15,11 @@ class AdminClient:
         connection (Connection): An authenticated connection to Beneath.
     """
 
-    def __init__(self, connection: Connection):
+    def __init__(self, connection: Connection, dry=False):
         self.connection = connection
-        self.organizations = Organizations(self.connection)
-        self.projects = Projects(self.connection)
-        self.secrets = Secrets(self.connection)
-        self.services = Services(self.connection)
-        self.streams = Streams(self.connection)
-        self.users = Users(self.connection)
+        self.organizations = Organizations(self.connection, dry=dry)
+        self.projects = Projects(self.connection, dry=dry)
+        self.secrets = Secrets(self.connection, dry=dry)
+        self.services = Services(self.connection, dry=dry)
+        self.streams = Streams(self.connection, dry=dry)
+        self.users = Users(self.connection, dry=dry)

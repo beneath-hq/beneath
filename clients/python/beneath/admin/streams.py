@@ -1,11 +1,8 @@
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 from beneath.utils import format_entity_name
 
 
-class Streams:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Streams(_ResourceBase):
     async def find_by_id(self, stream_id):
         result = await self.conn.query_control(
             variables={
@@ -58,7 +55,10 @@ class Streams:
         return result["streamByID"]
 
     async def find_by_organization_project_and_name(
-        self, organization_name, project_name, stream_name
+        self,
+        organization_name,
+        project_name,
+        stream_name,
     ):
         result = await self.conn.query_control(
             variables={
@@ -139,6 +139,26 @@ class Streams:
         )
         return result["streamInstancesForStream"]
 
+    async def compile_schema(self, schema_kind, schema, indexes=None):
+        result = await self.conn.query_control(
+            variables={
+                "input": {
+                    "schemaKind": schema_kind,
+                    "schema": schema,
+                    "indexes": indexes,
+                },
+            },
+            query="""
+                query CompileSchema($input: CompileSchemaInput!) {
+                    compileSchema(input: $input) {
+                        canonicalAvroSchema
+                        canonicalIndexes
+                    }
+                }
+            """,
+        )
+        return result["compileSchema"]
+
     async def create(
         self,
         organization_name,
@@ -158,6 +178,7 @@ class Streams:
         warehouse_retention_seconds=None,
         update_if_exists=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -226,6 +247,7 @@ class Streams:
         return result["createStream"]
 
     async def delete(self, stream_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "streamID": stream_id,
@@ -245,6 +267,7 @@ class Streams:
         make_primary=None,
         update_if_exists=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -270,6 +293,7 @@ class Streams:
         return result["createStreamInstance"]
 
     async def update_instance(self, instance_id, make_final=None, make_primary=None):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -294,6 +318,7 @@ class Streams:
         return result["updateStreamInstance"]
 
     async def delete_instance(self, instance_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "instanceID": instance_id,

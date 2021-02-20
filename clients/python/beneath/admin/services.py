@@ -1,13 +1,13 @@
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 from beneath.utils import format_entity_name
 
 
-class Services:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Services(_ResourceBase):
     async def find_by_organization_project_and_name(
-        self, organization_name, project_name, service_name
+        self,
+        organization_name,
+        project_name,
+        service_name,
     ):
         result = await self.conn.query_control(
             variables={
@@ -51,6 +51,7 @@ class Services:
         scan_quota_bytes=None,
         update_if_exists=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -88,7 +89,7 @@ class Services:
             """,
         )
         return result["createService"]
-    
+
     async def update(
         self,
         organization_name,
@@ -100,6 +101,7 @@ class Services:
         write_quota_bytes=None,
         scan_quota_bytes=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -138,6 +140,7 @@ class Services:
         return result["updateService"]
 
     async def update_permissions_for_stream(self, service_id, stream_id, read, write):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "serviceID": service_id,
@@ -169,6 +172,7 @@ class Services:
         return result["updateServiceStreamPermissions"]
 
     async def delete(self, service_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "serviceID": service_id,
@@ -182,6 +186,7 @@ class Services:
         return result["deleteService"]
 
     async def issue_secret(self, service_id, description):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "serviceID": service_id,

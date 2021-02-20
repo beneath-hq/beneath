@@ -1,14 +1,12 @@
 from datetime import datetime
 
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 from beneath.utils import format_graphql_time
 
 
-class Users:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Users(_ResourceBase):
     async def update_permissions_for_project(self, user_id, project_id, view, create, admin):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "userID": user_id,
@@ -44,8 +42,14 @@ class Users:
         return result["updateUserProjectPermissions"]
 
     async def update_permissions_for_organization(
-        self, user_id, organization_id, view, create, admin
+        self,
+        user_id,
+        organization_id,
+        view,
+        create,
+        admin,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "userID": user_id,

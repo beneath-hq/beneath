@@ -1,11 +1,8 @@
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 from beneath.utils import format_entity_name
 
 
-class Projects:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Projects(_ResourceBase):
     async def find_by_organization_and_name(self, organization_name, project_name):
         result = await self.conn.query_control(
             variables={
@@ -83,6 +80,7 @@ class Projects:
         site_url=None,
         photo_url=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -122,6 +120,7 @@ class Projects:
         site_url=None,
         photo_url=None,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
@@ -172,6 +171,7 @@ class Projects:
         return result["projectMembers"]
 
     async def delete(self, project_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "projectID": project_id,

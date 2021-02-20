@@ -55,14 +55,14 @@ class Connection:
         """
         if not self.connected:
             self._create_grpc_connection()
-        try:
-            await self._check_grpc_connection()
-        except grpc.RpcError as exc:
-            # pylint: disable=no-member
-            if exc.code() == grpc.StatusCode.UNAUTHENTICATED:
-                raise AuthenticationError(exc.details()) from exc
-            raise exc
-        self.connected = True
+            try:
+                await self._check_grpc_connection()
+            except grpc.RpcError as exc:
+                # pylint: disable=no-member
+                if exc.code() == grpc.StatusCode.UNAUTHENTICATED:
+                    raise AuthenticationError(exc.details()) from exc
+                raise exc
+            self.connected = True
 
     def _create_grpc_connection(self):
         self.request_metadata = [("authorization", "Bearer {}".format(self.secret))]
@@ -88,7 +88,9 @@ class Connection:
         pong = await self._ping()
         self._check_pong_status(pong)
         if not pong.authenticated:
-            raise AuthenticationError("You must authenticate with 'beneath auth'")
+            raise AuthenticationError(
+                "You must authenticate with 'beneath auth' or by setting BENEATH_SECRET"
+            )
 
     @classmethod
     def _check_pong_status(cls, pong: gateway_pb2.PingResponse):

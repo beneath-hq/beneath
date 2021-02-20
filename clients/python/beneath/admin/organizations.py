@@ -1,11 +1,8 @@
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 from beneath.utils import format_entity_name
 
 
-class Organizations:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Organizations(_ResourceBase):
     async def find_me(self):
         result = await self.conn.query_control(
             variables={},
@@ -115,6 +112,7 @@ class Organizations:
         return result["organizationMembers"]
 
     async def create(self, name):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "name": format_entity_name(name),
@@ -145,6 +143,7 @@ class Organizations:
         return result["createOrganization"]
 
     async def update_details(self, organization_id, name, display_name, description, photo_url):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "organizationID": organization_id,
@@ -191,8 +190,13 @@ class Organizations:
         return result["updateOrganization"]
 
     async def update_quota(
-        self, organization_id, read_quota_bytes, write_quota_bytes, scan_quota_bytes
+        self,
+        organization_id,
+        read_quota_bytes,
+        write_quota_bytes,
+        scan_quota_bytes,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "organizationID": organization_id,
@@ -225,6 +229,7 @@ class Organizations:
         return result["updateOrganizationQuotas"]
 
     async def invite_user(self, organization_id, user_id, view, create, admin):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "userID": user_id,
@@ -254,6 +259,7 @@ class Organizations:
         return result["inviteUserToOrganization"]
 
     async def accept_invite(self, organization_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "organizationID": organization_id,
@@ -267,8 +273,13 @@ class Organizations:
         return result["acceptOrganizationInvite"]
 
     async def update_user_quota(
-        self, user_id, read_quota_bytes, write_quota_bytes, scan_quota_bytes
+        self,
+        user_id,
+        read_quota_bytes,
+        write_quota_bytes,
+        scan_quota_bytes,
     ):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "userID": user_id,
@@ -303,6 +314,7 @@ class Organizations:
         return result["updateUserQuotas"]
 
     async def leave(self, user_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "userID": user_id,
@@ -321,6 +333,7 @@ class Organizations:
         return result["leaveBillingOrganization"]
 
     async def transfer_project(self, project_id, new_organization_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "projectID": project_id,

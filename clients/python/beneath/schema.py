@@ -19,10 +19,13 @@ class Schema:
     """ Represents a stream's parsed Avro schema """
 
     def __init__(self, avro: str):
+        self.avro = avro
+        """ The Avro schema as a string """
         self.parsed_avro = parse_schema(json.loads(avro))
         """ The parsed avro schema """
 
     def record_to_pb(self, record: Mapping) -> Tuple[gateway_pb2.Record, int]:
+        """ Serializes a record """
         if not isinstance(record, Mapping):
             raise TypeError("write error: record must be a mapping, got {}".format(record))
         avro = self._encode_avro(record)
@@ -31,6 +34,7 @@ class Schema:
         return (pb, pb.ByteSize())
 
     def pb_to_record(self, pb: gateway_pb2.Record, to_dataframe: bool) -> Mapping:
+        """ Deserializes a record """
         record = self._decode_avro(pb.avro_data)
         record["@meta.timestamp"] = (
             ms_to_pd_timestamp(pb.timestamp) if to_dataframe else ms_to_datetime(pb.timestamp)

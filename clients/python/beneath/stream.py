@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from typing import Iterable
 import uuid
 
-from beneath.instance import DryStreamInstance, StreamInstance
+from beneath.instance import StreamInstance
 from beneath.schema import Schema
 from beneath.utils import StreamQualifier
 
@@ -23,12 +23,6 @@ class Stream:
     Use it to get a StreamInstance, which you can query, replay, subscribe and write to.
     Learn more about streams and instances at https://about.beneath.dev/docs/concepts/streams/.
     """
-
-    client: Client
-
-    qualifier: StreamQualifier
-
-    admin_data: dict
 
     stream_id: uuid.UUID
     """
@@ -46,56 +40,58 @@ class Stream:
     This is probably the object you will use to write/query the stream.
     """
 
+    _client: Client
+    _qualifier: StreamQualifier
+
     # INITIALIZATION
 
     def __init__(self):
-        self.client: Client = None
-        self.qualifier: StreamQualifier = None
-        self.admin_data: dict = None
         self.stream_id: uuid.UUID = None
         self.schema: Schema = None
         self.primary_instance: StreamInstance = None
+        self._client: Client = None
+        self._qualifier: StreamQualifier = None
 
     @classmethod
-    async def make(cls, client: Client, qualifier: StreamQualifier, admin_data=None) -> Stream:
+    async def _make(cls, client: Client, qualifier: StreamQualifier, admin_data=None) -> Stream:
         stream = Stream()
-        stream.client = client
-        stream.qualifier = qualifier
-
+        stream._client = client
+        stream._qualifier = qualifier
         if not admin_data:
             # pylint: disable=protected-access
             admin_data = await stream._load_admin_data()
-        # pylint: disable=protected-access
-        stream._set_admin_data(admin_data)
+        stream.stream_id = uuid.UUID(hex=admin_data["streamID"])
+        stream.schema = Schema(admin_data["avroSchema"])
+        if "primaryStreamInstance" in admin_data:
+            if admin_data["primaryStreamInstance"] is not None:
+                stream.primary_instance = StreamInstance._make(
+                    client=client,
+                    stream=stream,
+                    admin_data=admin_data["primaryStreamInstance"],
+                )
+        return stream
 
+    @classmethod
+    async def _make_dry(
+        cls,
+        client: Client,
+        qualifier: StreamQualifier,
+        avro_schema: str,
+    ) -> Stream:
+        stream = Stream()
+        stream._client = client
+        stream._qualifier = qualifier
+        stream.stream_id = None
+        stream.schema = Schema(avro_schema)
+        stream.primary_instance = await stream.create_instance(version=0, make_primary=True)
         return stream
 
     async def _load_admin_data(self):
-        return await self.client.admin.streams.find_by_organization_project_and_name(
-            organization_name=self.qualifier.organization,
-            project_name=self.qualifier.project,
-            stream_name=self.qualifier.stream,
+        return await self._client.admin.streams.find_by_organization_project_and_name(
+            organization_name=self._qualifier.organization,
+            project_name=self._qualifier.project,
+            stream_name=self._qualifier.stream,
         )
-
-    def _set_admin_data(self, admin_data):
-        self.admin_data = admin_data
-        self.stream_id = uuid.UUID(hex=self.admin_data["streamID"])
-        self.schema = Schema(self.admin_data["avroSchema"])
-        if (
-            "primaryStreamInstance" in self.admin_data
-            and self.admin_data["primaryStreamInstance"] is not None
-        ):
-            self.primary_instance = StreamInstance(
-                stream=self, admin_data=self.admin_data["primaryStreamInstance"]
-            )
-
-    # MANAGEMENT
-
-    async def delete(self):
-        """
-        Deletes the stream and all its instances and data.
-        """
-        await self.client.admin.streams.delete(self.stream_id)
 
     # INSTANCES
 
@@ -104,8 +100,16 @@ class Stream:
         Returns a list of all the stream's instances.
         Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
         """
-        instances = await self.client.admin.streams.find_instances(self.admin_data["streamID"])
-        instances = [StreamInstance(stream=self, admin_data=i) for i in instances]
+        # handle if dry
+        if not self.stream_id:
+            if self.primary_instance:
+                return [self.primary_instance]
+            else:
+                return []
+        instances = await self._client.admin.streams.find_instances(str(self.stream_id))
+        instances = [
+            StreamInstance._make(client=self._client, stream=self, admin_data=i) for i in instances
+        ]
         return instances
 
     async def create_instance(
@@ -113,7 +117,6 @@ class Stream:
         version: int,
         make_primary=None,
         update_if_exists=None,
-        dry=False,
     ) -> StreamInstance:
         """
         Creates and returns a new instance for the stream.
@@ -128,13 +131,33 @@ class Stream:
                 If true and an instance for ``version`` already exists, will update and return the
                 existing instance.
         """
-        if dry:
-            return DryStreamInstance(self, version=version, primary=make_primary, final=None)
-        instance = await self.client.admin.streams.create_instance(
-            stream_id=self.admin_data["streamID"],
-            version=version,
-            make_primary=make_primary,
-            update_if_exists=update_if_exists,
-        )
-        instance = StreamInstance(stream=self, admin_data=instance)
+        # handle real and dry cases
+        if self.stream_id:
+            admin_data = await self._client.admin.streams.create_instance(
+                stream_id=str(self.stream_id),
+                version=version,
+                make_primary=make_primary,
+                update_if_exists=update_if_exists,
+            )
+            instance = StreamInstance._make(client=self._client, stream=self, admin_data=admin_data)
+        else:
+            instance = StreamInstance._make_dry(
+                client=self._client,
+                stream=self,
+                version=version,
+                make_primary=make_primary,
+            )
+        if make_primary:
+            self.primary_instance = instance
         return instance
+
+    # MANAGEMENT
+
+    async def delete(self):
+        """
+        Deletes the stream and all its instances and data.
+        """
+        # handle if dry
+        if not self.stream_id:
+            raise Exception("cannot delete dry stream")
+        await self._client.admin.streams.delete(self.stream_id)

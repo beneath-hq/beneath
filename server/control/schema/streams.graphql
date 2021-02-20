@@ -91,6 +91,7 @@ input CompileSchemaInput {
 }
 
 type CompileSchemaOutput {
+  canonicalAvroSchema: String!
   canonicalIndexes: String!
 }
 

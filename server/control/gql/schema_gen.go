@@ -60,7 +60,8 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	CompileSchemaOutput struct {
-		CanonicalIndexes func(childComplexity int) int
+		CanonicalAvroSchema func(childComplexity int) int
+		CanonicalIndexes    func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -488,6 +489,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CompileSchemaOutput.canonicalAvroSchema":
+		if e.complexity.CompileSchemaOutput.CanonicalAvroSchema == nil {
+			break
+		}
+
+		return e.complexity.CompileSchemaOutput.CanonicalAvroSchema(childComplexity), true
 
 	case "CompileSchemaOutput.canonicalIndexes":
 		if e.complexity.CompileSchemaOutput.CanonicalIndexes == nil {
@@ -2849,6 +2857,7 @@ input CompileSchemaInput {
 }
 
 type CompileSchemaOutput {
+  canonicalAvroSchema: String!
   canonicalIndexes: String!
 }
 
@@ -4227,6 +4236,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _CompileSchemaOutput_canonicalAvroSchema(ctx context.Context, field graphql.CollectedField, obj *CompileSchemaOutput) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompileSchemaOutput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CanonicalAvroSchema, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _CompileSchemaOutput_canonicalIndexes(ctx context.Context, field graphql.CollectedField, obj *CompileSchemaOutput) (ret graphql.Marshaler) {
 	defer func() {
@@ -14636,6 +14680,11 @@ func (ec *executionContext) _CompileSchemaOutput(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CompileSchemaOutput")
+		case "canonicalAvroSchema":
+			out.Values[i] = ec._CompileSchemaOutput_canonicalAvroSchema(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "canonicalIndexes":
 			out.Values[i] = ec._CompileSchemaOutput_canonicalIndexes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

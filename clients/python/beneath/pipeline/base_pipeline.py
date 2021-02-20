@@ -22,7 +22,6 @@ import msgpack
 from beneath import config
 from beneath.client import Client
 from beneath.instance import StreamInstance
-from beneath.logging import logger
 from beneath.pipeline.parse_args import parse_pipeline_args
 from beneath.stream import Stream
 from beneath.utils import AIODelayBuffer, ServiceQualifier, StreamQualifier
@@ -78,7 +77,7 @@ class BasePipeline:
         parse_args: bool = False,
         client: Client = None,
         write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
-        write_checkpoint_delay_ms: int = config.DEFAULT_WRITE_PIPELINE_CHECKPOINT_DELAY_MS,
+        write_checkpoint_delay_ms: int = config.DEFAULT_CHECKPOINT_COMMIT_DELAY_MS,
     ):
         if parse_args:
             parse_pipeline_args()
@@ -127,7 +126,6 @@ class BasePipeline:
         self._stage_tasks = []
         self._input_qualifiers = set()
         self._output_qualifiers = set()
-        self.logger = logger
         self.dry = self.action == Action.test
         self._run_task: asyncio.Task = None
         self._init()
@@ -173,10 +171,10 @@ class BasePipeline:
                 self._run_task = asyncio.create_task(self.run())
                 await self._run_task
             except asyncio.CancelledError:
-                logger.info("Pipeline gracefully cancelled")
+                self.client.logger.info("Pipeline gracefully cancelled")
 
         async def _kill(sig):
-            logger.info("Received %s, attempting graceful shutdown...", sig.name)
+            self.client.logger.info("Received %s, attempting graceful shutdown...", sig.name)
             if self._run_task:
                 self._run_task.cancel()
 
@@ -196,9 +194,11 @@ class BasePipeline:
             return
 
         if self.dry:
-            logger.info("Running in TEST mode: Records will be printed, but NOT saved to Beneath")
+            self.client.logger.info(
+                "Running in TEST mode: Records will be printed, but NOT saved to Beneath"
+            )
         else:
-            logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
+            self.client.logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
 
         self.writer = self.client.writer(dry=self.dry, write_delay_ms=self.write_delay_ms)
         self.checkpoint_writer = self._CheckpointWriter(self)
@@ -212,12 +212,12 @@ class BasePipeline:
             await self.writer.stop()
             await self._after_run()
         except asyncio.CancelledError:
-            logger.info("Pipeline cancelled, flushing buffered records...")
+            self.client.logger.info("Pipeline cancelled, flushing buffered records...")
             await self.checkpoint_writer.stop()
             await self.writer.stop()
             raise
 
-        logger.info("Pipeline completed successfully")
+        self.client.logger.info("Pipeline completed successfully")
 
     # SERVICE CHECKPOINT
 
@@ -288,10 +288,12 @@ class BasePipeline:
         return (self.action == Action.stage) or (self.action == Action.teardown)
 
     async def _stage(self):
-        logger.info("Staging service '%s'", self.service_qualifier)
+        self.client.logger.info("Staging service '%s'", self.service_qualifier)
         await self._stage_service()
         await asyncio.gather(self._stage_service_checkpoint(), *self._stage_tasks)
-        logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
+        self.client.logger.info(
+            "Finished staging pipeline for service '%s'", self.service_qualifier
+        )
 
     async def _stage_service(self):
         if self.is_stage:
@@ -345,7 +347,7 @@ class BasePipeline:
             update_if_exists=True,
         )
         self.checkpoint_instance = instance
-        logger.info(
+        self.client.logger.info(
             "Staged stream for pipeline checkpoint '%s' (using version %i)", qualifier, self.version
         )
 
@@ -376,7 +378,7 @@ class BasePipeline:
         if self.is_stage:
             await self._update_service_permissions(stream, read=True)
         self.instances[stream.qualifier] = stream.primary_instance
-        logger.info(
+        self.client.logger.info(
             "Staged input stream '%s' (using version %i)",
             stream_path,
             stream.primary_instance.version,
@@ -454,7 +456,9 @@ class BasePipeline:
         if self.is_stage:
             await self._update_service_permissions(stream, write=True)
         self.instances[stream.qualifier] = instance
-        logger.info("Staged output stream '%s' (using version %s)", stream_path, self.version)
+        self.client.logger.info(
+            "Staged output stream '%s' (using version %s)", stream_path, self.version
+        )
 
     async def _update_service_permissions(
         self, stream: Stream, read: bool = None, write: bool = None
@@ -469,15 +473,17 @@ class BasePipeline:
     # TEARDOWN
 
     async def _teardown(self):
-        logger.info("Tearing down pipeline for service '%s'", self.service_qualifier)
+        self.client.logger.info("Tearing down pipeline for service '%s'", self.service_qualifier)
         for qualifier in self._output_qualifiers:
             instance = self.instances[qualifier]
             await instance.stream.delete()
-            logger.info("Deleted output stream '%s'", qualifier)
+            self.client.logger.info("Deleted output stream '%s'", qualifier)
         await self.checkpoint_instance.stream.delete()
-        logger.info(
+        self.client.logger.info(
             "Deleted stream for pipeline checkpoint '%s'", self.checkpoint_instance.stream.qualifier
         )
         await self.client.admin.services.delete(self.service_id)
-        logger.info("Deleted pipeline service '%s'", self.service_qualifier)
-        logger.info("Finished teardown of pipeline for service '%s'", self.service_qualifier)
+        self.client.logger.info("Deleted pipeline service '%s'", self.service_qualifier)
+        self.client.logger.info(
+            "Finished teardown of pipeline for service '%s'", self.service_qualifier
+        )

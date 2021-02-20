@@ -4,13 +4,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from beneath.client import Client
     from beneath.stream import Stream
 
+from collections.abc import Mapping
+from typing import Iterable, Union
 import uuid
 
-from beneath import config
 from beneath.cursor import Cursor
-from beneath.writer import DryInstanceWriter, InstanceWriter
 
 
 class StreamInstance:
@@ -20,44 +21,71 @@ class StreamInstance:
     """
 
     stream: Stream
+    """ The stream that this is an instance of """
+
     instance_id: uuid.UUID
-    _admin_data: dict
+    """ The stream instance ID """
+
+    is_final: bool
+    """ True if the instance has been made final and is closed for further writes """
+
+    is_primary: bool
+    """ True if the instance is the primary instance for the stream """
+
+    version: int
+    """ The instance's version number """
+
+    _client: Client
 
     # INITIALIZATION
 
-    def __init__(self, stream: Stream, admin_data: dict):
-        self.stream = stream
+    @classmethod
+    def _make(cls, client: Client, stream: Stream, admin_data: dict) -> StreamInstance:
+        instance = StreamInstance()
+        instance._client = client
+        instance.stream = stream
+        instance._set_admin_data(admin_data)
+        return instance
+
+    @classmethod
+    def _make_dry(
+        cls,
+        client: Client,
+        stream: Stream,
+        version: int,
+        make_primary=False,
+    ) -> StreamInstance:
+        instance = StreamInstance()
+        instance._client = client
+        instance.stream = stream
+        instance.instance_id = None
+        instance.version = version
+        instance.is_primary = make_primary
+        return instance
+
+    def _set_admin_data(self, admin_data: dict):
         self.instance_id = uuid.UUID(hex=admin_data["streamInstanceID"])
-        self._admin_data = admin_data
-
-    # PROPERTIES
-
-    @property
-    def is_final(self) -> bool:
-        """ Returns true if the instance has been made final and is closed for further writes """
-        return self._admin_data["madeFinalOn"] is not None
-
-    @property
-    def is_primary(self):
-        """ Returns true if the instance is the primary instance for the stream """
-        return self._admin_data["madePrimaryOn"] is not None
-
-    @property
-    def version(self):
-        """ Returns the instance's version number """
-        return self._admin_data["version"]
+        self.version = admin_data["version"]
+        self.is_final = admin_data["madeFinalOn"] is not None
+        self.is_primary = admin_data["madePrimaryOn"] is not None
 
     # CONTROL PLANE
 
     async def update(self, make_primary=None, make_final=None):
         """ Updates the instance """
-        self._admin_data = await self.stream.client.admin.streams.update_instance(
-            instance_id=self.instance_id,
-            make_primary=make_primary,
-            make_final=make_final,
-        )
-        if make_primary:
-            self.stream.primary_instance = self
+        # handle real and dry cases
+        if self.instance_id:
+            admin_data = await self._client.admin.streams.update_instance(
+                instance_id=self.instance_id,
+                make_primary=make_primary,
+                make_final=make_final,
+            )
+            self._set_admin_data(admin_data)
+        else:
+            self.is_final = self.is_final or make_final
+            self.is_primary = self.is_primary or make_primary
+            if make_primary:
+                self.stream.primary_instance = self
 
     # READING RECORDS
 
@@ -71,14 +99,15 @@ class StreamInstance:
                 If true, returns a cursor for the most recent records and
                 lets you page through the log in reverse order.
         """
-        resp = await self.stream.client.connection.query_log(
-            instance_id=self.instance_id, peek=peek
-        )
+        # handle dry case
+        if not self.instance_id:
+            raise Exception("cannot query a dry instance")
+        resp = await self._client.connection.query_log(instance_id=self.instance_id, peek=peek)
         assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
         replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
         changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
         return Cursor(
-            connection=self.stream.client.connection,
+            connection=self._client.connection,
             schema=self.stream.schema,
             replay_cursor=replay,
             changes_cursor=changes,
@@ -98,14 +127,17 @@ class StreamInstance:
                 For details on the filter syntax,
                 see https://about.beneath.dev/docs/reading-writing-data/index-filters/.
         """
-        resp = await self.stream.client.connection.query_index(
+        # handle dry case
+        if not self.instance_id:
+            raise Exception("cannot query a dry instance")
+        resp = await self._client.connection.query_index(
             instance_id=self.instance_id, filter=filter
         )
         assert len(resp.replay_cursors) <= 1 and len(resp.change_cursors) <= 1
         replay = resp.replay_cursors[0] if len(resp.replay_cursors) > 0 else None
         changes = resp.change_cursors[0] if len(resp.change_cursors) > 0 else None
         return Cursor(
-            connection=self.stream.client.connection,
+            connection=self._client.connection,
             schema=self.stream.schema,
             replay_cursor=replay,
             changes_cursor=changes,
@@ -113,78 +145,6 @@ class StreamInstance:
 
     # WRITING RECORDS
 
-    def writer(self, dry=False, write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS):
-        """
-        Return a ``Writer`` object for writing data to the stream.
-        A ``Writer`` buffers records in memory for up to 1 second (by default) before
-        sending them in batches over the network.
-
-        Args:
-            dry (bool):
-                If true, written records will be printed, not transmitted to the server.
-                Useful for testing.
-            write_delay_ms (int):
-                The maximum amount of time to buffer records before sending a
-                batch write over the network. Defaults to 1 second (1000 ms).
-        """
-        if dry:
-            return DryInstanceWriter(instance=self, max_delay_ms=write_delay_ms)
-        return InstanceWriter(instance=self, max_delay_ms=write_delay_ms)
-
-
-class DryStreamInstance:
-
-    stream: Stream
-    instance_id: uuid.UUID
-
-    _version: int
-    _primary: bool
-    _final: bool
-
-    # INITIALIZATION
-
-    def __init__(self, stream: Stream, version: int, primary: bool, final: bool):
-        self.stream = stream
-        self.instance_id = uuid.UUID(bytes=(b"\x00" * 16))
-        self._version = version
-        self._primary = primary
-        self._final = final
-
-    # PROPERTIES
-
-    @property
-    def is_final(self):
-        return self._final
-
-    @property
-    def is_primary(self):
-        return self._primary
-
-    @property
-    def version(self):
-        return self._version
-
-    # CONTROL PLANE
-
-    async def update(self, make_primary=None, make_final=None):
-        if make_primary:
-            self._primary = True
-        if make_final:
-            self._final = True
-        if make_primary:
-            self.stream.primary_instance = self
-
-    # READING RECORDS
-
-    async def query_log(self, peek: bool = False) -> Cursor:
-        raise Exception("DryStreamInstance doesn't support query_log")
-
-    # pylint: disable=redefined-builtin
-    async def query_index(self, filter: str = None) -> Cursor:
-        raise Exception("DryStreamInstance doesn't support query_index")
-
-    # WRITING RECORDS
-
-    # pylint: disable=unused-argument
-    def writer(self, dry=False, write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS):
-        return DryInstanceWriter(instance=self, max_delay_ms=write_delay_ms)
+    async def write(self, records: Union[Mapping, Iterable[Mapping]]):
+        """ Convenience wrapper for ``Client.write`` """
+        await self._client.write(self, records)

@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from beneath.connection import Connection
+    from beneath.client import Client
     from beneath.instance import StreamInstance
 
 from collections import defaultdict
@@ -13,7 +13,6 @@ from typing import Dict, Iterable, List, Union, Tuple
 import uuid
 
 from beneath import config
-from beneath.logging import logger
 from beneath.proto import gateway_pb2
 from beneath.utils import AIODelayBuffer
 
@@ -24,17 +23,17 @@ InstanceRecordAndSize = Tuple["StreamInstance", Mapping, int]
 class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
     """ Override of AIODelayBuffer designed to buffer and write to multiple instances at once """
 
-    _connection: Connection
+    _client: Client
     _records: Dict[uuid.UUID, List[gateway_pb2.Record]]
     _total: int
 
-    def __init__(self, connection: Connection, max_delay_ms: int):
+    def __init__(self, client: Client, max_delay_ms: int):
         super().__init__(
             max_delay_ms=max_delay_ms,
             max_size=config.MAX_WRITE_SIZE_BYTES,
             max_count=config.MAX_WRITE_SIZE_COUNT,
         )
-        self._connection = connection
+        self._client = client
         self._total = 0
 
     def _reset(self):
@@ -45,7 +44,7 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
         self._records[instance_id].append(record)
 
     async def _flush(self):
-        await self._connection.write(
+        await self._client.connection.write(
             [
                 gateway_pb2.InstanceRecords(instance_id=instance_id.bytes, records=record_pbs)
                 for (instance_id, record_pbs) in self._records.items()
@@ -55,7 +54,7 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
         for (_, record_pbs) in self._records.items():
             count += len(record_pbs)
         self._total += count
-        logger.info(
+        self._client.logger.info(
             "Flushed %i records to %i instances (%i total during session)",
             count,
             len(self._records),
@@ -74,15 +73,17 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
 class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
     """ Override of AIODelayBuffer designed to buffer and write to multiple instances at once """
 
-    _total: int
+    _client: Client
     _records: List[InstanceRecordAndSize]
+    _total: int
 
-    def __init__(self, max_delay_ms: int):
+    def __init__(self, client: Client, max_delay_ms: int):
         super().__init__(
             max_delay_ms=max_delay_ms,
             max_size=config.MAX_WRITE_SIZE_BYTES,
             max_count=config.MAX_WRITE_SIZE_COUNT,
         )
+        self._client = client
         self._total = 0
 
     def _reset(self):
@@ -92,17 +93,21 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
         self._records.append(value)
 
     async def _flush(self):
-        logger.info("Flushing %i buffered records", len(self._records))
+        self._client.logger.info("Flushing %i buffered records", len(self._records))
         for value in self._records:
             (instance, record, size) = value
-            logger.info(
+            self._client.logger.info(
                 "Flushed record (stream=%s, size=%i bytes): %s",
-                str(instance.stream.qualifier),
+                str(instance.stream._qualifier),
                 size,
                 record,
             )
             self._total += 1
-        logger.info("Flushed %i records (%i total during session)", len(self._records), self._total)
+        self._client.logger.info(
+            "Flushed %i records (%i total during session)",
+            len(self._records),
+            self._total,
+        )
 
     # pylint: disable=arguments-differ
     async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):
@@ -112,29 +117,3 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
             (_, size) = instance.stream.schema.record_to_pb(record)
             value: InstanceRecordAndSize = (instance, record, size)
             await super().write(value=value, size=size)
-
-
-class InstanceWriter(Writer):
-
-    _instance: StreamInstance
-
-    def __init__(self, instance: StreamInstance, max_delay_ms: int):
-        super().__init__(connection=instance.stream.client.connection, max_delay_ms=max_delay_ms)
-        self._instance = instance
-
-    # pylint: disable=arguments-differ
-    async def write(self, records: Union[Mapping, Iterable[Mapping]]):
-        return await super().write(instance=self._instance, records=records)
-
-
-class DryInstanceWriter(DryWriter):
-
-    _instance: StreamInstance
-
-    def __init__(self, instance: StreamInstance, max_delay_ms: int):
-        super().__init__(max_delay_ms=max_delay_ms)
-        self._instance = instance
-
-    # pylint: disable=arguments-differ
-    async def write(self, records: Union[Mapping, Iterable[Mapping]]):
-        return await super().write(instance=self._instance, records=records)

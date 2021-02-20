@@ -114,11 +114,10 @@ func (r *queryResolver) CompileSchema(ctx context.Context, input gql.CompileSche
 		return nil, gqlerror.Errorf("Error compiling schema: %s", err.Error())
 	}
 
-	canonicalIndexes := &gql.CompileSchemaOutput{
-		CanonicalIndexes: stream.CanonicalIndexes,
-	}
-
-	return canonicalIndexes, nil
+	return &gql.CompileSchemaOutput{
+		CanonicalAvroSchema: stream.CanonicalAvroSchema,
+		CanonicalIndexes:    stream.CanonicalIndexes,
+	}, nil
 }
 
 func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStreamInput) (*models.Stream, error) {

@@ -16,7 +16,6 @@ from typing import AsyncIterator, Awaitable, Callable, Dict, Iterable, List, Uni
 from beneath.config import DEFAULT_READ_BATCH_SIZE
 from beneath.cursor import Cursor
 from beneath.instance import StreamInstance
-from beneath.logging import logger
 from beneath.pipeline import BasePipeline, Strategy
 from beneath.utils import StreamQualifier
 
@@ -245,11 +244,11 @@ class Pipeline(BasePipeline):
             instance = self.instances[qualifier]
             if not instance.is_primary:
                 await instance.update(make_primary=True)
-                logger.info(
+                self.client.logger.info(
                     "Made version %s of output stream '%s' primary", instance.version, qualifier
                 )
             else:
-                logger.info(
+                self.client.logger.info(
                     "Using existing primary version %s for output stream '%s'",
                     instance.version,
                     qualifier,
@@ -264,7 +263,7 @@ class Pipeline(BasePipeline):
             instance = self.instances[qualifier]
             if not instance.is_primary or not instance.is_final:
                 await instance.update(make_primary=True, make_final=True)
-                logger.info(
+                self.client.logger.info(
                     "Made version %s for output stream '%s' final and primary",
                     instance.version,
                     qualifier,

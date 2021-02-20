@@ -1,11 +1,9 @@
-from beneath.connection import Connection
+from beneath.admin.base import _ResourceBase
 
 
-class Secrets:
-    def __init__(self, conn: Connection):
-        self.conn = conn
-
+class Secrets(_ResourceBase):
     async def revoke_service_secret(self, secret_id):
+        self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "secretID": secret_id,

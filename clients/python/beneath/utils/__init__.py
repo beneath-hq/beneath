@@ -6,10 +6,11 @@ from beneath.utils.aiopoller import AIOPoller
 from beneath.utils.aioticker import AIOTicker
 from beneath.utils.aioworkerpool import AIOWorkerPool
 from beneath.utils.qualifiers import (
+    pretty_entity_name,
+    ProjectQualifier,
     ServiceQualifier,
     StreamQualifier,
-    ProjectQualifier,
-    pretty_entity_name,
+    SubscriptionQualifier,
 )
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "AIOWorkerPool",
     "ServiceQualifier",
     "StreamQualifier",
+    "SubscriptionQualifier",
     "ProjectQualifier",
     "pretty_entity_name",
 ]
