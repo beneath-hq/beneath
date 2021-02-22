@@ -114,7 +114,7 @@ const FilterForm: FC<FilterFormProps> = ({ filter, index, onChange }) => {
     setFields([...fields, field]);
   };
 
-  if (fields.length === 0) {
+  if (fields.length === 0 || fields.length < Object.keys(filter).length) {
     addField();
   }
 
