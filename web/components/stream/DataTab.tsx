@@ -1,6 +1,6 @@
 import { useRecords } from "beneath-react";
 import _ from "lodash";
-import { Button, Chip, Grid, Hidden, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, Chip, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
@@ -61,6 +61,8 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     );
   }
 
+  const NO_FILTER = {};
+
   // determine if stream may have more data incoming
   const finalized = !!instance.madeFinalOn;
 
@@ -76,17 +78,15 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
 
   const router = useRouter();
   const [filter, setFilter] = useState<any>(() => {
-    const emptyFilter = {};
-
     // checks to see if a filter was provided in the URL
-    if (typeof router.query.filter !== "string") return emptyFilter;
+    if (typeof router.query.filter !== "string") return NO_FILTER;
 
     // attempts to parse JSON
     let filter: any;
     try {
       filter = JSON.parse(router.query.filter);
     } catch {
-      return emptyFilter;
+      return NO_FILTER;
     }
 
     // checks that the filter's keys are in the stream's index
@@ -94,7 +94,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     const index = schema.columns.filter((col) => col.isKey);
     for (const key of keys) {
       const col = index.find((col) => col.name === key);
-      if (typeof col === "undefined") return emptyFilter;
+      if (typeof col === "undefined") return NO_FILTER;
     }
 
     // if query submitted in form {"key": "value"}, convert it to form {"key": {"_eq": "value"}}
@@ -136,15 +136,16 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
 
   // set filter in URL
   useEffect(() => {
+    let href = makeStreamHref(stream, instance);
+    let as = makeStreamAs(stream, instance);
     if (queryType === "index") {
       const filterJSON = JSON.stringify(filter);
-      const href =
-        makeStreamHref(stream, instance) + (filterJSON !== "{}" ? `&filter=${encodeURIComponent(filterJSON)}` : "");
-      const as =
-        makeStreamAs(stream, instance) + (filterJSON !== "{}" ? `?filter=${encodeURIComponent(filterJSON)}` : "");
-      router.replace(href, as);
+      const noFilterJSON = JSON.stringify(NO_FILTER);
+      href = href + (filterJSON !== noFilterJSON ? `&filter=${encodeURIComponent(filterJSON)}` : "");
+      as = as + (filterJSON !== noFilterJSON ? `?filter=${encodeURIComponent(filterJSON)}` : "");
     }
-  }, [JSON.stringify(filter)]);
+    router.replace(href, as);
+  }, [JSON.stringify(filter), queryType]);
 
   // CTAs
   let containerCta: CallToAction | undefined;
@@ -157,10 +158,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   if (!loading && _.isEmpty(filter) && records.length === 0) {
     tableCta = {
       message: `There's no data in this stream instance`,
-      buttons: [
-        // { label: "Write a record", onClick: () => setWriteDialog(true) },
-        { label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" },
-      ],
+      buttons: [{ label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" }],
     };
   }
 
@@ -170,7 +168,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
     note = "We removed some records from the bottom to fit new records in the table";
   }
   if (!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
-    if (_.isEmpty(filter)) {
+    if (queryType === "log" || _.isEmpty(filter)) {
       note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
     } else {
       note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} that match the filter`;
