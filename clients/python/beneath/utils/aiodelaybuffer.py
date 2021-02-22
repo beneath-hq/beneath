@@ -11,7 +11,7 @@ class AIODelayBuffer(Generic[BufferValue]):
     the size of buffered values or time passed since the first value was written to the buffer.
 
     We use it to buffer writes for `max_delay_ms` before sending them in a single batched request
-    over the network (with forced buffer flushes at `max_size`).
+    over the network (with forced buffer flushes at `max_buffer_size`).
 
     It only lets one buffer be open at any moment. If a write is attempted when the buffer is full
     or flushing, the write will not return until the flush of the previous buffer has completed.
@@ -19,10 +19,13 @@ class AIODelayBuffer(Generic[BufferValue]):
     This class is NOT thread-safe.
     """
 
-    def __init__(self, max_delay_ms: int, max_size: int, max_count: int):
+    def __init__(
+        self, max_delay_ms: int, max_record_size: int, max_buffer_size: int, max_buffer_count: int
+    ):
         self._max_delay = max_delay_ms / 1000
-        self._max_size = max_size
-        self._max_count = max_count
+        self._max_record_size = max_record_size
+        self._max_buffer_size = max_buffer_size
+        self._max_buffer_count = max_buffer_count
 
         self._delay_task: asyncio.Task = None
         self._delayed_flush_task: asyncio.Task = None
@@ -86,18 +89,18 @@ class AIODelayBuffer(Generic[BufferValue]):
         if not self._running:
             raise Exception("Cannot call write because the buffer is closed")
 
-        # check value can ever fit in buffer
-        if size > self._max_size:
+        # check value is within acceptable record size
+        if size > self._max_record_size:
             raise ValueError(
-                f"Value exceeds maximum size (size={size} max_size={self._max_size} value={value})"
+                f"Value exceeds maximum record size (size={size} max_record_size={self._max_record_size} value={value})"
             )
 
         # trigger/wait for flush if a) a flush is in progress, or b) value would cause size overflow
         loops = 0
         while (
             self._flushing
-            or (self._buffer_size + size > self._max_size)
-            or (self._buffer_count == self._max_count)
+            or (self._buffer_size + size > self._max_buffer_size)
+            or (self._buffer_count == self._max_buffer_count)
         ):
             assert self._delayed_flush_task is not None
             await self.force_flush()
