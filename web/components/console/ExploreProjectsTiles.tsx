@@ -16,7 +16,7 @@ const ExploreProjectsTiles: FC = () => {
       {error && <ErrorTile error={error?.message || "Couldn't load projects to explore"} />}
       {data &&
         data.exploreProjects &&
-        data.exploreProjects.map(({ projectID, name, description, photoURL, organization }) => (
+        data.exploreProjects.map(({ projectID, name, description, photoURL, public: isPublic, organization }) => (
           <ProjectHeroTile
             key={`explore:${projectID}`}
             href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
@@ -25,6 +25,7 @@ const ExploreProjectsTiles: FC = () => {
             name={toURLName(name)}
             description={description}
             avatarURL={photoURL}
+            isPublic={isPublic}
           />
         ))}
     </>

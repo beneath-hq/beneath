@@ -24,7 +24,7 @@ const ViewProjects: FC<ViewProjectsProps> = ({ organization }) => {
   return (
     <ContentContainer callToAction={cta}>
       <Grid container spacing={3}>
-        {organization.projects.map(({ projectID, name, displayName, description, photoURL }) => (
+        {organization.projects.map(({ projectID, name, displayName, description, photoURL, public: isPublic }) => (
           <ProjectHeroTile
             key={projectID}
             href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
@@ -34,6 +34,7 @@ const ViewProjects: FC<ViewProjectsProps> = ({ organization }) => {
             displayName={displayName}
             description={description}
             avatarURL={photoURL}
+            isPublic={isPublic}
           />
         ))}
       </Grid>

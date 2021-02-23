@@ -72,6 +72,7 @@ export const QUERY_ORGANIZATION = gql`
         displayName
         description
         photoURL
+        public
       }
       personalUserID
       ... on PrivateOrganization {
@@ -117,7 +118,7 @@ export const QUERY_ORGANIZATION = gql`
 `;
 
 export const QUERY_ORGANIZATION_MEMBERS = gql`
-  query OrganizationMembers($organizationID: UUID!){
+  query OrganizationMembers($organizationID: UUID!) {
     organizationMembers(organizationID: $organizationID) {
       organizationID
       userID
@@ -136,8 +137,20 @@ export const QUERY_ORGANIZATION_MEMBERS = gql`
 `;
 
 export const UPDATE_ORGANIZATION = gql`
-  mutation UpdateOrganization($organizationID: UUID!, $name: String, $displayName: String, $description: String, $photoURL: String) {
-    updateOrganization(organizationID: $organizationID, name: $name, displayName: $displayName, description: $description, photoURL: $photoURL) {
+  mutation UpdateOrganization(
+    $organizationID: UUID!
+    $name: String
+    $displayName: String
+    $description: String
+    $photoURL: String
+  ) {
+    updateOrganization(
+      organizationID: $organizationID
+      name: $name
+      displayName: $displayName
+      description: $description
+      photoURL: $photoURL
+    ) {
       organizationID
       name
       displayName

@@ -8,6 +8,7 @@ export const EXPLORE_PROJECTS = gql`
       displayName
       description
       photoURL
+      public
       createdOn
       updatedOn
       organization {
@@ -26,6 +27,7 @@ export const QUERY_PROJECTS_FOR_USER = gql`
       displayName
       description
       photoURL
+      public
       createdOn
       updatedOn
       organization {

@@ -20,6 +20,7 @@ export interface ExploreProjects_exploreProjects {
   displayName: string;
   description: string | null;
   photoURL: string | null;
+  public: boolean;
   createdOn: ControlTime;
   updatedOn: ControlTime;
   organization: ExploreProjects_exploreProjects_organization;

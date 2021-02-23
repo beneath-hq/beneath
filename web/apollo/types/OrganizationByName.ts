@@ -14,6 +14,7 @@ export interface OrganizationByName_organizationByName_PublicOrganization_projec
   displayName: string;
   description: string | null;
   photoURL: string | null;
+  public: boolean;
 }
 
 export interface OrganizationByName_organizationByName_PublicOrganization {
@@ -35,6 +36,7 @@ export interface OrganizationByName_organizationByName_PrivateOrganization_proje
   displayName: string;
   description: string | null;
   photoURL: string | null;
+  public: boolean;
 }
 
 export interface OrganizationByName_organizationByName_PrivateOrganization_personalUser_billingOrganization {

@@ -4,6 +4,7 @@ import { Grid, makeStyles, Typography } from "@material-ui/core";
 import Avatar from "../../Avatar";
 import { Tile, TileProps } from "./Tile";
 import { toURLName } from "lib/names";
+import { Lock, Public } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme) => ({
   avatar: {
@@ -20,6 +21,12 @@ const useStyles = makeStyles((theme) => ({
       alignItems: "center",
     },
   },
+  publicIcon: {
+    fill: theme.palette.primary.dark,
+  },
+  privateIcon: {
+    fill: theme.palette.grey[500],
+  },
 }));
 
 export interface ProjectHeroTileProps extends TileProps {
@@ -28,6 +35,7 @@ export interface ProjectHeroTileProps extends TileProps {
   displayName?: string | null;
   description?: string | null;
   avatarURL?: string | null;
+  isPublic: boolean;
 }
 
 const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
@@ -36,6 +44,7 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
   displayName,
   description,
   avatarURL,
+  isPublic,
   shape,
   ...tileProps
 }) => {
@@ -46,7 +55,7 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
         <Grid item className={classes.avatar}>
           <Avatar size="list" label={displayName || name} src={avatarURL} />
         </Grid>
-        <Grid item xs={9}>
+        <Grid item xs>
           <Grid container className={classes.path}>
             <Grid item>
               <Typography color="textSecondary" className={classes.orgName}>
@@ -54,7 +63,18 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
               </Typography>
             </Grid>
             <Grid item>
-              <Typography variant="h3">{toURLName(name)}</Typography>
+              <Grid container spacing={1} alignItems="center">
+                <Grid item>
+                  <Typography variant="h3">{toURLName(name)}</Typography>
+                </Grid>
+                <Grid item>
+                  {isPublic ? (
+                    <Public fontSize="small" className={classes.publicIcon} />
+                  ) : (
+                    <Lock fontSize="small" className={classes.privateIcon} />
+                  )}
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

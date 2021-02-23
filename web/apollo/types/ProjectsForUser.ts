@@ -20,6 +20,7 @@ export interface ProjectsForUser_projectsForUser {
   displayName: string;
   description: string | null;
   photoURL: string | null;
+  public: boolean;
   createdOn: ControlTime;
   updatedOn: ControlTime;
   organization: ProjectsForUser_projectsForUser_organization;
