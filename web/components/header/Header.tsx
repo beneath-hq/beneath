@@ -1,17 +1,15 @@
+import clsx from "clsx";
 import React, { FC } from "react";
+import { AppBar, Button, Grid, Link, makeStyles, Toolbar, useMediaQuery, useTheme } from "@material-ui/core";
+import { Menu as MenuIcon, Add } from "@material-ui/icons";
 
 import useMe from "../../hooks/useMe";
 import BeneathLogo from "./BeneathLogo";
 import { NakedLink } from "../Link";
-
-import { AppBar, Button, Grid, Link, makeStyles, Toolbar, useMediaQuery, useTheme } from "@material-ui/core";
-
-import { Menu as MenuIcon, Add } from "@material-ui/icons";
 import PathBreadcrumbs from "./PathBreadcrumbs";
 import ProfileButton from "./ProfileButton";
-import SplitButton from "components/SplitButton";
 import DropdownButton from "components/DropdownButton";
-import clsx from "clsx";
+import SplitButton from "components/SplitButton";
 
 const useStyles = makeStyles((_) => ({
   grow: {
@@ -79,7 +77,7 @@ const Header: FC = () => {
         </Grid>
         <Grid item xs />
         <Grid item xs>
-          <Toolbar>
+          <Toolbar variant="dense">
             {/* Spacer to move the remaining contents to right-hand side */}
             <div className={classes.grow} />
             {/* Create stream/project/etc. button */}

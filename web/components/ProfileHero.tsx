@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { FC } from "react";
 import { Grid, Link, makeStyles, Typography } from "@material-ui/core";
 
@@ -16,8 +15,8 @@ const useStyles = makeStyles((theme) => ({
     display: "block",
   },
   gutterBottom: {
-    marginBottom: theme.spacing(1),
-  }
+    marginBottom: theme.spacing(0.75),
+  },
 }));
 
 export interface ProfileHeroProps {
@@ -39,12 +38,14 @@ const ProfileHero: FC<ProfileHeroProps> = ({ name, displayName, description, sit
         <Typography component="h1" variant="h1" className={classes.gutterBottom}>
           {displayName || name}
         </Typography>
+        <Typography variant="body1" className={classes.gutterBottom}>
+          {description}
+        </Typography>
         {site && (
-          <Link href={site} variant="subtitle2" className={clsx(classes.site, classes.gutterBottom)}>
+          <Link href={site} variant="subtitle2" className={classes.site}>
             {site}
           </Link>
         )}
-        <Typography variant="body1">{description}</Typography>
       </Grid>
     </Grid>
   );

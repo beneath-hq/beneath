@@ -7,7 +7,6 @@ import {
   StreamInstancesByOrganizationProjectAndStreamName,
   StreamInstancesByOrganizationProjectAndStreamNameVariables,
 } from "apollo/types/StreamInstancesByOrganizationProjectAndStreamName";
-import { toURLName } from "lib/names";
 import { useRouter } from "next/router";
 import { FC, useState } from "react";
 import CreateInstance from "./CreateInstance";
@@ -17,12 +16,16 @@ import { StreamInstance } from "./types";
 import { makeStreamAs, makeStreamHref } from "./urls";
 
 const useStyles = makeStyles((theme) => ({
+  buttonGroup: {
+    height: "28px",
+  },
   leftPanel: {
     fontSize: "14px",
     "&:hover": {
       cursor: "default",
       backgroundColor: theme.palette.background.default,
     },
+    fontWeight: "normal",
     padding: "0px 8px",
   },
   middleButton: {
@@ -113,7 +116,7 @@ const StreamInstanceSelector: FC<Props> = ({ stream, currentInstance }) => {
 
   return (
     <>
-      <ButtonGroup disableElevation>
+      <ButtonGroup disableElevation className={classes.buttonGroup}>
         <Button className={classes.leftPanel}>Version</Button>
         <Button onClick={openMenu1} className={classes.middleButton}>
           {`${currentInstance?.version !== undefined ? currentInstance.version : ""}` +

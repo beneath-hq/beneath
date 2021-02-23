@@ -18,6 +18,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     fontSize: "14px",
     padding: "14px",
   },
+  tabPanel: {
+    paddingLeft: "0px",
+    paddingRight: "0px",
+  },
 }));
 
 interface StreamAPIProps {
@@ -105,7 +109,9 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
           <VSpace units={4} />
           {language.tabs.map(({ label, content }) => (
             <Grid key={label} item xs={12}>
-              <TabPanel value={label}>{content}</TabPanel>
+              <TabPanel value={label} className={classes.tabPanel}>
+                {content}
+              </TabPanel>
             </Grid>
           ))}
         </TabContext>

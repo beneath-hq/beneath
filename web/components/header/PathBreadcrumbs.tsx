@@ -208,7 +208,7 @@ const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCu
   const classes = useStyles();
   return (
     <Grid container alignItems="center" spacing={1} wrap="nowrap">
-      <Hidden xsDown>
+      <Hidden smDown>
         <Grid item>
           <Crumb
             href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
@@ -221,7 +221,7 @@ const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCu
           <Chip label="Stream" size="small" className={classes.streamChip} />
         </Grid>
       </Hidden>
-      <Hidden smUp>
+      <Hidden mdUp>
         <Grid item>
           <Typography>...</Typography>
         </Grid>
@@ -259,7 +259,7 @@ const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, i
 
   return (
     <Grid container alignItems="center" spacing={1} wrap="nowrap">
-      <Hidden xsDown>
+      <Hidden smDown>
         <Grid item>
           <Crumb
             isCurrent={isCurrent}
@@ -272,7 +272,7 @@ const ServiceCrumb: FC<ServiceCrumbProps> = ({ organization, project, service, i
           <Chip label="Service" size="small" className={classes.serviceChip} />
         </Grid>
       </Hidden>
-      <Hidden smUp>
+      <Hidden mdUp>
         <Grid item>
           <Typography>...</Typography>
         </Grid>

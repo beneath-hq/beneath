@@ -13,7 +13,8 @@ import {
   TableRow,
   Theme,
   Tooltip,
-  Box, Typography,
+  Box,
+  Typography,
   fade,
   Grid,
 } from "@material-ui/core";
@@ -42,11 +43,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   headerCellText: {
     marginRight: theme.spacing(1),
     fontSize: theme.typography.pxToRem(16),
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   headerCellInfo: {
     fontSize: theme.typography.h3.fontSize,
-    marginTop: theme.spacing(.9), // total hack to center the InfoIcon in the Chip
+    marginTop: theme.spacing(0.25), // total hack to center the InfoIcon in the Chip
   },
   primaryDarkColor: {
     backgroundColor: theme.palette.primary.dark,
@@ -77,7 +78,7 @@ const RecordsTable: FC<RecordsTableProps> = ({
           <Table size="small">
             <TableHead>
               <TableRow>
-                {columns.map((column) => (                  
+                {columns.map((column) => (
                   <TableCell key={column.name} className={clsx(classes.cell, classes.headerCell)}>
                     <Grid container spacing={1} alignItems="center" wrap="nowrap">
                       <Grid item>

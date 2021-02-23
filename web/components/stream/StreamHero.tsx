@@ -1,19 +1,14 @@
 import { Chip, Grid, Typography, makeStyles, Tooltip } from "@material-ui/core";
 import { FC } from "react";
 
-import { EntityKind } from "apollo/types/globalTypes";
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
-import { NakedLink } from "components/Link";
-import { StreamInstance } from "components/stream/types";
-import { useTotalUsage } from "components/usage/util";
-import { toURLName } from "lib/names";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
+import { StreamInstance } from "components/stream/types";
+import { toURLName } from "lib/names";
 import StreamInstanceSelector from "./StreamInstanceSelector";
-import { makeStreamAs, makeStreamHref } from "./urls";
 import { MetaChip, StreamUsageChip } from "./chips";
 
 const useStyles = makeStyles((theme) => ({
-  container: {
+  heroContainer: {
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
@@ -21,27 +16,10 @@ const useStyles = makeStyles((theme) => ({
     fontSize: theme.typography.pxToRem(30),
     fontWeight: "bold",
   },
-  site: {
-    display: "block",
-  },
-  selectField: {
-    width: "170px",
-  },
-  dropdownButton: {
-    backgroundColor: theme.palette.background.paper,
-    "&:hover": {
-      backgroundColor: theme.palette.secondary.main,
+  chipContainer: {
+    [theme.breakpoints.up("md")]: {
+      marginLeft: theme.spacing(1),
     },
-    border: `1px solid ${theme.palette.border.paper}`,
-    color: theme.palette.common.white,
-  },
-  verticalBar: {
-    display: "inline-block",
-    width: "1px",
-    height: "18px",
-    marginRight: "12px",
-    marginLeft: "12px",
-    backgroundColor: theme.palette.text.disabled,
   },
 }));
 
@@ -52,16 +30,13 @@ export interface StreamHeroProps {
 
 const StreamHero: FC<StreamHeroProps> = ({ stream, instance }) => {
   const classes = useStyles();
-  const organizationName = stream.project.organization.name;
-  const projectName = stream.project.name;
-  const streamName = stream.name;
 
   return (
-    <Grid className={classes.container} container alignItems="center" spacing={2}>
+    <Grid className={classes.heroContainer} container alignItems="center" spacing={1}>
       <Grid item>
-        <Typography className={classes.streamName}>{toURLName(streamName)}</Typography>
+        <Typography className={classes.streamName}>{toURLName(stream.name)}</Typography>
       </Grid>
-      <Grid item>
+      <Grid item className={classes.chipContainer}>
         <Grid container spacing={1} wrap="nowrap">
           {stream.meta && (
             <Grid item>

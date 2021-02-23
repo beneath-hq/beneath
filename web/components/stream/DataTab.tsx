@@ -1,6 +1,6 @@
 import { useRecords } from "beneath-react";
 import _ from "lodash";
-import { Button, Chip, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, Chip, Grid, makeStyles, Theme, Tooltip, Typography } from "@material-ui/core";
 import ArrowDownwardIcon from "@material-ui/icons/ArrowDownward";
 import FiberManualRecordIcon from "@material-ui/icons/FiberManualRecord";
 import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
@@ -31,6 +31,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   toggleButton: {
     width: 100,
+  },
+  toggleButtonLabel: {
+    display: "block",
+    width: "100%",
   },
   liveIcon: {
     color: theme.palette.success.light,
@@ -158,7 +162,18 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   if (!loading && _.isEmpty(filter) && records.length === 0) {
     tableCta = {
       message: `There's no data in this stream instance`,
-      buttons: [{ label: "Go to the Writing Data docs", href: "https://about.beneath.dev/docs" }],
+      buttons: [
+        {
+          label: "Go to API docs",
+          href: makeStreamHref(stream, instance, "api"),
+          as: makeStreamAs(stream, instance, "api"),
+        },
+      ],
+    };
+  }
+  if (!loading && queryType === "index" && !_.isEmpty(filter) && records.length === 0) {
+    tableCta = {
+      message: `Found no rows that match the filter`,
     };
   }
 
@@ -166,13 +181,6 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   let note: string | undefined;
   if (truncation.end) {
     note = "We removed some records from the bottom to fit new records in the table";
-  }
-  if (!loading && !fetchMore && !fetchMoreChanges && !truncation.start && !truncation.end) {
-    if (queryType === "log" || _.isEmpty(filter)) {
-      note = `${records.length !== 0 ? "Loaded all rows" : ""}`;
-    } else {
-      note = `${records.length === 0 ? "Found no rows" : "Loaded all rows"} that match the filter`;
-    }
   }
 
   // Messages at the top of the table use this component
@@ -197,10 +205,14 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
               }}
             >
               <ToggleButton value="log" className={clsx(classes.topRowHeight, classes.toggleButton)}>
-                Log
+                <Tooltip title="Sort the stream by the time of each write">
+                  <span className={classes.toggleButtonLabel}>Log</span>
+                </Tooltip>
               </ToggleButton>
               <ToggleButton value="index" className={clsx(classes.topRowHeight, classes.toggleButton)}>
-                Index
+                <Tooltip title="Query the stream by the key fields">
+                  <span className={classes.toggleButtonLabel}>Index</span>
+                </Tooltip>
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
@@ -243,7 +255,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
                   startIcon={<ArrowDownwardIcon />}
                   className={classes.topRowHeight}
                 >
-                  Newest to Oldest
+                  Newest to oldest
                 </Button>
               )}
               {!logPeek && (
@@ -254,7 +266,7 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
                   startIcon={<ArrowDownwardIcon />}
                   className={classes.topRowHeight}
                 >
-                  Oldest to Newest
+                  Oldest to newest
                 </Button>
               )}
             </Grid>
@@ -266,34 +278,33 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
               onChange={(filter: any) => setFilter({ ...filter })}
             />
           )}
-          {/* <Hidden smDown><Grid item xs /></Hidden> */}
-          <Grid item>
-            <WriteStream
-              stream={stream}
-              instanceID={instance.streamInstanceID}
-              buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
-            />
-          </Grid>
-          <Grid item>
-            <Button
-              variant="outlined"
-              component={NakedLink}
-              href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
-              as={`/-/sql`}
-              size="small"
-              classes={{ root: clsx(classes.topRowHeight, classes.safariButtonFix) }}
-              disabled={!stream.useWarehouse}
-            >
-              Query with SQL
-            </Button>
+          <Grid item xs>
+            <Grid container spacing={1} justify="flex-end" wrap="nowrap">
+              <Grid item>
+                <WriteStream
+                  stream={stream}
+                  instanceID={instance.streamInstanceID}
+                  buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
+                />
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  component={NakedLink}
+                  href={`/-/sql?stream=${stream.project.organization.name}/${stream.project.name}/${stream.name}`}
+                  as={`/-/sql`}
+                  size="small"
+                  classes={{ root: clsx(classes.topRowHeight, classes.safariButtonFix) }}
+                  disabled={!stream.useWarehouse}
+                >
+                  Query with SQL
+                </Button>
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
-        <VSpace units={2} />
-        <Typography variant="caption">
-          {queryType === "log" ? "Sort the stream by timestamp of each write." : "Query the stream by the key fields."}
-        </Typography>
         {/* records table */}
-        <VSpace units={2} />
+        <VSpace units={3} />
         {truncation.start && <Message>You loaded so many more rows that we had to remove some from the top</Message>}
         {subscription.error && <Message error={true}>{subscription.error.message}</Message>}
         <RecordsTable
