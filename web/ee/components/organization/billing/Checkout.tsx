@@ -1,7 +1,18 @@
 import { useQuery } from "@apollo/client";
 import dynamic from "next/dynamic";
-import React, {FC, useEffect} from "react";
-import { Button, Dialog, DialogContent, DialogTitle, Grid, makeStyles, Step, StepLabel, Stepper, Typography } from "@material-ui/core";
+import React, { FC, useEffect } from "react";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  makeStyles,
+  Step,
+  StepLabel,
+  Stepper,
+  Typography,
+} from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import VSpace from "components/VSpace";
@@ -27,10 +38,12 @@ interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
 }
 
-const Checkout: FC<Props> = ({organization}) => {
+const Checkout: FC<Props> = ({ organization }) => {
   const classes = useStyles();
   const [activeStep, setActiveStep] = React.useState(0);
-  const [selectedBillingPlan, setSelectedBillingPlan] = React.useState<BillingInfo_billingInfo_billingPlan | null>(null);
+  const [selectedBillingPlan, setSelectedBillingPlan] = React.useState<BillingInfo_billingInfo_billingPlan | null>(
+    null
+  );
   const [addCardDialog, setAddCardDialog] = React.useState(false);
   const [editTaxInfoDialog, setEditTaxInfoDialog] = React.useState(false);
   const DynamicCardForm = dynamic(() => import("./billing-method/CardForm"));
@@ -52,7 +65,7 @@ const Checkout: FC<Props> = ({organization}) => {
   if (!data) return null;
   const billingInfo = data.billingInfo;
 
-  const steps = ['Select a plan', 'Choose your billing method', 'Provide tax information', 'Finalize'];
+  const steps = ["Select a plan", "Choose your billing method", "Provide tax information", "Finalize"];
   const handleNext = () => {
     // if the Free plan is selected, skip the steps for billing method & tax info
     if (selectedBillingPlan && selectedBillingPlan.default && activeStep === 0) {
@@ -73,37 +86,32 @@ const Checkout: FC<Props> = ({organization}) => {
 
   return (
     <>
-      <Typography variant="h1">
-        Change your billing plan
-      </Typography>
+      <Typography variant="h1">Change your billing plan</Typography>
       <VSpace units={3} />
       <Stepper activeStep={activeStep} className={classes.stepper}>
         {steps.map((step) => (
           <Step key={step}>
-            <StepLabel>
-              {step}
-            </StepLabel>
+            <StepLabel>{step}</StepLabel>
           </Step>
         ))}
       </Stepper>
       <VSpace units={3} />
       {activeStep === 0 && (
         <>
-          <SelectBillingPlan selectBillingPlan={setSelectedBillingPlan} selectedBillingPlan={selectedBillingPlan} billingInfo={billingInfo} />
+          <SelectBillingPlan
+            selectBillingPlan={setSelectedBillingPlan}
+            selectedBillingPlan={selectedBillingPlan}
+            billingInfo={billingInfo}
+          />
         </>
       )}
       {activeStep === 1 && (
         <>
           <Grid container justify="center">
-            <Grid item xs={12} >
+            <Grid item xs={12}>
               <ViewBillingMethods organization={organization} billingInfo={billingInfo} addCard={setAddCardDialog} />
             </Grid>
-            <Dialog
-              open={addCardDialog}
-              fullWidth={true}
-              maxWidth={"sm"}
-              onBackdropClick={() => setAddCardDialog(false)}
-            >
+            <Dialog open={addCardDialog} fullWidth={true} maxWidth={"sm"}>
               <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
               <DialogContent>
                 <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
@@ -116,10 +124,19 @@ const Checkout: FC<Props> = ({organization}) => {
         <>
           <Grid container justify="center">
             <ViewTaxInfo organization={organization} onEdit={() => setEditTaxInfoDialog(true)} />
-            <Dialog open={editTaxInfoDialog} onBackdropClick={() => setEditTaxInfoDialog(false)} fullWidth maxWidth="sm">
+            <Dialog
+              open={editTaxInfoDialog}
+              onBackdropClick={() => setEditTaxInfoDialog(false)}
+              fullWidth
+              maxWidth="sm"
+            >
               <DialogTitle>Edit tax info</DialogTitle>
               <DialogContent>
-                <EditTaxInfo organization={organization} billingInfo={data.billingInfo} editTaxInfo={setEditTaxInfoDialog}/>
+                <EditTaxInfo
+                  organization={organization}
+                  billingInfo={data.billingInfo}
+                  editTaxInfo={setEditTaxInfoDialog}
+                />
               </DialogContent>
             </Dialog>
           </Grid>
@@ -128,11 +145,14 @@ const Checkout: FC<Props> = ({organization}) => {
       {activeStep === 3 && selectedBillingPlan && billingInfo.billingMethod && (
         <>
           {!selectedBillingPlan.default && (
-            <Finalize organization={organization} billingMethod={billingInfo.billingMethod} selectedBillingPlan={selectedBillingPlan} handleBack={handleBack} />
+            <Finalize
+              organization={organization}
+              billingMethod={billingInfo.billingMethod}
+              selectedBillingPlan={selectedBillingPlan}
+              handleBack={handleBack}
+            />
           )}
-          {selectedBillingPlan.default && (
-            <CancelBillingPlan organization={organization} handleBack={handleBack} />
-          )}
+          {selectedBillingPlan.default && <CancelBillingPlan organization={organization} handleBack={handleBack} />}
         </>
       )}
 
@@ -142,7 +162,14 @@ const Checkout: FC<Props> = ({organization}) => {
         {activeStep === 0 && (
           <>
             <Grid item>
-              <Button variant="contained" color="primary" onClick={handleNext} disabled={!selectedBillingPlan || selectedBillingPlan.billingPlanID === billingInfo.billingPlan.billingPlanID}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                disabled={
+                  !selectedBillingPlan || selectedBillingPlan.billingPlanID === billingInfo.billingPlan.billingPlanID
+                }
+              >
                 Next
               </Button>
             </Grid>
@@ -151,9 +178,7 @@ const Checkout: FC<Props> = ({organization}) => {
         {activeStep === 1 && (
           <>
             <Grid item>
-              <Button onClick={handleBack}>
-                Back
-              </Button>
+              <Button onClick={handleBack}>Back</Button>
             </Grid>
             <Grid item>
               <Button variant="contained" color="primary" onClick={handleNext} disabled={!billingInfo.billingMethod}>
@@ -165,9 +190,7 @@ const Checkout: FC<Props> = ({organization}) => {
         {activeStep === 2 && (
           <>
             <Grid item>
-              <Button onClick={handleBack}>
-                Back
-              </Button>
+              <Button onClick={handleBack}>Back</Button>
             </Grid>
             <Grid item>
               <Button variant="contained" color="primary" onClick={handleNext} disabled={!billingInfo.country}>

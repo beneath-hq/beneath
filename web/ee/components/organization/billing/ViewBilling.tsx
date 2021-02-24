@@ -85,7 +85,7 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
         <VSpace units={3} />
 
         <ViewBillingMethods organization={organization} billingInfo={data.billingInfo} addCard={setAddCardDialog} />
-        <Dialog open={addCardDialog} fullWidth={true} maxWidth={"sm"} onBackdropClick={() => setAddCardDialog(false)}>
+        <Dialog open={addCardDialog} fullWidth={true} maxWidth={"sm"}>
           <DialogTitle id="alert-dialog-title">{"Add a card"}</DialogTitle>
           <DialogContent>
             <DynamicCardForm organization={organization} openDialogFn={setAddCardDialog} />
