@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React, { FC } from "react";
-import { Grid, Link, makeStyles, Theme } from "@material-ui/core";
+import { Grid, Link } from "@material-ui/core";
 
 import { OrganizationByName_organizationByName_PrivateOrganization } from "apollo/types/OrganizationByName";
 import ViewTaxInfo from "./tax-info/ViewTaxInfo";
@@ -22,12 +22,6 @@ import VSpace from "components/VSpace";
 import { useRouter } from "next/router";
 import { toURLName } from "lib/names";
 
-const useStyles = makeStyles((theme: Theme) => ({
-  sectionTitle: {
-    marginBottom: theme.spacing(2),
-  },
-}));
-
 interface Props {
   organization: OrganizationByName_organizationByName_PrivateOrganization;
   billingMethod: BillingInfo_billingInfo_billingMethod;
@@ -36,12 +30,11 @@ interface Props {
 }
 
 const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan, handleBack }) => {
-  const classes = useStyles();
   const router = useRouter();
   const [updateBillingPlan] = useMutation<UpdateBillingPlan, UpdateBillingPlanVariables>(UPDATE_BILLING_PLAN, {
     context: { ee: true },
     onCompleted: (data) => {
-      if (data.updateBillingPlan) {
+      if (data && data.updateBillingPlan) {
         const orgName = toURLName(organization.name);
         const href = `/organization?organization_name=${orgName}&tab=billing`;
         const as = `/${orgName}/-/billing`;
