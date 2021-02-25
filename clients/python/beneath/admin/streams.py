@@ -119,6 +119,104 @@ class Streams(_ResourceBase):
         )
         return result["streamByOrganizationProjectAndName"]
 
+    async def find_instance_by_organization_project_name_and_version(
+        self,
+        organization_name,
+        project_name,
+        stream_name,
+        version,
+    ):
+        result = await self.conn.query_control(
+            variables={
+                "organizationName": format_entity_name(organization_name),
+                "projectName": format_entity_name(project_name),
+                "streamName": format_entity_name(stream_name),
+                "version": version,
+            },
+            query="""
+                query StreamInstanceByOrganizationProjectStreamAndVersion(
+                    $organizationName: String!
+                    $projectName: String!
+                    $streamName: String!
+                    $version: Int!
+                ) {
+                    streamInstanceByOrganizationProjectStreamAndVersion(
+                        organizationName: $organizationName
+                        projectName: $projectName
+                        streamName: $streamName
+                        version: $version
+                    ) {
+                        streamInstanceID
+                        stream {
+                            streamID
+                            name
+                            description
+                            createdOn
+                            updatedOn
+                            project {
+                                projectID
+                                name
+                            }
+                            schemaKind
+                            schema
+                            avroSchema
+                            streamIndexes {
+                                fields
+                                primary
+                                normalize
+                            }
+                            meta
+                            allowManualWrites
+                            useLog
+                            useIndex
+                            useWarehouse
+                            logRetentionSeconds
+                            indexRetentionSeconds
+                            warehouseRetentionSeconds
+                            primaryStreamInstance {
+                                streamInstanceID
+                                createdOn
+                                version
+                                madePrimaryOn
+                                madeFinalOn
+                            }
+                            instancesCreatedCount
+                            instancesDeletedCount
+                            instancesMadeFinalCount
+                            instancesMadePrimaryCount
+                        }
+                        streamID
+                        version
+                        createdOn
+                        madePrimaryOn
+                        madeFinalOn
+                    }
+                }
+            """,
+        )
+        return result["streamInstanceByOrganizationProjectStreamAndVersion"]
+
+    async def find_instance(self, stream_id, version):
+        result = await self.conn.query_control(
+            variables={
+                "streamID": stream_id,
+                "version": version,
+            },
+            query="""
+                query StreamInstanceForStream($streamID: UUID!) {
+                    streamInstanceForStream(streamID: $streamID) {
+                        streamInstanceID
+                        streamID
+                        createdOn
+                        version
+                        madePrimaryOn
+                        madeFinalOn
+                    }
+                }
+            """,
+        )
+        return result["streamInstancesForStream"]
+
     async def find_instances(self, stream_id):
         result = await self.conn.query_control(
             variables={
@@ -297,7 +395,7 @@ class Streams(_ResourceBase):
         result = await self.conn.query_control(
             variables={
                 "input": {
-                    "instanceID": instance_id,
+                    "streamInstanceID": instance_id,
                     "makeFinal": make_final,
                     "makePrimary": make_primary,
                 },

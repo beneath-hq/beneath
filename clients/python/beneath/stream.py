@@ -112,6 +112,23 @@ class Stream:
         ]
         return instances
 
+    async def find_instance(self, version: int):
+        """
+        Finds an instance by version number
+        Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
+        """
+        # handle dry case
+        if not self.stream_id:
+            if self.primary_instance and self.primary_instance.version == version:
+                return self.primary_instance
+            raise Exception("can't find instance by version for stream created with a dry client")
+        admin_data = await self._client.admin.streams.find_instance(
+            stream_id=str(self.stream_id),
+            version=version,
+        )
+        instance = StreamInstance._make(client=self._client, stream=self, admin_data=admin_data)
+        return instance
+
     async def create_instance(
         self,
         version: int,

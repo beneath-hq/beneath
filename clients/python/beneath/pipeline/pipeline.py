@@ -14,10 +14,7 @@ from datetime import timedelta
 from typing import AsyncIterator, Awaitable, Callable, Dict, Iterable, List, Union
 
 from beneath.config import DEFAULT_READ_BATCH_SIZE
-from beneath.cursor import Cursor
-from beneath.instance import StreamInstance
 from beneath.pipeline import BasePipeline, Strategy
-from beneath.utils import StreamQualifier
 
 AsyncGenerateFn = Callable[[BasePipeline], AsyncIterator[Mapping]]
 AsyncApplyFn = Callable[[Mapping], Awaitable[Union[Mapping, Iterable[Mapping]]]]
@@ -29,7 +26,6 @@ class Transform:
     def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
-    # pylint: disable=no-self-use
     async def process(self, incoming_records: Iterable[Mapping]):
         raise Exception("Must implement process in subclass")
 
@@ -52,80 +48,25 @@ class Generate(Transform):
 
 
 class ReadStream(Transform):
-
-    qualifier: StreamQualifier
-    limit: int
-    instance: StreamInstance
-    checkpoint_key: str
-    cursor: Cursor
-
     def __init__(
-        self, pipeline: Pipeline, stream_path: str, batch_size: int = DEFAULT_READ_BATCH_SIZE
+        self,
+        pipeline: Pipeline,
+        stream_path: str,
+        batch_size: int = DEFAULT_READ_BATCH_SIZE,
     ):
         super().__init__(pipeline)
+        self.stream_path = stream_path
+        self.batch_size = batch_size
         self.qualifier = self.pipeline._add_input_stream(stream_path)
-        self.limit = batch_size
 
     async def process(self, incoming_records: Iterable[Mapping]):
         assert incoming_records is None
-        await self._init_cursor()
-        iterators = [self._replay()]
-        if self.pipeline.strategy == Strategy.delta:
-            iterators.append(self._changes_delta())
-        elif self.pipeline.strategy == Strategy.continuous:
-            iterators.append(self._changes_continuous())
-        for it in iterators:
-            async for batch in it:
-                yield batch
-                await self._write_checkpoint()
-
-    async def _init_cursor(self):
-        self.instance = self.pipeline.instances[self.qualifier]
-        self.checkpoint_key = str(self.instance.instance_id) + ":cursor"
-        checkpoint = await self.pipeline.get_checkpoint(self.checkpoint_key)
-        if checkpoint:
-            self.cursor = Cursor(
-                connection=self.instance.stream.client.connection,
-                schema=self.instance.stream.schema,
-                replay_cursor=checkpoint.get("replay"),
-                changes_cursor=checkpoint.get("changes"),
-            )
-        else:
-            self.cursor = await self.instance.query_log()
-
-    async def _write_checkpoint(self):
-        checkpoint = {}
-        if self.cursor.replay_cursor:
-            checkpoint["replay"] = self.cursor.replay_cursor
-        if self.cursor.changes_cursor:
-            checkpoint["changes"] = self.cursor.changes_cursor
-        await self.pipeline.set_checkpoint(self.checkpoint_key, checkpoint)
-
-    async def _replay(self):
-        if not self.cursor.replay_cursor:
-            return
-        while True:
-            batch = await self.cursor.read_next(limit=self.limit)
-            if not batch:
-                return
-            yield batch
-
-    async def _changes_delta(self):
-        if not self.cursor.changes_cursor:
-            return
-        while True:
-            batch = await self.cursor.read_next_changes(limit=self.limit)
-            if not batch:
-                return
-            batch = list(batch)
-            if len(batch) == 0:
-                return
-            yield batch
-
-    async def _changes_continuous(self):
-        if not self.cursor.changes_cursor:
-            return
-        async for batch in self.cursor.subscribe_changes(batch_size=self.limit):
+        consumer = self.pipeline._inputs[self.qualifier]
+        async for batch in consumer.iterate(
+            batches=True,
+            replay_only=(self.pipeline.strategy == Strategy.batch),
+            stop_when_idle=(self.pipeline.strategy == Strategy.delta),
+        ):
             yield batch
 
 
@@ -164,12 +105,15 @@ class WriteStream(Transform):
     ):
         super().__init__(pipeline)
         self.qualifier = self.pipeline._add_output_stream(
-            stream_path, schema, description=description, retention=retention
+            stream_path,
+            schema=schema,
+            description=description,
+            retention=retention,
         )
 
     async def process(self, incoming_records: Iterable[Mapping]):
-        instance = self.pipeline.instances[self.qualifier]
-        await self.pipeline.writer.write(
+        instance = self.pipeline._outputs[self.qualifier]
+        await self.pipeline.client.write(
             instance=instance,
             records=incoming_records,
         )
@@ -203,7 +147,10 @@ class Pipeline(BasePipeline):
         return transform
 
     def apply(
-        self, prev_transform: Transform, fn: AsyncApplyFn, max_concurrency: int = None
+        self,
+        prev_transform: Transform,
+        fn: AsyncApplyFn,
+        max_concurrency: int = None,
     ) -> Transform:
         transform = Apply(self, fn, max_concurrency)
         self._dag[prev_transform].append(transform)
@@ -218,7 +165,11 @@ class Pipeline(BasePipeline):
         retention: timedelta = None,
     ):
         transform = WriteStream(
-            self, stream_path, schema, description=description, retention=retention
+            self,
+            stream_path,
+            schema,
+            description=description,
+            retention=retention,
         )
         self._dag[prev_transform].append(transform)
 
@@ -236,34 +187,32 @@ class Pipeline(BasePipeline):
             await asyncio.gather(*tasks)
 
     async def _before_run(self):
+        # make outputs primary if not batch
         if self.strategy == Strategy.batch:
             return
-        if not self.checkpoint_instance.is_primary:
-            await self.checkpoint_instance.update(make_primary=True)
-        for qualifier in self._output_qualifiers:
-            instance = self.instances[qualifier]
+        for qualifier, instance in self._outputs.items():
             if not instance.is_primary:
                 await instance.update(make_primary=True)
-                self.client.logger.info(
-                    "Made version %s of output stream '%s' primary", instance.version, qualifier
+                self.logger.info(
+                    "Made version %s of output stream '%s' primary",
+                    instance.version,
+                    qualifier,
                 )
             else:
-                self.client.logger.info(
+                self.logger.info(
                     "Using existing primary version %s for output stream '%s'",
                     instance.version,
                     qualifier,
                 )
 
     async def _after_run(self):
+        # make outputs primary if batch
         if self.strategy != Strategy.batch:
             return
-        if not self.checkpoint_instance.is_primary or not self.checkpoint_instance.is_final:
-            await self.checkpoint_instance.update(make_primary=True, make_final=True)
-        for qualifier in self._output_qualifiers:
-            instance = self.instances[qualifier]
+        for qualifier, instance in self._outputs.items():
             if not instance.is_primary or not instance.is_final:
                 await instance.update(make_primary=True, make_final=True)
-                self.client.logger.info(
+                self.logger.info(
                     "Made version %s for output stream '%s' final and primary",
                     instance.version,
                     qualifier,
