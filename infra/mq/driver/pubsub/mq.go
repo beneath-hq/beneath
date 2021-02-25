@@ -59,8 +59,9 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 	}
 
 	// receive messages forever (or until error occurs)
+	var rerr error
 	cctx, cancel := context.WithCancel(ctx)
-	return sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
+	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
 		// ephemeral subscriptions we ack immediately
 		if !persistent {
 			msg.Ack()
@@ -73,6 +74,7 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 			p.Logger.Errorf("couldn't process %s record: %s", topic, err.Error())
 			msg.Nack()
 			cancel()
+			rerr = err
 			return
 		}
 
@@ -81,7 +83,12 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 			msg.Ack()
 		}
 	})
-
+	if err != nil {
+		return err
+	} else if rerr != nil {
+		return rerr
+	}
+	return nil
 }
 
 // getPersistantSubscription finds or creates a topic subscription

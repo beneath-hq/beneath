@@ -6,9 +6,9 @@ import (
 	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/services/data"
 	"gitlab.com/beneath-hq/beneath/pkg/httputil"
 	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"gitlab.com/beneath-hq/beneath/services/data"
 )
 
 type readArgs struct {
@@ -35,24 +35,28 @@ func (a *app) handleRead(w http.ResponseWriter, r *http.Request, cursor []byte, 
 		return errr.HTTP()
 	}
 
+	return a.writeReadResponse(w, res.InstanceID, res.JobID, res.NextCursor, passChangeCursor, res.JSON)
+}
+
+func (a *app) writeReadResponse(w http.ResponseWriter, instanceID uuid.UUID, jobID uuid.UUID, nextCursor []byte, changeCursor []byte, data interface{}) error {
 	// make meta
 	meta := make(map[string]interface{})
-	if res.InstanceID != uuid.Nil {
-		meta["instance_id"] = res.InstanceID
-	} else if res.JobID != uuid.Nil {
-		meta["job_id"] = res.JobID
+	if instanceID != uuid.Nil {
+		meta["instance_id"] = instanceID
+	} else if jobID != uuid.Nil {
+		meta["job_id"] = jobID
 	}
-	if res.NextCursor != nil {
-		meta["next_cursor"] = base58.Encode(res.NextCursor)
+	if nextCursor != nil {
+		meta["next_cursor"] = base58.Encode(nextCursor)
 	}
-	if passChangeCursor != nil {
-		meta["change_cursor"] = base58.Encode(passChangeCursor)
+	if changeCursor != nil {
+		meta["change_cursor"] = base58.Encode(changeCursor)
 	}
 
 	// prepare result for encoding
 	encode := map[string]interface{}{
 		"meta": meta,
-		"data": res.JSON,
+		"data": data,
 	}
 
 	// write and finish

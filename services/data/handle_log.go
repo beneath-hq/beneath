@@ -67,10 +67,19 @@ func (s *Service) HandleQueryLog(ctx context.Context, req *QueryLogRequest) (*Qu
 			return nil, newErrorf(http.StatusBadRequest, "error parsing query: %s", err.Error())
 		}
 
+		// wrap cursors
+		var replayCursors, changeCursors [][]byte
+		if len(replayCursor) != 0 {
+			replayCursors = [][]byte{wrapCursor(LogCursorType, req.InstanceID, replayCursor)}
+		}
+		if len(changeCursor) != 0 {
+			changeCursors = [][]byte{wrapCursor(LogCursorType, req.InstanceID, changeCursor)}
+		}
+
 		// done
 		return &QueryLogResponse{
-			ReplayCursors: [][]byte{wrapCursor(LogCursorType, req.InstanceID, replayCursor)},
-			ChangeCursors: [][]byte{wrapCursor(LogCursorType, req.InstanceID, changeCursor)},
+			ReplayCursors: replayCursors,
+			ChangeCursors: changeCursors,
 		}, nil
 	}
 

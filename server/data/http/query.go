@@ -106,7 +106,10 @@ func (a *app) handleQuery(w http.ResponseWriter, r *http.Request, instanceID uui
 	}
 
 	// run a read
-	return a.handleRead(w, r, replayCursor, args.Limit, changeCursor)
+	if replayCursor != nil {
+		return a.handleRead(w, r, replayCursor, args.Limit, changeCursor)
+	}
+	return a.writeReadResponse(w, instanceID, uuid.Nil, replayCursor, changeCursor, nil)
 }
 
 func parseQueryArgs(r *http.Request) (queryArgs, error) {
