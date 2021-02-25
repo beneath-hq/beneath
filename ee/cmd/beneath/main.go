@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
 	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
-	eedependencies "gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
+	eedependencies "gitlab.com/beneath-hq/beneath/ee/cmd/beneath/dependencies"
 	eemigrations "gitlab.com/beneath-hq/beneath/ee/migrations"
 	eecontrol "gitlab.com/beneath-hq/beneath/ee/server/control"
 	"gitlab.com/beneath-hq/beneath/ee/services/billing"
