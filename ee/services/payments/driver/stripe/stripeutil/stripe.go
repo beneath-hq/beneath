@@ -329,9 +329,9 @@ func SendInvoice(invoiceID string) error {
 func PrettyDescription(plan *models.BillingPlan, product models.Product) string {
 	switch product {
 	case models.BaseProduct:
-		return fmt.Sprintf("%s (base)", plan.Description)
+		return fmt.Sprintf("%s (base)", plan.Name)
 	case models.SeatProduct:
-		return fmt.Sprintf("%s (seats)", plan.Description)
+		return fmt.Sprintf("%s (seats)", plan.Name)
 	case models.ProratedSeatProduct:
 		return fmt.Sprintf("Seats added mid-period (prorated)")
 	case models.ReadOverageProduct:
