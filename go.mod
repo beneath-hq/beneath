@@ -3,8 +3,8 @@ module gitlab.com/beneath-hq/beneath
 go 1.12
 
 require (
-	cloud.google.com/go v0.65.0
-	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go v0.75.0
+	cloud.google.com/go/bigquery v1.16.0
 	cloud.google.com/go/bigtable v1.6.0
 	cloud.google.com/go/pubsub v1.3.1
 	github.com/99designs/gqlgen v0.13.0
@@ -22,7 +22,7 @@ require (
 	github.com/go-test/deep v1.0.1
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/google/btree v1.0.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/gorilla/sessions v1.1.1
@@ -47,7 +47,7 @@ require (
 	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/stripe/stripe-go v66.1.1+incompatible
 	github.com/vektah/gqlparser v1.1.2
 	github.com/vektah/gqlparser/v2 v2.1.0
@@ -55,9 +55,9 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c
 	go.uber.org/dig v1.10.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	google.golang.org/api v0.31.0
-	google.golang.org/grpc v1.31.1
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+	google.golang.org/api v0.40.0
+	google.golang.org/grpc v1.35.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.0
 	robpike.io/filter v0.0.0-20150108201509-2984852a2183

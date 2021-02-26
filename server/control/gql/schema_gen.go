@@ -256,6 +256,7 @@ type ComplexityRoot struct {
 		StreamByID                                          func(childComplexity int, streamID uuid.UUID) int
 		StreamByOrganizationProjectAndName                  func(childComplexity int, organizationName string, projectName string, streamName string) int
 		StreamInstanceByOrganizationProjectStreamAndVersion func(childComplexity int, organizationName string, projectName string, streamName string, version int) int
+		StreamInstanceByStreamAndVersion                    func(childComplexity int, streamID uuid.UUID, version int) int
 		StreamInstancesByOrganizationProjectAndStreamName   func(childComplexity int, organizationName string, projectName string, streamName string) int
 		StreamInstancesForStream                            func(childComplexity int, streamID uuid.UUID) int
 		StreamPermissionsForService                         func(childComplexity int, serviceID uuid.UUID) int
@@ -439,6 +440,7 @@ type QueryResolver interface {
 	StreamByID(ctx context.Context, streamID uuid.UUID) (*models.Stream, error)
 	StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error)
 	StreamInstanceByOrganizationProjectStreamAndVersion(ctx context.Context, organizationName string, projectName string, streamName string, version int) (*models.StreamInstance, error)
+	StreamInstanceByStreamAndVersion(ctx context.Context, streamID uuid.UUID, version int) (*models.StreamInstance, error)
 	StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error)
 	StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error)
 	StreamsForUser(ctx context.Context, userID uuid.UUID) ([]*models.Stream, error)
@@ -1839,6 +1841,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.StreamInstanceByOrganizationProjectStreamAndVersion(childComplexity, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["version"].(int)), true
 
+	case "Query.streamInstanceByStreamAndVersion":
+		if e.complexity.Query.StreamInstanceByStreamAndVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Query_streamInstanceByStreamAndVersion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StreamInstanceByStreamAndVersion(childComplexity, args["streamID"].(uuid.UUID), args["version"].(int)), true
+
 	case "Query.streamInstancesByOrganizationProjectAndStreamName":
 		if e.complexity.Query.StreamInstancesByOrganizationProjectAndStreamName == nil {
 			break
@@ -2775,6 +2789,10 @@ input UpdateServiceInput {
     organizationName: String!
     projectName: String!
     streamName: String!
+    version: Int!
+  ): StreamInstance!
+  streamInstanceByStreamAndVersion(
+    streamID: UUID!
     version: Int!
   ): StreamInstance!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
@@ -4118,6 +4136,30 @@ func (ec *executionContext) field_Query_streamInstanceByOrganizationProjectStrea
 		}
 	}
 	args["version"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_streamInstanceByStreamAndVersion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["streamID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("streamID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["streamID"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["version"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["version"] = arg1
 	return args, nil
 }
 
@@ -9724,6 +9766,48 @@ func (ec *executionContext) _Query_streamInstanceByOrganizationProjectStreamAndV
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().StreamInstanceByOrganizationProjectStreamAndVersion(rctx, args["organizationName"].(string), args["projectName"].(string), args["streamName"].(string), args["version"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.StreamInstance)
+	fc.Result = res
+	return ec.marshalNStreamInstance2ᚖgitlabᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐStreamInstance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_streamInstanceByStreamAndVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_streamInstanceByStreamAndVersion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StreamInstanceByStreamAndVersion(rctx, args["streamID"].(uuid.UUID), args["version"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15922,6 +16006,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_streamInstanceByOrganizationProjectStreamAndVersion(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "streamInstanceByStreamAndVersion":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_streamInstanceByStreamAndVersion(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

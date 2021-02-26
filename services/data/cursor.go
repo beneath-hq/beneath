@@ -51,6 +51,9 @@ func NewCursor(cursorType CursorType, id uuid.UUID, payload []byte) Cursor {
 
 // CursorFromBytes creates (and validates) a Cursor from the return value of cursor.GetBytes()
 func CursorFromBytes(bytes []byte) (Cursor, error) {
+	if len(bytes) == 0 {
+		return nil, fmt.Errorf("cannot read from an empty cursor")
+	}
 	if len(bytes) <= cursorTypeSize+uuid.Size {
 		return nil, fmt.Errorf("corrupted cursor (too short to include type, instance_id and payload)")
 	}
@@ -93,6 +96,9 @@ func wrapCursor(cursorType CursorType, id uuid.UUID, engineCursor []byte) []byte
 
 // utility to making multiple wrapCursor calls
 func wrapCursors(cursorType CursorType, id uuid.UUID, engineCursors [][]byte) [][]byte {
+	if len(engineCursors) == 0 {
+		return nil
+	}
 	wrapped := make([][]byte, len(engineCursors))
 	for idx, engineCursor := range engineCursors {
 		wrapped[idx] = wrapCursor(cursorType, id, engineCursor)

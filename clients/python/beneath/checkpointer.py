@@ -16,7 +16,7 @@ import msgpack
 
 from beneath.config import DEFAULT_CHECKPOINT_COMMIT_DELAY_MS
 from beneath.instance import StreamInstance
-from beneath.utils import AIODelayBuffer, ProjectQualifier, StreamQualifier
+from beneath.utils import AIODelayBuffer, StreamQualifier
 
 SERVICE_CHECKPOINT_LOG_RETENTION = timedelta(hours=6)
 SERVICE_CHECKPOINT_SCHEMA = """
@@ -29,9 +29,9 @@ SERVICE_CHECKPOINT_SCHEMA = """
 
 class Checkpointer:
     """
-    Checkpointers store (small) key-value records in a meta stream called "checkpoints" (in the
-    specified project). They are useful for maintaining consumer and pipeline state, such as the
-    cursor for a subscription or the last time a scraper ran.
+    Checkpointers store (small) key-value records in a meta stream (in the specified project).
+    They are useful for maintaining consumer and pipeline state, such as the cursor for a
+    subscription or the last time a scraper ran.
 
     Checkpoint keys are strings and values are serialized with msgpack (supports most normal Python
     values, but not custom classes).
@@ -44,10 +44,15 @@ class Checkpointer:
     instance: StreamInstance
     """ The meta-stream instance that checkpoints are written to """
 
-    def __init__(self, client: Client, project_qualifier: ProjectQualifier, create_metastream=True):
+    def __init__(
+        self,
+        client: Client,
+        metastream_qualifier: StreamQualifier,
+        create_metastream=True,
+    ):
         self.instance = None
         self._client = client
-        self._project_qualifier = project_qualifier
+        self._metastream_qualifier = metastream_qualifier
         self._create = create_metastream
         self._writer = self._Writer(self)
         self._cache: Dict[str, Any] = {}
@@ -97,18 +102,9 @@ class Checkpointer:
     # CHECKPOINT STREAM
 
     async def _stage_stream(self):
-        if self._client.dry:
-            return
-
-        qualifier = StreamQualifier(
-            organization=self._project_qualifier.organization,
-            project=self._project_qualifier.project,
-            stream="checkpoints",
-        )
-
-        if self._create:
+        if self._create or self._client.dry:
             stream = await self._client.create_stream(
-                stream_path=str(qualifier),
+                stream_path=str(self._metastream_qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
                 description="Stores checkpointed state for consumers, pipelines, and more",
                 meta=True,
@@ -117,7 +113,7 @@ class Checkpointer:
                 update_if_exists=True,
             )
         else:
-            stream = await self._client.find_stream(stream_path=str(qualifier))
+            stream = await self._client.find_stream(stream_path=str(self._metastream_qualifier))
 
         if not stream.primary_instance:
             raise Exception("Expected checkpoints stream to have a primary instance")
@@ -125,7 +121,7 @@ class Checkpointer:
 
         self._client.logger.info(
             "Using '%s' (version %i) for checkpointing",
-            qualifier,
+            self._metastream_qualifier,
             self.instance.version,
         )
 
@@ -167,3 +163,23 @@ class Checkpointer:
         # pylint: disable=arguments-differ
         async def write(self, key: str, checkpoint: Any):
             await super().write(value=(key, checkpoint), size=0)
+
+
+class PrefixedCheckpointer:
+    """ Wraps a Checkpointer and prefixes all keys """
+
+    def __init__(self, checkpointer: Checkpointer, prefix: str):
+        self._checkpointer = checkpointer
+        self._prefix = prefix
+
+    @property
+    def instance(self):
+        return self._checkpointer.instance
+
+    async def get(self, key: str, default: Any = None) -> Any:
+        key = self._prefix + key
+        return await self._checkpointer.get(key, default=default)
+
+    async def set(self, key: str, value: Any):
+        key = self._prefix + key
+        return await self._checkpointer.set(key, value)

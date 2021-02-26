@@ -8,24 +8,21 @@ if TYPE_CHECKING:
     pass
 
 import asyncio
-from datetime import timedelta
 from enum import Enum
-import json
 import os
 import signal
-import sys
-from typing import Any, Dict, List, Set, Tuple
+from typing import Dict, Set
 import uuid
 
-import msgpack
-
 from beneath import config
+from beneath.connection import GraphQLError
+from beneath.consumer import Consumer
 from beneath.client import Client
+from beneath.checkpointer import Checkpointer
 from beneath.instance import StreamInstance
 from beneath.pipeline.parse_args import parse_pipeline_args
 from beneath.stream import Stream
-from beneath.utils import AIODelayBuffer, ServiceQualifier, StreamQualifier
-from beneath.writer import Writer
+from beneath.utils import ServiceQualifier, StreamQualifier
 
 
 class Action(Enum):
@@ -41,30 +38,7 @@ class Strategy(Enum):
     batch = "batch"
 
 
-SERVICE_CHECKPOINT_LOG_RETENTION = timedelta(hours=6)
-SERVICE_CHECKPOINT_SCHEMA = """
-  type ServiceCheckpoint @stream @key(fields: ["key"]) {
-    key: String!
-    value: Bytes
-  }
-"""
-
-
 class BasePipeline:
-
-    instances: Dict[StreamQualifier, StreamInstance]
-    checkpoint_instance: StreamInstance
-    writer: Writer
-    checkpoint_writer: BasePipeline._CheckpointWriter
-    service_id: uuid.UUID
-    description: str
-
-    _stage_tasks: List[asyncio.Task]
-    _input_qualifiers: Set[StreamQualifier]
-    _output_qualifiers: Set[StreamQualifier]
-
-    # INITIALIZATION AND OPTIONS PARSING
-
     def __init__(
         self,
         action: Action = None,
@@ -77,13 +51,15 @@ class BasePipeline:
         parse_args: bool = False,
         client: Client = None,
         write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
-        write_checkpoint_delay_ms: int = config.DEFAULT_CHECKPOINT_COMMIT_DELAY_MS,
     ):
         if parse_args:
             parse_pipeline_args()
         self.action = self._arg_or_env("action", action, "BENEATH_PIPELINE_ACTION", fn=Action)
         self.strategy = self._arg_or_env(
-            "strategy", strategy, "BENEATH_PIPELINE_STRATEGY", fn=Strategy
+            "strategy",
+            strategy,
+            "BENEATH_PIPELINE_STRATEGY",
+            fn=Strategy,
         )
         self.version = self._arg_or_env("version", version, "BENEATH_PIPELINE_VERSION", fn=int)
         self.service_qualifier = self._arg_or_env(
@@ -113,20 +89,19 @@ class BasePipeline:
             fn=int,
             default=lambda: None,
         )
-        self.client = client if client else Client()
-        self.write_delay_ms = write_delay_ms
-        self.write_checkpoint_delay_ms = write_checkpoint_delay_ms
-        self.instances: Dict[StreamQualifier, StreamInstance] = {}
-        self.checkpoint_instance = None
-        self.writer = None
-        self.checkpoint_writer = None
-        self.service_id = None
-        self.description = None
-        self.source_url = None
-        self._stage_tasks = []
-        self._input_qualifiers = set()
-        self._output_qualifiers = set()
-        self.dry = self.action == Action.test
+        dry = self.action == Action.test
+        self.client = client if client else Client(dry=dry, write_delay_ms=write_delay_ms)
+        self.logger = self.client.logger
+        self.checkpoints: Checkpointer = None
+        self.service_id: uuid.UUID = None
+        self.description: str = None
+
+        self._inputs: Dict[StreamQualifier, Consumer] = {}
+        self._input_qualifiers: Set[StreamQualifier] = set()
+        self._outputs: Dict[StreamQualifier, StreamInstance] = {}
+        self._output_qualifiers: Set[StreamQualifier] = set()
+        self._output_kwargs: Dict[StreamQualifier, dict] = {}
+
         self._run_task: asyncio.Task = None
         self._init()
 
@@ -152,18 +127,21 @@ class BasePipeline:
     def _init(self):  # pylint: disable=no-self-use
         raise Exception("_init should be implemented in a subclass")
 
-    async def _run(self):
-        raise Exception("_run should be implemented in a subclass")
-
     async def _before_run(self):
         raise Exception("_before_run should be implemented in a subclass")
 
     async def _after_run(self):
         raise Exception("_after_run should be implemented in a subclass")
 
+    async def _run(self):
+        raise Exception("_run should be implemented in a subclass")
+
     # RUNNING
 
     def main(self):
+        """
+        Runs the pipeline in an asyncio event loop and gracefully handles SIGINT and SIGTERM
+        """
         loop = asyncio.get_event_loop()
 
         async def _main():
@@ -171,10 +149,10 @@ class BasePipeline:
                 self._run_task = asyncio.create_task(self.run())
                 await self._run_task
             except asyncio.CancelledError:
-                self.client.logger.info("Pipeline gracefully cancelled")
+                self.logger.info("Pipeline gracefully cancelled")
 
         async def _kill(sig):
-            self.client.logger.info("Received %s, attempting graceful shutdown...", sig.name)
+            self.logger.info("Received %s, attempting graceful shutdown...", sig.name)
             if self._run_task:
                 self._run_task.cancel()
 
@@ -185,173 +163,178 @@ class BasePipeline:
         loop.run_until_complete(_main())
 
     async def run(self):
-        await self._stage()
-        if self.action == Action.stage:
-            return
-
-        if self.action == Action.teardown:
-            await self._teardown()
-            return
-
-        if self.dry:
-            self.client.logger.info(
-                "Running in TEST mode: Records will be printed, but NOT saved to Beneath"
-            )
-        else:
-            self.client.logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
-
-        self.writer = self.client.writer(dry=self.dry, write_delay_ms=self.write_delay_ms)
-        self.checkpoint_writer = self._CheckpointWriter(self)
-
-        await self._before_run()
-        await self.writer.start()
-        await self.checkpoint_writer.start()
+        """
+        Runs the pipeline in accordance with the action and strategy set on init
+        """
+        await self.client.start()
         try:
-            await self._run()
-            await self.checkpoint_writer.stop()
-            await self.writer.stop()
-            await self._after_run()
+            if self.action == Action.test:
+                await self._run_test()
+            elif self.action == Action.stage:
+                await self._run_stage()
+            elif self.action == Action.run:
+                await self._run_run()
+            elif self.action == Action.teardown:
+                await self._run_teardown()
         except asyncio.CancelledError:
-            self.client.logger.info("Pipeline cancelled, flushing buffered records...")
-            await self.checkpoint_writer.stop()
-            await self.writer.stop()
+            await self.client.stop()
+            self.logger.info("Pipeline cancelled")
             raise
 
-        self.client.logger.info("Pipeline completed successfully")
-
-    # SERVICE CHECKPOINT
-
-    class _CheckpointWriter(AIODelayBuffer[Tuple[str, Any]]):
-
-        checkpoint: Dict[str, Any]
-
-        def __init__(self, pipeline: BasePipeline):
-            super().__init__(
-                max_delay_ms=pipeline.write_checkpoint_delay_ms,
-                max_size=sys.maxsize,
-                max_count=sys.maxsize,
-            )
-            self.pipeline = pipeline
-
-        def _reset(self):
-            self.checkpoint = {}
-
-        def _merge(self, value: Tuple[str, Any]):
-            (key, checkpoint) = value
-            self.checkpoint[key] = checkpoint
-
-        async def _flush(self):
-            records = (
-                {
-                    "key": key,
-                    "value": msgpack.packb(checkpoint, datetime=True),
-                }
-                for (key, checkpoint) in self.checkpoint.items()
-            )
-            await self.pipeline.writer.write(
-                instance=self.pipeline.checkpoint_instance, records=records
-            )
-
-        # pylint: disable=arguments-differ
-        async def write(self, key: str, checkpoint: Any):
-            await super().write(value=(key, checkpoint), size=0)
-
-    async def get_checkpoint(self, key: str, default: Any = None) -> Any:
-        if self.dry:
-            return default
-
-        cursor = await self.checkpoint_instance.query_index(
-            filter=json.dumps(
-                {
-                    "key": key,
-                }
-            )
+    async def _run_test(self):
+        await self._stage_checkpointer(create=True)
+        await asyncio.gather(
+            *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
+            *[
+                self._stage_output_stream(qualifier=qualifier, create=True)
+                for qualifier in self._output_qualifiers
+            ],
         )
+        self.logger.info("Running in TEST mode: Records will be printed, but not saved")
+        await self._before_run()
+        await self._run()
+        await self._after_run()
+        await self.client.stop()
+        self.logger.info("Finished running pipeline")
 
-        value = default
-        batch = await cursor.read_next(limit=1)
-        if batch is not None:
-            records = list(batch)
-            if len(records) > 0:
-                value = records[0]["value"]
-                value = msgpack.unpackb(value, timestamp=3)
+    async def _run_stage(self):
+        async def _stage_input(qualifier: StreamQualifier):
+            await self._stage_input_stream(qualifier)
+            consumer = self._inputs[qualifier]
+            await self._update_service_permissions(consumer.instance.stream, read=True)
 
-        return value
+        async def _stage_output(qualifier: StreamQualifier):
+            await self._stage_output_stream(qualifier=qualifier, create=True)
+            instance = self._outputs[qualifier]
+            await self._update_service_permissions(instance.stream, write=True)
 
-    async def set_checkpoint(self, key: str, value: Any):
-        await self.checkpoint_writer.write(key, value)
+        await self._stage_service(create=True)
+        await self._stage_checkpointer(create=True)
+        await self._update_service_permissions(
+            self.checkpoints.instance.stream, read=True, write=True
+        )
+        await asyncio.gather(*[_stage_input(qualifier) for qualifier in self._input_qualifiers])
+        await asyncio.gather(*[_stage_output(qualifier) for qualifier in self._output_qualifiers])
+        await self.client.stop()
+        self.logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
+
+    async def _run_run(self):
+        await self._stage_checkpointer(create=False)
+        await asyncio.gather(
+            *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
+            *[
+                self._stage_output_stream(qualifier=qualifier, create=False)
+                for qualifier in self._output_qualifiers
+            ],
+        )
+        self.logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
+        await self._before_run()
+        await self._run()
+        await self.client.stop()
+        await self._after_run()
+        self.logger.info("Finished running pipeline")
+
+    async def _run_teardown(self):
+        await asyncio.gather(
+            *[self._teardown_output_stream(qualifier) for qualifier in self._output_qualifiers]
+        )
+        await self._teardown_checkpointer()
+        await self._teardown_service()
+        await self.client.stop()
+        self.logger.info("Finished tearing down pipeline for service '%s'", self.service_qualifier)
 
     # STAGING
 
-    @property
-    def is_stage(self):
-        return (self.action == Action.stage) or (self.action == Action.teardown)
-
-    async def _stage(self):
-        self.client.logger.info("Staging service '%s'", self.service_qualifier)
-        await self._stage_service()
-        await asyncio.gather(self._stage_service_checkpoint(), *self._stage_tasks)
-        self.client.logger.info(
-            "Finished staging pipeline for service '%s'", self.service_qualifier
-        )
-
-    async def _stage_service(self):
-        if self.is_stage:
-            description = self.description if self.description else "Service for running pipeline"
+    async def _stage_service(self, create: bool):
+        if create:
+            description = (
+                self.description
+                if self.description
+                else f"Service for running '{self.service_qualifier.service}' pipeline"
+            )
             admin_data = await self.client.admin.services.create(
                 organization_name=self.service_qualifier.organization,
                 project_name=self.service_qualifier.project,
                 service_name=self.service_qualifier.service,
                 description=description,
-                source_url=self.source_url,
                 read_quota_bytes=self.service_read_quota,
                 write_quota_bytes=self.service_write_quota,
                 scan_quota_bytes=self.service_scan_quota,
                 update_if_exists=True,
             )
+            self.logger.info("Staged service '%s'", self.service_qualifier)
         else:
             admin_data = await self.client.admin.services.find_by_organization_project_and_name(
                 organization_name=self.service_qualifier.organization,
                 project_name=self.service_qualifier.project,
                 service_name=self.service_qualifier.service,
             )
+            self.logger.info("Found service '%s'", self.service_qualifier)
         self.service_id = uuid.UUID(hex=admin_data["serviceID"])
 
-    async def _stage_service_checkpoint(self):
-        stream_name = f"{self.service_qualifier.service}-checkpoint"
-        qualifier = StreamQualifier(
-            organization=self.service_qualifier.organization,
-            project=self.service_qualifier.project,
-            stream=stream_name,
+    async def _teardown_service(self):
+        try:
+            await self._stage_service(create=False)
+            await self.client.admin.services.delete(self.service_id)
+            self.logger.info("Deleted service '%s'", self.service_qualifier)
+        except GraphQLError as e:
+            if " not found" in str(e):
+                return
+            raise
+
+    async def _stage_checkpointer(self, create: bool):
+        metastream_name = self.service_qualifier.service + "-checkpoints"
+        self.checkpoints = await self.client.checkpointer(
+            project_path=f"{self.service_qualifier.organization}/{self.service_qualifier.project}",
+            metastream_name=metastream_name,
+            create_metastream=create,
+            key_prefix=f"{self.version}:",
         )
-        if self.is_stage:
-            description = (
-                "Stores pipeline checkpoints for service "
-                f"'{self.service_qualifier.service}' (automatically created)"
+        if create:
+            self.logger.info(
+                "Staged checkpointer '%s'", self.checkpoints.instance.stream._qualifier
             )
-            stream = await self.client.create_stream(
-                stream_path=str(qualifier),
-                schema=SERVICE_CHECKPOINT_SCHEMA,
-                description=description,
-                meta=True,
-                log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
-                use_warehouse=False,
-                update_if_exists=True,
-            )
-            await self._update_service_permissions(stream, read=True, write=True)
         else:
-            stream = await self.client.find_stream(stream_path=str(qualifier))
-        instance = await stream.create_instance(
-            version=self.version,
-            dry=self.dry,
-            update_if_exists=True,
+            self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.stream._qualifier)
+
+    async def _teardown_checkpointer(self):
+        try:
+            await self._stage_checkpointer(create=False)
+            await self.checkpoints.instance.stream.delete()
+            self.logger.info(
+                "Deleted checkpointer '%s'", self.checkpoints.instance.stream._qualifier
+            )
+        except GraphQLError as e:
+            if " not found" in str(e):
+                return
+            raise
+
+    def _add_input_stream(self, stream_path: str):
+        qualifier = StreamQualifier.from_path(stream_path)
+        self._input_qualifiers.add(qualifier)
+        return qualifier
+
+    async def _stage_input_stream(self, qualifier: StreamQualifier):
+        if qualifier in self._output_qualifiers:
+            raise ValueError(f"Cannot use stream '{qualifier}' as both input and output")
+        subscription_path = f"{self.service_qualifier.organization}/"
+        subscription_path += f"{self.service_qualifier.project}/"
+        subscription_path += self.service_qualifier.service
+        consumer = await self.client.consumer(
+            stream_path=str(qualifier),
+            subscription_path=subscription_path,
+            checkpointer=self.checkpoints,
         )
-        self.checkpoint_instance = instance
-        self.client.logger.info(
-            "Staged stream for pipeline checkpoint '%s' (using version %i)", qualifier, self.version
+        self._inputs[qualifier] = consumer
+        self.logger.info(
+            "Using input stream '%s' (version: %d)", qualifier, consumer.instance.version
         )
 
-    def _parse_stream_path(self, stream_path: str) -> StreamQualifier:
+    def _add_output_stream(
+        self,
+        stream_path: str,
+        **kwargs,
+    ) -> StreamQualifier:
         # use service organization and project if "stream_path" is just a name
         if "/" not in stream_path:
             stream_path = (
@@ -359,131 +342,56 @@ class BasePipeline:
                 + f"{self.service_qualifier.project}/"
                 + stream_path
             )
-        return StreamQualifier.from_path(stream_path)
-
-    def _add_input_stream(self, stream_path: str) -> StreamQualifier:
-        qualifier = self._parse_stream_path(stream_path)
-        if (qualifier in self._input_qualifiers) or (qualifier in self._output_qualifiers):
-            raise ValueError(f"Stream {qualifier} already added as input or output")
-        self._input_qualifiers.add(qualifier)
-        self._stage_tasks.append(self._stage_input_stream(str(qualifier)))
-        return qualifier
-
-    async def _stage_input_stream(self, stream_path: str):
-        stream = await self.client.find_stream(stream_path=stream_path)
-        instance = stream.primary_instance
-        if not instance:
-            raise ValueError(f"Input stream {stream_path} doesn't have a primary instance")
-        assert stream.qualifier not in self.instances
-        if self.is_stage:
-            await self._update_service_permissions(stream, read=True)
-        self.instances[stream.qualifier] = stream.primary_instance
-        self.client.logger.info(
-            "Staged input stream '%s' (using version %i)",
-            stream_path,
-            stream.primary_instance.version,
-        )
-
-    def _add_output_stream(
-        self,
-        stream_path: str,
-        schema: str = None,
-        description: str = None,
-        use_index: bool = None,
-        use_warehouse: bool = None,
-        retention: timedelta = None,
-        log_retention: timedelta = None,
-        index_retention: timedelta = None,
-        warehouse_retention: timedelta = None,
-    ) -> StreamQualifier:
-        qualifier = self._parse_stream_path(stream_path)
-        if qualifier in self._output_qualifiers:
-            return qualifier
-        if qualifier in self._input_qualifiers:
-            raise ValueError(f"Cannot use stream '{qualifier}' as both input and output")
+        qualifier = StreamQualifier.from_path(stream_path)
         self._output_qualifiers.add(qualifier)
-        self._stage_tasks.append(
-            self._stage_output_stream(
-                stream_path=str(qualifier),
-                schema=schema,
-                description=description,
-                use_index=use_index,
-                use_warehouse=use_warehouse,
-                retention=retention,
-                log_retention=log_retention,
-                index_retention=index_retention,
-                warehouse_retention=warehouse_retention,
-            )
-        )
+        self._output_kwargs[qualifier] = kwargs
         return qualifier
 
-    async def _stage_output_stream(
-        self,
-        stream_path: str,
-        schema: str = None,
-        description: str = None,
-        use_index: bool = None,
-        use_warehouse: bool = None,
-        retention: timedelta = None,
-        log_retention: timedelta = None,
-        index_retention: timedelta = None,
-        warehouse_retention: timedelta = None,
-    ):
-        if not schema:
-            if description:
-                raise ValueError("you cannot set a stream 'description' without setting 'schema'")
-            stream = await self.client.find_stream(stream_path)
+    async def _stage_output_stream(self, qualifier: StreamQualifier, create: bool):
+        kwargs = self._output_kwargs[qualifier]
+        create = create and "schema" in kwargs
+        if create:
+            stream = await self.client.create_stream(
+                stream_path=str(qualifier),
+                update_if_exists=True,
+                **kwargs,
+            )
         else:
-            if self.is_stage:
-                stream = await self.client.create_stream(
-                    stream_path=stream_path,
-                    schema=schema,
-                    description=description,
-                    use_index=use_index,
-                    use_warehouse=use_warehouse,
-                    retention=retention,
-                    log_retention=log_retention,
-                    index_retention=index_retention,
-                    warehouse_retention=warehouse_retention,
-                    update_if_exists=True,
-                )
-            else:
-                stream = await self.client.find_stream(stream_path=stream_path)
-        assert stream.qualifier not in self.instances
-        instance = await stream.create_instance(
-            version=self.version, dry=self.dry, update_if_exists=True
-        )
-        if self.is_stage:
-            await self._update_service_permissions(stream, write=True)
-        self.instances[stream.qualifier] = instance
-        self.client.logger.info(
-            "Staged output stream '%s' (using version %s)", stream_path, self.version
-        )
+            stream = await self.client.find_stream(stream_path=str(qualifier))
+
+        instance = await stream.create_instance(version=self.version, update_if_exists=True)
+        self._outputs[qualifier] = instance
+
+        if create:
+            self.logger.info(
+                "Staged output stream '%s' (using version %s)", qualifier, self.version
+            )
+        else:
+            self.logger.info("Found output stream '%s' (using version %s)", qualifier, self.version)
+
+    async def _teardown_output_stream(self, qualifier: StreamQualifier):
+        try:
+            kwargs = self._output_kwargs[qualifier]
+            if "schema" not in kwargs:
+                return
+            await self._stage_output_stream(qualifier=qualifier, create=False)
+            instance = self._outputs[qualifier]
+            await instance.stream.delete()
+            self.logger.info("Deleted output '%s'", qualifier)
+        except GraphQLError as e:
+            if " not found" in str(e):
+                return
+            raise
 
     async def _update_service_permissions(
-        self, stream: Stream, read: bool = None, write: bool = None
+        self,
+        stream: Stream,
+        read: bool = None,
+        write: bool = None,
     ):
         await self.client.admin.services.update_permissions_for_stream(
-            service_id=self.service_id,
-            stream_id=stream.stream_id,
+            service_id=str(self.service_id),
+            stream_id=str(stream.stream_id),
             read=read,
             write=write,
-        )
-
-    # TEARDOWN
-
-    async def _teardown(self):
-        self.client.logger.info("Tearing down pipeline for service '%s'", self.service_qualifier)
-        for qualifier in self._output_qualifiers:
-            instance = self.instances[qualifier]
-            await instance.stream.delete()
-            self.client.logger.info("Deleted output stream '%s'", qualifier)
-        await self.checkpoint_instance.stream.delete()
-        self.client.logger.info(
-            "Deleted stream for pipeline checkpoint '%s'", self.checkpoint_instance.stream.qualifier
-        )
-        await self.client.admin.services.delete(self.service_id)
-        self.client.logger.info("Deleted pipeline service '%s'", self.service_qualifier)
-        self.client.logger.info(
-            "Finished teardown of pipeline for service '%s'", self.service_qualifier
         )

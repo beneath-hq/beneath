@@ -11,6 +11,10 @@ extend type Query {
     streamName: String!
     version: Int!
   ): StreamInstance!
+  streamInstanceByStreamAndVersion(
+    streamID: UUID!
+    version: Int!
+  ): StreamInstance!
   streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
   streamInstancesByOrganizationProjectAndStreamName(
     organizationName: String!

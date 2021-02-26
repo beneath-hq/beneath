@@ -20,24 +20,25 @@ class StreamInstance:
     to. Learn more about instances at https://about.beneath.dev/docs/concepts/streams/.
     """
 
-    stream: Stream
-    """ The stream that this is an instance of """
-
-    instance_id: uuid.UUID
-    """ The stream instance ID """
-
-    is_final: bool
-    """ True if the instance has been made final and is closed for further writes """
-
-    is_primary: bool
-    """ True if the instance is the primary instance for the stream """
-
-    version: int
-    """ The instance's version number """
-
-    _client: Client
-
     # INITIALIZATION
+
+    def __init__(self):
+        self.stream: Stream = None
+        """ The stream that this is an instance of """
+
+        self.instance_id: uuid.UUID = None
+        """ The stream instance ID """
+
+        self.is_final: bool = None
+        """ True if the instance has been made final and is closed for further writes """
+
+        self.is_primary: bool = None
+        """ True if the instance is the primary instance for the stream """
+
+        self.version: int = None
+        """ The instance's version number """
+
+        self._client: Client = None
 
     @classmethod
     def _make(cls, client: Client, stream: Stream, admin_data: dict) -> StreamInstance:
@@ -76,7 +77,7 @@ class StreamInstance:
         # handle real and dry cases
         if self.instance_id:
             admin_data = await self._client.admin.streams.update_instance(
-                instance_id=self.instance_id,
+                instance_id=str(self.instance_id),
                 make_primary=make_primary,
                 make_final=make_final,
             )

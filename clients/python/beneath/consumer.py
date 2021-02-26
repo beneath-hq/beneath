@@ -42,24 +42,28 @@ class Consumer:
         client: Client,
         stream_qualifier: StreamQualifier,
         batch_size: int = DEFAULT_READ_BATCH_SIZE,
+        version: int = None,
         checkpointer: Checkpointer = None,
         subscription_name: str = None,
     ):
         self._client = client
         self._stream_qualifier = stream_qualifier
+        self._version = version
         self._batch_size = batch_size
         self._checkpointer = checkpointer
         self._subscription_name = subscription_name
 
     async def _init(self):
         stream = await self._client.find_stream(stream_path=str(self._stream_qualifier))
-        instance = stream.primary_instance
-        if not instance:
-            raise ValueError(
-                f"Cannot consume stream {self._stream_qualifier}"
-                " because it doesn't have a primary instance"
-            )
-        self.instance = instance
+        if self._version is not None:
+            self.instance = await stream.find_instance(version=self._version)
+        else:
+            self.instance = stream.primary_instance
+            if not self.instance:
+                raise ValueError(
+                    f"Cannot consume stream {self._stream_qualifier}"
+                    " because it doesn't have a primary instance"
+                )
         await self._init_cursor()
 
     async def reset(self):
@@ -82,7 +86,8 @@ class Consumer:
             self._stream_qualifier,
             self.instance.version,
         )
-        await self._run_replay(cb, max_concurrency)
+        async for batch in self._run_replay():
+            await self._callback_batch(batch, cb, max_concurrency)
 
     async def subscribe(
         self,
@@ -92,8 +97,8 @@ class Consumer:
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and stays subscribed for new changes (runs forever). Calls the callback
-        for every record.
+        Replays the stream and stays subscribed for new changes (runs forever unless
+        stop_when_idle=True). Calls the callback for every record.
 
         Args:
             cb (async def fn(record)):
@@ -107,6 +112,37 @@ class Consumer:
                 If true, will return when "caught up" and no new changes are available.
                 Defaults to False.
         """
+        async for batch in self.iterate(
+            batches=True, changes_only=changes_only, stop_when_idle=stop_when_idle
+        ):
+            await self._callback_batch(batch, cb, max_concurrency)
+
+    async def iterate(
+        self,
+        batches: bool = False,
+        replay_only: bool = False,
+        changes_only: bool = False,
+        stop_when_idle: bool = False,
+    ):
+        """
+        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True).
+        Yields every record (or batch if batches=True).
+
+        Args:
+            batches (bool):
+                If true, yields batches of records as they're loaded (instead of individual records)
+            replay_only (bool):
+                If true, will not read changes, but only replay historical records.
+                Defaults to False.
+            changes_only (bool):
+                If true, will not replay historical records, but only subscribe to new changes.
+                Defaults to False.
+            stop_when_idle (bool):
+                If true, will return when "caught up" and no new changes are available.
+                Defaults to False.
+        """
+        if replay_only and changes_only:
+            raise Exception("cannot set replay_only=True and changes_only=True for iterate")
         if not changes_only:
             if self.cursor.replay_cursor:
                 self._client.logger.info(
@@ -114,16 +150,29 @@ class Consumer:
                     self._stream_qualifier,
                     self.instance.version,
                 )
-            await self._run_replay(cb, max_concurrency)
+            async for batch in self._run_replay():
+                if batches:
+                    yield batch
+                else:
+                    for record in batch:
+                        yield record
+        if replay_only:
+            return
         self._client.logger.info(
             "Subscribed to changes for stream '%s' (version %i)",
             self._stream_qualifier,
             self.instance.version,
         )
         if stop_when_idle:
-            await self._run_delta(cb, max_concurrency)
+            it = self._run_delta()
         else:
-            await self._run_subscribe(cb, max_concurrency)
+            it = self._run_subscribe()
+        async for batch in it:
+            if batches:
+                yield batch
+            else:
+                for record in batch:
+                    yield record
 
     # CURSORS / CHECKPOINTS
 
@@ -159,17 +208,17 @@ class Consumer:
 
     # RUNNING / CALLBACKS
 
-    async def _run_replay(self, cb: ConsumerCallback, max_concurrency: int):
+    async def _run_replay(self):
         if not self.cursor.replay_cursor:
             return
         while True:
             batch = await self.cursor.read_next(limit=self._batch_size)
             if not batch:
                 return
-            await self._callback_batch(batch, cb, max_concurrency)
+            yield batch
             await self._checkpoint()
 
-    async def _run_delta(self, cb: ConsumerCallback, max_concurrency: int):
+    async def _run_delta(self):
         if not self.cursor.changes_cursor:
             return
         while True:
@@ -179,16 +228,16 @@ class Consumer:
             batch = list(batch)
             if len(batch) == 0:
                 return
-            await self._callback_batch(batch, cb, max_concurrency)
+            yield batch
             await self._checkpoint()
             if len(batch) < self._batch_size:
                 return
 
-    async def _run_subscribe(self, cb: ConsumerCallback, max_concurrency: int):
+    async def _run_subscribe(self):
         if not self.cursor.changes_cursor:
             return
         async for batch in self.cursor.subscribe_changes(batch_size=self._batch_size):
-            await self._callback_batch(batch, cb, max_concurrency)
+            yield batch
             await self._checkpoint()
 
     async def _callback_batch(

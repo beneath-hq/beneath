@@ -14,7 +14,7 @@ def parse_pipeline_args():
     parser.add_argument(
         "service_path",
         type=str,
-        help="path for the pipeline ('username/project/name')",
+        help="project and path for the pipeline's service and state ('username/project/name')",
     )
     parser.add_argument(
         "--strategy",
@@ -32,19 +32,19 @@ def parse_pipeline_args():
         "--read-quota-mb",
         type=mb_to_bytes,
         default=None,
-        help="sets a limit on the pipeline's monthly read quota (set to 0 for unlimited quota)",
+        help="limit on the pipeline's service's monthly read quota (set to 0 for unlimited quota)",
     )
     parser.add_argument(
         "--write-quota-mb",
         type=mb_to_bytes,
         default=None,
-        help="sets a limit on the pipeline's monthly write quota (set to 0 for unlimited quota)",
+        help="limit on the pipeline's service's monthly write quota (set to 0 for unlimited quota)",
     )
     parser.add_argument(
         "--scan-quota-mb",
         type=mb_to_bytes,
         default=None,
-        help="sets a limit on the pipeline's monthly scan quota (set to 0 for unlimited quota)",
+        help="limit on the pipeline's service's monthly scan quota (set to 0 for unlimited quota)",
     )
 
     args = parser.parse_args()

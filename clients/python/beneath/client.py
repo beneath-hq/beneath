@@ -6,7 +6,7 @@ from typing import Dict, Iterable, Union
 
 from beneath import config
 from beneath.admin.client import AdminClient
-from beneath.checkpointer import Checkpointer
+from beneath.checkpointer import Checkpointer, PrefixedCheckpointer
 from beneath.config import DEFAULT_READ_BATCH_SIZE
 from beneath.connection import Connection
 from beneath.consumer import Consumer
@@ -234,14 +234,13 @@ class Client:
 
         if self._start_count == 0:
             raise Exception("Called stop more times than start")
+
+        if self._start_count == 1:
+            for checkpointer in self._checkpointers.values():
+                await checkpointer._stop()
+            await self._writer.stop()
+
         self._start_count -= 1
-        if self._start_count != 0:
-            return
-
-        for checkpointer in self._checkpointers.values():
-            await checkpointer._stop()
-
-        await self._writer.stop()
 
     async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):
         """
@@ -270,7 +269,13 @@ class Client:
 
     # CHECKPOINTERS
 
-    async def checkpointer(self, project_path: str, create_metastream: bool = True):
+    async def checkpointer(
+        self,
+        project_path: str,
+        metastream_name="checkpoints",
+        key_prefix: str = None,
+        create_metastream: bool = True,
+    ) -> Checkpointer:
         """
         Returns a checkpointer for the given project.
         Checkpointers store (small) key-value records useful for maintaining consumer and pipeline
@@ -279,12 +284,23 @@ class Client:
         Args:
             project_path (str):
                 Path to the project in which to store the checkpointer's state
+            metastream_name (str):
+                Name of the meta stream in which to save checkpointed data
             create_metastream (bool):
                 If true, the checkpointer will create the "checkpoints" meta-stream if it does not
                 already exists. If false, the checkpointer will throw an exception if the
                 meta-stream does not already exist. Defaults to True.
+            key_prefix (str):
+                If set, any ``get`` or ``set`` call on the checkpointer will prepend the prefix
+                to the key.
         """
-        qualifier = ProjectQualifier.from_path(project_path)
+        project_qualifier = ProjectQualifier.from_path(project_path)
+        qualifier = StreamQualifier(
+            organization=project_qualifier.organization,
+            project=project_qualifier.project,
+            stream=metastream_name,
+        )
+
         if qualifier not in self._checkpointers:
             checkpointer = Checkpointer(
                 self,
@@ -294,15 +310,21 @@ class Client:
             self._checkpointers[qualifier] = checkpointer
             if self._start_count != 0:
                 await checkpointer._start()
-        return self._checkpointers[qualifier]
+
+        checkpointer = self._checkpointers[qualifier]
+        if key_prefix:
+            checkpointer = PrefixedCheckpointer(checkpointer, key_prefix)
+        return checkpointer
 
     # CONSUMERS
 
     async def consumer(
         self,
         stream_path: str,
+        version: int = None,
         batch_size: int = DEFAULT_READ_BATCH_SIZE,
         subscription_path: str = None,
+        checkpointer: Checkpointer = None,
         create_metastream: bool = True,
     ):
         """
@@ -313,6 +335,8 @@ class Client:
             stream_path (str):
                 Path to the stream to subscribe to. The consumer will subscribe to the stream's
                 primary version.
+            version (int):
+                The instance version to use for stream. If not set, uses the primary instance.
             batch_size (int):
                 Sets the max number of records to load in each network request. Defaults to 1000.
             subscription_path (str):
@@ -320,9 +344,12 @@ class Client:
                 to save cursors. That means processing will not restart from scratch if the process
                 ends or crashes (as long as you use the same subscription name). To reset a
                 subscription, call ``reset`` on the consumer.
+            checkpointer (Checkpointer):
+                Only applies if ``subscription_path`` is set. Provides a specific checkpointer to
+                use for consumer state. If not set, will create one in the subscription's project.
             create_metastream (bool):
-                Only applies if ``subscription_path`` is set. Passed through to
-                ``client.checkpointer``.
+                Only applies if ``subscription_path`` is set and ``checkpointer`` is not set.
+                Passed through to ``client.checkpointer``.
         """
         stream_qualifier = StreamQualifier.from_path(stream_path)
         if not subscription_path:
@@ -336,13 +363,15 @@ class Client:
 
         sub_qualifier = SubscriptionQualifier.from_path(subscription_path)
         if sub_qualifier not in self._consumers:
-            checkpointer = await self.checkpointer(
-                f"{sub_qualifier.organization}/{sub_qualifier.project}",
-                create_metastream=create_metastream,
-            )
+            if checkpointer is None:
+                checkpointer = await self.checkpointer(
+                    f"{sub_qualifier.organization}/{sub_qualifier.project}",
+                    create_metastream=create_metastream,
+                )
             consumer = Consumer(
                 client=self,
                 stream_qualifier=stream_qualifier,
+                version=version,
                 batch_size=batch_size,
                 checkpointer=checkpointer,
                 subscription_name=sub_qualifier.subscription,
