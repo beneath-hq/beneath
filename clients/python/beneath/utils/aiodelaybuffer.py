@@ -92,7 +92,8 @@ class AIODelayBuffer(Generic[BufferValue]):
         # check value is within acceptable record size
         if size > self._max_record_size:
             raise ValueError(
-                f"Value exceeds maximum record size (size={size} max_record_size={self._max_record_size} value={value})"
+                f"Value exceeds maximum record size (size={size} "
+                f"max_record_size={self._max_record_size} value={value})"
             )
 
         # trigger/wait for flush if a) a flush is in progress, or b) value would cause size overflow
