@@ -12,7 +12,7 @@ SCHEMA = """
 
 def make_clock(name: str, start: datetime, delta: timedelta):
     async def _ticker(p: beneath.Pipeline):
-        last_tick = await p.get_checkpoint(name, default=start)
+        last_tick = await p.checkpoints.get(name, default=start)
         while True:
             now = datetime.now(tz=start.tzinfo)
             next_tick = last_tick + delta
@@ -20,7 +20,7 @@ def make_clock(name: str, start: datetime, delta: timedelta):
                 wait = next_tick - now
                 await asyncio.sleep(wait.total_seconds())
             yield {"time": next_tick}
-            await p.set_checkpoint(name, next_tick)
+            await p.checkpoints.set(name, next_tick)
             last_tick = next_tick
 
     return _ticker
@@ -28,7 +28,7 @@ def make_clock(name: str, start: datetime, delta: timedelta):
 
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True)
-    p.description = "Generates timestamps at fixed intervals"
+    p.description = "Pipeline that generates timestamps at fixed intervals"
 
     start = datetime(year=2021, month=1, day=1, tzinfo=timezone.utc)
 

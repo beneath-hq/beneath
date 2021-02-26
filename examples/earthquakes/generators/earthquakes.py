@@ -13,7 +13,7 @@ async def generate_earthquakes(p):
     # Upon startup, the pipeline will fetch its most recent checkpoint from Beneath
     # Upon *first* startup, the pipeline will use the "default" value
     # See line 39 where we set the checkpoint
-    checkpoint = await p.get_checkpoint("time", default=1612137600000)  # 1/2/2021
+    checkpoint = await p.checkpoints.get("time", default=1612137600000)  # 1/2/2021
 
     # Create a http session
     async with aiohttp.ClientSession() as session:
@@ -36,7 +36,7 @@ async def generate_earthquakes(p):
                 # If we've received new data, set a new checkpoint, which is the time of the most recent earthquake
                 if len(data["features"]) > 0:
                     checkpoint = data["features"][0]["properties"]["time"]
-                    await p.set_checkpoint("time", checkpoint)
+                    await p.checkpoints.set("time", checkpoint)
 
                 # Sleep until next query
                 await asyncio.sleep(POLL_SECONDS)

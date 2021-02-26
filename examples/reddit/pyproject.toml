@@ -6,7 +6,7 @@ authors = ["Beneath Systems <hello@beneath.dev>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-beneath = "^1.2.14"
+beneath = "^1.3.0"
 asyncpraw = "^7.1.0"
 
 [tool.poetry.dev-dependencies]
