@@ -14,6 +14,7 @@ def parse_pipeline_args():
     parser.add_argument(
         "service_path",
         type=str,
+        nargs="?",
         help="project and path for the pipeline's service and state ('username/project/name')",
     )
     parser.add_argument(
@@ -48,6 +49,12 @@ def parse_pipeline_args():
     )
 
     args = parser.parse_args()
+
+    if not args.service_path:
+        if args.action == "test":
+            args.service_path = "test/test/test"
+        else:
+            parser.error("service_path is required")
 
     os.environ["BENEATH_PIPELINE_ACTION"] = args.action
     os.environ["BENEATH_PIPELINE_STRATEGY"] = args.strategy

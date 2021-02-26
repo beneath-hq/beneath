@@ -272,9 +272,10 @@ class Client:
     async def checkpointer(
         self,
         project_path: str,
-        metastream_name="checkpoints",
         key_prefix: str = None,
-        create_metastream: bool = True,
+        metastream_name="checkpoints",
+        metastream_create: bool = True,
+        metastream_description="Stores checkpointed state for consumers, pipelines, and more",
     ) -> Checkpointer:
         """
         Returns a checkpointer for the given project.
@@ -284,15 +285,18 @@ class Client:
         Args:
             project_path (str):
                 Path to the project in which to store the checkpointer's state
-            metastream_name (str):
-                Name of the meta stream in which to save checkpointed data
-            create_metastream (bool):
-                If true, the checkpointer will create the "checkpoints" meta-stream if it does not
-                already exists. If false, the checkpointer will throw an exception if the
-                meta-stream does not already exist. Defaults to True.
             key_prefix (str):
                 If set, any ``get`` or ``set`` call on the checkpointer will prepend the prefix
                 to the key.
+            metastream_name (str):
+                Name of the meta stream in which to save checkpointed data
+            metastream_create (bool):
+                If true, the checkpointer will create the checkpoints meta-stream if it does not
+                already exists. If false, the checkpointer will throw an exception if the
+                meta-stream does not already exist. Defaults to True.
+            metastream_description (str):
+                An optional description to apply to the checkpoints meta-stream. Defaults to a
+                sensible description of checkpointing.
         """
         project_qualifier = ProjectQualifier.from_path(project_path)
         qualifier = StreamQualifier(
@@ -303,9 +307,10 @@ class Client:
 
         if qualifier not in self._checkpointers:
             checkpointer = Checkpointer(
-                self,
-                qualifier,
-                create_metastream=create_metastream,
+                client=self,
+                metastream_qualifier=qualifier,
+                metastream_create=metastream_create,
+                metastream_description=metastream_description,
             )
             self._checkpointers[qualifier] = checkpointer
             if self._start_count != 0:
@@ -325,7 +330,7 @@ class Client:
         batch_size: int = DEFAULT_READ_BATCH_SIZE,
         subscription_path: str = None,
         checkpointer: Checkpointer = None,
-        create_metastream: bool = True,
+        metastream_create: bool = True,
     ):
         """
         Creates a consumer for the given stream.
@@ -347,7 +352,7 @@ class Client:
             checkpointer (Checkpointer):
                 Only applies if ``subscription_path`` is set. Provides a specific checkpointer to
                 use for consumer state. If not set, will create one in the subscription's project.
-            create_metastream (bool):
+            metastream_create (bool):
                 Only applies if ``subscription_path`` is set and ``checkpointer`` is not set.
                 Passed through to ``client.checkpointer``.
         """
@@ -366,7 +371,7 @@ class Client:
             if checkpointer is None:
                 checkpointer = await self.checkpointer(
                     f"{sub_qualifier.organization}/{sub_qualifier.project}",
-                    create_metastream=create_metastream,
+                    metastream_create=metastream_create,
                 )
             consumer = Consumer(
                 client=self,

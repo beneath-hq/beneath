@@ -18,12 +18,13 @@ from beneath.easy import (
 )
 from beneath.instance import StreamInstance
 from beneath.job import Job, JobStatus
-from beneath.pipeline import Pipeline, PIPELINE_IDLE
+from beneath.pipeline import Action, Pipeline, PIPELINE_IDLE, Strategy
 from beneath.schema import Schema
 from beneath.stream import Stream
 
 __all__ = [
     "__version__",
+    "Action",
     "AuthenticationError",
     "Checkpointer",
     "Client",
@@ -39,6 +40,7 @@ __all__ = [
     "PIPELINE_IDLE",
     "GraphQLError",
     "Schema",
+    "Strategy",
     "Stream",
     "StreamInstance",
 ]

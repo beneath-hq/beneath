@@ -19,3 +19,4 @@ Contents:
    job
    cursor
    errors
+   pipeline

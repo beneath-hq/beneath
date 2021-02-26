@@ -48,12 +48,14 @@ class Checkpointer:
         self,
         client: Client,
         metastream_qualifier: StreamQualifier,
-        create_metastream=True,
+        metastream_create: bool,
+        metastream_description: str,
     ):
         self.instance = None
         self._client = client
         self._metastream_qualifier = metastream_qualifier
-        self._create = create_metastream
+        self._metastream_description = metastream_description
+        self._create = metastream_create
         self._writer = self._Writer(self)
         self._cache: Dict[str, Any] = {}
 
@@ -106,7 +108,7 @@ class Checkpointer:
             stream = await self._client.create_stream(
                 stream_path=str(self._metastream_qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
-                description="Stores checkpointed state for consumers, pipelines, and more",
+                description=self._metastream_description,
                 meta=True,
                 log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
                 use_warehouse=False,

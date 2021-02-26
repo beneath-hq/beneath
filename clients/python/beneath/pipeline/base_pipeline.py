@@ -26,19 +26,63 @@ from beneath.utils import ServiceQualifier, StreamQualifier
 
 
 class Action(Enum):
+    """ Actions that a pipeline can execute """
+
     test = "test"
+    """
+    Does a dry run of the pipeline, where input streams are read, but no output streams are created.
+    Records output by the pipeline will be logged, but not written.
+    """
+
     stage = "stage"
+    """
+    Creates all the resources the pipeline needs. These include output streams, a checkpoints meta
+    stream, and a service with the correct read and write permissions. The service can be used
+    to create a secret for deploying the pipeline to production.
+    """
+
     run = "run"
+    """
+    Runs the pipeline, reading inputs, applying transformations, and writing to output streams.
+    You must execute the "stage" action before running.
+    """
+
     teardown = "teardown"
+    """
+    The reverse action of "stage". Deletes all resources created for the pipeline.
+    """
 
 
 class Strategy(Enum):
+    """ Strategies for running a pipeline (only apply when ``action="run"``) """
+
     continuous = "continuous"
+    """
+    Attempts to keep the pipeline running forever. Will replay inputs and stay subscribed for
+    changes, and continously flush outputs. May terminate if a generator returns (see
+    ``Pipeline.generate`` for more).
+    """
+
     delta = "delta"
+    """
+    Stops the pipeline when there are no more changes to consume. On the first run, it replays
+    inputs, and on subsequent runs, it will consume and process all changes since the last run,
+    and then stop.
+    """
+
     batch = "batch"
+    """
+    Replays all inputs on every run, and never consumes changes. It will finalize stream instances
+    once it is done, so you must increase the ``version`` number on every run.
+    """
 
 
 class BasePipeline:
+    """
+    The ``BasePipeline`` implements core functionality for managing streams and checkpointing,
+    while subclasses implement data transformation logic. See the subclass ``Pipeline`` for more.
+    """
+
     def __init__(
         self,
         action: Action = None,
@@ -102,7 +146,7 @@ class BasePipeline:
         self._output_qualifiers: Set[StreamQualifier] = set()
         self._output_kwargs: Dict[StreamQualifier, dict] = {}
 
-        self._run_task: asyncio.Task = None
+        self._execute_task: asyncio.Task = None
         self._init()
 
     @staticmethod
@@ -140,21 +184,21 @@ class BasePipeline:
 
     def main(self):
         """
-        Runs the pipeline in an asyncio event loop and gracefully handles SIGINT and SIGTERM
+        Executes the pipeline in an asyncio event loop and gracefully handles SIGINT and SIGTERM
         """
         loop = asyncio.get_event_loop()
 
         async def _main():
             try:
-                self._run_task = asyncio.create_task(self.run())
-                await self._run_task
+                self._execute_task = asyncio.create_task(self.execute())
+                await self._execute_task
             except asyncio.CancelledError:
                 self.logger.info("Pipeline gracefully cancelled")
 
         async def _kill(sig):
             self.logger.info("Received %s, attempting graceful shutdown...", sig.name)
-            if self._run_task:
-                self._run_task.cancel()
+            if self._execute_task:
+                self._execute_task.cancel()
 
         signals = (signal.SIGTERM, signal.SIGINT)
         for sig in signals:
@@ -162,26 +206,27 @@ class BasePipeline:
 
         loop.run_until_complete(_main())
 
-    async def run(self):
+    async def execute(self):
         """
-        Runs the pipeline in accordance with the action and strategy set on init
+        Executes the pipeline in accordance with the action and strategy set on init
+        (called by ``main``).
         """
         await self.client.start()
         try:
             if self.action == Action.test:
-                await self._run_test()
+                await self._execute_test()
             elif self.action == Action.stage:
-                await self._run_stage()
+                await self._execute_stage()
             elif self.action == Action.run:
-                await self._run_run()
+                await self._execute_run()
             elif self.action == Action.teardown:
-                await self._run_teardown()
+                await self._execute_teardown()
         except asyncio.CancelledError:
             await self.client.stop()
             self.logger.info("Pipeline cancelled")
             raise
 
-    async def _run_test(self):
+    async def _execute_test(self):
         await self._stage_checkpointer(create=True)
         await asyncio.gather(
             *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
@@ -197,7 +242,7 @@ class BasePipeline:
         await self.client.stop()
         self.logger.info("Finished running pipeline")
 
-    async def _run_stage(self):
+    async def _execute_stage(self):
         async def _stage_input(qualifier: StreamQualifier):
             await self._stage_input_stream(qualifier)
             consumer = self._inputs[qualifier]
@@ -218,7 +263,7 @@ class BasePipeline:
         await self.client.stop()
         self.logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
 
-    async def _run_run(self):
+    async def _execute_run(self):
         await self._stage_checkpointer(create=False)
         await asyncio.gather(
             *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
@@ -234,7 +279,7 @@ class BasePipeline:
         await self._after_run()
         self.logger.info("Finished running pipeline")
 
-    async def _run_teardown(self):
+    async def _execute_teardown(self):
         await asyncio.gather(
             *[self._teardown_output_stream(qualifier) for qualifier in self._output_qualifiers]
         )
@@ -287,7 +332,10 @@ class BasePipeline:
         self.checkpoints = await self.client.checkpointer(
             project_path=f"{self.service_qualifier.organization}/{self.service_qualifier.project}",
             metastream_name=metastream_name,
-            create_metastream=create,
+            metastream_create=create,
+            metastream_description=(
+                f"Stores checkpointed state for the '{self.service_qualifier.service}' pipeline"
+            ),
             key_prefix=f"{self.version}:",
         )
         if create:

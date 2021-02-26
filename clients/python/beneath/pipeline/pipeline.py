@@ -13,7 +13,7 @@ from collections.abc import Mapping
 from datetime import timedelta
 from typing import AsyncIterator, Awaitable, Callable, Dict, Iterable, List, Union
 
-from beneath.config import DEFAULT_READ_BATCH_SIZE
+from beneath import config
 from beneath.pipeline import BasePipeline, Strategy
 
 AsyncGenerateFn = Callable[[BasePipeline], AsyncIterator[Mapping]]
@@ -52,7 +52,7 @@ class ReadStream(Transform):
         self,
         pipeline: Pipeline,
         stream_path: str,
-        batch_size: int = DEFAULT_READ_BATCH_SIZE,
+        batch_size: int = config.DEFAULT_READ_BATCH_SIZE,
     ):
         super().__init__(pipeline)
         self.stream_path = stream_path
@@ -124,11 +124,103 @@ class WriteStream(Transform):
 
 
 class Pipeline(BasePipeline):
+    """
+    Pipelines are a construct built on top of the Beneath primitives to manage the reading of input
+    streams, creation of output streams, data generation and derivation logic, and more.
+
+    This simple implementation supports four combinatorial operations: ``generate``,
+    ``read_stream``, ``apply``, and ``write_stream``. It's suitable for generating streams,
+    consuming streams, and one-to-N derivation of one stream to another. It's not currently
+    suitable for advanced aggregation or multi-machine parallel processing.
+
+    It supports (light) stateful transformations via a key-value based `checkpointer`, which is
+    useful for tracking generator and consumer progress in between invocations (or crashes).
+
+    Args:
+        action (Action):
+            The action to run when calling ``main`` or ``execute``
+        strategy (Strategy):
+            The processing strategy to apply when action="test" or action="run"
+        version (int):
+            The version number for output streams. Incrementing the version number will cause
+            the pipeline to create new output stream instances and replay input streams.
+        service_path (str):
+            Path for a service to create for the pipeline when action="stage". The service will
+            be assigned correct permissions for reading input streams and writing to output streams
+            and checkpoints. The service can be used to create a secret for deploying the pipeline
+            to production.
+        service_read_quota (int):
+            Read quota for the service staged for the pipeline (see ``service_path``)
+        service_write_quota (int):
+            Write quota for the service staged for the pipeline (see ``service_path``)
+        service_scan_quota (int):
+            Scan quota for the service staged for the pipeline (see ``service_path``)
+        client (Client):
+            Client to use for the pipeline. If not set, initializes a new client (see its init
+            for details on which secret gets used).
+        write_delay_ms (int):
+            Passed to ``Client`` initializer if ``client`` arg isn't passed
+
+    Example::
+
+        # pipeline.py
+
+        # This pipeline generates a stream `ticks` with a record for every minute
+        # since 1st Jan 2021.
+
+        # To test locally:
+        #     python ./pipeline.py test
+        # To prepare for running:
+        #     python ./pipeline.py stage USERNAME/PROJECT/ticker
+        # To run (after stage):
+        #     python ./pipeline.py run USERNAME/PROJECT/ticker
+        # To teardown:
+        #     python ./pipeline.py teardown USERNAME/PROJECT/ticker
+
+        import asyncio
+        import beneath
+        from datetime import datetime, timedelta, timezone
+
+        start = datetime(year=2021, month=1, day=1, tzinfo=timezone.utc)
+
+        async def ticker(p: beneath.Pipeline):
+            last_tick = await p.checkpoints.get("last", default=start)
+            while True:
+                now = datetime.now(tz=last_tick.tzinfo)
+                next_tick = last_tick + timedelta(minutes=1)
+
+                if next_tick >= now:
+                    yield beneath.PIPELINE_IDLE
+                    wait = next_tick - now
+                    await asyncio.sleep(wait.total_seconds())
+
+                yield {"time": next_tick}
+                await p.checkpoints.set("last", next_tick)
+                last_tick = next_tick
+
+        if __name__ == "__main__":
+
+            p = beneath.Pipeline(parse_args=True)
+            p.description = "Pipeline that emits a tick for every minute since 1st Jan 2021"
+
+            ticks = p.generate(ticker)
+            p.write_stream(
+                ticks,
+                stream_path="ticks",
+                schema='''
+                    type Tick @schema {
+                        time: Timestamp! @key
+                    }
+                ''',
+            )
+
+            p.main()
+    """
 
     _initial: List[Transform]
     _dag: Dict[Transform, List[Transform]]
 
-    # INIT
+    # INIT OVERRIDE
 
     def _init(self):
         self._initial = []
@@ -137,11 +229,25 @@ class Pipeline(BasePipeline):
     # DAG
 
     def generate(self, fn: AsyncGenerateFn) -> Transform:
+        """
+        Pipeline step for generating records.
+
+        Args:
+            fn (async def fn(pipeline)):
+                An async iterator that generates records. The pipeline is passed as an input arg.
+        """
         transform = Generate(self, fn)
         self._initial.append(transform)
         return transform
 
     def read_stream(self, stream_path: str) -> Transform:
+        """
+        Pipeline step for consuming the primary instance of a stream.
+
+        Args:
+            stream_path (str):
+                The stream to consume
+        """
         transform = ReadStream(self, stream_path)
         self._initial.append(transform)
         return transform
@@ -152,6 +258,17 @@ class Pipeline(BasePipeline):
         fn: AsyncApplyFn,
         max_concurrency: int = None,
     ) -> Transform:
+        """
+        Pipeline step that transforms records emitted by a previous step.
+
+        Args:
+            prev_transform (Transform):
+                The pipeline step to apply on. Can be a `generate`, `read_stream`, or other
+                `apply` step.
+            fn (async def fn(record) -> (None | record | [record])):
+                Function applied to each incoming record. Can return ``None``, one record
+                or a list of records, which will propagate to the next pipeline step.
+        """
         transform = Apply(self, fn, max_concurrency)
         self._dag[prev_transform].append(transform)
         return transform
@@ -164,6 +281,26 @@ class Pipeline(BasePipeline):
         description: str = None,
         retention: timedelta = None,
     ):
+        """
+        Pipeline step that writes incoming records from the previous step to a stream.
+
+        Args:
+            prev_transform (Transform):
+                The pipeline step to apply on. Can be a `generate`, `read_stream`, or other
+                `apply` step.
+            stream_path (str):
+                The stream to output to. If ``schema`` is provided, the stream will be created when
+                running the ``stage`` action. If the path doesn't include a username and project
+                name, it will attempt to find or create the stream in the pipeline's service's
+                project (see ``service_path`` in the constructor).
+            schema (str):
+                A GraphQL schema for creating the output stream.
+            description (str):
+                A description for the stream (only applicable if schema is set).
+            retention (timedelta):
+                The amount of time to retain written data in the stream. By default, records
+                are saved forever.
+        """
         transform = WriteStream(
             self,
             stream_path,
