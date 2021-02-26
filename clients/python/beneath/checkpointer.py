@@ -134,8 +134,9 @@ class Checkpointer:
         def __init__(self, checkpointer: Checkpointer):
             super().__init__(
                 max_delay_ms=DEFAULT_CHECKPOINT_COMMIT_DELAY_MS,
-                max_size=sys.maxsize,
-                max_count=sys.maxsize,
+                max_record_size=sys.maxsize,
+                max_buffer_size=sys.maxsize,
+                max_buffer_count=sys.maxsize,
             )
             self.checkpointer = checkpointer
 
