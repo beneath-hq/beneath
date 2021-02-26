@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: earthquakes
-        image: gcr.io/beneath/earthquakes:latest
+        image: gcr.io/beneath/examples-earthquakes:latest
         imagePullPolicy: Always
         env:
         - name: BENEATH_SECRET

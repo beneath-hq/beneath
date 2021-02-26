@@ -7,6 +7,7 @@ with open("schemas/earthquake.graphql", "r") as file:
 
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True)
+    p.description = "Continually pings the USGS earthquake API"
     earthquakes = p.generate(earthquakes.generate_earthquakes)
     p.write_stream(
         earthquakes,
