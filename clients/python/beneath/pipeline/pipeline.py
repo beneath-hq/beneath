@@ -160,6 +160,9 @@ class Pipeline(BasePipeline):
             for details on which secret gets used).
         write_delay_ms (int):
             Passed to ``Client`` initializer if ``client`` arg isn't passed
+        disable_checkpoints (bool):
+            If true, will not create a checkpointer, and consumers will not save state.
+            Defaults to false.
 
     Example::
 

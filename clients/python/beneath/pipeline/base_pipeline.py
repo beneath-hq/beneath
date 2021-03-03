@@ -95,6 +95,7 @@ class BasePipeline:
         parse_args: bool = False,
         client: Client = None,
         write_delay_ms: int = config.DEFAULT_WRITE_DELAY_MS,
+        disable_checkpoints: bool = False,
     ):
         if parse_args:
             parse_pipeline_args()
@@ -139,6 +140,7 @@ class BasePipeline:
         self.checkpoints: Checkpointer = None
         self.service_id: uuid.UUID = None
         self.description: str = None
+        self.disable_checkpoints = disable_checkpoints
 
         self._inputs: Dict[StreamQualifier, Consumer] = {}
         self._input_qualifiers: Set[StreamQualifier] = set()
@@ -255,9 +257,10 @@ class BasePipeline:
 
         await self._stage_service(create=True)
         await self._stage_checkpointer(create=True)
-        await self._update_service_permissions(
-            self.checkpoints.instance.stream, read=True, write=True
-        )
+        if not self.disable_checkpoints:
+            await self._update_service_permissions(
+                self.checkpoints.instance.stream, read=True, write=True
+            )
         await asyncio.gather(*[_stage_input(qualifier) for qualifier in self._input_qualifiers])
         await asyncio.gather(*[_stage_output(qualifier) for qualifier in self._output_qualifiers])
         await self.client.stop()
@@ -328,6 +331,8 @@ class BasePipeline:
             raise
 
     async def _stage_checkpointer(self, create: bool):
+        if self.disable_checkpoints:
+            return
         metastream_name = self.service_qualifier.service + "-checkpoints"
         self.checkpoints = await self.client.checkpointer(
             project_path=f"{self.service_qualifier.organization}/{self.service_qualifier.project}",
@@ -346,6 +351,8 @@ class BasePipeline:
             self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.stream._qualifier)
 
     async def _teardown_checkpointer(self):
+        if self.disable_checkpoints:
+            return
         try:
             await self._stage_checkpointer(create=False)
             await self.checkpoints.instance.stream.delete()
@@ -365,9 +372,11 @@ class BasePipeline:
     async def _stage_input_stream(self, qualifier: StreamQualifier):
         if qualifier in self._output_qualifiers:
             raise ValueError(f"Cannot use stream '{qualifier}' as both input and output")
-        subscription_path = f"{self.service_qualifier.organization}/"
-        subscription_path += f"{self.service_qualifier.project}/"
-        subscription_path += self.service_qualifier.service
+        subscription_path = None
+        if not self.disable_checkpoints:
+            subscription_path = f"{self.service_qualifier.organization}/"
+            subscription_path += f"{self.service_qualifier.project}/"
+            subscription_path += self.service_qualifier.service
         consumer = await self.client.consumer(
             stream_path=str(qualifier),
             subscription_path=subscription_path,

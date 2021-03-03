@@ -81,30 +81,28 @@ class Consumer:
             max_concurrency (int):
                 The maximum number of callbacks to call concurrently. Defaults to 1.
         """
-        self._client.logger.info(
-            "Replaying stream '%s' (version %i)",
-            self._stream_qualifier,
-            self.instance.version,
-        )
-        async for batch in self._run_replay():
-            await self._callback_batch(batch, cb, max_concurrency)
+        await self.subscribe(cb=cb, max_concurrency=max_concurrency, replay_only=True)
 
     async def subscribe(
         self,
         cb: ConsumerCallback,
         max_concurrency: int = 1,
+        replay_only: bool = False,
         changes_only: bool = False,
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and stays subscribed for new changes (runs forever unless
-        stop_when_idle=True). Calls the callback for every record.
+        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True).
+        Calls the callback for every record.
 
         Args:
             cb (async def fn(record)):
                 Async function for processing a record.
             max_concurrency (int):
                 The maximum number of callbacks to call concurrently. Defaults to 1.
+            replay_only (bool):
+                If true, will not read changes, but only replay historical records.
+                Defaults to False.
             changes_only (bool):
                 If true, will not replay historical records, but only subscribe to new changes.
                 Defaults to False.
@@ -113,7 +111,10 @@ class Consumer:
                 Defaults to False.
         """
         async for batch in self.iterate(
-            batches=True, changes_only=changes_only, stop_when_idle=stop_when_idle
+            batches=True,
+            replay_only=replay_only,
+            changes_only=changes_only,
+            stop_when_idle=stop_when_idle,
         ):
             await self._callback_batch(batch, cb, max_concurrency)
 

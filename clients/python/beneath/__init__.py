@@ -11,10 +11,12 @@ from beneath.checkpointer import Checkpointer
 from beneath.consumer import Consumer
 from beneath.cursor import Cursor
 from beneath.easy import (
-    easy_consume_stream,
-    easy_derive_stream,
-    easy_generate_stream,
-    easy_read,
+    consume,
+    query_index,
+    query_warehouse,
+    generate_stream_pipeline,
+    derive_stream_pipeline,
+    consume_stream_pipeline,
 )
 from beneath.instance import StreamInstance
 from beneath.job import Job, JobStatus
@@ -30,10 +32,6 @@ __all__ = [
     "Client",
     "Consumer",
     "Cursor",
-    "easy_consume_stream",
-    "easy_derive_stream",
-    "easy_generate_stream",
-    "easy_read",
     "Job",
     "JobStatus",
     "Pipeline",
@@ -43,4 +41,10 @@ __all__ = [
     "Strategy",
     "Stream",
     "StreamInstance",
+    "consume",
+    "query_index",
+    "query_warehouse",
+    "generate_stream_pipeline",
+    "derive_stream_pipeline",
+    "consume_stream_pipeline",
 ]
