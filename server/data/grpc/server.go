@@ -1,10 +1,13 @@
 package grpc
 
 import (
+	"time"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	"gitlab.com/beneath-hq/beneath/services/data"
@@ -19,6 +22,19 @@ const (
 	maxSendMsgSize = 1024 * 1024 * 50
 )
 
+var kaep = keepalive.EnforcementPolicy{
+	MinTime:             30 * time.Second, // If a client pings more than once every 5 seconds, terminate the connection
+	PermitWithoutStream: true,             // Allow pings even when there are no active streams
+}
+
+var kasp = keepalive.ServerParameters{
+	MaxConnectionIdle:     50 * time.Second,
+	MaxConnectionAge:      30 * time.Minute,
+	MaxConnectionAgeGrace: 1 * time.Minute,
+	// Time:                  5 * time.Second,
+	// Timeout:               1 * time.Second,
+}
+
 // gRPCServer implements pb.GatewayServer
 type gRPCServer struct {
 	Service *data.Service
@@ -30,6 +46,8 @@ func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Se
 	server := grpc.NewServer(
 		grpc.MaxRecvMsgSize(maxRecvMsgSize),
 		grpc.MaxSendMsgSize(maxSendMsgSize),
+		grpc.KeepaliveEnforcementPolicy(kaep),
+		grpc.KeepaliveParams(kasp),
 		grpc_middleware.WithUnaryServerChain(
 			middleware.InjectTagsUnaryServerInterceptor(),
 			middleware.LoggerUnaryServerInterceptor(l),
