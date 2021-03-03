@@ -2,9 +2,6 @@ from typing import AsyncIterator
 import uuid
 import warnings
 
-# we're wrapping grpc with aiogrpc until grpc officially supports aio
-# (follow https://github.com/grpc/grpc/projects/16)
-import aiogrpc
 import aiohttp
 import grpc
 from datetime import datetime, timedelta
@@ -36,7 +33,7 @@ class Connection:
         self.secret = secret
         self.connected = False
         self.request_metadata = None
-        self.channel: aiogrpc.Channel = None
+        self.channel: grpc.aio.Channel = None
         self.stub: gateway_pb2_grpc.GatewayStub = None
 
     def __getstate__(self):
@@ -68,19 +65,15 @@ class Connection:
         self.request_metadata = [("authorization", "Bearer {}".format(self.secret))]
         insecure = "localhost" in config.BENEATH_GATEWAY_HOST_GRPC
         if insecure:
-            self.channel = aiogrpc.insecure_channel(
+            self.channel = grpc.aio.insecure_channel(
                 target=config.BENEATH_GATEWAY_HOST_GRPC,
-                # compression param not supported by aiogrpc, but we can set it with options
-                # compression=grpc.Compression.Gzip,
-                options=(("grpc.default_compression_algorithm", int(grpc.Compression.Gzip)),),
+                compression=grpc.Compression.Gzip,
             )
         else:
-            self.channel = aiogrpc.secure_channel(
+            self.channel = grpc.aio.secure_channel(
                 target=config.BENEATH_GATEWAY_HOST_GRPC,
                 credentials=grpc.ssl_channel_credentials(),
-                # compression param not supported by aiogrpc, but we can set it with options
-                # compression=grpc.Compression.Gzip,
-                options=(("grpc.default_compression_algorithm", int(grpc.Compression.Gzip)),),
+                compression=grpc.Compression.Gzip,
             )
         self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
