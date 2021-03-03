@@ -4,6 +4,8 @@ import logging
 import os
 from typing import Dict, Iterable, Union
 
+import pandas as pd
+
 from beneath import config
 from beneath.admin.client import AdminClient
 from beneath.checkpointer import Checkpointer, PrefixedCheckpointer
@@ -266,6 +268,15 @@ class Client:
     async def force_flush(self):
         """ Forces the client to flush buffered writes without stopping """
         await self._writer.force_flush()
+
+    async def write_full(
+        stream_path: str,
+        records: Union[Iterable[dict], pd.DataFrame],
+        recreate_on_schema_change=True,
+        append=False,
+    ):
+
+        pass
 
     # CHECKPOINTERS
 

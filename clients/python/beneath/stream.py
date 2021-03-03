@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from beneath.client import Client
 
-from typing import Iterable
+from typing import Iterable, Mapping, Union
 import uuid
 
 from beneath.instance import StreamInstance
@@ -122,6 +122,8 @@ class Stream:
             if self.primary_instance and self.primary_instance.version == version:
                 return self.primary_instance
             raise Exception("can't find instance by version for stream created with a dry client")
+        if self.primary_instance and self.primary_instance.version == version:
+            return self.primary_instance
         admin_data = await self._client.admin.streams.find_instance(
             stream_id=str(self.stream_id),
             version=version,
@@ -178,3 +180,15 @@ class Stream:
         if not self.stream_id:
             raise Exception("cannot delete dry stream")
         await self._client.admin.streams.delete(self.stream_id)
+
+    # WRITING RECORDS
+
+    async def write(self, records: Union[Mapping, Iterable[Mapping]]):
+        """
+        Writes records to the stream's primary instance.
+
+        This is a convenience wrapper for ``stream.primary_instance.write(...)``.
+        """
+        if not self.primary_instance:
+            raise Exception("cannot write because the stream doesn't have a primary instance")
+        await self.primary_instance.write(records)
