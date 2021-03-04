@@ -329,7 +329,10 @@ func SendInvoice(invoiceID string) error {
 func PrettyDescription(plan *models.BillingPlan, product models.Product) string {
 	switch product {
 	case models.BaseProduct:
-		return fmt.Sprintf("%s (base)", plan.Name)
+		if plan.ReadOveragePriceCents > 0 || plan.WriteOveragePriceCents > 0 || plan.ScanOveragePriceCents > 0 {
+			return fmt.Sprintf("%s (base)", plan.Name)
+		}
+		return plan.Name
 	case models.SeatProduct:
 		return fmt.Sprintf("%s (seats)", plan.Name)
 	case models.ProratedSeatProduct:
