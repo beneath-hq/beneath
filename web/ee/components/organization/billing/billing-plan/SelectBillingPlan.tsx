@@ -7,7 +7,7 @@ import React, { FC } from "react";
 import { QUERY_BILLING_PLANS } from "ee/apollo/queries/billingPlan";
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingPlan } from "ee/apollo/types/BillingInfo";
 import { BillingPlans } from "ee/apollo/types/BillingPlans";
-import { CONTACT_FORM_LINK } from "ee/lib/billing";
+import { CONTACT_LINK } from "ee/lib/billing";
 import VSpace from "components/VSpace";
 import ViewBillingPlanDescription from "./ViewBillingPlanDescription";
 import ViewBillingPlanQuotas from "./ViewBillingPlanQuotas";
@@ -67,7 +67,7 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
 
   return (
     <>
-      <Alert severity="info"><Link href={CONTACT_FORM_LINK}>Contact sales</Link> for Enterprise plans, which offer custom pricing, team billing, premium support, and more</Alert>
+      <Alert severity="info"><Link href={CONTACT_LINK}>Contact sales</Link> for Enterprise plans, which offer custom pricing, team billing, premium support, and more</Alert>
       <VSpace units={3} />
       <List className={classes.list}>
         {sortedBillingPlans.map((billingPlan, idx) => (

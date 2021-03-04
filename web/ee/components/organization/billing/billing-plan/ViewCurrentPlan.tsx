@@ -6,7 +6,7 @@ import { OrganizationByName_organizationByName_PrivateOrganization } from "apoll
 import { NakedLink } from "components/Link";
 import VSpace from "components/VSpace";
 import { BillingInfo_billingInfo } from "ee/apollo/types/BillingInfo";
-import { CONTACT_FORM_LINK } from "ee/lib/billing";
+import { CONTACT_LINK } from "ee/lib/billing";
 import { toURLName } from "lib/names";
 
 const useStyles = makeStyles((theme) => ({
@@ -92,7 +92,7 @@ const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
         <Grid item>
           <Button
             variant="contained"
-            href={CONTACT_FORM_LINK}
+            href={CONTACT_LINK}
             >
             Contact sales
           </Button>
