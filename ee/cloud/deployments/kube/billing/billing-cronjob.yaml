@@ -1,0 +1,23 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: backend-billing
+spec:
+  schedule: "0 9 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backend
+            image: gcr.io/beneath/ee-backend:latest
+            args: ["billing", "run", "--config", "/etc/config/production.yaml"]
+            volumeMounts:
+              - name: backend-config
+                mountPath: /etc/config
+              - name: beneath-sa-key
+                mountPath: /var/secrets/google
+            env:
+              - name: GOOGLE_APPLICATION_CREDENTIALS
+                value: /var/secrets/google/key.json
+          restartPolicy: Never
