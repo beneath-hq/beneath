@@ -52,9 +52,9 @@ func initLogger() *zap.Logger {
 	return logger
 }
 
-// Customize the Production EncoderConfig to use "message" and "stack_trace" field names
+// Customize the Production EncoderConfig to use "message" field name.
 // Why? We want our errors to trigger alerts in GCP Error Reporting. The zap library defaults to using
-// "msg" and "stacktrace" field names, which naming unfortunately doesn't trigger alerts in GCP Error Reporting.
+// "msg", which naming unfortunately doesn't trigger alerts in GCP Error Reporting.
 // Source: https://cloud.google.com/error-reporting/docs/formatting-error-messages
 func newProductionEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
@@ -63,7 +63,7 @@ func newProductionEncoderConfig() zapcore.EncoderConfig {
 		NameKey:        "logger",
 		CallerKey:      "caller",
 		MessageKey:     "message",
-		StacktraceKey:  "stack_trace",
+		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
 		EncodeTime:     zapcore.EpochTimeEncoder,
