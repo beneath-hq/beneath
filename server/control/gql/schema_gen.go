@@ -2910,7 +2910,7 @@ input UpdateStreamInput {
 
 input CreateStreamInstanceInput {
   streamID: UUID!
-  version: Int!
+  version: Int
   makePrimary: Boolean
   updateIfExists: Boolean
 }
@@ -14350,7 +14350,7 @@ func (ec *executionContext) unmarshalInputCreateStreamInstanceInput(ctx context.
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
-			it.Version, err = ec.unmarshalNInt2int(ctx, v)
+			it.Version, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -175,7 +175,7 @@ func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStr
 		return nil, gqlerror.Errorf("Error creating stream: %s", err.Error())
 	}
 
-	_, err = r.Streams.CreateStreamInstance(ctx, stream, 0, true)
+	_, err = r.Streams.CreateStreamInstance(ctx, stream, nil, true)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error creating first instance: %s", err.Error())
 	}
@@ -293,7 +293,10 @@ const MaxInstancesPerStream = 25
 
 func (r *mutationResolver) CreateStreamInstance(ctx context.Context, input gql.CreateStreamInstanceInput) (*models.StreamInstance, error) {
 	if input.UpdateIfExists != nil && *input.UpdateIfExists {
-		instance := r.Streams.FindStreamInstanceByVersion(ctx, input.StreamID, input.Version)
+		if input.Version == nil {
+			return nil, gqlerror.Errorf("Cannot set updateIfExists=true without providing a version")
+		}
+		instance := r.Streams.FindStreamInstanceByVersion(ctx, input.StreamID, *input.Version)
 		if instance != nil {
 			return r.updateExistingFromCreateStreamInstance(ctx, instance, input)
 		}

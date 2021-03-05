@@ -130,7 +130,7 @@ input UpdateStreamInput {
 
 input CreateStreamInstanceInput {
   streamID: UUID!
-  version: Int!
+  version: Int
   makePrimary: Boolean
   updateIfExists: Boolean
 }

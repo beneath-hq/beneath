@@ -99,15 +99,19 @@ func (s *Service) FindStreamInstances(ctx context.Context, streamID uuid.UUID, f
 }
 
 // CreateStreamInstance creates and registers a new stream instance
-func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Stream, version int, makePrimary bool) (*models.StreamInstance, error) {
-	if version < 0 {
+func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Stream, version *int, makePrimary bool) (*models.StreamInstance, error) {
+	if version == nil {
+		version = &stream.NextInstanceVersion
+	}
+
+	if *version < 0 {
 		return nil, fmt.Errorf("Cannot create stream instance with negative version (got %d)", version)
 	}
 
 	instance := &models.StreamInstance{
 		StreamID: stream.StreamID,
 		Stream:   stream,
-		Version:  version,
+		Version:  *version,
 	}
 
 	if makePrimary {
@@ -125,6 +129,7 @@ func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Strea
 		}
 
 		streamQuery := tx.Model(stream).WherePK()
+		streamQuery.Set("next_instance_version = greatest(next_instance_version, ? + 1)", instance.Version)
 		streamQuery.Set("instances_created_count = instances_created_count + 1")
 		if makePrimary {
 			streamQuery.Set("primary_stream_instance_id = ?", instance.StreamInstanceID)
@@ -136,6 +141,9 @@ func (s *Service) CreateStreamInstance(ctx context.Context, stream *models.Strea
 		}
 
 		// modify stream to reflect changes without refetching
+		if instance.Version >= stream.NextInstanceVersion {
+			stream.NextInstanceVersion = instance.Version + 1
+		}
 		stream.InstancesCreatedCount++
 		stream.InstancesMadePrimaryCount++
 		stream.PrimaryStreamInstance = instance

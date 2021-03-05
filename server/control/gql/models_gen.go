@@ -70,7 +70,7 @@ type CreateStreamInput struct {
 
 type CreateStreamInstanceInput struct {
 	StreamID       uuid.UUID `json:"streamID"`
-	Version        int       `json:"version"`
+	Version        *int      `json:"version"`
 	MakePrimary    *bool     `json:"makePrimary"`
 	UpdateIfExists *bool     `json:"updateIfExists"`
 }

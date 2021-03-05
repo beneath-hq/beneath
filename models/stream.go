@@ -56,6 +56,7 @@ type Stream struct {
 	StreamInstances           []*StreamInstance `msgpack:"-"`
 	PrimaryStreamInstanceID   *uuid.UUID        `sql:"on_delete:SET NULL,type:uuid"`
 	PrimaryStreamInstance     *StreamInstance   `msgpack:"-"`
+	NextInstanceVersion       int               `sql:",notnull,default:0"`
 	InstancesCreatedCount     int32             `sql:",notnull,default:0"`
 	InstancesDeletedCount     int32             `sql:",notnull,default:0"`
 	InstancesMadeFinalCount   int32             `sql:",notnull,default:0"`
