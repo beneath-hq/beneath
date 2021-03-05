@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from typing import Iterable, Union
 import uuid
 
+from beneath import config
 from beneath.cursor import Cursor
 
 
@@ -70,12 +71,20 @@ class StreamInstance:
         self.is_final = admin_data["madeFinalOn"] is not None
         self.is_primary = admin_data["madePrimaryOn"] is not None
 
+    # STATE
+
+    def __repr__(self):
+        url = f"{config.BENEATH_FRONTEND_HOST}/{self.stream._qualifier}/{self.version}"
+        return f'<beneath.stream.StreamInstance("{url}")>'
+
     # CONTROL PLANE
 
     async def update(self, make_primary=None, make_final=None):
         """ Updates the instance """
         # handle real and dry cases
         if self.instance_id:
+            if make_final:
+                await self._client.force_flush()
             admin_data = await self._client.admin.streams.update_instance(
                 instance_id=str(self.instance_id),
                 make_primary=make_primary,
@@ -85,8 +94,15 @@ class StreamInstance:
         else:
             self.is_final = self.is_final or make_final
             self.is_primary = self.is_primary or make_primary
-            if make_primary:
-                self.stream.primary_instance = self
+        if make_primary:
+            self.stream.primary_instance = self
+
+    async def delete(self):
+        """ Deletes the instance """
+        if self.instance_id:
+            await self._client.admin.streams.delete_instance(instance_id=str(self.instance_id))
+        if self.stream.primary_instance == self:
+            self.stream.primary_instance = None
 
     # READING RECORDS
 

@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 from typing import Iterable, Mapping, Union
 import uuid
 
+from beneath import config
 from beneath.instance import StreamInstance
 from beneath.schema import Schema
 from beneath.utils import StreamQualifier
@@ -93,6 +94,11 @@ class Stream:
             stream_name=self._qualifier.stream,
         )
 
+    # STATE
+
+    def __repr__(self):
+        return f'<beneath.stream.Stream("{config.BENEATH_FRONTEND_HOST}/{self._qualifier}")>'
+
     # INSTANCES
 
     async def find_instances(self) -> Iterable[StreamInstance]:
@@ -133,7 +139,7 @@ class Stream:
 
     async def create_instance(
         self,
-        version: int,
+        version: int = None,
         make_primary=None,
         update_if_exists=None,
     ) -> StreamInstance:
@@ -143,7 +149,8 @@ class Stream:
 
         Args:
             version (int):
-                The version number to assign to the instance
+                The version number to assign to the instance. If not set, will create a new instance
+                with a higher version number than any previous instance for the stream.
             make_primary (bool):
                 Immediately make the new instance the stream's primary instance
             update_if_exists (bool):
@@ -163,7 +170,7 @@ class Stream:
             instance = StreamInstance._make_dry(
                 client=self._client,
                 stream=self,
-                version=version,
+                version=(0 if version is None else version),
                 make_primary=make_primary,
             )
         if make_primary:

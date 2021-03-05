@@ -361,7 +361,7 @@ class Streams(_ResourceBase):
     async def create_instance(
         self,
         stream_id,
-        version: int,
+        version: int = None,
         make_primary=None,
         update_if_exists=None,
     ):
