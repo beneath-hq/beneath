@@ -1,9 +1,10 @@
 from collections.abc import Mapping
 from datetime import timedelta
+import json
 import logging
 import os
 import sys
-from typing import Dict, Iterable, Union
+from typing import Dict, Iterable, List, Union
 
 import pandas as pd
 
@@ -16,7 +17,7 @@ from beneath.consumer import Consumer
 from beneath.instance import StreamInstance
 from beneath.job import Job
 from beneath.stream import Stream
-from beneath.utils import ProjectQualifier, StreamQualifier, SubscriptionQualifier
+from beneath.utils import infer_avro, ProjectQualifier, StreamQualifier, SubscriptionQualifier
 from beneath.writer import DryWriter, Writer
 
 
@@ -287,13 +288,77 @@ class Client:
         await self._writer.force_flush()
 
     async def write_full(
+        self,
         stream_path: str,
         records: Union[Iterable[dict], pd.DataFrame],
+        key: Union[str, List[str]] = None,
+        description: str = None,
         recreate_on_schema_change=True,
-        append=False,
     ):
+        # hairy defaults for `key`
+        if isinstance(key, str):
+            key = [key]
+        if not key:
+            if isinstance(records, pd.DataFrame):
+                index_named = None
+                for name in records.index.names:
+                    if index_named is None:
+                        index_named = name is not None
+                    elif index_named == (name is None):
+                        raise ValueError(
+                            "Cannot write DataFrame with mixed null and non-null"
+                            f" index names {records.index.names}"
+                        )
+                if index_named:
+                    key = records.index.names
+                    records = records.reset_index()
+                else:
+                    if len(records.index.names) > 1:
+                        key = [f"key{idx}" for idx, name in enumerate(records.index.names)]
+                    else:
+                        key = ["key"]
+                    records.index.names = key
+                    records = records.reset_index()
+            else:
+                for idx, record in enumerate(records):
+                    if "key" not in record:
+                        record["key"] = idx
+                    key = ["key"]
 
-        pass
+        # infer schema and indexex
+        schema = infer_avro(records)
+        indexes = json.dumps([{"key": True, "fields": key}])
+
+        # create the stream
+        stream = await self.create_stream(
+            stream_path=stream_path,
+            schema=schema,
+            description=description,
+            schema_kind="Avro",
+            indexes=indexes,
+            update_if_exists=True,
+        )
+
+        # get instance
+        next_instance = None
+        previous_instance = None
+        if stream.primary_instance is None:
+            next_instance = await stream.create_instance()
+        elif stream.primary_instance.is_final:
+            next_instance = await stream.create_instance()
+            previous_instance = stream.primary_instance
+        else:
+            next_instance = stream.primary_instance
+
+        # write records
+        await next_instance.write(records)
+
+        # make primary and final, and delete previous instance
+        await next_instance.update(make_primary=True, make_final=True)
+        if previous_instance:
+            await previous_instance.delete()
+
+        return stream
 
     # CHECKPOINTERS
 
