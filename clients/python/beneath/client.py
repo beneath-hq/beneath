@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from datetime import timedelta
 import logging
 import os
+import sys
 from typing import Dict, Iterable, Union
 
 import pandas as pd
@@ -55,10 +56,7 @@ class Client:
         self.connection = Connection(secret=self._get_secret(secret=secret))
         self.admin = AdminClient(connection=self.connection, dry=dry)
         self.dry = dry
-
-        logging.basicConfig()
-        self.logger = logging.getLogger("beneath")
-        self.logger.setLevel(logging.INFO)
+        self.logger = self._make_default_logger()
 
         if dry:
             self._writer = DryWriter(client=self, max_delay_ms=write_delay_ms)
@@ -83,6 +81,20 @@ class Client:
         if not isinstance(secret, str):
             raise TypeError("secret must be a string")
         return secret.strip()
+
+    @classmethod
+    def _make_default_logger(cls):
+        h1 = logging.StreamHandler(sys.stdout)
+        h1.setLevel(logging.INFO)
+        h1.addFilter(lambda record: record.levelno <= logging.INFO)
+
+        h2 = logging.StreamHandler(sys.stderr)
+        h2.setLevel(logging.WARNING)
+
+        logging.basicConfig(handlers=[h1, h2])
+        logger = logging.getLogger("beneath")
+        logger.setLevel(logging.INFO)
+        return logger
 
     # FINDING AND STAGING STREAMS
 
@@ -111,6 +123,8 @@ class Client:
         log_retention: timedelta = None,
         index_retention: timedelta = None,
         warehouse_retention: timedelta = None,
+        schema_kind: str = "GraphQL",
+        indexes: str = None,
         update_if_exists: bool = None,
     ) -> Stream:
         """
@@ -129,6 +143,8 @@ class Client:
             retention (timedelta):
                 The amount of time to retain records written to the stream.
                 If not set, records will be stored forever.
+            schema_kind (str):
+                The parser to use for ``schema``. Currently must be "GraphQL" (default).
             update_if_exists (bool):
                 If true and the stream already exists, the provided info will be used to update
                 the stream (only supports non-breaking schema changes) before returning it.
@@ -136,7 +152,7 @@ class Client:
         qualifier = StreamQualifier.from_path(stream_path)
         if self.dry:
             data = await self.admin.streams.compile_schema(
-                schema_kind="GraphQL",
+                schema_kind=schema_kind,
                 schema=schema,
             )
             stream = await Stream._make_dry(
@@ -149,8 +165,9 @@ class Client:
                 organization_name=qualifier.organization,
                 project_name=qualifier.project,
                 stream_name=qualifier.stream,
-                schema_kind="GraphQL",
+                schema_kind=schema_kind,
                 schema=schema,
+                indexes=indexes,
                 description=description,
                 meta=meta,
                 use_index=use_index,
