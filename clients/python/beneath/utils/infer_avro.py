@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 from datetime import datetime
+import json
 from typing import List, Union
 
 import numpy as np
@@ -15,7 +16,7 @@ TO_AVRO_TYPE = {
     str: "string",
     bytes: "bytes",
     datetime: {"type": "long", "logicalType": "timestamp-millis"},
-    np.bool_: "bool",
+    np.bool_: "boolean",
     np.int8: "int",
     np.int16: "int",
     np.int32: "int",
@@ -41,15 +42,14 @@ TO_AVRO_TYPE = {
 }
 
 
-def infer_avro(records: Union[List[dict], pd.DataFrame], key_fields: List[str]):
-    if not isinstance(records, pd.DataFrame):
-        records = pd.DataFrame.from_records(records)
-    fields = _infer_df_fields(records, key_fields, {})
+def infer_avro(records: Union[List[dict], pd.DataFrame]):
+    records = _values_to_df(records)
+    fields = _infer_df_fields(records, {})
     schema = {"type": "record", "name": "Root", "fields": fields}
-    return schema
+    return json.dumps(schema, indent=2)
 
 
-def _infer_df_fields(df, key_fields, nested_record_names):
+def _infer_df_fields(df, nested_record_names):
     fields = []
     for key, dtype in df.dtypes.items():
         if dtype is np.dtype("O"):
@@ -58,9 +58,6 @@ def _infer_df_fields(df, key_fields, nested_record_names):
             inferred_type = _infer_dtype_simple(dtype)
         if inferred_type is None:
             raise TypeError(f"Cannot infer schema for (sub-)type {repr(dtype)}")
-        if not _is_array_type(inferred_type):
-            if key not in key_fields:
-                inferred_type = ["null", inferred_type]
         fields.append({"name": key, "type": inferred_type})
     return fields
 
@@ -75,49 +72,74 @@ def _infer_dtype_simple(dtype):
 
 def _infer_dtype_complex(df, field, nested_record_names):
     NoneType = type(None)
-    bool_types = {bool, NoneType}
-    string_types = {str, NoneType}
-    bytes_types = {bytes, NoneType}
     record_types = {dict, OrderedDict, NoneType}
     array_types = {list, NoneType}
 
-    base_field_types = set(df[field].apply(type))
+    field_types = set(df[field].apply(type))
 
-    # String type - checking here makes it the default for all-None columns
-    if base_field_types.issubset(string_types):
-        return "string"
-    # Bool type - double checking here because pandas uses np.dtype('O') for bools with None
-    if base_field_types.issubset(bool_types):
-        return "boolean"
-    # Bytes type
-    if base_field_types.issubset(bytes_types):
-        return "bytes"
-    # Record type
-    if base_field_types.issubset(record_types):
-        records = df.loc[~df[field].isna(), field].reset_index(drop=True)
+    # Error if more than one non-None type
+    if len(field_types) > 2 or (len(field_types) == 2 and NoneType not in field_types):
+        raise TypeError(
+            f"Cannot identify schema type for field '{field}'"
+            f" because it has multiple distinct types: '{field_types}'"
+        )
+
+    # Default to ["null", "string"] for fields where all values are None
+    if len(field_types) == 1 and NoneType in field_types:
+        return ["null", "string"]
+
+    # The inferred type
+    inferred_type = None
+
+    # Try inferring record
+    if field_types.issubset(record_types):
         if field in nested_record_names:
             nested_record_names[field] += 1
         else:
             nested_record_names[field] = 0
         record_name = field + "_record" + str(nested_record_names[field])
-        record_fields = (
-            _infer_df_fields(pd.DataFrame.from_records(records), [], nested_record_names),
-        )
-        return {
+        records = df[field].dropna().reset_index(drop=True)
+        record_fields = _infer_df_fields(_values_to_df(records), nested_record_names)
+        inferred_type = {
             "type": "record",
             "name": record_name,
             "fields": record_fields,
         }
-    # Array type
-    if base_field_types.issubset(array_types):
+    # Try inferring array
+    elif field_types.issubset(array_types):
         ds = pd.Series(df.loc[~df[field].isna(), field].sum(), name=field).reset_index(drop=True)
         if ds.empty:
             # Defaults to array of strings
             item_type = "string"
         else:
-            item_type = _infer_df_fields(ds.to_frame(), [], nested_record_names)[0]["type"]
+            ds = _values_to_df(ds.to_frame())
+            item_type = _infer_df_fields(ds, nested_record_names)[0]["type"]
         return {"type": "array", "items": item_type}
+    # Infer by looking up in TO_AVRO_TYPE
+    else:
+        for field_type in field_types:
+            if field_type is not NoneType:
+                inferred_type = TO_AVRO_TYPE.get(field_type)
+
+    # Error if no match for inferred_type
+    if inferred_type is None:
+        raise TypeError(
+            f"Cannot identify schema type for field '{field}'"
+            f" with Python types: '{field_types}'"
+        )
+
+    # Make nullable if applicable
+    if NoneType in field_types:
+        inferred_type = ["null", inferred_type]
+
+    return inferred_type
 
 
-def _is_array_type(inferred_type):
-    return isinstance(inferred_type, dict) and inferred_type["type"] == "array"
+def _values_to_df(values):
+    if isinstance(values, pd.DataFrame):
+        df = values
+    else:
+        df = pd.DataFrame.from_records(values)
+    # df = df.where(pd.notnull(df), None)
+    df = df.replace({np.nan: None})
+    return df

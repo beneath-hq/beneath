@@ -5,6 +5,7 @@ from beneath.utils.aiodelaybuffer import AIODelayBuffer
 from beneath.utils.aiopoller import AIOPoller
 from beneath.utils.aioticker import AIOTicker
 from beneath.utils.aioworkerpool import AIOWorkerPool
+from beneath.utils.infer_avro import infer_avro
 from beneath.utils.qualifiers import (
     pretty_entity_name,
     ProjectQualifier,
@@ -23,6 +24,7 @@ __all__ = [
     "SubscriptionQualifier",
     "ProjectQualifier",
     "pretty_entity_name",
+    "infer_avro",
 ]
 
 
