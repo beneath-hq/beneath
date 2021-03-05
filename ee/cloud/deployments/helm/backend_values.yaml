@@ -19,9 +19,11 @@ data:
     grpcHost: grpc.data.beneath.dev
 
 extraEnv:
-- name: GOOGLE_APPLICATION_CREDENTIALS
-  value: /var/secrets/google/key.json
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /var/secrets/google/key.json
+  - name: IS_GKE
+    value: "1"
 
 extraSecretMounts:
-- secretName: beneath-sa-key
-  mountPath: /var/secrets/google
+  - secretName: beneath-sa-key
+    mountPath: /var/secrets/google

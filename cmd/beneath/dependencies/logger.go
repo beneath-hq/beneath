@@ -17,6 +17,7 @@ func init() {
 
 func initLogger() *zap.Logger {
 	env := envutil.GetEnv()
+	isGKE := os.Getenv("IS_GKE")
 
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
@@ -36,10 +37,12 @@ func initLogger() *zap.Logger {
 		encoder = zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 	}
 
-	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, consoleErrors, highPriority),
-		zapcore.NewCore(encoder, consoleDebugging, lowPriority),
-	)
+	errorsCore := zapcore.NewCore(encoder, consoleErrors, highPriority)
+	if isGKE != "" {
+		errorsCore = addGCPErrorLabel(errorsCore)
+	}
+	debuggingCore := zapcore.NewCore(encoder, consoleDebugging, lowPriority)
+	core := zapcore.NewTee(errorsCore, debuggingCore)
 
 	logger := zap.New(
 		core,
@@ -52,10 +55,7 @@ func initLogger() *zap.Logger {
 	return logger
 }
 
-// Customize the Production EncoderConfig to use "message" field name.
-// Why? We want our errors to trigger alerts in GCP Error Reporting. The zap library defaults to using
-// "msg", which naming unfortunately doesn't trigger alerts in GCP Error Reporting.
-// Source: https://cloud.google.com/error-reporting/docs/formatting-error-messages
+// Customize the Production EncoderConfig to use "message" field name
 func newProductionEncoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "ts",
@@ -70,4 +70,13 @@ func newProductionEncoderConfig() zapcore.EncoderConfig {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
+}
+
+func addGCPErrorLabel(core zapcore.Core) zapcore.Core {
+	gcpErrorLabel := zapcore.Field{
+		Key:    "@type",
+		Type:   zapcore.StringType,
+		String: "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent",
+	}
+	return core.With([]zapcore.Field{gcpErrorLabel})
 }
