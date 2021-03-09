@@ -20,3 +20,4 @@ Contents:
    cursor
    errors
    pipeline
+   easy
