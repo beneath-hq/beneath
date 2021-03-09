@@ -73,10 +73,10 @@ func (s *Service) CompileToStream(stream *models.Stream, schemaKind models.Strea
 	// if update, check canonical avro is the same
 	if update {
 		if canonicalAvro != stream.CanonicalAvroSchema {
-			return fmt.Errorf("Unfortunately we do not currently support updating a stream's data structure; you can only edit its documentation")
+			return fmt.Errorf("Schema error: Unfortunately we do not currently support structural changes to a stream's schema; you can only comments and descriptions")
 		}
 		if canonicalIndexes != stream.CanonicalIndexes {
-			return fmt.Errorf("Unfortunately we do not currently support updating a stream's indexes")
+			return fmt.Errorf("Schema error: Unfortunately we do not currently support updating a stream's indexes")
 		}
 	}
 
