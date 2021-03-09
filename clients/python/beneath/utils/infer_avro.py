@@ -46,7 +46,7 @@ def infer_avro(records: Union[List[dict], pd.DataFrame]):
     records = _values_to_df(records)
     fields = _infer_df_fields(records, {})
     schema = {"type": "record", "name": "Root", "fields": fields}
-    return json.dumps(schema, indent=2)
+    return json.dumps(schema)
 
 
 def _infer_df_fields(df, nested_record_names):
@@ -107,6 +107,12 @@ def _infer_dtype_complex(df, field, nested_record_names):
         }
     # Try inferring array
     elif field_types.issubset(array_types):
+        if NoneType in field_types:
+            raise TypeError(
+                f"Cannot create schema for field '{field}' because some values are None and "
+                "Beneath doesn't support nullable arrays (hint: replace None values with empty "
+                "lists)"
+            )
         ds = pd.Series(df.loc[~df[field].isna(), field].sum(), name=field).reset_index(drop=True)
         if ds.empty:
             # Defaults to array of strings

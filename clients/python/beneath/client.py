@@ -12,7 +12,7 @@ from beneath import config
 from beneath.admin.client import AdminClient
 from beneath.checkpointer import Checkpointer, PrefixedCheckpointer
 from beneath.config import DEFAULT_READ_BATCH_SIZE
-from beneath.connection import Connection
+from beneath.connection import Connection, GraphQLError
 from beneath.consumer import Consumer
 from beneath.instance import StreamInstance
 from beneath.job import Job
@@ -293,8 +293,36 @@ class Client:
         records: Union[Iterable[dict], pd.DataFrame],
         key: Union[str, List[str]] = None,
         description: str = None,
-        recreate_on_schema_change=True,
+        recreate_on_schema_change=False,
     ):
+        """
+        Infers a schema, creates a stream, and writes a full dataset to Beneath.
+        Each call will create a new primary version for the stream, and delete the old primary
+        version if/when the write completes succesfully.
+
+        Args:
+            stream_path (str):
+                The (desired) path to the stream in the format of "USERNAME/PROJECT/STREAM".
+                The project must already exist.
+            records (list(dict) | pandas.DataFrame):
+                The full dataset to write, either as a list of records or as a Pandas DataFrame.
+                This function uses ``beneath.infer_avro`` to infer a schema for the stream based
+                on the records.
+            key (str | list(str)):
+                The fields to use as the stream's key. If not set, will default to the dataframe
+                index if ``records`` is a Pandas DataFrame, or add a column of incrementing numbers
+                if ``records`` is a list.
+            description (str):
+                A description for the stream.
+            recreate_on_schema_change (bool):
+                If true, and there's an existing stream at ``stream_path`` with a schema that is
+                incompatible with the inferred schema for ``records``, it will delete the existing
+                stream and create a new one instead of throwing an error. Defaults to false.
+        """
+        if self._start_count == 0:
+            raise Exception("Cannot call write_full because the client is stopped")
+        if len(records) == 0:
+            return
         # hairy defaults for `key`
         if isinstance(key, str):
             key = [key]
@@ -325,19 +353,40 @@ class Client:
                         record["key"] = idx
                     key = ["key"]
 
-        # infer schema and indexex
+        # infer schema and indexes
         schema = infer_avro(records)
         indexes = json.dumps([{"key": True, "fields": key}])
 
         # create the stream
-        stream = await self.create_stream(
-            stream_path=stream_path,
-            schema=schema,
-            description=description,
-            schema_kind="Avro",
-            indexes=indexes,
-            update_if_exists=True,
-        )
+        try:
+            stream = await self.create_stream(
+                stream_path=stream_path,
+                schema=schema,
+                description=description,
+                schema_kind="Avro",
+                indexes=indexes,
+                update_if_exists=True,
+            )
+        except GraphQLError as e:
+            if "Schema error:" not in str(e):
+                raise
+            if not recreate_on_schema_change:
+                raise ValueError(
+                    "Cannot create stream because an existing stream *with a different schema* "
+                    f"already exists at '{stream_path}'. To delete the existing stream and all its"
+                    " versions and records, pass recreate_on_schema_change=True."
+                )
+            # recreate
+            stream = await self.find_stream(stream_path)
+            await self.admin.streams.delete(stream_id=str(stream.stream_id))
+            stream = await self.create_stream(
+                stream_path=stream_path,
+                schema=schema,
+                description=description,
+                schema_kind="Avro",
+                indexes=indexes,
+                update_if_exists=True,
+            )
 
         # get instance
         next_instance = None
