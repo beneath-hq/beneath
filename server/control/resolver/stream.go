@@ -34,7 +34,7 @@ func (r *queryResolver) StreamByID(ctx context.Context, streamID uuid.UUID) (*mo
 		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", streamID.String())
 	}
 
-	return stream, nil
+	return streamWithPermissions(stream, perms), nil
 }
 
 func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error) {
@@ -49,7 +49,7 @@ func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, 
 		return nil, gqlerror.Errorf("Not allowed to find stream %s/%s/%s", organizationName, projectName, streamName)
 	}
 
-	return stream, nil
+	return streamWithPermissions(stream, perms), nil
 }
 
 func (r *queryResolver) StreamInstanceByStreamAndVersion(ctx context.Context, streamID uuid.UUID, version int) (*models.StreamInstance, error) {
@@ -64,7 +64,7 @@ func (r *queryResolver) StreamInstanceByStreamAndVersion(ctx context.Context, st
 		return nil, gqlerror.Errorf("Not allowed to read instance version %d for stream %s", version, streamID.String())
 	}
 
-	return instance, nil
+	return instanceWithPermissions(instance, perms), nil
 }
 
 func (r *queryResolver) StreamInstanceByOrganizationProjectStreamAndVersion(ctx context.Context, organizationName string, projectName string, streamName string, version int) (*models.StreamInstance, error) {
@@ -79,7 +79,7 @@ func (r *queryResolver) StreamInstanceByOrganizationProjectStreamAndVersion(ctx 
 		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s/%s", organizationName, projectName, streamName)
 	}
 
-	return instance, nil
+	return instanceWithPermissions(instance, perms), nil
 }
 
 func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error) {
@@ -180,7 +180,7 @@ func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStr
 		return nil, gqlerror.Errorf("Error creating first instance: %s", err.Error())
 	}
 
-	return stream, nil
+	return streamWithProjectPermissions(stream, perms), nil
 }
 
 func (r *mutationResolver) updateExistingFromCreateStream(ctx context.Context, stream *models.Stream, input gql.CreateStreamInput) (*models.Stream, error) {
@@ -224,7 +224,7 @@ func (r *mutationResolver) updateExistingFromCreateStream(ctx context.Context, s
 		return nil, gqlerror.Errorf("Error updating existing stream: %s", err.Error())
 	}
 
-	return stream, nil
+	return streamWithProjectPermissions(stream, perms), nil
 }
 
 func checkUse(incoming *bool, current bool) bool {
@@ -265,7 +265,7 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, input gql.UpdateStr
 		return nil, gqlerror.Errorf("Error updating stream: %s", err.Error())
 	}
 
-	return stream, nil
+	return streamWithProjectPermissions(stream, perms), nil
 }
 
 func (r *mutationResolver) DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error) {
@@ -328,7 +328,7 @@ func (r *mutationResolver) CreateStreamInstance(ctx context.Context, input gql.C
 		return nil, gqlerror.Errorf("Error creating stream instance: %s", err.Error())
 	}
 
-	return si, nil
+	return instanceWithPermissions(si, perms), nil
 }
 
 func (r *mutationResolver) updateExistingFromCreateStreamInstance(ctx context.Context, instance *models.StreamInstance, input gql.CreateStreamInstanceInput) (*models.StreamInstance, error) {
@@ -348,7 +348,7 @@ func (r *mutationResolver) updateExistingFromCreateStreamInstance(ctx context.Co
 		return nil, gqlerror.Errorf("Error updating stream instance: %s", err.Error())
 	}
 
-	return instance, nil
+	return instanceWithPermissions(instance, perms), nil
 }
 
 func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, input gql.UpdateStreamInstanceInput) (*models.StreamInstance, error) {
@@ -377,7 +377,7 @@ func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, input gql.U
 		return nil, gqlerror.Errorf("Error updating stream instance: %s", err.Error())
 	}
 
-	return instance, nil
+	return instanceWithPermissions(instance, perms), nil
 }
 
 func (r *mutationResolver) DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error) {
@@ -398,4 +398,31 @@ func (r *mutationResolver) DeleteStreamInstance(ctx context.Context, instanceID 
 	}
 
 	return true, nil
+}
+
+func instanceWithPermissions(si *models.StreamInstance, perms models.StreamPermissions) *models.StreamInstance {
+	if si.Stream != nil {
+		si.Stream = streamWithPermissions(si.Stream, perms)
+	}
+	return si
+}
+
+func streamWithPermissions(s *models.Stream, perms models.StreamPermissions) *models.Stream {
+	// Note: This is a pretty bad approximation, but will do for our current use case
+	return streamWithProjectPermissions(s, models.ProjectPermissions{
+		View:   perms.Read,
+		Create: perms.Write,
+		Admin:  perms.Write,
+	})
+}
+
+func streamWithProjectPermissions(s *models.Stream, perms models.ProjectPermissions) *models.Stream {
+	if s.Project != nil {
+		s.Project.Permissions = &models.PermissionsUsersProjects{
+			View:   perms.View,
+			Create: perms.Create,
+			Admin:  perms.Admin,
+		}
+	}
+	return s
 }
