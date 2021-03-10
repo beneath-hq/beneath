@@ -16,7 +16,7 @@ import (
 func TestExpandWarehouseQueryString(t *testing.T) {
 	ctx := context.Background()
 	e := &Engine{Warehouse: &mock.Mock{}}
-	expandedQuery, err := e.ExpandWarehouseQuery(ctx, "select * from `exampleorg/example-proj/example_stream` join `/orgexample/proj-example/stream_example/`", streamResolver)
+	expandedQuery, err := e.ExpandWarehouseQuery(ctx, "select * from `exampleorg/example-proj/stream:example_stream` join `/orgexample/proj-example/stream_example/`", streamResolver)
 	assert.Nil(t, err)
 	assert.Equal(t, "select * from exampleorg.example_proj.example_stream_00000000 join orgexample.proj_example.stream_example_00000000", expandedQuery)
 }

@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	warehouseQueryStreamRegex = regexp.MustCompile("`(/?[_\\-a-zA-Z0-9]+/[_\\-/a-zA-Z0-9]+)`")
+	warehouseQueryStreamRegex = regexp.MustCompile("`(/?[_\\-a-zA-Z0-9]+/[_:\\-/a-zA-Z0-9]+)`")
 )
 
 // WarehouseQueryStreamResolver is a callback that should resolve a stream qualifier
@@ -98,7 +98,7 @@ func newStreamQualifier(path string) (streamQualifier, error) {
 	sq := streamQualifier{
 		Organization: strings.ReplaceAll(parts[0], "-", "_"),
 		Project:      strings.ReplaceAll(parts[1], "-", "_"),
-		Stream:       strings.ReplaceAll(parts[2], "-", "_"),
+		Stream:       strings.ReplaceAll(strings.TrimPrefix(parts[2], "stream:"), "-", "_"),
 	}
 
 	return sq, nil
