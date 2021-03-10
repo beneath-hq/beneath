@@ -20,6 +20,11 @@ export const QUERY_STREAM = gql`
           organizationID
           name
         }
+        permissions {
+          view
+          create
+          admin
+        }
       }
       schemaKind
       schema
@@ -81,6 +86,11 @@ export const QUERY_STREAM_INSTANCE = gql`
           organization {
             organizationID
             name
+          }
+          permissions {
+            view
+            create
+            admin
           }
         }
         schemaKind

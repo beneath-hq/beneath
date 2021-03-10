@@ -10,10 +10,6 @@ import { Formik, Form, Field } from "formik";
 import FormikTextField from "components/formik/TextField";
 import SubmitControl from "components/forms/SubmitControl";
 import { useToken } from "hooks/useToken";
-import { useQuery } from "@apollo/client";
-import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
-import { QUERY_PROJECT_MEMBERS } from "apollo/queries/project";
-import useMe from "hooks/useMe";
 
 interface WriteStreamProps {
   stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
@@ -23,28 +19,8 @@ interface WriteStreamProps {
 
 const WriteStream: FC<WriteStreamProps> = ({ stream: streamMetadata, instanceID, buttonClassName }) => {
   const schema = new Schema(streamMetadata.avroSchema, streamMetadata.streamIndexes);
-  const me = useMe();
   const token = useToken();
   const [writeDialog, setWriteDialog] = React.useState(false);
-
-  // hide the button under a few circumstances
-  if (streamMetadata.meta || !streamMetadata.allowManualWrites || !me || !token) {
-    return null;
-  }
-
-  const { error, data } = useQuery<ProjectMembers, ProjectMembersVariables>(QUERY_PROJECT_MEMBERS, {
-    variables: { projectID: streamMetadata.project.projectID },
-  });
-
-  if (error || !data) {
-    return <p>Error: {JSON.stringify(error)}</p>;
-  }
-
-  // hide the button if no Create permission in the project
-  const user = data.projectMembers.find((user) => user.userID === me?.personalUserID);
-  if (!user?.create) {
-    return null;
-  }
 
   const client = new Client({ secret: token || undefined });
   const stream = client.findStream({ instanceID });

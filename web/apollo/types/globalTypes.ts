@@ -76,7 +76,7 @@ export interface CreateStreamInput {
 
 export interface CreateStreamInstanceInput {
   streamID: ControlUUID;
-  version: number;
+  version?: number | null;
   makePrimary?: boolean | null;
   updateIfExists?: boolean | null;
 }

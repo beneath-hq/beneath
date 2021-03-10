@@ -15,12 +15,20 @@ export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectA
   name: string;
 }
 
+export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_permissions {
+  __typename: "PermissionsUsersProjects";
+  view: boolean;
+  create: boolean;
+  admin: boolean;
+}
+
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project {
   __typename: "Project";
   projectID: string;
   name: string;
   public: boolean;
   organization: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_organization;
+  permissions: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_project_permissions;
 }
 
 export interface StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName_streamIndexes {

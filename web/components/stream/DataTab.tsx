@@ -162,14 +162,16 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
   if (!loading && _.isEmpty(filter) && records.length === 0) {
     tableCta = {
       message: `There's no data in this stream instance`,
-      buttons: [
+    };
+    if (stream.project.permissions.create && !stream.meta) {
+      tableCta.buttons = [
         {
           label: "Go to API docs",
           href: makeStreamHref(stream, instance, "api"),
           as: makeStreamAs(stream, instance, "api"),
         },
-      ],
-    };
+      ];
+    }
   }
   if (!loading && queryType === "index" && !_.isEmpty(filter) && records.length === 0) {
     tableCta = {
@@ -280,13 +282,15 @@ const DataTab: FC<DataTabProps> = ({ stream, instance }) => {
           )}
           <Grid item xs>
             <Grid container spacing={1} justify="flex-end" wrap="nowrap">
-              <Grid item>
-                <WriteStream
-                  stream={stream}
-                  instanceID={instance.streamInstanceID}
-                  buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
-                />
-              </Grid>
+              {stream.project.permissions.create && stream.allowManualWrites && !stream.meta && (
+                <Grid item>
+                  <WriteStream
+                    stream={stream}
+                    instanceID={instance.streamInstanceID}
+                    buttonClassName={clsx(classes.topRowHeight, classes.safariButtonFix)}
+                  />
+                </Grid>
+              )}
               <Grid item>
                 <Button
                   variant="outlined"
