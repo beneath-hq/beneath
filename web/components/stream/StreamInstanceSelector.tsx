@@ -52,13 +52,13 @@ const StreamInstanceSelector: FC<Props> = ({ stream, currentInstance }) => {
   const router = useRouter();
   const [openDialogID, setOpenDialogID] = useState<null | "create" | "promote" | "delete">(null);
 
-  // menu 1
+  // Menu 1: Select a version
   const [menuAnchorEl1, setMenuAnchorEl1] = useState(null);
   const isMenuOpen1 = !!menuAnchorEl1;
   const openMenu1 = (event: any) => setMenuAnchorEl1(event.currentTarget);
   const closeMenu1 = () => setMenuAnchorEl1(null);
 
-  // menu 2
+  // Menu 2: Create, delete, promote an instance
   const [menuAnchorEl2, setMenuAnchorEl2] = useState(null);
   const isMenuOpen2 = !!menuAnchorEl2;
   const openMenu2 = (event: any) => setMenuAnchorEl2(event.currentTarget);
@@ -122,9 +122,11 @@ const StreamInstanceSelector: FC<Props> = ({ stream, currentInstance }) => {
           {`${currentInstance?.version !== undefined ? currentInstance.version : ""}` +
             (currentInstance?.streamInstanceID === stream.primaryStreamInstanceID ? " (Primary)" : "")}
         </Button>
-        <Button className={classes.rightButton} onClick={openMenu2}>
-          <MoreVert className={classes.icon} />
-        </Button>
+        {stream.project.permissions.create && stream.allowManualWrites && !stream.meta && (
+          <Button className={classes.rightButton} onClick={openMenu2}>
+            <MoreVert className={classes.icon} />
+          </Button>
+        )}
       </ButtonGroup>
 
       {/* MENU 1 (list of instances) */}
