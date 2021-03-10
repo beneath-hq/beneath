@@ -5,7 +5,7 @@ from config import reddit, SUBREDDIT, truncate_text
 
 async def generate_posts(p):
     sub = await reddit.subreddit(SUBREDDIT)
-    async for post in sub.stream.submissions():
+    async for post in sub.stream.submissions(skip_existing=True):
         link = (
             post.url
             if post.url.replace("https://www.reddit.com", "") != post.permalink

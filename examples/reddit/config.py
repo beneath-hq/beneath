@@ -1,5 +1,9 @@
+import logging
 import os
-import asyncpraw
+import sys
+from asyncpraw import Reddit
+from asyncprawcore import Requestor
+from tenacity import before_sleep_log, retry, stop_after_attempt, wait_chain, wait_fixed
 
 
 def get_env(var) -> str:
@@ -16,12 +20,30 @@ USERNAME = get_env("REDDIT_USERNAME")
 PASSWORD = get_env("REDDIT_PASSWORD")
 SUBREDDIT = get_env("REDDIT_SUBREDDIT")
 
-reddit = asyncpraw.Reddit(
+logger = logging.getLogger("redditscraper")
+logger.setLevel(logging.WARNING)
+
+
+class RetryRequestor(Requestor):
+    @retry(
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_chain(
+            *[wait_fixed(0.5)] + [wait_fixed(2)] + [wait_fixed(10)] + [wait_fixed(60)]
+        ),
+    )
+    async def request(self, *args, **kwargs):
+        return await super().request(*args, **kwargs)
+
+
+reddit = Reddit(
     user_agent=USER_AGENT,
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
     username=USERNAME,
     password=PASSWORD,
+    requestor_class=RetryRequestor,
 )
 
 

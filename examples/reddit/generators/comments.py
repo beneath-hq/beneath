@@ -5,7 +5,7 @@ from config import reddit, SUBREDDIT, truncate_text
 
 async def generate_comments(p):
     sub = await reddit.subreddit(SUBREDDIT)
-    async for comment in sub.stream.comments():
+    async for comment in sub.stream.comments(skip_existing=True):
         yield {
             "created_on": datetime.utcfromtimestamp(comment.created_utc),
             "id": comment.id,

@@ -27,7 +27,7 @@ def make_subreddit_description(subreddit, kind):
 
 
 if __name__ == "__main__":
-    p = beneath.Pipeline(parse_args=True)
+    p = beneath.Pipeline(parse_args=True, disable_checkpoints=True)
     p.description = "Scrapes posts and comments from Reddit"
 
     posts = p.generate(posts.generate_posts)
