@@ -73,7 +73,7 @@ tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>
 
 [[package]]
 name = "beneath"
-version = "1.3.1"
+version = "1.3.2"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 category = "main"
 optional = false
@@ -458,7 +458,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "cd11f48610d72202c469da6dcffa7dc2358eb590045acb53ed2470b8e42607f9"
+content-hash = "22930b6bd28c38f2c151a0521cd3140b82116ad2371113e907eea64988245917"
 
 [metadata.files]
 aiohttp = [
@@ -527,8 +527,8 @@ attrs = [
     {file = "attrs-20.3.0.tar.gz", hash = "sha256:832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700"},
 ]
 beneath = [
-    {file = "beneath-1.3.1-py3-none-any.whl", hash = "sha256:04ec3f26c2bae8034aef5a932cf87aa41514d9b381b7e1238da0dc64bd9988db"},
-    {file = "beneath-1.3.1.tar.gz", hash = "sha256:0819e60dbfac32a83741980ac20d5f338b21e3f341ed7b52f31a693d2728fee2"},
+    {file = "beneath-1.3.2-py3-none-any.whl", hash = "sha256:27f879a04aa975eaf1e88d7f41b84e6e587d8b2dade2f5a37d1ee9e582eb654a"},
+    {file = "beneath-1.3.2.tar.gz", hash = "sha256:ea8f02489099639d848f475c0405af88f3c0ad3af9890d5de297bca85664aca7"},
 ]
 black = [
     {file = "black-20.8b1.tar.gz", hash = "sha256:1c02557aa099101b9d21496f8a914e9ed2222ef70336404eeeac8edba836fbea"},
