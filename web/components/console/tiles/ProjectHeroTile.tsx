@@ -1,31 +1,23 @@
 import { FC } from "react";
-import { Grid, makeStyles, Typography } from "@material-ui/core";
+import { Chip, Grid, makeStyles, Tooltip, Typography } from "@material-ui/core";
 
 import Avatar from "../../Avatar";
 import { Tile, TileProps } from "./Tile";
 import { toURLName } from "lib/names";
-import { Lock, Public } from "@material-ui/icons";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
-  avatar: {
-    paddingRight: theme.spacing(2),
-  },
   container: {
-    padding: theme.spacing(3),
+    padding: theme.spacing(2),
   },
   orgName: {
-    marginRight: theme.spacing(0.75),
+    fontSize: theme.typography.caption.fontSize,
   },
-  path: {
-    [theme.breakpoints.down("md")]: {
-      alignItems: "center",
-    },
+  pointer: {
+    cursor: "pointer",
   },
-  publicIcon: {
-    fill: theme.palette.primary.dark,
-  },
-  privateIcon: {
-    fill: theme.palette.grey[500],
+  publicChip: {
+    background: theme.palette.primary.dark,
   },
 }));
 
@@ -51,30 +43,37 @@ const ProjectHeroTile: FC<ProjectHeroTileProps> = ({
   const classes = useStyles();
   return (
     <Tile shape={shape} {...tileProps}>
-      <Grid container spacing={2} className={classes.container} alignItems="center">
-        <Grid item className={classes.avatar}>
+      <Grid container spacing={2} className={classes.container}>
+        <Grid item>
           <Avatar size="list" label={displayName || name} src={avatarURL} />
         </Grid>
         <Grid item xs>
-          <Grid container className={classes.path}>
+          <Grid container direction="column">
             <Grid item>
-              <Typography color="textSecondary" className={classes.orgName}>
-                {toURLName(organizationName)} /
-              </Typography>
-            </Grid>
-            <Grid item>
-              <Grid container spacing={1} alignItems="center">
+              <Grid container alignItems="flex-start">
                 <Grid item>
-                  <Typography variant="h3">{toURLName(name)}</Typography>
+                  <Typography color="textSecondary" className={classes.orgName}>
+                    {toURLName(organizationName)} /
+                  </Typography>
                 </Grid>
+                <Grid item xs />
                 <Grid item>
-                  {isPublic ? (
-                    <Public fontSize="small" className={classes.publicIcon} />
-                  ) : (
-                    <Lock fontSize="small" className={classes.privateIcon} />
-                  )}
+                  <Tooltip
+                    title={
+                      isPublic ? "Anyone can access this project" : "People need permission to access this project"
+                    }
+                  >
+                    <Chip
+                      label={isPublic ? "Public" : "Private"}
+                      size="small"
+                      className={clsx(classes.pointer, isPublic && classes.publicChip)}
+                    />
+                  </Tooltip>
                 </Grid>
               </Grid>
+            </Grid>
+            <Grid item>
+              <Typography variant="h3">{toURLName(name)}</Typography>
             </Grid>
           </Grid>
         </Grid>

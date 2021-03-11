@@ -1,10 +1,8 @@
 import React, { FC } from "react";
 import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
-import { Code, Folder, Functions, LinearScale, Mail, MenuBook, VpnKey } from "@material-ui/icons";
 
 import { Tile, TileProps } from "./Tile";
 import useMe from "hooks/useMe";
-import { NakedLink } from "components/Link";
 
 const useStyles = makeStyles((theme: Theme) => ({
   rightButton: {
@@ -27,79 +25,13 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
     <Tile {...tileProps}>
       <Grid container alignItems="center" spacing={2}>
         <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<Folder className={classes.icon} />}
-            component={NakedLink}
-            href="/-/create/project"
-          >
-            Create project
+          <Button variant="contained" color="secondary" href="https://about.beneath.dev/contact" size="small">
+            Contact support
           </Button>
         </Grid>
         <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<LinearScale className={classes.icon} />}
-            component={NakedLink}
-            href="/-/create/stream"
-          >
-            Create stream
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button variant="contained" color="secondary" size="small" startIcon={<Functions className={classes.icon} />}>
-            Create service
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<VpnKey className={classes.icon} />}
-            component={NakedLink}
-            href={`/organization?organization_name=${me.name}&tab=secrets`}
-            as={`/${me.name}/-/secrets`}
-          >
-            Create secret
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<Code className={classes.icon} />}
-            component={NakedLink}
-            href="/-/sql"
-          >
-            SQL editor
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<MenuBook className={classes.icon} />}
-            href="https://about.beneath.dev/docs/quick-starts/"
-          >
-            Quick start
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            startIcon={<Mail className={classes.icon} />}
-            href="https://about.beneath.dev/contact"
-          >
-            Contact us
+          <Button variant="contained" color="secondary" size="small" href="https://discord.gg/f5yvx7YWau">
+            Join the Discord community
           </Button>
         </Grid>
       </Grid>

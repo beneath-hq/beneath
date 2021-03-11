@@ -47,8 +47,10 @@ const MyProjectsTiles: FC = () => {
         data.projectsForUser &&
         data.projectsForUser.map(({ projectID, name, description, photoURL, public: isPublic, organization }, i) => (
           <React.Fragment key={i}>
-            {/* if its the 3rd or 5th item, on medium+ screens, and you're on the free plan, then add a spacer to avoid overlap with the UpgradeTile */}
-            {(i === 2 || i === 4) && isMd && data2 && data2.billingInfo.billingPlan.default && <Grid item xs={4} />}
+            {/* if its the 3rd item, on medium+ screens, then add a spacer to avoid overlap with the Metrics panel */}
+            {i === 2 && isMd && <Grid item xs={4} />}
+            {/* if its the 5th item, on medium+ screens, and a free billing plan, then add a spacer to avoid overlap with the Upgrade panel */}
+            {i === 4 && isMd && data2?.billingInfo.billingPlan.default && <Grid item xs={4} />}
             <ProjectHeroTile
               key={`explore:${projectID}`}
               href={`/project?organization_name=${toURLName(organization.name)}&project_name=${toURLName(name)}`}
