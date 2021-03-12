@@ -42,6 +42,7 @@ export interface TemplateArgs {
   project: string;
   stream: string;
   schema: string;
+  avroSchema: string;
 }
 
 export const buildTemplate = (args: TemplateArgs) => {
@@ -54,46 +55,11 @@ export const buildTemplate = (args: TemplateArgs) => {
       tabs: [
         {
           label: "Reading",
-          content: (
-            <>
-              <Para>Install the Beneath Python library:</Para>
-              <CodePaper language="bash" paragraph>{`pip install beneath`}</CodePaper>
-              <Typography paragraph>Authenticate your environment:</Typography>
-              <CodePaper language="bash" paragraph>{`beneath auth SECRET`}</CodePaper>
-              <Typography variant="body1" paragraph>
-                From a Python script or notebook:
-              </Typography>
-              <CodePaper language="python" paragraph>
-                {`import beneath
-
-df = await beneath.easy_read("${args.organization}/${args.project}/${args.stream}")`}
-              </CodePaper>
-            </>
-          ),
+          content: buildPythonReading(args),
         },
         {
           label: "Writing",
-          content: (
-            <>
-              <Typography variant="body1" paragraph>
-                From a Python script or notebook:
-              </Typography>
-              <CodePaper language="python" paragraph>
-                {`
-import beneath
-client = beneath.Client()
-
-schema = """
-${args.schema}
-"""
-
-stream = await client.create_stream(stream_path="${args.organization}/${args.project}/${args.stream}", schema=schema)
-instance = await stream.create_instance(version=VERSION)
-async with instance.writer() as w:
-    await w.write(LIST_OF_RECORDS)`}
-              </CodePaper>
-            </>
-          ),
+          content: buildPythonWriting(args),
         },
         {
           label: "Pipelines",
@@ -172,6 +138,188 @@ beneath.easy_derive_stream(
       ],
     },
   ];
+};
+
+const buildPythonReading = (args: TemplateArgs) => {
+  return (
+    <>
+      <Heading>Setup</Heading>
+      <Para>
+        If you haven't already, install the Beneath library and authenticate your environment by{" "}
+        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
+      </Para>
+      <Heading>Read the entire stream into memory</Heading>
+      <Para>
+        This snippet loads the entire stream into a Pandas DataFrame, which is useful for analysis in notebooks or
+        scripts:
+      </Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+df = await beneath.query_index("${args.organization}/${args.project}/${args.stream}")
+      `}</CodePaper>
+      <Para>
+        The function accepts several optional arguments. The most common are <code>to_dataframe=False</code> to get
+        records as a regular Python list, <code>filter="..."</code> to{" "}
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter</Link> by key fields, and{" "}
+        <code>max_bytes=...</code> to increase the cap on how many records to load (used to prevent runaway costs). For
+        more details, see{" "}
+        <Link href="https://python.docs.beneath.dev/easy.html#beneath.easy.query_index">the API reference</Link>.
+      </Para>
+      <Heading>Replay the stream's history and subscribe to changes</Heading>
+      <Para>
+        This snippet replays the stream's historical records one-by-one and stays subscribed to new records, which is
+        useful for alerting and data enrichment:
+      </Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+async def callback(record):
+    print(record)
+
+await beneath.consume("${args.organization}/${args.project}/${args.stream}", callback)
+      `}</CodePaper>
+      <Para>
+        The function accepts several optional arguments. The most common are <code>replay_only=True</code> to stop the
+        script once the replay has completed, <code>changes_only=True</code> to only subscribe to changes, and{" "}
+        <code>subscription_path="ORGANIZATION/PROJECT/subscription:NAME"</code> to persist the consumer's progress.
+      </Para>
+      <Heading>Analyze with SQL</Heading>
+      <Para>
+        This snippet runs a warehouse (OLAP) query on the stream's records and returns the result, which is useful for
+        ad-hoc joins, aggregations, and visualizations:
+      </Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+df = await beneath.query_warehouse("SELECT count(*) FROM \`${args.organization}/${args.project}/${args.stream}\`")
+      `}</CodePaper>
+      <Para>
+        See the{" "}
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/">
+          warehouse queries documentation
+        </Link>{" "}
+        for a guideline to the SQL query syntax.
+      </Para>
+      <Heading>Reference</Heading>
+      <Para>
+        Consult the <Link href="https://python.docs.beneath.dev">Beneath Python client API reference</Link> for details
+        on all classes, methods and arguments.
+      </Para>
+    </>
+  );
+};
+
+const buildPythonWriting = (args: TemplateArgs) => {
+  let exampleRecord = "{\n";
+  const parsedSchema = JSON.parse(args.avroSchema);
+  for (const field of parsedSchema["fields"]) {
+    exampleRecord += `    "${field.name}": ...,\n`;
+  }
+  exampleRecord += "}";
+
+  return (
+    <>
+      <Heading>Setup</Heading>
+      <Para>
+        If you haven't already, install the Beneath library and authenticate your environment by{" "}
+        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
+      </Para>
+      <Heading>Writing basics</Heading>
+      <Para>This snippet demonstrates how to connect to the stream and write a record to it:</Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+client = beneath.Client()
+stream = await client.find_stream("${args.organization}/${args.project}/${args.stream}")
+await client.start()
+
+await stream.write(${exampleRecord})
+
+await client.stop()
+      `}</CodePaper>
+      <Para>
+        By default, records are buffered in memory for up to one second and sent in batches over the network, allowing
+        you to call <code>write</code> many times efficiently (e.g. in a loop). Calling <code>client.stop()</code>{" "}
+        ensures all records have been transmitted to Beneath before terminating.
+      </Para>
+      <Heading>Write an entire dataset in one go</Heading>
+      <Para>
+        The convenience function <code>write_full</code> allows you to write a full dataset to the stream in one go.
+        Each call will create a new version for the stream, and{" "}
+        <Link href="https://about.beneath.dev/docs/concepts/streams/#streams-can-have-multiple-versions-known-as-_instances_">
+          finalize
+        </Link>{" "}
+        it once the writes have completed.
+      </Para>
+      <Para>
+        WARNING: Using <code>write_full</code> will delete the current version of the stream and all its data.
+      </Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+df = pd.DataFrame(...)
+await beneath.write_full("${args.organization}/${args.project}/${args.stream}", df, recreate_on_schema_change=True)
+`}</CodePaper>
+      <Heading>Writing records from a web server</Heading>
+      <Para>
+        A frequent use case for Beneath is to create an API that writes data to a stream. This example shows how to do
+        so using <Link href="https://fastapi.tiangolo.com">FastAPI</Link>, which is like Flask, but faster and with
+        better support for <code>async</code> and <code>await</code>.
+      </Para>
+      <Para>First install the dependencies:</Para>
+      <CodePaper language="bash" paragraph>
+        pip install fastapi uvicorn
+      </CodePaper>
+      <Para>
+        Then create the web server (edit the <code>post</code> function or add your own endpoints):
+      </Para>
+      <CodePaper language="python" paragraph filename="server.py">{`
+import beneath
+import uvicorn
+from fastapi import FastAPI
+
+app = FastAPI()
+
+client = beneath.Client()
+stream = None
+
+
+@app.on_event("startup")
+async def on_startup():
+    global stream
+    stream = await client.find_stream("${args.organization}/${args.project}/${args.stream}")
+    await client.start()
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await stream.stop()
+
+
+@app.post("/")
+async def post(payload: dict):
+    # TODO: Validate and use payload
+    # NOTE: Don't write payload directly unless you trust the user
+    await stream.write(${exampleRecord})
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+`}</CodePaper>
+      <Para>Run it from the command-line:</Para>
+      <CodePaper language="bash" paragraph>
+        uvicorn server:app --reload
+      </CodePaper>
+      <Para>Test the API using cURL:</Para>
+      <CodePaper language="bash" paragraph>{`
+curl http://localhost:8000 \\
+  -X POST \\
+  -H "Content-Type: application/json" \\
+  -d 'PAYLOAD'
+`}</CodePaper>
+    </>
+  );
 };
 
 const buildJavaScriptReact = (args: TemplateArgs) => {
@@ -391,11 +539,12 @@ curl ${url} \\
 `}
       </CodePaper>
       <Para>
-        A succesful write returns HTTP status code 200. You should see the records appear in the stream shortly after.
+        Replace the last line with the JSON-encoded record(s) you're writing. A succesful write returns HTTP status code
+        200. You should see the records appear in the stream shortly after.
       </Para>
       <Heading>Encoding records as JSON</Heading>
       <Para>
-        Beneath's schemas support more data types than JSON. The{" "}
+        Beneath's schemas support more data types than JSON does. The{" "}
         <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/#representing-data-types-as-json">
           Representing data types as JSON
         </Link>{" "}
