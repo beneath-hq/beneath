@@ -87,6 +87,8 @@ class Connection:
 
     @classmethod
     def _check_pong_status(cls, pong: gateway_pb2.PingResponse):
+        if config.DEV:
+            return
         if pong.version_status == "warning":
             warnings.warn(
                 f"This version ({__version__}) of the Beneath python library will soon be "

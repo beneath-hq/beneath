@@ -92,7 +92,8 @@ class Consumer:
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True).
+        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True
+        or the instance is finalized).
         Calls the callback for every record.
 
         Args:
@@ -126,7 +127,8 @@ class Consumer:
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True).
+        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True
+        or the instance is finalized).
         Yields every record (or batch if batches=True).
 
         Args:
@@ -159,14 +161,20 @@ class Consumer:
                         yield record
         if replay_only:
             return
-        self._client.logger.info(
-            "Subscribed to changes for stream '%s' (version %i)",
-            self._stream_qualifier,
-            self.instance.version,
-        )
-        if stop_when_idle:
+
+        if stop_when_idle or self.instance.is_final:
+            self._client.logger.info(
+                "Consuming changes for stream '%s' (version %i)",
+                self._stream_qualifier,
+                self.instance.version,
+            )
             it = self._run_delta()
         else:
+            self._client.logger.info(
+                "Subscribed to changes for stream '%s' (version %i)",
+                self._stream_qualifier,
+                self.instance.version,
+            )
             it = self._run_subscribe()
         async for batch in it:
             if batches:
@@ -174,6 +182,13 @@ class Consumer:
             else:
                 for record in batch:
                     yield record
+        if self.instance.is_final:
+            self._client.logger.info(
+                "Stopped consuming changes for stream '%s' (version %i) because it has been"
+                " finalized",
+                self._stream_qualifier,
+                self.instance.version,
+            )
 
     # CURSORS / CHECKPOINTS
 

@@ -64,6 +64,8 @@ async def consume(
             The maximum number of callbacks to call concurrently. Defaults to 1.
     """
     client = _get_client()
+    if subscription_path is not None:
+        await client.start()
     consumer = await client.consumer(
         stream_path=stream_path,
         version=version,
@@ -78,6 +80,8 @@ async def consume(
         changes_only=changes_only,
         stop_when_idle=stop_when_idle,
     )
+    if subscription_path is not None:
+        await client.start()
 
 
 async def query_index(
@@ -108,7 +112,7 @@ async def query_index(
             If true, will return the result as a Pandas dataframe. Defaults to true.
         max_bytes (int)
             Sets the maximum number of bytes to read before returning with a warning.
-            Defaults to 10 MB (Avro-encoded).
+            Defaults to 25 MB (Avro-encoded).
         max_records (int):
             Sets the maximum number of records to read before returning with a warning.
             Defaults to unlimited (see ``max_bytes``).
@@ -153,7 +157,7 @@ async def query_warehouse(
     If analyze=True, the analyzed job is returned instead of the result.
 
     Args:
-        query (str):
+        sql (str):
             The analytical SQL query to run. To learn about the query language,
             see https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/.
         analyze (bool):
@@ -167,7 +171,7 @@ async def query_warehouse(
             If true, will return the result as a Pandas dataframe. Defaults to true.
         max_bytes (int)
             Sets the maximum number of bytes to read before returning with a warning.
-            Defaults to 10 MB (Avro-encoded).
+            Defaults to 25 MB (Avro-encoded).
         max_records (int):
             Sets the maximum number of records to read before returning with a warning.
             Defaults to unlimited (see ``max_bytes``).
