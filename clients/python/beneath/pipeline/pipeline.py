@@ -100,6 +100,7 @@ class WriteStream(Transform):
         pipeline: Pipeline,
         stream_path: str,
         schema: str = None,
+        schema_kind: str = "GraphQL",
         description: str = None,
         retention: timedelta = None,
     ):
@@ -107,6 +108,7 @@ class WriteStream(Transform):
         self.qualifier = self.pipeline._add_output_stream(
             stream_path,
             schema=schema,
+            schema_kind=schema_kind,
             description=description,
             retention=retention,
         )
@@ -283,6 +285,7 @@ class Pipeline(BasePipeline):
         schema: str = None,
         description: str = None,
         retention: timedelta = None,
+        schema_kind: str = "GraphQL",
     ):
         """
         Pipeline step that writes incoming records from the previous step to a stream.
@@ -303,6 +306,8 @@ class Pipeline(BasePipeline):
             retention (timedelta):
                 The amount of time to retain written data in the stream. By default, records
                 are saved forever.
+            schema_kind (str):
+                The parser to use for ``schema``. Currently must be "GraphQL" (default).
         """
         transform = WriteStream(
             self,
@@ -310,6 +315,7 @@ class Pipeline(BasePipeline):
             schema,
             description=description,
             retention=retention,
+            schema_kind=schema_kind,
         )
         self._dag[prev_transform].append(transform)
 
