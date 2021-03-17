@@ -34,7 +34,7 @@ export const MetaChip: FC = (props) => (
 export interface StreamUsageChipProps {
   stream: Stream;
   instance?: Instance;
-  notClickable?: Boolean;
+  notClickable?: boolean;
 }
 
 export const StreamUsageChip: FC<StreamUsageChipProps> = ({ stream, instance, notClickable }) => {

@@ -35,6 +35,7 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
       project: stream.project.name,
       stream: stream.name,
       schema: stream.schema,
+      schemaKind: stream.schemaKind,
       avroSchema: stream.avroSchema,
     });
   }, []);

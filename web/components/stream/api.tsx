@@ -7,6 +7,7 @@ import { GATEWAY_URL } from "lib/connection";
 import { toURLName } from "lib/names";
 import { FC } from "react";
 import useMe from "hooks/useMe";
+import { StreamSchemaKind } from "apollo/types/globalTypes";
 
 const useStyles = makeStyles((theme: Theme) => ({
   heading: {
@@ -42,6 +43,7 @@ export interface TemplateArgs {
   project: string;
   stream: string;
   schema: string;
+  schemaKind: StreamSchemaKind;
   avroSchema: string;
 }
 
@@ -63,66 +65,7 @@ export const buildTemplate = (args: TemplateArgs) => {
         },
         {
           label: "Pipelines",
-          content: (
-            <>
-              <Typography paragraph>
-                Beneath Pipelines make it easy to do stream processing on any Beneath data stream.
-              </Typography>
-              <Typography paragraph>
-                First, create a new Python file for your pipeline logic. Choose one from the "Consume," "Derive," or
-                "Advanced" options below.
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                Consume: apply a user-defined function
-              </Typography>
-              <CodePaper language="python" paragraph filename={"your_pipeline.py"}>
-                {`import beneath
-
-async def consume_fn(record):
-  # YOUR LOGIC HERE
-
-beneath.easy_consume_stream(
-  input_stream_path="${args.organization}/${args.project}/${args.stream}",
-  consume_fn=consume_fn,
-)`}
-              </CodePaper>
-              <Typography variant="subtitle1" gutterBottom>
-                Derive: apply a user-defined function and write results to a new stream
-              </Typography>
-              <CodePaper language="python" paragraph filename={"your_pipeline.py"}>
-                {`import beneath
-
-OUTPUT_SCHEMA="""
-YOUR OUTPUT SCHEMA HERE
-"""
-
-async def apply_fn(record):
-  # YOUR LOGIC HERE
-  yield new_record
-
-beneath.easy_derive_stream(
-  input_stream_path="${args.organization}/${args.project}/${args.stream}",
-  apply_fn=apply_fn,
-  output_stream_path="USER/PROJECT/YOUR_NEW_STREAM_NAME",
-  output_stream_schema=OUTPUT_SCHEMA
-)`}
-              </CodePaper>
-              <Typography variant="subtitle1" gutterBottom>
-                Advanced: check out the full docs to see what you can do with an advanced pipeline
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Second, <Link href={"/-/create/service"}>create a service</Link>, then stage your pipeline:
-              </Typography>
-              <CodePaper
-                language="bash"
-                paragraph
-              >{`python your_pipeline.py stage USERNAME/PROJECT/SERVICE`}</CodePaper>
-              <Typography variant="body1" paragraph>
-                Lastly, run your pipeline:
-              </Typography>
-              <CodePaper language="bash" paragraph>{`python your_pipeline.py run USERNAME/PROJECT/SERVICE`}</CodePaper>
-            </>
-          ),
+          content: buildPythonPipelines(args),
         },
       ],
     },
@@ -211,13 +154,7 @@ df = await beneath.query_warehouse("SELECT count(*) FROM \`${args.organization}/
 };
 
 const buildPythonWriting = (args: TemplateArgs) => {
-  let exampleRecord = "{\n";
-  const parsedSchema = JSON.parse(args.avroSchema);
-  for (const field of parsedSchema["fields"]) {
-    exampleRecord += `    "${field.name}": ...,\n`;
-  }
-  exampleRecord += "}";
-
+  const exampleRecord = makeExamplePythonRecord(args);
   return (
     <>
       <Heading>Setup</Heading>
@@ -253,7 +190,7 @@ await client.stop()
         it once the writes have completed.
       </Para>
       <Para>
-        WARNING: Using <code>write_full</code> will delete the current version of the stream and all its data.
+        WARNING: Using <code>write_full</code> will delete the stream's current primary version and all its data.
       </Para>
       <CodePaper language="python" paragraph>{`
 import beneath
@@ -301,7 +238,7 @@ async def on_shutdown():
 async def post(payload: dict):
     # TODO: Validate and use payload
     # NOTE: Don't write payload directly unless you trust the user
-    await stream.write(${exampleRecord})
+    await stream.write(${indent(exampleRecord, 4)})
 
 
 if __name__ == "__main__":
@@ -320,6 +257,184 @@ curl http://localhost:8000 \\
 `}</CodePaper>
     </>
   );
+};
+
+const buildPythonPipelines = (args: TemplateArgs) => {
+  const exampleRecord = makeExamplePythonRecord(args);
+  return (
+    <>
+      <Heading>Introduction</Heading>
+      <Para>
+        Pipelines provide an abstraction over the basic Beneath APIs that makes it easier to develop, test, and deploy
+        stream processing logic.
+      </Para>
+      <Para>
+        Beneath pipelines are currently quite basic and do not yet support joins and aggregations. They are still
+        well-suited for generating streams, one-to-N stream derivation, as well as syncing and alerting records.
+      </Para>
+      <Heading>Setup</Heading>
+      <Para>
+        If you haven't already, install the Beneath library and authenticate your environment by{" "}
+        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
+      </Para>
+      <Heading>Deriving a new stream</Heading>
+      <Para>
+        The snippet below shows how to create a pipeline that derives data from this stream into a new stream:
+      </Para>
+      <CodePaper language="python" paragraph filename="pipeline.py">{`
+import beneath
+
+async def derive(record):
+    result = ... # 1. Derive a new record (can also be a list of records)
+    return result
+
+p = beneath.Pipeline(parse_args=True)
+t1 = p.read_stream("${args.organization}/${args.project}/${args.stream}")
+t2 = p.apply(t1, derive)
+p.write_stream(
+    t2,
+    stream_path="derived-results", # 2. Output stream name
+    # 3. Output stream schema
+    schema="""
+        type Result @schema {
+          ...
+        }
+    """,
+)
+
+if __name__ == "__main__":
+    p.main()
+      `}</CodePaper>
+      <Para>To test the pipeline, run:</Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py test
+      </CodePaper>
+      <Para>See the last section on this page for details on how to run and deploy pipelines.</Para>
+      <Heading>Generating records for this stream</Heading>
+      <Para>The snippet below shows how to create a pipeline that generates data and writes it to the stream:</Para>
+      <CodePaper language="python" paragraph filename="pipeline.py">{`
+import asyncio
+import beneath
+from datetime import datetime, timezone
+
+async def generate_fn(p):
+    # The pipeline has a checkpointer, which lets you persist small values.
+    # If you're building a scraper, you often use it to track a datetime.
+    current_time = await p.checkpoints.get("KEY", default=datetime(1970, 1, 1, tzinfo=timezone.utc))
+
+    # Generators often use a loop to fetch or create the generated records
+    while True:
+        # Fetch records based on current_time
+        data = ...
+
+        # Create and yield generated records
+        for row in data:
+          yield ${indent(exampleRecord, 12)}
+
+        # Update current_time and checkpoint it
+        current_time = ...
+        p.checkpoints.set("KEY", current_time)
+
+        # Wait before fetching again or return 
+        await asyncio.sleep(1) # or return to stop the pipeline
+
+p = beneath.Pipeline(parse_args=True)
+t1 = p.generate(generate_fn)
+p.write_stream(
+    t1,
+    stream_path="${args.organization}/${args.project}/${args.stream}",
+    schema="""
+${dynamicIndent(args.schema, 8)}
+    """,${args.schemaKind === "GraphQL" ? "" : '\n    schema_kind="' + args.schemaKind + '",'}
+)
+
+if __name__ == "__main__":
+    p.main()
+
+      `}</CodePaper>
+      <Para>To test the pipeline, run:</Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py test
+      </CodePaper>
+      <Para>See the next section on this page for details on how to run and deploy pipelines.</Para>
+      <Heading>Running and deploying pipelines</Heading>
+      <Para>Running a pipeline requires a couple steps.</Para>
+      <Para>
+        First, you <em>stage</em> the pipeline in a project to create all the resources that the pipeline relies upon,
+        such as output streams, a service and a checkpointer:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py stage USERNAME/PROJECT/NAME
+      </CodePaper>
+      <Para>You're now ready to run the pipeline:</Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py run USERNAME/PROJECT/NAME
+      </CodePaper>
+      <Para>
+        The run command has several interesting configurations, such as output versioning and delta processing (where
+        the pipelines processes all changes since it last ran, then quits). For more details, run:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py run -h
+      </CodePaper>
+      <Para>
+        If you're deploying your pipeline to production, you should use a{" "}
+        <Link href="https://about.beneath.dev/docs/misc/resources/#services">service</Link>. When staging a pipeline, a
+        service is automatically created. To get a secret for it, run:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        beneath service issue-secret USERNAME/PROJECT/NAME --description "My production secret"
+      </CodePaper>
+      <Para>
+        You use the secret by setting the `BENEATH_SECRET` environment variable in your production environment. You can
+        also test it locally from the command-line:
+      </Para>
+      <CodePaper language="bash" paragraph>
+        BENEATH_SECRET=... python pipeline.py run USERNAME/PROJECT/NAME
+      </CodePaper>
+      <Para>
+        Navigate to <code>beneath.dev/USERNAME/PROJECT</code> in your browser to get an overview of all the staged
+        resources, records flowing in your streams, and usage and monitoring for your service!
+      </Para>
+      <Para>If you want to remove or reset a staged pipeline completely, run teardown:</Para>
+      <CodePaper language="bash" paragraph>
+        python pipeline.py teardown USERNAME/PROJECT/NAME
+      </CodePaper>
+    </>
+  );
+};
+
+const indent = (code: string, spaces: number) => {
+  const spacesString = " ".repeat(spaces);
+  return code.replace(/\n/g, "\n" + spacesString);
+};
+
+const dynamicIndent = (code: string, spaces: number) => {
+  // detect least number of prefix spaces
+  let minSpaces = 99;
+  const lines = code.match(/^[ \t]*/gm);
+  if (lines === null || lines.length === 0) {
+    minSpaces = 0;
+  } else {
+    for (const line of lines) {
+      const expanded = line.replace("\t", "    ");
+      if (expanded.length < minSpaces) {
+        minSpaces = expanded.length;
+      }
+    }
+  }
+  const spacesString = " ".repeat(spaces - minSpaces);
+  return spacesString + code.replace(/\n/g, "\n" + spacesString);
+};
+
+const makeExamplePythonRecord = (args: TemplateArgs) => {
+  let result = "{\n";
+  const parsedSchema = JSON.parse(args.avroSchema);
+  for (const field of parsedSchema["fields"]) {
+    result += `    "${field.name}": ...,\n`;
+  }
+  result += "}";
+  return result;
 };
 
 const buildJavaScriptReact = (args: TemplateArgs) => {
