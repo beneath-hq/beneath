@@ -39,16 +39,21 @@ We suggest you run the code in a Jupyter notebook, but you can use any Python en
 ```python
 import beneath
 client = beneath.Client()
+await client.start()
 
 stream = await client.create_stream("USERNAME/PROJECT_NAME/movies", schema="""
     " A stream of movies "
     type Movie @schema {
         title: String! @key
         released_on: Timestamp! @key
-        director: String!
-        description: String
+        director: String
+        budget_usd: Int
+        rating: Float
     }
 """, update_if_exists=True)
+
+# Stop the client at the end of your script
+# await client.stop()
 ```
 
 To run the above example, you need to:
@@ -69,15 +74,13 @@ Then run the following Python code, which writes a single record to the stream:
 
 ```python
 from datetime import datetime
-
-async with stream.primary_instance.writer() as w:
-    await w.write({
-        "title":       "Star Wars: Episode IV",
-        "released_on": datetime(year=1977, month=5, day=25),
-        "director":    "George Lucas",
-        "budget_usd":  11000000,
-        "rating":      8.6,
-    })
+await stream.write({
+    "title":       "Star Wars: Episode IV",
+    "released_on": datetime(year=1977, month=5, day=25),
+    "director":    "George Lucas",
+    "budget_usd":  11000000,
+    "rating":      8.6,
+})
 ```
 
 Did you see it tick in? Try tweaking and running the code several times to write multiple records.
@@ -102,22 +105,21 @@ async with aiohttp.ClientSession() as session:
 
 # write a 100 random movies one-by-one
 n = 100
-async with stream.primary_instance.writer() as w:
-    for i in range(n):
-        # get a random movie
-        movie = random.choice(movies)
+for i in range(n):
+    # get a random movie
+    movie = random.choice(movies)
 
-        # transform and write the movie
-        await w.write({
-            "title":       str(movie["Title"]),
-            "released_on": datetime.strptime(movie["Release Date"], "%b %d %Y"),
-            "director":    movie["Director"],
-            "budget_usd":  movie["Production Budget"],
-            "rating":      movie["IMDB Rating"],
-        })
+    # transform and write the movie
+    await stream.write({
+        "title":       str(movie["Title"]),
+        "released_on": datetime.strptime(movie["Release Date"], "%b %d %Y"),
+        "director":    movie["Director"],
+        "budget_usd":  movie["Production Budget"],
+        "rating":      movie["IMDB Rating"],
+    })
 
-        # wait about a second
-        await asyncio.sleep(1.1)
+    # wait a while
+    await asyncio.sleep(5)
 ```
 
 ## Clean up
@@ -136,4 +138,6 @@ beneath project delete USERNAME/PROJECT_NAME
 
 ## More info
 
-More examples of the Python SDK in action can be found in the [examples repo](https://gitlab.com/beneath-hq/beneath/-/tree/master/examples). For full details about available classes and functions, check out the [Python client API reference](https://python.docs.beneath.dev/).
+Under the "API" tab on the stream's page in the web console, you will find several more guides for reading and writing to the stream.
+
+Other examples of the Python SDK in action can be found in the [examples repo](https://gitlab.com/beneath-hq/beneath/-/tree/master/examples). For full details about available classes and functions, check out the [Python client API reference](https://python.docs.beneath.dev/).
