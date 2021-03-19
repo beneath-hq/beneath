@@ -8,21 +8,13 @@ const EXAMPLE_SCHEMAS = [
   {
     name: "Movies",
     language: "GraphQL",
-    schema: `" Description of the stream goes here "
+    schema: `" A stream of movies "
 type Movie @schema {
   title: String! @key
   released_on: Timestamp! @key
-  director: String!
-  platform: Platform!
-  description: String # optional field (no '!' after the type)
-}
-
-enum Platform {
-  Cinema
-  Apple
-  Amazon
-  Disney
-  Netflix
+  director: String
+  budget_usd: Int
+  rating: Float
 }`
   },
   {
@@ -45,6 +37,24 @@ enum Platform {
   is_spoiler: Boolean!
   is_stickied: Boolean!
 }`
+  },
+  {
+    name: "Earthquakes",
+    language: "GraphQL",
+    schema: `type Earthquake @schema {
+  " Time of earthquake "
+  time: Timestamp! @key
+
+  " Richter scale magnitude "
+  mag: Float32
+
+  " Location of earthquake "
+  place: String!
+
+  " Link for more information "
+  detail: String
+}
+`
   }
 ];
 

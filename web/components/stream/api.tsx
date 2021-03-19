@@ -45,6 +45,7 @@ export interface TemplateArgs {
   schema: string;
   schemaKind: StreamSchemaKind;
   avroSchema: string;
+  indexes: { fields: string[]; primary: boolean }[];
 }
 
 export const buildTemplate = (args: TemplateArgs) => {
@@ -84,6 +85,7 @@ export const buildTemplate = (args: TemplateArgs) => {
 };
 
 const buildPythonReading = (args: TemplateArgs) => {
+  const exampleFilter = makeExamplePythonKeyFilter(args);
   return (
     <>
       <Heading>Setup</Heading>
@@ -99,7 +101,7 @@ const buildPythonReading = (args: TemplateArgs) => {
       <CodePaper language="python" paragraph>{`
 import beneath
 
-df = await beneath.query_index("${args.organization}/${args.project}/${args.stream}")
+df = await beneath.load_full("${args.organization}/${args.project}/${args.stream}")
       `}</CodePaper>
       <Para>
         The function accepts several optional arguments. The most common are <code>to_dataframe=False</code> to get
@@ -127,6 +129,21 @@ await beneath.consume("${args.organization}/${args.project}/${args.stream}", cal
         script once the replay has completed, <code>changes_only=True</code> to only subscribe to changes, and{" "}
         <code>subscription_path="ORGANIZATION/PROJECT/subscription:NAME"</code> to persist the consumer's progress.
       </Para>
+      <Heading>Lookup records by key</Heading>
+      <Para>Use the snippet below to lookup stream records by key.</Para>
+      <CodePaper language="python" paragraph>{`
+import beneath
+
+client = beneath.Client()
+stream = await client.find_stream("${args.organization}/${args.project}/${args.stream}")
+
+cursor = await stream.query_index(filter=${exampleFilter})
+record = await record.read_one()
+# records = await record.read_next() # for range or prefix filters that return multiple records
+      `}</CodePaper>
+      You can also pass filters that match multiple records based on a key range or key prefix. See the{" "}
+      <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter docs</Link> for syntax
+      guidelines.
       <Heading>Analyze with SQL</Heading>
       <Para>
         This snippet runs a warehouse (OLAP) query on the stream's records and returns the result, which is useful for
@@ -425,6 +442,32 @@ const dynamicIndent = (code: string, spaces: number) => {
   }
   const spacesString = " ".repeat(spaces - minSpaces);
   return spacesString + code.replace(/\n/g, "\n" + spacesString);
+};
+
+const makeExamplePythonKeyFilter = (args: TemplateArgs) => {
+  let primaryIndex = null;
+  for (const index of args.indexes) {
+    if (index.primary) {
+      primaryIndex = index;
+    }
+  }
+
+  if (primaryIndex === null) {
+    // doesn't happen
+    return "";
+  }
+
+  let result = "";
+  for (const field of primaryIndex.fields) {
+    if (result.length === 0) {
+      result = "{";
+    } else {
+      result += ", ";
+    }
+    result += `"${field}": ...`;
+  }
+  result += "}";
+  return result;
 };
 
 const makeExamplePythonRecord = (args: TemplateArgs) => {

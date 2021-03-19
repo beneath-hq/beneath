@@ -248,7 +248,6 @@ export class Column {
     if (avro.Type.isType(this.type, "logical:decimal")) {
       return (val: any) => {
         try {
-          // @ts-ignore
           return BigInt(val).toLocaleString("en-US");
         } catch (e) {
           return BigInt(val).toLocaleString();
