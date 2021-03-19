@@ -11,6 +11,7 @@ from typing import Iterable, Mapping, Union
 import uuid
 
 from beneath import config
+from beneath.cursor import Cursor
 from beneath.instance import StreamInstance
 from beneath.schema import Schema
 from beneath.utils import StreamQualifier
@@ -41,6 +42,15 @@ class Stream:
     This is probably the object you will use to write/query the stream.
     """
 
+    use_log: bool
+    """ Whether log queries are supported for this stream. """
+
+    use_index: bool
+    """ Whether index queries are supported for this stream. """
+
+    use_warehouse: bool
+    """ Whether warehouse queries are supported for this stream. """
+
     _client: Client
     _qualifier: StreamQualifier
 
@@ -70,6 +80,9 @@ class Stream:
                     stream=stream,
                     admin_data=admin_data["primaryStreamInstance"],
                 )
+        stream.use_log = admin_data["useLog"]
+        stream.use_index = admin_data["useIndex"]
+        stream.use_warehouse = admin_data["useWarehouse"]
         return stream
 
     @classmethod
@@ -85,6 +98,9 @@ class Stream:
         stream.stream_id = None
         stream.schema = Schema(avro_schema)
         stream.primary_instance = await stream.create_instance(version=0, make_primary=True)
+        stream.use_log = True
+        stream.use_index = True
+        stream.use_warehouse = True
         return stream
 
     async def _load_admin_data(self):
@@ -187,6 +203,20 @@ class Stream:
         if not self.stream_id:
             raise Exception("cannot delete dry stream")
         await self._client.admin.streams.delete(self.stream_id)
+
+    # CURSORS
+
+    def restore_cursor(self, replay_cursor: bytes, changes_cursor: bytes):
+        """
+        Restores a cursor previously obtained by querying one of the stream's instances.
+        You must provide the cursor bytes, which can be found as properties of the Cursor object.
+        """
+        return Cursor(
+            connection=self._client.connection,
+            schema=self.schema,
+            replay_cursor=replay_cursor,
+            changes_cursor=changes_cursor,
+        )
 
     # WRITING RECORDS
 

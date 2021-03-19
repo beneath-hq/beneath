@@ -73,10 +73,9 @@ class Checkpointer:
         cursor = await self.instance.query_index(filter=filt)
 
         value = default
-        batch = await cursor.read_next(limit=1)
-        if batch is not None:
-            for record in batch:
-                value = msgpack.unpackb(record["value"], timestamp=3)
+        record = await cursor.read_one()
+        if record is not None:
+            value = msgpack.unpackb(record["value"], timestamp=3)
 
         # checking self._cache again because of awaits (and we'd rather serve a recent local set)
         if key not in self._cache:

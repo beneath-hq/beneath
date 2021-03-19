@@ -200,9 +200,7 @@ class Consumer:
         if not reset and self._checkpointer:
             state = await self._checkpointer.get(self._subscription_cursor_key)
             if state:
-                self.cursor = Cursor(
-                    connection=self._client.connection,
-                    schema=self.instance.stream.schema,
+                self.cursor = self.instance.stream.restore_cursor(
                     replay_cursor=state.get("replay"),
                     changes_cursor=state.get("changes"),
                 )

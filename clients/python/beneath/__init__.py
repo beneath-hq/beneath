@@ -12,7 +12,7 @@ from beneath.consumer import Consumer
 from beneath.cursor import Cursor
 from beneath.easy import (
     consume,
-    query_index,
+    load_full,
     query_warehouse,
     write_full,
     generate_stream_pipeline,
@@ -43,7 +43,7 @@ __all__ = [
     "Stream",
     "StreamInstance",
     "consume",
-    "query_index",
+    "load_full",
     "query_warehouse",
     "write_full",
     "generate_stream_pipeline",

@@ -43,6 +43,14 @@ class Cursor:
             "@meta.timestamp"
         )
 
+    async def read_one(self):
+        """ Returns the first record or None if the cursor is empty """
+        batch = await self.read_next(limit=1)
+        if batch is not None:
+            for record in batch:
+                return record
+        return None
+
     async def read_next(
         self, limit: int = config.DEFAULT_READ_BATCH_SIZE, to_dataframe=False
     ) -> Iterable[Mapping]:

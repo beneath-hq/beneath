@@ -84,7 +84,7 @@ async def consume(
         await client.start()
 
 
-async def query_index(
+async def load_full(
     stream_path: str,
     version: int = None,
     filter: str = None,
@@ -132,7 +132,14 @@ async def query_index(
             raise Exception(f"stream {stream_path} doesn't have a primary instance")
     else:
         instance = await stream.find_instance(version)
-    cursor = await instance.query_index(filter=filter)
+    if stream.use_index:
+        cursor = await instance.query_index(filter=filter)
+    elif filter is not None:
+        raise ValueError(
+            f"cannot use filter for {stream_path} because it doesn't have indexing enabled"
+        )
+    else:
+        cursor = await instance.query_log()
     return await cursor.read_all(
         to_dataframe=to_dataframe,
         max_bytes=max_bytes,
