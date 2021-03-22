@@ -7,12 +7,27 @@
 // GraphQL query operation: ServiceByOrganizationProjectAndName
 // ====================================================
 
+export interface ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName_project_permissions {
+  __typename: "PermissionsUsersProjects";
+  view: boolean;
+  create: boolean;
+  admin: boolean;
+}
+
+export interface ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName_project {
+  __typename: "Project";
+  projectID: string;
+  public: boolean;
+  permissions: ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName_project_permissions;
+}
+
 export interface ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName {
   __typename: "Service";
   serviceID: string;
   name: string;
   description: string | null;
   sourceURL: string | null;
+  project: ServiceByOrganizationProjectAndName_serviceByOrganizationProjectAndName_project;
   quotaStartTime: ControlTime;
   quotaEndTime: ControlTime;
   readQuota: number | null;

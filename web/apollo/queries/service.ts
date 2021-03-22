@@ -3,14 +3,23 @@ import gql from "graphql-tag";
 export const QUERY_SERVICE = gql`
   query ServiceByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $serviceName: String!) {
     serviceByOrganizationProjectAndName(
-      organizationName: $organizationName,
-      projectName: $projectName,
-      serviceName: $serviceName,
+      organizationName: $organizationName
+      projectName: $projectName
+      serviceName: $serviceName
     ) {
       serviceID
       name
       description
       sourceURL
+      project {
+        projectID
+        public
+        permissions {
+          view
+          create
+          admin
+        }
+      }
       quotaStartTime
       quotaEndTime
       readQuota
@@ -24,7 +33,7 @@ export const QUERY_STREAM_PERMISSIONS_FOR_SERVICE = gql`
   query StreamPermissionsForService($serviceID: UUID!) {
     streamPermissionsForService(serviceID: $serviceID) {
       serviceID
-    	streamID
+      streamID
       read
       write
       stream {
