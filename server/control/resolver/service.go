@@ -43,7 +43,7 @@ func (r *queryResolver) ServiceByID(ctx context.Context, serviceID uuid.UUID) (*
 		return nil, gqlerror.Errorf("You are not allowed to view project resources")
 	}
 
-	return service, nil
+	return serviceWithProjectPermissions(service, perms), nil
 }
 
 func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, serviceName string) (*models.Service, error) {
@@ -54,14 +54,18 @@ func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context,
 
 	secret := middleware.GetSecret(ctx)
 	selfFind := secret.IsService() && secret.GetOwnerID() == service.ServiceID
-	if !selfFind {
-		perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
-		if !perms.View {
-			return nil, gqlerror.Errorf("You are not allowed to view organization resources")
-		}
+	var perms models.ProjectPermissions
+	if selfFind {
+		perms = models.ProjectPermissions{View: true}
+	} else {
+		perms = r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
 	}
 
-	return service, nil
+	if !perms.View {
+		return nil, gqlerror.Errorf("You are not allowed to view project resources")
+	}
+
+	return serviceWithProjectPermissions(service, perms), nil
 }
 func (r *queryResolver) StreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) ([]*models.PermissionsServicesStreams, error) {
 	service := r.Services.FindService(ctx, serviceID)
@@ -112,17 +116,12 @@ func (r *mutationResolver) CreateService(ctx context.Context, input gql.CreateSe
 		return nil, gqlerror.Errorf("Error creating service: %s", err.Error())
 	}
 
-	return service, nil
+	return serviceWithProjectPermissions(service, perms), nil
 }
 
 func (r *mutationResolver) updateExistingFromCreateService(ctx context.Context, service *models.Service, input gql.CreateServiceInput) (*models.Service, error) {
-	project := r.Projects.FindProjectByOrganizationAndName(ctx, input.OrganizationName, input.ProjectName)
-	if project == nil {
-		return nil, gqlerror.Errorf("Project %s/%s not found", input.OrganizationName, input.ProjectName)
-	}
-
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, project.ProjectID, project.Public)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
 	if !perms.Create {
 		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", input.OrganizationName, input.ProjectName)
 	}
@@ -132,32 +131,27 @@ func (r *mutationResolver) updateExistingFromCreateService(ctx context.Context, 
 		return nil, gqlerror.Errorf("Error updating service: %s", err.Error())
 	}
 
-	return service, nil
+	return serviceWithProjectPermissions(service, perms), nil
 }
 
 func (r *mutationResolver) UpdateService(ctx context.Context, input gql.UpdateServiceInput) (*models.Service, error) {
-	project := r.Projects.FindProjectByOrganizationAndName(ctx, input.OrganizationName, input.ProjectName)
-	if project == nil {
-		return nil, gqlerror.Errorf("Project %s/%s not found", input.OrganizationName, input.ProjectName)
-	}
-
-	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, project.ProjectID, project.Public)
-	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", input.OrganizationName, input.ProjectName)
-	}
-
 	service := r.Services.FindServiceByOrganizationProjectAndName(ctx, input.OrganizationName, input.ProjectName, input.ServiceName)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s/%s/%s not found", input.OrganizationName, input.ProjectName, input.ServiceName)
 	}
 
+	secret := middleware.GetSecret(ctx)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, service.Project.Public)
+	if !perms.Create {
+		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", input.OrganizationName, input.ProjectName)
+	}
+
 	err := r.Services.Update(ctx, service, input.Description, input.SourceURL, IntToInt64(input.ReadQuota), IntToInt64(input.WriteQuota), IntToInt64(input.ScanQuota))
 	if err != nil {
 		return nil, gqlerror.Errorf("Error updating service: %s", err.Error())
 	}
 
-	return service, nil
+	return serviceWithProjectPermissions(service, perms), nil
 }
 
 func (r *mutationResolver) UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*models.PermissionsServicesStreams, error) {
@@ -209,7 +203,7 @@ func (r *mutationResolver) DeleteService(ctx context.Context, serviceID uuid.UUI
 	secret := middleware.GetSecret(ctx)
 	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, service.ProjectID, false)
 	if !perms.Create {
-		return false, gqlerror.Errorf("Not allowed to edit organization resources")
+		return false, gqlerror.Errorf("Not allowed to edit project resources")
 	}
 
 	err := r.Services.Delete(ctx, service)
@@ -218,4 +212,15 @@ func (r *mutationResolver) DeleteService(ctx context.Context, serviceID uuid.UUI
 	}
 
 	return true, nil
+}
+
+func serviceWithProjectPermissions(s *models.Service, perms models.ProjectPermissions) *models.Service {
+	if s.Project != nil {
+		s.Project.Permissions = &models.PermissionsUsersProjects{
+			View:   perms.View,
+			Create: perms.Create,
+			Admin:  perms.Admin,
+		}
+	}
+	return s
 }
