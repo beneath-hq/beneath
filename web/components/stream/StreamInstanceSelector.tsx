@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
     padding: "0px 8px",
   },
   middleButton: {
-    padding: "4px 0px",
+    padding: "0 9px",
     fontSize: "14px",
     width: "110px",
   },
