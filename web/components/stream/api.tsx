@@ -138,8 +138,8 @@ client = beneath.Client()
 stream = await client.find_stream("${args.organization}/${args.project}/${args.stream}")
 
 cursor = await stream.query_index(filter=${exampleFilter})
-record = await record.read_one()
-# records = await record.read_next() # for range or prefix filters that return multiple records
+record = await cursor.read_one()
+# records = await cursor.read_next() # for range or prefix filters that return multiple records
       `}</CodePaper>
       You can also pass filters that match multiple records based on a key range or key prefix. See the{" "}
       <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter docs</Link> for syntax

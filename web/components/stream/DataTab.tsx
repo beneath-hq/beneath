@@ -27,10 +27,11 @@ interface DataTabProps {
 
 const useStyles = makeStyles((theme: Theme) => ({
   topRowHeight: {
-    height: 28,
+    height: "28px",
+    padding: "0 9px",
   },
   toggleButton: {
-    width: 100,
+    width: "100px",
   },
   toggleButtonLabel: {
     display: "block",

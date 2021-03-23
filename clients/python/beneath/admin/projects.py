@@ -174,11 +174,13 @@ class Projects(_ResourceBase):
         self._before_mutation()
         result = await self.conn.query_control(
             variables={
-                "projectID": project_id,
+                "input": {
+                    "projectID": project_id,
+                }
             },
             query="""
-                mutation DeleteProject($projectID: UUID!) {
-                    deleteProject(projectID: $projectID)
+                mutation DeleteProject($input: DeleteProjectInput!) {
+                    deleteProject(input: $input)
                 }
             """,
         )
