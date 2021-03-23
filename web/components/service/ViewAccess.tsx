@@ -13,7 +13,7 @@ const ViewAccess: FC<Props> = ({ service }) => {
   return (
     <>
       <Container maxWidth="md">
-        <ListPermissions serviceID={service.serviceID} />
+        <ListPermissions serviceID={service.serviceID} editable={service.project.permissions.create} />
         <Box m={4} />
         {service.project.permissions.create && <ListSecrets serviceID={service.serviceID} />}
       </Container>

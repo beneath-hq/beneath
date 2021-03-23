@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import React, { FC, useState } from "react";
 
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableLinkCell, TableLinkRow, TableRow } from "components/Tables";
+import { Table, TableBody, TableCell, TableHead, TableLinkCell, TableRow } from "components/Tables";
 import { toURLName } from "lib/names";
 import {
   Button,
@@ -29,9 +29,10 @@ import AddPermission from "./AddPermission";
 
 export interface Props {
   serviceID: string;
+  editable: boolean;
 }
 
-const ListPermissions: FC<Props> = ({ serviceID }) => {
+const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
   const [showAddPermissionDialog, setShowAddPermissionDialog] = useState(false);
   const [showRevokePermissionDialog, setShowRevokePermissionDialog] = useState<string | undefined>(undefined);
   const { loading, error, data } = useQuery<StreamPermissionsForService, StreamPermissionsForServiceVariables>(
@@ -50,8 +51,10 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
   if (!data?.streamPermissionsForService.length) {
     cta = {
       message: `This service currently has no permissions for any resources`,
-      buttons: [{ label: "Add stream permission", onClick: () => setShowAddPermissionDialog(true) }],
     };
+    if (editable) {
+      cta.buttons = [{ label: "Add stream permission", onClick: () => setShowAddPermissionDialog(true) }];
+    }
   }
 
   const addPermissionDialog = (
@@ -137,7 +140,7 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
               <TableCell>Path</TableCell>
               <TableCell align="center">Read</TableCell>
               <TableCell align="center">Write</TableCell>
-              <TableCell>Delete</TableCell>
+              {editable && <TableCell>Delete</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -163,11 +166,13 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
                     </TableLinkCell>
                     <TableCell align="center">{perms.read && "✓"}</TableCell>
                     <TableCell align="center">{perms.write && "✓"}</TableCell>
-                    <TableCell padding="checkbox" align="right">
-                      <IconButton disabled={mutLoading} onClick={() => setShowRevokePermissionDialog(perms.streamID)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
+                    {editable && (
+                      <TableCell padding="checkbox" align="right">
+                        <IconButton disabled={mutLoading} onClick={() => setShowRevokePermissionDialog(perms.streamID)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    )}
                   </TableRow>
                 )}
               </React.Fragment>
@@ -177,7 +182,7 @@ const ListPermissions: FC<Props> = ({ serviceID }) => {
         {addPermissionDialog}
         {revokePermissionDialog}
       </ContentContainer>
-      {!cta && (
+      {editable && !cta && (
         <Button variant="contained" onClick={() => setShowAddPermissionDialog(true)}>
           Add permission
         </Button>
