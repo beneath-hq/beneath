@@ -28,7 +28,7 @@ func New(bus *bus.Bus, db db.DB, mq mq.MessageQueue) (*Service, error) {
 		MQ:  mq,
 	}
 
-	err := mq.RegisterTopic(controlEventsTopic)
+	err := mq.RegisterTopic(controlEventsTopic, false)
 	if err != nil {
 		return nil, err
 	}
@@ -81,5 +81,5 @@ func (s *Service) PublishControlEvent(ctx context.Context, name string, data map
 	if len(json) > s.MQ.MaxMessageSize() {
 		return fmt.Errorf("control event message %v has invalid size", json)
 	}
-	return s.MQ.Publish(ctx, controlEventsTopic, json)
+	return s.MQ.Publish(ctx, controlEventsTopic, json, nil)
 }

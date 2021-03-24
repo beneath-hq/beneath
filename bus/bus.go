@@ -10,6 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
 	"gitlab.com/beneath-hq/beneath/infra/mq"
@@ -30,14 +31,17 @@ type Bus struct {
 	Logger *zap.SugaredLogger
 	MQ     mq.MessageQueue
 
-	msgTypes       map[string]reflect.Type
-	syncListeners  map[string][]HandlerFunc
-	asyncListeners map[string][]HandlerFunc
+	msgTypes              map[string]reflect.Type
+	syncListeners         map[string][]HandlerFunc
+	asyncListeners        map[string][]HandlerFunc
+	asyncOrderedListeners map[string][]HandlerFunc
 }
 
 const (
-	asyncTopic        = "bus"
-	asyncSubscription = "bus-worker"
+	asyncTopic               = "bus"
+	asyncSubscription        = "bus-worker"
+	asyncOrderedTopic        = "bus-ordered"
+	asyncOrderedSubscription = "bus-ordered-worker"
 )
 
 // asyncMsg wraps a pb.BusMsg
@@ -50,17 +54,23 @@ type asyncMsg struct {
 
 // NewBus creates a new Bus
 func NewBus(logger *zap.Logger, mq mq.MessageQueue) (*Bus, error) {
-	err := mq.RegisterTopic(asyncTopic)
+	err := mq.RegisterTopic(asyncTopic, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = mq.RegisterTopic(asyncOrderedTopic, true)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Bus{
-		Logger:         logger.Named("bus").Sugar(),
-		MQ:             mq,
-		msgTypes:       make(map[string]reflect.Type),
-		syncListeners:  make(map[string][]HandlerFunc),
-		asyncListeners: make(map[string][]HandlerFunc),
+		Logger:                logger.Named("bus").Sugar(),
+		MQ:                    mq,
+		msgTypes:              make(map[string]reflect.Type),
+		syncListeners:         make(map[string][]HandlerFunc),
+		asyncListeners:        make(map[string][]HandlerFunc),
+		asyncOrderedListeners: make(map[string][]HandlerFunc),
 	}, nil
 }
 
@@ -78,6 +88,13 @@ func (b *Bus) AddSyncListener(handler HandlerFunc) {
 // worker.
 func (b *Bus) AddAsyncListener(handler HandlerFunc) {
 	b.addListener(b.asyncListeners, handler)
+}
+
+// AddAsyncOrderedListener registers an async msg handler, which
+// handles published messages (passed through MQ) in a background
+// worker. This one processes messages sequentially.
+func (b *Bus) AddAsyncOrderedListener(handler HandlerFunc) {
+	b.addListener(b.asyncOrderedListeners, handler)
 }
 
 func (b *Bus) addListener(listeners map[string][]HandlerFunc, handler HandlerFunc) {
@@ -146,6 +163,11 @@ func (b *Bus) Publish(ctx context.Context, msg Msg) error {
 		return err
 	}
 
+	err = b.publishAsyncOrdered(ctx, msgName, msg)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -199,12 +221,39 @@ func (b *Bus) publishAsync(ctx context.Context, msgName string, msg Msg) error {
 		return err
 	}
 
-	err = b.MQ.Publish(ctx, asyncTopic, data)
+	err = b.MQ.Publish(ctx, asyncTopic, data, nil)
 	if err != nil {
 		return err
 	}
 
 	b.Logger.Infow("async publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
+	return nil
+}
+
+func (b *Bus) publishAsyncOrdered(ctx context.Context, msgName string, msg Msg) error {
+	listeners := b.asyncOrderedListeners[msgName]
+	if len(listeners) == 0 {
+		return nil
+	}
+
+	amsg := &asyncMsg{
+		ID:        uuid.NewV4(),
+		Name:      msgName,
+		Timestamp: time.Now(),
+		Payload:   msg,
+	}
+
+	data, err := b.marshalAsyncMsg(ctx, amsg)
+	if err != nil {
+		return err
+	}
+
+	err = b.MQ.Publish(ctx, asyncOrderedTopic, data, &msgName)
+	if err != nil {
+		return err
+	}
+
+	b.Logger.Infow("async ordered publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
 	return nil
 }
 
@@ -257,7 +306,21 @@ func (b *Bus) unmarshalAsyncMsg(ctx context.Context, data []byte) (*asyncMsg, er
 // It's suitable for running in a worker process, but care should be taken to
 // make sure all the correct listeners have been instantiated in the process.
 func (b *Bus) Run(ctx context.Context) error {
-	return b.MQ.Subscribe(ctx, asyncTopic, asyncSubscription, true, func(ctx context.Context, data []byte) error {
+	group, ctx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		return b.runAsyncSubscriber(ctx)
+	})
+
+	group.Go(func() error {
+		return b.runAsyncOrderedSubscriber(ctx)
+	})
+
+	return group.Wait()
+}
+
+func (b *Bus) runAsyncSubscriber(ctx context.Context) error {
+	return b.MQ.Subscribe(ctx, asyncTopic, asyncSubscription, true, false, func(ctx context.Context, data []byte) error {
 		startTime := time.Now()
 
 		amsg, err := b.unmarshalAsyncMsg(ctx, data)
@@ -279,6 +342,34 @@ func (b *Bus) Run(ctx context.Context) error {
 		}
 
 		b.Logger.Infow("async processed", "id", amsg.ID.String(), "name", amsg.Name, "time", amsg.Timestamp, "elapsed", time.Since(startTime))
+
+		return nil
+	})
+}
+
+func (b *Bus) runAsyncOrderedSubscriber(ctx context.Context) error {
+	return b.MQ.Subscribe(ctx, asyncOrderedTopic, asyncOrderedSubscription, true, true, func(ctx context.Context, data []byte) error {
+		startTime := time.Now()
+
+		amsg, err := b.unmarshalAsyncMsg(ctx, data)
+		if err != nil {
+			b.Logger.Errorf("async ordered worker got unmarshal err, nacking...: %s", err)
+			return err
+		}
+
+		listeners := b.asyncOrderedListeners[amsg.Name]
+		if len(listeners) == 0 {
+			b.Logger.Errorf("async ordered worker got msg with no listeners, the correct services are likely not created in this process, acking...: %x", data)
+			return nil
+		}
+
+		err = b.callListeners(ctx, listeners, amsg.Payload)
+		if err != nil {
+			b.Logger.Errorf("async ordered worker got err when calling listeners, nacking...: %s", err)
+			return err
+		}
+
+		b.Logger.Infow("async ordered processed", "id", amsg.ID.String(), "name", amsg.Name, "time", amsg.Timestamp, "elapsed", time.Since(startTime))
 
 		return nil
 	})

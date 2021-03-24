@@ -26,12 +26,12 @@ type Service struct {
 
 // New returns a new data service instance
 func New(logger *zap.Logger, mq mq.MessageQueue, engine *engine.Engine, usage *usage.Service, permissions *permissions.Service, streams *stream.Service) (*Service, error) {
-	err := mq.RegisterTopic(writeRequestsTopic)
+	err := mq.RegisterTopic(writeRequestsTopic, false)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mq.RegisterTopic(writeReportsTopic)
+	err = mq.RegisterTopic(writeReportsTopic, false)
 	if err != nil {
 		return nil, err
 	}

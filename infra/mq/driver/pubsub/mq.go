@@ -18,7 +18,7 @@ func (p PubSub) MaxMessageSize() int {
 }
 
 // RegisterTopic implements MessageQueue
-func (p PubSub) RegisterTopic(name string) error {
+func (p PubSub) RegisterTopic(name string, ordered bool) error {
 	qualified := fmt.Sprintf("%s-%s", p.Opts.TopicPrefix, name)
 	topic, err := p.Client.CreateTopic(context.Background(), qualified)
 	if err != nil {
@@ -30,15 +30,23 @@ func (p PubSub) RegisterTopic(name string) error {
 		topic = p.Client.Topic(qualified)
 	}
 	p.Topics[name] = topic
+	if ordered {
+		topic.EnableMessageOrdering = true
+	}
 	return nil
 }
 
 // Publish implements MessageQueue
-func (p PubSub) Publish(ctx context.Context, topic string, msg []byte) error {
-	// push
-	result := p.Topics[topic].Publish(ctx, &pubsub.Message{
+func (p PubSub) Publish(ctx context.Context, topic string, msg []byte, orderingKey *string) error {
+	pubsubMessage := &pubsub.Message{
 		Data: msg,
-	})
+	}
+	if orderingKey != nil {
+		pubsubMessage.OrderingKey = *orderingKey
+	}
+
+	// push
+	result := p.Topics[topic].Publish(ctx, pubsubMessage)
 
 	// blocks until ack'ed by pubsub
 	_, err := result.Get(ctx)
@@ -46,14 +54,14 @@ func (p PubSub) Publish(ctx context.Context, topic string, msg []byte) error {
 }
 
 // Subscribe implements MessageQueue
-func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persistent bool, fn func(ctx context.Context, msg []byte) error) error {
+func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persistent bool, ordered bool, fn func(ctx context.Context, msg []byte) error) error {
 	// create name
 	fullName := fmt.Sprintf("%s-%s", p.Opts.SubscriptionPrefix, name)
 
 	// get subscription
 	var sub *pubsub.Subscription
 	if persistent {
-		sub = p.getPersistentSubscription(ctx, p.Topics[topic], fullName)
+		sub = p.getPersistentSubscription(ctx, p.Topics[topic], fullName, ordered)
 	} else {
 		sub = p.getEphemeralSubscription(ctx, p.Topics[topic], fullName, p.SubscriberID)
 	}
@@ -91,12 +99,13 @@ func (p PubSub) Subscribe(ctx context.Context, topic string, name string, persis
 	return nil
 }
 
-// getPersistantSubscription finds or creates a topic subscription
-func (p PubSub) getPersistentSubscription(ctx context.Context, topic *pubsub.Topic, name string) *pubsub.Subscription {
+// getPersistentSubscription finds or creates a topic subscription
+func (p PubSub) getPersistentSubscription(ctx context.Context, topic *pubsub.Topic, name string, ordered bool) *pubsub.Subscription {
 	// create/get subscriber to topic
 	subscription, err := p.Client.CreateSubscription(context.Background(), name, pubsub.SubscriptionConfig{
-		Topic:       topic,
-		AckDeadline: 20 * time.Second,
+		Topic:                 topic,
+		AckDeadline:           20 * time.Second,
+		EnableMessageOrdering: ordered,
 	})
 
 	if err != nil {
@@ -163,11 +172,12 @@ func (p PubSub) Reset(ctx context.Context) error {
 				return err
 			}
 		}
+		ordered := topic.EnableMessageOrdering
 		err := topic.Delete(ctx)
 		if err != nil {
 			return err
 		}
-		err = p.RegisterTopic(name)
+		err = p.RegisterTopic(name, ordered)
 		if err != nil {
 			return err
 		}

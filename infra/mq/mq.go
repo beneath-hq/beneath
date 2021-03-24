@@ -14,14 +14,16 @@ type MessageQueue interface {
 	MaxMessageSize() int
 
 	// RegisterTopic should register a new topic for message passing
-	RegisterTopic(name string) error
+	// If ordered, subscribers are able to process messages sequentially.
+	RegisterTopic(name string, ordered bool) error
 
 	// Publish should issue a new message to all the topic's subscribers
-	Publish(ctx context.Context, topic string, msg []byte) error
+	Publish(ctx context.Context, topic string, msg []byte, orderingKey *string) error
 
 	// Subscribe should create a subscription for new messages on the topic.
 	// If persistent, messages missed when offline should accumulate and be delivered on reconnect.
-	Subscribe(ctx context.Context, topic string, name string, persistent bool, fn func(ctx context.Context, msg []byte) error) error
+	// If ordered, messages will be processed sequentially, at the cost of higher latency.
+	Subscribe(ctx context.Context, topic string, name string, persistent bool, ordered bool, fn func(ctx context.Context, msg []byte) error) error
 
 	// Reset should clear all data in the service (useful during testing)
 	Reset(ctx context.Context) error
