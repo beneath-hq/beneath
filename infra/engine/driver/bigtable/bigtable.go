@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -252,15 +251,4 @@ func (b BigTable) readFilter(expires bool) bigtable.ReadOption {
 		filter = bigtable.ChainFilters(filter, notExpiredFilter)
 	}
 	return bigtable.RowFilter(filter)
-}
-
-func (b BigTable) dropRowRange(ctx context.Context, table string, rowKeyPrefix string) error {
-	err := b.Admin.DropRowRange(ctx, table, rowKeyPrefix)
-	if err != nil {
-		// Return the error only if necessary
-		if !strings.Contains(err.Error(), "A DropRowRange operation is already ongoing.") {
-			return err
-		}
-	}
-	return nil
 }

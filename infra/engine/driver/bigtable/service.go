@@ -47,7 +47,7 @@ func (b BigTable) RemoveInstance(ctx context.Context, s driver.Stream, i driver.
 		// secondary indexes
 		for _, index := range codec.SecondaryIndexes {
 			indexID := index.GetIndexID()
-			err := b.dropRowRange(ctx, indexesTable, string(indexID[:]))
+			err := b.Admin.DropRowRange(ctx, indexesTable, string(indexID[:]))
 			if err != nil {
 				return err
 			}
@@ -55,7 +55,7 @@ func (b BigTable) RemoveInstance(ctx context.Context, s driver.Stream, i driver.
 
 		// primary index
 		indexID := codec.PrimaryIndex.GetIndexID()
-		err := b.dropRowRange(ctx, indexesTable, string(indexID[:]))
+		err := b.Admin.DropRowRange(ctx, indexesTable, string(indexID[:]))
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func (b BigTable) RemoveInstance(ctx context.Context, s driver.Stream, i driver.
 	// log
 	if s.GetUseLog() {
 		instanceID := i.GetStreamInstanceID()
-		err := b.dropRowRange(ctx, logTable, string(instanceID[:]))
+		err := b.Admin.DropRowRange(ctx, logTable, string(instanceID[:]))
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (b BigTable) Reset(ctx context.Context) error {
 	}
 
 	for _, table := range tables {
-		err := b.dropRowRange(ctx, table, "")
+		err := b.Admin.DropRowRange(ctx, table, "")
 		if err != nil {
 			return err
 		}
