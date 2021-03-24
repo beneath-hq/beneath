@@ -174,7 +174,7 @@ async def instance_create(args):
 async def instance_update(args):
     client = Client()
     result = await client.admin.streams.update_instance(
-        instance_id=args.instance,
+        instance_id=args.instance_id,
         make_final=args.make_final,
         make_primary=args.make_primary,
     )
@@ -183,7 +183,7 @@ async def instance_update(args):
 
 async def instance_delete(args):
     client = Client()
-    result = await client.admin.streams.delete_instance(args.instance)
+    result = await client.admin.streams.delete_instance(args.instance_id)
     pretty_print_graphql_result(result)
 
 
