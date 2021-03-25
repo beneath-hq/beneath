@@ -32,7 +32,7 @@ func New(bus *bus.Bus, db db.DB, redis *redis.Client, engine *engine.Engine) *Se
 	s.Bus.AddSyncListener(s.organizationUpdated)
 	s.Bus.AddSyncListener(s.projectUpdated)
 	s.Bus.AddAsyncListener(s.streamUpdated)
-	s.Bus.AddAsyncListener(s.streamDeleted)
+	s.Bus.AddAsyncOrderedListener(s.streamDeleted)
 	s.Bus.AddSyncListener(s.streamInstanceCreated)
 	s.Bus.AddAsyncListener(s.streamInstanceUpdated)
 	s.Bus.AddAsyncOrderedListener(s.streamInstanceDeleted)
