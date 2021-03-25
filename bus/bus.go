@@ -163,11 +163,6 @@ func (b *Bus) Publish(ctx context.Context, msg Msg) error {
 		return err
 	}
 
-	err = b.publishAsyncOrdered(ctx, msgName, msg)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -205,7 +200,9 @@ func (b *Bus) callListeners(ctx context.Context, listeners []HandlerFunc, msg Ms
 
 func (b *Bus) publishAsync(ctx context.Context, msgName string, msg Msg) error {
 	listeners := b.asyncListeners[msgName]
-	if len(listeners) == 0 {
+	orderedListeners := b.asyncOrderedListeners[msgName]
+
+	if len(listeners) == 0 && len(orderedListeners) == 0 {
 		return nil
 	}
 
@@ -221,40 +218,31 @@ func (b *Bus) publishAsync(ctx context.Context, msgName string, msg Msg) error {
 		return err
 	}
 
-	err = b.MQ.Publish(ctx, asyncTopic, data, nil)
-	if err != nil {
-		return err
+	group, ctx := errgroup.WithContext(ctx)
+
+	if len(listeners) > 0 {
+		group.Go(func() error {
+			err = b.MQ.Publish(ctx, asyncTopic, data, nil)
+			if err != nil {
+				return err
+			}
+			b.Logger.Infow("async publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
+			return nil
+		})
 	}
 
-	b.Logger.Infow("async publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
-	return nil
-}
-
-func (b *Bus) publishAsyncOrdered(ctx context.Context, msgName string, msg Msg) error {
-	listeners := b.asyncOrderedListeners[msgName]
-	if len(listeners) == 0 {
-		return nil
+	if len(orderedListeners) > 0 {
+		group.Go(func() error {
+			err = b.MQ.Publish(ctx, asyncOrderedTopic, data, &msgName)
+			if err != nil {
+				return err
+			}
+			b.Logger.Infow("async ordered publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
+			return nil
+		})
 	}
 
-	amsg := &asyncMsg{
-		ID:        uuid.NewV4(),
-		Name:      msgName,
-		Timestamp: time.Now(),
-		Payload:   msg,
-	}
-
-	data, err := b.marshalAsyncMsg(ctx, amsg)
-	if err != nil {
-		return err
-	}
-
-	err = b.MQ.Publish(ctx, asyncOrderedTopic, data, &msgName)
-	if err != nil {
-		return err
-	}
-
-	b.Logger.Infow("async ordered publish", "id", amsg.ID.String(), "name", msgName, "bytes", len(data))
-	return nil
+	return group.Wait()
 }
 
 func (b *Bus) marshalAsyncMsg(ctx context.Context, amsg *asyncMsg) ([]byte, error) {

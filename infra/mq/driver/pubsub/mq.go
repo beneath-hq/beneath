@@ -29,24 +29,22 @@ func (p PubSub) RegisterTopic(name string, ordered bool) error {
 		// err is AlreadyExists
 		topic = p.Client.Topic(qualified)
 	}
+	topic.EnableMessageOrdering = ordered
 	p.Topics[name] = topic
-	if ordered {
-		topic.EnableMessageOrdering = true
-	}
 	return nil
 }
 
 // Publish implements MessageQueue
 func (p PubSub) Publish(ctx context.Context, topic string, msg []byte, orderingKey *string) error {
-	pubsubMessage := &pubsub.Message{
+	pubsubMsg := &pubsub.Message{
 		Data: msg,
 	}
 	if orderingKey != nil {
-		pubsubMessage.OrderingKey = *orderingKey
+		pubsubMsg.OrderingKey = *orderingKey
 	}
 
 	// push
-	result := p.Topics[topic].Publish(ctx, pubsubMessage)
+	result := p.Topics[topic].Publish(ctx, pubsubMsg)
 
 	// blocks until ack'ed by pubsub
 	_, err := result.Get(ctx)
@@ -114,6 +112,16 @@ func (p PubSub) getPersistentSubscription(ctx context.Context, topic *pubsub.Top
 			panic(fmt.Errorf("error creating subscription '%s': %v", name, err))
 		} else {
 			subscription = p.Client.Subscription(name)
+
+			subConfig, err := subscription.Config(ctx)
+			if err != nil {
+				panic(fmt.Errorf("error initializing subscription '%s': %v", name, err))
+			}
+
+			// check consistent with ordering setting
+			if subConfig.EnableMessageOrdering != ordered {
+				panic(fmt.Errorf("error initializing subscription '%s': inconsistent ordering configuration", name))
+			}
 		}
 	}
 
