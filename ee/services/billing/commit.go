@@ -237,7 +237,7 @@ func (s *Service) ComputeAndUpdateOrganizationQuotas(ctx context.Context, bi *mo
 	// update normal quotas (important, sets limits on activity)
 	err = s.Organizations.UpdateQuotas(ctx, org, &plan.ReadQuota, &plan.WriteQuota, &plan.ScanQuota)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return nil
