@@ -57,7 +57,7 @@ func addBillingCmd(c *cli.CLI) {
 		Short: "Runs billing for all customers whose plan is set to renew since the last invocation",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			cli.Dig.Invoke(func(logger *zap.Logger, billing *billing.Service) {
+			cli.Dig.Invoke(func(logger *zap.Logger, billing *billing.Service, eeServices *eedependencies.AllServices) {
 				err := billing.RunBilling(context.Background())
 				if err != nil {
 					logger.Sugar().Errorf("Billing failed with error: %s", err.Error())
