@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   code: {
     width: "100%",
-    overflowX: "scroll",
+    overflowX: "auto",
     padding: theme.spacing(2),
   },
   fileIcon: {
