@@ -47,8 +47,8 @@ reddit = Reddit(
 )
 
 
-def truncate_text(text):
-    max_chars = 5000
-    if len(text) > max_chars:
-        return text[:max_chars] + " [TRUNCATED]"
-    return text
+def truncate_string(s):
+    max_bytes = 5000
+    if len(s.encode("utf-8")) > max_bytes:
+        return s.encode("utf-8")[:max_bytes].decode("utf-8", "ignore") + " [TRUNCATED]"
+    return s

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from config import reddit, SUBREDDIT, truncate_text
+from config import reddit, SUBREDDIT, truncate_string
 
 
 async def generate_posts(p):
@@ -17,7 +17,7 @@ async def generate_posts(p):
             "author": post.author.name if post.author else "[deleted]",
             "subreddit": post.subreddit.display_name,
             "title": post.title,
-            "text": truncate_text(post.selftext),
+            "text": truncate_string(post.selftext),
             "link": link,
             "permalink": post.permalink,
             "flair": post.link_flair_text,

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from config import reddit, SUBREDDIT, truncate_text
+from config import reddit, SUBREDDIT, truncate_string
 
 
 async def generate_comments(p):
@@ -13,7 +13,7 @@ async def generate_comments(p):
             "subreddit": comment.subreddit.display_name,
             "post_id": comment.submission.id,
             "parent_id": comment.parent_id,
-            "text": truncate_text(comment.body),
+            "text": truncate_string(comment.body),
             "permalink": comment.permalink,
             "is_submitter": not not comment.is_submitter,
             "is_distinguished": not not comment.distinguished,
