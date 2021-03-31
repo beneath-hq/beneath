@@ -59,13 +59,13 @@ func (o *Organization) IsBillingOrganizationForUser() bool {
 
 // StripPrivateProjects removes private projects from o.Projects (no changes in database, just the loaded object)
 func (o *Organization) StripPrivateProjects() {
-	for i, p := range o.Projects {
-		if !p.Public {
-			n := len(o.Projects)
-			o.Projects[n-1], o.Projects[i] = o.Projects[i], o.Projects[n-1]
-			o.Projects = o.Projects[:n-1]
+	var res []*Project
+	for _, p := range o.Projects {
+		if p.Public {
+			res = append(res, p)
 		}
 	}
+	o.Projects = res
 }
 
 // OrganizationMember is a convenience representation of organization membership
