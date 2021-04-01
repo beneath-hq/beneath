@@ -173,7 +173,7 @@ func (s *Service) UpdateStream(ctx context.Context, msg *models.UpdateStreamComm
 	if msg.SchemaKind != nil && msg.Schema != nil {
 		schemaMD5 := s.ComputeSchemaMD5(*msg.Schema, msg.Indexes)
 		if !bytes.Equal(schemaMD5, stream.SchemaMD5) {
-			err := s.CompileToStream(stream, *msg.SchemaKind, *msg.Schema, &stream.CanonicalIndexes, msg.Description)
+			err := s.CompileToStream(stream, *msg.SchemaKind, *msg.Schema, msg.Indexes, msg.Description)
 			if err != nil {
 				return err
 			}
