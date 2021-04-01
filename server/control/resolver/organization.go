@@ -333,33 +333,52 @@ func (r *queryResolver) organizationPermissions(ctx context.Context, secret mode
 
 func (r *Resolver) organizationToPrivateOrganization(ctx context.Context, o *models.Organization, p models.OrganizationPermissions) *gql.PrivateOrganization {
 	po := &gql.PrivateOrganization{
-		OrganizationID:    o.OrganizationID.String(),
-		Name:              o.Name,
-		DisplayName:       o.DisplayName,
-		Description:       StrToPtr(o.Description),
-		PhotoURL:          StrToPtr(o.PhotoURL),
-		CreatedOn:         o.CreatedOn,
-		UpdatedOn:         o.UpdatedOn,
-		QuotaEpoch:        o.QuotaEpoch,
-		QuotaStartTime:    r.Usage.GetQuotaPeriod(o.QuotaEpoch).Floor(time.Now()),
-		QuotaEndTime:      r.Usage.GetQuotaPeriod(o.QuotaEpoch).Next(time.Now()),
-		PrepaidReadQuota:  Int64ToInt(o.PrepaidReadQuota),
-		PrepaidWriteQuota: Int64ToInt(o.PrepaidWriteQuota),
-		PrepaidScanQuota:  Int64ToInt(o.PrepaidScanQuota),
-		ReadQuota:         Int64ToInt(o.ReadQuota),
-		WriteQuota:        Int64ToInt(o.WriteQuota),
-		ScanQuota:         Int64ToInt(o.ScanQuota),
-		Projects:          o.Projects,
+		OrganizationID: o.OrganizationID.String(),
+		Name:           o.Name,
+		DisplayName:    o.DisplayName,
+		Description:    StrToPtr(o.Description),
+		PhotoURL:       StrToPtr(o.PhotoURL),
+		CreatedOn:      o.CreatedOn,
+		UpdatedOn:      o.UpdatedOn,
+		Projects:       o.Projects,
 	}
-
-	usage := r.Usage.GetCurrentQuotaUsage(ctx, o.OrganizationID, o.QuotaEpoch)
-	po.ReadUsage = int(usage.ReadBytes)
-	po.WriteUsage = int(usage.WriteBytes)
-	po.ScanUsage = int(usage.ScanBytes)
 
 	if o.UserID != nil {
 		po.PersonalUserID = o.UserID
 		po.PersonalUser = o.User
+	}
+
+	isNonBillingUser := o.User != nil && o.User.BillingOrganizationID != o.OrganizationID
+	if isNonBillingUser {
+		po.QuotaEpoch = o.User.QuotaEpoch
+		po.QuotaStartTime = r.Usage.GetQuotaPeriod(po.QuotaEpoch).Floor(time.Now())
+		po.QuotaEndTime = r.Usage.GetQuotaPeriod(po.QuotaEpoch).Next(time.Now())
+		po.PrepaidReadQuota = nil
+		po.PrepaidWriteQuota = nil
+		po.PrepaidScanQuota = nil
+		po.ReadQuota = Int64ToInt(o.User.ReadQuota)
+		po.WriteQuota = Int64ToInt(o.User.WriteQuota)
+		po.ScanQuota = Int64ToInt(o.User.ScanQuota)
+
+		usage := r.Usage.GetCurrentQuotaUsage(ctx, o.User.UserID, o.User.QuotaEpoch)
+		po.ReadUsage = int(usage.ReadBytes)
+		po.WriteUsage = int(usage.WriteBytes)
+		po.ScanUsage = int(usage.ScanBytes)
+	} else {
+		po.QuotaEpoch = o.QuotaEpoch
+		po.QuotaStartTime = r.Usage.GetQuotaPeriod(o.QuotaEpoch).Floor(time.Now())
+		po.QuotaEndTime = r.Usage.GetQuotaPeriod(o.QuotaEpoch).Next(time.Now())
+		po.PrepaidReadQuota = Int64ToInt(o.PrepaidReadQuota)
+		po.PrepaidWriteQuota = Int64ToInt(o.PrepaidWriteQuota)
+		po.PrepaidScanQuota = Int64ToInt(o.PrepaidScanQuota)
+		po.ReadQuota = Int64ToInt(o.ReadQuota)
+		po.WriteQuota = Int64ToInt(o.WriteQuota)
+		po.ScanQuota = Int64ToInt(o.ScanQuota)
+
+		usage := r.Usage.GetCurrentQuotaUsage(ctx, o.OrganizationID, o.QuotaEpoch)
+		po.ReadUsage = int(usage.ReadBytes)
+		po.WriteUsage = int(usage.WriteBytes)
+		po.ScanUsage = int(usage.ScanBytes)
 	}
 
 	if p.View || p.Create || p.Admin {

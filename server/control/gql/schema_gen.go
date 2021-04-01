@@ -2977,10 +2977,31 @@ input GetEntityUsageInput {
 	{Name: "server/control/schema/users.graphql", Input: `# extend type Query {}
 
 extend type Mutation {
-  registerUserConsent(userID: UUID!, terms: Boolean, newsletter: Boolean): PrivateUser!
-  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateUser!
-  updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
-  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
+  registerUserConsent(
+    userID: UUID!
+    terms: Boolean
+    newsletter: Boolean
+  ): PrivateUser!
+  updateUserQuotas(
+    userID: UUID!
+    readQuota: Int
+    writeQuota: Int
+    scanQuota: Int
+  ): PrivateUser!
+  updateUserProjectPermissions(
+    userID: UUID!
+    projectID: UUID!
+    view: Boolean
+    create: Boolean
+    admin: Boolean
+  ): PermissionsUsersProjects!
+  updateUserOrganizationPermissions(
+    userID: UUID!
+    organizationID: UUID!
+    view: Boolean
+    create: Boolean
+    admin: Boolean
+  ): PermissionsUsersOrganizations!
 }
 
 type PrivateUser {
