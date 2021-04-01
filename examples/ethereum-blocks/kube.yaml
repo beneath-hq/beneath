@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ethereum-blocks
+  labels:
+    app.kubernetes.io/name: ethereum-blocks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ethereum-blocks
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ethereum-blocks
+    spec:
+      containers:
+        - name: ethereum-blocks
+          image: gcr.io/beneath/examples-ethereum-blocks:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/ethereum/blocks-scraper"]
+          env:
+            - name: WEB3_PROVIDER_URL
+              value: https://cloudflare-eth.com
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ethereum-blocks
+                  key: beneath-secret
