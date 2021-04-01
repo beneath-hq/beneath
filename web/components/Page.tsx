@@ -28,7 +28,6 @@ const useStyles = makeStyles((theme) => ({
   subheaderAndContent: {
     overflow: "auto",
     flexGrow: 1,
-    padding: theme.spacing(3),
   },
   content: ({ contentMarginTop }: IStylesProps) => ({
     marginBottom: theme.spacing(12),
@@ -77,7 +76,7 @@ const Page: React.FC<IProps> = (props) => {
       </div>
       <div className={classes.footer}>
         <Grid container spacing={4} justify="center">
-          <Grid item>&copy; 2020 Beneath</Grid>
+          <Grid item>&copy; 2021 Beneath</Grid>
           <Grid item>
             <Link href="https://about.beneath.dev/policies/terms/">Terms of Service</Link>
           </Grid>

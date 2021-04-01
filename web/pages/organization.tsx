@@ -28,7 +28,7 @@ const OrganizationPage = () => {
     return <ErrorPage statusCode={404} />;
   }
 
-  const organizationName = toBackendName(router.query.organization_name);
+  let organizationName = toBackendName(router.query.organization_name);
 
   // little hack to replace organization name "me" with billing organization name if logged in
   if (me && organizationName === "me" && typeof window !== "undefined") {
@@ -39,7 +39,7 @@ const OrganizationPage = () => {
     } else {
       router.replace(`/organization?organization_name=${realName}`, `/${realName}`);
     }
-    return;
+    organizationName = realName;
   }
 
   const { loading, error, data } = useQuery<OrganizationByName, OrganizationByNameVariables>(QUERY_ORGANIZATION, {

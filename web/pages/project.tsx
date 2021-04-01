@@ -12,11 +12,13 @@ import ViewMembers from "../components/project/ViewMembers";
 import ViewOverview from "../components/project/ViewOverview";
 
 import { QUERY_PROJECT } from "../apollo/queries/project";
-import { ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables } from "../apollo/types/ProjectByOrganizationAndName";
+import {
+  ProjectByOrganizationAndName,
+  ProjectByOrganizationAndNameVariables,
+} from "../apollo/types/ProjectByOrganizationAndName";
 import { withApollo } from "../apollo/withApollo";
 import ErrorPage from "../components/ErrorPage";
 import { toBackendName, toURLName } from "../lib/names";
-
 
 const ProjectPage = () => {
   const router = useRouter();
@@ -29,14 +31,13 @@ const ProjectPage = () => {
   const projectName = toBackendName(router.query.project_name);
   const title = `${toURLName(organizationName)}/${toURLName(projectName)}`;
 
-  const {
-    loading,
-    error,
-    data,
-  } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(QUERY_PROJECT, {
-    fetchPolicy: "cache-and-network",
-    variables: { organizationName, projectName },
-  });
+  const { loading, error, data } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(
+    QUERY_PROJECT,
+    {
+      fetchPolicy: "cache-and-network",
+      variables: { organizationName, projectName },
+    }
+  );
 
   if (loading) {
     return (

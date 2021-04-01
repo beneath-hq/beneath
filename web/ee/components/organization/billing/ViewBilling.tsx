@@ -38,7 +38,9 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
     },
   });
 
-  if (!data || error) return null;
+  if (error || !data) {
+    return <p>Error: {JSON.stringify(error)}</p>;
+  }
 
   // alert when you're viewing billing for your personal organization but your main billing is handled by another org
   const specialCase =

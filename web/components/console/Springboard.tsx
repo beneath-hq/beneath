@@ -9,7 +9,6 @@ import MyUsageTile from "./tiles/MyUsageTile";
 import ProfileHeroTile from "./tiles/ProfileHeroTile";
 import UpgradeTile from "./tiles/UpgradeTile";
 import ActionsTile from "./tiles/ActionsTile";
-import ContentContainer from "components/ContentContainer";
 
 // Hack: in order to position the usage section in the top right-hand corner on medium+ screens,
 // we apply custom css styling to the Grid items. We pass through the styles to the Tile component, which is itself a Grid item.
@@ -53,40 +52,34 @@ const Springboard: FC = () => {
   }
 
   return (
-    <ContentContainer maxWidth="lg">
-      <Grid container spacing={3} className={classes.positionAncestor}>
-        <ProfileHeroTile
-          shape="wide"
-          href={`/organization?organization_name=${toURLName(me.name)}`}
-          as={`/${toURLName(me.name)}`}
-          path={`@${toURLName(me.name)}`}
-          name={toURLName(me.name)}
-          displayName={me.displayName}
-          description={me.description}
-          avatarURL={me.photoURL}
-        />
-        {me.organizationID === me.personalUser?.billingOrganizationID && (
-          <>
-            <MyUsageTile className={classes.usageTile} />
-            <UpgradeTile className={classes.upgradeTile} />
-          </>
-        )}
-        {isMd && <Grid item md={4} lg={6} />}
-        <ActionsTile shape="wide" nopaper />
-        <Grid item xs={12}>
-          <Typography variant="h3" className={classes.sectionTitle}>
-            My projects
-          </Typography>
-        </Grid>
-        <MyProjectsTiles />
-        <Grid item xs={12}>
-          <Typography variant="h3" className={classes.sectionTitle}>
-            Featured projects
-          </Typography>
-        </Grid>
-        <ExploreProjectsTiles />
+    <Grid container spacing={3} className={classes.positionAncestor}>
+      <ProfileHeroTile
+        shape="wide"
+        href={`/organization?organization_name=${toURLName(me.name)}`}
+        as={`/${toURLName(me.name)}`}
+        path={`@${toURLName(me.name)}`}
+        name={toURLName(me.name)}
+        displayName={me.displayName}
+        description={me.description}
+        avatarURL={me.photoURL}
+      />
+      <UpgradeTile className={classes.upgradeTile} />
+      <MyUsageTile className={classes.usageTile} />
+      {isMd && <Grid item md={4} lg={6} />}
+      <ActionsTile shape="wide" nopaper />
+      <Grid item xs={12}>
+        <Typography variant="h3" className={classes.sectionTitle}>
+          My projects
+        </Typography>
       </Grid>
-    </ContentContainer>
+      <MyProjectsTiles />
+      <Grid item xs={12}>
+        <Typography variant="h3" className={classes.sectionTitle}>
+          Featured projects
+        </Typography>
+      </Grid>
+      <ExploreProjectsTiles />
+    </Grid>
   );
 };
 

@@ -10,7 +10,7 @@ import useMe from "hooks/useMe";
 export const MyUsageTile: FC<TileProps> = (tileProps) => {
   const me = useMe();
 
-  if (!me || me.organizationID !== me.personalUser?.billingOrganizationID) {
+  if (!me) {
     return <></>;
   }
 
@@ -23,7 +23,8 @@ export const MyUsageTile: FC<TileProps> = (tileProps) => {
     >
       <Typography variant="h3">Current usage</Typography>
       <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-        Period from <Moment date={me.quotaStartTime} format="D MMM" /> to <Moment date={me.quotaEndTime} format="D MMM" />
+        Period from <Moment date={me.quotaStartTime} format="D MMM" /> to{" "}
+        <Moment date={me.quotaEndTime} format="D MMM" />
       </Typography>
       <PaperGrid variant="outlined" container spacing={2}>
         <Grid item xs={12}>

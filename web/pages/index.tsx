@@ -41,19 +41,26 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
         const router = useRouter();
         router.push(redirectAfterAuth);
         return (
-            // without this prop, React complains about different renderings between client-side and server-side
-            <div suppressHydrationWarning={true} />
+          // without this prop, React complains about different renderings between client-side and server-side
+          <div suppressHydrationWarning={true} />
         );
       }
     }
   }
 
-  return (
-    <Page title="Console" contentMarginTop="dense">
-      {loggedIn && <Springboard />}
-      {!loggedIn && <Welcome />}
-    </Page>
-  );
+  if (loggedIn) {
+    return (
+      <Page title="Console" maxWidth="lg" contentMarginTop="normal">
+        <Springboard />
+      </Page>
+    );
+  } else {
+    return (
+      <Page title="Console" maxWidth="md" contentMarginTop="dense">
+        <Welcome />
+      </Page>
+    );
+  }
 };
 
 Console.getInitialProps = (ctx) => {
