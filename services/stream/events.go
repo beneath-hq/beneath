@@ -7,6 +7,10 @@ import (
 	"gitlab.com/beneath-hq/beneath/models"
 )
 
+const (
+	keepRecentInstances = 3
+)
+
 func (s *Service) organizationUpdated(ctx context.Context, msg *models.OrganizationUpdatedEvent) error {
 	s.instanceCache.ClearForOrganization(ctx, msg.Organization.OrganizationID)
 	return nil
@@ -56,11 +60,14 @@ func (s *Service) streamInstanceUpdated(ctx context.Context, msg *models.StreamI
 
 	// delete earlier versions
 	if msg.MakePrimary {
-		instances := s.FindStreamInstances(ctx, msg.Stream.StreamID, nil, &msg.StreamInstance.Version)
-		for _, instance := range instances {
-			err := s.DeleteStreamInstance(ctx, msg.Stream, instance)
-			if err != nil {
-				return err
+		upToVersion := msg.StreamInstance.Version - keepRecentInstances
+		if upToVersion > 0 {
+			instances := s.FindStreamInstances(ctx, msg.Stream.StreamID, nil, &upToVersion)
+			for _, instance := range instances {
+				err := s.DeleteStreamInstance(ctx, msg.Stream, instance)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
