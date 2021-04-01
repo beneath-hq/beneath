@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "beneath"
-copyright = " 2020 Beneath Systems ApS"
+copyright = " 2021 Beneath Systems ApS"
 author = "Beneath Systems"
 
 # -- General configuration ---------------------------------------------------
