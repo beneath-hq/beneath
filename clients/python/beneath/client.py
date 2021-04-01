@@ -400,6 +400,8 @@ class Client:
             next_instance = stream.primary_instance
 
         # write records
+        if isinstance(records, pd.DataFrame):
+            records = records.to_dict(orient="records")
         await next_instance.write(records)
 
         # make primary and final, and delete previous instance
