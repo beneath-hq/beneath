@@ -84,7 +84,7 @@ app.prepare().then(() => {
   server.get("/-/redirects/auth/login/callback", (req, res) => {
     const token = req.query.token;
     if (token) {
-      res.cookie("token", token, { secure: !dev });
+      res.cookie("token", token, { maxAge: cookieAge, secure: !dev });
     } else {
       res.clearCookie("token");
     }
