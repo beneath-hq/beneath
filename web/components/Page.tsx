@@ -55,11 +55,15 @@ const Page: React.FC<IProps> = (props) => {
     setMobileDrawerOpen(!mobileDrawerOpen);
   };
 
+  const title = props.title ? props.title + " | Beneath" : "Beneath";
   const classes = useStyles({ contentMarginTop: props.contentMarginTop });
   return (
     <div className={classes.container}>
       <Head>
-        <title>{props.title ? props.title + " | " : ""} Beneath</title>
+        <title>{title}</title>
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:site" content="@BeneathHQ" />
+        <meta property="og:title" content={title} />
       </Head>
       <Header />
       <div className={classes.sidebarSubheaderAndContent}>
