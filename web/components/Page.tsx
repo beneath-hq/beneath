@@ -63,6 +63,7 @@ const Page: React.FC<IProps> = (props) => {
         <title>{title}</title>
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:site" content="@BeneathHQ" />
+        <meta property="og:image" content="https://about.beneath.dev/media/logo/banner-square.png" />
         <meta property="og:title" content={title} />
       </Head>
       <Header />
