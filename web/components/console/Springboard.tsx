@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.up("md")]: {
       position: "absolute",
       right: 0,
-      top: 340,
+      top: 320,
       width: 300,
     },
   },
@@ -63,8 +63,8 @@ const Springboard: FC = () => {
         description={me.description}
         avatarURL={me.photoURL}
       />
-      <UpgradeTile className={classes.upgradeTile} />
       <MyUsageTile className={classes.usageTile} />
+      <UpgradeTile className={classes.upgradeTile} />
       {isMd && <Grid item md={4} lg={6} />}
       <ActionsTile shape="wide" nopaper />
       <Grid item xs={12}>

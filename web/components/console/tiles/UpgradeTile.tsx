@@ -20,18 +20,16 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
   const classes = useStyles();
   const me = useMe();
 
-  if (!IS_EE || !me || !me.personalUserID) {
-    return <></>;
-  }
-
-  const { loading, error, data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
+  const skip = !IS_EE || !me || me?.personalUser?.billingOrganizationID !== me.organizationID;
+  const { data } = useQuery<BillingInfo, BillingInfoVariables>(QUERY_BILLING_INFO, {
     context: { ee: true },
     variables: {
-      organizationID: me.organizationID,
+      organizationID: me?.personalUser?.billingOrganizationID || "",
     },
+    skip: skip,
   });
 
-  if (!data?.billingInfo.billingPlan.default) {
+  if (skip || !data?.billingInfo.billingPlan.default) {
     return <></>;
   }
 
@@ -59,8 +57,8 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
                 color="primary"
                 variant="contained"
                 component={NakedLink}
-                href={`/organization?organization_name=${me.name}&tab=billing`}
-                as={`${me.name}/-/billing`}
+                href={`/organization?organization_name=${me?.name}&tab=billing`}
+                as={`${me?.name}/-/billing`}
               >
                 Upgrade
               </Button>
