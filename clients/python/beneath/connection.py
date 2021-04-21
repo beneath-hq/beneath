@@ -11,6 +11,9 @@ from beneath import config
 from beneath.proto import gateway_pb2
 from beneath.proto import gateway_pb2_grpc
 
+# Mirrors server/data/grpc/server.go
+MAX_RECV_MSG_SIZE = 1024 * 1024 * 50
+MAX_SEND_MSG_SIZE = 1024 * 1024 * 10
 
 class GraphQLError(Exception):
     """ Error returned for control-plane (GraphQL) errors """
@@ -64,16 +67,22 @@ class Connection:
     def _create_grpc_connection(self):
         self.request_metadata = [("authorization", "Bearer {}".format(self.secret))]
         insecure = "localhost" in config.BENEATH_GATEWAY_HOST_GRPC
+        options = [
+            ('grpc.max_receive_message_length', MAX_RECV_MSG_SIZE),
+            ('grpc.max_send_message_length', MAX_SEND_MSG_SIZE),
+        ]
         if insecure:
             self.channel = grpc.aio.insecure_channel(
                 target=config.BENEATH_GATEWAY_HOST_GRPC,
                 compression=grpc.Compression.Gzip,
+                options=options,
             )
         else:
             self.channel = grpc.aio.secure_channel(
                 target=config.BENEATH_GATEWAY_HOST_GRPC,
                 credentials=grpc.ssl_channel_credentials(),
                 compression=grpc.Compression.Gzip,
+                options=options,
             )
         self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
 
