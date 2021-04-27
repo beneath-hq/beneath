@@ -1,0 +1,23 @@
+name: Gitlab Mirror
+
+on:
+  push:
+    branches:
+      - stable
+
+jobs:
+  mirror:
+    name: Mirror
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: |
+          git remote add target https://$USERNAME:$TOKEN@$URL
+          git push -f --all target
+          git push -f --tags target
+        env:
+          URL: ${{ secrets.GITLAB_TARGET_URL }}
+          USERNAME: ${{ secrets.GITLAB_TARGET_USERNAME }}
+          TOKEN: ${{ secrets.GITLAB_TARGET_TOKEN }}
