@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	nee_models "gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	nee_models "github.com/beneath-hq/beneath/models"
 )
 
 // IMPORTANT: READ THIS BEFORE EDITING!

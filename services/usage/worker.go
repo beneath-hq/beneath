@@ -9,9 +9,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/semaphore"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 var (

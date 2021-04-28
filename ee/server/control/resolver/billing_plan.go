@@ -3,9 +3,9 @@ package resolver
 import (
 	"context"
 
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/server/control/gql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
 )
 
 // BillingPlan returns the gql.BillingPlanResolver

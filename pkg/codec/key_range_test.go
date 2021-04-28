@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"github.com/beneath-hq/beneath/pkg/codec/ext/tuple"
+	"github.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 func TestKeyRange1(t *testing.T) {

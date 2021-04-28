@@ -11,7 +11,7 @@ weight: 1
 
 ## Bug reports, questions, and feature requests
 
-To report a bug, request a feature, or ask a question, visit/search the [Issues](https://gitlab.com/beneath-hq/beneath/-/issues) (when posting, use either the "Bug", "Feature" or "Question" description templates). We love getting your input, so don't hesitate to engage!
+To report a bug, request a feature, or ask a question, visit/search the [Issues](https://github.com/beneath-hq/beneath/issues) (when posting, use either the "Bug", "Feature" or "Question" description templates). We love getting your input, so don't hesitate to engage!
 
 ## Documentation for contributors
 

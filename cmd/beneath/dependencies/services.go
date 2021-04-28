@@ -3,17 +3,17 @@ package dependencies
 import (
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
-	"gitlab.com/beneath-hq/beneath/services/project"
-	"gitlab.com/beneath-hq/beneath/services/secret"
-	"gitlab.com/beneath-hq/beneath/services/service"
-	"gitlab.com/beneath-hq/beneath/services/stream"
-	"gitlab.com/beneath-hq/beneath/services/usage"
-	"gitlab.com/beneath-hq/beneath/services/user"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/services/project"
+	"github.com/beneath-hq/beneath/services/secret"
+	"github.com/beneath-hq/beneath/services/service"
+	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/usage"
+	"github.com/beneath-hq/beneath/services/user"
 )
 
 // TO ADD A NEW SERVICE:
@@ -24,7 +24,7 @@ import (
 // AllServices is a convenience wrapper that initializes all services
 type AllServices struct {
 	Data         *data.Service
-	Usage      *usage.Service
+	Usage        *usage.Service
 	Middleware   *middleware.Service
 	Organization *organization.Service
 	Permissions  *permissions.Service
@@ -50,7 +50,7 @@ func NewAllServices(
 ) *AllServices {
 	return &AllServices{
 		Data:         data,
-		Usage:      usage,
+		Usage:        usage,
 		Middleware:   middleware,
 		Organization: organization,
 		Permissions:  permissions,

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/server/control/gql"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/server/control/gql"
 )
 
 // ProjectMember returns the ProjectMemberResolver

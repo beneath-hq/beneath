@@ -9,7 +9,7 @@ import (
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // FindCachedInstance returns select info about the instance and its stream (cached)

@@ -13,10 +13,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/satori/go.uuid"
+	"github.com/beneath-hq/beneath/ee/models"
+	uuid "github.com/satori/go.uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"gitlab.com/beneath-hq/beneath/ee/models"
 )
 
 // region    ************************** generated!.gotpl **************************

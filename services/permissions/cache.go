@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/cache/v7"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // initCaches sets up the three permissions caches

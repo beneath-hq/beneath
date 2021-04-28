@@ -4,7 +4,7 @@ version = "1.3.7"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 authors = ["Beneath Systems <hello@beneath.dev>"]
 license = "MIT License"
-repository = "https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python"
+repository = "https://github.com/beneath-hq/beneath/tree/master/clients/python"
 documentation = "https://python.docs.beneath.dev"
 readme = "README.md"
 

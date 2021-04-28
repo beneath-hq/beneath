@@ -6,9 +6,9 @@ import (
 	"github.com/go-chi/chi"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func (a *app) postToOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Request) error {

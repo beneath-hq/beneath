@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/pkg/refreshingval"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/usage"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/pkg/refreshingval"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/usage"
 	"go.uber.org/zap"
 )
 

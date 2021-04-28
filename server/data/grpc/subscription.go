@@ -4,9 +4,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 func (s *gRPCServer) Subscribe(req *pb.SubscribeRequest, ss pb.Gateway_SubscribeServer) error {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/beneath-hq/beneath/models"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 const (

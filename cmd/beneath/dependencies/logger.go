@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/pkg/envutil"
 )
 
 func init() {

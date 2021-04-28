@@ -15,11 +15,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
+	"github.com/beneath-hq/beneath/pkg/codec/ext/tuple"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/pkg/queryparse"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // Index represents a set of fields to generate keys for

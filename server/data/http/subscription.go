@@ -7,10 +7,10 @@ import (
 
 	"github.com/mr-tron/base58"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
-	"gitlab.com/beneath-hq/beneath/pkg/ws"
-	"gitlab.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/secrettoken"
+	"github.com/beneath-hq/beneath/pkg/ws"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 // KeepAlive implements ws.Server

@@ -3,11 +3,11 @@ package secret
 import (
 	"context"
 
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 	"github.com/go-redis/redis/v7"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/infra/db"
 )
 
 const (

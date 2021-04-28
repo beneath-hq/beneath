@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/services/data"
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func (s *gRPCServer) QueryLog(ctx context.Context, req *pb.QueryLogRequest) (*pb.QueryLogResponse, error) {

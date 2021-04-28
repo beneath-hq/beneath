@@ -140,4 +140,4 @@ beneath project delete USERNAME/PROJECT_NAME
 
 Under the "API" tab on the stream's page in the web console, you will find several more guides for reading and writing to the stream.
 
-Other examples of the Python SDK in action can be found in the [examples repo](https://gitlab.com/beneath-hq/beneath/-/tree/master/examples). For full details about available classes and functions, check out the [Python client API reference](https://python.docs.beneath.dev/).
+Other examples of the Python SDK in action can be found in the [examples repo](https://github.com/beneath-hq/beneath/tree/master/examples). For full details about available classes and functions, check out the [Python client API reference](https://python.docs.beneath.dev/).

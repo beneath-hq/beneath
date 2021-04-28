@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/models"
 )
 
 // HandleShouldInvoiceBilledResourcesEvent triggers invoicing after new billed resources are committed

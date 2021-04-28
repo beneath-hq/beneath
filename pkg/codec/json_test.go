@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
 )
 
 func TestAvroJson1(t *testing.T) {

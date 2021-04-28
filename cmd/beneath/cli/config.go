@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"github.com/beneath-hq/beneath/pkg/envutil"
 )
 
 // prefix for environment variables that override config keys

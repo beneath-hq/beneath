@@ -8,9 +8,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"github.com/beneath-hq/beneath/infra/engine"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // OpType defines a read or write operation

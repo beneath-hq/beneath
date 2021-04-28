@@ -14,4 +14,4 @@ Every Beneath client library has a separate API reference documentation page. We
 - [JavaScript (TypeScript) client reference](https://js.docs.beneath.dev/)
 - [React client reference](https://react.docs.beneath.dev/)
 
-You can find the source code for the client libraries [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/).
+You can find the source code for the client libraries [here](https://github.com/beneath-hq/beneath/tree/master/clients).

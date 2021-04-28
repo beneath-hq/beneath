@@ -9,8 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vmihailenco/msgpack"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/secrettoken"
 )
 
 // AuthenticateWithToken returns the secret object matching token, or nil.

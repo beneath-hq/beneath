@@ -1,8 +1,8 @@
 package dependencies
 
 import (
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	eecontrol "gitlab.com/beneath-hq/beneath/ee/server/control"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	eecontrol "github.com/beneath-hq/beneath/ee/server/control"
 )
 
 func init() {

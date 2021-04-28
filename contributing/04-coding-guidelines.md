@@ -30,5 +30,5 @@ This is a non-exhaustive list of things that are useful to document about your c
 
 - Include links to any references (such as tutorials, examples, open source code, etc.) that inspired you as your wrote the code
 - Explain what other parts of the codebase that the code is used in (or expected to be used in)
-- Follow the documentation conventions for Go as that makes the codebase easier to browse with [GoDoc](https://godoc.org/gitlab.com/beneath-hq/beneath) (also applies to other languages)
+- Follow the documentation conventions for Go as that makes the codebase easier to browse with [GoDoc](https://godoc.org/github.com/beneath-hq/beneath) (also applies to other languages)
 - Note which functions/structs/variables/constants that were difficult to name and briefly why (that's a great indicator of ambiguity to beware of for people who read the code later)

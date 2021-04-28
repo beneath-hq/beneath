@@ -6,9 +6,9 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
-	"gitlab.com/beneath-hq/beneath/pkg/mathutil"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/pkg/mathutil"
 )
 
 // Engine interfaces with the data layer

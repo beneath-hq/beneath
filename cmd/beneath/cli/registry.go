@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-hq/beneath/pkg/ctxutil"
+	"github.com/beneath-hq/beneath/pkg/ctxutil"
 )
 
 // Dig manages and creates dependencies

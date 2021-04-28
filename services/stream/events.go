@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 const (

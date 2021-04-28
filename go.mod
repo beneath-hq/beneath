@@ -1,4 +1,4 @@
-module gitlab.com/beneath-hq/beneath
+module github.com/beneath-hq/beneath
 
 go 1.12
 

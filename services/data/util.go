@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/httputil"
 )
 
 // Error represents a generalized GRPC and HTTP error

@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/services/data"
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func (s *gRPCServer) QueryWarehouse(ctx context.Context, req *pb.QueryWarehouseRequest) (*pb.QueryWarehouseResponse, error) {

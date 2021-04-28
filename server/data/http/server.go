@@ -11,12 +11,12 @@ import (
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/ws"
-	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/services/secret"
-	"gitlab.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/ws"
+	"github.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/secret"
+	"github.com/beneath-hq/beneath/services/stream"
 )
 
 type app struct {

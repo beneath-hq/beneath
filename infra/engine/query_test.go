@@ -8,9 +8,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver/mock"
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver/mock"
+	"github.com/beneath-hq/beneath/pkg/codec"
 )
 
 func TestExpandWarehouseQueryString(t *testing.T) {

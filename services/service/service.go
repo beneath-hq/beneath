@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // Service contains functionality for finding and creating services.

@@ -1,7 +1,7 @@
 # Configures gqlgen – docs at https://gqlgen.com/config/
 skip_validation: true
 schema:
-- "server/control/schema/**/*.graphql"
+  - "server/control/schema/**/*.graphql"
 exec:
   filename: server/control/gql/schema_gen.go
   package: gql
@@ -15,34 +15,34 @@ resolver:
 autobind: []
 models:
   UUID:
-    model: gitlab.com/beneath-hq/beneath/server/control/gql.UUID
-  UserSecret: 
-    model: gitlab.com/beneath-hq/beneath/models.UserSecret
-  ServiceSecret: 
-    model: gitlab.com/beneath-hq/beneath/models.ServiceSecret
+    model: github.com/beneath-hq/beneath/server/control/gql.UUID
+  UserSecret:
+    model: github.com/beneath-hq/beneath/models.UserSecret
+  ServiceSecret:
+    model: github.com/beneath-hq/beneath/models.ServiceSecret
   Project:
-    model: gitlab.com/beneath-hq/beneath/models.Project
+    model: github.com/beneath-hq/beneath/models.Project
   Stream:
-    model: gitlab.com/beneath-hq/beneath/models.Stream
+    model: github.com/beneath-hq/beneath/models.Stream
   StreamInstance:
-    model: gitlab.com/beneath-hq/beneath/models.StreamInstance
+    model: github.com/beneath-hq/beneath/models.StreamInstance
   StreamIndex:
-    model: gitlab.com/beneath-hq/beneath/models.StreamIndex
+    model: github.com/beneath-hq/beneath/models.StreamIndex
   PrivateUser:
-    model: gitlab.com/beneath-hq/beneath/models.User
+    model: github.com/beneath-hq/beneath/models.User
   PublicOrganization:
-    model: gitlab.com/beneath-hq/beneath/models.Organization
+    model: github.com/beneath-hq/beneath/models.Organization
   ProjectMember:
-    model: gitlab.com/beneath-hq/beneath/models.ProjectMember
+    model: github.com/beneath-hq/beneath/models.ProjectMember
   OrganizationMember:
-    model: gitlab.com/beneath-hq/beneath/models.OrganizationMember
+    model: github.com/beneath-hq/beneath/models.OrganizationMember
   Service:
-    model: gitlab.com/beneath-hq/beneath/models.Service
+    model: github.com/beneath-hq/beneath/models.Service
   PermissionsUsersProjects:
-    model: gitlab.com/beneath-hq/beneath/models.PermissionsUsersProjects
+    model: github.com/beneath-hq/beneath/models.PermissionsUsersProjects
   PermissionsUsersOrganizations:
-    model: gitlab.com/beneath-hq/beneath/models.PermissionsUsersOrganizations
+    model: github.com/beneath-hq/beneath/models.PermissionsUsersOrganizations
   PermissionsServicesStreams:
-    model: gitlab.com/beneath-hq/beneath/models.PermissionsServicesStreams
+    model: github.com/beneath-hq/beneath/models.PermissionsServicesStreams
   StreamSchemaKind:
-    model: gitlab.com/beneath-hq/beneath/models.StreamSchemaKind
+    model: github.com/beneath-hq/beneath/models.StreamSchemaKind

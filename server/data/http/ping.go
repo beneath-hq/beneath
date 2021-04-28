@@ -3,8 +3,8 @@ package http
 import (
 	"net/http"
 
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 type pingArgs struct {

@@ -9,11 +9,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
-	pbgw "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
+	pbgw "github.com/beneath-hq/beneath/server/data/grpc/proto"
 )
 
 // RunWorker subscribes to new write requests and stores data in derived systems.

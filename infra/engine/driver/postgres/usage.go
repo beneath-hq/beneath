@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
 )
 
 // WriteUsage implements engine.LookupService

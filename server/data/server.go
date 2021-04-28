@@ -8,14 +8,14 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
-	"gitlab.com/beneath-hq/beneath/pkg/grpcutil"
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	gwgrpc "gitlab.com/beneath-hq/beneath/server/data/grpc"
-	gwhttp "gitlab.com/beneath-hq/beneath/server/data/http"
-	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/services/secret"
-	"gitlab.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/pkg/grpcutil"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	gwgrpc "github.com/beneath-hq/beneath/server/data/grpc"
+	gwhttp "github.com/beneath-hq/beneath/server/data/http"
+	"github.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/secret"
+	"github.com/beneath-hq/beneath/services/stream"
 )
 
 // ServerOptions are the options for creating a data server
