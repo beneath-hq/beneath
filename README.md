@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://about.beneath.dev/?utm_source=github&utm_medium=logo" target="_blank">
-    <img src="https://github.com/beneath-hq/beneath/tree/master/assets/logo/banner-icon-text-background.png" alt="Beneath" height="200">
+    <img src="https://raw.githubusercontent.com/beneath-hq/beneath/master/assets/logo/banner-icon-text-background.png" alt="Beneath" height="200">
   </a>
 </p>
 
