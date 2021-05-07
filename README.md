@@ -12,33 +12,29 @@
 
 Beneath is a serverless DataOps platform that aims to combine data storage, processing, and visualization with data quality management and governance.
 
-## Problem
+_Beneath is a work in progress and your input makes a big difference! Star the project to show your support or [reach out](https://about.beneath.dev/contact) and tell us what you think._
 
-The holy grail of data work is putting data science into production. It's glorious to behold a live dashboard that aggregates multiple data sources, to receive real-time alerts based on a machine learning model, or to offer customer-specific analytics in your frontend. Unfortunately, turning ad-hoc data science into a production data service also involves, in our humble opinion, an outright ridiculous engineering overhead.
+## 🧠 Philosophy
 
-For skilled data engineers, building a best-practices data management stack is literally a full time job. If we were starting a project from scratch today, we would set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Then we'd start thinking about data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on, and so on.
+The holy grail of data work is putting data science into production. It's glorious to behold a live dashboard that aggregates multiple data sources, send real-time alerts based on a machine learning model, or offer customer-specific analytics in your frontend. But building a modern data management stack is a full-time job, and a lot can go wrong. If we were starting a project from scratch today, we would set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Then we'd start thinking about data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on, and so on.
 
-For data scientists, many of these paradigms are completely unfamiliar. It's easy to stick with the tools you know. We've been there, and we wound up with a Postgres database and a hairball of Python code so unwieldy that not even we understood it anymore. We've interviewed a lot of small data science teams, and that's still the most common stack we see.
+Beneath is a new way of building data apps and services. We're taking an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one platform. Our idea is to provide one opinionated layer of abstraction, accessible through client libraries and a web console, that in turn builds on existing data technologies.
 
-## Our solution
+We're inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we want to give data scientists and engineers a better developer experience to deploy, monitor, enrich, visualize, integrate, and share analytics.
 
-With Beneath, we're pursuing a unified approach that combines data storage, processing, and visualization with data quality management and governance in one platform. We're inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we're building a platform that data scientists and engineers can use to deploy, monitor, derive, visualize, integrate, and share analytics.
+## 🐣 Get started
 
-XXX
+The best way to try Beneath is with a free beta account. When you sign up, you'll be guided to installing the Python SDK and setting up your first project. [Sign up here](https://beneath.dev/?noredirect=1).
 
-## Get started
+We're working on bundling a self-hosted version that you can run locally. If you're interested in self-hosting, [contact us](https://about.beneath.dev/contact) and let us know!
 
-The best way to try out Beneath is with a free beta account. When you sign up, you'll be guided to installing the SDK and setting up your first project. [Sign up here](https://beneath.dev/?noredirect=1).
-
-We're working on bundling a self-hosted version that you can run locally. If you're interested in trying it out, [contact us](https://about.beneath.dev/contact) and let us know!
-
-## Status
+## 🚀 Status
 
 YYYY
 
 <!-- Getting there is a journey and we're starting with data storage in the form of streams you can replay, subscribe to, query with SQL, monitor, and share. Streams are the primitive the rest of our roadmap builds upon. -->
 
-## Features and roadmap
+## 📦 Features and roadmap
 
 - **Data storage**
   - [x] Log streaming with at-least-once delivery
@@ -83,17 +79,17 @@ YYYY
   - [ ] Row restricted access tokens for identity-centered apps
   - [ ] Self-hosted Beneath on Kubernetes with federation
 
-## How it works
+## 🍿 How it works
 
 ZZZ
 
-## Community and Support
+## 👋 Community and Support
 
 - Chat in [our Discord](https://discord.gg/f5yvx7YWau)
 - Email us at [hello@beneath.dev](mailto:hello@beneath.dev)
-- Book us for a casual [20-minute meeting](https://calendly.com/beneath-epg/beneath-office-hours)
+- Book a casual [20-minute meeting](https://calendly.com/beneath-epg/beneath-office-hours)
 
-## Documentation
+## 🎓 Documentation
 
 - Homepage: [https://about.beneath.dev](https://about.beneath.dev)
 - Documentation and tutorials: [https://about.beneath.dev/docs](https://about.beneath.dev/docs)
@@ -101,6 +97,6 @@ ZZZ
 - JavaScript client reference: [https://js.docs.beneath.dev](https://js.docs.beneath.dev)
 - React client reference: [https://react.docs.beneath.dev](https://react.docs.beneath.dev)
 
-## License
+## 🛒 License
 
 This repository contains the full source code for Beneath. It consists of an open-source core licensed under the MIT license, plus several source-available components found in the `ee` directory, most notably the Beneath UI. You can find more details in the `contributing/` directory.
