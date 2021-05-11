@@ -103,6 +103,4 @@ The `contributing/` directory in this repository contains a deeper technical wal
 
 ## 🛒 License
 
-This repository contains the full source code for Beneath. It consists of an open-source core licensed under the MIT license, plus several source-available components found in the `ee` directory, most notably the Beneath UI.
-
-The source-available components are free to use unless you intend to offer Beneath as a service. You can find more details in the `contributing/` directory.
+This repository contains the full source code for Beneath. We have not yet picked a source code license for the project, but will do so soon. You can read more about our considerations [here](https://github.com/beneath-hq/beneath/blob/master/contributing/08-license.md).
