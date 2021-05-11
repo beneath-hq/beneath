@@ -1,12 +1,4 @@
----
-title: Project structure
-description:
-menu:
-  docs:
-    parent: contributing
-    weight: 200
-weight: 200
----
+# Project structure
 
 ## Monorepo
 

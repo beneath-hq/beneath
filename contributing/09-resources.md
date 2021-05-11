@@ -1,12 +1,4 @@
----
-title: Links and resources
-description:
-menu:
-  docs:
-    parent: contributing
-    weight: 900
-weight: 900
----
+# Links and resources
 
 Use this document to track interesting resources (articles, videos, books, etc.) on topics relevant to the development of Beneath.
 

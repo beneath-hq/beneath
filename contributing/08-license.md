@@ -1,12 +1,4 @@
----
-title: License
-description:
-menu:
-  docs:
-    parent: contributing
-    weight: 800
-weight: 800
----
+# License
 
 The entire source code for Beneath is publicly available on [Github](https://github.com/beneath-hq/beneath), however, it does not currently meet the [definition of "open source"](https://opensource.org/osd).
 
