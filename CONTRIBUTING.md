@@ -1,1 +1,1 @@
-Please see `contributing/00-introduction.md`
+Please see `contributing/README.md`
