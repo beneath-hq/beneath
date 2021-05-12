@@ -49,9 +49,9 @@ const Header: FC = () => {
     });
   }
 
-  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/" }];
+  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/", target: "_blank" }];
   if (me) {
-    linkActions.unshift({ label: "SQL", href: "/-/sql" });
+    linkActions.unshift({ label: "SQL", href: "/-/sql", target: "_self" });
   }
 
   return (
@@ -110,6 +110,7 @@ const Header: FC = () => {
                   className={clsx(classes.rightItem, classes.rightButton)}
                   component={NakedLink}
                   href={action.href}
+                  target={action.target}
                 >
                   {action.label}
                 </Button>

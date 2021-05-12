@@ -83,13 +83,19 @@ const Page: React.FC<IProps> = (props) => {
         <Grid container spacing={4} justify="center">
           <Grid item>&copy; 2021 Beneath</Grid>
           <Grid item>
-            <Link href="https://about.beneath.dev/policies/terms/">Terms of Service</Link>
+            <Link href="https://about.beneath.dev/policies/terms/" target="_blank">
+              Terms of Service
+            </Link>
           </Grid>
           <Grid item>
-            <Link href="https://about.beneath.dev/policies/privacy/">Privacy Policy</Link>
+            <Link href="https://about.beneath.dev/policies/privacy/" target="_blank">
+              Privacy Policy
+            </Link>
           </Grid>
           <Grid item>
-            <Link href="https://about.beneath.dev/contact/">Contact us</Link>
+            <Link href="https://about.beneath.dev/contact/" target="_blank">
+              Contact us
+            </Link>
           </Grid>
         </Grid>
       </div>

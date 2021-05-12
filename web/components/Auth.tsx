@@ -73,7 +73,10 @@ const Auth: FC = () => {
                   To learn more about the beta:
                   <ul>
                     <li>
-                      Read about the <Link href="https://about.beneath.dev/beta/features/">current&nbsp;features</Link>
+                      Read about the{" "}
+                      <Link href="https://about.beneath.dev/beta/features/" target="_blank">
+                        current&nbsp;features
+                      </Link>
                     </li>
                   </ul>
                 </Typography>
@@ -83,7 +86,10 @@ const Auth: FC = () => {
                   Beneath is just getting started. To learn about what's next:
                   <ul>
                     <li>
-                      Check out the <Link href="https://github.com/beneath-hq/beneath/">GitHub</Link>
+                      Check out the{" "}
+                      <Link href="https://github.com/beneath-hq/beneath/" target="_blank">
+                        GitHub
+                      </Link>
                     </li>
                   </ul>
                 </Typography>
@@ -123,8 +129,13 @@ const Auth: FC = () => {
             </Paper>
             <Typography className={classes.termsText} variant="body2" color={"textSecondary"} align="center">
               By signing up or logging in you accept our{" "}
-              <Link href="https://about.beneath.dev/policies/terms/">Terms&nbsp;of&nbsp;Service</Link> and{" "}
-              <Link href="https://about.beneath.dev/policies/privacy/">Privacy&nbsp;Policy</Link>
+              <Link href="https://about.beneath.dev/policies/terms/" target="_blank">
+                Terms&nbsp;of&nbsp;Service
+              </Link>{" "}
+              and{" "}
+              <Link href="https://about.beneath.dev/policies/privacy/" target="_blank">
+                Privacy&nbsp;Policy
+              </Link>
             </Typography>
           </Grid>
         </Grid>
