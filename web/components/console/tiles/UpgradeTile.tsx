@@ -47,7 +47,7 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
         <Grid item>
           <Grid container spacing={1}>
             <Grid item xs={6}>
-              <Button fullWidth variant="contained" href="https://about.beneath.dev/contact">
+              <Button fullWidth variant="contained" href="https://about.beneath.dev/contact" target="_blank">
                 Contact&nbsp;us
               </Button>
             </Grid>

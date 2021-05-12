@@ -64,6 +64,7 @@ const Header: FC = () => {
               className={classes.logo}
               component={NakedLink}
               href={me ? "/" : "https://about.beneath.dev"}
+              target={me ? undefined : "_blank"}
               variant="h6"
               color="inherit"
               underline="none"

@@ -15,13 +15,13 @@ import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
   list: {
-    display: 'flex',
+    display: "flex",
     padding: theme.spacing(0),
     [theme.breakpoints.down("xs")]: {
-      flexDirection: 'column',
+      flexDirection: "column",
     },
     [theme.breakpoints.up("sm")]: {
-      flexDirection: 'row',
+      flexDirection: "row",
     },
   },
   listItem: {
@@ -49,7 +49,7 @@ interface Props {
   billingInfo: BillingInfo_billingInfo;
 }
 
-const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, billingInfo}) => {
+const SelectBillingPlan: FC<Props> = ({ selectBillingPlan, selectedBillingPlan, billingInfo }) => {
   const classes = useStyles();
   const { loading, error, data } = useQuery<BillingPlans>(QUERY_BILLING_PLANS, {
     context: { ee: true },
@@ -59,7 +59,7 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
 
   const sortedBillingPlans = data.billingPlans.slice().sort((a, b) => {
     if (a.UIRank && b.UIRank) {
-      return (a.UIRank > b.UIRank ? 1 : -1);
+      return a.UIRank > b.UIRank ? 1 : -1;
     } else {
       return 0;
     }
@@ -67,7 +67,12 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
 
   return (
     <>
-      <Alert severity="info"><Link href={CONTACT_LINK}>Contact sales</Link> for Enterprise plans, which offer custom pricing, team billing, premium support, and more</Alert>
+      <Alert severity="info">
+        <Link href={CONTACT_LINK} target="_blank">
+          Contact sales
+        </Link>{" "}
+        for Enterprise plans, which offer custom pricing, team billing, premium support, and more
+      </Alert>
       <VSpace units={3} />
       <List className={classes.list}>
         {sortedBillingPlans.map((billingPlan, idx) => (
@@ -76,13 +81,13 @@ const SelectBillingPlan: FC<Props> = ({selectBillingPlan, selectedBillingPlan, b
               button
               selected={selectedBillingPlan?.billingPlanID === billingPlan.billingPlanID}
               onClick={() => selectBillingPlan(billingPlan)}
-              className={clsx(classes.listItem, idx===0 && classes.firstListItem)}
+              className={clsx(classes.listItem, idx === 0 && classes.firstListItem)}
             >
               <ViewBillingPlanDescription
                 billingPlan={billingPlan}
                 selectable
                 selected={selectedBillingPlan?.billingPlanID === billingPlan.billingPlanID}
-                current={(billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID)}
+                current={billingInfo.billingPlan.billingPlanID === billingPlan.billingPlanID}
               />
             </ListItem>
           </React.Fragment>

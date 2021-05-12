@@ -1,20 +1,10 @@
 import React, { FC } from "react";
-import { Button, Grid, makeStyles, Theme } from "@material-ui/core";
+import { Button, Grid } from "@material-ui/core";
 
 import { Tile, TileProps } from "./Tile";
 import useMe from "hooks/useMe";
 
-const useStyles = makeStyles((theme: Theme) => ({
-  rightButton: {
-    height: "42px",
-  },
-  icon: {
-    fill: theme.palette.primary.dark,
-  },
-}));
-
 export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
-  const classes = useStyles();
   const me = useMe();
 
   if (!me) {
@@ -25,12 +15,24 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
     <Tile {...tileProps}>
       <Grid container alignItems="center" spacing={2}>
         <Grid item>
-          <Button variant="contained" color="secondary" href="https://about.beneath.dev/contact" size="small">
+          <Button
+            variant="contained"
+            color="secondary"
+            href="https://about.beneath.dev/contact"
+            target="_blank"
+            size="small"
+          >
             Contact support
           </Button>
         </Grid>
         <Grid item>
-          <Button variant="contained" color="secondary" size="small" href="https://discord.gg/f5yvx7YWau">
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            href="https://discord.gg/f5yvx7YWau"
+            target="_blank"
+          >
             Join the Discord community
           </Button>
         </Grid>
