@@ -64,7 +64,10 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
               If you have active services that you would like{" "}
               {organization.personalUser?.billingOrganization.displayName} to pay for, you need to transfer those
               services from your personal user to the {organization.personalUser?.billingOrganization.displayName}{" "}
-              organization. See the docs <Link href="https://about.beneath.dev/docs/core-resources/services">here</Link>
+              organization. See the docs{" "}
+              <Link href="https://about.beneath.dev/docs/core-resources/services" target="_blank">
+                here
+              </Link>
               .
               <br />
               <br /> If you have active services that you would like to pay for yourself, and not assign to your
@@ -77,7 +80,10 @@ const ViewBilling: FC<ViewBillingProps> = ({ organization }) => {
 
         <Alert severity="info">
           You can find detailed information about our billing plans{" "}
-          <Link href="https://about.beneath.dev/pricing/">here</Link>.
+          <Link href="https://about.beneath.dev/pricing/" target="_blank">
+            here
+          </Link>
+          .
         </Alert>
 
         <VSpace units={3} />

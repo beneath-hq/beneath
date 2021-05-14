@@ -168,7 +168,9 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
             helperText={
               <>
                 Check out the{" "}
-                <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/">schema docs</Link>{" "}
+                <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/" target="_blank">
+                  schema docs
+                </Link>{" "}
                 or start with an{" "}
                 <Link onClick={() => setExamplesDialog(true)} className={classes.link}>
                   example schema
