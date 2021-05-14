@@ -6,6 +6,10 @@ import Drawer from "./Drawer";
 import Header from "./header/Header";
 import { Link } from "./Link";
 
+import DiscordIcon from "components/icons/Discord";
+import GithubIcon from "components/icons/Github";
+import TwitterIcon from "components/icons/Twitter";
+
 interface IStylesProps {
   contentMarginTop?: null | "dense" | "normal" | "hero";
 }
@@ -40,6 +44,11 @@ const useStyles = makeStyles((theme) => ({
         ? theme.spacing(10)
         : theme.spacing(0),
   }),
+  footerIcon: {
+    display: "block",
+    width: "1.25rem",
+    height: "1.25rem",
+  },
 }));
 
 interface IProps {
@@ -56,7 +65,8 @@ const Page: React.FC<IProps> = (props) => {
   };
 
   const title = props.title ? props.title + " | Beneath" : "Beneath";
-  const classes = useStyles({ contentMarginTop: props.contentMarginTop });
+  const contentMarginTop = props.contentMarginTop === undefined ? "normal" : props.contentMarginTop;
+  const classes = useStyles({ contentMarginTop });
   return (
     <div className={classes.container}>
       <Head>
@@ -81,15 +91,12 @@ const Page: React.FC<IProps> = (props) => {
       </div>
       <div className={classes.footer}>
         <Grid container spacing={4} justify="center">
-          <Grid item>&copy; 2021 Beneath</Grid>
+          <Grid item>&copy; Beneath</Grid>
           <Grid item>
-            <Link href="https://about.beneath.dev/policies/terms/">Terms of Service</Link>
+            <Link href="https://about.beneath.dev/contact/">Contact</Link>
           </Grid>
           <Grid item>
-            <Link href="https://about.beneath.dev/policies/privacy/">Privacy Policy</Link>
-          </Grid>
-          <Grid item>
-            <Link href="https://about.beneath.dev/contact/">Contact us</Link>
+            <Link href="https://about.beneath.dev/policies/">Policies</Link>
           </Grid>
         </Grid>
       </div>

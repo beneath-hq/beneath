@@ -16,7 +16,7 @@ import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 const MyProjectsTiles: FC = () => {
   const me = useMe();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up("md"));
+  const isMd = !useMediaQuery(theme.breakpoints.down("sm"));
 
   if (!me || !me.personalUserID) {
     return <></>;
