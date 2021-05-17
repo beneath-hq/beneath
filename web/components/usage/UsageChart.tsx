@@ -81,14 +81,25 @@ export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => 
           },
           {
             mark: "rule",
-            selection: {
-              hover: { type: "single", on: "mouseover", clear: "mouseout", empty: "none", nearest: true },
-            },
+            params: [
+              {
+                name: "hover",
+                select: {
+                  type: "point",
+                  fields: ["time"],
+                  nearest: true,
+                  on: "mouseover",
+                  clear: "mouseout",
+                },
+              },
+            ],
             encoding: {
               color: {
+                value: "transparent",
                 condition: {
-                  selection: { not: "hover" },
-                  value: "transparent",
+                  param: "hover",
+                  value: "white",
+                  empty: false,
                 },
               },
             },
