@@ -1,7 +1,7 @@
 // NOTE: This file is not for layout stuff – use App.js for that
 // You should really only use it to change Head
 
-import Document, { DocumentContext, Head, Main, NextScript } from "next/document";
+import Document, { DocumentContext, Html, Head, Main, NextScript } from "next/document";
 import React from "react";
 import { ServerStyleSheets } from "@material-ui/styles";
 
@@ -30,7 +30,7 @@ export default class MyDocument extends Document {
 
   render() {
     return (
-      <html lang="en">
+      <Html lang="en">
         <Head>
           {/* This should really be the only place you make any changes */}
 
@@ -72,7 +72,7 @@ export default class MyDocument extends Document {
           <Main />
           <NextScript />
         </body>
-      </html>
+      </Html>
     );
   }
 }

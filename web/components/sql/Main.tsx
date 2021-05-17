@@ -50,7 +50,7 @@ const Main = () => {
 
   // Extract stream paths from query
   const streamPaths = useMemo(() => {
-    const matches = queryText.match(/\`[_\-a-z0-9]+\/[_\-a-z0-9]+\/[_\-a-z0-9]+\`/g);
+    const matches = queryText.match(/`[_\-a-z0-9]+\/[_\-a-z0-9]+\/[_\-a-z0-9]+`/g);
     const paths = _.uniq(matches);
     return paths;
   }, [queryText]);
@@ -85,7 +85,12 @@ const Main = () => {
         <Grid container spacing={2} direction="column">
           {/* Editor */}
           <Grid item xs={12}>
-            <CodeEditor rows={15} language="sql" value={queryText} onChange={(value: string) => setQueryText(value)} />
+            <CodeEditor
+              rows={15}
+              language="sql"
+              value={queryText}
+              onChange={(value: string | undefined) => setQueryText(value || "")}
+            />
           </Grid>
           {/* Action bar */}
           <Grid item xs={12}>

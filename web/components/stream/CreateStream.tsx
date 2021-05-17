@@ -154,11 +154,6 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
           </Grid> */}
           <Field
             name="schema"
-            validate={(schema?: string) => {
-              if (!schema) {
-                return "You must provide a valid schema";
-              }
-            }}
             component={FormikCodeEditor}
             label="GraphQL schema"
             required
@@ -338,7 +333,11 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
               </>
             )}
           </Collapse>
-          <SubmitControl label="Create stream" errorAlert={status} disabled={isSubmitting} />
+          <SubmitControl
+            label="Create stream"
+            errorAlert={status}
+            disabled={isSubmitting || !values.schema || !values.name}
+          />
         </Form>
       )}
     </Formik>
