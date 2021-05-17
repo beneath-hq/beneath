@@ -32,3 +32,4 @@ yarn-error.log
 beneath-models/.venv
 clients/**/build
 /public
+examples/**/yarn.lock
