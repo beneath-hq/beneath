@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-pg/pg/v9/orm"
 
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // CreateOrUpdateUser consolidates and returns the user matching the args

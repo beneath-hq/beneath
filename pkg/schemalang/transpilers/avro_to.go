@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/avro"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/avro"
 )
 
 // ToAvro converts a Schema to the Avro (JSON) representation.

@@ -3,15 +3,15 @@ package dependencies
 import (
 	"github.com/spf13/viper"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/ee/services/bi"
-	"gitlab.com/beneath-hq/beneath/ee/services/billing"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/ee/services/bi"
+	"github.com/beneath-hq/beneath/ee/services/billing"
+	"github.com/beneath-hq/beneath/ee/services/payments"
+	"github.com/beneath-hq/beneath/ee/services/payments/driver"
 
 	// registers all payments drivers
-	_ "gitlab.com/beneath-hq/beneath/ee/services/payments/driver/anarchism"
-	_ "gitlab.com/beneath-hq/beneath/ee/services/payments/driver/stripe"
+	_ "github.com/beneath-hq/beneath/ee/services/payments/driver/anarchism"
+	_ "github.com/beneath-hq/beneath/ee/services/payments/driver/stripe"
 )
 
 // See non-EE file for details

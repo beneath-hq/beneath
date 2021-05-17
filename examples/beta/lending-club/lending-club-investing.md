@@ -27,7 +27,7 @@ Together, these activities encompass a modern analytics application. Using Benea
 - A stream for [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/stream:loans-enriched).
 - Then we'll create this [Metabase dashboard](https://metabase.demo.beneath.dev/dashboard/1).
 
-For reference, here's all [the code](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python/examples/lending-club).
+For reference, here's all [the code](https://github.com/beneath-hq/beneath/tree/master/clients/python/examples/lending-club).
 
 ## Prerequisites
 
@@ -57,7 +57,7 @@ beneath project create epg/lending-club
 
 ### Create a Stream
 
-Next, we need to create a Stream by defining the stream’s schema, _staging_ the stream, and _staging_ an _instance_. In a blank file, we define the schema and name it `loans_history.graphql`. The full file is [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-history/loans_history.graphql), but this is a short version of what it looks like:
+Next, we need to create a Stream by defining the stream’s schema, _staging_ the stream, and _staging_ an _instance_. In a blank file, we define the schema and name it `loans_history.graphql`. The full file is [here](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-history/loans_history.graphql), but this is a short version of what it looks like:
 
 ```graphql
 " Loans listed on the Lending Club platform. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). Historical loans include the borrower's payment outcome. "
@@ -110,7 +110,7 @@ instance = await stream.create_instance(version=0, make_primary=True, update_if_
 
 ### Write csv files to Beneath
 
-Now that the stream has been created on Beneath, we can write data to it. Here's a [simple Python script](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-history/load_historical_loans.ipynb) that uploads the data in those csv files to Beneath.
+Now that the stream has been created on Beneath, we can write data to it. Here's a [simple Python script](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-history/load_historical_loans.ipynb) that uploads the data in those csv files to Beneath.
 
 The script ensures that the schema from the input files matches the schema of the Beneath stream. If the schema doesn’t match, Beneath will reject the write.
 
@@ -134,7 +134,7 @@ Now that we’ve loaded historical data into Beneath, we want to continually fet
 
 ### Write ETL script
 
-We write a little [ETL script](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans/fetch_new_loans.py) to ping the Lending Club API and write the resulting data to Beneath.
+We write a little [ETL script](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans/fetch_new_loans.py) to ping the Lending Club API and write the resulting data to Beneath.
 
 This script revolves around a Beneath _generator_ which is defined in this snippet:
 
@@ -199,7 +199,7 @@ kubectl create secret generic lending-club-loans-service-secret -n models --from
 kubectl create secret generic lending-club-api-key -n models --from-literal secret=SECRET
 ```
 
-Our ETL script only needs to spin-up/spin-down at 6am, 12pm, 3pm, and 6pm PST every day, so this calls for a Cronjob. We can deploy the Cronjob to our Kubernetes cluster with [this yaml file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans/kube.yaml) and these commands:
+Our ETL script only needs to spin-up/spin-down at 6am, 12pm, 3pm, and 6pm PST every day, so this calls for a Cronjob. We can deploy the Cronjob to our Kubernetes cluster with [this yaml file](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans/kube.yaml) and these commands:
 
 ```bash
 docker build -t gcr.io/beneath/lending-club-loans:latest .
@@ -237,7 +237,7 @@ After exploring our data, our next step is to enrich our real-time loan data str
 
 With Beneath, you can train a quick machine learning model by reading your data into a Jupyter notebook and training your model in-memory on your local computer. (This is the quick way to do it -- we’ll cover more robust ways in other tutorials).
 
-You can look at the full training script [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/train_model.ipynb). But here’s the outline of it:
+You can look at the full training script [here](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/train_model.ipynb). But here’s the outline of it:
 
 ### Read data into a Jupyter notebook
 
@@ -269,7 +269,7 @@ import joblib
 joblib.dump(clf, 'model.pkl')
 ```
 
-Now that we have our machine learning model in the model.pkl file, we can include it in our [Dockerfile](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/Dockerfile) and access it in our Kubernetes environment.
+Now that we have our machine learning model in the model.pkl file, we can include it in our [Dockerfile](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/Dockerfile) and access it in our Kubernetes environment.
 
 ## Enrich the data stream
 
@@ -279,11 +279,11 @@ In a Beneath service, we'll read the `epg/lending-club/loans` stream, apply our 
 
 ### Define new schema
 
-First, we prepare our output data stream by defining its schema in [this file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/loans_enriched.graphql). We’re using the same schema as the raw loans stream, but this time we’re adding a column for our predictions.
+First, we prepare our output data stream by defining its schema in [this file](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/loans_enriched.graphql). We’re using the same schema as the raw loans stream, but this time we’re adding a column for our predictions.
 
 ### Write stream processing script
 
-Next, we create our stream processing script that we’ll run in a Kubernetes container. It’s called enrich_loans.py and you can find it [here](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/enrich_loans.py).
+Next, we create our stream processing script that we’ll run in a Kubernetes container. It’s called enrich_loans.py and you can find it [here](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/enrich_loans.py).
 
 The script revolves around the `easy_derive_stream` function, which reads a Beneath stream, performs a computation on the stream, and outputs another Beneath stream:
 
@@ -332,7 +332,7 @@ We add our service secret to our Kubernetes environment like so:
 kubectl create secret generic lending-club-loans-enriched-service-secret -n models --from-literal secret=SECRET
 ```
 
-Now we need to create [this Dockerfile](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/Dockerfile). We specify that the service uses the `delta` strategy. With the delta strategy, every time Kubernetes spins up the service, the service will process all records that it hasn't seen before. Then the service will shut down until the Kubernetes cronjob spins it back up.
+Now we need to create [this Dockerfile](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/Dockerfile). We specify that the service uses the `delta` strategy. With the delta strategy, every time Kubernetes spins up the service, the service will process all records that it hasn't seen before. Then the service will shut down until the Kubernetes cronjob spins it back up.
 
 Here's the important line:
 
@@ -340,7 +340,7 @@ Here's the important line:
 CMD ["python", "enrich_loans.py", "run", "epg/lending-club/enrich-loans", "--strategy", "delta", "--read-quota-mb", "1000", "--write-quota-mb", "1000"]
 ```
 
-We create our Kubernetes cronjob with [this yaml file](https://gitlab.com/beneath-hq/beneath/-/blob/master/clients/python/examples/lending-club/loans-enriched/kube.yaml) and these commands:
+We create our Kubernetes cronjob with [this yaml file](https://github.com/beneath-hq/beneath/blob/master/clients/python/examples/lending-club/loans-enriched/kube.yaml) and these commands:
 
 ```bash
 docker build -t gcr.io/beneath/lending-club-loans-enriched:latest .

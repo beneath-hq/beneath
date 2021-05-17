@@ -1,20 +1,12 @@
----
-title: Project structure
-description: 
-menu:
-  docs:
-    parent: contributing
-    weight: 200
-weight: 200
----
+# Project structure
 
 ## Monorepo
 
 Beneath aims to use a single git repository (monorepo) for all code and documentation. Hopefully that makes it easier to manage dependencies and get a full view of development.
 
-Checkout the git repo with: `git clone https://gitlab.com/beneath-hq/beneath.git`
+Checkout the git repo with: `git clone https://github.com/beneath-hq/beneath.git`
 
-Client libraries (i.e. language-specific libraries that read from and write to Beneath) are found in the `clients/` directory. As an example, see the [Python client library](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python).
+Client libraries (i.e. language-specific libraries that read from and write to Beneath) are found in the `clients/` directory. As an example, see the [Python client library](https://github.com/beneath-hq/beneath/tree/master/clients/python).
 
 ## Core components
 
@@ -42,7 +34,7 @@ Here's a rough guide to the project structure (each folder has a `README.md` wit
 - `config`: Contains a YAML config template, and may contain local development config (e.g. `.development.yaml`, which is ignored by Git)
 - `contributing`: Documentation that describes how the codebase is structured and how to contribute to it
 - `ee`: Enterprise-edition functionality, such as billing
-- `infra`: Packages for connecting to external systems / infrastructure, such as Postgres, Redis, MQ, and notably the "engine", which has drivers for the data systems used in the data-plane 
+- `infra`: Packages for connecting to external systems / infrastructure, such as Postgres, Redis, MQ, and notably the "engine", which has drivers for the data systems used in the data-plane
 - `migrations`: Postgres migrations for the control-plane models in `models/`
 - `models`: Control-plane models and bus events
 - `pkg`: Stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)

@@ -3,7 +3,7 @@ package project
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // CreateUserStarterProject creates a starter project when a user is created

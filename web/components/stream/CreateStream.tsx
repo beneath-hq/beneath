@@ -154,11 +154,6 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
           </Grid> */}
           <Field
             name="schema"
-            validate={(schema?: string) => {
-              if (!schema) {
-                return "You must provide a valid schema";
-              }
-            }}
             component={FormikCodeEditor}
             label="GraphQL schema"
             required
@@ -168,7 +163,9 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
             helperText={
               <>
                 Check out the{" "}
-                <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/">schema docs</Link>{" "}
+                <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/" target="_blank">
+                  schema docs
+                </Link>{" "}
                 or start with an{" "}
                 <Link onClick={() => setExamplesDialog(true)} className={classes.link}>
                   example schema
@@ -336,7 +333,11 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
               </>
             )}
           </Collapse>
-          <SubmitControl label="Create stream" errorAlert={status} disabled={isSubmitting} />
+          <SubmitControl
+            label="Create stream"
+            errorAlert={status}
+            disabled={isSubmitting || !values.schema || !values.name}
+          />
         </Form>
       )}
     </Formik>

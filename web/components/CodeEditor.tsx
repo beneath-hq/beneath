@@ -1,8 +1,7 @@
 import { useTheme, lighten, rgbToHex, makeStyles, Box } from "@material-ui/core";
 import clsx from "clsx";
-import dynamic from "next/dynamic";
 import { FC, useState } from "react";
-const MonacoEditor = dynamic(import("react-monaco-editor"), { ssr: false });
+import Editor from "@monaco-editor/react";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -20,7 +19,7 @@ export interface CodeEditorProps {
   rows: number;
   language?: string;
   value: string | null;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   onFocus?: () => void;
   onBlur?: () => void;
 }
@@ -34,10 +33,10 @@ const CodeEditor: FC<CodeEditorProps> = (props) => {
   const classes = useStyles();
   return (
     <Box className={clsx(classes.container, focus && classes.containerFocus)} height={height}>
-      <MonacoEditor
+      <Editor
         height={height}
         language={language}
-        value={value}
+        value={value || undefined}
         onChange={onChange}
         theme="beneath-theme"
         options={{
@@ -59,7 +58,7 @@ const CodeEditor: FC<CodeEditorProps> = (props) => {
           scrollBeyondLastLine: false,
           selectOnLineNumbers: true,
         }}
-        editorWillMount={(monaco) => {
+        beforeMount={(monaco) => {
           monaco.editor.defineTheme("beneath-theme", {
             base: "vs-dark",
             inherit: true,
@@ -71,15 +70,7 @@ const CodeEditor: FC<CodeEditorProps> = (props) => {
             },
           });
         }}
-        editorDidMount={(editor, monaco) => {
-          // boilerplate
-          const monacoEnvironment = (window as any).MonacoEnvironment;
-          monacoEnvironment.getWorkerUrl = (moduleId: any, label: string) => {
-            // add languages here IF they have intellisense support
-            if (label === "json") return "/_next/static/json.worker.js";
-            return "/_next/static/editor.worker.js";
-          };
-
+        onMount={(editor, monaco) => {
           editor.onDidFocusEditorText(() => {
             if (onFocus) onFocus();
             setFocus(true);

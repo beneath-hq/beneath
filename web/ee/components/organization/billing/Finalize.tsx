@@ -100,7 +100,11 @@ const Finalize: FC<Props> = ({ organization, billingMethod, selectedBillingPlan,
                 <span>
                   I authorise Beneath to send instructions to the financial institution that issued my card to take
                   payments from my card account in accordance with the
-                  <Link href="https://about.beneath.dev/policies/"> terms </Link> of my agreement with you.
+                  <Link href="https://about.beneath.dev/policies/" target="_blank">
+                    {" "}
+                    terms{" "}
+                  </Link>{" "}
+                  of my agreement with you.
                 </span>
               }
             />

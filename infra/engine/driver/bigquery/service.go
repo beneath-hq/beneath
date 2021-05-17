@@ -5,8 +5,8 @@ import (
 
 	"cloud.google.com/go/bigquery"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // MaxKeySize implements beneath.Service

@@ -3,10 +3,10 @@ package resolver
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/ee/services/billing"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/ee/server/control/gql"
+	"github.com/beneath-hq/beneath/ee/services/billing"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/permissions"
 )
 
 // Resolver implements gql.ResolverRoot

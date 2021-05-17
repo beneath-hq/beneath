@@ -5,7 +5,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // PaymentMethod represents different methods of payment

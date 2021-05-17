@@ -3,9 +3,9 @@ package organization
 import (
 	"context"
 
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // An invite procedure is required for organizations since there's mutual costs and benefits: a) The inviter

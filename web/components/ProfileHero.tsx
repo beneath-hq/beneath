@@ -42,7 +42,7 @@ const ProfileHero: FC<ProfileHeroProps> = ({ name, displayName, description, sit
           {description}
         </Typography>
         {site && (
-          <Link href={site} variant="subtitle2" className={classes.site}>
+          <Link href={site} target="_blank" variant="subtitle2" className={classes.site}>
             {site}
           </Link>
         )}

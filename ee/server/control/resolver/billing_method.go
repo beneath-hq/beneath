@@ -6,10 +6,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/server/control/gql"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // BillingMethod returns the gql.BillingMethodResolver

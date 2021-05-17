@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/pkg/codec"
 )
 
 // StreamSchemaKind indicates the SDL of a stream's schema

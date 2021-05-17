@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 const (

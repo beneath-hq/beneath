@@ -11,8 +11,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 var one = big.NewInt(1)

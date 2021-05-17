@@ -5,7 +5,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // Currency represents a billing currency

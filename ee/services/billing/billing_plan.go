@@ -5,9 +5,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // FindBillingPlan finds a billing plan

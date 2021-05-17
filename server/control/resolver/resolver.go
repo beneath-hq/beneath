@@ -3,20 +3,20 @@ package resolver
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
-	"gitlab.com/beneath-hq/beneath/services/project"
-	"gitlab.com/beneath-hq/beneath/services/secret"
-	"gitlab.com/beneath-hq/beneath/services/service"
-	"gitlab.com/beneath-hq/beneath/services/stream"
-	"gitlab.com/beneath-hq/beneath/services/usage"
-	"gitlab.com/beneath-hq/beneath/services/user"
+	"github.com/beneath-hq/beneath/server/control/gql"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/services/project"
+	"github.com/beneath-hq/beneath/services/secret"
+	"github.com/beneath-hq/beneath/services/service"
+	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/usage"
+	"github.com/beneath-hq/beneath/services/user"
 )
 
 // Resolver implements gql.ResolverRoot
 type Resolver struct {
-	Usage       *usage.Service
+	Usage         *usage.Service
 	Organizations *organization.Service
 	Permissions   *permissions.Service
 	Projects      *project.Service

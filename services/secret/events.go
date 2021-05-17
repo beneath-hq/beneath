@@ -3,7 +3,7 @@ package secret
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 func (s *Service) userUpdated(ctx context.Context, msg *models.UserUpdatedEvent) error {

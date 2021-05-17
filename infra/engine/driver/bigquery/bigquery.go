@@ -7,7 +7,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 // BigQuery implements beneath.WarehouseService

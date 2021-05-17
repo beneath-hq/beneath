@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 // ParseQuery implements driver.LookupService

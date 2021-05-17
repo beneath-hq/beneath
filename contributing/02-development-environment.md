@@ -1,12 +1,4 @@
----
-title: Setting up a development environment
-description: 
-menu:
-  docs:
-    parent: contributing
-    weight: 300
-weight: 300
----
+# Development environment
 
 In order to develop Beneath on your local machine, you need to setup local installations of its dependencies.
 
@@ -26,7 +18,7 @@ It's a good idea to run each dependency in a separate tab of a single terminal w
 
 ### Install Google Cloud SDK
 
-Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably `home` or `documents`). 
+Follow this tutorial https://cloud.google.com/sdk/docs/downloads-interactive, but first read this: It creates a folder in the directory from which you run the install commands, so make sure you're in a folder where you won't delete it by accident (probably `home` or `documents`).
 
 Check that everything installed correctly and that you're in the `beneath` Google Cloud project by running `gcloud projects list` (in a new tab). You might also want to check out your `~/.bash_profile` to make sure it configured your `PATH` correctly.
 

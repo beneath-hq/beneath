@@ -3,9 +3,9 @@ package stream
 import (
 	"github.com/go-redis/redis/v7"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/infra/engine"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/infra/engine"
 )
 
 // Service has functionality for managing user and service secrets, including authentication

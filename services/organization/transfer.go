@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // TransferProject transfers a project in fromOrg to targetOrg

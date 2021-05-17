@@ -11,13 +11,13 @@ import (
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/ee/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/ee/server/control/resolver"
-	"gitlab.com/beneath-hq/beneath/ee/services/billing"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/ee/server/control/gql"
+	"github.com/beneath-hq/beneath/ee/server/control/resolver"
+	"github.com/beneath-hq/beneath/ee/services/billing"
+	"github.com/beneath-hq/beneath/ee/services/payments"
+	"github.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/permissions"
 )
 
 // Server is the enterprise control server.

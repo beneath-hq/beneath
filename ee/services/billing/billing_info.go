@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/ee/pkg/paymentsutil"
-	"gitlab.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/pkg/paymentsutil"
+	"github.com/beneath-hq/beneath/infra/db"
 )
 
 // FindBillingInfoByOrganization finds an organization's billing info

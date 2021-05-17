@@ -5,9 +5,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // Service contains functionality for finding and creating users

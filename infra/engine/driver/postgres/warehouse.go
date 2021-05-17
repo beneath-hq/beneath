@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 
+	"github.com/beneath-hq/beneath/infra/engine/driver"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 // WriteToWarehouse implements beneath.WarehouseService

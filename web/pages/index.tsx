@@ -3,9 +3,9 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { withApollo } from "../apollo/withApollo";
-import Page from "../components/Page";
-import Springboard from "../components/console/Springboard";
-import Welcome from "../components/console/Welcome";
+import Auth from "components/Auth";
+import Page from "components/Page";
+import Springboard from "components/console/Springboard";
 import useMe from "../hooks/useMe";
 import { checkForRedirectAfterAuth } from "lib/authRedirect";
 
@@ -56,8 +56,8 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
     );
   } else {
     return (
-      <Page title="Console" maxWidth="md" contentMarginTop="dense">
-        <Welcome />
+      <Page title="Welcome to Beneath" maxWidth="md" contentMarginTop="normal">
+        <Auth />
       </Page>
     );
   }

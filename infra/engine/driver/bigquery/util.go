@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 func isAlreadyExists(err error) bool {

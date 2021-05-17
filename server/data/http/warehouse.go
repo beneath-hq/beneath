@@ -8,10 +8,10 @@ import (
 	"github.com/mr-tron/base58"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/services/data"
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 type queryWarehouseArgs struct {

@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/services/data"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func (s *gRPCServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {

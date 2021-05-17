@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/secrettoken"
 )
 
 // GetSecret extracts the auth object from ctx

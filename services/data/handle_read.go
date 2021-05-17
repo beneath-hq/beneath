@@ -7,11 +7,11 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // ReadRequest is a request to HandleRead

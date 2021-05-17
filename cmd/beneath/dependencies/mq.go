@@ -1,12 +1,12 @@
 package dependencies
 
 import (
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/infra/mq"
 	"github.com/spf13/viper"
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/infra/mq"
 
 	// registers all mq drivers
-	_ "gitlab.com/beneath-hq/beneath/infra/mq/driver/pubsub"
+	_ "github.com/beneath-hq/beneath/infra/mq/driver/pubsub"
 )
 
 func init() {

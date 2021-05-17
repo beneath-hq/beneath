@@ -1,9 +1,9 @@
 package dependencies
 
 import (
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/server/control"
 	"github.com/spf13/viper"
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/server/control"
 )
 
 func init() {

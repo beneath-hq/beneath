@@ -1,11 +1,11 @@
 package data
 
 import (
-	"gitlab.com/beneath-hq/beneath/infra/engine"
-	"gitlab.com/beneath-hq/beneath/infra/mq"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
-	"gitlab.com/beneath-hq/beneath/services/stream"
-	"gitlab.com/beneath-hq/beneath/services/usage"
+	"github.com/beneath-hq/beneath/infra/engine"
+	"github.com/beneath-hq/beneath/infra/mq"
+	"github.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/usage"
 	"go.uber.org/zap"
 )
 

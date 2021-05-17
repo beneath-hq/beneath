@@ -49,9 +49,9 @@ const Header: FC = () => {
     });
   }
 
-  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/" }];
+  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/", target: "_blank" }];
   if (me) {
-    linkActions.unshift({ label: "SQL", href: "/-/sql" });
+    linkActions.unshift({ label: "SQL", href: "/-/sql", target: "_self" });
   }
 
   return (
@@ -64,6 +64,7 @@ const Header: FC = () => {
               className={classes.logo}
               component={NakedLink}
               href={me ? "/" : "https://about.beneath.dev"}
+              target={me ? undefined : "_blank"}
               variant="h6"
               color="inherit"
               underline="none"
@@ -110,23 +111,13 @@ const Header: FC = () => {
                   className={clsx(classes.rightItem, classes.rightButton)}
                   component={NakedLink}
                   href={action.href}
+                  target={action.target}
                 >
                   {action.label}
                 </Button>
               ))}
 
-            {/* Login button */}
-            {!me && (
-              <Button
-                className={clsx(classes.rightItem, classes.rightButton)}
-                component={NakedLink}
-                variant="contained"
-                href="/-/auth"
-              >
-                Login
-              </Button>
-            )}
-            {/* Signup button */}
+            {/* Login / Signup button */}
             {!me && (
               <Button
                 className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
@@ -135,7 +126,7 @@ const Header: FC = () => {
                 href="/-/auth"
                 color="primary"
               >
-                Sign up
+                Sign up / Log in
               </Button>
             )}
             {me && <ProfileButton className={classes.rightItem} me={me} />}

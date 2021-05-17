@@ -12,15 +12,15 @@ import { toURLName } from "lib/names";
 const useStyles = makeStyles((theme) => ({
   sectionHeader: {
     marginTop: theme.spacing(3),
-    marginBottom: theme.spacing(2)
+    marginBottom: theme.spacing(2),
   },
   textData: {
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   buttons: {
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(1),
-  }
+  },
 }));
 
 interface Props {
@@ -28,7 +28,7 @@ interface Props {
   billingInfo: BillingInfo_billingInfo;
 }
 
-const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
+const ViewCurrentPlan: FC<Props> = ({ organization, billingInfo }) => {
   const classes = useStyles();
 
   return (
@@ -36,28 +36,25 @@ const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
       <Typography variant="h2" className={classes.sectionHeader}>
         Your current plan
       </Typography>
-      <Grid container spacing={1}  alignItems="center">
+      <Grid container spacing={1} alignItems="center">
         <Grid item>
-          <Typography>
-            Plan name:
-          </Typography>
+          <Typography>Plan name:</Typography>
         </Grid>
         <Grid item>
-          <Typography className={classes.textData}>
-            {billingInfo.billingPlan.name}
-          </Typography>
+          <Typography className={classes.textData}>{billingInfo.billingPlan.name}</Typography>
         </Grid>
       </Grid>
       <VSpace units={1} />
-      <Grid container spacing={1} >
+      <Grid container spacing={1}>
         <Grid item>
-          <Typography>
-            Current billing period:
-          </Typography>
+          <Typography>Current billing period:</Typography>
         </Grid>
         <Grid item>
           <Typography className={classes.textData}>
-            <Moment format="MMMM Do" subtract={{ days: 31 }}>{billingInfo.nextBillingTime}</Moment> to <Moment format="MMMM Do">{billingInfo.nextBillingTime}</Moment>
+            <Moment format="MMMM Do" subtract={{ days: 31 }}>
+              {billingInfo.nextBillingTime}
+            </Moment>{" "}
+            to <Moment format="MMMM Do">{billingInfo.nextBillingTime}</Moment>
           </Typography>
         </Grid>
       </Grid>
@@ -90,10 +87,7 @@ const ViewCurrentPlan: FC<Props> = ({organization, billingInfo}) => {
           )}
         </Grid>
         <Grid item>
-          <Button
-            variant="contained"
-            href={CONTACT_LINK}
-            >
+          <Button variant="contained" href={CONTACT_LINK} target="_blank">
             Contact sales
           </Button>
         </Grid>

@@ -6,9 +6,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/server/control/gql"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/server/control/gql"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // Project returns the gql.ProjectResolver

@@ -13,4 +13,4 @@ The documentation is organized as follows:
 - [Usage & billing]({{< ref "/docs/usage" >}}). Documents how Beneath monitors usage and calculates your monthly bill.
 - [Miscellaneous]({{< ref "/docs/misc" >}}). Contains pages that don't fit elsewhere, such as the FAQ.
 
-We make our best effort to make the documentation easy to understand. If you have any questions, don't hesitate to [contact us]({{< ref "/contact" >}}). You can also use our [Issues page](https://gitlab.com/beneath-hq/beneath/-/issues) to suggest changes to the docs.
+We make our best effort to make the documentation easy to understand. If you have any questions, don't hesitate to [contact us]({{< ref "/contact" >}}). You can also use our [Issues page](https://github.com/beneath-hq/beneath/issues) to suggest changes to the docs.

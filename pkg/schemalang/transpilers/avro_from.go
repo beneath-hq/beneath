@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/avro"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/avro"
 )
 
 // FromAvro converts a json-encoded Avro schema to the conventional

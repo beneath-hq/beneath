@@ -6,9 +6,9 @@ import (
 	"github.com/go-pg/pg"
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 )
 
 // Service encapsulates behavior for dealing with organizations

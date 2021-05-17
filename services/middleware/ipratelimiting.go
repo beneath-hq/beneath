@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/httputil"
 )
 
 func (s *Service) initRateLimiter() {
