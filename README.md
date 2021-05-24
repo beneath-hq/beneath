@@ -20,15 +20,15 @@ The holy grail of data work is putting data science into production. It's glorio
 
 But building a modern data management stack is a full-time job, and a lot can go wrong. If you were starting a project from scratch today, you might set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Later, you would need more tools to do data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on, and so on.
 
-Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, which under the hood builds on modern data technologies.
+Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, i.e. one SDK and UI, which under the hood builds on modern data technologies.
 
 Beneath is inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we want to give data scientists and engineers a better developer experience for building data apps.
 
 ## 🚀 Status
 
-We started with the data storage and governance layers. You can use the [Beneath Beta](https://beneath.dev/?noredirect=1) today to store, explore, query, stream, monitor and share data. It supports a variety of interfaces, including a Python client, a CLI, websockets and a web UI. The beta is stable for non-critical use cases. If you try out the beta and have any feedback to share, we'd love to [hear it](https://about.beneath.dev/contact/)!
+We started with the data storage and governance layers. You can use the [Beneath Beta](https://beneath.dev/?noredirect=1) today to store, explore, query, stream, monitor and share data. It offers several interfaces, including a Python client, a CLI, websockets, and a web UI. The beta is stable for non-critical use cases. If you try out the beta and have any feedback to share, we'd love to [hear it](https://about.beneath.dev/contact/)!
 
-Next up are the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management. Check out the roadmap below for progress.
+Next up, we're tackling the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management. Check out the roadmap below for progress.
 
 ## 🐣 Get started
 
