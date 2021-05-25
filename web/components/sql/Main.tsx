@@ -1,5 +1,5 @@
 import { useApolloClient, ApolloQueryResult } from "@apollo/client";
-import { Button, CircularProgress, Grid, makeStyles, Theme, Chip } from "@material-ui/core";
+import { Button, CircularProgress, Grid, makeStyles, Theme, Chip, Typography } from "@material-ui/core";
 import { useWarehouse } from "beneath-react";
 import _ from "lodash";
 import { useRouter } from "next/router";
@@ -17,8 +17,12 @@ import {
 } from "apollo/types/StreamByOrganizationProjectAndName";
 import { toBackendName } from "lib/names";
 import StreamPreview from "./StreamPreview";
+import { NakedLink } from "components/Link";
 
-const useStyles = makeStyles((_: Theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
+  unauthenticatedContainer: {
+    marginTop: theme.spacing(12),
+  },
   statusAction: {
     display: "flex",
     alignItems: "center",
@@ -76,8 +80,27 @@ const Main = () => {
     Promise.all(promises).then(() => setStreams(results));
   }, [JSON.stringify(streamPaths)]);
 
-  // Render
+  // get classes
   const classes = useStyles();
+
+  // show message if not logged in
+  if (token === null) {
+    return (
+      <Grid container direction="column" alignItems="center" spacing={2} className={classes.unauthenticatedContainer}>
+        <Grid item>
+          <Typography variant="h3" gutterBottom>
+            Log in or create a free user to run SQL queries
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Button component={NakedLink} variant="contained" href="/" color="primary">
+            Sign up / Log in
+          </Button>
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Grid container spacing={2}>
       {/* Left */}
