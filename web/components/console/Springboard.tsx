@@ -52,7 +52,7 @@ const Springboard: FC = () => {
   }
 
   return (
-    <Grid container spacing={3} className={classes.positionAncestor}>
+    <Grid container spacing={4} className={classes.positionAncestor}>
       <ProfileHeroTile
         shape="wide"
         href={`/organization?organization_name=${toURLName(me.name)}`}

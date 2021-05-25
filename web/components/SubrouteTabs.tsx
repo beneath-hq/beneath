@@ -18,6 +18,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: "inline-flex",
     width: "100%",
   },
+  labelIcon: {
+    marginRight: "5px",
+    marginTop: "2px",
+  },
   labelProgress: {
     width: "16px",
     marginLeft: "5px",
@@ -45,6 +49,7 @@ export interface SubrouteTabsProps {
 export interface SubrouteTab {
   value: string;
   label: string;
+  icon?: React.ReactNode;
   render: () => React.ReactNode;
 }
 
@@ -77,6 +82,7 @@ const SubrouteTabs: FC<SubrouteTabsProps> = ({ router, tabs, defaultValue }) => 
             value={tab.value}
             label={
               <div className={classes.labelContainer}>
+                {tab.icon && <span className={classes.labelIcon}>{tab.icon}</span>}
                 <span className={classes.label}>{tab.label}</span>
                 {tab.value === selectedValue && loading && (
                   <CircularProgress className={classes.labelProgress} size={16} disableShrink />

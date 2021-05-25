@@ -101,7 +101,7 @@ const Auth: FC = () => {
           <Grid item xs={12} md={5}>
             <Paper className={classes.paper}>
               <Typography className={classes.loginTitle} align="center" variant="h2" gutterBottom>
-                Sign up / Log in
+                Sign up for free
               </Typography>
               <Grid container spacing={2} justify="center">
                 <Grid item xs={12}>
