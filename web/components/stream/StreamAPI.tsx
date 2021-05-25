@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { Alert } from "@material-ui/lab";
 import { Container, Grid, makeStyles, Tab, Tabs, Theme } from "@material-ui/core";
 import { TabContext, TabList, TabPanel } from "@material-ui/lab";
@@ -9,6 +9,8 @@ import { Link } from "components/Link";
 import VSpace from "../VSpace";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import { buildTemplate } from "./api";
+import { useRouter } from "next/router";
+import { Label } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
@@ -43,8 +45,26 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
 
   const me = useMe();
   const classes = useStyles();
-  const [language, setLanguage] = useState(api[0]);
-  const [tab, setTab] = useState(language.tabs[0]);
+  const router = useRouter();
+  const [language, setLanguage] = useState(
+    api.find(({ label }) => label.toLowerCase() === router.query.language) || api[0]
+  );
+  const [tab, setTab] = useState(
+    language.tabs.find(({ label }) => label.toLowerCase() === router.query.action) || language.tabs[0]
+  );
+
+  const updateRoute = () => {
+    let asPath = router.asPath.split("?")[0];
+    if (language !== api[0] || tab !== language.tabs[0]) {
+      asPath += `?language=${language.label.toLowerCase()}`;
+      asPath += `&action=${tab.label.toLowerCase()}`;
+    }
+    if (asPath != router.asPath) {
+      router.replace({ pathname: router.pathname, query: router.query }, asPath, { shallow: true });
+    }
+  };
+  useEffect(updateRoute, [language.label]);
+  useEffect(updateRoute, [tab.label]);
 
   return (
     <Container maxWidth="md" className={classes.container}>
