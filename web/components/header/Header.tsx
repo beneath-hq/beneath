@@ -10,6 +10,7 @@ import PathBreadcrumbs from "./PathBreadcrumbs";
 import ProfileButton from "./ProfileButton";
 import DropdownButton from "components/DropdownButton";
 import SplitButton from "components/SplitButton";
+import { useRouter } from "next/router";
 
 const useStyles = makeStyles((_) => ({
   grow: {
@@ -34,6 +35,7 @@ const Header: FC = () => {
   const classes = useStyles();
 
   const theme = useTheme();
+  const router = useRouter();
   const isSm = useMediaQuery(theme.breakpoints.up("md"));
 
   const createActions = [
@@ -63,11 +65,11 @@ const Header: FC = () => {
             <Link
               className={classes.logo}
               component={NakedLink}
-              href={me ? "/" : "https://about.beneath.dev"}
-              target={me ? undefined : "_blank"}
+              href="/"
               variant="h6"
               color="inherit"
               underline="none"
+              title="Home"
               noWrap
             >
               <BeneathLogo />
@@ -118,12 +120,12 @@ const Header: FC = () => {
               ))}
 
             {/* Login / Signup button */}
-            {!me && (
+            {!me && router.pathname !== "/" && (
               <Button
                 className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
                 component={NakedLink}
                 variant="contained"
-                href="/-/auth"
+                href="/"
                 color="primary"
               >
                 Sign up / Log in

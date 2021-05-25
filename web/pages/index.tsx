@@ -56,7 +56,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
     );
   } else {
     return (
-      <Page title="Welcome to Beneath" maxWidth="md" contentMarginTop="normal">
+      <Page title="Welcome to Beneath" contentMarginTop="normal">
         <Auth />
       </Page>
     );

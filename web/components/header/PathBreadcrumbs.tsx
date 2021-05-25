@@ -8,6 +8,8 @@ import MUILink from "@material-ui/core/Link";
 import { makeStyles } from "@material-ui/core/styles";
 import { Chip, Grid, Hidden, Typography } from "@material-ui/core";
 import { toURLName } from "lib/names";
+import useMe from "hooks/useMe";
+import { Me_me } from "apollo/types/Me";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -52,8 +54,9 @@ const useStyles = makeStyles((theme) => ({
 
 export const PathBreadcrumbs: FC = () => {
   const router = useRouter();
+  const me = useMe();
   const classes = useStyles();
-  const crumbs = makeCrumbs(router);
+  const crumbs = makeCrumbs(router, me);
   return (
     <Breadcrumbs
       aria-label="Breadcrumbs"
@@ -70,7 +73,7 @@ export const PathBreadcrumbs: FC = () => {
 
 export default PathBreadcrumbs;
 
-const makeCrumbs = (router: NextRouter) => {
+const makeCrumbs = (router: NextRouter, me: Me_me | null) => {
   if (router.route === "/project") {
     return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
@@ -152,7 +155,7 @@ const makeCrumbs = (router: NextRouter) => {
   } else if (router.route === "/-/welcome") {
     return [<Crumb key={0} href="/-/welcome" label="Welcome" isCurrent={true} />];
   } else if (router.route === "/") {
-    return [<Crumb key={0} href="/" label="Home" isCurrent={true} />];
+    return [<Crumb key={0} href="/" label={me ? "Home" : "Welcome"} isCurrent={true} />];
   } else {
     return [];
   }
