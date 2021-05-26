@@ -9,12 +9,15 @@ import { UsageIndicator, QuotaUsageIndicator } from "components/usage/UsageIndic
 import { PaperGrid } from "components/Paper";
 import Loading from "components/Loading";
 import UsageChart from "./UsageChart";
-import {  } from "./util";
+import {} from "./util";
 
 const useStyles = makeStyles((theme: Theme) => ({
   tab: {
     fontSize: theme.typography.body2.fontSize,
     padding: theme.spacing(1.5),
+  },
+  indicatorPaper: {
+    height: "100%",
   },
 }));
 
@@ -57,6 +60,15 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
     props.entityID
   );
 
+  // set dimension to most used (runs only on first load)
+  useEffect(() => {
+    if (quotaUsage) {
+      if (quotaUsage.readBytes < quotaUsage.writeBytes) {
+        setDimension("write");
+      }
+    }
+  }, [quotaUsageLoading]);
+
   if (quotaUsageLoading || hourlyUsageLoading) {
     return <Loading justify="center" />;
   }
@@ -93,7 +105,7 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
       </Grid>
       {unit === "bytes" && (
         <>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <QuotaUsageIndicator
               label="Reads"
               usage={quotaUsage.readBytes}
@@ -101,7 +113,7 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
               prepaidQuota={props.prepaidReadQuota}
             />
           </PaperGrid>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <QuotaUsageIndicator
               label="Writes"
               usage={quotaUsage.writeBytes}
@@ -109,7 +121,7 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
               prepaidQuota={props.prepaidWriteQuota}
             />
           </PaperGrid>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <QuotaUsageIndicator
               label="Scans"
               usage={quotaUsage?.scanBytes}
@@ -121,23 +133,23 @@ export const OwnerUsageView: FC<OwnerUsageViewProps> = (props) => {
       )}
       {unit === "records" && (
         <>
-          <PaperGrid item xs={12} md={6}>
+          <PaperGrid item xs={12} md={6} className={classes.indicatorPaper}>
             <UsageIndicator label="Records read" usage={quotaUsage.readRecords} />
           </PaperGrid>
-          <PaperGrid item xs={12} md={6}>
+          <PaperGrid item xs={12} md={6} className={classes.indicatorPaper}>
             <UsageIndicator label="Records written" usage={quotaUsage.writeRecords} />
           </PaperGrid>
         </>
       )}
       {unit === "ops" && (
         <>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <UsageIndicator label="Read requests" usage={quotaUsage.readOps} />
           </PaperGrid>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <UsageIndicator label="Write requests" usage={quotaUsage.writeOps} />
           </PaperGrid>
-          <PaperGrid item xs={12} md={4}>
+          <PaperGrid item xs={12} md={4} className={classes.indicatorPaper}>
             <UsageIndicator label="Scan requests" usage={quotaUsage.scanOps} />
           </PaperGrid>
         </>

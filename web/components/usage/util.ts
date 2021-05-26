@@ -21,6 +21,8 @@ export const useHourlyUsage = (entityKind: EntityKind, entityID: string) => {
         until: untilExclusive.toISOString(),
       },
     },
+    fetchPolicy: "cache-and-network",
+    pollInterval: 30000, // 30 seconds
   });
 
   let usages: Usage[] | undefined;
