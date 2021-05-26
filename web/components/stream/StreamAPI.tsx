@@ -109,7 +109,7 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
       >
         {me && <>You can manage secrets on your secrets page</>}
         {!me && (
-          <Typography variant="h3">You need a user to access Beneath. Sign up for free to get started!</Typography>
+          <Typography variant="h4">You need a user to read from Beneath. Sign up for free to get started!</Typography>
         )}
       </Alert>
       <VSpace units={2} />
