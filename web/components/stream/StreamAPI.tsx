@@ -1,16 +1,17 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { Alert } from "@material-ui/lab";
-import { Container, Grid, makeStyles, Tab, Tabs, Theme } from "@material-ui/core";
+import { Box, Button, Container, Grid, makeStyles, Tab, Tabs, Theme, Typography } from "@material-ui/core";
 import { TabContext, TabList, TabPanel } from "@material-ui/lab";
 
 import { toURLName } from "lib/names";
 import useMe from "hooks/useMe";
-import { Link } from "components/Link";
+import { Link, NakedLink } from "components/Link";
 import VSpace from "../VSpace";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import { buildTemplate } from "./api";
 import { useRouter } from "next/router";
 import { Label } from "@material-ui/icons";
+import { setRedirectAfterAuth } from "lib/authRedirect";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
@@ -23,6 +24,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   tabPanel: {
     paddingLeft: "0px",
     paddingRight: "0px",
+  },
+  signupButton: {
+    marginLeft: "0.5rem",
+    height: "32px",
+    whiteSpace: "nowrap",
   },
 }));
 
@@ -56,8 +62,13 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
   const updateRoute = () => {
     let asPath = router.asPath.split("?")[0];
     if (language !== api[0] || tab !== language.tabs[0]) {
-      asPath += `?language=${language.label.toLowerCase()}`;
-      asPath += `&action=${tab.label.toLowerCase()}`;
+      router.query.language = language.label.toLowerCase();
+      router.query.action = tab.label.toLowerCase();
+      asPath += `?language=${router.query.language}`;
+      asPath += `&action=${router.query.action}`;
+    } else {
+      delete router.query.language;
+      delete router.query.action;
     }
     if (asPath != router.asPath) {
       router.replace({ pathname: router.pathname, query: router.query }, asPath, { shallow: true });
@@ -68,22 +79,37 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
 
   return (
     <Container maxWidth="md" className={classes.container}>
-      <Alert severity="info">
-        {me && (
-          <>
-            To create a secret for connecting to Beneath, head to the{" "}
-            <Link
+      <Alert
+        severity="info"
+        action={
+          me ? (
+            <Button
+              className={classes.signupButton}
+              component={NakedLink}
+              variant="contained"
               href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
               as={`/${toURLName(me.name)}/-/secrets`}
+              color="primary"
             >
-              secrets page
-            </Link>
-          </>
-        )}
+              My secrets
+            </Button>
+          ) : (
+            <Button
+              className={classes.signupButton}
+              component={NakedLink}
+              variant="contained"
+              href="/"
+              color="primary"
+              onClick={() => setRedirectAfterAuth(router.pathname, router.query, router.asPath)}
+            >
+              Join now
+            </Button>
+          )
+        }
+      >
+        {me && <>You can manage secrets on your secrets page</>}
         {!me && (
-          <>
-            <Link href="/-/auth">Login or sign up</Link> to get a secret for connecting to Beneath
-          </>
+          <Typography variant="h3">You need a user to access Beneath. Sign up for free to get started!</Typography>
         )}
       </Alert>
       <VSpace units={2} />

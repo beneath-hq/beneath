@@ -6,8 +6,8 @@ const expirationMilliseconds = 2 * 60 * 1000; // ensures the user can login in t
 // `if (typeof window !== "undefined") { YOUR_CODE }`
 // We do these checks in the component code, not in this library.
 
-export const setRedirectAfterAuth = (href: string) => {
-  const item = { href, timestamp: new Date().getTime() };
+export const setRedirectAfterAuth = (href: string, query: any, as: string) => {
+  const item = { href, query, as, timestamp: new Date().getTime() };
   localStorage.setItem(redirectAfterAuth, JSON.stringify(item));
 };
 
@@ -33,5 +33,6 @@ export const checkForRedirectAfterAuth = () => {
   }
 
   // not expired
-  return item.href;
+  localStorage.removeItem(redirectAfterAuth);
+  return { href: item.href, query: item.query, as: item.as };
 };
