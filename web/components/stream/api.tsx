@@ -12,7 +12,7 @@ import { StreamSchemaKind } from "apollo/types/globalTypes";
 const useStyles = makeStyles((theme: Theme) => ({
   heading: {
     "&:not(:first-child)": {
-      marginTop: "2.5rem",
+      marginTop: "5rem",
     },
   },
 }));
@@ -84,18 +84,26 @@ export const buildTemplate = (args: TemplateArgs) => {
   ];
 };
 
+const buildPythonSetup = (args: TemplateArgs) => {
+  return (
+    <>
+      <Heading>Setup</Heading>
+      <Para>If you've already installed the SDK, you can skip these steps. First, install the library:</Para>
+      <CodePaper language="bash" paragraph>{`pip install --upgrade beneath`}</CodePaper>
+      <Para>
+        Now create a command-line (CLI) secret for your local environment from your{" "}
+        <SecretsLink>secrets page</SecretsLink>. Then authenticate your environment with the secret:
+      </Para>
+      <CodePaper language="bash" paragraph>{`beneath auth SECRET`}</CodePaper>
+    </>
+  );
+};
+
 const buildPythonReading = (args: TemplateArgs) => {
   const exampleFilter = makeExamplePythonKeyFilter(args);
   return (
     <>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/" target="_blank">
-          following this guide
-        </Link>
-        .
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Read the entire stream into memory</Heading>
       <Para>
         This snippet loads the entire stream into a Pandas DataFrame, which is useful for analysis in notebooks or
@@ -187,14 +195,7 @@ const buildPythonWriting = (args: TemplateArgs) => {
   const exampleRecord = makeExamplePythonRecord(args);
   return (
     <>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/" target="_blank">
-          following this guide
-        </Link>
-        .
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Writing basics</Heading>
       <Para>This snippet demonstrates how to connect to the stream and write a record to it:</Para>
       <CodePaper language="python" paragraph>{`
@@ -311,14 +312,7 @@ const buildPythonPipelines = (args: TemplateArgs) => {
         Beneath pipelines are currently quite basic and do not yet support joins and aggregations. They are still
         well-suited for generating streams, one-to-N stream derivation, as well as syncing and alerting records.
       </Para>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/" target="_blank">
-          following this guide
-        </Link>
-        .
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Deriving a new stream</Heading>
       <Para>
         The snippet below shows how to create a pipeline that derives data from this stream into a new stream:
@@ -514,7 +508,7 @@ const buildJavaScriptReact = (args: TemplateArgs) => {
       <Para>First, add the Beneath react client to your project:</Para>
       <CodePaper language="bash" paragraph>{`npm install beneath-react`}</CodePaper>
       <Para>
-        To query private streams, create a read-only secret on your <SecretsLink>secrets</SecretsLink> page. If you're
+        To query private streams, create a read-only secret on your <SecretsLink>secrets page</SecretsLink>. If you're
         going to use it in production, create a{" "}
         <Link
           href="https://about.beneath.dev/docs/reading-writing-data/access-management/#creating-services-setting-quotas-and-granting-permissions"

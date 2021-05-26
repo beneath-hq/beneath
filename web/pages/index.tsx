@@ -39,7 +39,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
       const redirectAfterAuth = checkForRedirectAfterAuth();
       if (redirectAfterAuth) {
         const router = useRouter();
-        router.push(redirectAfterAuth);
+        router.push({ pathname: redirectAfterAuth.href, query: redirectAfterAuth.query }, redirectAfterAuth.as);
         return (
           // without this prop, React complains about different renderings between client-side and server-side
           <div suppressHydrationWarning={true} />
@@ -56,7 +56,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
     );
   } else {
     return (
-      <Page title="Welcome to Beneath" maxWidth="md" contentMarginTop="normal">
+      <Page title="Welcome to Beneath" contentMarginTop="normal">
         <Auth />
       </Page>
     );

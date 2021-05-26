@@ -8,8 +8,8 @@ Beneath is a serverless DataOps platform. It aims to combine data storage, proce
 
 <hr />
 
-[![Go Report Card](https://goreportcard.com/badge/gitlab.com/beneath-hq/beneath?style=flat-square)](https://goreportcard.com/report/gitlab.com/beneath-hq/beneath)
-[![GoDoc](https://godoc.org/gitlab.com/beneath-hq/beneath?status.svg)](https://godoc.org/gitlab.com/beneath-hq/beneath)
+[![Go Report Card](https://goreportcard.com/badge/github.com/beneath-hq/beneath?style=flat-square)](https://goreportcard.com/report/github.com/beneath-hq/beneath)
+[![GoDoc](https://godoc.org/github.com/beneath-hq/beneath?status.svg)](https://godoc.org/github.com/beneath-hq/beneath)
 [![Twitter](https://img.shields.io/badge/Follow-BeneathHQ-blue.svg?style=flat&logo=twitter)](https://twitter.com/BeneathHQ)
 
 _Beneath is a work in progress and your input makes a big difference! Star the project to show your support or [reach out](https://about.beneath.dev/contact/) and tell us what you think._
@@ -20,15 +20,23 @@ The holy grail of data work is putting data science into production. It's glorio
 
 But building a modern data management stack is a full-time job, and a lot can go wrong. If you were starting a project from scratch today, you might set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Later, you would need more tools to do data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on, and so on.
 
-Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, which under the hood builds on modern data technologies.
+Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, i.e. one SDK and UI, which under the hood builds on modern data technologies.
 
 Beneath is inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we want to give data scientists and engineers a better developer experience for building data apps.
 
-<!-- to store, monitor, enrich, visualize, integrate, and share data. -->
+## 🚀 Status
+
+We started with the data storage and governance layers. You can use the [Beneath Beta](https://beneath.dev/?noredirect=1) today to store, explore, query, stream, monitor and share data. It offers several interfaces, including a Python client, a CLI, websockets, and a web UI. The beta is stable for non-critical use cases. If you try out the beta and have any feedback to share, we'd love to [hear it](https://about.beneath.dev/contact/)!
+
+Next up, we're tackling the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management. Check out the roadmap below for progress.
 
 ## 🐣 Get started
 
-The best way to try Beneath is with a free beta account. When you sign up, you'll be guided to installing the Python SDK and setting up your first project. [Sign up here](https://beneath.dev/?noredirect=1).
+The best way to try Beneath is with a free beta account. [Sign up here](https://beneath.dev/?noredirect=1). When you have created an account, you can:
+
+1. Install and authenticate the Beneath SDK
+2. Browse public projects and integrate using Python, JavaScript, Websockets and more
+3. Create a private or public project and start writing data
 
 We're working on bundling a self-hosted version that you can run locally. If you're interested in self-hosting, [let us know](https://about.beneath.dev/contact)!
 
@@ -47,8 +55,6 @@ We're working on bundling a self-hosted version that you can run locally. If you
 - React client reference: [https://react.docs.beneath.dev](https://react.docs.beneath.dev)
 
 ## 📦 Features and roadmap
-
-**Status:** The data storage and governance layers are currently [in beta](https://beneath.dev/?noredirect=1), and stable for non-critical use cases. We're ramping up to add data processing and data visualization capabilities, which in turn will unlock the opportunity for more advanced data quality management.
 
 - **Data storage**
   - [x] Log streaming for replay and subscribe
