@@ -1,11 +1,7 @@
 import { NextRouter, withRouter } from "next/router";
 import React, { FC } from "react";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
-import Divider from "@material-ui/core/Divider";
-import { makeStyles, Theme } from "@material-ui/core/styles";
-import Tab from "@material-ui/core/Tab";
-import Tabs from "@material-ui/core/Tabs";
+import { CircularProgress, Divider, makeStyles, Tab, Tabs, Theme } from "@material-ui/core";
 
 import { NakedLink } from "./Link";
 import VSpace from "./VSpace";

@@ -1,16 +1,15 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { Alert } from "@material-ui/lab";
-import { Box, Button, Container, Grid, makeStyles, Tab, Tabs, Theme, Typography } from "@material-ui/core";
+import { Button, Container, Grid, makeStyles, Tab, Theme, Typography } from "@material-ui/core";
 import { TabContext, TabList, TabPanel } from "@material-ui/lab";
+import { useRouter } from "next/router";
 
 import { toURLName } from "lib/names";
 import useMe from "hooks/useMe";
-import { Link, NakedLink } from "components/Link";
+import { NakedLink } from "components/Link";
 import VSpace from "../VSpace";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import { buildTemplate } from "./api";
-import { useRouter } from "next/router";
-import { Label } from "@material-ui/icons";
 import { setRedirectAfterAuth } from "lib/authRedirect";
 
 const useStyles = makeStyles((theme: Theme) => ({
