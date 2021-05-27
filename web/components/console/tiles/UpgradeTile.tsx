@@ -58,7 +58,7 @@ export const UpgradeTile: FC<TileProps> = ({ ...tileProps }) => {
                 variant="contained"
                 component={NakedLink}
                 href={`/organization?organization_name=${me?.name}&tab=billing`}
-                as={`${me?.name}/-/billing`}
+                as={`/${me?.name}/-/billing`}
               >
                 Upgrade
               </Button>

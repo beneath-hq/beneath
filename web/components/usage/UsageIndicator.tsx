@@ -69,8 +69,10 @@ export interface UsageIndicatorProps extends IndicatorProps {
 
 export const UsageIndicator: FC<UsageIndicatorProps> = ({ format, usage, ...indicatorProps }) => {
   return (
-    <Indicator {...indicatorProps}>{format === "bytes" ? numbro(usage).format(bytesFormat) : numbro(usage).format(intFormat)}</Indicator>
-  )
+    <Indicator {...indicatorProps}>
+      {format === "bytes" ? numbro(usage).format(bytesFormat) : numbro(usage).format(intFormat)}
+    </Indicator>
+  );
 };
 
 export interface QuotaUsageIndicatorProps extends IndicatorProps {
@@ -79,7 +81,12 @@ export interface QuotaUsageIndicatorProps extends IndicatorProps {
   prepaidQuota?: number | null;
 }
 
-export const QuotaUsageIndicator: FC<QuotaUsageIndicatorProps> = ({ usage, quota, prepaidQuota, ...indicatorProps }) => {
+export const QuotaUsageIndicator: FC<QuotaUsageIndicatorProps> = ({
+  usage,
+  quota,
+  prepaidQuota,
+  ...indicatorProps
+}) => {
   const progressQuota = !quota ? undefined : !prepaidQuota ? quota : usage >= prepaidQuota ? quota : prepaidQuota;
 
   const classes = useStyles();

@@ -106,9 +106,13 @@ const ContentContainer: FC<ContentContainerProps> = (props) => {
         {innerEl}
         {!error && !callToAction?.message && note && (
           <div className={classes.note}>
-            <Typography variant="body2" color="textSecondary" align="center">
-              {note}
-            </Typography>
+            {typeof note === "string" ? (
+              <Typography variant="body2" color="textSecondary" align="center">
+                {note}
+              </Typography>
+            ) : (
+              note
+            )}
           </div>
         )}
       </>

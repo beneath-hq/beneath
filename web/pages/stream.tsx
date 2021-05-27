@@ -4,6 +4,10 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React from "react";
 
+import AssessmentIcon from "@material-ui/icons/Assessment";
+import CodeIcon from "@material-ui/icons/Code";
+import ViewListIcon from "@material-ui/icons/ViewList";
+
 import { QUERY_STREAM, QUERY_STREAM_INSTANCE } from "apollo/queries/stream";
 import {
   StreamInstanceByOrganizationProjectStreamAndVersion,
@@ -107,13 +111,15 @@ const StreamPage = () => {
   tabs.push({
     value: "data",
     label: "Data",
+    icon: <ViewListIcon />,
     render: () => <DataTab stream={stream} instance={instance} />,
   });
   if (instance) {
-    tabs.push({ value: "api", label: "API", render: () => <StreamAPI stream={stream} /> });
+    tabs.push({ value: "api", label: "API", icon: <CodeIcon />, render: () => <StreamAPI stream={stream} /> });
     tabs.push({
       value: "monitoring",
       label: "Monitoring",
+      icon: <AssessmentIcon />,
       render: () => <>{instance && <ViewUsage stream={stream} instance={instance} />}</>,
     });
   }
