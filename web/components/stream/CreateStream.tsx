@@ -254,8 +254,8 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
           </Grid>
           <Typography>
             URL preview: https://beneath.dev/
-            {values.project?.organization.name ? toURLName(values.project?.organization.name) : ""}/
-            {values.project?.name ? toURLName(values.project?.name) : ""}/stream:
+            {values.project?.organization.name ? toURLName(values.project?.organization.name) : "USERNAME"}/
+            {values.project?.name ? toURLName(values.project?.name) : "PROJECT"}/stream:
             {values.name ? toURLName(values.name) : ""}
           </Typography>
           <VSpace units={3} />
