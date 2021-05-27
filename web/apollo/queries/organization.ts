@@ -172,3 +172,15 @@ export const UPDATE_ORGANIZATION = gql`
     }
   }
 `;
+
+export const UPDATE_USER_ORGANIZATION_PERMISSIONS = gql`
+  mutation UpdateUserOrganizationPermissions($userID: UUID!, $organizationID: UUID!, $view: Boolean, $create: Boolean, $admin: Boolean) {
+    updateUserOrganizationPermissions(userID: $userID, organizationID: $organizationID, view: $view, create: $create, admin: $admin) {
+      userID
+      organizationID
+      view
+      create
+      admin
+    }
+  }
+`;

@@ -1,4 +1,4 @@
-import { Button, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Button, Grid, makeStyles, PropTypes, Theme, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import React, { FC } from "react";
 import Moment from "react-moment";
@@ -12,12 +12,13 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   button: {
     width: "fit-content", // keep small even in full width form
+    whiteSpace: "nowrap",
   },
   severeButton: {
     backgroundColor: theme.palette.error.main,
     "&:hover": {
       backgroundColor: theme.palette.secondary.dark,
-    }
+    },
   },
   timestamps: {
     marginTop: 24,
@@ -26,6 +27,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 export interface SubmitControlProps extends FormControlProps {
   label?: string;
+  color?: PropTypes.Color;
   cancelFn?: () => void;
   cancelLabel?: string;
   severe?: boolean;
@@ -36,7 +38,19 @@ export interface SubmitControlProps extends FormControlProps {
 }
 
 const SubmitControl: FC<SubmitControlProps> = (props) => {
-  const { label, cancelFn, cancelLabel, severe, errorAlert, createdOn, updatedOn, disabled, rightSide, ...others } = props;
+  const {
+    label,
+    color,
+    cancelFn,
+    cancelLabel,
+    severe,
+    errorAlert,
+    createdOn,
+    updatedOn,
+    disabled,
+    rightSide,
+    ...others
+  } = props;
   const classes = useStyles();
   return (
     <FormControl disabled={disabled} {...others}>
@@ -54,7 +68,13 @@ const SubmitControl: FC<SubmitControlProps> = (props) => {
           </Grid>
         )}
         <Grid item>
-          <Button className={clsx(classes.button, severe && classes.severeButton)} type="submit" disabled={disabled} variant="contained" color="primary">
+          <Button
+            className={clsx(classes.button, severe && classes.severeButton)}
+            type="submit"
+            disabled={disabled}
+            variant="contained"
+            color={color || "primary"}
+          >
             {label}
           </Button>
         </Grid>
