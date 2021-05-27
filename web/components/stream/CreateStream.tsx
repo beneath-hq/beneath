@@ -62,7 +62,6 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
   const router = useRouter();
   const classes = useStyles();
   const [examplesDialog, setExamplesDialog] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [createStream] = useMutation<CreateStream, CreateStreamVariables>(CREATE_STREAM, {
     onCompleted: (data) => {
       if (data?.createStream) {
@@ -130,9 +129,25 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
     >
       {({ values, setFieldValue, isSubmitting, status }) => (
         <Form title="Create stream">
+          <Typography gutterBottom>
+            Streams are how you store data in Beneath. You can replay and subscribe to streams, run OLAP queries with
+            SQL, and look up specific records by key. Learn more about streams in the{" "}
+            <Link href="https://about.beneath.dev/docs/concepts/">Concepts</Link> docs.
+          </Typography>
           <Typography>
-            Streams in Beneath have a predefined schema. Submit this form and you'll be ready to write data to your
-            stream.
+            You may also be interested in:
+            <ul>
+              <li>
+                <Link href="https://about.beneath.dev/docs/quick-starts/create-stream/">
+                  How to create a stream from Python
+                </Link>
+              </li>
+              <li>
+                <Link href="https://about.beneath.dev/docs/quick-starts/publish-pandas-dataframe/">
+                  How to publish a Pandas DataFrame
+                </Link>
+              </li>
+            </ul>
           </Typography>
           {/* TEMPORARY: Hide this dropdown while there's only one option */}
           {/* <Grid container>
@@ -162,7 +177,7 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
             language={"graphql"}
             helperText={
               <>
-                Check out the{" "}
+                Streams need a predefined schema. Check out the{" "}
                 <Link href="https://about.beneath.dev/docs/reading-writing-data/schema-definition/" target="_blank">
                   schema docs
                 </Link>{" "}
@@ -170,6 +185,7 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
                 <Link onClick={() => setExamplesDialog(true)} className={classes.link}>
                   example schema
                 </Link>
+                .
               </>
             }
           />
@@ -238,12 +254,12 @@ const CreateStreamView: FC<Props> = ({ preselectedProject }) => {
           </Grid>
           <Typography>
             URL preview: https://beneath.dev/
-            {values.project?.organization.name ? toURLName(values.project?.organization.name) : ""}/
-            {values.project?.name ? toURLName(values.project?.name) : ""}/stream:
+            {values.project?.organization.name ? toURLName(values.project?.organization.name) : "USERNAME"}/
+            {values.project?.name ? toURLName(values.project?.name) : "PROJECT"}/stream:
             {values.name ? toURLName(values.name) : ""}
           </Typography>
           <VSpace units={3} />
-          <Collapse title="Advanced settings" in={showAdvancedSettings}>
+          <Collapse title="Advanced settings">
             <Field name="useIndex" component={FormikCheckbox} type="checkbox" label="Enable indexing" />
             <Field name="useWarehouse" component={FormikCheckbox} type="checkbox" label="Enable SQL (warehouse)" />
             <Field
