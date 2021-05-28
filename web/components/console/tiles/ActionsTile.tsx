@@ -18,6 +18,17 @@ export const ActionsTile: FC<TileProps> = ({ ...tileProps }) => {
           <Button
             variant="contained"
             color="secondary"
+            href="https://about.beneath.dev/docs/quick-starts/"
+            target="_blank"
+            size="small"
+          >
+            Quick starts
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
             href="https://about.beneath.dev/contact"
             target="_blank"
             size="small"
