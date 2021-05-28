@@ -16,3 +16,4 @@ What do you want to do?
 - [Create a stream]({{< ref "/docs/quick-starts/create-stream" >}}). Create a stream and write data to it.
 - [Read data from streams]({{< ref "/docs/quick-starts/read-from-stream" >}}). Load, replay or subscribe to data from an existing stream on Beneath.
 - [Publish a Pandas DataFrame]({{< ref "/docs/quick-starts/publish-pandas-dataframe" >}}). Load a Pandas DataFrame and share it with others.
+- [Create a data pipeline]({{< ref "/docs/quick-starts/create-pipeline" >}}). Create a pipeline to generate and process streams.
