@@ -18,7 +18,7 @@ _Beneath is a work in progress and your input makes a big difference! Star the p
 
 The holy grail of data work is putting data science into production. It's glorious to build live dashboards that aggregate multiple data sources, send real-time alerts based on a machine learning model, or offer customer-specific analytics in your frontend.
 
-But building a modern data management stack is a full-time job, and a lot can go wrong. If you were starting a project from scratch today, you might set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Later, you would need more tools to do data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on, and so on.
+But building a modern data management stack is a full-time job, and a lot can go wrong. If you were starting a project from scratch today, you might set up Postgres, BigQuery, Kafka, Airflow, DBT and Metabase just to cover the basics. Later, you would need more tools to do data quality management, data cataloging, data versioning, data lineage, permissions management, change data capture, stream processing, and so on.
 
 Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, i.e. one SDK and UI, which under the hood builds on modern data technologies.
 
@@ -28,7 +28,7 @@ Beneath is inspired by services like Netlify and Vercel that make it remarkable 
 
 We started with the data storage and governance layers. You can use the [Beneath Beta](https://beneath.dev/?noredirect=1) today to store, explore, query, stream, monitor and share data. It offers several interfaces, including a Python client, a CLI, websockets, and a web UI. The beta is stable for non-critical use cases. If you try out the beta and have any feedback to share, we'd love to [hear it](https://about.beneath.dev/contact/)!
 
-Next up, we're tackling the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management. Check out the roadmap below for progress.
+Next up, we're tackling the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management (see the roadmap at the end of this README for progress).
 
 ## 🐣 Get started
 
@@ -45,6 +45,36 @@ We're working on bundling a self-hosted version that you can run locally. If you
 - Chat in [our Discord](https://discord.gg/f5yvx7YWau)
 - Email us at [hello@beneath.dev](mailto:hello@beneath.dev)
 - Book a casual [20-minute meeting](https://calendly.com/beneath-epg/beneath-office-hours)
+
+## 🎬 Tour
+
+The snippet below presents a whirlwind tour of the Python API:
+
+```python
+# Create a new stream
+stream = await beneath.create_stream("examples/demo/foo", schema="""
+  type Foo @schema {
+    foo: String! @key
+    bar: Timestamp
+  }
+""")
+
+# Write real-time data
+await stream.write(data)
+
+# Load into a dataframe
+df = await beneath.load_full(stream)
+
+# Replay and subscribe
+await beneath.consume(stream, callback)
+
+# Analyze with SQL
+data = await beneath.query_warehouse(f"SELECT count(*) FROM `{stream}`")
+```
+
+The image below shows a screenshot from the Beneath console. Check out the home page for a [demo video](https://about.beneath.dev/).
+
+![Source code example](https://about.beneath.dev/media/readme/monitoring.png)
 
 ## 🎓 Documentation
 
