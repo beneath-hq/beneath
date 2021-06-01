@@ -17,3 +17,4 @@ What do you want to do?
 - [Read data from streams]({{< ref "/docs/quick-starts/read-from-stream" >}}). Load, replay or subscribe to data from an existing stream on Beneath.
 - [Publish a Pandas DataFrame]({{< ref "/docs/quick-starts/publish-pandas-dataframe" >}}). Load a Pandas DataFrame and share it with others.
 - [Create a data pipeline]({{< ref "/docs/quick-starts/create-pipeline" >}}). Create a pipeline to generate and process streams.
+- [Checkpoint a machine learning model]({{< ref "/docs/quick-starts/checkpoint-machine-learning-model" >}}). Save a machine learning model to use in a data pipeline.
