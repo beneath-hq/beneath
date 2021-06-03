@@ -22,9 +22,9 @@ If you haven't already, follow the [Install the Beneath SDK]({{< ref "/docs/quic
 
 Browse the Beneath web [console](https://beneath.dev/?noredirect=1) and navigate to a stream you want to process.
 
-Click through to the stream's "Pipelines" API: API > Python > Pipelines. Here you'll find a stream-specific tutorial on how to create a pipeline.
+Click through to the stream's "Pipelines" API: API > Python > Pipelines. There you'll find a stream-specific tutorial on how to create a pipeline.
 
-For an example, look at the API for [earthquakes](https://beneath.dev/examples/earthquakes/stream:earthquakes/-/api?language=python&action=pipelines) or [Reddit posts](https://beneath.dev/examples/reddit/stream:r-wallstreetbets-posts/-/api?language=python&action=pipelines).
+For an example, look at the API for [earthquakes](https://beneath.dev/examples/earthquakes/stream:earthquakes/-/api?language=python&action=pipelines) or [r/wallstreetbets posts](https://beneath.dev/examples/reddit/stream:r-wallstreetbets-posts/-/api?language=python&action=pipelines) streams.
 
 <video width="99%" playsinline controls>
   <source src="/media/docs/quickstart-create-pipeline.mp4" type="video/mp4">
@@ -34,8 +34,8 @@ For an example, look at the API for [earthquakes](https://beneath.dev/examples/e
 
 The Pipelines tab has two code templates:
 
-- **Generate records for this stream**. Follow this guide to consume an external data source and write the data to Beneath. If you change the `stream_path` and `schema` with your own, then the pipeline will produce an entirely new stream.
-- **Derive a new stream**. Follow this guide to apply processing logic to the stream.
+- **Generate records for this stream**. Follow this guide to consume an external data source and write the data to Beneath. You can also adapt the `stream_path` and `schema` params to make the pipeline produce an entirely new stream.
+- **Derive a new stream**. Follow this guide to apply processing logic, such as filtering or enrichment, to the stream.
 
 ## Run and deploy your pipeline
 

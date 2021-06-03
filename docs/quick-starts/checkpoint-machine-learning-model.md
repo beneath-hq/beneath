@@ -43,17 +43,17 @@ clf = LogisticRegression().fit(X_train, y_train)
 
 ## Serialize your model
 
-Before checkpointing, the model object first needs to be converted into a data format that can be transmitted and stored (the process known as [serialization](https://en.wikipedia.org/wiki/Serialization)). Here we use [Python's `pickle` module](https://realpython.com/python-pickle-module/) to serialize our `clf` model into a byte string:
+Before checkpointing, the model object first needs to be converted into a data format that can be transmitted and stored. Here we use [Python's `pickle` module](https://realpython.com/python-pickle-module/) to serialize our `clf` model into a byte string:
 
 ```python
 import pickle
 
-s = pickel.dumps(clf)
+s = pickle.dumps(clf)
 ```
 
 ## Checkpoint your model
 
-Beneath checkpoints are metadata that can be retrieved whenever a data processor starts up. At the beginning of any machine learning application, the first step is to load the model into memory before processing new data.
+In Beneath, checkpoints are metadata that can be retrieved whenever a data processor starts up. At the beginning of any machine learning application, the first step is to load the model into memory before processing new data.
 
 To use checkpoints, first establish a connection to Beneath:
 
@@ -62,14 +62,10 @@ client = beneath.Client()
 await client.start()
 ```
 
-Next create a "checkpointer." Here we create a metastream named `predictive-model` and save ("set") our serialized classifier:
+Next create a "checkpointer" and save our serialized classifier to it:
 
 ```python
-checkpointer = await client.checkpointer(
-  project_path="USERNAME/PROJECT_NAME",
-  metastream_name="predictive-model",
-  metastream_description="Stores the model used to make predictions"
-)
+checkpointer = await client.checkpointer(project_path="USERNAME/PROJECT_NAME")
 
 await checkpointer.set("clf_serialized", s)
 ```
@@ -77,7 +73,7 @@ await checkpointer.set("clf_serialized", s)
 When we're done with the checkpointer, we close the connection:
 
 ```python
-client.stop()
+await client.stop()
 ```
 
 # Part 2: Make predictions
@@ -102,8 +98,6 @@ PREDICTIONS_SCHEMA = """
 """
 
 # create a Beneath Pipeline
-# we define it globally so we can use p.client.checkpointer()
-# in get_clf()
 p = beneath.Pipeline(parse_args=True, disable_checkpoints=True)
 ```
 
@@ -143,7 +137,7 @@ Now that we've loaded our machine learning model, we can use it in a function to
 async def predict_outcome(record):
     clf = await get_clf()
 
-    X = [[record["FEATURE_1"], record["FEATURE_1"], ...]]
+    X = [[record["FEATURE_1"], record["FEATURE_2"], ...]]
     prediction = clf.predict_proba(X)[0][0]
 
     yield {
