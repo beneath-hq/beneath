@@ -5,4 +5,4 @@ The contents of this repository are licensed as follows:
 - All content in the "clients/" directory (which contains libraries for interfacing with Beneath) is licensed under the "MIT/Expat" license (see "clients/LICENSE")
 - All content in the "docs/" directory (which contains developer documentation) is licensed under the "Creative Commons Attribution-ShareAlike 4.0 International" license (see "docs/LICENSE")
 - All third party components copied or linked into the repository are licensed under the original license provided by their owners
-- All other content is copyright Beneath Systems ApS with all rights reserved (pending further deliberation, see "CONTRIBUTING.md")
+- All other content is licensed under the Business Source License 1.1 (BSL) (see "licenses/BSL.txt")
