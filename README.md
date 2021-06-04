@@ -30,6 +30,36 @@ We started with the data storage and governance layers. You can use the [Beneath
 
 Next up, we're tackling the data processing and data visualization layers, which will bring expanded opportunity for data governance and data quality management (see the roadmap at the end of this README for progress).
 
+## 🎬 Tour
+
+The snippet below presents a whirlwind tour of the Python API:
+
+```python
+# Create a new stream
+stream = await client.create_stream("examples/demo/foo", schema="""
+  type Foo @schema {
+    foo: String! @key
+    bar: Timestamp
+  }
+""")
+
+# Write real-time data
+await stream.write(data)
+
+# Load into a dataframe
+df = await beneath.load_full(stream)
+
+# Replay and subscribe
+await beneath.consume(stream, callback, subscription_path="...")
+
+# Analyze with SQL
+data = await beneath.query_warehouse(f"SELECT count(*) FROM `{stream}`")
+```
+
+The image below shows a screenshot from the Beneath console. Check out the home page for a [demo video](https://about.beneath.dev/).
+
+![Source code example](https://about.beneath.dev/media/readme/monitoring.png)
+
 ## 🐣 Get started
 
 The best way to try Beneath is with a free beta account. [Sign up here](https://beneath.dev/?noredirect=1). When you have created an account, you can:
@@ -45,36 +75,6 @@ We're working on bundling a self-hosted version that you can run locally. If you
 - Chat in [our Discord](https://discord.gg/f5yvx7YWau)
 - Email us at [hello@beneath.dev](mailto:hello@beneath.dev)
 - Book a casual [20-minute meeting](https://calendly.com/beneath-epg/beneath-office-hours)
-
-## 🎬 Tour
-
-The snippet below presents a whirlwind tour of the Python API:
-
-```python
-# Create a new stream
-stream = await beneath.create_stream("examples/demo/foo", schema="""
-  type Foo @schema {
-    foo: String! @key
-    bar: Timestamp
-  }
-""")
-
-# Write real-time data
-await stream.write(data)
-
-# Load into a dataframe
-df = await beneath.load_full(stream)
-
-# Replay and subscribe
-await beneath.consume(stream, callback)
-
-# Analyze with SQL
-data = await beneath.query_warehouse(f"SELECT count(*) FROM `{stream}`")
-```
-
-The image below shows a screenshot from the Beneath console. Check out the home page for a [demo video](https://about.beneath.dev/).
-
-![Source code example](https://about.beneath.dev/media/readme/monitoring.png)
 
 ## 🎓 Documentation
 
@@ -139,4 +139,4 @@ The `contributing/` directory in this repository contains a deeper technical wal
 
 ## 🛒 License
 
-This repository contains the full source code for Beneath. We have not yet picked a source code license for the project, but will do so soon. You can read more about our considerations [here](https://github.com/beneath-hq/beneath/blob/master/contributing/08-license.md).
+This repository contains the full source code for Beneath. Beneath's core is source available, licensed under the [Business Source License](https://github.com/beneath-hq/beneath/blob/master/licenses/BSL.txt), which converts to the Apache 2.0 license after four years. All the client libraries (in the `clients/` directory) and examples (in the `examples/` directory) are open-source, licensed under the MIT license.
