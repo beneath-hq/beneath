@@ -30,7 +30,7 @@ For an example, look at the API for [earthquakes](https://beneath.dev/examples/e
 
 The API tab details several different ways to consume data, depending on your use case:
 
-- Read the entire stream into memory
-- Replay the stream's history and subscribe to changes
-- Lookup records by key
-- Analyze with SQL
+- **Read the entire stream into memory**
+- **Replay the stream's history and subscribe to changes**
+- **Lookup records by key**
+- **Analyze with SQL**

@@ -1,16 +1,14 @@
 ---
-title: Create a pipeline
+title: Use the Pipeline API
 description: A guide to generating and processing streams with the Pipeline API
 menu:
   docs:
     parent: quick-starts
-    weight: 600
-weight: 600
+    weight: 500
+weight: 500
 ---
 
-This quick start will help you create a Beneath Pipeline.
-
-Pipelines provide an abstraction over the basic Beneath APIs that makes it easier to develop, test, and deploy stream processing logic.
+Beneath Pipelines provide an abstraction over the basic Beneath APIs that makes it easier to develop, test, and deploy stream processing logic.
 
 Beneath pipelines are currently quite basic and do not yet support joins and aggregations. They are still well-suited for generating streams, one-to-N stream derivation, as well as syncing and alerting records.
 

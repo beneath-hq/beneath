@@ -4,8 +4,8 @@ description: A guide to loading a Pandas DataFrame into Beneath and sharing it w
 menu:
   docs:
     parent: quick-starts
-    weight: 500
-weight: 500
+    weight: 800
+weight: 800
 ---
 
 This quick start will show you how to publish a [Pandas DataFrame](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html) on Beneath. Share the DataFrame with others, or use it as reference data in a Beneath data pipeline or SQL query.
