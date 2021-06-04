@@ -1,7 +1,7 @@
 # Configures gqlgen – docs at https://gqlgen.com/config/
 skip_validation: true
 schema:
-- "ee/server/control/schema/**/*.graphql"
+  - "ee/server/control/schema/**/*.graphql"
 exec:
   filename: ee/server/control/gql/schema_gen.go
   package: gql
@@ -15,14 +15,14 @@ resolver:
 autobind: []
 models:
   UUID:
-    model: gitlab.com/beneath-hq/beneath/ee/server/control/gql.UUID
+    model: github.com/beneath-hq/beneath/ee/server/control/gql.UUID
   BillingPlan:
-    model: gitlab.com/beneath-hq/beneath/ee/models.BillingPlan
+    model: github.com/beneath-hq/beneath/ee/models.BillingPlan
   BilledResource:
-    model: gitlab.com/beneath-hq/beneath/ee/models.BilledResource
+    model: github.com/beneath-hq/beneath/ee/models.BilledResource
   BillingMethod:
-    model: gitlab.com/beneath-hq/beneath/ee/models.BillingMethod
+    model: github.com/beneath-hq/beneath/ee/models.BillingMethod
   BillingInfo:
-    model: gitlab.com/beneath-hq/beneath/ee/models.BillingInfo
+    model: github.com/beneath-hq/beneath/ee/models.BillingInfo
   PaymentMethod:
-    model: gitlab.com/beneath-hq/beneath/ee/models.PaymentMethod
+    model: github.com/beneath-hq/beneath/ee/models.PaymentMethod

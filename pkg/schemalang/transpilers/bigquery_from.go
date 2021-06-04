@@ -5,7 +5,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 // FromBigQuery transpiles a BigQuery schema to an Avro schema

@@ -12,7 +12,7 @@ import { StreamSchemaKind } from "apollo/types/globalTypes";
 const useStyles = makeStyles((theme: Theme) => ({
   heading: {
     "&:not(:first-child)": {
-      marginTop: "2.5rem",
+      marginTop: "5rem",
     },
   },
 }));
@@ -84,15 +84,26 @@ export const buildTemplate = (args: TemplateArgs) => {
   ];
 };
 
+const buildPythonSetup = (args: TemplateArgs) => {
+  return (
+    <>
+      <Heading>Setup</Heading>
+      <Para>If you've already installed the SDK, you can skip these steps. First, install the library:</Para>
+      <CodePaper language="bash" paragraph>{`pip install --upgrade beneath`}</CodePaper>
+      <Para>
+        Now create a command-line (CLI) secret for your local environment from your{" "}
+        <SecretsLink>secrets page</SecretsLink>. Then authenticate your environment with the secret:
+      </Para>
+      <CodePaper language="bash" paragraph>{`beneath auth SECRET`}</CodePaper>
+    </>
+  );
+};
+
 const buildPythonReading = (args: TemplateArgs) => {
   const exampleFilter = makeExamplePythonKeyFilter(args);
   return (
     <>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Read the entire stream into memory</Heading>
       <Para>
         This snippet loads the entire stream into a Pandas DataFrame, which is useful for analysis in notebooks or
@@ -106,10 +117,15 @@ df = await beneath.load_full("${args.organization}/${args.project}/${args.stream
       <Para>
         The function accepts several optional arguments. The most common are <code>to_dataframe=False</code> to get
         records as a regular Python list, <code>filter="..."</code> to{" "}
-        <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter</Link> by key fields, and{" "}
-        <code>max_bytes=...</code> to increase the cap on how many records to load (used to prevent runaway costs). For
-        more details, see{" "}
-        <Link href="https://python.docs.beneath.dev/easy.html#beneath.easy.query_index">the API reference</Link>.
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/" target="_blank">
+          filter
+        </Link>{" "}
+        by key fields, and <code>max_bytes=...</code> to increase the cap on how many records to load (used to prevent
+        runaway costs). For more details, see{" "}
+        <Link href="https://python.docs.beneath.dev/easy.html#beneath.easy.query_index" target="_blank">
+          the API reference
+        </Link>
+        .
       </Para>
       <Heading>Replay the stream's history and subscribe to changes</Heading>
       <Para>
@@ -142,8 +158,10 @@ record = await cursor.read_one()
 # records = await cursor.read_next() # for range or prefix filters that return multiple records
       `}</CodePaper>
       You can also pass filters that match multiple records based on a key range or key prefix. See the{" "}
-      <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter docs</Link> for syntax
-      guidelines.
+      <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/" target="_blank">
+        filter docs
+      </Link>{" "}
+      for syntax guidelines.
       <Heading>Analyze with SQL</Heading>
       <Para>
         This snippet runs a warehouse (OLAP) query on the stream's records and returns the result, which is useful for
@@ -156,15 +174,18 @@ df = await beneath.query_warehouse("SELECT count(*) FROM \`${args.organization}/
       `}</CodePaper>
       <Para>
         See the{" "}
-        <Link href="https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/">
+        <Link href="https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/" target="_blank">
           warehouse queries documentation
         </Link>{" "}
         for a guideline to the SQL query syntax.
       </Para>
       <Heading>Reference</Heading>
       <Para>
-        Consult the <Link href="https://python.docs.beneath.dev">Beneath Python client API reference</Link> for details
-        on all classes, methods and arguments.
+        Consult the{" "}
+        <Link href="https://python.docs.beneath.dev" target="_blank">
+          Beneath Python client API reference
+        </Link>{" "}
+        for details on all classes, methods and arguments.
       </Para>
     </>
   );
@@ -174,11 +195,7 @@ const buildPythonWriting = (args: TemplateArgs) => {
   const exampleRecord = makeExamplePythonRecord(args);
   return (
     <>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Writing basics</Heading>
       <Para>This snippet demonstrates how to connect to the stream and write a record to it:</Para>
       <CodePaper language="python" paragraph>{`
@@ -201,7 +218,10 @@ await client.stop()
       <Para>
         The convenience function <code>write_full</code> allows you to write a full dataset to the stream in one go.
         Each call will create a new version for the stream, and{" "}
-        <Link href="https://about.beneath.dev/docs/concepts/streams/#streams-can-have-multiple-versions-known-as-_instances_">
+        <Link
+          href="https://about.beneath.dev/docs/concepts/streams/#streams-can-have-multiple-versions-known-as-_instances_"
+          target="_blank"
+        >
           finalize
         </Link>{" "}
         it once the writes have completed.
@@ -218,8 +238,11 @@ await beneath.write_full("${args.organization}/${args.project}/${args.stream}", 
       <Heading>Writing records from a web server</Heading>
       <Para>
         A frequent use case for Beneath is to create an API that writes data to a stream. This example shows how to do
-        so using <Link href="https://fastapi.tiangolo.com">FastAPI</Link>, which is like Flask, but faster and with
-        better support for <code>async</code> and <code>await</code>.
+        so using{" "}
+        <Link href="https://fastapi.tiangolo.com" target="_blank">
+          FastAPI
+        </Link>
+        , which is like Flask, but faster and with better support for <code>async</code> and <code>await</code>.
       </Para>
       <Para>First install the dependencies:</Para>
       <CodePaper language="bash" paragraph>
@@ -289,11 +312,7 @@ const buildPythonPipelines = (args: TemplateArgs) => {
         Beneath pipelines are currently quite basic and do not yet support joins and aggregations. They are still
         well-suited for generating streams, one-to-N stream derivation, as well as syncing and alerting records.
       </Para>
-      <Heading>Setup</Heading>
-      <Para>
-        If you haven't already, install the Beneath library and authenticate your environment by{" "}
-        <Link href="https://about.beneath.dev/docs/quick-starts/install-sdk/">following this guide</Link>.
-      </Para>
+      {buildPythonSetup(args)}
       <Heading>Deriving a new stream</Heading>
       <Para>
         The snippet below shows how to create a pipeline that derives data from this stream into a new stream:
@@ -396,8 +415,10 @@ if __name__ == "__main__":
       </CodePaper>
       <Para>
         If you're deploying your pipeline to production, you should use a{" "}
-        <Link href="https://about.beneath.dev/docs/misc/resources/#services">service</Link>. When staging a pipeline, a
-        service is automatically created. To get a secret for it, run:
+        <Link href="https://about.beneath.dev/docs/misc/resources/#services" target="_blank">
+          service
+        </Link>
+        . When staging a pipeline, a service is automatically created. To get a secret for it, run:
       </Para>
       <CodePaper language="bash" paragraph>
         beneath service issue-secret USERNAME/PROJECT/NAME --description "My production secret"
@@ -487,9 +508,12 @@ const buildJavaScriptReact = (args: TemplateArgs) => {
       <Para>First, add the Beneath react client to your project:</Para>
       <CodePaper language="bash" paragraph>{`npm install beneath-react`}</CodePaper>
       <Para>
-        To query private streams, create a read-only secret on your <SecretsLink>secrets</SecretsLink> page. If you're
+        To query private streams, create a read-only secret on your <SecretsLink>secrets page</SecretsLink>. If you're
         going to use it in production, create a{" "}
-        <Link href="https://about.beneath.dev/docs/reading-writing-data/access-management/#creating-services-setting-quotas-and-granting-permissions">
+        <Link
+          href="https://about.beneath.dev/docs/reading-writing-data/access-management/#creating-services-setting-quotas-and-granting-permissions"
+          target="_blank"
+        >
           service secret
         </Link>
         .
@@ -536,8 +560,15 @@ const App = () => {
       </CodePaper>
       <Heading>Reference</Heading>
       <Para>
-        Consult the <Link href="https://react.docs.beneath.dev">Beneath React client API reference</Link> for details.
-        There's also a lower-level <Link href="https://js.docs.beneath.dev">vanilla JavaScript client</Link>.
+        Consult the{" "}
+        <Link href="https://react.docs.beneath.dev" target="_blank">
+          Beneath React client API reference
+        </Link>{" "}
+        for details. There's also a lower-level{" "}
+        <Link href="https://js.docs.beneath.dev" target="_blank">
+          vanilla JavaScript client
+        </Link>
+        .
       </Para>
     </>
   );
@@ -650,7 +681,10 @@ curl ${url} \\
             <TableCell>
               The type of query to run. "log" queries return all records in write order. "index" queries return the most
               recent record for each key, sorted and optionally filtered by key. See the{" "}
-              <Link href="https://about.beneath.dev/docs/concepts/unified-data-system/">docs</Link> for more.
+              <Link href="https://about.beneath.dev/docs/concepts/unified-data-system/" target="_blank">
+                docs
+              </Link>{" "}
+              for more.
             </TableCell>
           </TableRow>
           <TableRow>
@@ -671,8 +705,10 @@ curl ${url} \\
             <TableCell>
               Only applies if type=index. If set, the filter is applied to the index and only matching record(s)
               returned. See the{" "}
-              <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/">filter docs</Link> for
-              syntax.
+              <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/" target="_blank">
+                filter docs
+              </Link>{" "}
+              for syntax.
             </TableCell>
           </TableRow>
         </TableBody>
@@ -703,7 +739,10 @@ curl ${url} \\
       <Heading>Encoding records as JSON</Heading>
       <Para>
         Beneath's schemas support more data types than JSON does. The{" "}
-        <Link href="https://about.beneath.dev/docs/reading-writing-data/index-filters/#representing-data-types-as-json">
+        <Link
+          href="https://about.beneath.dev/docs/reading-writing-data/index-filters/#representing-data-types-as-json"
+          target="_blank"
+        >
           Representing data types as JSON
         </Link>{" "}
         section of the filtering documentation shows how to encode different data types as JSON.

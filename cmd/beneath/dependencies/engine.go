@@ -3,14 +3,14 @@ package dependencies
 import (
 	"github.com/spf13/viper"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/infra/engine"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/infra/engine"
 
 	// registers all engine drivers
-	_ "gitlab.com/beneath-hq/beneath/infra/engine/driver/bigquery"
-	_ "gitlab.com/beneath-hq/beneath/infra/engine/driver/bigtable"
-	_ "gitlab.com/beneath-hq/beneath/infra/engine/driver/mock"
-	_ "gitlab.com/beneath-hq/beneath/infra/engine/driver/postgres"
+	_ "github.com/beneath-hq/beneath/infra/engine/driver/bigquery"
+	_ "github.com/beneath-hq/beneath/infra/engine/driver/bigtable"
+	_ "github.com/beneath-hq/beneath/infra/engine/driver/mock"
+	_ "github.com/beneath-hq/beneath/infra/engine/driver/postgres"
 )
 
 func init() {

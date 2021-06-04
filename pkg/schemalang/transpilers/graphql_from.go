@@ -3,8 +3,8 @@ package transpilers
 import (
 	"fmt"
 
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/graphql"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/graphql"
 )
 
 // FromGraphQL converts a GraphQL schema to an Avro schema

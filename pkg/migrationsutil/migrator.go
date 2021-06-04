@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/pkg/envutil"
+	"github.com/beneath-hq/beneath/pkg/envutil"
 )
 
 // Migrator wraps go-pg/migrations with useful extra functionality

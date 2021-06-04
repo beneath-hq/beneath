@@ -6,8 +6,8 @@ import (
 
 	version "github.com/hashicorp/go-version"
 
-	"gitlab.com/beneath-hq/beneath/services/data/clientversion"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/data/clientversion"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // PingRequest is a request to HandlePing

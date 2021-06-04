@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/services/data"
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func (s *gRPCServer) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadResponse, error) {

@@ -3,8 +3,8 @@ package dependencies
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
 )
 
 func init() {

@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/pkg/queryparse"
 )
 
 // Tracking drivers

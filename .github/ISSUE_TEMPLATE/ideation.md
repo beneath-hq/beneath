@@ -1,3 +1,12 @@
+---
+name: Ideation
+about: Brainstorm solutions to pain points
+title: ''
+labels: ideation
+assignees: ''
+
+---
+
 ### Problem Statement
 
 <!--
@@ -24,5 +33,3 @@ How many users have the problem or would use the new solution?
 How much effort would it take to address this problem?
 Please considering the full vertical of UX, engineering, devops and documentation.
 -->
-
-/label ~"type::ideation"

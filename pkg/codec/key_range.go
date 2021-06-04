@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/beneath-hq/beneath/pkg/codec/ext/tuple"
+	"github.com/beneath-hq/beneath/pkg/queryparse"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/pkg/codec/ext/tuple"
-	"gitlab.com/beneath-hq/beneath/pkg/queryparse"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 var (

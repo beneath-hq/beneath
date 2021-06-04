@@ -40,7 +40,7 @@ Given our objectives and stack, why is Beneath a good choice for data storage?
 - First, we'll create this [stream of real-time Reddit posts](https://beneath.dev/epg/reddit/stream:coronavirus-posts-sentiment).
 - Then we'll create this [website](https://nextjs.demo.beneath.dev).
 
-For reference, here's all [the frontend code](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/js-react/examples/reddit-sentiment) and [the backend code](https://gitlab.com/beneath-hq/beneath/-/tree/master/clients/python/examples/reddit-sentiment).
+For reference, here's all [the frontend code](https://github.com/beneath-hq/beneath/tree/master/clients/js-react/examples/reddit-sentiment) and [the backend code](https://github.com/beneath-hq/beneath/tree/master/clients/python/examples/reddit-sentiment).
 
 ## Prerequisites
 

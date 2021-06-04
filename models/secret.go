@@ -6,7 +6,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/pkg/secrettoken"
+	"github.com/beneath-hq/beneath/pkg/secrettoken"
 )
 
 // Secret represents an access token to Beneath

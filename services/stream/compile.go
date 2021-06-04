@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 // ComputeSchemaMD5 returns a non-canonical (but useful) digest of a schema and its indexes

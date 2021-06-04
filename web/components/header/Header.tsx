@@ -10,6 +10,7 @@ import PathBreadcrumbs from "./PathBreadcrumbs";
 import ProfileButton from "./ProfileButton";
 import DropdownButton from "components/DropdownButton";
 import SplitButton from "components/SplitButton";
+import { useRouter } from "next/router";
 
 const useStyles = makeStyles((_) => ({
   grow: {
@@ -34,6 +35,7 @@ const Header: FC = () => {
   const classes = useStyles();
 
   const theme = useTheme();
+  const router = useRouter();
   const isSm = useMediaQuery(theme.breakpoints.up("md"));
 
   const createActions = [
@@ -49,9 +51,9 @@ const Header: FC = () => {
     });
   }
 
-  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/" }];
+  const linkActions = [{ label: "Docs", href: "https://about.beneath.dev/docs/", target: "_blank" }];
   if (me) {
-    linkActions.unshift({ label: "SQL", href: "/-/sql" });
+    linkActions.unshift({ label: "SQL", href: "/-/sql", target: "_self" });
   }
 
   return (
@@ -63,10 +65,11 @@ const Header: FC = () => {
             <Link
               className={classes.logo}
               component={NakedLink}
-              href={me ? "/" : "https://about.beneath.dev"}
+              href="/"
               variant="h6"
               color="inherit"
               underline="none"
+              title="Home"
               noWrap
             >
               <BeneathLogo />
@@ -110,32 +113,22 @@ const Header: FC = () => {
                   className={clsx(classes.rightItem, classes.rightButton)}
                   component={NakedLink}
                   href={action.href}
+                  target={action.target}
                 >
                   {action.label}
                 </Button>
               ))}
 
-            {/* Login button */}
-            {!me && (
-              <Button
-                className={clsx(classes.rightItem, classes.rightButton)}
-                component={NakedLink}
-                variant="contained"
-                href="/-/auth"
-              >
-                Login
-              </Button>
-            )}
-            {/* Signup button */}
-            {!me && (
+            {/* Login / Signup button */}
+            {!me && router.pathname !== "/" && (
               <Button
                 className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
                 component={NakedLink}
                 variant="contained"
-                href="/-/auth"
+                href="/"
                 color="primary"
               >
-                Sign up
+                Sign up / Log in
               </Button>
             )}
             {me && <ProfileButton className={classes.rightItem} me={me} />}

@@ -1,32 +1,8 @@
-const withCSS = require("@zeit/next-css");
-const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const { PHASE_DEVELOPMENT_SERVER } = require("next/constants");
 
 module.exports = (phase) => {
   // setup monaco editor
-  const config = withCSS({
-    webpack: (config) => {
-      config.module.rules.push({
-        test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-        use: {
-          loader: "url-loader",
-          options: {
-            limit: 100000,
-          },
-        },
-      });
-
-      config.plugins.push(
-        new MonacoWebpackPlugin({
-          // Add languages as needed...
-          languages: ["json", "graphql", "sql"],
-          filename: "static/[name].worker.js",
-        })
-      );
-
-      return config;
-    },
-  });
+  const config = {};
 
   // add BENEATH_ENV variable
   if (phase === PHASE_DEVELOPMENT_SERVER) {
@@ -40,6 +16,11 @@ module.exports = (phase) => {
       BENEATH_ENV: "production",
     });
   }
+
+  // use webpack 5
+  config.future = {
+    webpack5: true,
+  };
 
   // return
   return config;

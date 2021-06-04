@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/beneath-hq/beneath/models"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // CreateWithUser creates an organization and makes user a member

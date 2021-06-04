@@ -132,8 +132,14 @@ const WelcomePage: NextPage = () => {
               }}
               label={
                 <span>
-                  I agree to the <Link href="https://about.beneath.dev/policies/terms/">terms of service</Link> and{" "}
-                  <Link href="https://about.beneath.dev/policies/privacy/">privacy policy</Link>
+                  I agree to the{" "}
+                  <Link href="https://about.beneath.dev/policies/terms/" target="_blank">
+                    terms of service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="https://about.beneath.dev/policies/privacy/" target="_blank">
+                    privacy policy
+                  </Link>
                 </span>
               }
             />

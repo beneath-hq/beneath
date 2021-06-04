@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/infra/mq"
+	"github.com/beneath-hq/beneath/models"
 	uuid "github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/infra/mq"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // Service wraps business intelligence-related functionality

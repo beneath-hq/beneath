@@ -7,9 +7,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	nee_models "gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/ee/models"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	nee_models "github.com/beneath-hq/beneath/models"
 )
 
 // FindBilledResources returns the matching billed resources or nil

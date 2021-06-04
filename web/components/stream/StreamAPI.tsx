@@ -1,14 +1,16 @@
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { Alert } from "@material-ui/lab";
-import { Container, Grid, makeStyles, Tab, Tabs, Theme } from "@material-ui/core";
+import { Button, Container, Grid, makeStyles, Tab, Theme, Typography } from "@material-ui/core";
 import { TabContext, TabList, TabPanel } from "@material-ui/lab";
+import { useRouter } from "next/router";
 
 import { toURLName } from "lib/names";
 import useMe from "hooks/useMe";
-import { Link } from "components/Link";
+import { NakedLink } from "components/Link";
 import VSpace from "../VSpace";
 import { StreamInstanceByOrganizationProjectStreamAndVersion_streamInstanceByOrganizationProjectStreamAndVersion_stream } from "apollo/types/StreamInstanceByOrganizationProjectStreamAndVersion";
 import { buildTemplate } from "./api";
+import { setRedirectAfterAuth } from "lib/authRedirect";
 
 const useStyles = makeStyles((theme: Theme) => ({
   container: {
@@ -21,6 +23,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   tabPanel: {
     paddingLeft: "0px",
     paddingRight: "0px",
+  },
+  signupButton: {
+    marginLeft: "0.5rem",
+    height: "32px",
+    whiteSpace: "nowrap",
   },
 }));
 
@@ -43,27 +50,65 @@ const StreamAPI: FC<StreamAPIProps> = ({ stream }) => {
 
   const me = useMe();
   const classes = useStyles();
-  const [language, setLanguage] = useState(api[0]);
-  const [tab, setTab] = useState(language.tabs[0]);
+  const router = useRouter();
+  const [language, setLanguage] = useState(
+    api.find(({ label }) => label.toLowerCase() === router.query.language) || api[0]
+  );
+  const [tab, setTab] = useState(
+    language.tabs.find(({ label }) => label.toLowerCase() === router.query.action) || language.tabs[0]
+  );
+
+  const updateRoute = () => {
+    let asPath = router.asPath.split("?")[0];
+    if (language !== api[0] || tab !== language.tabs[0]) {
+      router.query.language = language.label.toLowerCase();
+      router.query.action = tab.label.toLowerCase();
+      asPath += `?language=${router.query.language}`;
+      asPath += `&action=${router.query.action}`;
+    } else {
+      delete router.query.language;
+      delete router.query.action;
+    }
+    if (asPath != router.asPath) {
+      router.replace({ pathname: router.pathname, query: router.query }, asPath, { shallow: true });
+    }
+  };
+  useEffect(updateRoute, [language.label]);
+  useEffect(updateRoute, [tab.label]);
 
   return (
     <Container maxWidth="md" className={classes.container}>
-      <Alert severity="info">
-        {me && (
-          <>
-            To create a secret for connecting to Beneath, head to the{" "}
-            <Link
+      <Alert
+        severity="info"
+        action={
+          me ? (
+            <Button
+              className={classes.signupButton}
+              component={NakedLink}
+              variant="contained"
               href={`/organization?organization_name=${toURLName(me.name)}&tab=secrets`}
               as={`/${toURLName(me.name)}/-/secrets`}
+              color="primary"
             >
-              secrets page
-            </Link>
-          </>
-        )}
+              My secrets
+            </Button>
+          ) : (
+            <Button
+              className={classes.signupButton}
+              component={NakedLink}
+              variant="contained"
+              href="/"
+              color="primary"
+              onClick={() => setRedirectAfterAuth(router.pathname, router.query, router.asPath)}
+            >
+              Join now
+            </Button>
+          )
+        }
+      >
+        {me && <>You can manage secrets on your secrets page</>}
         {!me && (
-          <>
-            <Link href="/-/auth">Login or sign up</Link> to get a secret for connecting to Beneath
-          </>
+          <Typography variant="h4">You need a user to read from Beneath. Sign up for free to get started!</Typography>
         )}
       </Alert>
       <VSpace units={2} />

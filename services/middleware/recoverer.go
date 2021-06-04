@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/pkg/httputil"
 )
 
 // RecovererMiddleware is a HTTP middleware that catches any downstream panic calls, and

@@ -1,3 +1,12 @@
+---
+name: Refactor
+about: Propose a code restructuring
+title: ''
+labels: refactor
+assignees: ''
+
+---
+
 ### Summary
 
 <!--
@@ -24,5 +33,3 @@ List files or directories that will be changed by the refactoring.
 Please outline how to execute the refactor.
 Provide links to example code or useful resources.
 -->
-
-/label ~"type::refactor"

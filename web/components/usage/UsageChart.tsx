@@ -29,7 +29,7 @@ export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => 
       renderer="svg"
       // onNewView={(view) => {}} // HINT: To do SSR, must not return until this has triggered
       spec={{
-        $schema: "https://vega.github.io/schema/vega-lite/v4.0.0-beta.10.json",
+        $schema: "https://vega.github.io/schema/vega-lite/v5.1.0.json",
         config: vegaConfig,
         height: 400,
         width: "container",
@@ -81,14 +81,25 @@ export const UsageChart: FC<UsageChartProps> = ({ usages, unit, dimension }) => 
           },
           {
             mark: "rule",
-            selection: {
-              hover: { type: "single", on: "mouseover", clear: "mouseout", empty: "none", nearest: true },
-            },
+            params: [
+              {
+                name: "hover",
+                select: {
+                  type: "point",
+                  fields: ["time"],
+                  nearest: true,
+                  on: "mouseover",
+                  clear: "mouseout",
+                },
+              },
+            ],
             encoding: {
               color: {
+                value: "transparent",
                 condition: {
-                  selection: { not: "hover" },
-                  value: "transparent",
+                  param: "hover",
+                  value: "white",
+                  empty: false,
                 },
               },
             },

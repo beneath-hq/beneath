@@ -3,8 +3,8 @@ package dependencies
 import (
 	"github.com/spf13/viper"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/infra/redis"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/infra/redis"
 )
 
 func init() {
@@ -14,9 +14,9 @@ func init() {
 		return &opts, v.UnmarshalKey("control.redis", &opts)
 	})
 	cli.AddConfigKey(&cli.ConfigKey{
-		Key:     "control.redis.url",
-		Default: "redis://localhost/",
-		Description:   "Redis connection URL for control-plane caching",
+		Key:         "control.redis.url",
+		Default:     "redis://localhost/",
+		Description: "Redis connection URL for control-plane caching",
 	})
 
 }

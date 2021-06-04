@@ -131,3 +131,15 @@ export const UPDATE_PROJECT = gql`
     }
   }
 `;
+
+export const UPDATE_USER_PROJECT_PERMISSIONS = gql`
+  mutation UpdateUserProjectPermissions($userID: UUID!, $projectID: UUID!, $view: Boolean, $create: Boolean, $admin: Boolean) {
+    updateUserProjectPermissions(userID: $userID, projectID: $projectID, view: $view, create: $create, admin: $admin) {
+      userID
+      projectID
+      view
+      create
+      admin
+    }
+  }
+`;

@@ -25,7 +25,7 @@ export function formikToComponent({
     onChange: (value) => {
       setFieldValue(name, value);
       if (onChange) {
-        onChange(value);
+        onChange(value || "");
       }
     },
     onBlur: () => {

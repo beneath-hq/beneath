@@ -1,3 +1,12 @@
+---
+name: Feature
+about: Request new functionality
+title: ''
+labels: enhancement
+assignees: ''
+
+---
+
 ### Problem to solve and solution
 
 <!--
@@ -31,5 +40,3 @@ Please consider how we can measure the UX or business impact of the feature.
 -->
 
 ### Optional: Other information / inspiration / links
-
-/label ~"type::feature"

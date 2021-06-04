@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/beneath-hq/beneath/models"
 	"github.com/satori/go.uuid"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 type Organization interface {

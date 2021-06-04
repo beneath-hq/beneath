@@ -7,20 +7,20 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
-	eedependencies "gitlab.com/beneath-hq/beneath/ee/cmd/beneath/dependencies"
-	eemigrations "gitlab.com/beneath-hq/beneath/ee/migrations"
-	eecontrol "gitlab.com/beneath-hq/beneath/ee/server/control"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/migrations"
-	"gitlab.com/beneath-hq/beneath/server/control"
-	"gitlab.com/beneath-hq/beneath/server/data"
-	"gitlab.com/beneath-hq/beneath/services/usage"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/cmd/beneath/dependencies"
+	eedependencies "github.com/beneath-hq/beneath/ee/cmd/beneath/dependencies"
+	eemigrations "github.com/beneath-hq/beneath/ee/migrations"
+	eecontrol "github.com/beneath-hq/beneath/ee/server/control"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/migrations"
+	"github.com/beneath-hq/beneath/server/control"
+	"github.com/beneath-hq/beneath/server/data"
+	"github.com/beneath-hq/beneath/services/usage"
 
 	// registers all dependencies with the CLI
-	_ "gitlab.com/beneath-hq/beneath/cmd/beneath/dependencies"
-	_ "gitlab.com/beneath-hq/beneath/ee/cmd/beneath/dependencies"
+	_ "github.com/beneath-hq/beneath/cmd/beneath/dependencies"
+	_ "github.com/beneath-hq/beneath/ee/cmd/beneath/dependencies"
 )
 
 func main() {

@@ -3,9 +3,9 @@ import { useRouter } from "next/router";
 import React from "react";
 
 import { withApollo } from "../apollo/withApollo";
-import Page from "../components/Page";
-import Springboard from "../components/console/Springboard";
-import Welcome from "../components/console/Welcome";
+import Auth from "components/Auth";
+import Page from "components/Page";
+import Springboard from "components/console/Springboard";
 import useMe from "../hooks/useMe";
 import { checkForRedirectAfterAuth } from "lib/authRedirect";
 
@@ -39,7 +39,7 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
       const redirectAfterAuth = checkForRedirectAfterAuth();
       if (redirectAfterAuth) {
         const router = useRouter();
-        router.push(redirectAfterAuth);
+        router.push({ pathname: redirectAfterAuth.href, query: redirectAfterAuth.query }, redirectAfterAuth.as);
         return (
           // without this prop, React complains about different renderings between client-side and server-side
           <div suppressHydrationWarning={true} />
@@ -56,8 +56,8 @@ const Console: NextPage<Props> = ({ writeHead, end }) => {
     );
   } else {
     return (
-      <Page title="Console" maxWidth="md" contentMarginTop="dense">
-        <Welcome />
+      <Page title="Welcome to Beneath" contentMarginTop="normal">
+        <Auth />
       </Page>
     );
   }

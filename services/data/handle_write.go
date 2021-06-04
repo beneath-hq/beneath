@@ -9,12 +9,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 
-	pb_engine "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/pkg/jsonutil"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
-	pb "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	pb_engine "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/pkg/jsonutil"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
+	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // WriteRequest is a request to HandleWrite

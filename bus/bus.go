@@ -12,9 +12,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/proto"
-	"gitlab.com/beneath-hq/beneath/infra/mq"
-	"gitlab.com/beneath-hq/beneath/pkg/timeutil"
+	pb "github.com/beneath-hq/beneath/infra/engine/proto"
+	"github.com/beneath-hq/beneath/infra/mq"
+	"github.com/beneath-hq/beneath/pkg/timeutil"
 )
 
 // Msg represents an event handled by Bus

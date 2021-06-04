@@ -3,8 +3,8 @@ package transpilers
 import (
 	"testing"
 
+	"github.com/beneath-hq/beneath/pkg/schemalang"
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
 )
 
 func TestAvro(t *testing.T) {

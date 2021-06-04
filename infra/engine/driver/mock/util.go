@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 type mockRecordsIterator struct{}

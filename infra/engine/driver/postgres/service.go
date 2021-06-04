@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
 )
 
 // MaxKeySize implements beneath.Service

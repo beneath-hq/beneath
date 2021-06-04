@@ -5,9 +5,10 @@ package proto
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	proto1 "gitlab.com/beneath-hq/beneath/server/data/grpc/proto"
 	math "math"
+
+	proto1 "github.com/beneath-hq/beneath/server/data/grpc/proto"
+	proto "github.com/golang/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

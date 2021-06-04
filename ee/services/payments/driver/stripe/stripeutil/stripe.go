@@ -14,9 +14,9 @@ import (
 	"github.com/stripe/stripe-go/taxrate"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/ee/pkg/paymentsutil"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/pkg/paymentsutil"
+	"github.com/beneath-hq/beneath/ee/services/payments/driver"
 )
 
 const (

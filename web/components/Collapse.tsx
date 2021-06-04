@@ -13,18 +13,19 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   openLink: {
-    color: theme.palette.primary.main
+    color: theme.palette.primary.main,
   },
   title: {
     fontWeight: "bold",
-  }
+  },
 }));
 
 interface Props extends MuiCollapseProps {
   title: string;
+  children: any;
 }
 
-const Collapse: FC<Props> = ({title, children}) => {
+export const Collapse: FC<Props> = ({ title, children }) => {
   const classes = useStyles();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -33,18 +34,13 @@ const Collapse: FC<Props> = ({title, children}) => {
       <Link onClick={() => setIsOpen((prev) => !prev)} className={clsx(classes.link, isOpen && classes.openLink)}>
         <Grid container spacing={1}>
           <Grid item>
-            <Typography className={classes.title}>
-              {title}
-            </Typography>
+            <Typography className={classes.title}>{title}</Typography>
           </Grid>
-          <Grid item>
-            {isOpen ? <ExpandLess /> : <ExpandMore />}
-          </Grid>
+          <Grid item>{isOpen ? <ExpandLess /> : <ExpandMore />}</Grid>
         </Grid>
       </Link>
-      <MuiCollapse in={isOpen}>
-        {children}
-      </MuiCollapse>
+      {isOpen && <>{children}</>}
+      {/* <MuiCollapse in={isOpen}>{children}</MuiCollapse> */}
     </>
   );
 };

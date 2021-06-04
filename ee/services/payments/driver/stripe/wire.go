@@ -8,14 +8,14 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	"gitlab.com/beneath-hq/beneath/ee/services/billing"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver"
-	"gitlab.com/beneath-hq/beneath/ee/services/payments/driver/stripe/stripeutil"
-	"gitlab.com/beneath-hq/beneath/pkg/httputil"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
-	"gitlab.com/beneath-hq/beneath/services/organization"
-	"gitlab.com/beneath-hq/beneath/services/permissions"
+	"github.com/beneath-hq/beneath/ee/models"
+	"github.com/beneath-hq/beneath/ee/services/billing"
+	"github.com/beneath-hq/beneath/ee/services/payments/driver"
+	"github.com/beneath-hq/beneath/ee/services/payments/driver/stripe/stripeutil"
+	"github.com/beneath-hq/beneath/pkg/httputil"
+	"github.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/services/organization"
+	"github.com/beneath-hq/beneath/services/permissions"
 )
 
 // WireDriver implements payments.Driver

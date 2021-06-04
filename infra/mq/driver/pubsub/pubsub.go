@@ -9,7 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"go.uber.org/zap"
 
-	"gitlab.com/beneath-hq/beneath/infra/mq"
+	"github.com/beneath-hq/beneath/infra/mq"
 )
 
 func init() {

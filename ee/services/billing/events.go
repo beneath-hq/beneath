@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/beneath-hq/beneath/ee/models"
-	nee_models "gitlab.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/ee/models"
+	nee_models "github.com/beneath-hq/beneath/models"
 )
 
 // HandleOrganizationCreatedEvent puts a newly created organization on the default plan.

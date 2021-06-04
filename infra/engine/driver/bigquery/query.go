@@ -10,11 +10,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/api/iterator"
 
-	"gitlab.com/beneath-hq/beneath/infra/engine/driver"
-	pb "gitlab.com/beneath-hq/beneath/infra/engine/driver/bigquery/proto"
-	"gitlab.com/beneath-hq/beneath/pkg/codec"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang"
-	"gitlab.com/beneath-hq/beneath/pkg/schemalang/transpilers"
+	"github.com/beneath-hq/beneath/infra/engine/driver"
+	pb "github.com/beneath-hq/beneath/infra/engine/driver/bigquery/proto"
+	"github.com/beneath-hq/beneath/pkg/codec"
+	"github.com/beneath-hq/beneath/pkg/schemalang"
+	"github.com/beneath-hq/beneath/pkg/schemalang/transpilers"
 )
 
 const (

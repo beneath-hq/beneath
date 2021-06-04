@@ -6,8 +6,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"gitlab.com/beneath-hq/beneath/models"
-	"gitlab.com/beneath-hq/beneath/services/middleware"
+	"github.com/beneath-hq/beneath/models"
+	"github.com/beneath-hq/beneath/services/middleware"
 )
 
 // QueryLogRequest is a request to HandleQueryLog

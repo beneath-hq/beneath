@@ -3,9 +3,9 @@ package dependencies
 import (
 	"context"
 
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/cmd/beneath/cli"
-	"gitlab.com/beneath-hq/beneath/services/data"
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/cmd/beneath/cli"
+	"github.com/beneath-hq/beneath/services/data"
 )
 
 func init() {

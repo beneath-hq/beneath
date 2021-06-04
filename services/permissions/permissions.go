@@ -5,10 +5,10 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
+	"github.com/beneath-hq/beneath/bus"
+	"github.com/beneath-hq/beneath/infra/db"
+	"github.com/beneath-hq/beneath/models"
 	"github.com/go-redis/redis/v7"
-	"gitlab.com/beneath-hq/beneath/bus"
-	"gitlab.com/beneath-hq/beneath/infra/db"
-	"gitlab.com/beneath-hq/beneath/models"
 )
 
 // Service provides functionality for checking users' and services' permissions for resources
