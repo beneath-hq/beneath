@@ -533,7 +533,7 @@ const App = () => {
     // Other useful options:
     // secret: "INSERT",
     // query: { type: "log", peek: false },
-    // query: { type: "index", filter: { ... } },
+    // query: { type: "index", filter: 'FILTER' },
     // subscribe: true,
   })
 
