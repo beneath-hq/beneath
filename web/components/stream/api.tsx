@@ -599,7 +599,7 @@ curl ${url} \\
 curl ${url} \\
   -H "Authorization: Bearer SECRET" \\
   -d type=index \\
-  -d filter=FILTER \\
+  -d filter='FILTER' \\
   -d limit=25 \\
   -G
 `}
