@@ -533,7 +533,7 @@ const App = () => {
     // Other useful options:
     // secret: "INSERT",
     // query: { type: "log", peek: false },
-    // query: { type: "index", filter: { ... } },
+    // query: { type: "index", filter: 'FILTER' },
     // subscribe: true,
   })
 
@@ -599,7 +599,7 @@ curl ${url} \\
 curl ${url} \\
   -H "Authorization: Bearer SECRET" \\
   -d type=index \\
-  -d filter=FILTER \\
+  -d filter='FILTER' \\
   -d limit=25 \\
   -G
 `}

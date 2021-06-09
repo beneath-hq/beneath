@@ -4,7 +4,7 @@
   </a>
 </p>
 
-Beneath is a serverless DataOps platform. It aims to combine data storage, processing, and visualization with data quality management and governance in one end-to-end platform.
+Beneath is a serverless real-time data platform. Our goal is to create one end-to-end platform for data workers that combines data storage, processing, and visualization with data quality management and governance.
 
 <hr />
 
@@ -12,7 +12,7 @@ Beneath is a serverless DataOps platform. It aims to combine data storage, proce
 [![GoDoc](https://godoc.org/github.com/beneath-hq/beneath?status.svg)](https://godoc.org/github.com/beneath-hq/beneath)
 [![Twitter](https://img.shields.io/badge/Follow-BeneathHQ-blue.svg?style=flat&logo=twitter)](https://twitter.com/BeneathHQ)
 
-_Beneath is a work in progress and your input makes a big difference! Star the project to show your support or [reach out](https://about.beneath.dev/contact/) and tell us what you think._
+_Beneath is a work in progress and your input makes a big difference! If you like it, star the project to show your support or [reach out](https://about.beneath.dev/contact/) and tell us what you think._
 
 ## 🧠 Philosophy
 
@@ -22,7 +22,7 @@ But building a modern data management stack is a full-time job, and a lot can go
 
 Beneath is a new way of building data apps. It takes an end-to-end approach that combines data storage, processing, and visualization with data quality management and governance in one serverless platform. The idea is to provide one opinionated layer of abstraction, i.e. one SDK and UI, which under the hood builds on modern data technologies.
 
-Beneath is inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we want to give data scientists and engineers a better developer experience for building data apps.
+Beneath is inspired by services like Netlify and Vercel that make it remarkable easy for developers to build and run web apps. In that same spirit, we want to give data scientists and engineers the fastest developer experience for building data products.
 
 ## 🚀 Status
 
@@ -43,17 +43,20 @@ stream = await client.create_stream("examples/demo/foo", schema="""
   }
 """)
 
-# Write real-time data
+# Write batch or real-time data
 await stream.write(data)
 
 # Load into a dataframe
 df = await beneath.load_full(stream)
 
-# Replay and subscribe
+# Replay and subscribe to changes
 await beneath.consume(stream, callback, subscription_path="...")
 
 # Analyze with SQL
 data = await beneath.query_warehouse(f"SELECT count(*) FROM `{stream}`")
+
+# Lookup by key, range or prefix
+data = await stream.query_index(filter={"foo": {"_prefix": "bar"}})
 ```
 
 The image below shows a screenshot from the Beneath console. Check out the home page for a [demo video](https://about.beneath.dev/).

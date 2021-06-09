@@ -33,13 +33,11 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* This should really be the only place you make any changes */}
-
           {/* Description tag */}
           <meta
             name="description"
-            content="Streams you can replay, subscribe, query, and share. We're building a better developer experience for data apps."
+            content="Beneath is a serverless real-time data platform. Create serverless streams you can replay and subscribe to, query with SQL, index and filter, serve as an API, monitor, version, and share safely."
           />
-
           {/* Blog RSS feed */}
           <link
             rel="alternate"
@@ -47,7 +45,6 @@ export default class MyDocument extends Document {
             type="application/rss+xml"
             title="Blog Feed | Beneath"
           />
-
           {/* Favicon */}
           <meta name="theme-color" content={theme.palette.background.default} />
           <meta name="msapplication-TileColor" content="#10182e" />

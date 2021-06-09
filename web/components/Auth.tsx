@@ -83,7 +83,7 @@ const Auth: FC = () => {
                   <ul className={classes.list}>
                     <li>
                       Read about the{" "}
-                      <Link href="https://about.beneath.dev/features/" target="_blank">
+                      <Link href="https://about.beneath.dev/" target="_blank">
                         current&nbsp;features
                       </Link>
                     </li>
