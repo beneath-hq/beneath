@@ -10,13 +10,17 @@ import {
 import { withApollo } from "apollo/withApollo";
 import Page from "components/Page";
 import CreateStream from "components/stream/CreateStream";
+import AuthToContinue from "components/AuthToContinue";
+import { useToken } from "hooks/useToken";
 
 const CreatePage: NextPage = () => {
+  const token = useToken();
+
   // Prepopulate query text if &stream=... url param is set
   const router = useRouter();
   const organizationName = router.query.organization;
   const projectName = router.query.project;
-  const skip = !(typeof organizationName === "string" && typeof projectName === "string");
+  const skip = !(typeof organizationName === "string" && typeof projectName === "string" && token);
 
   const { loading, error, data } = useQuery<ProjectByOrganizationAndName, ProjectByOrganizationAndNameVariables>(
     QUERY_PROJECT,
@@ -31,7 +35,8 @@ const CreatePage: NextPage = () => {
 
   return (
     <Page title="Create stream" contentMarginTop="normal" maxWidth="md">
-      <CreateStream preselectedProject={data?.projectByOrganizationAndName} />
+      {!token && <AuthToContinue label="Log in or create a free user to create a stream" />}
+      {token && <CreateStream preselectedProject={data?.projectByOrganizationAndName} />}
     </Page>
   );
 };
