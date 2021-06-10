@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 const Auth: FC = () => {
   const classes = useStyles();
   const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up("md"));
+  const isMd = useMediaQuery(theme.breakpoints.up("md"), { defaultMatches: true });
 
   return (
     <>

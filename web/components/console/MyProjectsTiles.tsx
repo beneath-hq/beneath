@@ -10,13 +10,11 @@ import LoadingTile from "./tiles/LoadingTile";
 import ProjectHeroTile from "./tiles/ProjectHeroTile";
 import PlaceholderTile from "./tiles/PlaceholderTile";
 import useMe from "hooks/useMe";
-import { BillingInfo, BillingInfoVariables } from "ee/apollo/types/BillingInfo";
-import { QUERY_BILLING_INFO } from "ee/apollo/queries/billingInfo";
 
 const MyProjectsTiles: FC = () => {
   const me = useMe();
   const theme = useTheme();
-  const isMd = !useMediaQuery(theme.breakpoints.down("sm"));
+  const isMd = useMediaQuery(theme.breakpoints.up("md"), { defaultMatches: true });
 
   if (!me || !me.personalUserID) {
     return <></>;
@@ -29,20 +27,10 @@ const MyProjectsTiles: FC = () => {
     },
   });
 
-  const { loading: loading2, error: error2, data: data2 } = useQuery<BillingInfo, BillingInfoVariables>(
-    QUERY_BILLING_INFO,
-    {
-      context: { ee: true },
-      variables: {
-        organizationID: me.organizationID,
-      },
-    }
-  );
-
   return (
     <>
-      {(loading || loading2) && <LoadingTile />}
-      {error && <ErrorTile error={error?.message || error2?.message || "Couldn't load your projects"} />}
+      {loading && <LoadingTile />}
+      {error && <ErrorTile error={error?.message || "Couldn't load your projects"} />}
       {data &&
         data.projectsForUser &&
         data.projectsForUser.map(({ projectID, name, description, photoURL, public: isPublic, organization }, i) => (
