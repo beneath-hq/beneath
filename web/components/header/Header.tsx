@@ -36,7 +36,7 @@ const Header: FC = () => {
 
   const theme = useTheme();
   const router = useRouter();
-  const isSm = useMediaQuery(theme.breakpoints.up("md"));
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
 
   const createActions = [
     { label: "Create project", href: "/-/create/project" },
@@ -85,7 +85,7 @@ const Header: FC = () => {
             <div className={classes.grow} />
             {/* Create stream/project/etc. button */}
             {me &&
-              (isSm ? (
+              (isMdUp ? (
                 <SplitButton
                   margin="dense"
                   className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
@@ -106,7 +106,7 @@ const Header: FC = () => {
                 </DropdownButton>
               ))}
             {/* Links (desktop) */}
-            {isSm &&
+            {isMdUp &&
               linkActions.map((action, idx) => (
                 <Button
                   key={idx}
@@ -133,7 +133,7 @@ const Header: FC = () => {
             )}
             {me && <ProfileButton className={classes.rightItem} me={me} />}
             {/* Links (mobile) */}
-            {!isSm && (
+            {!isMdUp && (
               <DropdownButton
                 className={clsx(classes.rightItem, classes.rightButton)}
                 variant="text"
