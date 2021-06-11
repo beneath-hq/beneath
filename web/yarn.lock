@@ -1254,11 +1254,6 @@ astral-regex@^2.0.0:
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-2.0.0.tgz#483143c567aeed4785759c0865786dc77d7d2e31"
   integrity sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==
 
-async-limiter@~1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.1.tgz#dd379e94f0db8310b08291f9d64c3209766617fd"
-  integrity sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==
-
 asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
@@ -1306,23 +1301,23 @@ base64-js@^1.0.2:
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
 
-beneath-react@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.1.6.tgz#1cb5c265366ab5be27d8933ab414b04d7b09d49d"
-  integrity sha512-SozC8T7QmdQMtrOKDa8IRuEFiuH8t9kqbiBQU4ugI27zQNGgphb6ZX0781fo1XomuDmU/IHYBNpjNKkIJVUOOg==
+beneath-react@^1.1.7:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/beneath-react/-/beneath-react-1.1.7.tgz#ac8b2ae606a8f5a75daab40d2d8a62684b4f98ad"
+  integrity sha512-cHzEwnWhrOqlzf3/A4h9HRxqpFEHL8IlUs85n4rKfR1Cn17GdbvxA/CAhFDiYVJIC2CBsmw2PIB6KpfbvRJr8Q==
   dependencies:
-    beneath "^1.1.10"
+    beneath "^1.1.11"
     lodash "^4.17.15"
     uuid "^8.3.0"
 
-beneath@^1.1.10, beneath@^1.1.8:
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.10.tgz#584898f91542225c75350db1448c3f4cfe548776"
-  integrity sha512-sDH01mhMU8q/ZpdPEgcaiOGvhLJhXlIGmblLzMfzgv7F+OpQzGTjQAkJa/UWUzyfkKmG6WCgwYI706ZIWoP5wA==
+beneath@^1.1.11:
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.11.tgz#f5daa77fe64db499901bc565d33a69ca83b37a38"
+  integrity sha512-wUdtyywKi5Ut7ULsbUMssd1980zndoWU+MIEf05MqhV+YlGYRQ8+2c4y8y7D6T6kJsiXKtT1VAYbtY5T7CjV6g==
   dependencies:
     "@types/node-fetch" "^2.5.7"
     graphql "^14.6.0"
-    subscriptions-transport-ws "^0.9.16"
+    subscriptions-transport-ws "^0.9.19"
 
 big.js@^5.2.2:
   version "5.2.2"
@@ -5733,16 +5728,16 @@ stylis@3.5.4:
   resolved "https://registry.yarnpkg.com/stylis/-/stylis-3.5.4.tgz#f665f25f5e299cf3d64654ab949a57c768b73fbe"
   integrity sha512-8/3pSmthWM7lsPBKv7NXkzn2Uc9W7NotcwGNpJaa3k7WMM1XDCA4MgT5k/8BIexd5ydZdboXtU90XH9Ec4Bv/Q==
 
-subscriptions-transport-ws@^0.9.16:
-  version "0.9.18"
-  resolved "https://registry.yarnpkg.com/subscriptions-transport-ws/-/subscriptions-transport-ws-0.9.18.tgz#bcf02320c911fbadb054f7f928e51c6041a37b97"
-  integrity sha512-tztzcBTNoEbuErsVQpTN2xUNN/efAZXyCyL5m3x4t6SKrEiTL2N8SaKWBFWM4u56pL79ULif3zjyeq+oV+nOaA==
+subscriptions-transport-ws@^0.9.19:
+  version "0.9.19"
+  resolved "https://registry.yarnpkg.com/subscriptions-transport-ws/-/subscriptions-transport-ws-0.9.19.tgz#10ca32f7e291d5ee8eb728b9c02e43c52606cdcf"
+  integrity sha512-dxdemxFFB0ppCLg10FTtRqH/31FNRL1y1BQv8209MK5I4CwALb7iihQg+7p65lFcIl8MHatINWBLOqpgU4Kyyw==
   dependencies:
     backo2 "^1.0.2"
     eventemitter3 "^3.1.0"
     iterall "^1.2.1"
     symbol-observable "^1.0.4"
-    ws "^5.2.0"
+    ws "^5.2.0 || ^6.0.0 || ^7.0.0"
 
 supports-color@^2.0.0:
   version "2.0.0"
@@ -6724,12 +6719,10 @@ write-file-atomic@^3.0.0:
     signal-exit "^3.0.2"
     typedarray-to-buffer "^3.1.5"
 
-ws@^5.2.0:
-  version "5.2.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.2.tgz#dffef14866b8e8dc9133582514d1befaf96e980f"
-  integrity sha512-jaHFD6PFv6UgoIVda6qZllptQsMlDEJkTQcybzzXDYM1XO9Y8em691FGMPmM46WGyLU4z9KMgQN+qrux/nhlHA==
-  dependencies:
-    async-limiter "~1.0.0"
+"ws@^5.2.0 || ^6.0.0 || ^7.0.0":
+  version "7.4.6"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.6.tgz#5654ca8ecdeee47c33a9a4bf6d28e2be2980377c"
+  integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
 
 xdg-basedir@^4.0.0:
   version "4.0.0"
