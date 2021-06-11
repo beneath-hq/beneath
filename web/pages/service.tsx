@@ -19,7 +19,7 @@ import ViewUsage from "../components/service/ViewUsage";
 import { toBackendName, toURLName } from "../lib/names";
 import ViewAccess from "components/service/ViewAccess";
 
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
 
 const ServicePage = () => {
   const router = useRouter();

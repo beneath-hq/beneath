@@ -32,7 +32,7 @@ interface IndicatorProps {
 }
 
 const intFormat: numbro.Format = { thousandSeparated: true };
-const bytesFormat: numbro.Format = { base: "decimal", mantissa: 0, output: "byte" };
+const bytesFormat: numbro.Format = { base: "decimal", mantissa: 1, optionalMantissa: true, output: "byte" };
 const percentFormat: numbro.Format = { output: "percent", mantissa: 0 };
 
 const Indicator: FC<IndicatorProps> = ({ label, dense, children }) => {

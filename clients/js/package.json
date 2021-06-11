@@ -1,6 +1,6 @@
 {
   "name": "beneath",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "Client library for https://beneath.dev",
   "url": "https://github.com/beneath-hq/beneath/tree/master/clients/js",
   "main": "dist/index.js",
@@ -30,6 +30,6 @@
   "dependencies": {
     "@types/node-fetch": "^2.5.7",
     "graphql": "^14.6.0",
-    "subscriptions-transport-ws": "^0.9.16"
+    "subscriptions-transport-ws": "^0.9.19"
   }
 }
