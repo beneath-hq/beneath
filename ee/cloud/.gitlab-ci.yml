@@ -3,7 +3,6 @@
   image: dtzar/helm-kubectl:3.2.1
   only:
     - stable
-  when: manual
   variables:
     KUBE_NAMESPACE: production
   environment:
@@ -12,30 +11,31 @@
 
 cloud:deploy:web:
   extends:
-  - .cloud:deploy:prod
+    - .cloud:deploy:prod
   needs: ["ee:build:web"]
   script:
-  - helm upgrade --install --wait --force web ee/cloud/deployments/helm/web/
-    --namespace=${KUBE_NAMESPACE}
-    --values ee/cloud/deployments/helm/web_values.yaml
-    --set image.tag=${CI_COMMIT_SHORT_SHA}
-    --set replicaCount=${REPLICAS_WEB}
+    - helm upgrade --install --wait --force web ee/cloud/deployments/helm/web/
+      --namespace=${KUBE_NAMESPACE}
+      --values ee/cloud/deployments/helm/web_values.yaml
+      --set image.tag=${CI_COMMIT_SHORT_SHA}
+      --set replicaCount=${REPLICAS_WEB}
   variables:
     REPLICAS_WEB: 2
 
 cloud:deploy:backend:
   extends:
-  - .cloud:deploy:prod
+    - .cloud:deploy:prod
   needs: ["ee:build:backend"]
+  when: manual
   script:
-  - helm upgrade --install --wait --force backend ee/cloud/deployments/helm/backend/
-    --namespace=${KUBE_NAMESPACE}
-    --values ee/cloud/deployments/helm/backend_values.yaml
-    --set image.tag=${CI_COMMIT_SHORT_SHA}
-    --set ctrl.server.replicaCount=${REPLICAS_CTRL_SERVER}
-    --set ctrl.worker.replicaCount=${REPLICAS_CTRL_WORKER}
-    --set data.server.replicaCount=${REPLICAS_DATA_SERVER}
-    --set data.worker.replicaCount=${REPLICAS_DATA_WORKER}
+    - helm upgrade --install --wait --force backend ee/cloud/deployments/helm/backend/
+      --namespace=${KUBE_NAMESPACE}
+      --values ee/cloud/deployments/helm/backend_values.yaml
+      --set image.tag=${CI_COMMIT_SHORT_SHA}
+      --set ctrl.server.replicaCount=${REPLICAS_CTRL_SERVER}
+      --set ctrl.worker.replicaCount=${REPLICAS_CTRL_WORKER}
+      --set data.server.replicaCount=${REPLICAS_DATA_SERVER}
+      --set data.worker.replicaCount=${REPLICAS_DATA_WORKER}
   variables:
     REPLICAS_CTRL_SERVER: 2
     REPLICAS_CTRL_WORKER: 2
