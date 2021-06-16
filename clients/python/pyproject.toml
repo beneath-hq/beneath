@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beneath"
-version = "1.3.7"
+version = "1.3.8"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 authors = ["Beneath Systems <hello@beneath.dev>"]
 license = "MIT License"
@@ -16,7 +16,7 @@ python = "^3.7"
 aiohttp = "^3.6.2"
 argparse = "^1.4"
 Cython = "^0.29.15"
-fastavro = "^0.22"
+fastavro = "^1.0"
 grpcio = "^1.35.0"
 msgpack = "^1.0.0"
 pandas = "^1.0.1"
