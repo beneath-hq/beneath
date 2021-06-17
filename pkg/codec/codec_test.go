@@ -60,7 +60,7 @@ func transpileGraphQLToAvroString(gql string) string {
 func TestAvroSimple(t *testing.T) {
 	index := testIndex{fields: []string{"one"}}
 	avroSchema := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: "one") {
+		type Test @schema(name: "test") @key(fields: "one") {
 			one: String!
 			two: String!
 			three: Int64!
@@ -102,7 +102,7 @@ func TestAvroSimple(t *testing.T) {
 func TestAvroComplex(t *testing.T) {
 	index := testIndex{fields: []string{"one"}}
 	avroSchema := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: "one") {
+		type Test @schema(name: "test") @key(fields: "one") {
 			one: String!
 			two: Bytes20!
 			three: Int64!
@@ -162,7 +162,7 @@ func TestAvroComplex(t *testing.T) {
 func TestAvroVeryComplex(t *testing.T) {
 	avroSchema := transpileGraphQLToAvroString(`
 		" Docs, docs, docs, docs! "
-		type Test @stream @key(fields: ["a", "b"]) {
+		type Test @schema @key(fields: ["a", "b"]) {
 			a: String!
 			b: Timestamp!
 			c: Bytes20
@@ -239,7 +239,7 @@ func TestAvroVeryComplex(t *testing.T) {
 func TestKeySimple(t *testing.T) {
 	index := testIndex{fields: []string{"k1", "k2", "k3", "k4"}}
 	schemaString := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: ["k1", "k2", "k3", "k4"]) {
+		type Test @schema(name: "test") @key(fields: ["k1", "k2", "k3", "k4"]) {
 			k1: Bytes20!
 			k2: Int64!
 			k3: String!
@@ -323,7 +323,7 @@ func TestSecondaryKeys(t *testing.T) {
 		fields:  []string{"k2", "k3"},
 		shortID: 1}
 	schemaString := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: ["k1", "k2"]) {
+		type Test @schema(name: "test") @key(fields: ["k1", "k2"]) {
 			k1: Bytes20!
 			k2: Int64!
 			k3: String!
@@ -366,7 +366,7 @@ func TestQueryParse(t *testing.T) {
 	index2 := testIndex{fields: []string{"two"}}
 	index3 := testIndex{fields: []string{"three", "two"}}
 	avroSchema := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: "one") @index(fields: "two") @index(fields: ["three", "two"]) {
+		type Test @schema(name: "test") @key(fields: "one") @index(fields: "two") @index(fields: ["three", "two"]) {
 			one: String!
 			two: Bytes!
 			three: Int64!

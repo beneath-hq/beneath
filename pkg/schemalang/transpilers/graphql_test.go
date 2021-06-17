@@ -9,7 +9,7 @@ import (
 
 const UserSchemaGraphQLWithDoc = `
 " User test "
-type user @stream @key(fields: "id") {
+type user @schema @key(fields: "id") {
 	id: UUID!
 	password_hash: Bytes32!
 	password_salt: Bytes32!
@@ -54,7 +54,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 	}
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: String!
 			k: Int!
 			k: String
@@ -62,7 +62,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "field 'k' declared twice in")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "k") {
+		type TestA @schema @key(fields: "k") {
 			k: Int!
 			a: TestB!
 		}
@@ -77,7 +77,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "found cyclic type 'TestA' \\(not supported\\)")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "k") {
+		type TestA @schema @key(fields: "k") {
 			k: Int!
 			a: TestB
 		}
@@ -87,27 +87,27 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "type 'TestB' does not define any fields")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "k") {
+		type TestA @schema @key(fields: "k") {
 			k: Int!
 			b: TestB
 		}
 	`, "unknown type 'TestB'")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: ["a", "b"]) {
+		type TestA @schema @key(fields: ["a", "b"]) {
 			a: Int!
 			b: [Int!]
 		}
 	`, "field 'b' in type 'TestA' cannot be used as index")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int
 		}
 	`, "field 'a' in type 'TestA' cannot be used as index")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: TestB!
 		}
 
@@ -117,26 +117,26 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "field 'a' in type 'TestA' cannot be used as index")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "b") {
+		type TestA @schema @key(fields: "b") {
 			a: Int!
 		}
 	`, "index field 'b' doesn't exist in type 'TestA'")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: ["a", "b"]) {
+		type TestA @schema @key(fields: ["a", "b"]) {
 			a: Int!
 			b: Int
 		}
 	`, "field 'b' in type 'TestA' cannot be used as index because it is optional")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: ["a", "a"]) {
+		type TestA @schema @key(fields: ["a", "a"]) {
 			a: Int!
 		}
 	`, "field 'a' used twice in index for type 'TestA'")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			b: TestE
 		}
@@ -146,7 +146,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "enum 'TestE' must have at least one symbol")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			b: TestE
 		}
@@ -158,35 +158,35 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "symbol 'TestA' declared twice in enum 'TestE'")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			b: [Int]!
 		}
 	`, "type wrapped by list cannot be nullable")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			b: [[Int!]!]
 		}
 	`, "nested lists are not allowed")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: Int!
 		}
 	`, "field name 'b+' exceeds limit of 64 characters")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			__timestamp: Int!
 		}
 	`, "field name '__timestamp' is a reserved identifier")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 			aA: String!
 		}
@@ -194,7 +194,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 
 	parseCheckAndAssertRegex(t, `
 		type TestA
-			@stream
+			@schema
 			@key(fields: "a")
 			@index(fields: ["a", "b"])
 		{
@@ -205,7 +205,7 @@ func TestChecksWithGraphQL(t *testing.T) {
 
 	parseCheckAndAssertRegex(t, `
 		type TestA
-			@stream
+			@schema
 			@key(fields: "a")
 			@index(fields: ["a", "b"])
 		{
@@ -215,9 +215,9 @@ func TestChecksWithGraphQL(t *testing.T) {
 	`, "the indexes on type 'TestA' are not mutually exclusive")
 
 	parseCheckAndAssertRegex(t, `
-		type TestA @stream(name: "Hey") @key(fields: "a") {
+		type TestA @schema(name: "Hey") @key(fields: "a") {
 			a: Int!
 			b: String!
 		}
-	`, "stream name 'Hey' at .* is not a valid stream name")
+	`, "schema name='Hey' at .* is not a valid schema name (.*)")
 }

@@ -9,7 +9,7 @@ import (
 func TestSDL1(t *testing.T) {
 	_, err := ParseSDL(`
 		type TestExample1
-			@stream(name: "test-example-1")
+			@schema(name: "test-example-1")
 			@key(fields: ["a_aaa", "a_bbb"])
 			@index(fields: ["a_bbb"], normalize: false)
 		{
@@ -61,7 +61,7 @@ func TestSDL4(t *testing.T) {
 
 func TestSDL5(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream {
+		type Test @schema {
 			a: Int!
 		}
 	`)
@@ -71,17 +71,17 @@ func TestSDL5(t *testing.T) {
 
 func TestSDL6(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream(testA: "test", testB: "test") {
+		type Test @schema(testA: "test", testB: "test") {
 			a: Int!
 		}
 	`)
 	assert.NotNil(t, err)
-	assert.Regexp(t, "unknown arg 'testA' for annotation '@stream'", err.Error())
+	assert.Regexp(t, "unknown arg 'testA' for annotation '@schema'", err.Error())
 }
 
 func TestSDL9(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream @key(fields: [0, 1]) {
+		type Test @schema @key(fields: [0, 1]) {
 			a: Int!
 		}
 	`)
@@ -91,7 +91,7 @@ func TestSDL9(t *testing.T) {
 
 func TestSDL10(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream @key(fields: ["a", "b"], external: whatever) {
+		type Test @schema @key(fields: ["a", "b"], external: whatever) {
 			a: Int!
 			b: Int!
 		}
@@ -102,7 +102,7 @@ func TestSDL10(t *testing.T) {
 
 func TestSDL11(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream @key(fields: true) {
+		type Test @schema @key(fields: true) {
 			a: Int!
 		}
 	`)
@@ -112,7 +112,7 @@ func TestSDL11(t *testing.T) {
 
 func TestSDL25(t *testing.T) {
 	_, err := ParseSDL(`
-		type TestA @stream @key(fields: "a") {
+		type TestA @schema @key(fields: "a") {
 			a: Int!
 		}
 		enum Bytes20 {
@@ -126,7 +126,7 @@ func TestSDL25(t *testing.T) {
 
 func TestSDL29(t *testing.T) {
 	c, err := ParseSDL(`
-		type TestA @stream(name: "test") @key(fields: "a") {
+		type TestA @schema(name: "test") @key(fields: "a") {
 			a: Int!
 			b: Int!
 		}
@@ -137,10 +137,10 @@ func TestSDL29(t *testing.T) {
 
 func TestSDL30(t *testing.T) {
 	_, err := ParseSDL(`
-		type TestA @stream(name: "test") @key(fields: "a") {
+		type TestA @schema(name: "test") @key(fields: "a") {
 			a: Int!
 		}
-		type TestB @stream(name: "test") @key(fields: "a") {
+		type TestB @schema(name: "test") @key(fields: "a") {
 			a: Int!
 		}
 	`)
@@ -151,7 +151,7 @@ func TestSDL30(t *testing.T) {
 func TestSDL35(t *testing.T) {
 	_, err := ParseSDL(`
 		type TestA
-			@stream
+			@schema
 			@key(fields: "a")
 			@hello
 		{
@@ -176,7 +176,7 @@ func TestSDL36(t *testing.T) {
 
 func TestSDL37(t *testing.T) {
 	_, err := ParseSDL(`
-		type TestA @stream(name: "") @key(fields: "a") {
+		type TestA @schema(name: "") @key(fields: "a") {
 			a: Int!
 			b: String!
 		}
@@ -187,7 +187,7 @@ func TestSDL37(t *testing.T) {
 
 func TestSDL39(t *testing.T) {
 	_, err := ParseSDL(`
-		type TestA @stream @key(fields: "a", normalize: "true") {
+		type TestA @schema @key(fields: "a", normalize: "true") {
 			a: Int!
 			b: String!
 		}
@@ -198,7 +198,7 @@ func TestSDL39(t *testing.T) {
 
 func TestSDL40(t *testing.T) {
 	_, err := ParseSDL(`
-		type TestA @stream @key(fields: "a", xxx: "true") {
+		type TestA @schema @key(fields: "a", xxx: "true") {
 			a: Int!
 			b: String!
 		}
@@ -209,7 +209,7 @@ func TestSDL40(t *testing.T) {
 
 func TestSDL41(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream {
+		type Test @schema {
 			a: Int! @key
 			b: String! @random
 		}
@@ -220,7 +220,7 @@ func TestSDL41(t *testing.T) {
 
 func TestSDL42(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream {
+		type Test @schema {
 			a: Int! @key(random: 10)
 			b: String! @random
 		}
@@ -231,7 +231,7 @@ func TestSDL42(t *testing.T) {
 
 func TestSDL43(t *testing.T) {
 	res, err := ParseSDL(`
-		type Test @stream {
+		type Test @schema {
 			a: Int! @key
 			b: String
 			c: String! @key
@@ -243,7 +243,7 @@ func TestSDL43(t *testing.T) {
 
 func TestSDL44(t *testing.T) {
 	_, err := ParseSDL(`
-		type Test @stream @key {
+		type Test @schema @key {
 			a: Int!
 			b: String
 			c: String! @key

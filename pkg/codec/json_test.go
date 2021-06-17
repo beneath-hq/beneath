@@ -11,7 +11,7 @@ import (
 
 func TestAvroJson1(t *testing.T) {
 	avroSchemaString := transpileGraphQLToAvroString(`
-		type Test @stream(name: "test") @key(fields: ["one", "two"]) {
+		type Test @schema(name: "test") @key(fields: ["one", "two"]) {
 			one: String!
 			two: Timestamp!
 			three: TestA!
