@@ -42,16 +42,16 @@ func (s *Service) HandleQueryLog(ctx context.Context, req *QueryLogRequest) (*Qu
 	}
 	middleware.SetTagsPayload(ctx, payload)
 
-	// get cached stream
-	stream := s.Streams.FindCachedInstance(ctx, req.InstanceID)
-	if stream == nil {
-		return nil, newErrorf(http.StatusNotFound, "stream not found")
+	// get cached table
+	table := s.Tables.FindCachedInstance(ctx, req.InstanceID)
+	if table == nil {
+		return nil, newErrorf(http.StatusNotFound, "table not found")
 	}
 
 	// check permissions
-	perms := s.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+	perms := s.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Public)
 	if !perms.Read {
-		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this stream")
+		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this table")
 	}
 
 	// run peek query
@@ -62,7 +62,7 @@ func (s *Service) HandleQueryLog(ctx context.Context, req *QueryLogRequest) (*Qu
 		}
 
 		// run query
-		replayCursor, changeCursor, err := s.Engine.Lookup.Peek(ctx, stream, stream, models.EfficientStreamInstance(req.InstanceID))
+		replayCursor, changeCursor, err := s.Engine.Lookup.Peek(ctx, table, table, models.EfficientTableInstance(req.InstanceID))
 		if err != nil {
 			return nil, newErrorf(http.StatusBadRequest, "error parsing query: %s", err.Error())
 		}
@@ -84,7 +84,7 @@ func (s *Service) HandleQueryLog(ctx context.Context, req *QueryLogRequest) (*Qu
 	}
 
 	// run normal query
-	replayCursors, changeCursors, err := s.Engine.Lookup.ParseQuery(ctx, stream, stream, models.EfficientStreamInstance(req.InstanceID), nil, false, int(req.Partitions))
+	replayCursors, changeCursors, err := s.Engine.Lookup.ParseQuery(ctx, table, table, models.EfficientTableInstance(req.InstanceID), nil, false, int(req.Partitions))
 	if err != nil {
 		return nil, newErrorf(http.StatusBadRequest, "error parsing query: %s", err.Error())
 	}

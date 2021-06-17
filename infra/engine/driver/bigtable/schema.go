@@ -65,7 +65,7 @@ func makeLogInsert(rowTime time.Time, processTime time.Time, avro []byte) *bigta
 	return mut
 }
 
-// hashes a stream instance ID and a stream index ID to produce a unique, random prefix for indexed data
+// hashes a table instance ID and a table index ID to produce a unique, random prefix for indexed data
 func makeIndexHash(instanceID uuid.UUID, indexID uuid.UUID) IndexHash {
 	var res IndexHash
 	for i := 0; i < uuid.Size; i++ {

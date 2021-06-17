@@ -27,7 +27,7 @@ func FromGraphQL(gql string) (schemalang.Schema, schemalang.Indexes, error) {
 		return nil, nil, err
 	}
 
-	// add stream info
+	// add table info
 	indexes := make(schemalang.Indexes, len(parsed.Indexes)+1)
 	indexes[0] = t.fromIndex(parsed.Key, true)
 	for i, index := range parsed.Indexes {

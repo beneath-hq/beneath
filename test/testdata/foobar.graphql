@@ -1,8 +1,5 @@
 " Schema comment "
-type FooBar
-  @stream
-  @key(fields: ["a", "b"])
-{
+type FooBar @table @key(fields: ["a", "b"]) {
   a: String!
   b: Int!
   c: Bytes4!

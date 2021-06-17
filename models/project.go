@@ -24,7 +24,7 @@ type Project struct {
 	Organization   *Organization `msgpack:"-"`
 	CreatedOn      time.Time     `sql:",default:now()"`
 	UpdatedOn      time.Time     `sql:",default:now()"`
-	Streams        []*Stream     `msgpack:"-"`
+	Tables         []*Table      `msgpack:"-"`
 	Services       []*Service    `msgpack:"-"`
 	Users          []*User       `pg:"many2many:permissions_users_projects,fk:project_id,joinFK:user_id",msgpack:"-"`
 

@@ -8,12 +8,12 @@ import (
 )
 
 // WriteToWarehouse implements beneath.WarehouseService
-func (b Postgres) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, rs []driver.Record) error {
+func (b Postgres) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance, rs []driver.Record) error {
 	panic("todo")
 }
 
 // GetWarehouseTableName implements beneath.WarehouseService
-func (b Postgres) GetWarehouseTableName(p driver.Project, s driver.Stream, i driver.StreamInstance) string {
+func (b Postgres) GetWarehouseTableName(p driver.Project, s driver.Table, i driver.TableInstance) string {
 	panic("todo")
 }
 

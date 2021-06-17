@@ -7,13 +7,13 @@ import (
 	"github.com/beneath-hq/beneath/server/control/gql"
 )
 
-// StreamInstance returns the gql.StreamInstanceResolver
-func (r *Resolver) StreamInstance() gql.StreamInstanceResolver {
-	return &streamInstanceResolver{r}
+// TableInstance returns the gql.TableInstanceResolver
+func (r *Resolver) TableInstance() gql.TableInstanceResolver {
+	return &tableInstanceResolver{r}
 }
 
-type streamInstanceResolver struct{ *Resolver }
+type tableInstanceResolver struct{ *Resolver }
 
-func (r *streamInstanceResolver) StreamInstanceID(ctx context.Context, obj *models.StreamInstance) (string, error) {
-	return obj.StreamInstanceID.String(), nil
+func (r *tableInstanceResolver) TableInstanceID(ctx context.Context, obj *models.TableInstance) (string, error) {
+	return obj.TableInstanceID.String(), nil
 }

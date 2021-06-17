@@ -8,7 +8,7 @@ import (
 )
 
 // CLI builds and serves the CLI for *launching* the Beneath backend (*not* the Python-based CLI
-// for local authentication, creating streams, etc.)
+// for local authentication, creating tables, etc.)
 type CLI struct {
 	Root *cobra.Command
 	v    *viper.Viper

@@ -22,7 +22,7 @@ In the future, we may want to extend this list with fundamentally different data
 - `bigtable` implements Google Cloud Bigtable as a highly-scalable `LookupService` driver.
 - `mock` implements a `WarehouseService` driver that simply discards data and pretends to have successfully stored it.
 - `pubsub` implements Google Cloud Pub/Sub as a highly-scalable `MessageQueue` driver.
-- `postgres` has not yet been implemented, but is intended to implement all driver types on Postgres for use in development and small-scale (100s GB) self-hosting deployments. 
+- `postgres` has not yet been implemented, but is intended to implement all driver types on Postgres for use in development and small-scale (100s GB) self-hosting deployments.
 
 ## Implementing a new driver
 
@@ -32,5 +32,5 @@ Here's a list of drivers we're very interested in developing
 
 - Postgres as a driver for `MessageQueue`, `LookupService` and `WarehouseService` (as described above)
 - Apache Cassandra as a `LookupService`
-- Apache Kafka as a `MessageQueue` and possibly a `LookupService` (leveraging Kafka Streams and/or ksqlDB)
+- Apache Kafka as a `MessageQueue` and possibly a `LookupService` (leveraging Kafka Tables and/or ksqlDB)
 - Amazon Redshift as a `WarehouseService`

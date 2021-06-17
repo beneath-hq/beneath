@@ -10,15 +10,15 @@ import (
 )
 
 // WriteToWarehouse implements beneath.WarehouseService
-func (m Mock) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, rs []driver.Record) error {
+func (m Mock) WriteToWarehouse(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance, rs []driver.Record) error {
 	return nil
 }
 
 // GetWarehouseTableName implements beneath.WarehouseService
-func (m Mock) GetWarehouseTableName(p driver.Project, s driver.Stream, i driver.StreamInstance) string {
-	instanceID := i.GetStreamInstanceID()
+func (m Mock) GetWarehouseTableName(p driver.Project, s driver.Table, i driver.TableInstance) string {
+	instanceID := i.GetTableInstanceID()
 	shortID := hex.EncodeToString(instanceID[0:4])
-	return fmt.Sprintf("%s.%s.%s_%s", p.GetOrganizationName(), p.GetProjectName(), s.GetStreamName(), shortID)
+	return fmt.Sprintf("%s.%s.%s_%s", p.GetOrganizationName(), p.GetProjectName(), s.GetTableName(), shortID)
 }
 
 // AnalyzeWarehouseQuery implements beneath.WarehouseService

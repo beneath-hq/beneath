@@ -9,30 +9,30 @@ import (
 	"github.com/beneath-hq/beneath/models"
 )
 
-// StreamPermissionsForSecret gets the secret owner's permissions for a stream
-func (s *Service) StreamPermissionsForSecret(ctx context.Context, secret models.Secret, streamID uuid.UUID, projectID uuid.UUID, public bool) models.StreamPermissions {
+// TablePermissionsForSecret gets the secret owner's permissions for a table
+func (s *Service) TablePermissionsForSecret(ctx context.Context, secret models.Secret, tableID uuid.UUID, projectID uuid.UUID, public bool) models.TablePermissions {
 	switch secret := secret.(type) {
 	case *models.UserSecret:
-		return s.streamPermissionsForUserSecret(ctx, secret, streamID, projectID, public)
+		return s.tablePermissionsForUserSecret(ctx, secret, tableID, projectID, public)
 	case *models.ServiceSecret:
-		return s.streamPermissionsForServiceSecret(ctx, secret, streamID, projectID, public)
+		return s.tablePermissionsForServiceSecret(ctx, secret, tableID, projectID, public)
 	case *models.AnonymousSecret:
-		return models.StreamPermissions{Read: public}
+		return models.TablePermissions{Read: public}
 	default:
 		panic(fmt.Errorf("unrecognized secret type %T", secret))
 	}
 }
 
-func (s *Service) streamPermissionsForUserSecret(ctx context.Context, secret *models.UserSecret, streamID uuid.UUID, projectID uuid.UUID, public bool) models.StreamPermissions {
+func (s *Service) tablePermissionsForUserSecret(ctx context.Context, secret *models.UserSecret, tableID uuid.UUID, projectID uuid.UUID, public bool) models.TablePermissions {
 	projectPerms := s.CachedUserProjectPermissions(ctx, secret.UserID, projectID)
-	return models.StreamPermissions{
+	return models.TablePermissions{
 		Read:  (projectPerms.View && !secret.PublicOnly) || public,
 		Write: projectPerms.Create && !secret.ReadOnly && (!secret.PublicOnly || public),
 	}
 }
 
-func (s *Service) streamPermissionsForServiceSecret(ctx context.Context, secret *models.ServiceSecret, streamID uuid.UUID, projectID uuid.UUID, public bool) models.StreamPermissions {
-	return s.CachedServiceStreamPermissions(ctx, secret.ServiceID, streamID)
+func (s *Service) tablePermissionsForServiceSecret(ctx context.Context, secret *models.ServiceSecret, tableID uuid.UUID, projectID uuid.UUID, public bool) models.TablePermissions {
+	return s.CachedServiceTablePermissions(ctx, secret.ServiceID, tableID)
 }
 
 // ProjectPermissionsForSecret gets the secret owner's permissions for a project

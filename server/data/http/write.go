@@ -11,14 +11,14 @@ import (
 	"github.com/beneath-hq/beneath/services/data"
 )
 
-func (a *app) postToOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+func (a *app) postToOrganizationAndProjectAndTable(w http.ResponseWriter, r *http.Request) error {
 	organizationName := toBackendName(chi.URLParam(r, "organizationName"))
 	projectName := toBackendName(chi.URLParam(r, "projectName"))
-	streamName := toBackendName(chi.URLParam(r, "streamName"))
+	tableName := toBackendName(chi.URLParam(r, "tableName"))
 
-	instanceID := a.StreamService.FindPrimaryInstanceIDByOrganizationProjectAndName(r.Context(), organizationName, projectName, streamName)
+	instanceID := a.TableService.FindPrimaryInstanceIDByOrganizationProjectAndName(r.Context(), organizationName, projectName, tableName)
 	if instanceID == uuid.Nil {
-		return httputil.NewError(404, "instance for stream not found")
+		return httputil.NewError(404, "instance for table not found")
 	}
 
 	return a.handleWrite(w, r, instanceID)

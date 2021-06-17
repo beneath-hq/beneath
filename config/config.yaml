@@ -37,10 +37,10 @@ data:
   # data server port for HTTP (env: BENEATH_DATA_HTTP_PORT)
   http_port: "5000"
   index:
-    # driver to use for (indexed) operational serving of stream records (env: BENEATH_DATA_INDEX_DRIVER)
+    # driver to use for (indexed) operational serving of table records (env: BENEATH_DATA_INDEX_DRIVER)
     driver: ""
   warehouse:
-    # driver to use for OLAP queries of stream records (env: BENEATH_DATA_WAREHOUSE_DRIVER)
+    # driver to use for OLAP queries of table records (env: BENEATH_DATA_WAREHOUSE_DRIVER)
     driver: ""
 
 mq:

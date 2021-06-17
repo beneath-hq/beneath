@@ -1,4 +1,4 @@
-package stream
+package table
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 
 // internalCachedInstance is a serializable version of models.CachedInstance (which is not serializable because of Codec)
 type internalCachedInstance struct {
-	StreamID                  uuid.UUID
+	TableID                   uuid.UUID
 	Public                    bool
 	Final                     bool
 	UseLog                    bool
@@ -25,23 +25,23 @@ type internalCachedInstance struct {
 	OrganizationName          string
 	ProjectID                 uuid.UUID
 	ProjectName               string
-	StreamName                string
+	TableName                 string
 	CanonicalAvroSchema       string
 	Indexes                   []internalCachedInstanceIndex
 }
 
 // internalCachedInstanceIndex represents indexes
 type internalCachedInstanceIndex struct {
-	StreamIndexID uuid.UUID
-	ShortID       int
-	Fields        []string
-	Primary       bool
-	Normalize     bool
+	TableIndexID uuid.UUID
+	ShortID      int
+	Fields       []string
+	Primary      bool
+	Normalize    bool
 }
 
 // GetIndexID implements codec.Index
 func (i internalCachedInstanceIndex) GetIndexID() uuid.UUID {
-	return i.StreamIndexID
+	return i.TableIndexID
 }
 
 // GetShortID implements codec.Index
@@ -61,7 +61,7 @@ func (i internalCachedInstanceIndex) GetNormalize() bool {
 
 func cachedInstanceToInternal(c *models.CachedInstance) *internalCachedInstance {
 	wrapped := &internalCachedInstance{
-		StreamID:                  c.StreamID,
+		TableID:                   c.TableID,
 		Public:                    c.Public,
 		Final:                     c.Final,
 		UseLog:                    c.UseLog,
@@ -74,7 +74,7 @@ func cachedInstanceToInternal(c *models.CachedInstance) *internalCachedInstance 
 		OrganizationName:          c.OrganizationName,
 		ProjectID:                 c.ProjectID,
 		ProjectName:               c.ProjectName,
-		StreamName:                c.StreamName,
+		TableName:                 c.TableName,
 	}
 
 	// necessary because we allow empty CachedInstance objects
@@ -92,7 +92,7 @@ func cachedInstanceToInternal(c *models.CachedInstance) *internalCachedInstance 
 func internalToCachedInstance(i *internalCachedInstance) (*models.CachedInstance, error) {
 	c := &models.CachedInstance{}
 
-	c.StreamID = i.StreamID
+	c.TableID = i.TableID
 	c.Public = i.Public
 	c.Final = i.Final
 	c.UseLog = i.UseLog
@@ -105,7 +105,7 @@ func internalToCachedInstance(i *internalCachedInstance) (*models.CachedInstance
 	c.OrganizationName = i.OrganizationName
 	c.ProjectID = i.ProjectID
 	c.ProjectName = i.ProjectName
-	c.StreamName = i.StreamName
+	c.TableName = i.TableName
 
 	// nil checks necessary because we allow empty CachedInstance objects
 

@@ -74,26 +74,26 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 				return newErrorf(http.StatusBadRequest, "records are empty for instance_id=%s", instanceID.String())
 			}
 
-			// get stream info
-			stream := s.Streams.FindCachedInstance(cctx, instanceID)
-			if stream == nil {
-				return newErrorf(http.StatusNotFound, "stream not found for instance_id=%s", instanceID.String())
+			// get table info
+			table := s.Tables.FindCachedInstance(cctx, instanceID)
+			if table == nil {
+				return newErrorf(http.StatusNotFound, "table not found for instance_id=%s", instanceID.String())
 			}
 
-			// check not already a committed batch stream
-			if stream.Final {
+			// check not already a committed batch table
+			if table.Final {
 				return newErrorf(http.StatusBadRequest, "instance_id=%s closed for further writes because it has been marked final", instanceID.String())
 			}
 
 			// check permissions
-			perms := s.Permissions.StreamPermissionsForSecret(cctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+			perms := s.Permissions.TablePermissionsForSecret(cctx, secret, table.TableID, table.ProjectID, table.Public)
 			if !perms.Write {
-				return newErrorf(http.StatusForbidden, "secret doesn't grant right to write to stream_id=%s", stream.StreamID.String())
+				return newErrorf(http.StatusForbidden, "secret doesn't grant right to write to table_id=%s", table.TableID.String())
 			}
 
-			// set stream
+			// set table
 			mu.Lock()
-			instances[instanceID] = stream
+			instances[instanceID] = table
 			mu.Unlock()
 
 			return nil
@@ -117,8 +117,8 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 		}
 
 		// check records
-		stream := instances[instanceID]
-		pbs, bytes, err := records.prepare(s, instanceID, stream)
+		table := instances[instanceID]
+		pbs, bytes, err := records.prepare(s, instanceID, table)
 		if err != nil {
 			return nil, err
 		}
@@ -147,8 +147,8 @@ func (s *Service) HandleWrite(ctx context.Context, req *WriteRequest) (*WriteRes
 
 	// track write usage
 	for _, im := range instanceUsage {
-		stream := instances[im.InstanceID]
-		s.Usage.TrackWrite(ctx, secret, stream.StreamID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
+		table := instances[im.InstanceID]
+		s.Usage.TrackWrite(ctx, secret, table.TableID, im.InstanceID, int64(im.RecordsCount), int64(im.BytesWritten))
 	}
 
 	// set log payload
@@ -176,14 +176,14 @@ func (r *WriteRecords) Len() int {
 }
 
 // prepares for writing
-func (r *WriteRecords) prepare(s *Service, instanceID uuid.UUID, stream *models.CachedInstance) ([]*pb.Record, int, *Error) {
+func (r *WriteRecords) prepare(s *Service, instanceID uuid.UUID, table *models.CachedInstance) ([]*pb.Record, int, *Error) {
 	if r.PB != nil {
-		return r.preparePB(s, instanceID, stream)
+		return r.preparePB(s, instanceID, table)
 	}
-	return r.prepareJSON(s, instanceID, stream)
+	return r.prepareJSON(s, instanceID, table)
 }
 
-func (r *WriteRecords) preparePB(s *Service, instanceID uuid.UUID, stream *models.CachedInstance) ([]*pb.Record, int, *Error) {
+func (r *WriteRecords) preparePB(s *Service, instanceID uuid.UUID, table *models.CachedInstance) ([]*pb.Record, int, *Error) {
 	// validate each record
 	bytes := 0
 	for i, record := range r.PB {
@@ -193,13 +193,13 @@ func (r *WriteRecords) preparePB(s *Service, instanceID uuid.UUID, stream *model
 		}
 
 		// check it decodes
-		structured, err := stream.Codec.UnmarshalAvro(record.AvroData)
+		structured, err := table.Codec.UnmarshalAvro(record.AvroData)
 		if err != nil {
 			return nil, 0, newErrorf(http.StatusBadRequest, "error for instance_id=%s, record at index %d: %v", instanceID.String(), i, err.Error())
 		}
 
 		// check record size
-		err = s.Engine.CheckRecordSize(stream, structured, len(record.AvroData))
+		err = s.Engine.CheckRecordSize(table, structured, len(record.AvroData))
 		if err != nil {
 			return nil, 0, newErrorf(http.StatusBadRequest, "error for instance_id=%s, record at index %d: %v", instanceID.String(), i, err.Error())
 		}
@@ -211,7 +211,7 @@ func (r *WriteRecords) preparePB(s *Service, instanceID uuid.UUID, stream *model
 	return r.PB, bytes, nil
 }
 
-func (r *WriteRecords) prepareJSON(s *Service, instanceID uuid.UUID, stream *models.CachedInstance) ([]*pb.Record, int, *Error) {
+func (r *WriteRecords) prepareJSON(s *Service, instanceID uuid.UUID, table *models.CachedInstance) ([]*pb.Record, int, *Error) {
 	// convert objects into records
 	records := make([]*pb.Record, len(r.JSON))
 	bytesWritten := 0
@@ -237,18 +237,18 @@ func (r *WriteRecords) prepareJSON(s *Service, instanceID uuid.UUID, stream *mod
 		}
 
 		// convert from json types to native types for encoding
-		native, err := stream.Codec.ConvertFromJSONTypes(obj)
+		native, err := table.Codec.ConvertFromJSONTypes(obj)
 		if err != nil {
 			return nil, 0, newErrorf(http.StatusBadRequest, "error encoding record at index %d for instance %s: %s", idx, instanceID.String(), err.Error())
 		}
 
 		// encode as avro
-		avroData, err := stream.Codec.MarshalAvro(native)
+		avroData, err := table.Codec.MarshalAvro(native)
 		if err != nil {
 			return nil, 0, newErrorf(http.StatusBadRequest, "error encoding record at index %d for instance %s: %s", idx, instanceID.String(), err.Error())
 		}
 
-		err = s.Engine.CheckRecordSize(stream, native, len(avroData))
+		err = s.Engine.CheckRecordSize(table, native, len(avroData))
 		if err != nil {
 			return nil, 0, newErrorf(http.StatusBadRequest, "error encoding record at index %d for instance %s: %s", idx, instanceID.String(), err.Error())
 		}

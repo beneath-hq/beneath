@@ -16,9 +16,9 @@ const (
 )
 
 // TrackRead is a helper to track read usage for a secret from an instance
-func (s *Service) TrackRead(ctx context.Context, secret models.Secret, streamID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
-	if streamID != uuid.Nil {
-		s.trackOp(OpTypeRead, streamID, time.Time{}, nrecords, nbytes)
+func (s *Service) TrackRead(ctx context.Context, secret models.Secret, tableID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
+	if tableID != uuid.Nil {
+		s.trackOp(OpTypeRead, tableID, time.Time{}, nrecords, nbytes)
 	}
 	if instanceID != uuid.Nil {
 		s.trackOp(OpTypeRead, instanceID, time.Time{}, nrecords, nbytes)
@@ -33,8 +33,8 @@ func (s *Service) TrackRead(ctx context.Context, secret models.Secret, streamID 
 }
 
 // TrackWrite is a helper to track write usage for a secret to an instance
-func (s *Service) TrackWrite(ctx context.Context, secret models.Secret, streamID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
-	s.trackOp(OpTypeWrite, streamID, time.Time{}, nrecords, nbytes)
+func (s *Service) TrackWrite(ctx context.Context, secret models.Secret, tableID uuid.UUID, instanceID uuid.UUID, nrecords int64, nbytes int64) {
+	s.trackOp(OpTypeWrite, tableID, time.Time{}, nrecords, nbytes)
 	s.trackOp(OpTypeWrite, instanceID, time.Time{}, nrecords, nbytes)
 	if !secret.IsAnonymous() {
 		if nbytes < minWriteBytesBilled {
@@ -56,7 +56,7 @@ func (s *Service) TrackScan(ctx context.Context, secret models.Secret, nbytes in
 	}
 }
 
-// trackOp records the usage for a given ID (stream, instance, user, service, organization, ...)
+// trackOp records the usage for a given ID (table, instance, user, service, organization, ...)
 func (s *Service) trackOp(op OpType, id uuid.UUID, maybeQuotaEpoch time.Time, nrecords int64, nbytes int64) {
 	s.mu.Lock()
 	u := s.usageBuffer[id]

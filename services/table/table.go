@@ -1,4 +1,4 @@
-package stream
+package table
 
 import (
 	"github.com/go-redis/redis/v7"
@@ -31,10 +31,10 @@ func New(bus *bus.Bus, db db.DB, redis *redis.Client, engine *engine.Engine) *Se
 	s.initInstanceCache()
 	s.Bus.AddSyncListener(s.organizationUpdated)
 	s.Bus.AddSyncListener(s.projectUpdated)
-	s.Bus.AddAsyncListener(s.streamUpdated)
-	s.Bus.AddAsyncOrderedListener(s.streamDeleted)
-	s.Bus.AddSyncListener(s.streamInstanceCreated)
-	s.Bus.AddAsyncListener(s.streamInstanceUpdated)
-	s.Bus.AddAsyncOrderedListener(s.streamInstanceDeleted)
+	s.Bus.AddAsyncListener(s.tableUpdated)
+	s.Bus.AddAsyncOrderedListener(s.tableDeleted)
+	s.Bus.AddSyncListener(s.tableInstanceCreated)
+	s.Bus.AddAsyncListener(s.tableInstanceUpdated)
+	s.Bus.AddAsyncOrderedListener(s.tableInstanceDeleted)
 	return s
 }

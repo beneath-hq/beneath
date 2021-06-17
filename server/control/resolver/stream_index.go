@@ -7,13 +7,13 @@ import (
 	"github.com/beneath-hq/beneath/server/control/gql"
 )
 
-// StreamIndex returns the gql.StreamIndexResolver
-func (r *Resolver) StreamIndex() gql.StreamIndexResolver {
-	return &streamIndexResolver{r}
+// TableIndex returns the gql.TableIndexResolver
+func (r *Resolver) TableIndex() gql.TableIndexResolver {
+	return &tableIndexResolver{r}
 }
 
-type streamIndexResolver struct{ *Resolver }
+type tableIndexResolver struct{ *Resolver }
 
-func (r *streamIndexResolver) IndexID(ctx context.Context, obj *models.StreamIndex) (string, error) {
-	return obj.StreamIndexID.String(), nil
+func (r *tableIndexResolver) IndexID(ctx context.Context, obj *models.TableIndex) (string, error) {
+	return obj.TableIndexID.String(), nil
 }

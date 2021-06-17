@@ -34,14 +34,14 @@ func init() {
 	cli.AddConfigKey(&cli.ConfigKey{
 		Key:         "data.index.driver",
 		Default:     "",
-		Description: "driver to use for (indexed) operational serving of stream records",
+		Description: "driver to use for (indexed) operational serving of table records",
 	})
 	cli.AddConfigKey(&cli.ConfigKey{
 		Key:         "data.warehouse.driver",
 		Default:     "",
-		Description: "driver to use for OLAP queries of stream records",
+		Description: "driver to use for OLAP queries of table records",
 	})
 	// 	Key:     "data.log.driver",
 	// 	Default: "",
-	// 	Description:   "driver to use for log storage of stream records",
+	// 	Description:   "driver to use for log storage of table records",
 }

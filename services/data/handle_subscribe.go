@@ -40,16 +40,16 @@ func (s *Service) HandleSubscribe(ctx context.Context, req *SubscribeRequest) (*
 	// read instanceID
 	instanceID := cursor.GetID()
 
-	// get cached stream
-	stream := s.Streams.FindCachedInstance(ctx, instanceID)
-	if stream == nil {
-		return nil, newErrorf(http.StatusNotFound, "stream not found")
+	// get cached table
+	table := s.Tables.FindCachedInstance(ctx, instanceID)
+	if table == nil {
+		return nil, newErrorf(http.StatusNotFound, "table not found")
 	}
 
 	// check permissions
-	perms := s.Permissions.StreamPermissionsForSecret(ctx, req.Secret, stream.StreamID, stream.ProjectID, stream.Public)
+	perms := s.Permissions.TablePermissionsForSecret(ctx, req.Secret, table.TableID, table.ProjectID, table.Public)
 	if !perms.Read {
-		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this stream")
+		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this table")
 	}
 
 	// check usage

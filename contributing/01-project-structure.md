@@ -14,14 +14,14 @@ The entire backend is implemented in Go, the frontend is implemented in TypeScri
 
 Conceptually, the backend is divided into two planes:
 
-- The **control plane** manages users, projects, streams, etc., and is backed by Postgres and Redis.
-- The **data plane** reads and writes stream records, and is backed by pluggable data systems for log storage, indexed lookups and warehouse/OLAP queries (known as the "engine", see `infra/engine/`).
+- The **control plane** manages users, projects, tables, etc., and is backed by Postgres and Redis.
+- The **data plane** reads and writes table records, and is backed by pluggable data systems for log storage, indexed lookups and warehouse/OLAP queries (known as the "engine", see `infra/engine/`).
 
 The backend is compiled as one executable (`cmd/beneath/`) that can run one or all of the following services:
 
 - `control-server`, which exposes a GraphQL API for the control plane
 - `control-worker`, which runs background tasks related to the control plane
-- `data-server`, which exposes REST, Websockets and GRPC APIs for the data plane (i.e. reading and writing streams)
+- `data-server`, which exposes REST, Websockets and GRPC APIs for the data plane (i.e. reading and writing tables)
 - `data-worker`, which asynchronously processes records written to `data-server` and writes them to the underlying data systems
 
 Here's a rough guide to the project structure (each folder has a `README.md` with further details):
@@ -37,7 +37,7 @@ Here's a rough guide to the project structure (each folder has a `README.md` wit
 - `infra`: Packages for connecting to external systems / infrastructure, such as Postgres, Redis, MQ, and notably the "engine", which has drivers for the data systems used in the data-plane
 - `migrations`: Postgres migrations for the control-plane models in `models/`
 - `models`: Control-plane models and bus events
-- `pkg`: Stand-alone utility libraries that are not directly related to any specific service (e.g., the stream schema parser)
+- `pkg`: Stand-alone utility libraries that are not directly related to any specific service (e.g., the table schema parser)
 - `scripts`: Helper scripts for code generation, etc.
 - `server`: Implementations of the control and data servers
 - `services`: Contains packages ("services") that encapsulate functionality for a specific domain of the app, typically involving persistant operations on `infra/`

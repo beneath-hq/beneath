@@ -13,13 +13,13 @@ const (
 	int64ByteSize = 8
 )
 
-// returns true if data in log for stream expires; returns false if data should be persisted forever
-func logExpires(s driver.Stream) bool {
+// returns true if data in log for table expires; returns false if data should be persisted forever
+func logExpires(s driver.Table) bool {
 	return s.GetLogRetention() != time.Duration(0)
 }
 
-// returns true if data in indexes for stream expires; returns false if data should be persisted forever
-func indexExpires(s driver.Stream) bool {
+// returns true if data in indexes for table expires; returns false if data should be persisted forever
+func indexExpires(s driver.Table) bool {
 	return s.GetIndexRetention() != time.Duration(0)
 }
 

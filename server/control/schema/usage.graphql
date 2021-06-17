@@ -2,8 +2,8 @@ extend type Query {
   getUsage(input: GetUsageInput!): [Usage!]!
   getOrganizationUsage(input: GetEntityUsageInput!): [Usage!]!
   getServiceUsage(input: GetEntityUsageInput!): [Usage!]!
-  getStreamInstanceUsage(input: GetEntityUsageInput!): [Usage!]!
-  getStreamUsage(input: GetEntityUsageInput!): [Usage!]!
+  getTableInstanceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getTableUsage(input: GetEntityUsageInput!): [Usage!]!
   getUserUsage(input: GetEntityUsageInput!): [Usage!]!
 }
 
@@ -24,8 +24,8 @@ type Usage {
 enum EntityKind {
   Organization
   Service
-  StreamInstance
-  Stream
+  TableInstance
+  Table
   User
 }
 

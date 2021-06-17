@@ -24,10 +24,10 @@ func (r *queryResolver) GetUsage(ctx context.Context, input gql.GetUsageInput) (
 		return r.GetOrganizationUsage(ctx, entityInput)
 	case gql.EntityKindService:
 		return r.GetServiceUsage(ctx, entityInput)
-	case gql.EntityKindStreamInstance:
-		return r.GetStreamInstanceUsage(ctx, entityInput)
-	case gql.EntityKindStream:
-		return r.GetStreamUsage(ctx, entityInput)
+	case gql.EntityKindTableInstance:
+		return r.GetTableInstanceUsage(ctx, entityInput)
+	case gql.EntityKindTable:
+		return r.GetTableUsage(ctx, entityInput)
 	case gql.EntityKindUser:
 		return r.GetUserUsage(ctx, entityInput)
 	}
@@ -59,31 +59,31 @@ func (r *queryResolver) GetServiceUsage(ctx context.Context, input gql.GetEntity
 	return r.getUsage(ctx, input.EntityID, input.Label, input.From, input.Until)
 }
 
-func (r *queryResolver) GetStreamInstanceUsage(ctx context.Context, input gql.GetEntityUsageInput) ([]*gql.Usage, error) {
-	stream := r.Streams.FindCachedInstance(ctx, input.EntityID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream for instance %s not found", input.EntityID.String())
+func (r *queryResolver) GetTableInstanceUsage(ctx context.Context, input gql.GetEntityUsageInput) ([]*gql.Usage, error) {
+	table := r.Tables.FindCachedInstance(ctx, input.EntityID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table for instance %s not found", input.EntityID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("you do not have permission to view this stream's usage")
+		return nil, gqlerror.Errorf("you do not have permission to view this table's usage")
 	}
 
 	return r.getUsage(ctx, input.EntityID, input.Label, input.From, input.Until)
 }
 
-func (r *queryResolver) GetStreamUsage(ctx context.Context, input gql.GetEntityUsageInput) ([]*gql.Usage, error) {
-	stream := r.Streams.FindStream(ctx, input.EntityID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s not found", input.EntityID.String())
+func (r *queryResolver) GetTableUsage(ctx context.Context, input gql.GetEntityUsageInput) ([]*gql.Usage, error) {
+	table := r.Tables.FindTable(ctx, input.EntityID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table %s not found", input.EntityID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("you do not have permission to view this stream's usage")
+		return nil, gqlerror.Errorf("you do not have permission to view this table's usage")
 	}
 
 	return r.getUsage(ctx, input.EntityID, input.Label, input.From, input.Until)

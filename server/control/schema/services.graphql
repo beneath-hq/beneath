@@ -1,13 +1,22 @@
 extend type Query {
   serviceByID(serviceID: UUID!): Service!
-  serviceByOrganizationProjectAndName(organizationName: String!, projectName: String!, serviceName: String!): Service!
-  streamPermissionsForService(serviceID: UUID!): [PermissionsServicesStreams!]!
+  serviceByOrganizationProjectAndName(
+    organizationName: String!
+    projectName: String!
+    serviceName: String!
+  ): Service!
+  tablePermissionsForService(serviceID: UUID!): [PermissionsServicesTables!]!
 }
 
 extend type Mutation {
   createService(input: CreateServiceInput!): Service!
   updateService(input: UpdateServiceInput!): Service!
-  updateServiceStreamPermissions(serviceID: UUID!, streamID: UUID!, read: Boolean, write: Boolean): PermissionsServicesStreams!
+  updateServiceTablePermissions(
+    serviceID: UUID!
+    tableID: UUID!
+    read: Boolean
+    write: Boolean
+  ): PermissionsServicesTables!
   deleteService(serviceID: UUID!): Boolean!
 }
 
@@ -27,12 +36,12 @@ type Service {
   updatedOn: Time!
 }
 
-type PermissionsServicesStreams {
+type PermissionsServicesTables {
   serviceID: UUID!
-  streamID: UUID!
+  tableID: UUID!
   read: Boolean!
   write: Boolean!
-  stream: Stream
+  table: Table
 }
 
 input CreateServiceInput {

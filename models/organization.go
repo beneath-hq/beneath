@@ -13,7 +13,7 @@ import (
 type Organization struct {
 	_msgpack          struct{}   `msgpack:",omitempty"`
 	OrganizationID    uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
-	Name              string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"` // NOTE: when updating, clear stream cache
+	Name              string     `sql:",unique,notnull",validate:"required,gte=3,lte=40"` // NOTE: when updating, clear table cache
 	DisplayName       string     `sql:",notnull",validate:"required,gte=1,lte=50"`
 	Description       string     `validate:"omitempty,lte=255"`
 	PhotoURL          string     `validate:"omitempty,url,lte=400"`
@@ -163,6 +163,8 @@ var orgNameBlacklist = []string{
 	"secrets",
 	"stream",
 	"streams",
+	"table",
+	"tables",
 	"terminal",
 	"user",
 	"username",

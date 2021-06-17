@@ -67,7 +67,7 @@ func (r *queryResolver) ServiceByOrganizationProjectAndName(ctx context.Context,
 
 	return serviceWithProjectPermissions(service, perms), nil
 }
-func (r *queryResolver) StreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) ([]*models.PermissionsServicesStreams, error) {
+func (r *queryResolver) TablePermissionsForService(ctx context.Context, serviceID uuid.UUID) ([]*models.PermissionsServicesTables, error) {
 	service := r.Services.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
@@ -79,7 +79,7 @@ func (r *queryResolver) StreamPermissionsForService(ctx context.Context, service
 		return nil, gqlerror.Errorf("You are not allowed to view project resources")
 	}
 
-	servicePerms := r.Services.FindStreamPermissionsForService(ctx, serviceID)
+	servicePerms := r.Services.FindTablePermissionsForService(ctx, serviceID)
 
 	return servicePerms, nil
 }
@@ -154,7 +154,7 @@ func (r *mutationResolver) UpdateService(ctx context.Context, input gql.UpdateSe
 	return serviceWithProjectPermissions(service, perms), nil
 }
 
-func (r *mutationResolver) UpdateServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID, read *bool, write *bool) (*models.PermissionsServicesStreams, error) {
+func (r *mutationResolver) UpdateServiceTablePermissions(ctx context.Context, serviceID uuid.UUID, tableID uuid.UUID, read *bool, write *bool) (*models.PermissionsServicesTables, error) {
 	service := r.Services.FindService(ctx, serviceID)
 	if service == nil {
 		return nil, gqlerror.Errorf("Service %s not found", serviceID.String())
@@ -166,30 +166,30 @@ func (r *mutationResolver) UpdateServiceStreamPermissions(ctx context.Context, s
 		return nil, gqlerror.Errorf("Not allowed to edit the service")
 	}
 
-	stream := r.Streams.FindStream(ctx, streamID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s not found", streamID.String())
+	table := r.Tables.FindTable(ctx, tableID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table %s not found", tableID.String())
 	}
 
-	streamProjectPerms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, stream.ProjectID, false)
-	if !streamProjectPerms.Create {
-		return nil, gqlerror.Errorf("Not allowed to access stream")
+	tableProjectPerms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, table.ProjectID, false)
+	if !tableProjectPerms.Create {
+		return nil, gqlerror.Errorf("Not allowed to access table")
 	}
 
-	pss := r.Permissions.FindPermissionsServicesStreams(ctx, serviceID, streamID)
+	pss := r.Permissions.FindPermissionsServicesTables(ctx, serviceID, tableID)
 	if pss == nil {
-		pss = &models.PermissionsServicesStreams{
+		pss = &models.PermissionsServicesTables{
 			ServiceID: serviceID,
-			StreamID:  streamID,
+			TableID:   tableID,
 		}
 	}
 
-	err := r.Permissions.UpdateServiceStreamPermission(ctx, pss, read, write)
+	err := r.Permissions.UpdateServiceTablePermission(ctx, pss, read, write)
 	if err != nil {
 		return nil, err
 	}
 
-	pss.Stream = stream
+	pss.Table = table
 
 	return pss, nil
 }

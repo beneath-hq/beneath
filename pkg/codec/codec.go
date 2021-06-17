@@ -18,7 +18,7 @@ type Index interface {
 	// GetIndexID should return a globally unique identifier for the index
 	GetIndexID() uuid.UUID
 
-	// GetShortID should return a local-to-the-stream unique identifier for the index
+	// GetShortID should return a local-to-the-table unique identifier for the index
 	GetShortID() int
 
 	// GetFields should return the list of fields for encoding keys in the index

@@ -29,13 +29,13 @@ type PermissionsUsersOrganizations struct {
 	Admin          bool `sql:",notnull"`
 }
 
-// PermissionsServicesStreams represnts the many-to-many relationship between services and projects
-type PermissionsServicesStreams struct {
-	tableName struct{}  `sql:"permissions_services_streams"`
+// PermissionsServicesTables represnts the many-to-many relationship between services and projects
+type PermissionsServicesTables struct {
+	tableName struct{}  `sql:"permissions_services_tables"`
 	ServiceID uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
 	Service   *Service
-	StreamID  uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
-	Stream    *Stream
+	TableID   uuid.UUID `sql:"on_delete:CASCADE,pk,type:uuid"`
+	Table     *Table
 	Read      bool `sql:",notnull"`
 	Write     bool `sql:",notnull"`
 }
@@ -47,8 +47,8 @@ type ProjectPermissions struct {
 	Admin  bool
 }
 
-// StreamPermissions represents permissions that a service has for a given stream
-type StreamPermissions struct {
+// TablePermissions represents permissions that a service has for a given table
+type TablePermissions struct {
 	Read  bool
 	Write bool
 }
@@ -63,5 +63,5 @@ type OrganizationPermissions struct {
 func init() {
 	orm.RegisterTable((*PermissionsUsersProjects)(nil))
 	orm.RegisterTable((*PermissionsUsersOrganizations)(nil))
-	orm.RegisterTable((*PermissionsServicesStreams)(nil))
+	orm.RegisterTable((*PermissionsServicesTables)(nil))
 }

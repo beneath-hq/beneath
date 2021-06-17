@@ -22,7 +22,7 @@ import (
 	pb "github.com/beneath-hq/beneath/server/data/grpc/proto"
 )
 
-func TestStreamCreateReadAndWrite(t *testing.T) {
+func TestTableCreateReadAndWrite(t *testing.T) {
 	startTime := time.Now()
 
 	// create project
@@ -38,23 +38,23 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	project := res1.Result()["createProject"]
 	assert.Equal(t, "test", project["name"])
 
-	// create stream
+	// create table
 	schema := readTestdata("foobar.graphql")
 	res2 := queryGQL(`
-		mutation CreateStream($organization: String!, $schema: String!) {
-			createStream(
+		mutation CreateTable($organization: String!, $schema: String!) {
+			createTable(
 				input: {
 					organizationName: $organization,
 					projectName: "test",
-					streamName: "foo_bar",
+					tableName: "foo_bar",
 					schemaKind: GraphQL,
 					schema: $schema,
 					updateIfExists: true,
 				}
 			) {
-				streamID
+				tableID
 				avroSchema
-				primaryStreamInstanceID
+				primaryTableInstanceID
 				name
 				project { projectID }
 			}
@@ -64,23 +64,23 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 		"schema":       schema,
 	})
 	assert.Empty(t, res2.Errors)
-	stream := res2.Result()["createStream"]
-	assert.Equal(t, "foo_bar", stream["name"])
-	assert.Len(t, stream["project"], 1)
+	table := res2.Result()["createTable"]
+	assert.Equal(t, "foo_bar", table["name"])
+	assert.Len(t, table["project"], 1)
 
 	//
 	res2_1 := queryGQL(`
-		mutation CreateStreamInstance($streamID: UUID!) {
-			createStreamInstance(
+		mutation CreateTableInstance($tableID: UUID!) {
+			createTableInstance(
 				input: {
-					streamID: $streamID,
+					tableID: $tableID,
 					version: 0,
 					makePrimary: true,
 					updateIfExists: true,
 				}
 			) {
-				streamInstanceID
-				streamID
+				tableInstanceID
+				tableID
 				createdOn
 				version
 				madePrimaryOn
@@ -88,20 +88,20 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 			}
 		}
 	`, map[string]interface{}{
-		"streamID": stream["streamID"],
+		"tableID": table["tableID"],
 	})
 	assert.Empty(t, res2_1.Errors)
-	instance := res2_1.Result()["createStreamInstance"]
-	instanceID := uuid.FromStringOrNil(instance["streamInstanceID"].(string))
+	instance := res2_1.Result()["createTableInstance"]
+	instanceID := uuid.FromStringOrNil(instance["tableInstanceID"].(string))
 	assert.False(t, instanceID == uuid.Nil)
 	assert.Equal(t, float64(0), instance["version"])
 	assert.NotNil(t, instance["madePrimaryOn"])
 	assert.Nil(t, instance["madeFinalOn"])
 
-	// prepare to write to stream
+	// prepare to write to table
 	foobars := nextFoobars(100)
 	split := 50
-	codec, err := goavro.NewCodec(stream["avroSchema"].(string))
+	codec, err := goavro.NewCodec(table["avroSchema"].(string))
 	assert.Nil(t, err)
 
 	// compile grpc records
@@ -372,10 +372,10 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 	// wait to let metrics get committed
 	time.Sleep(200 * time.Millisecond)
 
-	// check metrics have been accurately tracked for stream
+	// check metrics have been accurately tracked for table
 	res14 := queryGQL(`
-		query GetStreamUsage($streamID: UUID!, $from: Time!) {
-			getStreamUsage(streamID: $streamID, period: "month", from: $from) {
+		query GetTableUsage($tableID: UUID!, $from: Time!) {
+			getTableUsage(tableID: $tableID, period: "month", from: $from) {
 				entityID
 				time
 				readOps
@@ -387,19 +387,19 @@ func TestStreamCreateReadAndWrite(t *testing.T) {
 			}
 		}
 	`, map[string]interface{}{
-		"streamID": stream["streamID"],
-		"from":     timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
+		"tableID": table["tableID"],
+		"from":    timeutil.Floor(startTime, timeutil.PeriodMonth).Format("2006-01-02T15:04:05Z07:00"),
 	})
 	assert.Empty(t, res14.Errors)
-	streamUsage := res14.Results()["getStreamUsage"]
-	assert.Len(t, streamUsage, 1)
-	assert.Equal(t, stream["streamID"], streamUsage[0]["entityID"])
-	assert.Greater(t, int(streamUsage[0]["readOps"].(float64)), 0)
-	assert.Greater(t, int(streamUsage[0]["readBytes"].(float64)), 0)
-	assert.Greater(t, int(streamUsage[0]["readRecords"].(float64)), 0)
-	assert.Equal(t, int(streamUsage[0]["writeOps"].(float64)), 2)
-	assert.Greater(t, int(streamUsage[0]["writeBytes"].(float64)), 0)
-	assert.Equal(t, int(streamUsage[0]["writeRecords"].(float64)), len(foobars))
+	tableUsage := res14.Results()["getTableUsage"]
+	assert.Len(t, tableUsage, 1)
+	assert.Equal(t, table["tableID"], tableUsage[0]["entityID"])
+	assert.Greater(t, int(tableUsage[0]["readOps"].(float64)), 0)
+	assert.Greater(t, int(tableUsage[0]["readBytes"].(float64)), 0)
+	assert.Greater(t, int(tableUsage[0]["readRecords"].(float64)), 0)
+	assert.Equal(t, int(tableUsage[0]["writeOps"].(float64)), 2)
+	assert.Greater(t, int(tableUsage[0]["writeBytes"].(float64)), 0)
+	assert.Equal(t, int(tableUsage[0]["writeRecords"].(float64)), len(foobars))
 
 	// check metrics have been accurately tracked for the user
 	res15 := queryGQL(`

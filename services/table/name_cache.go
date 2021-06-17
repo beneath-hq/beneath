@@ -1,4 +1,4 @@
-package stream
+package table
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// FindPrimaryInstanceIDByOrganizationProjectAndName returns the current primary instance ID of the stream
-func (s *Service) FindPrimaryInstanceIDByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) uuid.UUID {
-	return s.nameCache.Get(ctx, organizationName, projectName, streamName)
+// FindPrimaryInstanceIDByOrganizationProjectAndName returns the current primary instance ID of the table
+func (s *Service) FindPrimaryInstanceIDByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, tableName string) uuid.UUID {
+	return s.nameCache.Get(ctx, organizationName, projectName, tableName)
 }
 
-// nameCache is a Redis and LRU based cache mapping stream paths to the primary instance ID for that stream
+// nameCache is a Redis and LRU based cache mapping table paths to the primary instance ID for that table
 type nameCache struct {
 	codec   *cache.Codec
 	service *Service
@@ -34,13 +34,13 @@ func (s *Service) initNameCache() {
 	s.nameCache = c
 }
 
-func (c *nameCache) Get(ctx context.Context, organizationName string, projectName string, streamName string) uuid.UUID {
+func (c *nameCache) Get(ctx context.Context, organizationName string, projectName string, tableName string) uuid.UUID {
 	var instanceID uuid.UUID
 	err := c.codec.Once(&cache.Item{
-		Key:        c.redisKey(organizationName, projectName, streamName),
+		Key:        c.redisKey(organizationName, projectName, tableName),
 		Object:     &instanceID,
 		Expiration: c.cacheTime(),
-		Func:       c.getterFunc(ctx, organizationName, projectName, streamName),
+		Func:       c.getterFunc(ctx, organizationName, projectName, tableName),
 	})
 
 	if err != nil {
@@ -53,8 +53,8 @@ func (c *nameCache) Get(ctx context.Context, organizationName string, projectNam
 	return instanceID
 }
 
-func (c *nameCache) Clear(ctx context.Context, organizationName string, projectName string, streamName string) {
-	err := c.codec.Delete(c.redisKey(organizationName, projectName, streamName))
+func (c *nameCache) Clear(ctx context.Context, organizationName string, projectName string, tableName string) {
+	err := c.codec.Delete(c.redisKey(organizationName, projectName, tableName))
 	if err != nil && err != cache.ErrCacheMiss {
 		panic(err)
 	}
@@ -72,8 +72,8 @@ func (c *nameCache) cacheLRUTime() time.Duration {
 	return 10 * time.Second
 }
 
-func (c *nameCache) redisKey(organizationName string, projectName string, streamName string) string {
-	return fmt.Sprintf("inst:%s:%s:%s", organizationName, projectName, streamName)
+func (c *nameCache) redisKey(organizationName string, projectName string, tableName string) string {
+	return fmt.Sprintf("inst:%s:%s:%s", organizationName, projectName, tableName)
 }
 
 func (c *nameCache) marshal(v interface{}) ([]byte, error) {
@@ -87,19 +87,19 @@ func (c *nameCache) unmarshal(b []byte, v interface{}) (err error) {
 	return err
 }
 
-func (c *nameCache) getterFunc(ctx context.Context, organizationName string, projectName string, streamName string) func() (interface{}, error) {
+func (c *nameCache) getterFunc(ctx context.Context, organizationName string, projectName string, tableName string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		res := uuid.Nil
 		_, err := c.service.DB.GetDB(ctx).QueryContext(ctx, pg.Scan(&res), `
-			select s.primary_stream_instance_id
-			from streams s
+			select s.primary_table_instance_id
+			from tables s
 			join projects p on s.project_id = p.project_id
 			join organizations o on p.organization_id = o.organization_id
 			where lower(s.name) = lower(?)
 			and lower(p.name) = lower(?)
 			and lower(o.name) = lower(?)
-			and primary_stream_instance_id is not null
-		`, streamName, projectName, organizationName)
+			and primary_table_instance_id is not null
+		`, tableName, projectName, organizationName)
 		if err == pg.ErrNoRows {
 			return res, nil
 		}

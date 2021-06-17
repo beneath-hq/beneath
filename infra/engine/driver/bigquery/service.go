@@ -25,7 +25,7 @@ func (b BigQuery) MaxRecordsInBatch() int {
 }
 
 // RegisterInstance implements beneath.Service
-func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	// get bigquery schema
 	schema, err := transpilers.FromAvro(s.GetCodec().AvroSchema)
 	if err != nil {
@@ -67,7 +67,7 @@ func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Stream, i drive
 	}
 
 	// create table
-	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
+	table := b.InstancesDataset.Table(instanceTableName(i.GetTableInstanceID()))
 	err = table.Create(ctx, tableMetadata)
 	if err != nil && !isAlreadyExists(err) { // for idempotency, we don't care if it exists
 		return err
@@ -77,9 +77,9 @@ func (b BigQuery) RegisterInstance(ctx context.Context, s driver.Stream, i drive
 }
 
 // RemoveInstance implements beneath.Service
-func (b BigQuery) RemoveInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b BigQuery) RemoveInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	// delete instance table
-	table := b.InstancesDataset.Table(instanceTableName(i.GetStreamInstanceID()))
+	table := b.InstancesDataset.Table(instanceTableName(i.GetTableInstanceID()))
 	err := table.Delete(ctx)
 	if err != nil && !isNotFound(err) {
 		return err

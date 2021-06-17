@@ -11,136 +11,136 @@ import (
 	"github.com/beneath-hq/beneath/services/middleware"
 )
 
-// Stream returns the gql.StreamResolver
-func (r *Resolver) Stream() gql.StreamResolver {
-	return &streamResolver{r}
+// Table returns the gql.TableResolver
+func (r *Resolver) Table() gql.TableResolver {
+	return &tableResolver{r}
 }
 
-type streamResolver struct{ *Resolver }
+type tableResolver struct{ *Resolver }
 
-func (r *streamResolver) StreamID(ctx context.Context, obj *models.Stream) (string, error) {
-	return obj.StreamID.String(), nil
+func (r *tableResolver) TableID(ctx context.Context, obj *models.Table) (string, error) {
+	return obj.TableID.String(), nil
 }
 
-func (r *queryResolver) StreamByID(ctx context.Context, streamID uuid.UUID) (*models.Stream, error) {
-	stream := r.Streams.FindStream(ctx, streamID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream with ID %s not found", streamID.String())
+func (r *queryResolver) TableByID(ctx context.Context, tableID uuid.UUID) (*models.Table, error) {
+	table := r.Tables.FindTable(ctx, tableID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table with ID %s not found", tableID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", streamID.String())
+		return nil, gqlerror.Errorf("Not allowed to read table with ID %s", tableID.String())
 	}
 
-	return streamWithPermissions(stream, perms), nil
+	return tableWithPermissions(table, perms), nil
 }
 
-func (r *queryResolver) StreamByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, streamName string) (*models.Stream, error) {
-	stream := r.Streams.FindStreamByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s/%s/%s not found", organizationName, projectName, streamName)
+func (r *queryResolver) TableByOrganizationProjectAndName(ctx context.Context, organizationName string, projectName string, tableName string) (*models.Table, error) {
+	table := r.Tables.FindTableByOrganizationProjectAndName(ctx, organizationName, projectName, tableName)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table %s/%s/%s not found", organizationName, projectName, tableName)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Read && !perms.Write {
-		return nil, gqlerror.Errorf("Not allowed to find stream %s/%s/%s", organizationName, projectName, streamName)
+		return nil, gqlerror.Errorf("Not allowed to find table %s/%s/%s", organizationName, projectName, tableName)
 	}
 
-	return streamWithPermissions(stream, perms), nil
+	return tableWithPermissions(table, perms), nil
 }
 
-func (r *queryResolver) StreamInstanceByStreamAndVersion(ctx context.Context, streamID uuid.UUID, version int) (*models.StreamInstance, error) {
-	instance := r.Streams.FindStreamInstanceByVersion(ctx, streamID, version)
+func (r *queryResolver) TableInstanceByTableAndVersion(ctx context.Context, tableID uuid.UUID, version int) (*models.TableInstance, error) {
+	instance := r.Tables.FindTableInstanceByVersion(ctx, tableID, version)
 	if instance == nil {
-		return nil, gqlerror.Errorf("Instance for stream %s version %d not found", streamID.String(), version)
+		return nil, gqlerror.Errorf("Instance for table %s version %d not found", tableID.String(), version)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, streamID, instance.Stream.ProjectID, instance.Stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, tableID, instance.Table.ProjectID, instance.Table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read instance version %d for stream %s", version, streamID.String())
+		return nil, gqlerror.Errorf("Not allowed to read instance version %d for table %s", version, tableID.String())
 	}
 
 	return instanceWithPermissions(instance, perms), nil
 }
 
-func (r *queryResolver) StreamInstanceByOrganizationProjectStreamAndVersion(ctx context.Context, organizationName string, projectName string, streamName string, version int) (*models.StreamInstance, error) {
-	instance := r.Streams.FindStreamInstanceByOrganizationProjectStreamAndVersion(ctx, organizationName, projectName, streamName, version)
+func (r *queryResolver) TableInstanceByOrganizationProjectTableAndVersion(ctx context.Context, organizationName string, projectName string, tableName string, version int) (*models.TableInstance, error) {
+	instance := r.Tables.FindTableInstanceByOrganizationProjectTableAndVersion(ctx, organizationName, projectName, tableName, version)
 	if instance == nil {
-		return nil, gqlerror.Errorf("Stream instance %s/%s/%s version %d not found", organizationName, projectName, streamName, version)
+		return nil, gqlerror.Errorf("Table instance %s/%s/%s version %d not found", organizationName, projectName, tableName, version)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, instance.Stream.StreamID, instance.Stream.ProjectID, instance.Stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, instance.Table.TableID, instance.Table.ProjectID, instance.Table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream %s/%s/%s", organizationName, projectName, streamName)
+		return nil, gqlerror.Errorf("Not allowed to read table %s/%s/%s", organizationName, projectName, tableName)
 	}
 
 	return instanceWithPermissions(instance, perms), nil
 }
 
-func (r *queryResolver) StreamInstancesForStream(ctx context.Context, streamID uuid.UUID) ([]*models.StreamInstance, error) {
-	stream := r.Streams.FindStream(ctx, streamID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream with ID %s not found", streamID.String())
+func (r *queryResolver) TableInstancesForTable(ctx context.Context, tableID uuid.UUID) ([]*models.TableInstance, error) {
+	table := r.Tables.FindTable(ctx, tableID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table with ID %s not found", tableID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", streamID.String())
+		return nil, gqlerror.Errorf("Not allowed to read table with ID %s", tableID.String())
 	}
 
-	instances := r.Streams.FindStreamInstances(ctx, streamID, nil, nil)
+	instances := r.Tables.FindTableInstances(ctx, tableID, nil, nil)
 	return instances, nil
 }
 
-func (r *queryResolver) StreamInstancesByOrganizationProjectAndStreamName(ctx context.Context, organizationName string, projectName string, streamName string) ([]*models.StreamInstance, error) {
-	stream := r.Streams.FindStreamByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s/%s/%s not found", organizationName, projectName, streamName)
+func (r *queryResolver) TableInstancesByOrganizationProjectAndTableName(ctx context.Context, organizationName string, projectName string, tableName string) ([]*models.TableInstance, error) {
+	table := r.Tables.FindTableByOrganizationProjectAndName(ctx, organizationName, projectName, tableName)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table %s/%s/%s not found", organizationName, projectName, tableName)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Read {
-		return nil, gqlerror.Errorf("Not allowed to read stream with ID %s", stream.StreamID.String())
+		return nil, gqlerror.Errorf("Not allowed to read table with ID %s", table.TableID.String())
 	}
 
-	instances := r.Streams.FindStreamInstances(ctx, stream.StreamID, nil, nil)
+	instances := r.Tables.FindTableInstances(ctx, table.TableID, nil, nil)
 	return instances, nil
 }
 
-func (r *queryResolver) StreamsForUser(ctx context.Context, userID uuid.UUID) ([]*models.Stream, error) {
+func (r *queryResolver) TablesForUser(ctx context.Context, userID uuid.UUID) ([]*models.Table, error) {
 	secret := middleware.GetSecret(ctx)
 	if !(secret.IsUser() && secret.GetOwnerID() == userID) {
-		return nil, gqlerror.Errorf("StreamsForUser can only be called for the calling user")
+		return nil, gqlerror.Errorf("TablesForUser can only be called for the calling user")
 	}
-	return r.Streams.FindStreamsForUser(ctx, userID), nil
+	return r.Tables.FindTablesForUser(ctx, userID), nil
 }
 
 func (r *queryResolver) CompileSchema(ctx context.Context, input gql.CompileSchemaInput) (*gql.CompileSchemaOutput, error) {
-	stream := &models.Stream{}
-	err := r.Streams.CompileToStream(stream, input.SchemaKind, input.Schema, input.Indexes, nil)
+	table := &models.Table{}
+	err := r.Tables.CompileToTable(table, input.SchemaKind, input.Schema, input.Indexes, nil)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error compiling schema: %s", err.Error())
 	}
 
 	return &gql.CompileSchemaOutput{
-		CanonicalAvroSchema: stream.CanonicalAvroSchema,
-		CanonicalIndexes:    stream.CanonicalIndexes,
+		CanonicalAvroSchema: table.CanonicalAvroSchema,
+		CanonicalIndexes:    table.CanonicalIndexes,
 	}, nil
 }
 
-func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStreamInput) (*models.Stream, error) {
+func (r *mutationResolver) CreateTable(ctx context.Context, input gql.CreateTableInput) (*models.Table, error) {
 	// Handle UpdateIfExists (returns if exists)
 	if input.UpdateIfExists != nil && *input.UpdateIfExists {
-		stream := r.Streams.FindStreamByOrganizationProjectAndName(ctx, input.OrganizationName, input.ProjectName, input.StreamName)
-		if stream != nil {
-			return r.updateExistingFromCreateStream(ctx, stream, input)
+		table := r.Tables.FindTableByOrganizationProjectAndName(ctx, input.OrganizationName, input.ProjectName, input.TableName)
+		if table != nil {
+			return r.updateExistingFromCreateTable(ctx, table, input)
 		}
 	}
 
@@ -155,9 +155,9 @@ func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStr
 		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s/%s", input.OrganizationName, input.ProjectName)
 	}
 
-	stream, err := r.Streams.CreateStream(ctx, &models.CreateStreamCommand{
+	table, err := r.Tables.CreateTable(ctx, &models.CreateTableCommand{
 		Project:                   project,
-		Name:                      input.StreamName,
+		Name:                      input.TableName,
 		SchemaKind:                input.SchemaKind,
 		Schema:                    input.Schema,
 		Indexes:                   input.Indexes,
@@ -172,47 +172,47 @@ func (r *mutationResolver) CreateStream(ctx context.Context, input gql.CreateStr
 		WarehouseRetentionSeconds: input.WarehouseRetentionSeconds,
 	})
 	if err != nil {
-		return nil, gqlerror.Errorf("Error creating stream: %s", err.Error())
+		return nil, gqlerror.Errorf("Error creating table: %s", err.Error())
 	}
 
-	_, err = r.Streams.CreateStreamInstance(ctx, stream, nil, true)
+	_, err = r.Tables.CreateTableInstance(ctx, table, nil, true)
 	if err != nil {
 		return nil, gqlerror.Errorf("Error creating first instance: %s", err.Error())
 	}
 
-	return streamWithProjectPermissions(stream, perms), nil
+	return tableWithProjectPermissions(table, perms), nil
 }
 
-func (r *mutationResolver) updateExistingFromCreateStream(ctx context.Context, stream *models.Stream, input gql.CreateStreamInput) (*models.Stream, error) {
+func (r *mutationResolver) updateExistingFromCreateTable(ctx context.Context, table *models.Table, input gql.CreateTableInput) (*models.Table, error) {
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, table.ProjectID, table.Project.Public)
 	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s", stream.Project.Name)
+		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s", table.Project.Name)
 	}
 
 	// check use and retention unchanged (probably doesn't belong here, but tricky to move to service)
-	if !checkUse(input.UseLog, stream.UseLog) {
-		return nil, gqlerror.Errorf("Cannot update useLog on existing stream")
+	if !checkUse(input.UseLog, table.UseLog) {
+		return nil, gqlerror.Errorf("Cannot update useLog on existing table")
 	}
-	if !checkUse(input.UseIndex, stream.UseIndex) {
-		return nil, gqlerror.Errorf("Cannot update useIndex on existing stream")
+	if !checkUse(input.UseIndex, table.UseIndex) {
+		return nil, gqlerror.Errorf("Cannot update useIndex on existing table")
 	}
-	if !checkUse(input.UseWarehouse, stream.UseWarehouse) {
-		return nil, gqlerror.Errorf("Cannot update useWarehouse on existing stream")
+	if !checkUse(input.UseWarehouse, table.UseWarehouse) {
+		return nil, gqlerror.Errorf("Cannot update useWarehouse on existing table")
 	}
-	if !checkRetention(input.LogRetentionSeconds, stream.LogRetentionSeconds) {
-		return nil, gqlerror.Errorf("Cannot update logRetentionSeconds on existing stream")
+	if !checkRetention(input.LogRetentionSeconds, table.LogRetentionSeconds) {
+		return nil, gqlerror.Errorf("Cannot update logRetentionSeconds on existing table")
 	}
-	if !checkRetention(input.IndexRetentionSeconds, stream.IndexRetentionSeconds) {
-		return nil, gqlerror.Errorf("Cannot update indexRetentionSeconds on existing stream")
+	if !checkRetention(input.IndexRetentionSeconds, table.IndexRetentionSeconds) {
+		return nil, gqlerror.Errorf("Cannot update indexRetentionSeconds on existing table")
 	}
-	if !checkRetention(input.WarehouseRetentionSeconds, stream.WarehouseRetentionSeconds) {
-		return nil, gqlerror.Errorf("Cannot update warehouseRetentionSeconds on existing stream")
+	if !checkRetention(input.WarehouseRetentionSeconds, table.WarehouseRetentionSeconds) {
+		return nil, gqlerror.Errorf("Cannot update warehouseRetentionSeconds on existing table")
 	}
 
 	// attempt update
-	err := r.Streams.UpdateStream(ctx, &models.UpdateStreamCommand{
-		Stream:            stream,
+	err := r.Tables.UpdateTable(ctx, &models.UpdateTableCommand{
+		Table:             table,
 		SchemaKind:        &input.SchemaKind,
 		Schema:            &input.Schema,
 		Indexes:           input.Indexes,
@@ -221,10 +221,10 @@ func (r *mutationResolver) updateExistingFromCreateStream(ctx context.Context, s
 		AllowManualWrites: input.AllowManualWrites,
 	})
 	if err != nil {
-		return nil, gqlerror.Errorf("Error updating existing stream: %s", err.Error())
+		return nil, gqlerror.Errorf("Error updating existing table: %s", err.Error())
 	}
 
-	return streamWithProjectPermissions(stream, perms), nil
+	return tableWithProjectPermissions(table, perms), nil
 }
 
 func checkUse(incoming *bool, current bool) bool {
@@ -241,20 +241,20 @@ func checkRetention(incoming *int, current int32) bool {
 	return current == 0
 }
 
-func (r *mutationResolver) UpdateStream(ctx context.Context, input gql.UpdateStreamInput) (*models.Stream, error) {
-	stream := r.Streams.FindStream(ctx, input.StreamID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream with ID %s not found", input.StreamID)
+func (r *mutationResolver) UpdateTable(ctx context.Context, input gql.UpdateTableInput) (*models.Table, error) {
+	table := r.Tables.FindTable(ctx, input.TableID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table with ID %s not found", input.TableID)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, table.ProjectID, table.Project.Public)
 	if !perms.Create {
-		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s", stream.Project.Name)
+		return nil, gqlerror.Errorf("Not allowed to create or modify resources in project %s", table.Project.Name)
 	}
 
-	err := r.Streams.UpdateStream(ctx, &models.UpdateStreamCommand{
-		Stream:            stream,
+	err := r.Tables.UpdateTable(ctx, &models.UpdateTableCommand{
+		Table:             table,
 		SchemaKind:        input.SchemaKind,
 		Schema:            input.Schema,
 		Indexes:           input.Indexes,
@@ -262,25 +262,25 @@ func (r *mutationResolver) UpdateStream(ctx context.Context, input gql.UpdateStr
 		AllowManualWrites: input.AllowManualWrites,
 	})
 	if err != nil {
-		return nil, gqlerror.Errorf("Error updating stream: %s", err.Error())
+		return nil, gqlerror.Errorf("Error updating table: %s", err.Error())
 	}
 
-	return streamWithProjectPermissions(stream, perms), nil
+	return tableWithProjectPermissions(table, perms), nil
 }
 
-func (r *mutationResolver) DeleteStream(ctx context.Context, streamID uuid.UUID) (bool, error) {
-	stream := r.Streams.FindStream(ctx, streamID)
-	if stream == nil {
-		return false, gqlerror.Errorf("Stream %s not found", streamID.String())
+func (r *mutationResolver) DeleteTable(ctx context.Context, tableID uuid.UUID) (bool, error) {
+	table := r.Tables.FindTable(ctx, tableID)
+	if table == nil {
+		return false, gqlerror.Errorf("Table %s not found", tableID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, stream.ProjectID, false)
+	perms := r.Permissions.ProjectPermissionsForSecret(ctx, secret, table.ProjectID, false)
 	if !perms.Create {
-		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", stream.Project.Name)
+		return false, gqlerror.Errorf("Not allowed to perform admin functions in project %s", table.Project.Name)
 	}
 
-	err := r.Streams.DeleteStream(ctx, stream)
+	err := r.Tables.DeleteTable(ctx, table)
 	if err != nil {
 		return false, gqlerror.Errorf("%s", err.Error())
 	}
@@ -288,34 +288,34 @@ func (r *mutationResolver) DeleteStream(ctx context.Context, streamID uuid.UUID)
 	return true, nil
 }
 
-// MaxInstancesPerStream sets a limit for the number of instances for a stream at any given time
-const MaxInstancesPerStream = 25
+// MaxInstancesPerTable sets a limit for the number of instances for a table at any given time
+const MaxInstancesPerTable = 25
 
-func (r *mutationResolver) CreateStreamInstance(ctx context.Context, input gql.CreateStreamInstanceInput) (*models.StreamInstance, error) {
+func (r *mutationResolver) CreateTableInstance(ctx context.Context, input gql.CreateTableInstanceInput) (*models.TableInstance, error) {
 	if input.UpdateIfExists != nil && *input.UpdateIfExists {
 		if input.Version == nil {
 			return nil, gqlerror.Errorf("Cannot set updateIfExists=true without providing a version")
 		}
-		instance := r.Streams.FindStreamInstanceByVersion(ctx, input.StreamID, *input.Version)
+		instance := r.Tables.FindTableInstanceByVersion(ctx, input.TableID, *input.Version)
 		if instance != nil {
-			return r.updateExistingFromCreateStreamInstance(ctx, instance, input)
+			return r.updateExistingFromCreateTableInstance(ctx, instance, input)
 		}
 	}
 
-	stream := r.Streams.FindStream(ctx, input.StreamID)
-	if stream == nil {
-		return nil, gqlerror.Errorf("Stream %s not found", input.StreamID.String())
+	table := r.Tables.FindTable(ctx, input.TableID)
+	if table == nil {
+		return nil, gqlerror.Errorf("Table %s not found", input.TableID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Project.Public)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Project.Public)
 	if !perms.Write {
-		return nil, gqlerror.Errorf("Not allowed to write to stream %s/%s/%s", stream.Project.Organization.Name, stream.Project.Name, stream.Name)
+		return nil, gqlerror.Errorf("Not allowed to write to table %s/%s/%s", table.Project.Organization.Name, table.Project.Name, table.Name)
 	}
 
 	// check not too many instances
-	if stream.InstancesCreatedCount-stream.InstancesDeletedCount >= MaxInstancesPerStream {
-		return nil, gqlerror.Errorf("You cannot have more than %d instances per stream. Delete an existing instance to make room for more.", MaxInstancesPerStream)
+	if table.InstancesCreatedCount-table.InstancesDeletedCount >= MaxInstancesPerTable {
+		return nil, gqlerror.Errorf("You cannot have more than %d instances per table. Delete an existing instance to make room for more.", MaxInstancesPerTable)
 	}
 
 	makePrimary := false
@@ -323,19 +323,19 @@ func (r *mutationResolver) CreateStreamInstance(ctx context.Context, input gql.C
 		makePrimary = *input.MakePrimary
 	}
 
-	si, err := r.Streams.CreateStreamInstance(ctx, stream, input.Version, makePrimary)
+	si, err := r.Tables.CreateTableInstance(ctx, table, input.Version, makePrimary)
 	if err != nil {
-		return nil, gqlerror.Errorf("Error creating stream instance: %s", err.Error())
+		return nil, gqlerror.Errorf("Error creating table instance: %s", err.Error())
 	}
 
 	return instanceWithPermissions(si, perms), nil
 }
 
-func (r *mutationResolver) updateExistingFromCreateStreamInstance(ctx context.Context, instance *models.StreamInstance, input gql.CreateStreamInstanceInput) (*models.StreamInstance, error) {
+func (r *mutationResolver) updateExistingFromCreateTableInstance(ctx context.Context, instance *models.TableInstance, input gql.CreateTableInstanceInput) (*models.TableInstance, error) {
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, instance.Stream.StreamID, instance.Stream.ProjectID, false)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, instance.Table.TableID, instance.Table.ProjectID, false)
 	if !perms.Write {
-		return nil, gqlerror.Errorf("Not allowed to write to instance %s", instance.StreamInstanceID)
+		return nil, gqlerror.Errorf("Not allowed to write to instance %s", instance.TableInstanceID)
 	}
 
 	makePrimary := false
@@ -343,24 +343,24 @@ func (r *mutationResolver) updateExistingFromCreateStreamInstance(ctx context.Co
 		makePrimary = *input.MakePrimary
 	}
 
-	err := r.Streams.UpdateStreamInstance(ctx, instance.Stream, instance, false, makePrimary)
+	err := r.Tables.UpdateTableInstance(ctx, instance.Table, instance, false, makePrimary)
 	if err != nil {
-		return nil, gqlerror.Errorf("Error updating stream instance: %s", err.Error())
+		return nil, gqlerror.Errorf("Error updating table instance: %s", err.Error())
 	}
 
 	return instanceWithPermissions(instance, perms), nil
 }
 
-func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, input gql.UpdateStreamInstanceInput) (*models.StreamInstance, error) {
-	instance := r.Streams.FindStreamInstance(ctx, input.StreamInstanceID)
+func (r *mutationResolver) UpdateTableInstance(ctx context.Context, input gql.UpdateTableInstanceInput) (*models.TableInstance, error) {
+	instance := r.Tables.FindTableInstance(ctx, input.TableInstanceID)
 	if instance == nil {
-		return nil, gqlerror.Errorf("Stream instance %s not found", input.StreamInstanceID)
+		return nil, gqlerror.Errorf("Table instance %s not found", input.TableInstanceID)
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, instance.Stream.StreamID, instance.Stream.ProjectID, false)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, instance.Table.TableID, instance.Table.ProjectID, false)
 	if !perms.Write {
-		return nil, gqlerror.Errorf("Not allowed to write to instance %s", input.StreamInstanceID)
+		return nil, gqlerror.Errorf("Not allowed to write to instance %s", input.TableInstanceID)
 	}
 
 	makeFinal := false
@@ -372,51 +372,51 @@ func (r *mutationResolver) UpdateStreamInstance(ctx context.Context, input gql.U
 		makePrimary = *input.MakePrimary
 	}
 
-	err := r.Streams.UpdateStreamInstance(ctx, instance.Stream, instance, makeFinal, makePrimary)
+	err := r.Tables.UpdateTableInstance(ctx, instance.Table, instance, makeFinal, makePrimary)
 	if err != nil {
-		return nil, gqlerror.Errorf("Error updating stream instance: %s", err.Error())
+		return nil, gqlerror.Errorf("Error updating table instance: %s", err.Error())
 	}
 
 	return instanceWithPermissions(instance, perms), nil
 }
 
-func (r *mutationResolver) DeleteStreamInstance(ctx context.Context, instanceID uuid.UUID) (bool, error) {
-	instance := r.Streams.FindStreamInstance(ctx, instanceID)
+func (r *mutationResolver) DeleteTableInstance(ctx context.Context, instanceID uuid.UUID) (bool, error) {
+	instance := r.Tables.FindTableInstance(ctx, instanceID)
 	if instance == nil {
-		return false, gqlerror.Errorf("Stream instance '%s' not found", instanceID.String())
+		return false, gqlerror.Errorf("Table instance '%s' not found", instanceID.String())
 	}
 
 	secret := middleware.GetSecret(ctx)
-	perms := r.Permissions.StreamPermissionsForSecret(ctx, secret, instance.Stream.StreamID, instance.Stream.ProjectID, false)
+	perms := r.Permissions.TablePermissionsForSecret(ctx, secret, instance.Table.TableID, instance.Table.ProjectID, false)
 	if !perms.Write {
 		return false, gqlerror.Errorf("Not allowed to write to instance %s", instanceID.String())
 	}
 
-	err := r.Streams.DeleteStreamInstance(ctx, instance.Stream, instance)
+	err := r.Tables.DeleteTableInstance(ctx, instance.Table, instance)
 	if err != nil {
-		return false, gqlerror.Errorf("Couldn't delete stream instance: %s", err.Error())
+		return false, gqlerror.Errorf("Couldn't delete table instance: %s", err.Error())
 	}
 
 	return true, nil
 }
 
-func instanceWithPermissions(si *models.StreamInstance, perms models.StreamPermissions) *models.StreamInstance {
-	if si.Stream != nil {
-		si.Stream = streamWithPermissions(si.Stream, perms)
+func instanceWithPermissions(si *models.TableInstance, perms models.TablePermissions) *models.TableInstance {
+	if si.Table != nil {
+		si.Table = tableWithPermissions(si.Table, perms)
 	}
 	return si
 }
 
-func streamWithPermissions(s *models.Stream, perms models.StreamPermissions) *models.Stream {
+func tableWithPermissions(s *models.Table, perms models.TablePermissions) *models.Table {
 	// Note: This is a pretty bad approximation, but will do for our current use case
-	return streamWithProjectPermissions(s, models.ProjectPermissions{
+	return tableWithProjectPermissions(s, models.ProjectPermissions{
 		View:   perms.Read,
 		Create: perms.Write,
 		Admin:  perms.Write,
 	})
 }
 
-func streamWithProjectPermissions(s *models.Stream, perms models.ProjectPermissions) *models.Stream {
+func tableWithProjectPermissions(s *models.Table, perms models.ProjectPermissions) *models.Table {
 	if s.Project != nil {
 		s.Project.Permissions = &models.PermissionsUsersProjects{
 			View:   perms.View,

@@ -1,4 +1,4 @@
-package stream
+package table
 
 import (
 	"crypto/md5"
@@ -22,22 +22,22 @@ func (s *Service) ComputeSchemaMD5(schema string, indexes *string) []byte {
 	return digest[:]
 }
 
-// CompileToStream compiles the given schema and sets relevant fields on the stream.
-func (s *Service) CompileToStream(stream *models.Stream, schemaKind models.StreamSchemaKind, newSchema string, newIndexes *string, description *string) error {
-	// determine if we're updating an existing stream or creating a new
-	update := stream.StreamID != uuid.Nil
+// CompileToTable compiles the given schema and sets relevant fields on the table.
+func (s *Service) CompileToTable(table *models.Table, schemaKind models.TableSchemaKind, newSchema string, newIndexes *string, description *string) error {
+	// determine if we're updating an existing table or creating a new
+	update := table.TableID != uuid.Nil
 
 	// get schema
 	var schema schemalang.Schema
 	var indexes schemalang.Indexes
 	var err error
 	switch schemaKind {
-	case models.StreamSchemaKindAvro:
+	case models.TableSchemaKindAvro:
 		schema, err = transpilers.FromAvro(newSchema)
-	case models.StreamSchemaKindGraphQL:
+	case models.TableSchemaKindGraphQL:
 		schema, indexes, err = transpilers.FromGraphQL(newSchema)
 	default:
-		err = fmt.Errorf("Unsupported stream schema definition language '%s'", schemaKind)
+		err = fmt.Errorf("Unsupported table schema definition language '%s'", schemaKind)
 	}
 	if err != nil {
 		return err
@@ -72,46 +72,46 @@ func (s *Service) CompileToStream(stream *models.Stream, schemaKind models.Strea
 
 	// if update, check canonical avro is the same
 	if update {
-		if canonicalAvro != stream.CanonicalAvroSchema {
-			return fmt.Errorf("Schema error: Unfortunately we do not currently support structural changes to a stream's schema; you can only comments and descriptions")
+		if canonicalAvro != table.CanonicalAvroSchema {
+			return fmt.Errorf("Schema error: Unfortunately we do not currently support structural changes to a table's schema; you can only comments and descriptions")
 		}
-		if canonicalIndexes != stream.CanonicalIndexes {
-			return fmt.Errorf("Schema error: Unfortunately we do not currently support updating a stream's indexes")
+		if canonicalIndexes != table.CanonicalIndexes {
+			return fmt.Errorf("Schema error: Unfortunately we do not currently support updating a table's indexes")
 		}
 	}
 
 	// TEMPORARY: disable secondary indexes
 	if len(indexes) != 1 {
-		return fmt.Errorf("Cannot add secondary indexes to stream (a stream must have exactly one key index)")
+		return fmt.Errorf("Cannot add secondary indexes to table (a table must have exactly one key index)")
 	}
 
 	// set indexes
 	if !update {
-		s.assignIndexes(stream, indexes)
+		s.assignIndexes(table, indexes)
 	}
 
-	// set missing stream fields
-	stream.SchemaKind = schemaKind
-	stream.Schema = newSchema
-	stream.AvroSchema = avro
-	stream.CanonicalAvroSchema = canonicalAvro
-	stream.CanonicalIndexes = canonicalIndexes
+	// set missing table fields
+	table.SchemaKind = schemaKind
+	table.Schema = newSchema
+	table.AvroSchema = avro
+	table.CanonicalAvroSchema = canonicalAvro
+	table.CanonicalIndexes = canonicalIndexes
 	if description == nil {
-		stream.Description = schema.(*schemalang.Record).Doc
+		table.Description = schema.(*schemalang.Record).Doc
 	} else {
-		stream.Description = *description
+		table.Description = *description
 	}
 
 	return nil
 }
 
-// Sets StreamIndexes to new StreamIndex objects based on def.
+// Sets TableIndexes to new TableIndex objects based on def.
 // Doesn't execute any DB actions, so doesn't set any IDs.
-func (s *Service) assignIndexes(stream *models.Stream, indexes schemalang.Indexes) {
+func (s *Service) assignIndexes(table *models.Table, indexes schemalang.Indexes) {
 	indexes.Sort()
-	stream.StreamIndexes = make([]*models.StreamIndex, len(indexes))
+	table.TableIndexes = make([]*models.TableIndex, len(indexes))
 	for idx, index := range indexes {
-		stream.StreamIndexes[idx] = &models.StreamIndex{
+		table.TableIndexes[idx] = &models.TableIndex{
 			ShortID:   idx,
 			Fields:    index.Fields,
 			Primary:   index.Key,

@@ -22,12 +22,12 @@ func (b Postgres) MaxRecordsInBatch() int {
 }
 
 // RegisterInstance implements beneath.Service
-func (b Postgres) RegisterInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b Postgres) RegisterInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	panic("todo")
 }
 
 // RemoveInstance implements beneath.Service
-func (b Postgres) RemoveInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b Postgres) RemoveInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	panic("todo")
 }
 

@@ -17,9 +17,9 @@ type Organization interface {
 }
 
 type CompileSchemaInput struct {
-	SchemaKind models.StreamSchemaKind `json:"schemaKind"`
-	Schema     string                  `json:"schema"`
-	Indexes    *string                 `json:"indexes"`
+	SchemaKind models.TableSchemaKind `json:"schemaKind"`
+	Schema     string                 `json:"schema"`
+	Indexes    *string                `json:"indexes"`
 }
 
 type CompileSchemaOutput struct {
@@ -49,27 +49,27 @@ type CreateServiceInput struct {
 	UpdateIfExists   *bool   `json:"updateIfExists"`
 }
 
-type CreateStreamInput struct {
-	OrganizationName          string                  `json:"organizationName"`
-	ProjectName               string                  `json:"projectName"`
-	StreamName                string                  `json:"streamName"`
-	SchemaKind                models.StreamSchemaKind `json:"schemaKind"`
-	Schema                    string                  `json:"schema"`
-	Indexes                   *string                 `json:"indexes"`
-	Description               *string                 `json:"description"`
-	Meta                      *bool                   `json:"meta"`
-	AllowManualWrites         *bool                   `json:"allowManualWrites"`
-	UseLog                    *bool                   `json:"useLog"`
-	UseIndex                  *bool                   `json:"useIndex"`
-	UseWarehouse              *bool                   `json:"useWarehouse"`
-	LogRetentionSeconds       *int                    `json:"logRetentionSeconds"`
-	IndexRetentionSeconds     *int                    `json:"indexRetentionSeconds"`
-	WarehouseRetentionSeconds *int                    `json:"warehouseRetentionSeconds"`
-	UpdateIfExists            *bool                   `json:"updateIfExists"`
+type CreateTableInput struct {
+	OrganizationName          string                 `json:"organizationName"`
+	ProjectName               string                 `json:"projectName"`
+	TableName                 string                 `json:"tableName"`
+	SchemaKind                models.TableSchemaKind `json:"schemaKind"`
+	Schema                    string                 `json:"schema"`
+	Indexes                   *string                `json:"indexes"`
+	Description               *string                `json:"description"`
+	Meta                      *bool                  `json:"meta"`
+	AllowManualWrites         *bool                  `json:"allowManualWrites"`
+	UseLog                    *bool                  `json:"useLog"`
+	UseIndex                  *bool                  `json:"useIndex"`
+	UseWarehouse              *bool                  `json:"useWarehouse"`
+	LogRetentionSeconds       *int                   `json:"logRetentionSeconds"`
+	IndexRetentionSeconds     *int                   `json:"indexRetentionSeconds"`
+	WarehouseRetentionSeconds *int                   `json:"warehouseRetentionSeconds"`
+	UpdateIfExists            *bool                  `json:"updateIfExists"`
 }
 
-type CreateStreamInstanceInput struct {
-	StreamID       uuid.UUID `json:"streamID"`
+type CreateTableInstanceInput struct {
+	TableID        uuid.UUID `json:"tableID"`
 	Version        *int      `json:"version"`
 	MakePrimary    *bool     `json:"makePrimary"`
 	UpdateIfExists *bool     `json:"updateIfExists"`
@@ -152,19 +152,19 @@ type UpdateServiceInput struct {
 	ScanQuota        *int    `json:"scanQuota"`
 }
 
-type UpdateStreamInput struct {
-	StreamID          uuid.UUID                `json:"streamID"`
-	SchemaKind        *models.StreamSchemaKind `json:"schemaKind"`
-	Schema            *string                  `json:"schema"`
-	Indexes           *string                  `json:"indexes"`
-	Description       *string                  `json:"description"`
-	AllowManualWrites *bool                    `json:"allowManualWrites"`
+type UpdateTableInput struct {
+	TableID           uuid.UUID               `json:"tableID"`
+	SchemaKind        *models.TableSchemaKind `json:"schemaKind"`
+	Schema            *string                 `json:"schema"`
+	Indexes           *string                 `json:"indexes"`
+	Description       *string                 `json:"description"`
+	AllowManualWrites *bool                   `json:"allowManualWrites"`
 }
 
-type UpdateStreamInstanceInput struct {
-	StreamInstanceID uuid.UUID `json:"streamInstanceID"`
-	MakeFinal        *bool     `json:"makeFinal"`
-	MakePrimary      *bool     `json:"makePrimary"`
+type UpdateTableInstanceInput struct {
+	TableInstanceID uuid.UUID `json:"tableInstanceID"`
+	MakeFinal       *bool     `json:"makeFinal"`
+	MakePrimary     *bool     `json:"makePrimary"`
 }
 
 type Usage struct {
@@ -184,24 +184,24 @@ type Usage struct {
 type EntityKind string
 
 const (
-	EntityKindOrganization   EntityKind = "Organization"
-	EntityKindService        EntityKind = "Service"
-	EntityKindStreamInstance EntityKind = "StreamInstance"
-	EntityKindStream         EntityKind = "Stream"
-	EntityKindUser           EntityKind = "User"
+	EntityKindOrganization  EntityKind = "Organization"
+	EntityKindService       EntityKind = "Service"
+	EntityKindTableInstance EntityKind = "TableInstance"
+	EntityKindTable         EntityKind = "Table"
+	EntityKindUser          EntityKind = "User"
 )
 
 var AllEntityKind = []EntityKind{
 	EntityKindOrganization,
 	EntityKindService,
-	EntityKindStreamInstance,
-	EntityKindStream,
+	EntityKindTableInstance,
+	EntityKindTable,
 	EntityKindUser,
 }
 
 func (e EntityKind) IsValid() bool {
 	switch e {
-	case EntityKindOrganization, EntityKindService, EntityKindStreamInstance, EntityKindStream, EntityKindUser:
+	case EntityKindOrganization, EntityKindService, EntityKindTableInstance, EntityKindTable, EntityKindUser:
 		return true
 	}
 	return false

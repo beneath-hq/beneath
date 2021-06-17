@@ -26,12 +26,12 @@ func (b BigTable) MaxRecordsInBatch() int {
 }
 
 // RegisterInstance implements beneath.Service
-func (b BigTable) RegisterInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b BigTable) RegisterInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	return nil
 }
 
 // RemoveInstance implements beneath.Service
-func (b BigTable) RemoveInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (b BigTable) RemoveInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	codec := s.GetCodec()
 
 	// get table names
@@ -63,7 +63,7 @@ func (b BigTable) RemoveInstance(ctx context.Context, s driver.Stream, i driver.
 
 	// log
 	if s.GetUseLog() {
-		instanceID := i.GetStreamInstanceID()
+		instanceID := i.GetTableInstanceID()
 		err := b.Admin.DropRowRange(ctx, logTable, string(instanceID[:]))
 		if err != nil {
 			return err

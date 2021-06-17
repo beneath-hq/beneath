@@ -202,7 +202,7 @@ func (b BigTable) openTable(name string, cfName string, maxVersions int, maxAge 
 	return b.Client.Open(name)
 }
 
-func (b BigTable) tablesForStream(s driver.Stream) (logTable *bigtable.Table, indexTable *bigtable.Table) {
+func (b BigTable) tablesForTable(s driver.Table) (logTable *bigtable.Table, indexTable *bigtable.Table) {
 	if logExpires(s) {
 		logTable = b.LogExpiring
 	} else {
@@ -245,7 +245,7 @@ func (b BigTable) readFilter(expires bool) bigtable.ReadOption {
 	// to get semantically correct results
 	filter := bigtable.LatestNFilter(1)
 	if expires {
-		// In expiring streams, the timestamp is interpreted as the expiration date.
+		// In expiring tables, the timestamp is interpreted as the expiration date.
 		// So the timestamp must be greater than now to not be expired.
 		notExpiredFilter := bigtable.TimestampRangeFilter(time.Now(), time.Time{})
 		filter = bigtable.ChainFilters(filter, notExpiredFilter)

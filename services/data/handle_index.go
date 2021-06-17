@@ -43,16 +43,16 @@ func (s *Service) HandleQueryIndex(ctx context.Context, req *QueryIndexRequest) 
 	}
 	middleware.SetTagsPayload(ctx, payload)
 
-	// get cached stream
-	stream := s.Streams.FindCachedInstance(ctx, req.InstanceID)
-	if stream == nil {
-		return nil, newErrorf(http.StatusNotFound, "stream not found")
+	// get cached table
+	table := s.Tables.FindCachedInstance(ctx, req.InstanceID)
+	if table == nil {
+		return nil, newErrorf(http.StatusNotFound, "table not found")
 	}
 
 	// check permissions
-	perms := s.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+	perms := s.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Public)
 	if !perms.Read {
-		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this stream")
+		return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this table")
 	}
 
 	// get filter
@@ -62,7 +62,7 @@ func (s *Service) HandleQueryIndex(ctx context.Context, req *QueryIndexRequest) 
 	}
 
 	// run query
-	replayCursors, changeCursors, err := s.Engine.Lookup.ParseQuery(ctx, stream, stream, models.EfficientStreamInstance(req.InstanceID), where, true, int(req.Partitions))
+	replayCursors, changeCursors, err := s.Engine.Lookup.ParseQuery(ctx, table, table, models.EfficientTableInstance(req.InstanceID), where, true, int(req.Partitions))
 	if err != nil {
 		return nil, newErrorf(http.StatusBadRequest, "error parsing query: %s", err.Error())
 	}

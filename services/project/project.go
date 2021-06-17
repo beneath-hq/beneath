@@ -36,7 +36,7 @@ func (s *Service) FindProject(ctx context.Context, projectID uuid.UUID) *models.
 	}
 	err := s.DB.GetDB(ctx).ModelContext(ctx, project).
 		WherePK().
-		Column("project.*", "Streams", "Services", "Organization").
+		Column("project.*", "Tables", "Services", "Organization").
 		Select()
 	if !db.AssertFoundOne(err) {
 		return nil
@@ -52,7 +52,7 @@ func (s *Service) FindProjectByOrganizationAndName(ctx context.Context, organiza
 			return q.Where("lower(organization.name) = lower(?)", organizationName), nil
 		}).
 		Where("lower(project.name) = lower(?)", projectName).
-		Column("project.*", "Streams", "Services").
+		Column("project.*", "Tables", "Services").
 		Select()
 	if !db.AssertFoundOne(err) {
 		return nil
@@ -213,7 +213,7 @@ func (s *Service) Update(ctx context.Context, p *models.Project, displayName *st
 		return err
 	}
 
-	// note: if we ever support renaming projects, must invalidate stream cache for all instances in project
+	// note: if we ever support renaming projects, must invalidate table cache for all instances in project
 
 	return nil
 }

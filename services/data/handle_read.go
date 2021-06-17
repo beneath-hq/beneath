@@ -81,7 +81,7 @@ func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadRespon
 
 	// get result iterator
 	var it driver.RecordsIterator
-	streamID := uuid.Nil
+	tableID := uuid.Nil
 	instanceID := uuid.Nil
 
 	if cursor.GetType() == LogCursorType || cursor.GetType() == IndexCursorType {
@@ -93,21 +93,21 @@ func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadRespon
 		payload.InstanceID = &instanceID
 		middleware.SetTagsPayload(ctx, payload)
 
-		// get cached stream
-		stream := s.Streams.FindCachedInstance(ctx, instanceID)
-		if stream == nil {
-			return nil, newError(http.StatusNotFound, "stream not found")
+		// get cached table
+		table := s.Tables.FindCachedInstance(ctx, instanceID)
+		if table == nil {
+			return nil, newError(http.StatusNotFound, "table not found")
 		}
-		streamID = stream.StreamID
+		tableID = table.TableID
 
 		// check permissions
-		perms := s.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+		perms := s.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Public)
 		if !perms.Read {
-			return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this stream")
+			return nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read this table")
 		}
 
 		// get it
-		it, err = s.Engine.Lookup.ReadCursor(ctx, stream, stream, models.EfficientStreamInstance(instanceID), cursor.GetPayload(), int(req.Limit))
+		it, err = s.Engine.Lookup.ReadCursor(ctx, table, table, models.EfficientTableInstance(instanceID), cursor.GetPayload(), int(req.Limit))
 		if err != nil {
 			return nil, newErrorf(http.StatusBadRequest, "%s", err.Error())
 		}
@@ -175,7 +175,7 @@ func (s *Service) HandleRead(ctx context.Context, req *ReadRequest) (*ReadRespon
 	resp.NextCursor = wrapCursor(cursor.GetType(), cursor.GetID(), it.NextCursor())
 
 	// track read usage
-	s.Usage.TrackRead(ctx, secret, streamID, instanceID, int64(nrecords), int64(nbytes))
+	s.Usage.TrackRead(ctx, secret, tableID, instanceID, int64(nrecords), int64(nbytes))
 
 	// update log message
 	payload.BytesRead = nbytes

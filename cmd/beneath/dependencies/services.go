@@ -11,7 +11,7 @@ import (
 	"github.com/beneath-hq/beneath/services/project"
 	"github.com/beneath-hq/beneath/services/secret"
 	"github.com/beneath-hq/beneath/services/service"
-	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/table"
 	"github.com/beneath-hq/beneath/services/usage"
 	"github.com/beneath-hq/beneath/services/user"
 )
@@ -31,7 +31,7 @@ type AllServices struct {
 	Project      *project.Service
 	Secret       *secret.Service
 	Service      *service.Service
-	Stream       *stream.Service
+	Table        *table.Service
 	User         *user.Service
 }
 
@@ -45,7 +45,7 @@ func NewAllServices(
 	project *project.Service,
 	secret *secret.Service,
 	service *service.Service,
-	stream *stream.Service,
+	table *table.Service,
 	user *user.Service,
 ) *AllServices {
 	return &AllServices{
@@ -57,7 +57,7 @@ func NewAllServices(
 		Project:      project,
 		Secret:       secret,
 		Service:      service,
-		Stream:       stream,
+		Table:        table,
 		User:         user,
 	}
 }
@@ -72,7 +72,7 @@ func init() {
 	cli.AddDependency(project.New)
 	cli.AddDependency(secret.New)
 	cli.AddDependency(service.New)
-	cli.AddDependency(stream.New)
+	cli.AddDependency(table.New)
 	cli.AddDependency(user.New)
 
 	// the usage service takes some extra options

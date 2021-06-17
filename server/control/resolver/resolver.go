@@ -9,7 +9,7 @@ import (
 	"github.com/beneath-hq/beneath/services/project"
 	"github.com/beneath-hq/beneath/services/secret"
 	"github.com/beneath-hq/beneath/services/service"
-	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/table"
 	"github.com/beneath-hq/beneath/services/usage"
 	"github.com/beneath-hq/beneath/services/user"
 )
@@ -22,7 +22,7 @@ type Resolver struct {
 	Projects      *project.Service
 	Secrets       *secret.Service
 	Services      *service.Service
-	Streams       *stream.Service
+	Tables        *table.Service
 	Users         *user.Service
 }
 

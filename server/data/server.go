@@ -15,7 +15,7 @@ import (
 	"github.com/beneath-hq/beneath/services/data"
 	"github.com/beneath-hq/beneath/services/middleware"
 	"github.com/beneath-hq/beneath/services/secret"
-	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/table"
 )
 
 // ServerOptions are the options for creating a data server
@@ -34,14 +34,14 @@ type Server struct {
 }
 
 // NewServer initializes a new data-plane server that supports HTTP and GRPC
-func NewServer(opts *ServerOptions, logger *zap.Logger, data *data.Service, middleware *middleware.Service, secret *secret.Service, stream *stream.Service) *Server {
+func NewServer(opts *ServerOptions, logger *zap.Logger, data *data.Service, middleware *middleware.Service, secret *secret.Service, table *table.Service) *Server {
 	l := logger.Named("data.server")
 	s := &Server{
 		Opts:        opts,
 		Logger:      l.Sugar(),
 		DataService: data,
 		GRPC:        gwgrpc.NewServer(l, data, middleware),
-		HTTP:        gwhttp.NewServer(l, data, middleware, secret, stream),
+		HTTP:        gwhttp.NewServer(l, data, middleware, secret, table),
 	}
 
 	return s

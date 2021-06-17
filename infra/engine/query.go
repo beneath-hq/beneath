@@ -13,30 +13,30 @@ import (
 )
 
 const (
-	maxReferencedStreams = 5
+	maxReferencedTables = 5
 )
 
 var (
-	warehouseQueryStreamRegex = regexp.MustCompile("`(/?[_\\-a-zA-Z0-9]+/[_:\\-/a-zA-Z0-9]+)`")
+	warehouseQueryTableRegex = regexp.MustCompile("`(/?[_\\-a-zA-Z0-9]+/[_:\\-/a-zA-Z0-9]+)`")
 )
 
-// WarehouseQueryStreamResolver is a callback that should resolve a stream qualifier
-type WarehouseQueryStreamResolver func(ctx context.Context, organization, project, stream string) (driver.Project, driver.Stream, driver.StreamInstance, error)
+// WarehouseQueryTableResolver is a callback that should resolve a table qualifier
+type WarehouseQueryTableResolver func(ctx context.Context, organization, project, table string) (driver.Project, driver.Table, driver.TableInstance, error)
 
-// ExpandWarehouseQuery replaces stream references of the form `org/proj/stream` in warehouse queries
+// ExpandWarehouseQuery replaces table references of the form `org/proj/table` in warehouse queries
 // with the proper name of the underlying table in the warehouse
-func (e *Engine) ExpandWarehouseQuery(ctx context.Context, query string, resolver WarehouseQueryStreamResolver) (string, error) {
-	// find stream paths in query
-	matches := warehouseQueryStreamRegex.FindAllString(query, -1)
+func (e *Engine) ExpandWarehouseQuery(ctx context.Context, query string, resolver WarehouseQueryTableResolver) (string, error) {
+	// find table paths in query
+	matches := warehouseQueryTableRegex.FindAllString(query, -1)
 	if len(matches) == 0 {
 		return query, nil
 	}
 
-	// create mapping of streams to resolve
+	// create mapping of tables to resolve
 	mu := &sync.Mutex{}
-	tableNames := make(map[streamQualifier]string)
+	tableNames := make(map[tableQualifier]string)
 	for _, path := range matches {
-		qualifier, err := newStreamQualifier(path)
+		qualifier, err := newTableQualifier(path)
 		if err != nil {
 			return "", err
 		}
@@ -44,16 +44,16 @@ func (e *Engine) ExpandWarehouseQuery(ctx context.Context, query string, resolve
 	}
 
 	// check number of tables is within limit
-	if len(tableNames) > maxReferencedStreams {
-		return "", fmt.Errorf("a query cannot reference more than %d streams", maxReferencedStreams)
+	if len(tableNames) > maxReferencedTables {
+		return "", fmt.Errorf("a query cannot reference more than %d tables", maxReferencedTables)
 	}
 
-	// use an errgroup to concurrently lookup all the streams referenced in the query
+	// use an errgroup to concurrently lookup all the tables referenced in the query
 	group, gctx := errgroup.WithContext(ctx)
 	for qualifier := range tableNames {
 		qualifier := qualifier // bind locally
 		group.Go(func() error {
-			p, s, si, err := resolver(gctx, qualifier.Organization, qualifier.Project, qualifier.Stream)
+			p, s, si, err := resolver(gctx, qualifier.Organization, qualifier.Project, qualifier.Table)
 			if err != nil {
 				return err
 			}
@@ -72,8 +72,8 @@ func (e *Engine) ExpandWarehouseQuery(ctx context.Context, query string, resolve
 	}
 
 	// execute actual expand
-	expandedQuery := warehouseQueryStreamRegex.ReplaceAllStringFunc(query, func(path string) string {
-		qualifier, err := newStreamQualifier(path)
+	expandedQuery := warehouseQueryTableRegex.ReplaceAllStringFunc(query, func(path string) string {
+		qualifier, err := newTableQualifier(path)
 		if err != nil {
 			panic(err) // shouldn't happen; would have been caught earlier
 		}
@@ -83,22 +83,22 @@ func (e *Engine) ExpandWarehouseQuery(ctx context.Context, query string, resolve
 	return expandedQuery, nil
 }
 
-type streamQualifier struct {
+type tableQualifier struct {
 	Organization string
 	Project      string
-	Stream       string
+	Table        string
 }
 
-func newStreamQualifier(path string) (streamQualifier, error) {
+func newTableQualifier(path string) (tableQualifier, error) {
 	parts := strings.Split(strings.Trim(path, "`/"), "/")
 	if len(parts) != 3 || len(parts[0]) == 0 || len(parts[1]) == 0 || len(parts[2]) == 0 {
-		return streamQualifier{}, fmt.Errorf("Expected stream path with three components (i.e. 'organization/project/stream'), but got '%s'", path)
+		return tableQualifier{}, fmt.Errorf("Expected table path with three components (i.e. 'organization/project/table'), but got '%s'", path)
 	}
 
-	sq := streamQualifier{
+	sq := tableQualifier{
 		Organization: strings.ReplaceAll(parts[0], "-", "_"),
 		Project:      strings.ReplaceAll(parts[1], "-", "_"),
-		Stream:       strings.ReplaceAll(strings.TrimPrefix(parts[2], "stream:"), "-", "_"),
+		Table:        strings.ReplaceAll(strings.TrimPrefix(parts[2], "table:"), "-", "_"),
 	}
 
 	return sq, nil

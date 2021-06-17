@@ -97,7 +97,7 @@ func (e *Engine) Healthy() bool {
 }
 
 // CheckRecordSize validates that the record fits within the constraints of the underlying infrastructure
-func (e *Engine) CheckRecordSize(s driver.Stream, structured map[string]interface{}, avroBytesLen int) error {
+func (e *Engine) CheckRecordSize(s driver.Table, structured map[string]interface{}, avroBytesLen int) error {
 	if avroBytesLen > e.maxRecordSize {
 		return fmt.Errorf("encoded record size exceeds maximum of %d bytes", e.maxRecordSize)
 	}

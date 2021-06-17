@@ -36,7 +36,7 @@ var (
 )
 
 // ParseQuery implements driver.LookupService
-func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error) {
+func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error) {
 	// checks not too many partitions
 	if partitions > maxPartitions {
 		return nil, nil, fmt.Errorf("the requested number of partitions exceeds the maximum number of supported partitions (%d)", partitions)
@@ -44,7 +44,7 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 
 	if compacted {
 		if !s.GetUseIndex() {
-			return nil, nil, fmt.Errorf("cannot execute indexed queries on stream with useIndex=false")
+			return nil, nil, fmt.Errorf("cannot execute indexed queries on table with useIndex=false")
 		}
 	}
 
@@ -56,7 +56,7 @@ func (b BigTable) ParseQuery(ctx context.Context, p driver.Project, s driver.Str
 	}
 
 	// get instance log state
-	state, err := b.Sequencer.GetState(ctx, makeSequencerKey(i.GetStreamInstanceID()))
+	state, err := b.Sequencer.GetState(ctx, makeSequencerKey(i.GetTableInstanceID()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -181,9 +181,9 @@ func decompileCursorSet(bs []byte) (*pb.CursorSet, error) {
 }
 
 // Peek implements driver.LookupService
-func (b BigTable) Peek(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance) ([]byte, []byte, error) {
+func (b BigTable) Peek(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance) ([]byte, []byte, error) {
 	// get instance log state
-	state, err := b.Sequencer.GetState(ctx, makeSequencerKey(i.GetStreamInstanceID()))
+	state, err := b.Sequencer.GetState(ctx, makeSequencerKey(i.GetTableInstanceID()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -213,7 +213,7 @@ func (b BigTable) Peek(ctx context.Context, p driver.Project, s driver.Stream, i
 }
 
 // ReadCursor implements driver.LookupService
-func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, cursorSet []byte, limit int) (driver.RecordsIterator, error) {
+func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance, cursorSet []byte, limit int) (driver.RecordsIterator, error) {
 	// check limit
 	if limit == 0 || limit > maxLimit {
 		return nil, ErrInvalidLimit
@@ -255,7 +255,7 @@ func (b BigTable) ReadCursor(ctx context.Context, p driver.Project, s driver.Str
 	// check cursor type
 	if first.Type == pb.Cursor_INDEX {
 		if !s.GetUseIndex() {
-			return nil, fmt.Errorf("Can't read index cursor on stream with useIndex=false (unexpected error, how did you get this cursor?)")
+			return nil, fmt.Errorf("Can't read index cursor on table with useIndex=false (unexpected error, how did you get this cursor?)")
 		}
 	}
 
@@ -338,7 +338,7 @@ func (i *batchesIterator) NextCursor() []byte {
 	return i.nextCursor
 }
 
-func (b BigTable) readPeekCursor(ctx context.Context, s driver.Stream, i driver.StreamInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
+func (b BigTable) readPeekCursor(ctx context.Context, s driver.Table, i driver.TableInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
 	// prepare range
 	end := cursor.LogEnd
 	start := mathutil.MaxInt64(0, end-int64(limit))
@@ -370,7 +370,7 @@ func (b BigTable) readPeekCursor(ctx context.Context, s driver.Stream, i driver.
 	}, nil
 }
 
-func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.StreamInstance, set *pb.CursorSet, limit int) (driver.RecordsIterator, error) {
+func (b BigTable) readLogCursors(ctx context.Context, s driver.Table, i driver.TableInstance, set *pb.CursorSet, limit int) (driver.RecordsIterator, error) {
 	// important log invariants:
 	// (1) for two records r1 and r2 where offset(r2) > offset(r1) we have that processTime(r2) >= processTime(r1)
 	// (2) for a cursor where LogEnd != 0, we know that offset=LogEnd is already written or is expired
@@ -511,7 +511,7 @@ func (b BigTable) readLogCursors(ctx context.Context, s driver.Stream, i driver.
 	}, nil
 }
 
-func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver.StreamInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
+func (b BigTable) readIndexCursor(ctx context.Context, s driver.Table, i driver.TableInstance, cursor *pb.Cursor, limit int) (driver.RecordsIterator, error) {
 	// create key range from cursor
 	kr := codec.KeyRange{
 		Base:     cursor.IndexStart,
@@ -566,7 +566,7 @@ func (b BigTable) readIndexCursor(ctx context.Context, s driver.Stream, i driver
 // secondary index. We solve the problem by disregarding normalization options and forcing ReadCursor to lookup secondary
 // index values in the primary index, so that it can compare timestamps and pickup garbage. But ideally, secondary indexes
 // could be denormalized and not require multiple lookups.
-func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.Stream, i driver.StreamInstance, records []driver.Record) error {
+func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.Table, i driver.TableInstance, records []driver.Record) error {
 	// Prepare
 	codec := s.GetCodec()
 	logRetention := s.GetLogRetention()
@@ -574,7 +574,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	logExpires := logExpires(s)
 	indexExpires := indexExpires(s)
 	useIndex := s.GetUseIndex()
-	instanceID := i.GetStreamInstanceID()
+	instanceID := i.GetTableInstanceID()
 	normalizePrimary := codec.PrimaryIndex.GetNormalize()
 	primaryHash := makeIndexHash(instanceID, codec.PrimaryIndex.GetIndexID())
 	nowForExpirationChecks := toPersistedTime(time.Now(), expirationBuffer)
@@ -590,7 +590,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	}
 
 	// get offset
-	batch, err := b.Sequencer.BeginBatch(ctx, makeSequencerKey(i.GetStreamInstanceID()), len(records))
+	batch, err := b.Sequencer.BeginBatch(ctx, makeSequencerKey(i.GetTableInstanceID()), len(records))
 	if err != nil {
 		return err
 	}
@@ -701,7 +701,7 @@ func (b BigTable) WriteRecords(ctx context.Context, p driver.Project, s driver.S
 	//   save to primary
 	//   save to secondary
 
-	logTable, indexesTable := b.tablesForStream(s)
+	logTable, indexesTable := b.tablesForTable(s)
 
 	errs, err := indexesTable.ApplyBulk(ctx, deleteSecondaryKeys, deleteSecondaryMuts)
 	if err != nil {

@@ -25,7 +25,7 @@ import (
 	"github.com/beneath-hq/beneath/services/project"
 	"github.com/beneath-hq/beneath/services/secret"
 	"github.com/beneath-hq/beneath/services/service"
-	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/table"
 	"github.com/beneath-hq/beneath/services/usage"
 	"github.com/beneath-hq/beneath/services/user"
 )
@@ -51,7 +51,7 @@ type Server struct {
 	Projects      *project.Service
 	Secrets       *secret.Service
 	Services      *service.Service
-	Streams       *stream.Service
+	Tables        *table.Service
 	Users         *user.Service
 }
 
@@ -66,7 +66,7 @@ func NewServer(
 	project *project.Service,
 	secret *secret.Service,
 	service *service.Service,
-	stream *stream.Service,
+	table *table.Service,
 	user *user.Service,
 ) *Server {
 	l := logger.Named("control.server")
@@ -81,7 +81,7 @@ func NewServer(
 		Projects:      project,
 		Secrets:       secret,
 		Services:      service,
-		Streams:       stream,
+		Tables:        table,
 		Users:         user,
 	}
 
@@ -151,7 +151,7 @@ func (s *Server) makeExecutableSchema() graphql.ExecutableSchema {
 		Projects:      s.Projects,
 		Secrets:       s.Secrets,
 		Services:      s.Services,
-		Streams:       s.Streams,
+		Tables:        s.Tables,
 		Users:         s.Users,
 	}})
 }

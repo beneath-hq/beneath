@@ -16,24 +16,24 @@ import (
 	"github.com/beneath-hq/beneath/services/data"
 	"github.com/beneath-hq/beneath/services/middleware"
 	"github.com/beneath-hq/beneath/services/secret"
-	"github.com/beneath-hq/beneath/services/stream"
+	"github.com/beneath-hq/beneath/services/table"
 )
 
 type app struct {
 	Logger        *zap.SugaredLogger
 	DataService   *data.Service
 	SecretService *secret.Service
-	StreamService *stream.Service
+	TableService  *table.Service
 }
 
 // NewServer creates and returns the data HTTP server
-func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Service, secret *secret.Service, stream *stream.Service) *http.Server {
+func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Service, secret *secret.Service, table *table.Service) *http.Server {
 	l := logger.Named("http")
 	app := &app{
 		Logger:        l.Sugar(),
 		DataService:   data,
 		SecretService: secret,
-		StreamService: stream,
+		TableService:  table,
 	}
 	router := chi.NewRouter()
 
@@ -62,11 +62,11 @@ func NewServer(logger *zap.Logger, data *data.Service, middleware *middleware.Se
 	router.Method("GET", "/v1/-/ping", httputil.AppHandler(app.getPing))
 
 	// index and log endpoints
-	router.Method("GET", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(app.getFromOrganizationAndProjectAndStream))
+	router.Method("GET", "/v1/{organizationName}/{projectName}/{tableName}", httputil.AppHandler(app.getFromOrganizationAndProjectAndTable))
 	router.Method("GET", "/v1/-/instances/{instanceID}", httputil.AppHandler(app.getFromInstance))
 
 	// write endpoint
-	router.Method("POST", "/v1/{organizationName}/{projectName}/{streamName}", httputil.AppHandler(app.postToOrganizationAndProjectAndStream))
+	router.Method("POST", "/v1/{organizationName}/{projectName}/{tableName}", httputil.AppHandler(app.postToOrganizationAndProjectAndTable))
 	router.Method("POST", "/v1/-/instances/{instanceID}", httputil.AppHandler(app.postToInstance))
 
 	// warehouse job endpoints

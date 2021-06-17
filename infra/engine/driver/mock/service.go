@@ -22,12 +22,12 @@ func (m Mock) MaxRecordsInBatch() int {
 }
 
 // RegisterInstance implements beneath.Service
-func (m Mock) RegisterInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (m Mock) RegisterInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	return nil
 }
 
 // RemoveInstance implements beneath.Service
-func (m Mock) RemoveInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (m Mock) RemoveInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	return nil
 }
 

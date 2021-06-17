@@ -22,8 +22,8 @@ const (
 )
 
 // GetWarehouseTableName implements beneath.WarehouseService
-func (b BigQuery) GetWarehouseTableName(p driver.Project, s driver.Stream, i driver.StreamInstance) string {
-	return fmt.Sprintf("`%s.%s`", b.InstancesDataset.DatasetID, instanceTableName(i.GetStreamInstanceID()))
+func (b BigQuery) GetWarehouseTableName(p driver.Project, s driver.Table, i driver.TableInstance) string {
+	return fmt.Sprintf("`%s.%s`", b.InstancesDataset.DatasetID, instanceTableName(i.GetTableInstanceID()))
 }
 
 // AnalyzeWarehouseQuery implements beneath.WarehouseService
@@ -123,7 +123,7 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 
 	// extract referenced instances, if possible (ReferencedTables is only set for dry jobs)
 	if queryStats.ReferencedTables != nil {
-		job.ReferencedInstances = make([]driver.StreamInstance, len(queryStats.ReferencedTables))
+		job.ReferencedInstances = make([]driver.TableInstance, len(queryStats.ReferencedTables))
 
 		for idx, table := range queryStats.ReferencedTables {
 			if table.ProjectID != b.ProjectID {
@@ -135,7 +135,7 @@ func (b BigQuery) bqJobToDriverJob(ctx context.Context, bqJob *bigquery.Job, dry
 				return nil, fmt.Errorf("Query references bad table: %s.%s.%s (%s)", table.ProjectID, table.DatasetID, table.TableID, err.Error())
 			}
 
-			job.ReferencedInstances[idx] = streamInstance{InstanceID: instanceID}
+			job.ReferencedInstances[idx] = tableInstance{InstanceID: instanceID}
 		}
 	}
 
@@ -386,11 +386,11 @@ func (r resultRecord) GetPrimaryKey() []byte {
 	panic(fmt.Errorf("warehouse query result doesn't have primary key"))
 }
 
-type streamInstance struct {
+type tableInstance struct {
 	InstanceID uuid.UUID
 }
 
-func (i streamInstance) GetStreamInstanceID() uuid.UUID {
+func (i tableInstance) GetTableInstanceID() uuid.UUID {
 	return i.InstanceID
 }
 
@@ -400,7 +400,7 @@ type queryJob struct {
 	Error               error
 	ResultAvroSchema    string
 	ReplayCursors       [][]byte
-	ReferencedInstances []driver.StreamInstance
+	ReferencedInstances []driver.TableInstance
 	BytesScanned        int64
 	ResultSizeBytes     int64
 	ResultSizeRecords   int64
@@ -432,7 +432,7 @@ func (j *queryJob) GetReplayCursors() [][]byte {
 }
 
 // GetReferencedInstances implements driver.WarehouseJob
-func (j *queryJob) GetReferencedInstances() []driver.StreamInstance {
+func (j *queryJob) GetReferencedInstances() []driver.TableInstance {
 	return j.ReferencedInstances
 }
 

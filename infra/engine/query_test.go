@@ -16,20 +16,20 @@ import (
 func TestExpandWarehouseQueryString(t *testing.T) {
 	ctx := context.Background()
 	e := &Engine{Warehouse: &mock.Mock{}}
-	expandedQuery, err := e.ExpandWarehouseQuery(ctx, "select * from `exampleorg/example-proj/stream:example_stream` join `/orgexample/proj-example/stream_example/`", streamResolver)
+	expandedQuery, err := e.ExpandWarehouseQuery(ctx, "select * from `exampleorg/example-proj/table:example_table` join `/orgexample/proj-example/table_example/`", tableResolver)
 	assert.Nil(t, err)
-	assert.Equal(t, "select * from exampleorg.example_proj.example_stream_00000000 join orgexample.proj_example.stream_example_00000000", expandedQuery)
+	assert.Equal(t, "select * from exampleorg.example_proj.example_table_00000000 join orgexample.proj_example.table_example_00000000", expandedQuery)
 }
 
-func streamResolver(ctx context.Context, organizationName, projectName, streamName string) (driver.Project, driver.Stream, driver.StreamInstance, error) {
+func tableResolver(ctx context.Context, organizationName, projectName, tableName string) (driver.Project, driver.Table, driver.TableInstance, error) {
 	p := project{
 		organization: organizationName,
 		project:      projectName,
 	}
-	s := stream{
-		name: streamName,
+	s := table{
+		name: tableName,
 	}
-	si := streamInstance{}
+	si := tableInstance{}
 	return p, s, si, nil
 }
 
@@ -56,51 +56,51 @@ func (p project) GetPublic() bool {
 	return p.public
 }
 
-type stream struct {
+type table struct {
 	id   uuid.UUID
 	name string
 }
 
-func (s stream) GetStreamID() uuid.UUID {
+func (s table) GetTableID() uuid.UUID {
 	return s.id
 }
 
-func (s stream) GetStreamName() string {
+func (s table) GetTableName() string {
 	return s.name
 }
 
-func (s stream) GetUseLog() bool {
+func (s table) GetUseLog() bool {
 	return true
 }
 
-func (s stream) GetUseIndex() bool {
+func (s table) GetUseIndex() bool {
 	return true
 }
 
-func (s stream) GetUseWarehouse() bool {
+func (s table) GetUseWarehouse() bool {
 	return true
 }
 
-func (s stream) GetLogRetention() time.Duration {
+func (s table) GetLogRetention() time.Duration {
 	return time.Duration(0)
 }
 
-func (s stream) GetIndexRetention() time.Duration {
+func (s table) GetIndexRetention() time.Duration {
 	return time.Duration(0)
 }
 
-func (s stream) GetWarehouseRetention() time.Duration {
+func (s table) GetWarehouseRetention() time.Duration {
 	return time.Duration(0)
 }
 
-func (s stream) GetCodec() *codec.Codec {
+func (s table) GetCodec() *codec.Codec {
 	return nil
 }
 
-type streamInstance struct {
+type tableInstance struct {
 	id uuid.UUID
 }
 
-func (i streamInstance) GetStreamInstanceID() uuid.UUID {
+func (i tableInstance) GetTableInstanceID() uuid.UUID {
 	return i.id
 }

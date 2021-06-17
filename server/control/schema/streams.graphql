@@ -1,46 +1,43 @@
 extend type Query {
-  streamByID(streamID: UUID!): Stream!
-  streamByOrganizationProjectAndName(
+  tableByID(tableID: UUID!): Table!
+  tableByOrganizationProjectAndName(
     organizationName: String!
     projectName: String!
-    streamName: String!
-  ): Stream!
-  streamInstanceByOrganizationProjectStreamAndVersion(
+    tableName: String!
+  ): Table!
+  tableInstanceByOrganizationProjectTableAndVersion(
     organizationName: String!
     projectName: String!
-    streamName: String!
+    tableName: String!
     version: Int!
-  ): StreamInstance!
-  streamInstanceByStreamAndVersion(
-    streamID: UUID!
-    version: Int!
-  ): StreamInstance!
-  streamInstancesForStream(streamID: UUID!): [StreamInstance!]!
-  streamInstancesByOrganizationProjectAndStreamName(
+  ): TableInstance!
+  tableInstanceByTableAndVersion(tableID: UUID!, version: Int!): TableInstance!
+  tableInstancesForTable(tableID: UUID!): [TableInstance!]!
+  tableInstancesByOrganizationProjectAndTableName(
     organizationName: String!
     projectName: String!
-    streamName: String!
-  ): [StreamInstance!]!
-  streamsForUser(userID: UUID!): [Stream!]!
+    tableName: String!
+  ): [TableInstance!]!
+  tablesForUser(userID: UUID!): [Table!]!
   compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
 }
 
 extend type Mutation {
-  createStream(input: CreateStreamInput!): Stream!
-  updateStream(input: UpdateStreamInput!): Stream!
-  deleteStream(streamID: UUID!): Boolean!
-  createStreamInstance(input: CreateStreamInstanceInput!): StreamInstance!
-  updateStreamInstance(input: UpdateStreamInstanceInput!): StreamInstance!
-  deleteStreamInstance(instanceID: UUID!): Boolean!
+  createTable(input: CreateTableInput!): Table!
+  updateTable(input: UpdateTableInput!): Table!
+  deleteTable(tableID: UUID!): Boolean!
+  createTableInstance(input: CreateTableInstanceInput!): TableInstance!
+  updateTableInstance(input: UpdateTableInstanceInput!): TableInstance!
+  deleteTableInstance(instanceID: UUID!): Boolean!
 }
 
-enum StreamSchemaKind {
+enum TableSchemaKind {
   GraphQL
   Avro
 }
 
-type Stream {
-  streamID: ID!
+type Table {
+  tableID: ID!
   name: String!
   description: String
   createdOn: Time!
@@ -49,12 +46,12 @@ type Stream {
   meta: Boolean!
   allowManualWrites: Boolean!
 
-  schemaKind: StreamSchemaKind!
+  schemaKind: TableSchemaKind!
   schema: String!
   avroSchema: String!
   canonicalAvroSchema: String!
   canonicalIndexes: String!
-  streamIndexes: [StreamIndex!]!
+  tableIndexes: [TableIndex!]!
 
   useLog: Boolean!
   useIndex: Boolean!
@@ -63,25 +60,25 @@ type Stream {
   indexRetentionSeconds: Int!
   warehouseRetentionSeconds: Int!
 
-  primaryStreamInstance: StreamInstance
-  primaryStreamInstanceID: UUID
+  primaryTableInstance: TableInstance
+  primaryTableInstanceID: UUID
   instancesCreatedCount: Int!
   instancesDeletedCount: Int!
   instancesMadeFinalCount: Int!
   instancesMadePrimaryCount: Int!
 }
 
-type StreamInstance {
-  streamInstanceID: ID!
-  stream: Stream!
-  streamID: UUID!
+type TableInstance {
+  tableInstanceID: ID!
+  table: Table!
+  tableID: UUID!
   version: Int!
   createdOn: Time!
   madePrimaryOn: Time
   madeFinalOn: Time
 }
 
-type StreamIndex {
+type TableIndex {
   indexID: ID!
   fields: [String!]!
   primary: Boolean!
@@ -89,7 +86,7 @@ type StreamIndex {
 }
 
 input CompileSchemaInput {
-  schemaKind: StreamSchemaKind!
+  schemaKind: TableSchemaKind!
   schema: String!
   indexes: String
 }
@@ -99,11 +96,11 @@ type CompileSchemaOutput {
   canonicalIndexes: String!
 }
 
-input CreateStreamInput {
+input CreateTableInput {
   organizationName: String!
   projectName: String!
-  streamName: String!
-  schemaKind: StreamSchemaKind!
+  tableName: String!
+  schemaKind: TableSchemaKind!
   schema: String!
   indexes: String
   description: String
@@ -119,24 +116,24 @@ input CreateStreamInput {
   updateIfExists: Boolean
 }
 
-input UpdateStreamInput {
-  streamID: UUID!
-  schemaKind: StreamSchemaKind
+input UpdateTableInput {
+  tableID: UUID!
+  schemaKind: TableSchemaKind
   schema: String
   indexes: String
   description: String
   allowManualWrites: Boolean
 }
 
-input CreateStreamInstanceInput {
-  streamID: UUID!
+input CreateTableInstanceInput {
+  tableID: UUID!
   version: Int
   makePrimary: Boolean
   updateIfExists: Boolean
 }
 
-input UpdateStreamInstanceInput {
-  streamInstanceID: UUID!
+input UpdateTableInstanceInput {
+  tableInstanceID: UUID!
   makeFinal: Boolean
   makePrimary: Boolean
 }

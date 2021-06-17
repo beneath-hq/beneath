@@ -25,7 +25,7 @@ type queryArgs struct {
 	Peek   bool
 }
 
-func (a *app) getFromOrganizationAndProjectAndStream(w http.ResponseWriter, r *http.Request) error {
+func (a *app) getFromOrganizationAndProjectAndTable(w http.ResponseWriter, r *http.Request) error {
 	// if cursor is set, go straight to fetching from cursor (the instance ID is backed into the cursor)
 	if r.URL.Query().Get("cursor") != "" {
 		return a.getFromCursor(w, r)
@@ -34,12 +34,12 @@ func (a *app) getFromOrganizationAndProjectAndStream(w http.ResponseWriter, r *h
 	// parse url params
 	organizationName := toBackendName(chi.URLParam(r, "organizationName"))
 	projectName := toBackendName(chi.URLParam(r, "projectName"))
-	streamName := toBackendName(chi.URLParam(r, "streamName"))
+	tableName := toBackendName(chi.URLParam(r, "tableName"))
 
-	// find primary instance ID for stream
-	instanceID := a.StreamService.FindPrimaryInstanceIDByOrganizationProjectAndName(r.Context(), organizationName, projectName, streamName)
+	// find primary instance ID for table
+	instanceID := a.TableService.FindPrimaryInstanceIDByOrganizationProjectAndName(r.Context(), organizationName, projectName, tableName)
 	if instanceID == uuid.Nil {
-		return httputil.NewError(404, "instance for stream not found")
+		return httputil.NewError(404, "instance for table not found")
 	}
 
 	// run query

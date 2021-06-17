@@ -81,10 +81,10 @@ func (s *Service) processWriteRequest(ctx context.Context, req *pb.WriteRequest)
 }
 
 func (s *Service) processInstanceRecords(ctx context.Context, writeID []byte, ir *pbgw.InstanceRecords) (int, error) {
-	// lookup stream
+	// lookup table
 	instanceID := uuid.FromBytesOrNil(ir.InstanceId)
-	stream := s.Streams.FindCachedInstance(ctx, instanceID)
-	if stream == nil {
+	table := s.Tables.FindCachedInstance(ctx, instanceID)
+	if table == nil {
 		// TODO: use dead letter queue that retries
 		s.Logger.Errorw("instance not found", "instance", instanceID.String(), "records", ir.Records)
 		return 0, nil
@@ -94,7 +94,7 @@ func (s *Service) processInstanceRecords(ctx context.Context, writeID []byte, ir
 	var bytesWritten int
 	records := make([]driver.Record, len(ir.Records))
 	for idx, proto := range ir.Records {
-		r := newRecord(stream, proto)
+		r := newRecord(table, proto)
 		bytesWritten += len(r.GetAvro())
 		records[idx] = r
 	}
@@ -103,12 +103,12 @@ func (s *Service) processInstanceRecords(ctx context.Context, writeID []byte, ir
 	group, cctx := errgroup.WithContext(ctx)
 
 	group.Go(func() error {
-		return s.Engine.Lookup.WriteRecords(cctx, stream, stream, models.EfficientStreamInstance(instanceID), records)
+		return s.Engine.Lookup.WriteRecords(cctx, table, table, models.EfficientTableInstance(instanceID), records)
 	})
 
-	if stream.UseWarehouse {
+	if table.UseWarehouse {
 		group.Go(func() error {
-			return s.Engine.Warehouse.WriteToWarehouse(cctx, stream, stream, models.EfficientStreamInstance(instanceID), records)
+			return s.Engine.Warehouse.WriteToWarehouse(cctx, table, table, models.EfficientTableInstance(instanceID), records)
 		})
 	}
 
@@ -137,8 +137,8 @@ type record struct {
 	Structured map[string]interface{}
 }
 
-func newRecord(stream driver.Stream, proto *pbgw.Record) record {
-	structured, err := stream.GetCodec().UnmarshalAvro(proto.AvroData)
+func newRecord(table driver.Table, proto *pbgw.Record) record {
+	structured, err := table.GetCodec().UnmarshalAvro(proto.AvroData)
 	if err != nil {
 		panic(err)
 	}

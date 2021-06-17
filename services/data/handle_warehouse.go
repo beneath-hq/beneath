@@ -88,27 +88,27 @@ func (s *Service) HandleQueryWarehouse(ctx context.Context, req *QueryWarehouseR
 	}
 
 	// expand query
-	query, err := s.Engine.ExpandWarehouseQuery(ctx, req.Query, func(ctx context.Context, organizationName, projectName, streamName string) (driver.Project, driver.Stream, driver.StreamInstance, error) {
+	query, err := s.Engine.ExpandWarehouseQuery(ctx, req.Query, func(ctx context.Context, organizationName, projectName, tableName string) (driver.Project, driver.Table, driver.TableInstance, error) {
 		// get instance ID
-		instanceID := s.Streams.FindPrimaryInstanceIDByOrganizationProjectAndName(ctx, organizationName, projectName, streamName)
+		instanceID := s.Tables.FindPrimaryInstanceIDByOrganizationProjectAndName(ctx, organizationName, projectName, tableName)
 		if instanceID == uuid.Nil {
-			return nil, nil, nil, newErrorf(http.StatusNotFound, "instance not found for stream '%s/%s/%s'", organizationName, projectName, streamName)
+			return nil, nil, nil, newErrorf(http.StatusNotFound, "instance not found for table '%s/%s/%s'", organizationName, projectName, tableName)
 		}
 
-		// get stream
-		stream := s.Streams.FindCachedInstance(ctx, instanceID)
-		if stream == nil {
-			return nil, nil, nil, newErrorf(http.StatusNotFound, "stream '%s/%s/%s' not found", organizationName, projectName, streamName)
+		// get table
+		table := s.Tables.FindCachedInstance(ctx, instanceID)
+		if table == nil {
+			return nil, nil, nil, newErrorf(http.StatusNotFound, "table '%s/%s/%s' not found", organizationName, projectName, tableName)
 		}
 
 		// check permissions
-		perms := s.Permissions.StreamPermissionsForSecret(ctx, secret, stream.StreamID, stream.ProjectID, stream.Public)
+		perms := s.Permissions.TablePermissionsForSecret(ctx, secret, table.TableID, table.ProjectID, table.Public)
 		if !perms.Read {
-			return nil, nil, nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read stream '%s/%s/%s'", organizationName, projectName, streamName)
+			return nil, nil, nil, newErrorf(http.StatusForbidden, "token doesn't grant right to read table '%s/%s/%s'", organizationName, projectName, tableName)
 		}
 
 		// success
-		return stream, stream, models.EfficientStreamInstance(instanceID), nil
+		return table, table, models.EfficientTableInstance(instanceID), nil
 	})
 	if err != nil {
 		if errr, ok := err.(*Error); ok {
@@ -196,7 +196,7 @@ func wrapWarehouseJob(job driver.WarehouseJob, analyzeJob driver.WarehouseJob) *
 
 	referencedInstanceIDs := make([]uuid.UUID, len(referencedInstances))
 	for idx, instanceID := range referencedInstances {
-		referencedInstanceIDs[idx] = instanceID.GetStreamInstanceID()
+		referencedInstanceIDs[idx] = instanceID.GetTableInstanceID()
 	}
 
 	res := &WarehouseJob{

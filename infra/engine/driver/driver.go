@@ -47,13 +47,13 @@ type Project interface {
 	GetPublic() bool
 }
 
-// Stream encapsulates metadata about a Beneath stream
-type Stream interface {
-	// GetStreamID should return the stream ID
-	GetStreamID() uuid.UUID
+// Table encapsulates metadata about a Beneath table
+type Table interface {
+	// GetTableID should return the table ID
+	GetTableID() uuid.UUID
 
-	// GetStreamName should return the stream's identifying name
-	GetStreamName() string
+	// GetTableName should return the table's identifying name
+	GetTableName() string
 
 	// GetUseLog should return true if records should be stored for log-based replay and change capture
 	GetUseLog() bool
@@ -73,14 +73,14 @@ type Stream interface {
 	// GetWarehouseRetention should return the duration data should be retained (use 0 for infinite retention)
 	GetWarehouseRetention() time.Duration
 
-	// GetCodec should return a codec for serializing and deserializing stream data and keys
+	// GetCodec should return a codec for serializing and deserializing table data and keys
 	GetCodec() *codec.Codec
 }
 
-// StreamInstance encapsulates metadata about a Beneath stream instance
-type StreamInstance interface {
-	// GetStreamInstanceID should return the instance's ID
-	GetStreamInstanceID() uuid.UUID
+// TableInstance encapsulates metadata about a Beneath table instance
+type TableInstance interface {
+	// GetTableInstanceID should return the instance's ID
+	GetTableInstanceID() uuid.UUID
 }
 
 // RecordsIterator allows iterating over a list of records in various formats
@@ -140,10 +140,10 @@ type Service interface {
 	MaxRecordsInBatch() int
 
 	// RegisterInstance is called when a new instance is created
-	RegisterInstance(ctx context.Context, s Stream, i StreamInstance) error
+	RegisterInstance(ctx context.Context, s Table, i TableInstance) error
 
 	// RemoveInstance is called when an instance is deleted
-	RemoveInstance(ctx context.Context, s Stream, i StreamInstance) error
+	RemoveInstance(ctx context.Context, s Table, i TableInstance) error
 
 	// Reset should clear all data in the service (useful during testing)
 	Reset(ctx context.Context) error
@@ -158,16 +158,16 @@ type LookupService interface {
 	Service
 
 	// ParseQuery returns (replayCursors, changeCursors, err)
-	ParseQuery(ctx context.Context, p Project, s Stream, i StreamInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error)
+	ParseQuery(ctx context.Context, p Project, s Table, i TableInstance, where queryparse.Query, compacted bool, partitions int) ([][]byte, [][]byte, error)
 
 	// Peek returns (rewindCursor, changeCursor, err)
-	Peek(ctx context.Context, p Project, s Stream, i StreamInstance) ([]byte, []byte, error)
+	Peek(ctx context.Context, p Project, s Table, i TableInstance) ([]byte, []byte, error)
 
 	// ReadCursor returns (records, nextCursor, err)
-	ReadCursor(ctx context.Context, p Project, s Stream, i StreamInstance, cursor []byte, limit int) (RecordsIterator, error)
+	ReadCursor(ctx context.Context, p Project, s Table, i TableInstance, cursor []byte, limit int) (RecordsIterator, error)
 
 	// WriteRecord persists the records
-	WriteRecords(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
+	WriteRecords(ctx context.Context, p Project, s Table, i TableInstance, rs []Record) error
 }
 
 // Warehouse
@@ -178,10 +178,10 @@ type WarehouseService interface {
 	Service
 
 	// WriteToWarehouse should insert the records in r for querying on the given instance
-	WriteToWarehouse(ctx context.Context, p Project, s Stream, i StreamInstance, rs []Record) error
+	WriteToWarehouse(ctx context.Context, p Project, s Table, i TableInstance, rs []Record) error
 
-	// GetWarehouseTableName should return the table name that the driver wants stream references in queries expanded to
-	GetWarehouseTableName(p Project, s Stream, i StreamInstance) string
+	// GetWarehouseTableName should return the table name that the driver wants table references in queries expanded to
+	GetWarehouseTableName(p Project, s Table, i TableInstance) string
 
 	// AnalyzeWarehouseQuery should perform a dry-run of query
 	AnalyzeWarehouseQuery(ctx context.Context, query string) (WarehouseJob, error)
@@ -246,7 +246,7 @@ type WarehouseJob interface {
 	GetReplayCursors() [][]byte
 
 	// GetReferencedInstances returns all the instances referenced in the query
-	GetReferencedInstances() []StreamInstance
+	GetReferencedInstances() []TableInstance
 
 	// GetBytesScanned returns an estimate of the number of bytes scanned by the query
 	GetBytesScanned() int64
@@ -262,7 +262,7 @@ type WarehouseJob interface {
 // -----
 
 // NOTE: Usage tracking is temporarily implemented in the engine, but logically doesn't really belong here.
-// It should really be implemented as separate infrastructure (possibly even on top of the engine as "meta" streams).
+// It should really be implemented as separate infrastructure (possibly even on top of the engine as "meta" tables).
 
 // UsageLabel defines valid labels for UsageService
 type UsageLabel string

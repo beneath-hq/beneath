@@ -22,12 +22,12 @@ models:
     model: github.com/beneath-hq/beneath/models.ServiceSecret
   Project:
     model: github.com/beneath-hq/beneath/models.Project
-  Stream:
-    model: github.com/beneath-hq/beneath/models.Stream
-  StreamInstance:
-    model: github.com/beneath-hq/beneath/models.StreamInstance
-  StreamIndex:
-    model: github.com/beneath-hq/beneath/models.StreamIndex
+  Table:
+    model: github.com/beneath-hq/beneath/models.Table
+  TableInstance:
+    model: github.com/beneath-hq/beneath/models.TableInstance
+  TableIndex:
+    model: github.com/beneath-hq/beneath/models.TableIndex
   PrivateUser:
     model: github.com/beneath-hq/beneath/models.User
   PublicOrganization:
@@ -42,7 +42,7 @@ models:
     model: github.com/beneath-hq/beneath/models.PermissionsUsersProjects
   PermissionsUsersOrganizations:
     model: github.com/beneath-hq/beneath/models.PermissionsUsersOrganizations
-  PermissionsServicesStreams:
-    model: github.com/beneath-hq/beneath/models.PermissionsServicesStreams
-  StreamSchemaKind:
-    model: github.com/beneath-hq/beneath/models.StreamSchemaKind
+  PermissionsServicesTables:
+    model: github.com/beneath-hq/beneath/models.PermissionsServicesTables
+  TableSchemaKind:
+    model: github.com/beneath-hq/beneath/models.TableSchemaKind

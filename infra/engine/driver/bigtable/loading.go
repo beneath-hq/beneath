@@ -27,12 +27,12 @@ type Record struct {
 	SecondaryKey []byte
 	Time         time.Time
 	ProcessTime  time.Time
-	Stream       driver.Stream
+	Table        driver.Table
 }
 
 // IsNil implements driver.Record
 func (r Record) IsNil() bool {
-	return r.Offset == 0 && len(r.AvroData) == 0 && len(r.PrimaryKey) == 0 && len(r.SecondaryKey) == 0 && r.Time.IsZero() && r.ProcessTime.IsZero() && r.Stream == nil
+	return r.Offset == 0 && len(r.AvroData) == 0 && len(r.PrimaryKey) == 0 && len(r.SecondaryKey) == 0 && r.Time.IsZero() && r.ProcessTime.IsZero() && r.Table == nil
 }
 
 // GetTimestamp implements driver.Record
@@ -47,7 +47,7 @@ func (r Record) GetAvro() []byte {
 
 // GetStructured implements driver.Record
 func (r Record) GetStructured() map[string]interface{} {
-	structured, err := r.Stream.GetCodec().UnmarshalAvro(r.AvroData)
+	structured, err := r.Table.GetCodec().UnmarshalAvro(r.AvroData)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +57,7 @@ func (r Record) GetStructured() map[string]interface{} {
 
 // GetJSON implements driver.Record
 func (r Record) GetJSON() map[string]interface{} {
-	data, err := r.Stream.GetCodec().ConvertToJSONTypes(r.GetStructured())
+	data, err := r.Table.GetCodec().ConvertToJSONTypes(r.GetStructured())
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +70,7 @@ func (r Record) GetPrimaryKey() []byte {
 }
 
 // LoadPrimaryIndexRange reads indexed records by primary key
-func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i driver.StreamInstance, kr codec.KeyRange, limit int) ([]Record, codec.KeyRange, error) {
+func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Table, i driver.TableInstance, kr codec.KeyRange, limit int) ([]Record, codec.KeyRange, error) {
 	// - Create bigtable range for primary index
 	// - Load it
 	// - If not normalized, return it
@@ -79,7 +79,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 	// - Return it
 
 	// prep
-	instanceID := i.GetStreamInstanceID()
+	instanceID := i.GetTableInstanceID()
 	normalized := s.GetCodec().PrimaryIndex.GetNormalize()
 	logRetention := s.GetLogRetention()
 	indexRetention := s.GetIndexRetention()
@@ -106,7 +106,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 				AvroData:   avroCol.Value,
 				PrimaryKey: primaryKey,
 				Time:       fromPersistedTime(avroCol.Timestamp.Time(), indexRetention),
-				Stream:     s,
+				Table:      s,
 			}
 
 			// add record to result
@@ -153,7 +153,7 @@ func (b BigTable) LoadPrimaryIndexRange(ctx context.Context, s driver.Stream, i 
 		record := Record{
 			Offset:     offset,
 			PrimaryKey: primaryKey,
-			Stream:     s,
+			Table:      s,
 		}
 
 		// set record based on columns
@@ -200,7 +200,7 @@ func nextPrimaryKeyRange(result []Record, prev codec.KeyRange, limit int) codec.
 }
 
 // LoadSecondaryIndexRange reads records indexed by secondary key
-func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, i driver.StreamInstance, index codec.Index, kr codec.KeyRange, limit int) ([]Record, codec.KeyRange, error) {
+func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Table, i driver.TableInstance, index codec.Index, kr codec.KeyRange, limit int) ([]Record, codec.KeyRange, error) {
 	// - Create bigtable range for secondary index
 	// - Load it
 	// - Put results into map[primary]Record
@@ -216,7 +216,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 
 	// prep
 	c := s.GetCodec()
-	instanceID := i.GetStreamInstanceID()
+	instanceID := i.GetTableInstanceID()
 	indexRetention := s.GetIndexRetention()
 	primaryHash := makeIndexHash(instanceID, c.PrimaryIndex.GetIndexID())
 	secondaryHash := makeIndexHash(instanceID, index.GetIndexID())
@@ -252,7 +252,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 			PrimaryKey:   primaryKey,
 			SecondaryKey: secondaryKey,
 			Time:         fromPersistedTime(offsetCol.Timestamp.Time(), indexRetention),
-			Stream:       s,
+			Table:        s,
 		}
 
 		return true
@@ -327,7 +327,7 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 		}
 
 		// apply deletes
-		_, indexesTable := b.tablesForStream(s)
+		_, indexesTable := b.tablesForTable(s)
 		errs, err := indexesTable.ApplyBulk(ctx, keys, muts)
 		if err != nil {
 			return nil, codec.KeyRange{}, err
@@ -416,9 +416,9 @@ func (b BigTable) LoadSecondaryIndexRange(ctx context.Context, s driver.Stream, 
 }
 
 // LoadLogRange reads a range of offsets from the instance log
-func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.StreamInstance, from int64, to int64, limit int) ([]Record, error) {
+func (b BigTable) LoadLogRange(ctx context.Context, s driver.Table, i driver.TableInstance, from int64, to int64, limit int) ([]Record, error) {
 	// prep
-	instanceID := i.GetStreamInstanceID()
+	instanceID := i.GetTableInstanceID()
 	logRetention := s.GetLogRetention()
 
 	// build rowset
@@ -434,7 +434,7 @@ func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.St
 		record := Record{
 			Offset:     offset,
 			PrimaryKey: primaryKey,
-			Stream:     s,
+			Table:      s,
 		}
 
 		// set columns
@@ -458,7 +458,7 @@ func (b BigTable) LoadLogRange(ctx context.Context, s driver.Stream, i driver.St
 }
 
 // LoadExistingRecords loads existing rows that share a primary key with the input records
-func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i driver.StreamInstance, records []driver.Record) (map[string]Record, error) {
+func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Table, i driver.TableInstance, records []driver.Record) (map[string]Record, error) {
 	// - Create bigtable rowset of primary index keys
 	// - Load it into a map[primary]Record
 	// - If denormalized, return it
@@ -468,7 +468,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 
 	// prep
 	c := s.GetCodec()
-	instanceID := i.GetStreamInstanceID()
+	instanceID := i.GetTableInstanceID()
 	normalized := c.PrimaryIndex.GetNormalize()
 	indexRetention := s.GetIndexRetention()
 	hash := makeIndexHash(instanceID, c.PrimaryIndex.GetIndexID())
@@ -493,7 +493,7 @@ func (b BigTable) LoadExistingRecords(ctx context.Context, s driver.Stream, i dr
 		// prep record
 		record := Record{
 			PrimaryKey: primaryKey,
-			Stream:     s,
+			Table:      s,
 		}
 
 		// extract columns

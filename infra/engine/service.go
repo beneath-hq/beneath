@@ -9,7 +9,7 @@ import (
 )
 
 // RegisterInstance is called when a new instance is created
-func (e *Engine) RegisterInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (e *Engine) RegisterInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	group, ctx := errgroup.WithContext(ctx)
 
 	group.Go(func() error {
@@ -26,7 +26,7 @@ func (e *Engine) RegisterInstance(ctx context.Context, s driver.Stream, i driver
 }
 
 // RemoveInstance is called when an instance is deleted
-func (e *Engine) RemoveInstance(ctx context.Context, s driver.Stream, i driver.StreamInstance) error {
+func (e *Engine) RemoveInstance(ctx context.Context, s driver.Table, i driver.TableInstance) error {
 	group, ctx := errgroup.WithContext(ctx)
 
 	group.Go(func() error {

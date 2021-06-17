@@ -178,20 +178,20 @@ func (s *Service) Delete(ctx context.Context, service *models.Service) error {
 	})
 }
 
-// FindStreamPermissionsForService finds every stream the service has permissions for
-func (s *Service) FindStreamPermissionsForService(ctx context.Context, serviceID uuid.UUID) []*models.PermissionsServicesStreams {
-	var perms []*models.PermissionsServicesStreams
+// FindTablePermissionsForService finds every table the service has permissions for
+func (s *Service) FindTablePermissionsForService(ctx context.Context, serviceID uuid.UUID) []*models.PermissionsServicesTables {
+	var perms []*models.PermissionsServicesTables
 	err := s.DB.GetDB(ctx).ModelContext(ctx, &perms).
 		Column(
-			"permissions_services_streams.*",
-			"Stream",
-			"Stream.Project.project_id",
-			"Stream.Project.name",
-			"Stream.Project.Organization.organization_id",
-			"Stream.Project.Organization.name",
+			"permissions_services_tables.*",
+			"Table",
+			"Table.Project.project_id",
+			"Table.Project.name",
+			"Table.Project.Organization.organization_id",
+			"Table.Project.Organization.name",
 		).
 		Where("service_id = ?", serviceID).
-		Order("stream__project__organization.name", "stream__project.name", "stream.name").
+		Order("table__project__organization.name", "table__project.name", "table.name").
 		Limit(200).
 		Select()
 	if err != nil {

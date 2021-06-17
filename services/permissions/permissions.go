@@ -19,7 +19,7 @@ type Service struct {
 
 	userOrganizationCache *Cache
 	userProjectCache      *Cache
-	serviceStreamCache    *Cache
+	serviceTableCache     *Cache
 }
 
 // New creates a new permissions service
@@ -63,11 +63,11 @@ func (s *Service) FindPermissionsUsersOrganizations(ctx context.Context, userID 
 	return permissions
 }
 
-// FindPermissionsServicesStreams finds a service's permissions for a stream
-func (s *Service) FindPermissionsServicesStreams(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID) *models.PermissionsServicesStreams {
-	permissions := &models.PermissionsServicesStreams{
+// FindPermissionsServicesTables finds a service's permissions for a table
+func (s *Service) FindPermissionsServicesTables(ctx context.Context, serviceID uuid.UUID, tableID uuid.UUID) *models.PermissionsServicesTables {
+	permissions := &models.PermissionsServicesTables{
 		ServiceID: serviceID,
-		StreamID:  streamID,
+		TableID:   tableID,
 	}
 	err := s.DB.GetDB(ctx).ModelContext(ctx, permissions).
 		WherePK().
@@ -166,8 +166,8 @@ func (s *Service) UpdateUserOrganizationPermission(ctx context.Context, p *model
 	return nil
 }
 
-// UpdateServiceStreamPermission upserts permissions (or deletes them if all are falsy)
-func (s *Service) UpdateServiceStreamPermission(ctx context.Context, p *models.PermissionsServicesStreams, read *bool, write *bool) error {
+// UpdateServiceTablePermission upserts permissions (or deletes them if all are falsy)
+func (s *Service) UpdateServiceTablePermission(ctx context.Context, p *models.PermissionsServicesTables, read *bool, write *bool) error {
 	if read != nil {
 		p.Read = *read
 	}
@@ -183,7 +183,7 @@ func (s *Service) UpdateServiceStreamPermission(ctx context.Context, p *models.P
 		}
 	} else {
 		// build upsert
-		q := s.DB.GetDB(ctx).ModelContext(ctx, p).OnConflict("(service_id, stream_id) DO UPDATE")
+		q := s.DB.GetDB(ctx).ModelContext(ctx, p).OnConflict("(service_id, table_id) DO UPDATE")
 		if read != nil {
 			q = q.Set("read = EXCLUDED.read")
 		}
@@ -199,7 +199,7 @@ func (s *Service) UpdateServiceStreamPermission(ctx context.Context, p *models.P
 	}
 
 	// clear cache
-	s.serviceStreamCache.Clear(ctx, p.ServiceID, p.StreamID)
+	s.serviceTableCache.Clear(ctx, p.ServiceID, p.TableID)
 
 	return nil
 }

@@ -28,10 +28,10 @@ func (s *Service) initCaches() {
 			where p.user_id = ? and p.project_id = ?
 		`)
 
-	s.serviceStreamCache = NewCache(s, models.StreamPermissions{}, `
+	s.serviceTableCache = NewCache(s, models.TablePermissions{}, `
 			select p.read, p.write
-			from permissions_services_streams p
-			where p.service_id = ? and p.stream_id = ?
+			from permissions_services_tables p
+			where p.service_id = ? and p.table_id = ?
 		`)
 }
 
@@ -45,9 +45,9 @@ func (s *Service) CachedUserProjectPermissions(ctx context.Context, userID uuid.
 	return s.userProjectCache.Get(ctx, userID, projectID).(models.ProjectPermissions)
 }
 
-// CachedServiceStreamPermissions returns stream permissions for a given owner-resource combo
-func (s *Service) CachedServiceStreamPermissions(ctx context.Context, serviceID uuid.UUID, streamID uuid.UUID) models.StreamPermissions {
-	return s.serviceStreamCache.Get(ctx, serviceID, streamID).(models.StreamPermissions)
+// CachedServiceTablePermissions returns table permissions for a given owner-resource combo
+func (s *Service) CachedServiceTablePermissions(ctx context.Context, serviceID uuid.UUID, tableID uuid.UUID) models.TablePermissions {
+	return s.serviceTableCache.Get(ctx, serviceID, tableID).(models.TablePermissions)
 }
 
 // Cache caches an owner's permissions for a resource for fast access
@@ -74,7 +74,7 @@ var permsCacheConfig = struct {
 	},
 }
 
-// NewCache initializes a PermissionCache object for a given prototype (organization/project/stream)
+// NewCache initializes a PermissionCache object for a given prototype (organization/project/table)
 func NewCache(service *Service, prototype interface{}, query string) *Cache {
 	pm := &Cache{}
 	pm.service = service
