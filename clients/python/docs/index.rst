@@ -20,5 +20,7 @@ Contents:
    cursor
    errors
    pipeline
+   checkpointer
+   consumer
    easy
    misc/index
