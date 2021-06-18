@@ -7,8 +7,8 @@ import { Client } from "./Client";
 import { Job } from "./Job";
 
 const PROJECT_NAME = "js_test";
-const STREAM_NAME = "foo";
-const STREAM_SCHEMA = `
+const TABLE_NAME = "foo";
+const TABLE_SCHEMA = `
   type Foo @schema {
     a: Int! @key
     b: String
@@ -98,9 +98,9 @@ test("creates test table", async () => {
 				name
 			}
 		}
-  `, { organization: me.name, project: PROJECT_NAME, table: STREAM_NAME, schema: STREAM_SCHEMA });
+  `, { organization: me.name, project: PROJECT_NAME, table: TABLE_NAME, schema: TABLE_SCHEMA });
   const table = tableRes.createTable;
-  expect(table.name).toBe(STREAM_NAME);
+  expect(table.name).toBe(TABLE_NAME);
 
   const instanceRes = await queryControl(`
     mutation CreateTableInstance($tableID: UUID!) {

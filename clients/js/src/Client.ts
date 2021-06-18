@@ -34,7 +34,7 @@ export interface QueryWarehouseResult<TRecord = any> {
  *
  * ```js
  * const client = Client({ secret: "YOUR_SECRET" });
- * const table = client.findTable("USERNAME/PROJECT/STREAM");
+ * const table = client.findTable("USERNAME/PROJECT/TABLE");
  * ```
  *
  * If your code runs in the browser (i.e. it's part of your frontend), you must

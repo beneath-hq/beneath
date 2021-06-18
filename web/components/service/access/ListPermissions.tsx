@@ -19,12 +19,12 @@ import {
   TablePermissionsForService,
   TablePermissionsForServiceVariables,
 } from "apollo/types/TablePermissionsForService";
-import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE } from "apollo/queries/service";
+import { QUERY_TABLE_PERMISSIONS_FOR_SERVICE } from "apollo/queries/service";
 import {
   UpdateServiceTablePermissions,
   UpdateServiceTablePermissionsVariables,
 } from "apollo/types/UpdateServiceTablePermissions";
-import { UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
+import { UPDATE_SERVICE_TABLE_PERMISSIONS } from "apollo/queries/service";
 import AddPermission from "./AddPermission";
 
 export interface Props {
@@ -36,7 +36,7 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
   const [showAddPermissionDialog, setShowAddPermissionDialog] = useState(false);
   const [showRevokePermissionDialog, setShowRevokePermissionDialog] = useState<string | undefined>(undefined);
   const { loading, error, data } = useQuery<TablePermissionsForService, TablePermissionsForServiceVariables>(
-    QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
+    QUERY_TABLE_PERMISSIONS_FOR_SERVICE,
     {
       variables: { serviceID },
     }
@@ -45,7 +45,7 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
   const [updateServiceTablePermissions, { loading: mutLoading }] = useMutation<
     UpdateServiceTablePermissions,
     UpdateServiceTablePermissionsVariables
-  >(UPDATE_SERVICE_STREAM_PERMISSIONS);
+  >(UPDATE_SERVICE_TABLE_PERMISSIONS);
 
   let cta: CallToAction | undefined;
   if (!data?.tablePermissionsForService.length) {
@@ -93,14 +93,14 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
                 update: (cache, { data }) => {
                   if (data && data.updateServiceTablePermissions) {
                     const queryData = cache.readQuery({
-                      query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
+                      query: QUERY_TABLE_PERMISSIONS_FOR_SERVICE,
                       variables: { serviceID },
                     }) as any;
                     const filtered = queryData.tablePermissionsForService.filter(
                       (perms: any) => perms.tableID !== tableID
                     );
                     cache.writeQuery({
-                      query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
+                      query: QUERY_TABLE_PERMISSIONS_FOR_SERVICE,
                       variables: { serviceID },
                       data: { tablePermissionsForService: filtered },
                     });

@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { Button, ButtonGroup, Dialog, DialogContent, makeStyles, Menu, MenuItem } from "@material-ui/core";
 import { MoreVert } from "@material-ui/icons";
-import { QUERY_STREAM_INSTANCES } from "apollo/queries/table";
+import { QUERY_TABLE_INSTANCES } from "apollo/queries/table";
 import { TableInstanceByOrganizationProjectTableAndVersion_tableInstanceByOrganizationProjectTableAndVersion_table } from "apollo/types/TableInstanceByOrganizationProjectTableAndVersion";
 import {
   TableInstancesByOrganizationProjectAndTableName,
@@ -71,7 +71,7 @@ const TableInstanceSelector: FC<Props> = ({ table, currentInstance }) => {
   const { error, data } = useQuery<
     TableInstancesByOrganizationProjectAndTableName,
     TableInstancesByOrganizationProjectAndTableNameVariables
-  >(QUERY_STREAM_INSTANCES, {
+  >(QUERY_TABLE_INSTANCES, {
     variables: {
       organizationName,
       projectName,

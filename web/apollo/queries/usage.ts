@@ -54,7 +54,7 @@ export const GET_SERVICE_USAGE = gql`
   }
 `;
 
-export const GET_STREAM_USAGE = gql`
+export const GET_TABLE_USAGE = gql`
   query GetTableUsage($input: GetEntityUsageInput!) {
     getTableUsage(input: $input) {
       entityID

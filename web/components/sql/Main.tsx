@@ -10,7 +10,7 @@ import CodeEditor from "components/CodeEditor";
 import RecordsView from "components/table/RecordsView";
 import { Schema } from "components/table/schema";
 import { useToken } from "hooks/useToken";
-import { QUERY_STREAM } from "apollo/queries/table";
+import { QUERY_TABLE } from "apollo/queries/table";
 import {
   TableByOrganizationProjectAndName,
   TableByOrganizationProjectAndNameVariables,
@@ -68,7 +68,7 @@ const Main = () => {
       const parts = path.substring(1, path.length - 1).split("/");
       return client
         .query<TableByOrganizationProjectAndName, TableByOrganizationProjectAndNameVariables>({
-          query: QUERY_STREAM,
+          query: QUERY_TABLE,
           variables: {
             organizationName: toBackendName(parts[0]),
             projectName: toBackendName(parts[1]),

@@ -6,7 +6,7 @@ import { TableByOrganizationProjectAndName_tableByOrganizationProjectAndName } f
 import { TableInstance } from "components/table/types";
 import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import { DeleteTableInstance, DeleteTableInstanceVariables } from "apollo/types/DeleteTableInstance";
-import { DELETE_STREAM_INSTANCE, QUERY_STREAM } from "apollo/queries/table";
+import { DELETE_TABLE_INSTANCE, QUERY_TABLE } from "apollo/queries/table";
 import { toURLName } from "lib/names";
 import { makeTableAs, makeTableHref } from "./urls";
 
@@ -18,7 +18,7 @@ export interface DeleteInstanceProps {
 
 const DeleteInstance: FC<DeleteInstanceProps> = ({ table, instance, setOpenDialogID }) => {
   const router = useRouter();
-  const [deleteTableInstance] = useMutation<DeleteTableInstance, DeleteTableInstanceVariables>(DELETE_STREAM_INSTANCE, {
+  const [deleteTableInstance] = useMutation<DeleteTableInstance, DeleteTableInstanceVariables>(DELETE_TABLE_INSTANCE, {
     onCompleted: (data) => {
       if (data?.deleteTableInstance) {
         router.replace(makeTableHref(table), makeTableAs(table));
@@ -47,7 +47,7 @@ const DeleteInstance: FC<DeleteInstanceProps> = ({ table, instance, setOpenDialo
               variables: { instanceID: instance.tableInstanceID },
               refetchQueries: [
                 {
-                  query: QUERY_STREAM,
+                  query: QUERY_TABLE,
                   variables: {
                     organizationName: table.project.organization.name,
                     projectName: table.project.name,

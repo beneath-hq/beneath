@@ -18,7 +18,7 @@ import {
 import React, { FC, useState } from "react";
 
 import { QUERY_PROJECTS_FOR_USER } from "../../apollo/queries/project";
-import { CREATE_STREAM } from "../../apollo/queries/table";
+import { CREATE_TABLE } from "../../apollo/queries/table";
 import { TableSchemaKind } from "../../apollo/types/globalTypes";
 import { ProjectsForUser, ProjectsForUserVariables } from "../../apollo/types/ProjectsForUser";
 import { CreateTable, CreateTableVariables } from "../../apollo/types/CreateTable";
@@ -62,7 +62,7 @@ const CreateTableView: FC<Props> = ({ preselectedProject }) => {
   const router = useRouter();
   const classes = useStyles();
   const [examplesDialog, setExamplesDialog] = useState(false);
-  const [createTable] = useMutation<CreateTable, CreateTableVariables>(CREATE_STREAM, {
+  const [createTable] = useMutation<CreateTable, CreateTableVariables>(CREATE_TABLE, {
     onCompleted: (data) => {
       if (data?.createTable) {
         router.replace(makeTableHref(data.createTable), makeTableAs(data.createTable), { shallow: true });

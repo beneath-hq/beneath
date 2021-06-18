@@ -3,7 +3,7 @@ import { Field, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
 
-import { QUERY_STREAM_INSTANCES, CREATE_STREAM_INSTANCE, QUERY_STREAM } from "../../apollo/queries/table";
+import { QUERY_TABLE_INSTANCES, CREATE_TABLE_INSTANCE, QUERY_TABLE } from "../../apollo/queries/table";
 import { CreateTableInstance, CreateTableInstanceVariables } from "../../apollo/types/CreateTableInstance";
 import { Form, handleSubmitMutation, TextField as FormikTextField } from "../formik";
 import SubmitControl from "../forms/SubmitControl";
@@ -20,7 +20,7 @@ export interface CreateInstanceProps {
 
 const CreateInstance: FC<CreateInstanceProps> = ({ table, instances, setOpenDialogID }) => {
   const router = useRouter();
-  const [createTableInstance] = useMutation<CreateTableInstance, CreateTableInstanceVariables>(CREATE_STREAM_INSTANCE, {
+  const [createTableInstance] = useMutation<CreateTableInstance, CreateTableInstanceVariables>(CREATE_TABLE_INSTANCE, {
     onCompleted: (data) => {
       if (data?.createTableInstance) {
         router.replace(makeTableHref(table, data.createTableInstance), makeTableAs(table, data.createTableInstance));
@@ -54,7 +54,7 @@ const CreateInstance: FC<CreateInstanceProps> = ({ table, instances, setOpenDial
             },
             refetchQueries: [
               {
-                query: QUERY_STREAM,
+                query: QUERY_TABLE,
                 variables: {
                   organizationName: table.project.organization.name,
                   projectName: table.project.name,
@@ -63,7 +63,7 @@ const CreateInstance: FC<CreateInstanceProps> = ({ table, instances, setOpenDial
               },
               // TODO: instead, we should use Apollo's "update()" to update the cache for the list of instances
               {
-                query: QUERY_STREAM_INSTANCES,
+                query: QUERY_TABLE_INSTANCES,
                 variables: {
                   organizationName: table.project.organization.name,
                   projectName: table.project.name,

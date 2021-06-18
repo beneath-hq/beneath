@@ -8,7 +8,7 @@ import AssessmentIcon from "@material-ui/icons/Assessment";
 import CodeIcon from "@material-ui/icons/Code";
 import ViewListIcon from "@material-ui/icons/ViewList";
 
-import { QUERY_STREAM, QUERY_STREAM_INSTANCE } from "apollo/queries/table";
+import { QUERY_TABLE, QUERY_TABLE_INSTANCE } from "apollo/queries/table";
 import {
   TableInstanceByOrganizationProjectTableAndVersion,
   TableInstanceByOrganizationProjectTableAndVersionVariables,
@@ -68,7 +68,7 @@ const TablePage = () => {
   } = useQuery<
     TableInstanceByOrganizationProjectTableAndVersion,
     TableInstanceByOrganizationProjectTableAndVersionVariables
-  >(QUERY_STREAM_INSTANCE, {
+  >(QUERY_TABLE_INSTANCE, {
     variables: { organizationName, projectName, tableName, version: version as number },
     skip: version === null,
   });
@@ -77,7 +77,7 @@ const TablePage = () => {
     loading: loadingTable,
     error: errorTable,
     data: dataTable,
-  } = useQuery<TableByOrganizationProjectAndName, TableByOrganizationProjectAndNameVariables>(QUERY_STREAM, {
+  } = useQuery<TableByOrganizationProjectAndName, TableByOrganizationProjectAndNameVariables>(QUERY_TABLE, {
     variables: { organizationName, projectName, tableName },
     skip: version !== null,
   });

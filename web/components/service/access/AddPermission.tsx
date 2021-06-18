@@ -7,12 +7,12 @@ import SubmitControl from "components/forms/SubmitControl";
 import FormikSelectField from "components/formik/SelectField";
 import useMe from "hooks/useMe";
 import { TablesForUser, TablesForUserVariables } from "apollo/types/TablesForUser";
-import { QUERY_STREAMS_FOR_USER } from "apollo/queries/table";
+import { QUERY_TABLES_FOR_USER } from "apollo/queries/table";
 import {
   UpdateServiceTablePermissions,
   UpdateServiceTablePermissionsVariables,
 } from "apollo/types/UpdateServiceTablePermissions";
-import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE, UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
+import { QUERY_TABLE_PERMISSIONS_FOR_SERVICE, UPDATE_SERVICE_TABLE_PERMISSIONS } from "apollo/queries/service";
 import { toURLName } from "lib/names";
 import FormikRadioGroup from "components/formik/RadioGroup";
 
@@ -29,7 +29,7 @@ export interface Props {
 
 const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
   const me = useMe();
-  const { data, loading, error } = useQuery<TablesForUser, TablesForUserVariables>(QUERY_STREAMS_FOR_USER, {
+  const { data, loading, error } = useQuery<TablesForUser, TablesForUserVariables>(QUERY_TABLES_FOR_USER, {
     variables: { userID: me?.personalUserID || "" },
     skip: !me,
   });
@@ -37,7 +37,7 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
   const [updateServiceTablePermissions] = useMutation<
     UpdateServiceTablePermissions,
     UpdateServiceTablePermissionsVariables
-  >(UPDATE_SERVICE_STREAM_PERMISSIONS, {
+  >(UPDATE_SERVICE_TABLE_PERMISSIONS, {
     onCompleted: (data) => {
       if (data.updateServiceTablePermissions) {
         onCompleted();
@@ -66,7 +66,7 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
                 read: values.read === "true" ? true : false,
                 write: values.write === "true" ? true : false,
               },
-              refetchQueries: [{ query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE, variables: { serviceID: serviceID } }],
+              refetchQueries: [{ query: QUERY_TABLE_PERMISSIONS_FOR_SERVICE, variables: { serviceID: serviceID } }],
             })
           )
         }

@@ -1,6 +1,6 @@
 import gql from "graphql-tag";
 
-export const QUERY_STREAM = gql`
+export const QUERY_TABLE = gql`
   query TableByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $tableName: String!) {
     tableByOrganizationProjectAndName(
       organizationName: $organizationName
@@ -59,7 +59,7 @@ export const QUERY_STREAM = gql`
   }
 `;
 
-export const QUERY_STREAM_INSTANCE = gql`
+export const QUERY_TABLE_INSTANCE = gql`
   query TableInstanceByOrganizationProjectTableAndVersion(
     $organizationName: String!
     $projectName: String!
@@ -132,7 +132,7 @@ export const QUERY_STREAM_INSTANCE = gql`
   }
 `;
 
-export const QUERY_STREAM_INSTANCES = gql`
+export const QUERY_TABLE_INSTANCES = gql`
   query TableInstancesByOrganizationProjectAndTableName(
     $organizationName: String!
     $projectName: String!
@@ -153,7 +153,7 @@ export const QUERY_STREAM_INSTANCES = gql`
   }
 `;
 
-export const QUERY_STREAMS_FOR_USER = gql`
+export const QUERY_TABLES_FOR_USER = gql`
   query TablesForUser($userID: UUID!) {
     tablesForUser(userID: $userID) {
       tableID
@@ -182,7 +182,7 @@ export const COMPILE_SCHEMA = gql`
   }
 `;
 
-export const CREATE_STREAM = gql`
+export const CREATE_TABLE = gql`
   mutation CreateTable($input: CreateTableInput!) {
     createTable(input: $input) {
       tableID
@@ -224,7 +224,7 @@ export const CREATE_STREAM = gql`
   }
 `;
 
-export const CREATE_STREAM_INSTANCE = gql`
+export const CREATE_TABLE_INSTANCE = gql`
   mutation CreateTableInstance($input: CreateTableInstanceInput!) {
     createTableInstance(input: $input) {
       tableInstanceID
@@ -237,7 +237,7 @@ export const CREATE_STREAM_INSTANCE = gql`
   }
 `;
 
-export const UPDATE_STREAM_INSTANCE = gql`
+export const UPDATE_TABLE_INSTANCE = gql`
   mutation UpdateTableInstance($input: UpdateTableInstanceInput!) {
     updateTableInstance(input: $input) {
       tableInstanceID
@@ -250,7 +250,7 @@ export const UPDATE_STREAM_INSTANCE = gql`
   }
 `;
 
-export const DELETE_STREAM_INSTANCE = gql`
+export const DELETE_TABLE_INSTANCE = gql`
   mutation DeleteTableInstance($instanceID: UUID!) {
     deleteTableInstance(instanceID: $instanceID)
   }

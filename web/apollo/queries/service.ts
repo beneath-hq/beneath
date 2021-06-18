@@ -29,7 +29,7 @@ export const QUERY_SERVICE = gql`
   }
 `;
 
-export const QUERY_STREAM_PERMISSIONS_FOR_SERVICE = gql`
+export const QUERY_TABLE_PERMISSIONS_FOR_SERVICE = gql`
   query TablePermissionsForService($serviceID: UUID!) {
     tablePermissionsForService(serviceID: $serviceID) {
       serviceID
@@ -96,7 +96,7 @@ export const UPDATE_SERVICE = gql`
   }
 `;
 
-export const UPDATE_SERVICE_STREAM_PERMISSIONS = gql`
+export const UPDATE_SERVICE_TABLE_PERMISSIONS = gql`
   mutation UpdateServiceTablePermissions($serviceID: UUID!, $tableID: UUID!, $read: Boolean, $write: Boolean) {
     updateServiceTablePermissions(serviceID: $serviceID, tableID: $tableID, read: $read, write: $write) {
       serviceID

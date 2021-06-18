@@ -2,12 +2,7 @@ import { useMutation } from "@apollo/client";
 import { Button, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core";
 import React, { FC } from "react";
 
-import {
-  QUERY_STREAM,
-  QUERY_STREAM_INSTANCE,
-  QUERY_STREAM_INSTANCES,
-  UPDATE_STREAM_INSTANCE,
-} from "apollo/queries/table";
+import { QUERY_TABLE, QUERY_TABLE_INSTANCE, QUERY_TABLE_INSTANCES, UPDATE_TABLE_INSTANCE } from "apollo/queries/table";
 import { TableByOrganizationProjectAndName_tableByOrganizationProjectAndName } from "apollo/types/TableByOrganizationProjectAndName";
 import { UpdateTableInstance, UpdateTableInstanceVariables } from "apollo/types/UpdateTableInstance";
 import { TableInstance } from "components/table/types";
@@ -19,7 +14,7 @@ export interface PromoteInstanceProps {
 }
 
 const PromoteInstance: FC<PromoteInstanceProps> = ({ table, instance, setOpenDialogID }) => {
-  const [updateTableInstance] = useMutation<UpdateTableInstance, UpdateTableInstanceVariables>(UPDATE_STREAM_INSTANCE, {
+  const [updateTableInstance] = useMutation<UpdateTableInstance, UpdateTableInstanceVariables>(UPDATE_TABLE_INSTANCE, {
     onCompleted: () => setOpenDialogID(null),
   });
 
@@ -43,7 +38,7 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ table, instance, setOpenDia
               variables: { input: { tableInstanceID: instance.tableInstanceID, makePrimary: true } },
               refetchQueries: [
                 {
-                  query: QUERY_STREAM,
+                  query: QUERY_TABLE,
                   variables: {
                     organizationName: table.project.organization.name,
                     projectName: table.project.name,
@@ -51,7 +46,7 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ table, instance, setOpenDia
                   },
                 },
                 {
-                  query: QUERY_STREAM_INSTANCE,
+                  query: QUERY_TABLE_INSTANCE,
                   variables: {
                     organizationName: table.project.organization.name,
                     projectName: table.project.name,
@@ -60,7 +55,7 @@ const PromoteInstance: FC<PromoteInstanceProps> = ({ table, instance, setOpenDia
                   },
                 },
                 {
-                  query: QUERY_STREAM_INSTANCES,
+                  query: QUERY_TABLE_INSTANCES,
                   variables: {
                     organizationName: table.project.organization.name,
                     projectName: table.project.name,
