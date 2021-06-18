@@ -7,7 +7,7 @@ To run this example:
     python derive.py run USERNAME/PROJECT/SERVICE
 """
 
-STREAM_PATH = "epg/sandbox/mock"
+TABLE_PATH = "epg/sandbox/mock"
 
 import beneath
 
@@ -16,7 +16,7 @@ p = beneath.Pipeline(parse_args=True)
 async def fn(data):
   print(data)
   
-data = p.read_stream(STREAM_PATH)
+data = p.read_table(TABLE_PATH)
 
 p.apply(data, fn)
 

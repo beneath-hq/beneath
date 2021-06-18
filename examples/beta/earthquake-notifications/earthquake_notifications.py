@@ -1,5 +1,5 @@
 """
-This example contains a pipeline that listens to the "earthquakes" stream, and uses Twilio to send an SMS notification when big earthquakes happen.
+This example contains a pipeline that listens to the "earthquakes" table, and uses Twilio to send an SMS notification when big earthquakes happen.
 
 To run this example:  
   1. Stage the pipeline
@@ -46,7 +46,7 @@ async def detect_big_earthquakes(earthquake):
     )
   
 # read from Beneath as the first step in the Pipeline
-earthquakes = p.read_stream("demos/earthquakes/earthquakes")
+earthquakes = p.read_table("demos/earthquakes/earthquakes")
 
 # add the notification logic as the second step in the pipeline
 p.apply(earthquakes, detect_big_earthquakes)

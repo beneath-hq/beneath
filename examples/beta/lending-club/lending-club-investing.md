@@ -62,7 +62,7 @@ Next, we need to create a Stream by defining the stream’s schema, _staging_ th
 ```graphql
 " Loans listed on the Lending Club platform. Loans are listed each day at 6AM, 10AM, 2PM, and 6PM (PST). Historical loans include the borrower's payment outcome. "
 type Loan
-  @stream
+  @schema
   @key(fields: ["id"])
 {
   "A unique LC assigned ID for the loan listing."
@@ -82,7 +82,7 @@ type Loan
 
 ```
 
-Then, we _stage_ the stream by providing the stream path in the form of `USERNAME/PROJECT/YOUR-NEW-STREAM-NAME` and the schema file. Here I name the new stream `loans-history`:
+Then, we _stage_ the stream by providing the stream path in the form of `USERNAME/PROJECT/YOUR-NEW-TABLE-NAME` and the schema file. Here I name the new stream `loans-history`:
 
 ```python
 import beneath
@@ -92,11 +92,11 @@ username = "epg"
 project_name = "lending-club"
 stream_name = "loans-history"
 
-STREAM_PATH = f"{username}/{project_name}/{stream_name}"
+TABLE_PATH = f"{username}/{project_name}/{stream_name}"
 SCHEMA = open("loans_history.graphql", "r").read()
 
 stream = await client.create_stream(
-    stream_path=STREAM_PATH,
+    stream_path=TABLE_PATH,
     schema=SCHEMA,
     update_if_exists=True,
 )
@@ -141,7 +141,7 @@ This script revolves around a Beneath _generator_ which is defined in this snipp
 ```python
 beneath.easy_generate_stream(
   generate_fn=generate_loans,
-  output_stream_path=STREAM,
+  output_stream_path=TABLE,
   output_stream_schema=SCHEMA,
 )
 ```
@@ -289,9 +289,9 @@ The script revolves around the `easy_derive_stream` function, which reads a Bene
 
 ```python
 beneath.easy_derive_stream(
-  input_stream_path=INPUT_STREAM,
+  input_stream_path=INPUT_TABLE,
   apply_fn=process_loan,
-  output_stream_path=OUTPUT_STREAM,
+  output_stream_path=OUTPUT_TABLE,
   output_stream_schema=OUTPUT_SCHEMA,
 )
 ```

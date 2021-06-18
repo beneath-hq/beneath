@@ -34,27 +34,27 @@ if __name__ == "__main__":
 
     name = "1m"
     clock = p.generate(make_clock(name, start, timedelta(minutes=1)))
-    p.write_stream(
+    p.write_table(
         clock,
-        stream_path=f"clock-{name}",
+        table_path=f"clock-{name}",
         schema=SCHEMA,
         description="Clock that ticks every minute",
     )
 
     name = "1h"
     clock = p.generate(make_clock(name, start, timedelta(hours=1)))
-    p.write_stream(
+    p.write_table(
         clock,
-        stream_path=f"clock-{name}",
+        table_path=f"clock-{name}",
         schema=SCHEMA,
         description="Clock that ticks every hour",
     )
 
     name = "1d"
     clock = p.generate(make_clock(name, start, timedelta(days=1)))
-    p.write_stream(
+    p.write_table(
         clock,
-        stream_path=f"clock-{name}",
+        table_path=f"clock-{name}",
         schema=SCHEMA,
         description="Clock that ticks every day",
     )

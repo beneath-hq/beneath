@@ -239,21 +239,21 @@ if __name__ == "__main__":
     blocks = p.generate(generate_blocks)
     stable = p.apply(blocks, filter_stable)
     unstable = p.apply(blocks, filter_unstable)
-    p.write_stream(
+    p.write_table(
         unstable,
         "blocks-unstable",
         schema=SCHEMA,
         description=(
-            "Blocks loaded from the Ethereum mainnet. "
-            "Blocks are loaded without delay, so forks will frequently occur in this stream."
+            "Blocks loaded in real-time from the Ethereum mainnet. "
+            "Blocks are loaded without delay, so forks will frequently occur in this table."
         ),
     )
-    p.write_stream(
+    p.write_table(
         stable,
         "blocks-stable",
         schema=SCHEMA,
         description=(
-            "Blocks loaded from the Ethereum mainnet. "
+            "Blocks loaded in real-time from the Ethereum mainnet. "
             "Blocks are loaded with a 12-block delay to minimize the chance of forks."
         ),
     )

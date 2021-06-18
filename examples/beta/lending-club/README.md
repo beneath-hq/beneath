@@ -1,17 +1,17 @@
 # Lending Club historical loan analysis and realtime assessment
 
-The code in these folders produces the three data streams in the [Beneath Lending Club project](https://beneath.dev/epg/lending-club):
+The code in these folders produces the three data tables in the [Beneath Lending Club project](https://beneath.dev/epg/lending-club):
 
-- [historical loans with performance data](https://beneath.dev/epg/lending-club/stream:loans-history)
-- [real-time loans listed on the Lending Club website 4x per day](https://beneath.dev/epg/lending-club/stream:loans)
-- [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/stream:loans-enriched)
+- [historical loans with performance data](https://beneath.dev/epg/lending-club/table:loans-history)
+- [real-time loans listed on the Lending Club website 4x per day](https://beneath.dev/epg/lending-club/table:loans)
+- [real-time loans enriched with performance predictions](https://beneath.dev/epg/lending-club/table:loans-enriched)
 
-### Developing the streams
+### Developing the tables
 
 - The historical loan data is uploaded to Beneath via the Jupyter notebook `loans-history/load_historical_loans.ipynb`.
 - The real-time loan data is captured with the `loans/fetch_new_loans.py` script.
 - The real-time enriched loan data is created with the `loans-enriched/enrich_loans.py` script.
-- To make performance predictions, the enriched data stream utilizes the machine learning model that is trained with the `loans-enriched/train_model.ipynb` notebook.
+- To make performance predictions, the enriched data table utilizes the machine learning model that is trained with the `loans-enriched/train_model.ipynb` notebook.
 
 To set yourself up for development:
 
@@ -19,7 +19,7 @@ To set yourself up for development:
     source .venv/bin/activate
     pip install -r requirements.txt
 
-To create the Beneath project where the stream is stored (epg is my username - you'll have to use your own):
+To create the Beneath project where the table is stored (epg is my username - you'll have to use your own):
 
     beneath project create epg/lending-club
 

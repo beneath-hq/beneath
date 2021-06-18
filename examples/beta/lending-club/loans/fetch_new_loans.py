@@ -5,7 +5,7 @@ from datetime import datetime
 
 # config
 LENDING_CLUB_API_KEY = os.getenv("LENDING_CLUB_API_KEY", default=None)
-STREAM = "loans"
+TABLE = "loans"
 SCHEMA = open("loans.graphql", "r").read()
 
 async def generate_loans(p: beneath.Pipeline):
@@ -56,18 +56,18 @@ async def generate_loans(p: beneath.Pipeline):
 
 if __name__ == "__main__":
   # EASY OPTION
-  beneath.easy_generate_stream(
+  beneath.easy_generate_table(
     generate_fn=generate_loans,
-    output_stream_path=STREAM,
-    output_stream_schema=SCHEMA,
+    output_table_path=TABLE,
+    output_table_schema=SCHEMA,
   )
   
   # DETAILED OPTION
   # p = beneath.Pipeline(parse_args=True)
   # loans = p.generate(generate_loans)
-  # p.write_stream(
+  # p.write_table(
   #   loans,
-  #   stream_path=STREAM,
+  #   table_path=TABLE,
   #   schema=SCHEMA
   # )
   # p.main() 

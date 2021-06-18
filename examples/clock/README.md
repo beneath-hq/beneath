@@ -7,7 +7,7 @@ poetry install
 poetry shell
 ```
 
-Stage the streams and a service for the pipeline, then run it
+Stage the tables and a service for the pipeline, then run it
 
 ```bash
 python clock.py stage USERNAME/PROJECT/clock --read-quota-mb 1000 --write-quota-mb 2000

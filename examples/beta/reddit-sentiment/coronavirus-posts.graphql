@@ -1,8 +1,5 @@
 " Reddit posts to the r/Coronavirus subreddit. Using a pre-trained NLP model to compute each submission's polarity and subjectivity. "
-type Post
-  @stream
-  @key(fields: ["subreddit", "author", "timestamp"])
-{
+type Post @schema @key(fields: ["subreddit", "author", "timestamp"]) {
   " Name of the subreddit "
   subreddit: String!
 

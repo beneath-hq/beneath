@@ -21,7 +21,7 @@ async def get_clf():
     if _clf is None:
         checkpointer = await p.client.checkpointer(
             project_path="USERNAME/PROJECT_NAME",
-            metastream_name="predictive-model",
+            metatable_name="predictive-model",
         )
 
         s = await checkpointer.get("clf_serialized")
@@ -41,14 +41,14 @@ async def predict_outcome(record):
 
 
 if __name__ == "__main__":
-    p.description = "A pipeline that makes predictions based on the features stream"
+    p.description = "A pipeline that makes predictions based on the features table"
 
-    # consume the features stream
-    features = p.read_stream("USERNAME/PROJECT_NAME/features")
+    # consume the features table
+    features = p.read_table("USERNAME/PROJECT_NAME/features")
 
-    # derive a new stream and write to Beneath
+    # derive a new table and write to Beneath
     predictions = p.apply(features, predict_outcome)
-    p.write_stream(
+    p.write_table(
         predictions,
         "predictions",
         schema=PREDICTIONS_SCHEMA,

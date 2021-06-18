@@ -2,7 +2,7 @@ import { useRecords } from "beneath-react";
 
 const App = () => {
   const { records, loading, error } = useRecords({
-    stream: "examples/clock/clock-1m",
+    table: "examples/clock/clock-1m",
     query: { type: "log", peek: true },
     subscribe: true,
   });

@@ -9,7 +9,7 @@ if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True)
     p.description = "Continually pings the USGS earthquake API"
     earthquakes = p.generate(earthquakes.generate_earthquakes)
-    p.write_stream(
+    p.write_table(
         earthquakes,
         "earthquakes",
         schema=EARTHQUAKES_SCHEMA,

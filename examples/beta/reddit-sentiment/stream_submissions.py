@@ -7,7 +7,7 @@ from datetime import datetime
 from structlog import get_logger
 from textblob import TextBlob
 
-STREAM = "epg/reddit/coronavirus-posts-sentiment"
+TABLE = "epg/reddit/coronavirus-posts-sentiment"
 REDDIT_USER_AGENT = "BeneathClient/0.1 (by /u/greenep12)"
 REDDIT_CLIENT_ID = "hQE2QCQmnPhqTg"
 REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", default=None)
@@ -17,7 +17,7 @@ log = get_logger()
 
 async def main():
   client = beneath.Client()
-  stream = await client.find_stream(STREAM)
+  stream = await client.find_stream(TABLE)
 
   reddit = praw.Reddit(
     user_agent=REDDIT_USER_AGENT,

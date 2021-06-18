@@ -11,7 +11,7 @@ with open("schemas/comment.graphql", "r") as file:
     COMMENTS_SCHEMA = file.read()
 
 
-def make_stream_name(subreddit, kind):
+def make_table_name(subreddit, kind):
     name = subreddit.replace("+", "-")
     return f"r-{name}-{kind}"
 
@@ -31,17 +31,17 @@ if __name__ == "__main__":
     p.description = "Scrapes posts and comments from Reddit"
 
     posts = p.generate(posts.generate_posts)
-    p.write_stream(
+    p.write_table(
         posts,
-        make_stream_name(SUBREDDIT, "posts"),
+        make_table_name(SUBREDDIT, "posts"),
         schema=POSTS_SCHEMA,
         description=make_subreddit_description(SUBREDDIT, "posts"),
     )
 
     comments = p.generate(comments.generate_comments)
-    p.write_stream(
+    p.write_table(
         comments,
-        make_stream_name(SUBREDDIT, "comments"),
+        make_table_name(SUBREDDIT, "comments"),
         schema=COMMENTS_SCHEMA,
         description=make_subreddit_description(SUBREDDIT, "comments"),
     )

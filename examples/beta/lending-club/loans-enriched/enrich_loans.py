@@ -2,8 +2,8 @@ import beneath
 import joblib
 
 # config
-INPUT_STREAM = "loans"
-OUTPUT_STREAM = "loans-enriched"
+INPUT_TABLE = "loans"
+OUTPUT_TABLE = "loans-enriched"
 OUTPUT_SCHEMA = open("loans_enriched.graphql", "r").read()
 
 # load ML model to use for predictions
@@ -47,16 +47,16 @@ async def process_loan(loan):
 
 if __name__ == "__main__":
   # EASY OPTION
-  beneath.easy_derive_stream(
-    input_stream_path=INPUT_STREAM,
+  beneath.easy_derive_table(
+    input_table_path=INPUT_TABLE,
     apply_fn=process_loan,
-    output_stream_path=OUTPUT_STREAM,
-    output_stream_schema=OUTPUT_SCHEMA,
+    output_table_path=OUTPUT_TABLE,
+    output_table_schema=OUTPUT_SCHEMA,
   )
 
   # DETAILED OPTION
   # p = beneath.Pipeline(parse_args=True)
-  # loans = p.read_stream(INPUT_STREAM)
+  # loans = p.read_table(INPUT_TABLE)
   # loans_enriched = p.apply(loans, process_loan)
-  # p.write_stream(loans_enriched, OUTPUT_STREAM, OUTPUT_SCHEMA)
+  # p.write_table(loans_enriched, OUTPUT_TABLE, OUTPUT_SCHEMA)
   # p.main()
