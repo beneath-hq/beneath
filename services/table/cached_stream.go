@@ -25,7 +25,7 @@ type internalCachedInstance struct {
 	OrganizationName          string
 	ProjectID                 uuid.UUID
 	ProjectName               string
-	TableName                 string
+	TablName                  string // "TableName" would conflict with go-pg
 	CanonicalAvroSchema       string
 	Indexes                   []internalCachedInstanceIndex
 }
@@ -74,7 +74,7 @@ func cachedInstanceToInternal(c *models.CachedInstance) *internalCachedInstance 
 		OrganizationName:          c.OrganizationName,
 		ProjectID:                 c.ProjectID,
 		ProjectName:               c.ProjectName,
-		TableName:                 c.TableName,
+		TablName:                  c.TableName,
 	}
 
 	// necessary because we allow empty CachedInstance objects
@@ -105,7 +105,7 @@ func internalToCachedInstance(i *internalCachedInstance) (*models.CachedInstance
 	c.OrganizationName = i.OrganizationName
 	c.ProjectID = i.ProjectID
 	c.ProjectName = i.ProjectName
-	c.TableName = i.TableName
+	c.TableName = i.TablName
 
 	// nil checks necessary because we allow empty CachedInstance objects
 

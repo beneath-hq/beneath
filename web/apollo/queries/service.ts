@@ -30,14 +30,14 @@ export const QUERY_SERVICE = gql`
 `;
 
 export const QUERY_STREAM_PERMISSIONS_FOR_SERVICE = gql`
-  query StreamPermissionsForService($serviceID: UUID!) {
-    streamPermissionsForService(serviceID: $serviceID) {
+  query TablePermissionsForService($serviceID: UUID!) {
+    tablePermissionsForService(serviceID: $serviceID) {
       serviceID
-      streamID
+      tableID
       read
       write
-      stream {
-        streamID
+      table {
+        tableID
         name
         project {
           projectID
@@ -97,14 +97,14 @@ export const UPDATE_SERVICE = gql`
 `;
 
 export const UPDATE_SERVICE_STREAM_PERMISSIONS = gql`
-  mutation UpdateServiceStreamPermissions($serviceID: UUID!, $streamID: UUID!, $read: Boolean, $write: Boolean) {
-    updateServiceStreamPermissions(serviceID: $serviceID, streamID: $streamID, read: $read, write: $write) {
+  mutation UpdateServiceTablePermissions($serviceID: UUID!, $tableID: UUID!, $read: Boolean, $write: Boolean) {
+    updateServiceTablePermissions(serviceID: $serviceID, tableID: $tableID, read: $read, write: $write) {
       serviceID
-      streamID
+      tableID
       read
       write
-      stream {
-        streamID
+      table {
+        tableID
         name
         project {
           projectID

@@ -13,16 +13,16 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName_organ
   name: string;
 }
 
-export interface ProjectByOrganizationAndName_projectByOrganizationAndName_streams {
-  __typename: "Stream";
-  streamID: string;
+export interface ProjectByOrganizationAndName_projectByOrganizationAndName_tables {
+  __typename: "Table";
+  tableID: string;
   name: string;
   description: string | null;
   createdOn: ControlTime;
   meta: boolean;
   instancesCreatedCount: number;
   instancesDeletedCount: number;
-  primaryStreamInstanceID: ControlUUID | null;
+  primaryTableInstanceID: ControlUUID | null;
 }
 
 export interface ProjectByOrganizationAndName_projectByOrganizationAndName_services {
@@ -52,7 +52,7 @@ export interface ProjectByOrganizationAndName_projectByOrganizationAndName {
   createdOn: ControlTime;
   updatedOn: ControlTime;
   organization: ProjectByOrganizationAndName_projectByOrganizationAndName_organization;
-  streams: ProjectByOrganizationAndName_projectByOrganizationAndName_streams[];
+  tables: ProjectByOrganizationAndName_projectByOrganizationAndName_tables[];
   services: ProjectByOrganizationAndName_projectByOrganizationAndName_services[];
   permissions: ProjectByOrganizationAndName_projectByOrganizationAndName_permissions;
 }

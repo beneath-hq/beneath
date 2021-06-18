@@ -54,15 +54,15 @@ export const QUERY_PROJECT = gql`
         organizationID
         name
       }
-      streams {
-        streamID
+      tables {
+        tableID
         name
         description
         createdOn
         meta
         instancesCreatedCount
         instancesDeletedCount
-        primaryStreamInstanceID
+        primaryTableInstanceID
       }
       services {
         serviceID

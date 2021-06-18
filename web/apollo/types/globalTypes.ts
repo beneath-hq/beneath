@@ -10,12 +10,12 @@
 export enum EntityKind {
   Organization = "Organization",
   Service = "Service",
-  Stream = "Stream",
-  StreamInstance = "StreamInstance",
+  Table = "Table",
+  TableInstance = "TableInstance",
   User = "User",
 }
 
-export enum StreamSchemaKind {
+export enum TableSchemaKind {
   Avro = "Avro",
   GraphQL = "GraphQL",
 }
@@ -28,7 +28,7 @@ export enum UsageLabel {
 }
 
 export interface CompileSchemaInput {
-  schemaKind: StreamSchemaKind;
+  schemaKind: TableSchemaKind;
   schema: string;
   indexes?: string | null;
 }
@@ -55,11 +55,11 @@ export interface CreateServiceInput {
   updateIfExists?: boolean | null;
 }
 
-export interface CreateStreamInput {
+export interface CreateTableInput {
   organizationName: string;
   projectName: string;
-  streamName: string;
-  schemaKind: StreamSchemaKind;
+  tableName: string;
+  schemaKind: TableSchemaKind;
   schema: string;
   indexes?: string | null;
   description?: string | null;
@@ -74,8 +74,8 @@ export interface CreateStreamInput {
   updateIfExists?: boolean | null;
 }
 
-export interface CreateStreamInstanceInput {
-  streamID: ControlUUID;
+export interface CreateTableInstanceInput {
+  tableID: ControlUUID;
   version?: number | null;
   makePrimary?: boolean | null;
   updateIfExists?: boolean | null;
@@ -116,8 +116,8 @@ export interface UpdateServiceInput {
   scanQuota?: number | null;
 }
 
-export interface UpdateStreamInstanceInput {
-  streamInstanceID: ControlUUID;
+export interface UpdateTableInstanceInput {
+  tableInstanceID: ControlUUID;
   makeFinal?: boolean | null;
   makePrimary?: boolean | null;
 }

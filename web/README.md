@@ -8,7 +8,7 @@ The primary libraries used in the frontend are:
 
 - [React](https://reactjs.org/): Needs no introduction
 
-- [Next.js](https://nextjs.org/): Facilitates server-side rendered React. The advantages are increased speed and SEO. It does make some things slightly more complicated, namely code that depends on global variables (like `document` or `window`) or the `res` object in Node. 
+- [Next.js](https://nextjs.org/): Facilitates server-side rendered React. The advantages are increased speed and SEO. It does make some things slightly more complicated, namely code that depends on global variables (like `document` or `window`) or the `res` object in Node.
 
 - [Apollo GraphQL](https://www.apollographql.com/docs/react/) (React version): Used to make GraphQL calls to the control server. Also manages all the application's state (implemented correctly, it should save us from needing Redux or similar).
 
@@ -21,7 +21,7 @@ The primary libraries used in the frontend are:
 - `web/ee` contains code for the enterprise edition
 - `web/hooks` contains useful, shared React hooks
 - `web/lib` contains assorted configs, utilities and non-React JS code
-- `web/pages` contains the distinct pages of the site (it's a Nextjs convention); note that we *don't* use nested pages to auto-generate dynamic routes (which is a recent Nextjs convention), see `web/server.js` for the routes
+- `web/pages` contains the distinct pages of the site (it's a Nextjs convention); note that we _don't_ use nested pages to auto-generate dynamic routes (which is a recent Nextjs convention), see `web/server.js` for the routes
 
 ## Commands
 
@@ -34,11 +34,11 @@ The primary libraries used in the frontend are:
 
 Regenerate types for Apollo queries (only covers queries in `web/apollo/queries/`):
 
-```yarn apollo:generate```
+`yarn apollo:generate`
 
 ## Using the `beneath` and `beneath-react` JS client libraries
 
-The stream data exploration page uses the JS and React clients (see `clients/js` and `clients/js-react` under the repository root) to fetch data. It does *not* locally link to these, but instead uses the versions stored on NPM. It's significantly simpler and less brittle to do it this way, but it does mean that changes made in the clients aren't immediately reflected when developing the console.
+The table data exploration page uses the JS and React clients (see `clients/js` and `clients/js-react` under the repository root) to fetch data. It does _not_ locally link to these, but instead uses the versions stored on NPM. It's significantly simpler and less brittle to do it this way, but it does mean that changes made in the clients aren't immediately reflected when developing the console.
 
 If you need to edit the two simultaneously, you have to short-circuit the imports (and remember to run `tsc` first in the client libraries). Before committing, you should revert the short-circuiting code, publish the client libraries as new versions to NPM, and update the dependent versions in `web/package.json`.
 

@@ -41,7 +41,7 @@ func (s *Service) FindTableInstanceByOrganizationProjectTableAndVersion(ctx cont
 		).
 		Where("lower(table__project__organization.name) = lower(?)", organizationName).
 		Where("lower(table__project.name) = lower(?)", projectName).
-		Where("lower(table.name) = lower(?)", tableName).
+		Where("lower(\"table\".name) = lower(?)", tableName).
 		Where("table_instance.version = ?", version).
 		Select()
 	if !db.AssertFoundOne(err) {

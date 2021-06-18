@@ -191,7 +191,7 @@ func (s *Service) FindTablePermissionsForService(ctx context.Context, serviceID 
 			"Table.Project.Organization.name",
 		).
 		Where("service_id = ?", serviceID).
-		Order("table__project__organization.name", "table__project.name", "table.name").
+		Order("table__project__organization.name", "table__project.name", "\"table\".name").
 		Limit(200).
 		Select()
 	if err != nil {

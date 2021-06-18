@@ -99,7 +99,7 @@ const CreateService: FC<Props> = ({ preselectedProject }) => {
             name="project"
             validate={(proj?: Project) => {
               if (!proj) {
-                return "Select a project for the stream";
+                return "Select a project for the table";
               }
             }}
             component={FormikSelectField}

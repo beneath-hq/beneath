@@ -9,7 +9,7 @@ const typePolicies: TypePolicies = {
   NewServiceSecret: { keyFields: ["secret", ["serviceSecretID"]] },
   Organization: { keyFields: ["organizationID"] },
   OrganizationMember: { keyFields: ["organizationID", "userID"] },
-  PermissionsServicesStreams: { keyFields: ["serviceID", "streamID"] },
+  PermissionsServicesTables: { keyFields: ["serviceID", "tableID"] },
   PermissionsUsersOrganizations: { keyFields: false },
   PermissionsUsersProjects: { keyFields: false },
   PrivateOrganization: { keyFields: ["organizationID"] },
@@ -18,9 +18,9 @@ const typePolicies: TypePolicies = {
   ProjectMember: { keyFields: ["projectID", "userID"] },
   PublicOrganization: { keyFields: ["organizationID"] },
   Service: { keyFields: ["serviceID"] },
-  Stream: { keyFields: ["streamID"] },
-  StreamIndex: { keyFields: ["indexID"] },
-  StreamInstance: { keyFields: ["streamInstanceID"] },
+  Table: { keyFields: ["tableID"] },
+  TableIndex: { keyFields: ["indexID"] },
+  TableInstance: { keyFields: ["tableInstanceID"] },
   UserSecret: { keyFields: ["userSecretID"] },
 };
 

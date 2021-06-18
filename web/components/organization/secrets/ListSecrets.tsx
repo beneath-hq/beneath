@@ -18,7 +18,7 @@ import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "apollo/queries/secret";
 import { RevokeUserSecret, RevokeUserSecretVariables } from "apollo/types/RevokeUserSecret";
 import { SecretsForUser, SecretsForUserVariables } from "apollo/types/SecretsForUser";
 import ContentContainer from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableRow } from "components/UITables";
 
 export interface ListSecretsProps {
   userID: string;
@@ -31,26 +31,20 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
     variables: { userID },
   });
 
-  const [revokeSecret, { loading: mutLoading }] = useMutation<RevokeUserSecret, RevokeUserSecretVariables>(
-    REVOKE_USER_SECRET
-  );
+  const [revokeSecret, { loading: mutLoading }] =
+    useMutation<RevokeUserSecret, RevokeUserSecretVariables>(REVOKE_USER_SECRET);
 
   const dialogue = (
     <Dialog open={!!deleteSecretID}>
       <DialogTitle>Are you sure you want to delete this secret?</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Any environments (your CLI, any services, Jupyter notebooks, etc.) that rely on this secret will
-          no longer work. For the affected environments, you'll have to issue a new secret and
-          re-authenticate.
+          Any environments (your CLI, any services, Jupyter notebooks, etc.) that rely on this secret will no longer
+          work. For the affected environments, you'll have to issue a new secret and re-authenticate.
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="primary"
-          autoFocus
-          onClick={() => setDeleteSecretID(undefined)}
-        >
+        <Button color="primary" autoFocus onClick={() => setDeleteSecretID(undefined)}>
           No, go back
         </Button>
         <Button
@@ -67,9 +61,7 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
                       query: QUERY_USER_SECRETS,
                       variables: { userID },
                     }) as any;
-                    const filtered = queryData.secretsForUser.filter(
-                      (secret: any) => secret.userSecretID !== secretID
-                    );
+                    const filtered = queryData.secretsForUser.filter((secret: any) => secret.userSecretID !== secretID);
                     cache.writeQuery({
                       query: QUERY_USER_SECRETS,
                       variables: { userID },
@@ -92,28 +84,28 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
     <>
       <Typography variant="h2">Personal secrets</Typography>
       <ContentContainer paper margin="normal" loading={loading} error={error && JSON.stringify(error)}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Description</TableCell>
-              <TableCell>Access</TableCell>
-              <TableCell>Prefix</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Delete</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <UITable>
+          <UITableHead>
+            <UITableRow>
+              <UITableCell>Description</UITableCell>
+              <UITableCell>Access</UITableCell>
+              <UITableCell>Prefix</UITableCell>
+              <UITableCell>Created</UITableCell>
+              <UITableCell>Delete</UITableCell>
+            </UITableRow>
+          </UITableHead>
+          <UITableBody>
             {data?.secretsForUser
               .filter((secret) => secret.description !== "Browser session")
               .map(({ createdOn, description, userSecretID, prefix, readOnly, publicOnly }) => (
-                <TableRow key={userSecretID} hover>
-                  <TableCell>{description || ""}</TableCell>
-                  <TableCell>{readOnly ? (publicOnly ? "Public read" : "Private read") : "Full access"}</TableCell>
-                  <TableCell>{prefix}</TableCell>
-                  <TableCell>
+                <UITableRow key={userSecretID} hover>
+                  <UITableCell>{description || ""}</UITableCell>
+                  <UITableCell>{readOnly ? (publicOnly ? "Public read" : "Private read") : "Full access"}</UITableCell>
+                  <UITableCell>{prefix}</UITableCell>
+                  <UITableCell>
                     <Moment fromNow date={createdOn} />
-                  </TableCell>
-                  <TableCell padding="checkbox" align="right">
+                  </UITableCell>
+                  <UITableCell padding="checkbox" align="right">
                     <IconButton
                       aria-label="Delete"
                       disabled={mutLoading}
@@ -121,11 +113,11 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
+                  </UITableCell>
+                </UITableRow>
               ))}
-          </TableBody>
-        </Table>
+          </UITableBody>
+        </UITable>
         {dialogue}
       </ContentContainer>
     </>

@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import React, { FC, useState } from "react";
 
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableLinkCell, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableLinkCell, UITableRow } from "components/UITables";
 import { toURLName } from "lib/names";
 import {
   Button,
@@ -16,14 +16,14 @@ import {
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import {
-  StreamPermissionsForService,
-  StreamPermissionsForServiceVariables,
-} from "apollo/types/StreamPermissionsForService";
+  TablePermissionsForService,
+  TablePermissionsForServiceVariables,
+} from "apollo/types/TablePermissionsForService";
 import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE } from "apollo/queries/service";
 import {
-  UpdateServiceStreamPermissions,
-  UpdateServiceStreamPermissionsVariables,
-} from "apollo/types/UpdateServiceStreamPermissions";
+  UpdateServiceTablePermissions,
+  UpdateServiceTablePermissionsVariables,
+} from "apollo/types/UpdateServiceTablePermissions";
 import { UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
 import AddPermission from "./AddPermission";
 
@@ -35,25 +35,25 @@ export interface Props {
 const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
   const [showAddPermissionDialog, setShowAddPermissionDialog] = useState(false);
   const [showRevokePermissionDialog, setShowRevokePermissionDialog] = useState<string | undefined>(undefined);
-  const { loading, error, data } = useQuery<StreamPermissionsForService, StreamPermissionsForServiceVariables>(
+  const { loading, error, data } = useQuery<TablePermissionsForService, TablePermissionsForServiceVariables>(
     QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
     {
       variables: { serviceID },
     }
   );
 
-  const [updateServiceStreamPermissions, { loading: mutLoading }] = useMutation<
-    UpdateServiceStreamPermissions,
-    UpdateServiceStreamPermissionsVariables
+  const [updateServiceTablePermissions, { loading: mutLoading }] = useMutation<
+    UpdateServiceTablePermissions,
+    UpdateServiceTablePermissionsVariables
   >(UPDATE_SERVICE_STREAM_PERMISSIONS);
 
   let cta: CallToAction | undefined;
-  if (!data?.streamPermissionsForService.length) {
+  if (!data?.tablePermissionsForService.length) {
     cta = {
       message: `This service currently has no permissions for any resources`,
     };
     if (editable) {
-      cta.buttons = [{ label: "Add stream permission", onClick: () => setShowAddPermissionDialog(true) }];
+      cta.buttons = [{ label: "Add table permission", onClick: () => setShowAddPermissionDialog(true) }];
     }
   }
 
@@ -87,22 +87,22 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
           autoFocus
           onClick={() => {
             if (showRevokePermissionDialog) {
-              const streamID = showRevokePermissionDialog;
-              updateServiceStreamPermissions({
-                variables: { serviceID, streamID, read: false, write: false },
+              const tableID = showRevokePermissionDialog;
+              updateServiceTablePermissions({
+                variables: { serviceID, tableID, read: false, write: false },
                 update: (cache, { data }) => {
-                  if (data && data.updateServiceStreamPermissions) {
+                  if (data && data.updateServiceTablePermissions) {
                     const queryData = cache.readQuery({
                       query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
                       variables: { serviceID },
                     }) as any;
-                    const filtered = queryData.streamPermissionsForService.filter(
-                      (perms: any) => perms.streamID !== streamID
+                    const filtered = queryData.tablePermissionsForService.filter(
+                      (perms: any) => perms.tableID !== tableID
                     );
                     cache.writeQuery({
                       query: QUERY_STREAM_PERMISSIONS_FOR_SERVICE,
                       variables: { serviceID },
-                      data: { streamPermissionsForService: filtered },
+                      data: { tablePermissionsForService: filtered },
                     });
                   }
                 },
@@ -123,8 +123,8 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
         Permissions
       </Typography>
       <Typography variant="body2">
-        Services should have minimally viable permissions. This service will only be able to access the resources in
-        this table.
+        Services should have minimally viable permissions. The service will only be able to access the resources listed
+        below.
       </Typography>
       <ContentContainer
         paper
@@ -133,52 +133,50 @@ const ListPermissions: FC<Props> = ({ serviceID, editable }) => {
         error={error && JSON.stringify(error)}
         callToAction={cta}
       >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Resource</TableCell>
-              <TableCell>Path</TableCell>
-              <TableCell align="center">Read</TableCell>
-              <TableCell align="center">Write</TableCell>
-              {editable && <TableCell>Delete</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <UITable>
+          <UITableHead>
+            <UITableRow>
+              <UITableCell>Resource</UITableCell>
+              <UITableCell>Path</UITableCell>
+              <UITableCell align="center">Read</UITableCell>
+              <UITableCell align="center">Write</UITableCell>
+              {editable && <UITableCell>Delete</UITableCell>}
+            </UITableRow>
+          </UITableHead>
+          <UITableBody>
             {/* TODO: add an alphabetical sort of the path, using .sort() before .map() */}
-            {data?.streamPermissionsForService.map((perms) => (
-              <React.Fragment key={perms.streamID}>
-                {perms.stream && (
-                  <TableRow>
-                    <TableCell>Stream</TableCell>
-                    <TableLinkCell
-                      href={`/stream?organization_name=${toURLName(
-                        perms.stream.project.organization.name
-                      )}&project_name=${toURLName(perms.stream.project.name)}&stream_name=${toURLName(
-                        perms.stream.name
-                      )}`}
-                      as={`/${toURLName(perms.stream.project.organization.name)}/${toURLName(
-                        perms.stream.project.name
-                      )}/stream:${toURLName(perms.stream.name)}`}
+            {data?.tablePermissionsForService.map((perms) => (
+              <React.Fragment key={perms.tableID}>
+                {perms.table && (
+                  <UITableRow>
+                    <UITableCell>Table</UITableCell>
+                    <UITableLinkCell
+                      href={`/table?organization_name=${toURLName(
+                        perms.table.project.organization.name
+                      )}&project_name=${toURLName(perms.table.project.name)}&table_name=${toURLName(perms.table.name)}`}
+                      as={`/${toURLName(perms.table.project.organization.name)}/${toURLName(
+                        perms.table.project.name
+                      )}/table:${toURLName(perms.table.name)}`}
                     >
-                      {`/${toURLName(perms.stream.project.organization.name)}/${toURLName(
-                        perms.stream.project.name
-                      )}/stream:${toURLName(perms.stream.name)}`}
-                    </TableLinkCell>
-                    <TableCell align="center">{perms.read && "✓"}</TableCell>
-                    <TableCell align="center">{perms.write && "✓"}</TableCell>
+                      {`/${toURLName(perms.table.project.organization.name)}/${toURLName(
+                        perms.table.project.name
+                      )}/table:${toURLName(perms.table.name)}`}
+                    </UITableLinkCell>
+                    <UITableCell align="center">{perms.read && "✓"}</UITableCell>
+                    <UITableCell align="center">{perms.write && "✓"}</UITableCell>
                     {editable && (
-                      <TableCell padding="checkbox" align="right">
-                        <IconButton disabled={mutLoading} onClick={() => setShowRevokePermissionDialog(perms.streamID)}>
+                      <UITableCell padding="checkbox" align="right">
+                        <IconButton disabled={mutLoading} onClick={() => setShowRevokePermissionDialog(perms.tableID)}>
                           <DeleteIcon />
                         </IconButton>
-                      </TableCell>
+                      </UITableCell>
                     )}
-                  </TableRow>
+                  </UITableRow>
                 )}
               </React.Fragment>
             ))}
-          </TableBody>
-        </Table>
+          </UITableBody>
+        </UITable>
         {addPermissionDialog}
         {revokePermissionDialog}
       </ContentContainer>

@@ -6,7 +6,7 @@ import { ProjectByOrganizationAndName_projectByOrganizationAndName } from "apoll
 import { ProjectMembers, ProjectMembersVariables } from "apollo/types/ProjectMembers";
 import Avatar from "components/Avatar";
 import ContentContainer from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableLinkRow, UITableRow } from "components/UITables";
 import { toURLName } from "lib/names";
 import AddProjectMember from "./AddProjectMember";
 import { Button, Dialog, DialogContent, Grid } from "@material-ui/core";
@@ -40,36 +40,36 @@ const ViewMembers: FC<ViewMembersProps> = ({ project }) => {
           )
         }
       >
-        <Table textSize="medium">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox"></TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell align="center">View</TableCell>
-              <TableCell align="center">Create</TableCell>
-              <TableCell align="center">Admin</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <UITable textSize="medium">
+          <UITableHead>
+            <UITableRow>
+              <UITableCell padding="checkbox"></UITableCell>
+              <UITableCell>Username</UITableCell>
+              <UITableCell>Name</UITableCell>
+              <UITableCell align="center">View</UITableCell>
+              <UITableCell align="center">Create</UITableCell>
+              <UITableCell align="center">Admin</UITableCell>
+            </UITableRow>
+          </UITableHead>
+          <UITableBody>
             {data?.projectMembers.map((member) => (
-              <TableLinkRow
+              <UITableLinkRow
                 key={member.userID}
                 href={`/organization?organization_name=${toURLName(member.name)}`}
                 as={`/${toURLName(member.name)}`}
               >
-                <TableCell>
+                <UITableCell>
                   {member.photoURL && <Avatar size="list" label={member.displayName} src={member.photoURL} />}
-                </TableCell>
-                <TableCell>{toURLName(member.name)}</TableCell>
-                <TableCell>{member.displayName}</TableCell>
-                <TableCell align="center">{member.view && "✓"}</TableCell>
-                <TableCell align="center">{member.create && "✓"}</TableCell>
-                <TableCell align="center">{member.admin && "✓"}</TableCell>
-              </TableLinkRow>
+                </UITableCell>
+                <UITableCell>{toURLName(member.name)}</UITableCell>
+                <UITableCell>{member.displayName}</UITableCell>
+                <UITableCell align="center">{member.view && "✓"}</UITableCell>
+                <UITableCell align="center">{member.create && "✓"}</UITableCell>
+                <UITableCell align="center">{member.admin && "✓"}</UITableCell>
+              </UITableLinkRow>
             ))}
-          </TableBody>
-        </Table>
+          </UITableBody>
+        </UITable>
       </ContentContainer>
       <Dialog open={showAddMember} onBackdropClick={() => setShowAddMember(false)}>
         <DialogContent>

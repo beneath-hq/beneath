@@ -167,10 +167,14 @@ app.prepare().then(() => {
   addDynamicRoute("/:organization_name/:project_name/-/:tab", "/project");
   addDynamicRoute("/:organization_name/:project_name/service::service_name", "/service");
   addDynamicRoute("/:organization_name/:project_name/service::service_name/-/:tab", "/service");
-  addDynamicRoute("/:organization_name/:project_name/stream::stream_name", "/stream");
-  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/-/:tab", "/stream");
-  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/:version", "/stream");
-  addDynamicRoute("/:organization_name/:project_name/stream::stream_name/:version/-/:tab", "/stream");
+  addDynamicRoute("/:organization_name/:project_name/table::table_name", "/table");
+  addDynamicRoute("/:organization_name/:project_name/table::table_name/-/:tab", "/table");
+  addDynamicRoute("/:organization_name/:project_name/table::table_name/:version", "/table");
+  addDynamicRoute("/:organization_name/:project_name/table::table_name/:version/-/:tab", "/table");
+  addDynamicRoute("/:organization_name/:project_name/stream::table_name", "/table");
+  addDynamicRoute("/:organization_name/:project_name/stream::table_name/-/:tab", "/table");
+  addDynamicRoute("/:organization_name/:project_name/stream::table_name/:version", "/table");
+  addDynamicRoute("/:organization_name/:project_name/stream::table_name/:version/-/:tab", "/table");
   addStaticRoute("*"); // catchall
 
   // Run server

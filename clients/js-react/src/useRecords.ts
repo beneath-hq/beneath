@@ -1,4 +1,4 @@
-import { Client, StreamQualifier } from "beneath";
+import { Client, TableQualifier } from "beneath";
 import { sortedUniqBy } from "lodash";
 import { useEffect, useState } from "react";
 
@@ -15,8 +15,8 @@ const DEFAULT_SUBSCRIBE_POLL_FREQUENCY = 250;
 export interface UseRecordsOptions {
   /** Secret to use for authentication */
   secret?: string;
-  /** Identifier for the stream or instance to query */
-  stream: StreamQualifier;
+  /** Identifier for the table or instance to query */
+  table: TableQualifier;
   /** Query to run. Defaults to an unfiltered index query. */
   query?: { type: "index", filter?: string } | { type: "log", peek?: boolean };
   /** Number of records to fetch per request (limit). Defaults to 25. */
@@ -74,7 +74,7 @@ export type Record<TRecord = any> = TRecord & {
 };
 
 /**
- * React hook that you can use to query streams, including paging through data
+ * React hook that you can use to query tables, including paging through data
  * and getting real-time updates over websockets.
  * @param opts  Options, including required parameters. See {@linkcode UseRecordsOptions} for details.
  */
@@ -130,15 +130,15 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
 
       // Section: INITIAL LOAD
 
-      // get stream object
-      const stream = client.findStream(opts.stream);
+      // get table object
+      const table = client.findTable(opts.table);
 
-      // query stream
+      // query table
       const query =
         queryType === "index"
-          ? await stream.queryIndex({ filter: queryFilter, pageSize })
+          ? await table.queryIndex({ filter: queryFilter, pageSize })
           : queryType === "log"
-            ? await stream.queryLog({ pageSize, peek: queryPeek })
+            ? await table.queryLog({ pageSize, peek: queryPeek })
             : undefined;
       if (!query) {
         throw Error(`invalid view option <${queryType}>`);
@@ -447,7 +447,7 @@ export function useRecords<TRecord = any>(opts: UseRecordsOptions): UseRecordsRe
     };
   }, [
     opts.secret,
-    (typeof opts.stream === "string") ? opts.stream : ("instanceID" in opts.stream) ? opts.stream.instanceID : `${opts.stream.organization}/${opts.stream.project}/${opts.stream.stream}`,
+    (typeof opts.table === "string") ? opts.table : ("instanceID" in opts.table) ? opts.table.instanceID : `${opts.table.organization}/${opts.table.project}/${opts.table.table}`,
     opts.query?.type,
     opts.query?.type === "log" ? opts.query.peek : opts.query?.type === "index" ? opts.query.filter : undefined,
     opts.pageSize,

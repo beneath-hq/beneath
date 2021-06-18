@@ -1,8 +1,8 @@
 import { Connection, PingData, Response } from "./Connection";
 import { Job } from "./Job";
-import { Stream } from "./Stream";
+import { Table } from "./Table";
 import { DEFAULT_QUERY_WAREHOUSE_TIMEOUT_MS, DEFAULT_QUERY_WAREHOUSE_MAX_BYTES_SCANNED, JS_CLIENT_ID } from "./config";
-import { StreamQualifier } from "./types";
+import { TableQualifier } from "./types";
 import { PACKAGE_VERSION } from "./version";
 
 export interface ClientOptions {
@@ -28,13 +28,13 @@ export interface QueryWarehouseResult<TRecord = any> {
 /**
  * `Client` is the root class for interfacing with Beneath from the
  * browser. It is a wrapper for the Beneath REST APIs. You can use it to read
- * from and write data to streams, and to run warehouse queries.
+ * from and write data to tables, and to run warehouse queries.
  *
- * To instantiate a new client and find a stream:
+ * To instantiate a new client and find a table:
  *
  * ```js
  * const client = Client({ secret: "YOUR_SECRET" });
- * const stream = client.findStream("USERNAME/PROJECT/STREAM");
+ * const table = client.findTable("USERNAME/PROJECT/STREAM");
  * ```
  *
  * If your code runs in the browser (i.e. it's part of your frontend), you must
@@ -57,13 +57,13 @@ export class Client {
   }
 
   /**
-   * @param streamQualifier  Identifies the stream to find
-   * @typeParam TRecord  Optional type for the records in the stream. No error
-   * is thrown if it doesn't correctly correspond to the stream's schema; it is
+   * @param tableQualifier  Identifies the table to find
+   * @typeParam TRecord  Optional type for the records in the table. No error
+   * is thrown if it doesn't correctly correspond to the table's schema; it is
    * for type hinting purposes only.
    */
-  public findStream<TRecord = any>(streamQualifier: StreamQualifier): Stream<TRecord> {
-    return new Stream<TRecord>(this.connection, streamQualifier);
+  public findTable<TRecord = any>(tableQualifier: TableQualifier): Table<TRecord> {
+    return new Table<TRecord>(this.connection, tableQualifier);
   }
 
   /**

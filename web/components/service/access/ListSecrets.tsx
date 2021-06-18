@@ -19,7 +19,7 @@ import { QUERY_SERVICE_SECRETS, REVOKE_SERVICE_SECRET } from "apollo/queries/sec
 import { RevokeServiceSecret, RevokeServiceSecretVariables } from "apollo/types/RevokeServiceSecret";
 import { SecretsForService, SecretsForServiceVariables } from "apollo/types/SecretsForService";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableRow } from "components/UITables";
 import IssueSecret from "./IssueSecret";
 import { Alert, AlertTitle } from "@material-ui/lab";
 
@@ -43,23 +43,22 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
     variables: { serviceID },
   });
 
-  const [revokeSecret, { loading: mutLoading }] = useMutation<RevokeServiceSecret, RevokeServiceSecretVariables>(
-    REVOKE_SERVICE_SECRET
-  );
+  const [revokeSecret, { loading: mutLoading }] =
+    useMutation<RevokeServiceSecret, RevokeServiceSecretVariables>(REVOKE_SERVICE_SECRET);
 
   let cta: CallToAction | undefined;
   if (!data?.secretsForService.length) {
     cta = {
       message: `This service currently has no outstanding secrets`,
-      buttons: [{ label: "Issue secret", onClick: () => setIssueSecretDialog(true)}] 
+      buttons: [{ label: "Issue secret", onClick: () => setIssueSecretDialog(true) }],
     };
   }
 
   const issueDialog = (
     <Dialog open={issueSecretDialog} onBackdropClick={() => setIssueSecretDialog(false)}>
       <DialogContent>
-        <IssueSecret 
-          serviceID={serviceID} 
+        <IssueSecret
+          serviceID={serviceID}
           onCompleted={(newSecretString) => {
             setNewSecretString(newSecretString);
             setIssueSecretDialog(false);
@@ -74,15 +73,12 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
       <DialogTitle>Are you sure you want to delete this secret?</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          A service in production that depends on this secret will no longer work. You'll have to issue a new secret and re-authenticate.
+          A service in production that depends on this secret will no longer work. You'll have to issue a new secret and
+          re-authenticate.
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="primary"
-          autoFocus
-          onClick={() => setDeleteSecretID(undefined)}
-        >
+        <Button color="primary" autoFocus onClick={() => setDeleteSecretID(undefined)}>
           No, go back
         </Button>
         <Button
@@ -122,41 +118,49 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
 
   return (
     <>
-      <Typography variant="h2" gutterBottom>Service secrets</Typography>
-      <Typography variant="body2">Service secrets should be used when deploying to production or embedding secrets in public code. 
-      The associated usage gets counted against both the service's individual quotas and the organization's overall quotas.</Typography>
+      <Typography variant="h2" gutterBottom>
+        Service secrets
+      </Typography>
+      <Typography variant="body2">
+        Service secrets should be used when deploying to production or embedding secrets in public code. The associated
+        usage gets counted against both the service's individual quotas and the organization's overall quotas.
+      </Typography>
       {newSecretString !== "" && (
         <Alert severity="success" className={classes.newSecretCard}>
           <AlertTitle>Here is your new secret!</AlertTitle>
           <Typography gutterBottom variant="body2">
             {newSecretString}
           </Typography>
-          <Typography>
-            The secret will only be shown this once – remember to keep it safe!
-          </Typography>
+          <Typography>The secret will only be shown this once – remember to keep it safe!</Typography>
         </Alert>
       )}
-      <ContentContainer paper margin="normal" loading={loading} error={error && JSON.stringify(error)} callToAction={cta}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Description</TableCell>
-              <TableCell>Prefix</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell>Delete</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <ContentContainer
+        paper
+        margin="normal"
+        loading={loading}
+        error={error && JSON.stringify(error)}
+        callToAction={cta}
+      >
+        <UITable>
+          <UITableHead>
+            <UITableRow>
+              <UITableCell>Description</UITableCell>
+              <UITableCell>Prefix</UITableCell>
+              <UITableCell>Created</UITableCell>
+              <UITableCell>Delete</UITableCell>
+            </UITableRow>
+          </UITableHead>
+          <UITableBody>
             {data?.secretsForService
               .filter((secret) => secret.description !== "Browser session")
               .map(({ createdOn, description, serviceSecretID, prefix }) => (
-                <TableRow key={serviceSecretID} hover>
-                  <TableCell>{description || ""}</TableCell>
-                  <TableCell>{prefix}</TableCell>
-                  <TableCell>
+                <UITableRow key={serviceSecretID} hover>
+                  <UITableCell>{description || ""}</UITableCell>
+                  <UITableCell>{prefix}</UITableCell>
+                  <UITableCell>
                     <Moment fromNow date={createdOn} />
-                  </TableCell>
-                  <TableCell padding="checkbox" align="right">
+                  </UITableCell>
+                  <UITableCell padding="checkbox" align="right">
                     <IconButton
                       aria-label="Delete"
                       disabled={mutLoading}
@@ -164,16 +168,18 @@ const ListSecrets: FC<ListSecretsProps> = ({ serviceID }) => {
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
+                  </UITableCell>
+                </UITableRow>
               ))}
-          </TableBody>
-        </Table>
+          </UITableBody>
+        </UITable>
         {issueDialog}
         {revokeDialog}
       </ContentContainer>
       {!cta && (
-        <Button variant="contained" onClick={() => setIssueSecretDialog(true)}>Create secret</Button>
+        <Button variant="contained" onClick={() => setIssueSecretDialog(true)}>
+          Create secret
+        </Button>
       )}
     </>
   );

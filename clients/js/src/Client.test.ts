@@ -9,15 +9,15 @@ import { Job } from "./Job";
 const PROJECT_NAME = "js_test";
 const STREAM_NAME = "foo";
 const STREAM_SCHEMA = `
-  type Foo @stream @key(fields: "a") {
-    a: Int!
+  type Foo @schema {
+    a: Int! @key
     b: String
   }
 `;
 const NUMROWS = 50;
 
 let client: Client;
-let streamQualifier: { organization: string, project: string, stream: string };
+let tableQualifier: { organization: string, project: string, table: string };
 
 beforeAll(() => {
   const secret = loadLocalSecret();
@@ -62,68 +62,72 @@ test("runs with authenticated CLI and BENEATH_ENV=dev", async () => {
   expect(pong.data?.versionStatus).toBe("stable");
 });
 
-test("creates test stream", async () => {
+test("creates test table", async () => {
   const meRes = await queryControl("query Me { me { organizationID name } }");
   const me = meRes.me;
   expect(me.name).toBeTruthy();
 
-  const projectRes = await queryControl(`
-    mutation CreateProject(input: CreateProjectInput!) {
-			createProject(input: $input) {
-				projectID
-				name
-			}
-		}
-  `, { input: { organizationID: me.organizationID, project: PROJECT_NAME } });
-  const project = projectRes.createProject;
-  expect(project.name).toBe(PROJECT_NAME);
+  try {
+    const projectRes = await queryControl(`
+      mutation CreateProject($input: CreateProjectInput!) {
+        createProject(input: $input) {
+          projectID
+          name
+        }
+      }
+    `, { input: { organizationID: me.organizationID, projectName: PROJECT_NAME } });
+    const project = projectRes.createProject;
+    expect(project.name).toBe(PROJECT_NAME);
+  } catch (error) {
+    expect(error.message).toMatch(/duplicate key value violates unique constraint/);
+  }
 
-  const streamRes = await queryControl(`
-    mutation CreateStream($organization: String!, $project: String!, $stream: String!, $schema: String!) {
-			createStream(
+  const tableRes = await queryControl(`
+    mutation CreateTable($organization: String!, $project: String!, $table: String!, $schema: String!) {
+			createTable(
         input: {
           organizationName: $organization,
           projectName: $project,
-          streamName: $stream,
+          tableName: $table,
           schemaKind: GraphQL,
           schema: $schema,
           updateIfExists: true,
         }
 			) {
-				streamID
+				tableID
 				name
 			}
 		}
-  `, { organization: me.name, project: project.name, stream: STREAM_NAME, schema: STREAM_SCHEMA });
-  const stream = streamRes.createStream;
-  expect(stream.name).toBe(STREAM_NAME);
+  `, { organization: me.name, project: PROJECT_NAME, table: STREAM_NAME, schema: STREAM_SCHEMA });
+  const table = tableRes.createTable;
+  expect(table.name).toBe(STREAM_NAME);
 
   const instanceRes = await queryControl(`
-    mutation CreateStreamInstance($streamID: UUID!) {
-			createStreamInstance(input: { streamID: $streamID, version: 0, makePrimary: true, updateIfExists: true }) {
-        streamInstanceID
-        streamID
+    mutation CreateTableInstance($tableID: UUID!) {
+			createTableInstance(input: { tableID: $tableID, version: 0, makePrimary: true, updateIfExists: true }) {
+        tableInstanceID
+        tableID
 			}
 		}
-  `, { streamID: stream.streamID });
-  const instance = instanceRes.createStreamInstance;
-  expect(instance.streamID).toBe(stream.streamID);
+  `, { tableID: table.tableID });
+  const instance = instanceRes.createTableInstance;
+  expect(instance.tableID).toBe(table.tableID);
 
-  streamQualifier = {
+  tableQualifier = {
     organization: me.name,
-    project: project.name,
-    stream: stream.name,
+    project: PROJECT_NAME,
+    table: table.name,
   };
 });
 
-test("writes to test stream", async () => {
+test("writes to test table", async () => {
   const records = [];
   for (let i = 0; i < NUMROWS; i++) {
     records.push(makeFoo(i));
   }
 
-  const stream = client.findStream(streamQualifier);
-  const { writeID, error } = await stream.write(records);
+  const table = client.findTable(tableQualifier);
+  const { writeID, error } = await table.write(records);
   expect(error).toBeUndefined();
   expect(writeID).toBeTruthy();
 });
@@ -133,7 +137,7 @@ test("runs warehouse job and reads results", async () => {
 
   const query = `
     select a, count(*) as count
-    from \`${streamQualifier.organization}/${streamQualifier.project}/${streamQualifier.stream}\`
+    from \`${tableQualifier.organization}/${tableQualifier.project}/${tableQualifier.table}\`
     group by a
     order by a
   `;

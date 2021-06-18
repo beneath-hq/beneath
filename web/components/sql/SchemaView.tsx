@@ -1,8 +1,8 @@
 import { Chip, makeStyles, Theme, Grid, Tooltip, Typography } from "@material-ui/core";
 import React, { FC, useMemo } from "react";
 
-import { Schema } from "../stream/schema";
-import { StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName } from "apollo/types/StreamByOrganizationProjectAndName";
+import { Schema } from "../table/schema";
+import { TableByOrganizationProjectAndName_tableByOrganizationProjectAndName } from "apollo/types/TableByOrganizationProjectAndName";
 
 const useStyles = makeStyles((theme: Theme) => ({
   icon: {
@@ -15,12 +15,12 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export interface SchemaViewProps {
-  stream: StreamByOrganizationProjectAndName_streamByOrganizationProjectAndName;
+  table: TableByOrganizationProjectAndName_tableByOrganizationProjectAndName;
 }
 
-const SchemaView: FC<SchemaViewProps> = ({ stream }) => {
+const SchemaView: FC<SchemaViewProps> = ({ table }) => {
   const classes = useStyles();
-  const schema = useMemo(() => new Schema(stream.avroSchema, stream.streamIndexes), [stream.avroSchema]);
+  const schema = useMemo(() => new Schema(table.avroSchema, table.tableIndexes), [table.avroSchema]);
   const columns = schema.getColumns(false);
   return (
     <Grid container direction="column" spacing={1}>

@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.primary,
     fontWeight: theme.typography.fontWeightBold,
   },
-  streamChip: {
+  tableChip: {
     backgroundColor: theme.palette.primary.dark,
   },
   serviceChip: {
@@ -84,7 +84,7 @@ const makeCrumbs = (router: NextRouter, me: Me_me | null) => {
         project={router.query.project_name as string}
       />,
     ];
-  } else if (router.route === "/stream") {
+  } else if (router.route === "/table") {
     return [
       <OrganizationCrumb key={1} organization={router.query.organization_name as string} />,
       <ProjectCrumb
@@ -92,12 +92,12 @@ const makeCrumbs = (router: NextRouter, me: Me_me | null) => {
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
       />,
-      <StreamCrumb
+      <TableCrumb
         key={3}
         isCurrent
         organization={router.query.organization_name as string}
         project={router.query.project_name as string}
-        stream={router.query.stream_name as string}
+        table={router.query.table_name as string}
       />,
     ];
   } else if (router.route === "/organization") {
@@ -144,8 +144,8 @@ const makeCrumbs = (router: NextRouter, me: Me_me | null) => {
     ];
   } else if (router.route === "/-/create/project") {
     return [<Crumb key={0} href="/-/create/project" label="Create project" isCurrent={true} />];
-  } else if (router.route === "/-/create/stream") {
-    return [<Crumb key={0} href="/-/create/stream" label="Create stream" isCurrent={true} />];
+  } else if (router.route === "/-/create/table") {
+    return [<Crumb key={0} href="/-/create/table" label="Create table" isCurrent={true} />];
   } else if (router.route === "/-/create/service") {
     return [<Crumb key={0} href="/-/create/service" label="Create service" isCurrent={true} />];
   } else if (router.route === "/-/sql") {
@@ -200,28 +200,28 @@ const ProjectCrumb: FC<ProjectCrumbProps> = ({ organization, project, isCurrent,
   return <Crumb isCurrent={isCurrent} href={href} as={as} label={tabLabel || project} />;
 };
 
-interface StreamCrumbProps {
+interface TableCrumbProps {
   organization: string;
   project: string;
-  stream: string;
+  table: string;
   isCurrent?: boolean;
 }
 
-const StreamCrumb: FC<StreamCrumbProps> = ({ organization, project, stream, isCurrent }) => {
+const TableCrumb: FC<TableCrumbProps> = ({ organization, project, table, isCurrent }) => {
   const classes = useStyles();
   return (
     <Grid container alignItems="center" spacing={1} wrap="nowrap">
       <Hidden smDown>
         <Grid item>
           <Crumb
-            href={`/stream?organization_name=${organization}&project_name=${project}&stream_name=${stream}`}
-            as={`/${organization}/${project}/stream:${stream}`}
-            label={stream}
+            href={`/table?organization_name=${organization}&project_name=${project}&table_name=${table}`}
+            as={`/${organization}/${project}/table:${table}`}
+            label={table}
             isCurrent={isCurrent}
           />
         </Grid>
         <Grid item>
-          <Chip label="Stream" size="small" className={classes.streamChip} />
+          <Chip label="Table" size="small" className={classes.tableChip} />
         </Grid>
       </Hidden>
       <Hidden mdUp>

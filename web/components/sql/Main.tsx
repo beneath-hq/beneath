@@ -7,16 +7,16 @@ import numbro from "numbro";
 import React, { useState, useMemo, useEffect } from "react";
 
 import CodeEditor from "components/CodeEditor";
-import RecordsTable from "components/stream/RecordsTable";
-import { Schema } from "components/stream/schema";
+import RecordsView from "components/table/RecordsView";
+import { Schema } from "components/table/schema";
 import { useToken } from "hooks/useToken";
-import { QUERY_STREAM } from "apollo/queries/stream";
+import { QUERY_STREAM } from "apollo/queries/table";
 import {
-  StreamByOrganizationProjectAndName,
-  StreamByOrganizationProjectAndNameVariables,
-} from "apollo/types/StreamByOrganizationProjectAndName";
+  TableByOrganizationProjectAndName,
+  TableByOrganizationProjectAndNameVariables,
+} from "apollo/types/TableByOrganizationProjectAndName";
 import { toBackendName } from "lib/names";
-import StreamPreview from "./StreamPreview";
+import TablePreview from "./TablePreview";
 import { NakedLink } from "components/Link";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -30,12 +30,12 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const Main = () => {
-  // Prepopulate query text if &stream=... url param is set
+  // Prepopulate query text if &table=... url param is set
   const router = useRouter();
   const [queryText, setQueryText] = useState(() => {
-    const prepopulateStream = router.query.stream;
-    if (prepopulateStream) {
-      return `select count(*) from \`${prepopulateStream}\``;
+    const prepopulateTable = router.query.table;
+    if (prepopulateTable) {
+      return `select count(*) from \`${prepopulateTable}\``;
     }
     return "";
   });
@@ -52,33 +52,33 @@ const Main = () => {
     return schema;
   }, [job?.resultAvroSchema]);
 
-  // Extract stream paths from query
-  const streamPaths = useMemo(() => {
+  // Extract table paths from query
+  const tablePaths = useMemo(() => {
     const matches = queryText.match(/`[_\-a-z0-9]+\/[_\-a-z0-9]+\/[_\-a-z0-9]+`/g);
     const paths = _.uniq(matches);
     return paths;
   }, [queryText]);
 
-  // Lookup every stream path in query
+  // Lookup every table path in query
   const client = useApolloClient();
-  const [streams, setStreams] = useState<ApolloQueryResult<StreamByOrganizationProjectAndName>[]>([]);
+  const [tables, setTables] = useState<ApolloQueryResult<TableByOrganizationProjectAndName>[]>([]);
   useEffect(() => {
-    const results: ApolloQueryResult<StreamByOrganizationProjectAndName>[] = [];
-    const promises = streamPaths.map((path, idx) => {
+    const results: ApolloQueryResult<TableByOrganizationProjectAndName>[] = [];
+    const promises = tablePaths.map((path, idx) => {
       const parts = path.substring(1, path.length - 1).split("/");
       return client
-        .query<StreamByOrganizationProjectAndName, StreamByOrganizationProjectAndNameVariables>({
+        .query<TableByOrganizationProjectAndName, TableByOrganizationProjectAndNameVariables>({
           query: QUERY_STREAM,
           variables: {
             organizationName: toBackendName(parts[0]),
             projectName: toBackendName(parts[1]),
-            streamName: toBackendName(parts[2]),
+            tableName: toBackendName(parts[2]),
           },
         })
         .then((res) => (results[idx] = res));
     });
-    Promise.all(promises).then(() => setStreams(results));
-  }, [JSON.stringify(streamPaths)]);
+    Promise.all(promises).then(() => setTables(results));
+  }, [JSON.stringify(tablePaths)]);
 
   // get classes
   const classes = useStyles();
@@ -163,9 +163,9 @@ const Main = () => {
               </Grid>
             </Grid>
           </Grid>
-          {/* Table */}
+          {/* Records */}
           <Grid item xs={12}>
-            <RecordsTable
+            <RecordsView
               paper
               schema={schema}
               records={records}
@@ -187,9 +187,9 @@ const Main = () => {
       {/* Right */}
       <Grid item xs={12} md={4} lg={3}>
         <Grid container spacing={2} direction="column">
-          {streams.map((result, idx) => (
+          {tables.map((result, idx) => (
             <Grid key={idx} item>
-              <StreamPreview result={result} />
+              <TablePreview result={result} />
             </Grid>
           ))}
         </Grid>

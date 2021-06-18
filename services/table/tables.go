@@ -43,7 +43,7 @@ func (s *Service) FindTableByOrganizationProjectAndName(ctx context.Context, org
 		).
 		Where("lower(project__organization.name) = lower(?)", organizationName).
 		Where("lower(project.name) = lower(?)", projectName).
-		Where("lower(table.name) = lower(?)", tableName).
+		Where("lower(\"table\".name) = lower(?)", tableName).
 		Select()
 	if !db.AssertFoundOne(err) {
 		return nil
@@ -56,9 +56,9 @@ func (s *Service) FindTablesForUser(ctx context.Context, userID uuid.UUID) []*mo
 	var tables []*models.Table
 	err := s.DB.GetDB(ctx).ModelContext(ctx, &tables).
 		Column("table.*", "Project.project_id", "Project.name", "Project.Organization.organization_id", "Project.Organization.name").
-		Join("JOIN permissions_users_projects AS pup ON pup.project_id = table.project_id").
+		Join("JOIN permissions_users_projects AS pup ON pup.project_id = \"table\".project_id").
 		Where("pup.user_id = ?", userID).
-		Order("project__organization.name", "project.name", "table.name").
+		Order("project__organization.name", "project.name", "\"table\".name").
 		Limit(200).
 		Select()
 	if err != nil {

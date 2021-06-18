@@ -36,7 +36,7 @@ export default class MyDocument extends Document {
           {/* Description tag */}
           <meta
             name="description"
-            content="Beneath is a serverless real-time data platform. Create serverless streams you can replay and subscribe to, query with SQL, index and filter, serve as an API, monitor, version, and share safely."
+            content="Beneath is a serverless real-time data platform. Create serverless, real-time tables you can replay and stream, filter, analyze with SQL, serve as an API, monitor, version, and share safely."
           />
           {/* Blog RSS feed */}
           <link

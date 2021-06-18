@@ -161,7 +161,7 @@ func (c *instanceCache) getterFunc(ctx context.Context, instanceID uuid.UUID) fu
 					o.name as organization_name,
 					s.project_id,
 					p.name as project_name,
-					s.name as table_name,
+					s.name as tabl_name,
 					s.canonical_avro_schema
 				from table_instances si
 				join tables s on si.table_id = s.table_id

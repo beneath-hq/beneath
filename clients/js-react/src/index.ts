@@ -1,4 +1,4 @@
-export { Client, Job, Record, StreamQualifier } from "beneath";
+export { Client, Job, Record, TableQualifier } from "beneath";
 export * from "./shared";
 export * from "./useRecords";
 export * from "./useWarehouse";

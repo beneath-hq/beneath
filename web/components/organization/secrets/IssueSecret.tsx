@@ -6,7 +6,12 @@ import React, { FC } from "react";
 
 import { ISSUE_USER_SECRET, QUERY_USER_SECRETS } from "apollo/queries/secret";
 import { IssueUserSecret, IssueUserSecretVariables } from "apollo/types/IssueUserSecret";
-import { Form, handleSubmitMutation, RadioGroup as FormikRadioGroup, TextField as FormikTextField } from "components/formik";
+import {
+  Form,
+  handleSubmitMutation,
+  RadioGroup as FormikRadioGroup,
+  TextField as FormikTextField,
+} from "components/formik";
 import SubmitControl from "components/forms/SubmitControl";
 
 const useStyles = makeStyles((theme) => ({
@@ -22,11 +27,14 @@ export interface IssueSecretProps {
 const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
   const [newSecretString, setNewSecretString] = React.useState("");
 
-  const [issueUserSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(ISSUE_USER_SECRET, {
-    onCompleted: (data) => {
-      setNewSecretString(data.issueUserSecret.token);
-    },
-  });
+  const [issueUserSecret, { loading, error }] = useMutation<IssueUserSecret, IssueUserSecretVariables>(
+    ISSUE_USER_SECRET,
+    {
+      onCompleted: (data) => {
+        setNewSecretString(data.issueUserSecret.token);
+      },
+    }
+  );
 
   const initialValues = {
     description: "",
@@ -112,7 +120,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
             />
             {values.access === "full" && (
               <Typography variant="body2" color="textSecondary">
-                Full access secrets can read/write streams and edit resources. Use them for e.g. CLI authentication,
+                Full access secrets can read/write tables and edit resources. Use them for e.g. CLI authentication,
                 private scripts and Jupyter notebooks.
                 <br />
                 <strong>Keep secure and don't share with others.</strong>
@@ -120,12 +128,12 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
             )}
             {values.access === "readonly" && (
               <Typography variant="body2" color="textSecondary">
-                Private read secrets can read data from every public and private stream you have access to.
+                Private read secrets can read data from every public and private table you have access to.
               </Typography>
             )}
             {values.access === "readpublic" && (
               <Typography variant="body2" color="textSecondary">
-                Public read secrets can read data from every public stream you have access to, but not from streams in
+                Public read secrets can read data from every public table you have access to, but not from tables in
                 private projects.
               </Typography>
             )}
@@ -139,9 +147,7 @@ const IssueSecret: FC<IssueSecretProps> = ({ userID }) => {
           <Typography gutterBottom variant="body2">
             {newSecretString}
           </Typography>
-          <Typography>
-            The secret will only be shown this once – remember to keep it safe!
-          </Typography>
+          <Typography>The secret will only be shown this once – remember to keep it safe!</Typography>
         </Alert>
       )}
     </>

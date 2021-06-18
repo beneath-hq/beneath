@@ -1034,10 +1034,10 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-beneath@^1.1.11:
-  version "1.1.11"
-  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.1.11.tgz#f5daa77fe64db499901bc565d33a69ca83b37a38"
-  integrity sha512-wUdtyywKi5Ut7ULsbUMssd1980zndoWU+MIEf05MqhV+YlGYRQ8+2c4y8y7D6T6kJsiXKtT1VAYbtY5T7CjV6g==
+beneath@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/beneath/-/beneath-1.2.0.tgz#1cfd59ef3e3afb077da54087c0dc2a6a2d5d3691"
+  integrity sha512-sBhHI5+jPW1nMOa0JW80ZSwnEiBftQftEaD5B8L441wEXofekFgvB5xHZSUGatRTjfI2t5Aktu2jfc07QnQ5Pw==
   dependencies:
     "@types/node-fetch" "^2.5.7"
     graphql "^14.6.0"

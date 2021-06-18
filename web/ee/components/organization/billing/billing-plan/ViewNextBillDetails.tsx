@@ -1,4 +1,13 @@
-import { Grid, makeStyles, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import {
+  Grid,
+  makeStyles,
+  Table as MuiTable,
+  TableBody as MuiTableBody,
+  TableCell as MuiTableCell,
+  TableHead as MuiTableHead,
+  TableRow as MuiTableRow,
+  Typography,
+} from "@material-ui/core";
 import numbro from "numbro";
 import { FC } from "react";
 
@@ -15,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
   container: {
     overflowX: "auto",
   },
-  tableKeyColumn: {
+  keyColumn: {
     backgroundColor: theme.palette.background?.medium,
     fontWeight: 500,
   },
@@ -65,56 +74,56 @@ const ViewNextBillDetails: FC<Props> = ({ organization, billingInfo }) => {
 
       <Grid container className={classes.container}>
         <Grid item xs={12}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell align="right">Prepaid quota</TableCell>
-                <TableCell align="right">Allowed overage</TableCell>
-                <TableCell align="right">Price per overage GB</TableCell>
-                <TableCell align="right">Your usage</TableCell>
-                <TableCell align="right">Your overage cost</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell className={classes.tableKeyColumn}>Reads</TableCell>
-                <TableCell align="right">{numbro(organization.prepaidReadQuota).format(bytesFormat)}</TableCell>
-                <TableCell align="right">
+          <MuiTable>
+            <MuiTableHead>
+              <MuiTableRow>
+                <MuiTableCell></MuiTableCell>
+                <MuiTableCell align="right">Prepaid quota</MuiTableCell>
+                <MuiTableCell align="right">Allowed overage</MuiTableCell>
+                <MuiTableCell align="right">Price per overage GB</MuiTableCell>
+                <MuiTableCell align="right">Your usage</MuiTableCell>
+                <MuiTableCell align="right">Your overage cost</MuiTableCell>
+              </MuiTableRow>
+            </MuiTableHead>
+            <MuiTableBody>
+              <MuiTableRow>
+                <MuiTableCell className={classes.keyColumn}>Reads</MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.prepaidReadQuota).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">
                   {numbro(organization.readQuota - organization.prepaidReadQuota).format(bytesFormat)}
-                </TableCell>
-                <TableCell align="right">
+                </MuiTableCell>
+                <MuiTableCell align="right">
                   {currencyFormatter.format(billingInfo.billingPlan.readOveragePriceCents / 100)}
-                </TableCell>
-                <TableCell align="right">{numbro(organization.readUsage).format(bytesFormat)}</TableCell>
-                <TableCell align="right">{currencyFormatter.format(readOverageTotal / 100)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className={classes.tableKeyColumn}>Writes</TableCell>
-                <TableCell align="right">{numbro(organization.prepaidWriteQuota).format(bytesFormat)}</TableCell>
-                <TableCell align="right">
+                </MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.readUsage).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">{currencyFormatter.format(readOverageTotal / 100)}</MuiTableCell>
+              </MuiTableRow>
+              <MuiTableRow>
+                <MuiTableCell className={classes.keyColumn}>Writes</MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.prepaidWriteQuota).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">
                   {numbro(organization.writeQuota - organization.prepaidWriteQuota).format(bytesFormat)}
-                </TableCell>
-                <TableCell align="right">
+                </MuiTableCell>
+                <MuiTableCell align="right">
                   {currencyFormatter.format(billingInfo.billingPlan.writeOveragePriceCents / 100)}
-                </TableCell>
-                <TableCell align="right">{numbro(organization.writeUsage).format(bytesFormat)}</TableCell>
-                <TableCell align="right">{currencyFormatter.format(writeOverageTotal / 100)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className={classes.tableKeyColumn}>Scans</TableCell>
-                <TableCell align="right">{numbro(organization.prepaidScanQuota).format(bytesFormat)}</TableCell>
-                <TableCell align="right">
+                </MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.writeUsage).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">{currencyFormatter.format(writeOverageTotal / 100)}</MuiTableCell>
+              </MuiTableRow>
+              <MuiTableRow>
+                <MuiTableCell className={classes.keyColumn}>Scans</MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.prepaidScanQuota).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">
                   {numbro(organization.scanQuota - organization.prepaidScanQuota).format(bytesFormat)}
-                </TableCell>
-                <TableCell align="right">
+                </MuiTableCell>
+                <MuiTableCell align="right">
                   {currencyFormatter.format(billingInfo.billingPlan.scanOveragePriceCents / 100)}
-                </TableCell>
-                <TableCell align="right">{numbro(organization.scanUsage).format(bytesFormat)}</TableCell>
-                <TableCell align="right">{currencyFormatter.format(scanOverageTotal / 100)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+                </MuiTableCell>
+                <MuiTableCell align="right">{numbro(organization.scanUsage).format(bytesFormat)}</MuiTableCell>
+                <MuiTableCell align="right">{currencyFormatter.format(scanOverageTotal / 100)}</MuiTableCell>
+              </MuiTableRow>
+            </MuiTableBody>
+          </MuiTable>
         </Grid>
       </Grid>
     </>

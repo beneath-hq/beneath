@@ -55,8 +55,8 @@ export const GET_SERVICE_USAGE = gql`
 `;
 
 export const GET_STREAM_USAGE = gql`
-  query GetStreamUsage($input: GetEntityUsageInput!) {
-    getStreamUsage(input: $input) {
+  query GetTableUsage($input: GetEntityUsageInput!) {
+    getTableUsage(input: $input) {
       entityID
       label
       time

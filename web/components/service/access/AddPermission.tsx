@@ -6,18 +6,18 @@ import { Form, handleSubmitMutation, TextField as FormikTextField } from "compon
 import SubmitControl from "components/forms/SubmitControl";
 import FormikSelectField from "components/formik/SelectField";
 import useMe from "hooks/useMe";
-import { StreamsForUser, StreamsForUserVariables } from "apollo/types/StreamsForUser";
-import { QUERY_STREAMS_FOR_USER } from "apollo/queries/stream";
+import { TablesForUser, TablesForUserVariables } from "apollo/types/TablesForUser";
+import { QUERY_STREAMS_FOR_USER } from "apollo/queries/table";
 import {
-  UpdateServiceStreamPermissions,
-  UpdateServiceStreamPermissionsVariables,
-} from "apollo/types/UpdateServiceStreamPermissions";
+  UpdateServiceTablePermissions,
+  UpdateServiceTablePermissionsVariables,
+} from "apollo/types/UpdateServiceTablePermissions";
 import { QUERY_STREAM_PERMISSIONS_FOR_SERVICE, UPDATE_SERVICE_STREAM_PERMISSIONS } from "apollo/queries/service";
 import { toURLName } from "lib/names";
 import FormikRadioGroup from "components/formik/RadioGroup";
 
-interface Stream {
-  streamID: string;
+interface Table {
+  tableID: string;
   name: string;
   project: { name: string; organization: { name: string } };
 }
@@ -29,24 +29,24 @@ export interface Props {
 
 const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
   const me = useMe();
-  const { data, loading, error } = useQuery<StreamsForUser, StreamsForUserVariables>(QUERY_STREAMS_FOR_USER, {
+  const { data, loading, error } = useQuery<TablesForUser, TablesForUserVariables>(QUERY_STREAMS_FOR_USER, {
     variables: { userID: me?.personalUserID || "" },
     skip: !me,
   });
 
-  const [updateServiceStreamPermissions] = useMutation<
-    UpdateServiceStreamPermissions,
-    UpdateServiceStreamPermissionsVariables
+  const [updateServiceTablePermissions] = useMutation<
+    UpdateServiceTablePermissions,
+    UpdateServiceTablePermissionsVariables
   >(UPDATE_SERVICE_STREAM_PERMISSIONS, {
     onCompleted: (data) => {
-      if (data.updateServiceStreamPermissions) {
+      if (data.updateServiceTablePermissions) {
         onCompleted();
       }
     },
   });
 
   const initialValues = {
-    stream: null as Stream | null,
+    table: null as Table | null,
     read: "false",
     write: "false",
   };
@@ -59,10 +59,10 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
           handleSubmitMutation(
             values,
             actions,
-            updateServiceStreamPermissions({
+            updateServiceTablePermissions({
               variables: {
                 serviceID: serviceID,
-                streamID: values.stream?.streamID as string,
+                tableID: values.table?.tableID as string,
                 read: values.read === "true" ? true : false,
                 write: values.write === "true" ? true : false,
               },
@@ -74,23 +74,23 @@ const AddPermission: FC<Props> = ({ serviceID, onCompleted }) => {
         {({ isSubmitting, status }) => (
           <Form title="Add permission" variant="embedded">
             <Field
-              name="stream"
-              validate={(stream?: Stream) => {
-                if (!stream) {
-                  return "Select a stream";
+              name="table"
+              validate={(table?: Table) => {
+                if (!table) {
+                  return "Select a table";
                 }
               }}
               component={FormikSelectField}
-              label="Stream"
+              label="Table"
               required
               loading={loading}
-              options={data?.streamsForUser || []}
-              getOptionLabel={(option: Stream) =>
+              options={data?.tablesForUser || []}
+              getOptionLabel={(option: Table) =>
                 `${toURLName(option.project.organization.name)}/${toURLName(option.project.name)}/${toURLName(
                   option.name
                 )}`
               }
-              getOptionSelected={(option: Stream, value: Stream) => {
+              getOptionSelected={(option: Table, value: Table) => {
                 return option.name === value.name;
               }}
             />

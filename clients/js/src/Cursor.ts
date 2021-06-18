@@ -1,6 +1,6 @@
 import { Connection } from "./Connection";
 import { DEFAULT_READ_BATCH_SIZE, DEFAULT_SUBSCRIBE_POLL_AT_MOST_EVERY_MS } from "./config";
-import { Record, StreamQualifier } from "./types";
+import { Record, TableQualifier } from "./types";
 
 export type ReadOptions = { pageSize?: number };
 
@@ -17,15 +17,15 @@ export class Cursor<TRecord = any> {
   public nextCursor?: string;
   public changeCursor?: string;
   private connection: Connection;
-  private streamQualifier?: StreamQualifier;
+  private tableQualifier?: TableQualifier;
   private defaultPageSize?: number;
   private initialData?: Record<TRecord>[];
 
-  constructor(connection: Connection, nextCursor?: string, changeCursor?: string, data?: Record<TRecord>[], streamQualifier?: StreamQualifier, defaultPageSize?: number) {
+  constructor(connection: Connection, nextCursor?: string, changeCursor?: string, data?: Record<TRecord>[], tableQualifier?: TableQualifier, defaultPageSize?: number) {
     this.connection = connection;
     this.nextCursor = nextCursor;
     this.changeCursor = changeCursor;
-    this.streamQualifier = streamQualifier;
+    this.tableQualifier = tableQualifier;
     this.defaultPageSize = defaultPageSize;
 
     this.initialData = data;
@@ -75,7 +75,7 @@ export class Cursor<TRecord = any> {
     }
 
     // fetch more
-    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.nextCursor }, this.streamQualifier);
+    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.nextCursor }, this.tableQualifier);
     if (error) {
       return { error };
     }
@@ -96,7 +96,7 @@ export class Cursor<TRecord = any> {
       return { error: Error("cannot fetch changes for this query") };
     }
 
-    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.changeCursor }, this.streamQualifier);
+    const { meta, data, error } = await this.connection.read<TRecord>({ limit, cursor: this.changeCursor }, this.tableQualifier);
     if (error) {
       return { error };
     }
@@ -112,7 +112,7 @@ export class Cursor<TRecord = any> {
       throw Error("cannot subscribe to changes for this query");
     }
 
-    if (!(this.streamQualifier && typeof this.streamQualifier !== "string" && "instanceID" in this.streamQualifier)) {
+    if (!(this.tableQualifier && typeof this.tableQualifier !== "string" && "instanceID" in this.tableQualifier)) {
       throw Error("cannot subscribe to changes for this query");
     }
 
@@ -127,7 +127,7 @@ export class Cursor<TRecord = any> {
       polling: false,
       lastPoll: 0,
       // tslint:disable-next-line: no-empty
-      unsubscribe: () => {},
+      unsubscribe: () => { },
     };
 
     const _unsubscribe = (error?: Error) => {
@@ -184,7 +184,7 @@ export class Cursor<TRecord = any> {
     };
 
     const { unsubscribe } = this.connection.subscribe({
-      instanceID: this.streamQualifier.instanceID,
+      instanceID: this.tableQualifier.instanceID,
       cursor: this.changeCursor,
       onResult: () => {
         poll();

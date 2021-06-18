@@ -42,7 +42,7 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
                   description: values.description,
                   photoURL: values.photoURL,
                   public: values.public === "public" ? true : false,
-                }
+                },
               },
             })
           )
@@ -98,12 +98,12 @@ const EditProject: FC<EditProjectProps> = ({ project }) => {
             />
             {values.public === "public" && (
               <Typography variant="body2" color="textSecondary">
-                Open your data streams to the world and see what people build!
+                Open your tables to the world and see what people build!
               </Typography>
             )}
             {values.public === "private" && (
               <Typography variant="body2" color="textSecondary">
-                Keep your data streams private and add collaborators as needed.
+                Keep your tables private and add collaborators as needed.
               </Typography>
             )}
             <SubmitControl

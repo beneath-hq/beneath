@@ -70,10 +70,10 @@ const Auth: FC = () => {
                 <Typography variant="body1" component="div">
                   <strong>Today, you can use Beneath to:</strong>
                   <ul className={classes.list}>
-                    <li>Replay, subscribe and analyze streams</li>
-                    <li>Create and share new serverless streams</li>
-                    <li>Use the console to browse streams and monitor usage</li>
-                    <li>Access streams using Python, SQL, WebSockets and more</li>
+                    <li>Create and share serverless, real-time tables</li>
+                    <li>Replay, stream, filter and analyze tables</li>
+                    <li>Use the console to browse data and monitor usage</li>
+                    <li>Access tables using Python, SQL, WebSockets and more</li>
                   </ul>
                 </Typography>
               </Grid>

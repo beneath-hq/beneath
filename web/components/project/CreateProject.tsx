@@ -90,7 +90,7 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
       {({ values, isSubmitting, status }) => (
         <Form title="Create project">
           <Typography variant="body2">
-            Projects contain streams and services, and every project has its own access management. A project in Beneath
+            Projects contain tables and services, and every project has its own access management. A project in Beneath
             is like a repo in Git.
           </Typography>
           <Field
@@ -163,12 +163,12 @@ const CreateProject: FC<CreateProjectProps> = ({ preselectedOrganization }) => {
           />
           {values.public === "public" && (
             <Typography variant="body2" color="textSecondary">
-              Open your data streams to the world and see what people build!
+              Open your tables to the world and see what people build!
             </Typography>
           )}
           {values.public === "private" && (
             <Typography variant="body2" color="textSecondary">
-              Keep your data streams private and add collaborators as needed.
+              Keep your tables private and add collaborators as needed.
             </Typography>
           )}
           <SubmitControl label="Create project" errorAlert={status} disabled={isSubmitting} />

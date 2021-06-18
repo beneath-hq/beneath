@@ -1,6 +1,17 @@
-import {useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import _ from "lodash";
-import { Button, Grid, makeStyles, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import {
+  Button,
+  Grid,
+  makeStyles,
+  Paper,
+  Table as MuiTable,
+  TableBody as MuiTableBody,
+  TableCell as MuiTableCell,
+  TableHead as MuiTableHead,
+  TableRow as MuiTableRow,
+  Typography,
+} from "@material-ui/core";
 import { MoreVert } from "@material-ui/icons";
 import React, { FC } from "react";
 
@@ -12,13 +23,13 @@ import { BillingMethods, BillingMethodsVariables } from "ee/apollo/types/Billing
 import { BillingInfo_billingInfo, BillingInfo_billingInfo_billingMethod } from "ee/apollo/types/BillingInfo";
 import { UpdateBillingMethod, UpdateBillingMethodVariables } from "ee/apollo/types/UpdateBillingMethod";
 import { UPDATE_BILLING_METHOD } from "ee/apollo/queries/billingInfo";
-import {ANARCHISM_DRIVER, STRIPECARD_DRIVER, STRIPEWIRE_DRIVER} from "ee/lib/billing";
+import { ANARCHISM_DRIVER, STRIPECARD_DRIVER, STRIPEWIRE_DRIVER } from "ee/lib/billing";
 import VSpace from "components/VSpace";
 import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
-    padding: theme.spacing(3)
+    padding: theme.spacing(3),
   },
   paperTitle: {
     marginBottom: theme.spacing(1),
@@ -39,7 +50,7 @@ const useStyles = makeStyles((theme) => ({
     },
     boxShadow: "none",
     color: theme.palette.common.white,
-  }
+  },
 }));
 
 export interface BillingMethodsProps {
@@ -56,7 +67,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
   });
 
   const [updateBillingMethod] = useMutation<UpdateBillingMethod, UpdateBillingMethodVariables>(UPDATE_BILLING_METHOD, {
-    context: { ee: true }
+    context: { ee: true },
   });
 
   if (!data || error) return null;
@@ -74,7 +85,7 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
       const last4 = payload.last4.toString();
       const expMonth = payload.expMonth.toString();
       const expYear = payload.expYear.toString();
-      return `${brand.toUpperCase()} ${last4}, Exp: ${expMonth}/${expYear.substring(2,4)}`;
+      return `${brand.toUpperCase()} ${last4}, Exp: ${expMonth}/${expYear.substring(2, 4)}`;
     }
     if (driver === STRIPEWIRE_DRIVER) {
       const payload = JSON.parse(driverPayload);
@@ -83,11 +94,15 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
   };
 
   const getBillingMethodActions = (billingMethod: BillingInfo_billingInfo_billingMethod) => [
-    { label: "Set to active", onClick: () => updateBillingMethod({
-      variables: {
-        organizationID: organization.organizationID,
-        billingMethodID: billingMethod.billingMethodID
-      }})
+    {
+      label: "Set to active",
+      onClick: () =>
+        updateBillingMethod({
+          variables: {
+            organizationID: organization.organizationID,
+            billingMethodID: billingMethod.billingMethodID,
+          },
+        }),
     },
     // TODO: enable deleting billing methods
     // { label: "Delete billing method", onClick: () => deleteBillingMethod() }
@@ -105,55 +120,72 @@ const ViewBillingMethods: FC<BillingMethodsProps> = ({ organization, billingInfo
         <VSpace units={3} />
         {data.billingMethods.length === 0 && (
           // TODO: replace ContentContainer with just a nicely formatted callToAction for TitledPaper components
-          <ContentContainer callToAction={{
-            message: `You have no billing methods on file`,
-            buttons: [{ label: "Add a credit card", onClick: () => addCard(true) }]
-          }}/>
+          <ContentContainer
+            callToAction={{
+              message: `You have no billing methods on file`,
+              buttons: [{ label: "Add a credit card", onClick: () => addCard(true) }],
+            }}
+          />
         )}
         {data.billingMethods.length !== 0 && (
           <>
-          <Grid container className={classes.container}>
-            <Grid item xs={12}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Details</TableCell>
-                    <TableCell>Active</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.billingMethods.map((billingMethod) => (
-                    <TableRow
-                      key={billingMethod.billingMethodID}
-                    >
-                      <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
-                        {formatDriver(billingMethod.paymentsDriver)}
-                      </TableCell>
-                      <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
-                        {formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}
-                      </TableCell>
-                      <TableCell className={clsx((billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID) && classes.active)}>
-                        {billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownButton
-                          variant="contained"
-                          margin="dense"
-                          actions={getBillingMethodActions(billingMethod)}
-                          className={classes.dropdownButton}
+            <Grid container className={classes.container}>
+              <Grid item xs={12}>
+                <MuiTable>
+                  <MuiTableHead>
+                    <MuiTableRow>
+                      <MuiTableCell>Type</MuiTableCell>
+                      <MuiTableCell>Details</MuiTableCell>
+                      <MuiTableCell>Active</MuiTableCell>
+                      <MuiTableCell></MuiTableCell>
+                    </MuiTableRow>
+                  </MuiTableHead>
+                  <MuiTableBody>
+                    {data.billingMethods.map((billingMethod) => (
+                      <MuiTableRow key={billingMethod.billingMethodID}>
+                        <MuiTableCell
+                          className={clsx(
+                            billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID &&
+                              classes.active
+                          )}
                         >
-                          <MoreVert />
-                        </DropdownButton>
-                        </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          {formatDriver(billingMethod.paymentsDriver)}
+                        </MuiTableCell>
+                        <MuiTableCell
+                          className={clsx(
+                            billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID &&
+                              classes.active
+                          )}
+                        >
+                          {formatDetails(billingMethod.paymentsDriver, billingMethod.driverPayload)}
+                        </MuiTableCell>
+                        <MuiTableCell
+                          className={clsx(
+                            billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID &&
+                              classes.active
+                          )}
+                        >
+                          {billingMethod.billingMethodID === billingInfo.billingMethod?.billingMethodID ? "Yes" : "No"}
+                        </MuiTableCell>
+                        <MuiTableCell>
+                          <DropdownButton
+                            variant="contained"
+                            margin="dense"
+                            actions={getBillingMethodActions(billingMethod)}
+                            className={classes.dropdownButton}
+                          >
+                            <MoreVert />
+                          </DropdownButton>
+                        </MuiTableCell>
+                      </MuiTableRow>
+                    ))}
+                  </MuiTableBody>
+                </MuiTable>
+              </Grid>
             </Grid>
-          </Grid>
-          <Button variant="contained" onClick={() => addCard(true)} className={classes.button}>Add card</Button>
+            <Button variant="contained" onClick={() => addCard(true)} className={classes.button}>
+              Add card
+            </Button>
           </>
         )}
       </Paper>

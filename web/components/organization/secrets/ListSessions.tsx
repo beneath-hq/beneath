@@ -17,7 +17,7 @@ import { QUERY_USER_SECRETS, REVOKE_USER_SECRET } from "apollo/queries/secret";
 import { RevokeUserSecret, RevokeUserSecretVariables } from "apollo/types/RevokeUserSecret";
 import { SecretsForUser, SecretsForUserVariables } from "apollo/types/SecretsForUser";
 import ContentContainer from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableRow } from "components/UITables";
 
 export interface ListSecretsProps {
   userID: string;
@@ -30,17 +30,14 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
     variables: { userID },
   });
 
-  const [revokeSecret, { loading: mutLoading }] = useMutation<RevokeUserSecret, RevokeUserSecretVariables>(
-    REVOKE_USER_SECRET
-  );
+  const [revokeSecret, { loading: mutLoading }] =
+    useMutation<RevokeUserSecret, RevokeUserSecretVariables>(REVOKE_USER_SECRET);
 
   const dialogue = (
     <Dialog open={!!deleteSecretID}>
       <DialogTitle>Are you sure you want to delete this session?</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          You'll be logged out if you delete your current session.
-        </DialogContentText>
+        <DialogContentText>You'll be logged out if you delete your current session.</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button color="primary" autoFocus onClick={() => setDeleteSecretID(undefined)}>
@@ -89,26 +86,24 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
         again.
       </Typography>
       <ContentContainer paper margin="normal" loading={loading} error={error && JSON.stringify(error)}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Created</TableCell>
-              <TableCell>Exact time</TableCell>
-              <TableCell>Delete</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <UITable>
+          <UITableHead>
+            <UITableRow>
+              <UITableCell>Created</UITableCell>
+              <UITableCell>Exact time</UITableCell>
+              <UITableCell>Delete</UITableCell>
+            </UITableRow>
+          </UITableHead>
+          <UITableBody>
             {data?.secretsForUser
               .filter((secret) => secret.description === "Browser session")
               .map(({ createdOn, description, userSecretID }) => (
-                <TableRow key={userSecretID} hover>
-                  <TableCell>
+                <UITableRow key={userSecretID} hover>
+                  <UITableCell>
                     <Moment fromNow date={createdOn} />
-                  </TableCell>
-                  <TableCell>
-                    {createdOn.toLocaleUpperCase()}
-                  </TableCell>
-                  <TableCell padding="checkbox" align="right">
+                  </UITableCell>
+                  <UITableCell>{createdOn.toLocaleUpperCase()}</UITableCell>
+                  <UITableCell padding="checkbox" align="right">
                     <IconButton
                       aria-label="Delete"
                       disabled={mutLoading}
@@ -116,11 +111,11 @@ const ListSecrets: FC<ListSecretsProps> = ({ userID }) => {
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
+                  </UITableCell>
+                </UITableRow>
               ))}
-          </TableBody>
-        </Table>
+          </UITableBody>
+        </UITable>
         {dialogue}
       </ContentContainer>
     </>

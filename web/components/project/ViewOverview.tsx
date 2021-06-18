@@ -2,15 +2,15 @@ import React, { FC } from "react";
 
 import {
   ProjectByOrganizationAndName_projectByOrganizationAndName,
-  ProjectByOrganizationAndName_projectByOrganizationAndName_streams,
+  ProjectByOrganizationAndName_projectByOrganizationAndName_tables,
   ProjectByOrganizationAndName_projectByOrganizationAndName_services,
 } from "apollo/types/ProjectByOrganizationAndName";
 import clsx from "clsx";
 import ContentContainer, { CallToAction } from "components/ContentContainer";
-import { Table, TableBody, TableCell, TableHead, TableLinkRow, TableRow } from "components/Tables";
+import { UITable, UITableBody, UITableCell, UITableHead, UITableLinkRow, UITableRow } from "components/UITables";
 import { toURLName } from "lib/names";
 import { Chip, Grid, Hidden, makeStyles } from "@material-ui/core";
-import { MetaChip, StreamUsageChip } from "components/stream/chips";
+import { MetaChip, TableUsageChip } from "components/table/chips";
 
 const useStyles = makeStyles((theme) => ({
   nameCell: {
@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
   pointer: {
     cursor: "pointer",
   },
-  streamChip: {
+  tableChip: {
     backgroundColor: theme.palette.primary.dark,
   },
   serviceChip: {
@@ -37,14 +37,14 @@ export interface ViewOverviewProps {
   project: ProjectByOrganizationAndName_projectByOrganizationAndName;
 }
 
-type Stream = ProjectByOrganizationAndName_projectByOrganizationAndName_streams;
+type Table = ProjectByOrganizationAndName_projectByOrganizationAndName_tables;
 type Service = ProjectByOrganizationAndName_projectByOrganizationAndName_services;
-type Resource = Stream | Service;
+type Resource = Table | Service;
 
 const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
   const classes = useStyles();
 
-  const resources: Resource[] = [...project.streams, ...project.services];
+  const resources: Resource[] = [...project.tables, ...project.services];
 
   let cta: CallToAction | undefined;
   if (!resources.length) {
@@ -61,19 +61,19 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
     if (project.permissions.create) {
       cta.buttons = [
         {
-          label: "Create stream",
-          href: `/-/create/stream?organization=${project.organization.name}&project=${project.name}`,
-          as: "/-/create/stream",
+          label: "Create table",
+          href: `/-/create/table?organization=${project.organization.name}&project=${project.name}`,
+          as: "/-/create/table",
         },
       ];
     }
   }
 
   const makeHref = (resource: Resource) => {
-    if (resource.__typename === "Stream") {
-      return `/stream?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
+    if (resource.__typename === "Table") {
+      return `/table?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
         project.name
-      )}&stream_name=${toURLName(resource.name)}`;
+      )}&table_name=${toURLName(resource.name)}`;
     } else if (resource.__typename === "Service") {
       return `/service?organization_name=${toURLName(project.organization.name)}&project_name=${toURLName(
         project.name
@@ -83,8 +83,8 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
   };
 
   const makeAs = (resource: Resource) => {
-    if (resource.__typename === "Stream") {
-      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/stream:${toURLName(resource.name)}`;
+    if (resource.__typename === "Table") {
+      return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/table:${toURLName(resource.name)}`;
     } else if (resource.__typename === "Service") {
       return `/${toURLName(project.organization.name)}/${toURLName(project.name)}/service:${toURLName(resource.name)}`;
     }
@@ -93,32 +93,32 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
 
   return (
     <ContentContainer paper callToAction={cta}>
-      <Table textSize="medium">
-        <TableHead>
-          <TableRow>
-            <TableCell></TableCell>
-            <TableCell>Name</TableCell>
+      <UITable textSize="medium">
+        <UITableHead>
+          <UITableRow>
+            <UITableCell></UITableCell>
+            <UITableCell>Name</UITableCell>
             <Hidden smDown>
-              <TableCell expand>Description</TableCell>
+              <UITableCell expand>Description</UITableCell>
             </Hidden>
             <Hidden xsDown>
-              <TableCell></TableCell>
+              <UITableCell></UITableCell>
             </Hidden>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+          </UITableRow>
+        </UITableHead>
+        <UITableBody>
           {Array.from(resources)
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((resource) => (
-              <TableLinkRow key={resource.name + resource.createdOn} href={makeHref(resource)} as={makeAs(resource)}>
-                <TypeTableCell resource={resource} />
-                <TableCell className={classes.nameCell}>{toURLName(resource.name)}</TableCell>
+              <UITableLinkRow key={resource.name + resource.createdOn} href={makeHref(resource)} as={makeAs(resource)}>
+                <TypeUITableCell resource={resource} />
+                <UITableCell className={classes.nameCell}>{toURLName(resource.name)}</UITableCell>
                 <Hidden smDown>
-                  <TableCell className={classes.descriptionCell}>{resource.description}</TableCell>
+                  <UITableCell className={classes.descriptionCell}>{resource.description}</UITableCell>
                 </Hidden>
                 <Hidden xsDown>
-                  <TableCell align="right">
-                    {resource.__typename === "Stream" && (
+                  <UITableCell align="right">
+                    {resource.__typename === "Table" && (
                       <Grid container wrap="nowrap" justify="flex-end" spacing={1}>
                         {resource.meta && (
                           <Grid item>
@@ -126,34 +126,34 @@ const ViewOverview: FC<ViewOverviewProps> = ({ project }) => {
                           </Grid>
                         )}
                         <Grid item>
-                          <StreamUsageChip stream={{ ...resource, project }} notClickable />
+                          <TableUsageChip table={{ ...resource, project }} notClickable />
                         </Grid>
                       </Grid>
                     )}
-                  </TableCell>
+                  </UITableCell>
                 </Hidden>
-              </TableLinkRow>
+              </UITableLinkRow>
             ))}
-        </TableBody>
-      </Table>
+        </UITableBody>
+      </UITable>
     </ContentContainer>
   );
 };
 
 export default ViewOverview;
 
-const TypeTableCell: FC<{ resource: Resource }> = ({ resource }) => {
+const TypeUITableCell: FC<{ resource: Resource }> = ({ resource }) => {
   const classes = useStyles();
   return (
-    <TableCell>
+    <UITableCell>
       <Chip
         label={<strong>{resource.__typename}</strong>}
         className={clsx(
           classes.pointer,
-          resource.__typename === "Stream" && classes.streamChip,
+          resource.__typename === "Table" && classes.tableChip,
           resource.__typename === "Service" && classes.serviceChip
         )}
       />
-    </TableCell>
+    </UITableCell>
   );
 };

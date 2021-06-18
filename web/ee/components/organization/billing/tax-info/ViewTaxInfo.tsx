@@ -12,7 +12,7 @@ import ContentContainer from "components/ContentContainer";
 const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(3),
-    height: "100%"
+    height: "100%",
   },
   paperTitle: {
     marginBottom: theme.spacing(1),
@@ -21,8 +21,8 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
   },
   button: {
-    marginTop: theme.spacing(3)
-  }
+    marginTop: theme.spacing(3),
+  },
 }));
 
 export interface BillingInfoProps {
@@ -44,19 +44,19 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, onEdit, littleHeader 
   if (!data || error) return null;
   const billingInfo = data.billingInfo;
 
-  // construct the table
-  let rows = [{key: "Country", value: billingInfo.country}];
+  // construct the view
+  let rows = [{ key: "Country", value: billingInfo.country }];
   if (billingInfo.country === "United States of America") {
-    rows = rows.concat({key: "State", value: billingInfo.region as string});
+    rows = rows.concat({ key: "State", value: billingInfo.region as string });
   }
   if (billingInfo.taxNumber) {
     rows = rows.concat(
-      {key: "Tax entity", value: "Company"},
-      {key: "Company", value: billingInfo.companyName as string},
-      {key: "Tax ID", value: billingInfo.taxNumber as string},
+      { key: "Tax entity", value: "Company" },
+      { key: "Company", value: billingInfo.companyName as string },
+      { key: "Tax ID", value: billingInfo.taxNumber as string }
     );
   } else {
-    rows = rows.concat({key: "Tax entity", value: "Individual"});
+    rows = rows.concat({ key: "Tax entity", value: "Individual" });
   }
 
   let empty: boolean | undefined;
@@ -67,17 +67,21 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, onEdit, littleHeader 
   return (
     <>
       <Paper variant="outlined" className={classes.paper}>
-        <Typography variant={littleHeader ? "h2" : "h1"} className={classes.paperTitle}>Tax info</Typography>
+        <Typography variant={littleHeader ? "h2" : "h1"} className={classes.paperTitle}>
+          Tax info
+        </Typography>
         <Typography variant="body2" color="textSecondary">
           Information used to compute tax for customers in certain countries
         </Typography>
         <VSpace units={3} />
         {empty && onEdit && (
           // TODO: replace ContentContainer with just a nicely formatted callToAction for TitledPaper components
-          <ContentContainer callToAction={{
-            message: `You have not provided any tax information`,
-            buttons: [{ label: "Edit", onClick: () => onEdit() }]
-          }} />
+          <ContentContainer
+            callToAction={{
+              message: `You have not provided any tax information`,
+              buttons: [{ label: "Edit", onClick: () => onEdit() }],
+            }}
+          />
         )}
         {!empty && (
           <>
@@ -85,14 +89,10 @@ const ViewTaxInfo: FC<BillingInfoProps> = ({ organization, onEdit, littleHeader 
               <React.Fragment key={row.key}>
                 <Grid container alignItems="center" spacing={1}>
                   <Grid item>
-                    <Typography>
-                      {row.key}:
-                    </Typography>
+                    <Typography>{row.key}:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography className={classes.textData}>
-                      {row.value}
-                    </Typography>
+                    <Typography className={classes.textData}>{row.value}</Typography>
                   </Grid>
                 </Grid>
               </React.Fragment>

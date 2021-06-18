@@ -1,7 +1,7 @@
 import { SubscriptionClient } from "subscriptions-transport-ws";
 
 import { BENEATH_GATEWAY_HOST, BENEATH_GATEWAY_HOST_WS } from "./config";
-import { Record, StreamQualifier } from "./types";
+import { Record, TableQualifier } from "./types";
 
 // Args types
 
@@ -100,8 +100,8 @@ export class Connection {
     return res;
   }
 
-  public async write(streamQualifier: StreamQualifier, records: any[]): Promise<Response<null, WriteMeta>> {
-    const path = this.makePath(streamQualifier);
+  public async write(tableQualifier: TableQualifier, records: any[]): Promise<Response<null, WriteMeta>> {
+    const path = this.makePath(tableQualifier);
     const res = await this.fetch<null, any>("POST", path, records);
 
     if (res.meta) {
@@ -112,13 +112,13 @@ export class Connection {
     return res;
   }
 
-  public async queryLog<TRecord = any>(streamQualifier: StreamQualifier, args: QueryLogArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    const path = this.makePath(streamQualifier);
+  public async queryLog<TRecord = any>(tableQualifier: TableQualifier, args: QueryLogArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    const path = this.makePath(tableQualifier);
     return this.fetchRecords(path, { ...args, type: "log" });
   }
 
-  public async queryIndex<TRecord = any>(streamQualifier: StreamQualifier, args: QueryIndexArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    const path = this.makePath(streamQualifier);
+  public async queryIndex<TRecord = any>(tableQualifier: TableQualifier, args: QueryIndexArgs): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    const path = this.makePath(tableQualifier);
     return this.fetchRecords(path, { ...args, type: "index" });
   }
 
@@ -137,9 +137,9 @@ export class Connection {
     return this.parseWarehouseResponse(res);
   }
 
-  public async read<TRecord = any>(args: ReadArgs, streamQualifier?: StreamQualifier): Promise<Response<Record<TRecord>[], RecordsMeta>> {
-    // we could make all cursor requests to "/v1/-/cursor", but for stream/instance reads it's neat for the URL to show the stream/instance in client logs
-    const path = streamQualifier ? this.makePath(streamQualifier) : "v1/-/cursor";
+  public async read<TRecord = any>(args: ReadArgs, tableQualifier?: TableQualifier): Promise<Response<Record<TRecord>[], RecordsMeta>> {
+    // we could make all cursor requests to "/v1/-/cursor", but for table/instance reads it's neat for the URL to show the table/instance in client logs
+    const path = tableQualifier ? this.makePath(tableQualifier) : "v1/-/cursor";
     return this.fetchRecords(path, args);
   }
 
@@ -239,35 +239,35 @@ export class Connection {
     return res;
   }
 
-  private makePath(sq: StreamQualifier): string {
+  private makePath(sq: TableQualifier): string {
     if (typeof sq === "string") {
       sq = this.pathStringToObject(sq);
     }
     if ("instanceID" in sq && sq.instanceID) {
       return `v1/-/instances/${sq.instanceID}`;
-    } else if ("project" in sq && "stream" in sq) {
-      return `v1/${sq.organization}/${sq.project}/${sq.stream}`;
+    } else if ("project" in sq && "table" in sq) {
+      return `v1/${sq.organization}/${sq.project}/${sq.table}`;
     }
-    throw Error("invalid stream qualifier");
+    throw Error("invalid table qualifier");
   }
 
-  private pathStringToObject(path: string): { organization: string, project: string, stream: string } {
+  private pathStringToObject(path: string): { organization: string, project: string, table: string } {
     const parts = path.split("/");
 
     // trim leading/trailing "/"
     if (parts.length > 0 && parts[0] === "/") { parts.shift(); }
     if (parts.length > 0 && parts[parts.length - 1] === "/") { parts.pop(); }
 
-    // handle org/proj/stream
+    // handle org/proj/table
     if (parts.length === 3) {
       return {
         organization: parts[0],
         project: parts[1],
-        stream: parts[2],
+        table: parts[2],
       };
     }
 
-    throw Error(`Cannot parse stream path "${path}"; it must have the format "organization/project/stream"`);
+    throw Error(`Cannot parse table path "${path}"; it must have the format "organization/project/table"`);
   }
 
   private parseWarehouseResponse(res: Response<any, null>): Response<WarehouseJobData, null> {

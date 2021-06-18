@@ -40,7 +40,7 @@ const Header: FC = () => {
 
   const createActions = [
     { label: "Create project", href: "/-/create/project" },
-    { label: "Create stream", href: "/-/create/stream" },
+    { label: "Create table", href: "/-/create/table" },
     { label: "Create service", href: "/-/create/service" },
   ] as { label: string; href: string; as?: string }[];
   if (me) {
@@ -83,7 +83,7 @@ const Header: FC = () => {
           <Toolbar variant="dense">
             {/* Spacer to move the remaining contents to right-hand side */}
             <div className={classes.grow} />
-            {/* Create stream/project/etc. button */}
+            {/* Create table/project/etc. button */}
             {me &&
               (isMdUp ? (
                 <SplitButton

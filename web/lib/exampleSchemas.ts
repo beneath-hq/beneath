@@ -8,7 +8,7 @@ const EXAMPLE_SCHEMAS = [
   {
     name: "Movies",
     language: "GraphQL",
-    schema: `" A stream of movies "
+    schema: `" A table of movies "
 type Movie @schema {
   title: String! @key
   released_on: Timestamp! @key
