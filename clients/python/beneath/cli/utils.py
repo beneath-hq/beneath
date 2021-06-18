@@ -5,7 +5,7 @@ from beneath.connection import GraphQLError
 
 project_path_help = "format USERNAME/PROJECT"
 service_path_help = "format USERNAME/PROJECT/SERVICE"
-stream_path_help = "format USERNAME/PROJECT/STREAM"
+table_path_help = "format USERNAME/PROJECT/TABLE"
 
 
 def async_cmd(cmd):

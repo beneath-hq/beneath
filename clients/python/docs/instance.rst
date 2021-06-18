@@ -1,5 +1,5 @@
-StreamInstance
+TableInstance
 ==============
 
-.. autoclass:: beneath.StreamInstance()
+.. autoclass:: beneath.TableInstance()
     :members:

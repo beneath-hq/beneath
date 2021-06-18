@@ -15,15 +15,15 @@ from beneath.easy import (
     load_full,
     query_warehouse,
     write_full,
-    generate_stream_pipeline,
-    derive_stream_pipeline,
-    consume_stream_pipeline,
+    generate_table_pipeline,
+    derive_table_pipeline,
+    consume_table_pipeline,
 )
-from beneath.instance import StreamInstance
+from beneath.instance import TableInstance
 from beneath.job import Job, JobStatus
 from beneath.pipeline import Action, Pipeline, PIPELINE_IDLE, Strategy
 from beneath.schema import Schema
-from beneath.stream import Stream
+from beneath.table import Table
 
 __all__ = [
     "__version__",
@@ -40,13 +40,13 @@ __all__ = [
     "GraphQLError",
     "Schema",
     "Strategy",
-    "Stream",
-    "StreamInstance",
+    "Table",
+    "TableInstance",
     "consume",
     "load_full",
     "query_warehouse",
     "write_full",
-    "generate_stream_pipeline",
-    "derive_stream_pipeline",
-    "consume_stream_pipeline",
+    "generate_table_pipeline",
+    "derive_table_pipeline",
+    "consume_table_pipeline",
 ]

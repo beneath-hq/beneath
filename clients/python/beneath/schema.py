@@ -16,7 +16,7 @@ from beneath.utils import (
 
 
 class Schema:
-    """ Represents a stream's parsed Avro schema """
+    """ Represents a table's parsed Avro schema """
 
     def __init__(self, avro: str):
         self.avro = avro

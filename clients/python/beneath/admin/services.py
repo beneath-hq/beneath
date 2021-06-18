@@ -139,37 +139,37 @@ class Services(_ResourceBase):
         )
         return result["updateService"]
 
-    async def update_permissions_for_stream(self, service_id, stream_id, read, write):
+    async def update_permissions_for_table(self, service_id, table_id, read, write):
         self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "serviceID": service_id,
-                "streamID": stream_id,
+                "tableID": table_id,
                 "read": read,
                 "write": write,
             },
             query="""
                 mutation UpdateServicePermissions(
                     $serviceID: UUID!
-                    $streamID: UUID!
+                    $tableID: UUID!
                     $read: Boolean
                     $write: Boolean
                 ) {
-                    updateServiceStreamPermissions(
+                    updateServiceTablePermissions(
                         serviceID: $serviceID
-                        streamID: $streamID
+                        tableID: $tableID
                         read: $read
                         write: $write
                     ) {
                         serviceID
-                        streamID
+                        tableID
                         read
                         write
                     }
                 }
             """,
         )
-        return result["updateServiceStreamPermissions"]
+        return result["updateServiceTablePermissions"]
 
     async def delete(self, service_id):
         self._before_mutation()

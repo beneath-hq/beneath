@@ -8,14 +8,14 @@ Here is an example of WriteToBeneath's usage in a Beam pipeline:
   # set up beneath client
   client = Client(secret='SECRET')
 
-  # get the stream of interest
-  stream = client.get_stream("PROJECT_NAME", "STREAM_NAME")
+  # get the table of interest
+  table = client.get_table("PROJECT_NAME", "TABLE_NAME")
 
   # create pipeline
   pipeline = beam.Pipeline()
   (p
     | beam.Create(self._generate())
-    | WriteToBeneath(stream)
+    | WriteToBeneath(table)
   )
 
   # run pipeline
@@ -29,24 +29,24 @@ class _GatewayWriteFn(beam.DoFn):
 
     _BATCH_SIZE = 1000
 
-    def __init__(self, stream, instance_id):
-        if stream is None:
-            raise Exception("Error! The provided stream is not valid")
+    def __init__(self, table, instance_id):
+        if table is None:
+            raise Exception("Error! The provided table is not valid")
         if instance_id is None:
             raise Exception("Error! The provided instance ID is not valid")
-        self.stream = stream
+        self.table = table
         self.instance_id = instance_id
         self.bundle = None
 
     def __getstate__(self):
         return {
-            "stream": self.stream,
+            "table": self.table,
             "instance_id": self.instance_id,
             "bundle": self.bundle,
         }
 
     def __setstate__(self, obj):
-        self.stream = obj["stream"]
+        self.table = obj["table"]
         self.instance_id = obj["instance_id"]
         self.bundle = obj["bundle"]
 
@@ -63,15 +63,15 @@ class _GatewayWriteFn(beam.DoFn):
 
     def _flush(self):
         if len(self.bundle) != 0:
-            self.stream.write(records=self.bundle, instance_id=self.instance_id)
+            self.table.write(records=self.bundle, instance_id=self.instance_id)
             self.bundle = []
 
 
 class WriteToBeneath(beam.PTransform):
-    def __init__(self, stream, instance_id=None):
-        self.stream = stream
-        self.instance_id = instance_id if instance_id else stream.current_instance_id
+    def __init__(self, table, instance_id=None):
+        self.table = table
+        self.instance_id = instance_id if instance_id else table.current_instance_id
 
     def expand(self, pvalue):
-        p = pvalue | "Write" >> beam.ParDo(_GatewayWriteFn(self.stream, self.instance_id))
+        p = pvalue | "Write" >> beam.ParDo(_GatewayWriteFn(self.table, self.instance_id))
         return p

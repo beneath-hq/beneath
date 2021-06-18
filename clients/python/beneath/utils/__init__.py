@@ -10,7 +10,7 @@ from beneath.utils.qualifiers import (
     pretty_entity_name,
     ProjectQualifier,
     ServiceQualifier,
-    StreamQualifier,
+    TableQualifier,
     SubscriptionQualifier,
 )
 
@@ -20,7 +20,7 @@ __all__ = [
     "AIOTicker",
     "AIOWorkerPool",
     "ServiceQualifier",
-    "StreamQualifier",
+    "TableQualifier",
     "SubscriptionQualifier",
     "ProjectQualifier",
     "pretty_entity_name",

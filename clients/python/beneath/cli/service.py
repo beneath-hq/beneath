@@ -1,5 +1,5 @@
 from beneath.client import Client
-from beneath.utils import ProjectQualifier, ServiceQualifier, StreamQualifier
+from beneath.utils import ProjectQualifier, ServiceQualifier, TableQualifier
 from beneath.cli.utils import (
     async_cmd,
     mb_to_bytes,
@@ -7,7 +7,7 @@ from beneath.cli.utils import (
     str2bool,
     project_path_help,
     service_path_help,
-    stream_path_help,
+    table_path_help,
 )
 
 
@@ -43,11 +43,11 @@ def add_subparser(root):
 
     _update_perms = service.add_parser(
         "update-permissions",
-        help="Add/remove service permissions for streams",
+        help="Add/remove service permissions for tables",
     )
     _update_perms.set_defaults(func=async_cmd(update_permissions))
     _update_perms.add_argument("service_path", type=str, help=service_path_help)
-    _update_perms.add_argument("stream_path", type=str, help=stream_path_help)
+    _update_perms.add_argument("table_path", type=str, help=table_path_help)
     _update_perms.add_argument("--read", type=str2bool, nargs="?", const=True, default=None)
     _update_perms.add_argument("--write", type=str2bool, nargs="?", const=True, default=None)
 
@@ -121,15 +121,15 @@ async def update_permissions(args):
         project_name=seq.project,
         service_name=seq.service,
     )
-    stq = StreamQualifier.from_path(args.stream_path)
-    stream = await client.admin.streams.find_by_organization_project_and_name(
+    stq = TableQualifier.from_path(args.table_path)
+    table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=stq.organization,
         project_name=stq.project,
-        stream_name=stq.stream,
+        table_name=stq.table,
     )
-    result = await client.admin.services.update_permissions_for_stream(
+    result = await client.admin.services.update_permissions_for_table(
         service_id=service["serviceID"],
-        stream_id=stream["streamID"],
+        table_id=table["tableID"],
         read=args.read,
         write=args.write,
     )

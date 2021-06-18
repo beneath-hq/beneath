@@ -6,7 +6,7 @@ from beneath.cli import auth
 from beneath.cli import organization
 from beneath.cli import project
 from beneath.cli import service
-from beneath.cli import stream
+from beneath.cli import table
 
 
 def main():
@@ -33,5 +33,5 @@ def create_argument_parser():
     organization.add_subparser(root)
     project.add_subparser(root)
     service.add_subparser(root)
-    stream.add_subparser(root)
+    table.add_subparser(root)
     return parser

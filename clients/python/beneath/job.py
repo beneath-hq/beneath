@@ -47,7 +47,7 @@ class Job:
     """ The current status of the job """
 
     referenced_instance_ids: List[uuid.UUID]
-    """ The IDs of the stream instances referenced in the query """
+    """ The IDs of the table instances referenced in the query """
 
     bytes_scanned: int
     """ The number of bytes scanned by the query """

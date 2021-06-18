@@ -19,10 +19,10 @@ from beneath.connection import GraphQLError
 from beneath.consumer import Consumer
 from beneath.client import Client
 from beneath.checkpointer import Checkpointer
-from beneath.instance import StreamInstance
+from beneath.instance import TableInstance
 from beneath.pipeline.parse_args import parse_pipeline_args
-from beneath.stream import Stream
-from beneath.utils import ServiceQualifier, StreamQualifier
+from beneath.table import Table
+from beneath.utils import ServiceQualifier, TableQualifier
 
 
 class Action(Enum):
@@ -30,20 +30,20 @@ class Action(Enum):
 
     test = "test"
     """
-    Does a dry run of the pipeline, where input streams are read, but no output streams are created.
+    Does a dry run of the pipeline, where input tables are read, but no output tables are created.
     Records output by the pipeline will be logged, but not written.
     """
 
     stage = "stage"
     """
-    Creates all the resources the pipeline needs. These include output streams, a checkpoints meta
-    stream, and a service with the correct read and write permissions. The service can be used
+    Creates all the resources the pipeline needs. These include output tables, a checkpoints meta
+    table, and a service with the correct read and write permissions. The service can be used
     to create a secret for deploying the pipeline to production.
     """
 
     run = "run"
     """
-    Runs the pipeline, reading inputs, applying transformations, and writing to output streams.
+    Runs the pipeline, reading inputs, applying transformations, and writing to output tables.
     You must execute the "stage" action before running.
     """
 
@@ -72,14 +72,14 @@ class Strategy(Enum):
 
     batch = "batch"
     """
-    Replays all inputs on every run, and never consumes changes. It will finalize stream instances
+    Replays all inputs on every run, and never consumes changes. It will finalize table instances
     once it is done, so you must increase the ``version`` number on every run.
     """
 
 
 class BasePipeline:
     """
-    The ``BasePipeline`` implements core functionality for managing streams and checkpointing,
+    The ``BasePipeline`` implements core functionality for managing tables and checkpointing,
     while subclasses implement data transformation logic. See the subclass ``Pipeline`` for more.
     """
 
@@ -142,11 +142,11 @@ class BasePipeline:
         self.description: str = None
         self.disable_checkpoints = disable_checkpoints
 
-        self._inputs: Dict[StreamQualifier, Consumer] = {}
-        self._input_qualifiers: Set[StreamQualifier] = set()
-        self._outputs: Dict[StreamQualifier, StreamInstance] = {}
-        self._output_qualifiers: Set[StreamQualifier] = set()
-        self._output_kwargs: Dict[StreamQualifier, dict] = {}
+        self._inputs: Dict[TableQualifier, Consumer] = {}
+        self._input_qualifiers: Set[TableQualifier] = set()
+        self._outputs: Dict[TableQualifier, TableInstance] = {}
+        self._output_qualifiers: Set[TableQualifier] = set()
+        self._output_kwargs: Dict[TableQualifier, dict] = {}
 
         self._execute_task: asyncio.Task = None
         self._init()
@@ -231,9 +231,9 @@ class BasePipeline:
     async def _execute_test(self):
         await self._stage_checkpointer(create=True)
         await asyncio.gather(
-            *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
+            *[self._stage_input_table(qualifier) for qualifier in self._input_qualifiers],
             *[
-                self._stage_output_stream(qualifier=qualifier, create=True)
+                self._stage_output_table(qualifier=qualifier, create=True)
                 for qualifier in self._output_qualifiers
             ],
         )
@@ -245,21 +245,21 @@ class BasePipeline:
         self.logger.info("Finished running pipeline")
 
     async def _execute_stage(self):
-        async def _stage_input(qualifier: StreamQualifier):
-            await self._stage_input_stream(qualifier)
+        async def _stage_input(qualifier: TableQualifier):
+            await self._stage_input_table(qualifier)
             consumer = self._inputs[qualifier]
-            await self._update_service_permissions(consumer.instance.stream, read=True)
+            await self._update_service_permissions(consumer.instance.table, read=True)
 
-        async def _stage_output(qualifier: StreamQualifier):
-            await self._stage_output_stream(qualifier=qualifier, create=True)
+        async def _stage_output(qualifier: TableQualifier):
+            await self._stage_output_table(qualifier=qualifier, create=True)
             instance = self._outputs[qualifier]
-            await self._update_service_permissions(instance.stream, write=True)
+            await self._update_service_permissions(instance.table, write=True)
 
         await self._stage_service(create=True)
         await self._stage_checkpointer(create=True)
         if not self.disable_checkpoints:
             await self._update_service_permissions(
-                self.checkpoints.instance.stream, read=True, write=True
+                self.checkpoints.instance.table, read=True, write=True
             )
         await asyncio.gather(*[_stage_input(qualifier) for qualifier in self._input_qualifiers])
         await asyncio.gather(*[_stage_output(qualifier) for qualifier in self._output_qualifiers])
@@ -269,9 +269,9 @@ class BasePipeline:
     async def _execute_run(self):
         await self._stage_checkpointer(create=False)
         await asyncio.gather(
-            *[self._stage_input_stream(qualifier) for qualifier in self._input_qualifiers],
+            *[self._stage_input_table(qualifier) for qualifier in self._input_qualifiers],
             *[
-                self._stage_output_stream(qualifier=qualifier, create=False)
+                self._stage_output_table(qualifier=qualifier, create=False)
                 for qualifier in self._output_qualifiers
             ],
         )
@@ -284,7 +284,7 @@ class BasePipeline:
 
     async def _execute_teardown(self):
         await asyncio.gather(
-            *[self._teardown_output_stream(qualifier) for qualifier in self._output_qualifiers]
+            *[self._teardown_output_table(qualifier) for qualifier in self._output_qualifiers]
         )
         await self._teardown_checkpointer()
         await self._teardown_service()
@@ -333,107 +333,107 @@ class BasePipeline:
     async def _stage_checkpointer(self, create: bool):
         if self.disable_checkpoints:
             return
-        metastream_name = self.service_qualifier.service + "-checkpoints"
+        metatable_name = self.service_qualifier.service + "-checkpoints"
         self.checkpoints = await self.client.checkpointer(
             project_path=f"{self.service_qualifier.organization}/{self.service_qualifier.project}",
-            metastream_name=metastream_name,
-            metastream_create=create,
-            metastream_description=(
+            metatable_name=metatable_name,
+            metatable_create=create,
+            metatable_description=(
                 f"Stores checkpointed state for the '{self.service_qualifier.service}' pipeline"
             ),
             key_prefix=f"{self.version}:",
         )
         if create:
             self.logger.info(
-                "Staged checkpointer '%s'", self.checkpoints.instance.stream._qualifier
+                "Staged checkpointer '%s'", self.checkpoints.instance.table._qualifier
             )
         else:
-            self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.stream._qualifier)
+            self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.table._qualifier)
 
     async def _teardown_checkpointer(self):
         if self.disable_checkpoints:
             return
         try:
             await self._stage_checkpointer(create=False)
-            await self.checkpoints.instance.stream.delete()
+            await self.checkpoints.instance.table.delete()
             self.logger.info(
-                "Deleted checkpointer '%s'", self.checkpoints.instance.stream._qualifier
+                "Deleted checkpointer '%s'", self.checkpoints.instance.table._qualifier
             )
         except GraphQLError as e:
             if " not found" in str(e):
                 return
             raise
 
-    def _add_input_stream(self, stream_path: str):
-        qualifier = StreamQualifier.from_path(stream_path)
+    def _add_input_table(self, table_path: str):
+        qualifier = TableQualifier.from_path(table_path)
         self._input_qualifiers.add(qualifier)
         return qualifier
 
-    async def _stage_input_stream(self, qualifier: StreamQualifier):
+    async def _stage_input_table(self, qualifier: TableQualifier):
         if qualifier in self._output_qualifiers:
-            raise ValueError(f"Cannot use stream '{qualifier}' as both input and output")
+            raise ValueError(f"Cannot use table '{qualifier}' as both input and output")
         subscription_path = None
         if not self.disable_checkpoints:
             subscription_path = f"{self.service_qualifier.organization}/"
             subscription_path += f"{self.service_qualifier.project}/"
             subscription_path += self.service_qualifier.service
         consumer = await self.client.consumer(
-            stream_path=str(qualifier),
+            table_path=str(qualifier),
             subscription_path=subscription_path,
             checkpointer=self.checkpoints,
         )
         self._inputs[qualifier] = consumer
         self.logger.info(
-            "Using input stream '%s' (version: %d)", qualifier, consumer.instance.version
+            "Using input table '%s' (version: %d)", qualifier, consumer.instance.version
         )
 
-    def _add_output_stream(
+    def _add_output_table(
         self,
-        stream_path: str,
+        table_path: str,
         **kwargs,
-    ) -> StreamQualifier:
-        # use service organization and project if "stream_path" is just a name
-        if "/" not in stream_path:
-            stream_path = (
+    ) -> TableQualifier:
+        # use service organization and project if "table_path" is just a name
+        if "/" not in table_path:
+            table_path = (
                 f"{self.service_qualifier.organization}/"
                 + f"{self.service_qualifier.project}/"
-                + stream_path
+                + table_path
             )
-        qualifier = StreamQualifier.from_path(stream_path)
+        qualifier = TableQualifier.from_path(table_path)
         self._output_qualifiers.add(qualifier)
         self._output_kwargs[qualifier] = kwargs
         return qualifier
 
-    async def _stage_output_stream(self, qualifier: StreamQualifier, create: bool):
+    async def _stage_output_table(self, qualifier: TableQualifier, create: bool):
         kwargs = self._output_kwargs[qualifier]
         create = create and "schema" in kwargs
         if create:
-            stream = await self.client.create_stream(
-                stream_path=str(qualifier),
+            table = await self.client.create_table(
+                table_path=str(qualifier),
                 update_if_exists=True,
                 **kwargs,
             )
         else:
-            stream = await self.client.find_stream(stream_path=str(qualifier))
+            table = await self.client.find_table(table_path=str(qualifier))
 
-        instance = await stream.create_instance(version=self.version, update_if_exists=True)
+        instance = await table.create_instance(version=self.version, update_if_exists=True)
         self._outputs[qualifier] = instance
 
         if create:
             self.logger.info(
-                "Staged output stream '%s' (using version %s)", qualifier, self.version
+                "Staged output table '%s' (using version %s)", qualifier, self.version
             )
         else:
-            self.logger.info("Found output stream '%s' (using version %s)", qualifier, self.version)
+            self.logger.info("Found output table '%s' (using version %s)", qualifier, self.version)
 
-    async def _teardown_output_stream(self, qualifier: StreamQualifier):
+    async def _teardown_output_table(self, qualifier: TableQualifier):
         try:
             kwargs = self._output_kwargs[qualifier]
             if "schema" not in kwargs:
                 return
-            await self._stage_output_stream(qualifier=qualifier, create=False)
+            await self._stage_output_table(qualifier=qualifier, create=False)
             instance = self._outputs[qualifier]
-            await instance.stream.delete()
+            await instance.table.delete()
             self.logger.info("Deleted output '%s'", qualifier)
         except GraphQLError as e:
             if " not found" in str(e):
@@ -442,13 +442,13 @@ class BasePipeline:
 
     async def _update_service_permissions(
         self,
-        stream: Stream,
+        table: Table,
         read: bool = None,
         write: bool = None,
     ):
-        await self.client.admin.services.update_permissions_for_stream(
+        await self.client.admin.services.update_permissions_for_table(
             service_id=str(self.service_id),
-            stream_id=str(stream.stream_id),
+            table_id=str(table.table_id),
             read=read,
             write=write,
         )

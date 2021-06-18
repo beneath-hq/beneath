@@ -27,7 +27,7 @@ class Projects(_ResourceBase):
                         public
                         createdOn
                         updatedOn
-                        streams {
+                        tables {
                             name
                         }
                         services {

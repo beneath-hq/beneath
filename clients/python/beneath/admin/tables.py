@@ -2,16 +2,16 @@ from beneath.admin.base import _ResourceBase
 from beneath.utils import format_entity_name
 
 
-class Streams(_ResourceBase):
-    async def find_by_id(self, stream_id):
+class Tables(_ResourceBase):
+    async def find_by_id(self, table_id):
         result = await self.conn.query_control(
             variables={
-                "streamID": stream_id,
+                "tableID": table_id,
             },
             query="""
-                query StreamByID($streamID: UUID!) {
-                    streamByID(streamID: $streamID) {
-                        streamID
+                query TableByID($tableID: UUID!) {
+                    tableByID(tableID: $tableID) {
+                        tableID
                         name
                         description
                         createdOn
@@ -23,7 +23,7 @@ class Streams(_ResourceBase):
                         schemaKind
                         schema
                         avroSchema
-                        streamIndexes {
+                        tableIndexes {
                             fields
                             primary
                             normalize
@@ -36,9 +36,9 @@ class Streams(_ResourceBase):
                         logRetentionSeconds
                         indexRetentionSeconds
                         warehouseRetentionSeconds
-                        primaryStreamInstanceID
-                        primaryStreamInstance {
-                            streamInstanceID
+                        primaryTableInstanceID
+                        primaryTableInstance {
+                            tableInstanceID
                             createdOn
                             version
                             madePrimaryOn
@@ -52,32 +52,32 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["streamByID"]
+        return result["tableByID"]
 
     async def find_by_organization_project_and_name(
         self,
         organization_name,
         project_name,
-        stream_name,
+        table_name,
     ):
         result = await self.conn.query_control(
             variables={
                 "organizationName": format_entity_name(organization_name),
                 "projectName": format_entity_name(project_name),
-                "streamName": format_entity_name(stream_name),
+                "tableName": format_entity_name(table_name),
             },
             query="""
-                query StreamByOrganizationProjectAndName(
+                query TableByOrganizationProjectAndName(
                     $organizationName: String!
                     $projectName: String!
-                    $streamName: String!
+                    $tableName: String!
                 ) {
-                    streamByOrganizationProjectAndName(
+                    tableByOrganizationProjectAndName(
                         organizationName: $organizationName
                         projectName: $projectName
-                        streamName: $streamName
+                        tableName: $tableName
                     ) {
-                        streamID
+                        tableID
                         name
                         description
                         createdOn
@@ -89,7 +89,7 @@ class Streams(_ResourceBase):
                         schemaKind
                         schema
                         avroSchema
-                        streamIndexes {
+                        tableIndexes {
                             fields
                             primary
                             normalize
@@ -102,8 +102,8 @@ class Streams(_ResourceBase):
                         logRetentionSeconds
                         indexRetentionSeconds
                         warehouseRetentionSeconds
-                        primaryStreamInstance {
-                            streamInstanceID
+                        primaryTableInstance {
+                            tableInstanceID
                             createdOn
                             version
                             madePrimaryOn
@@ -117,38 +117,38 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["streamByOrganizationProjectAndName"]
+        return result["tableByOrganizationProjectAndName"]
 
     async def find_instance_by_organization_project_name_and_version(
         self,
         organization_name,
         project_name,
-        stream_name,
+        table_name,
         version,
     ):
         result = await self.conn.query_control(
             variables={
                 "organizationName": format_entity_name(organization_name),
                 "projectName": format_entity_name(project_name),
-                "streamName": format_entity_name(stream_name),
+                "tableName": format_entity_name(table_name),
                 "version": version,
             },
             query="""
-                query StreamInstanceByOrganizationProjectStreamAndVersion(
+                query TableInstanceByOrganizationProjectTableAndVersion(
                     $organizationName: String!
                     $projectName: String!
-                    $streamName: String!
+                    $tableName: String!
                     $version: Int!
                 ) {
-                    streamInstanceByOrganizationProjectStreamAndVersion(
+                    tableInstanceByOrganizationProjectTableAndVersion(
                         organizationName: $organizationName
                         projectName: $projectName
-                        streamName: $streamName
+                        tableName: $tableName
                         version: $version
                     ) {
-                        streamInstanceID
-                        stream {
-                            streamID
+                        tableInstanceID
+                        table {
+                            tableID
                             name
                             description
                             createdOn
@@ -160,7 +160,7 @@ class Streams(_ResourceBase):
                             schemaKind
                             schema
                             avroSchema
-                            streamIndexes {
+                            tableIndexes {
                                 fields
                                 primary
                                 normalize
@@ -173,8 +173,8 @@ class Streams(_ResourceBase):
                             logRetentionSeconds
                             indexRetentionSeconds
                             warehouseRetentionSeconds
-                            primaryStreamInstance {
-                                streamInstanceID
+                            primaryTableInstance {
+                                tableInstanceID
                                 createdOn
                                 version
                                 madePrimaryOn
@@ -185,7 +185,7 @@ class Streams(_ResourceBase):
                             instancesMadeFinalCount
                             instancesMadePrimaryCount
                         }
-                        streamID
+                        tableID
                         version
                         createdOn
                         madePrimaryOn
@@ -194,19 +194,19 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["streamInstanceByOrganizationProjectStreamAndVersion"]
+        return result["tableInstanceByOrganizationProjectTableAndVersion"]
 
-    async def find_instance(self, stream_id, version):
+    async def find_instance(self, table_id, version):
         result = await self.conn.query_control(
             variables={
-                "streamID": stream_id,
+                "tableID": table_id,
                 "version": version,
             },
             query="""
-                query StreamInstanceForStream($streamID: UUID!) {
-                    streamInstanceForStream(streamID: $streamID) {
-                        streamInstanceID
-                        streamID
+                query TableInstanceForTable($tableID: UUID!) {
+                    tableInstanceForTable(tableID: $tableID) {
+                        tableInstanceID
+                        tableID
                         createdOn
                         version
                         madePrimaryOn
@@ -215,18 +215,18 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["streamInstancesForStream"]
+        return result["tableInstancesForTable"]
 
-    async def find_instances(self, stream_id):
+    async def find_instances(self, table_id):
         result = await self.conn.query_control(
             variables={
-                "streamID": stream_id,
+                "tableID": table_id,
             },
             query="""
-                query StreamInstancesForStream($streamID: UUID!) {
-                    streamInstancesForStream(streamID: $streamID) {
-                        streamInstanceID
-                        streamID
+                query TableInstancesForTable($tableID: UUID!) {
+                    tableInstancesForTable(tableID: $tableID) {
+                        tableInstanceID
+                        tableID
                         createdOn
                         version
                         madePrimaryOn
@@ -235,7 +235,7 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["streamInstancesForStream"]
+        return result["tableInstancesForTable"]
 
     async def compile_schema(self, schema_kind, schema, indexes=None):
         result = await self.conn.query_control(
@@ -261,7 +261,7 @@ class Streams(_ResourceBase):
         self,
         organization_name,
         project_name,
-        stream_name,
+        table_name,
         schema_kind,
         schema,
         indexes=None,
@@ -282,7 +282,7 @@ class Streams(_ResourceBase):
                 "input": {
                     "organizationName": format_entity_name(organization_name),
                     "projectName": format_entity_name(project_name),
-                    "streamName": format_entity_name(stream_name),
+                    "tableName": format_entity_name(table_name),
                     "schemaKind": schema_kind,
                     "schema": schema,
                     "indexes": indexes,
@@ -299,9 +299,9 @@ class Streams(_ResourceBase):
                 },
             },
             query="""
-                mutation CreateStream($input: CreateStreamInput!) {
-                    createStream(input: $input) {
-                        streamID
+                mutation CreateTable($input: CreateTableInput!) {
+                    createTable(input: $input) {
+                        tableID
                         name
                         description
                         createdOn
@@ -313,7 +313,7 @@ class Streams(_ResourceBase):
                         schemaKind
                         schema
                         avroSchema
-                        streamIndexes {
+                        tableIndexes {
                             fields
                             primary
                             normalize
@@ -326,9 +326,9 @@ class Streams(_ResourceBase):
                         logRetentionSeconds
                         indexRetentionSeconds
                         warehouseRetentionSeconds
-                        primaryStreamInstanceID
-                        primaryStreamInstance {
-                            streamInstanceID
+                        primaryTableInstanceID
+                        primaryTableInstance {
+                            tableInstanceID
                             createdOn
                             version
                             madePrimaryOn
@@ -342,25 +342,25 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["createStream"]
+        return result["createTable"]
 
-    async def delete(self, stream_id):
+    async def delete(self, table_id):
         self._before_mutation()
         result = await self.conn.query_control(
             variables={
-                "streamID": stream_id,
+                "tableID": table_id,
             },
             query="""
-                mutation DeleteStream($streamID: UUID!) {
-                    deleteStream(streamID: $streamID)
+                mutation DeleteTable($tableID: UUID!) {
+                    deleteTable(tableID: $tableID)
                 }
             """,
         )
-        return result["deleteStream"]
+        return result["deleteTable"]
 
     async def create_instance(
         self,
-        stream_id,
+        table_id,
         version: int = None,
         make_primary=None,
         update_if_exists=None,
@@ -369,17 +369,17 @@ class Streams(_ResourceBase):
         result = await self.conn.query_control(
             variables={
                 "input": {
-                    "streamID": stream_id,
+                    "tableID": table_id,
                     "version": version,
                     "makePrimary": make_primary,
                     "updateIfExists": update_if_exists,
                 },
             },
             query="""
-                mutation CreateStreamInstance($input: CreateStreamInstanceInput!) {
-                    createStreamInstance(input: $input) {
-                        streamInstanceID
-                        streamID
+                mutation CreateTableInstance($input: CreateTableInstanceInput!) {
+                    createTableInstance(input: $input) {
+                        tableInstanceID
+                        tableID
                         createdOn
                         version
                         madePrimaryOn
@@ -388,23 +388,23 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["createStreamInstance"]
+        return result["createTableInstance"]
 
     async def update_instance(self, instance_id, make_final=None, make_primary=None):
         self._before_mutation()
         result = await self.conn.query_control(
             variables={
                 "input": {
-                    "streamInstanceID": instance_id,
+                    "tableInstanceID": instance_id,
                     "makeFinal": make_final,
                     "makePrimary": make_primary,
                 },
             },
             query="""
-                mutation UpdateStreamInstance($input: UpdateStreamInstanceInput!) {
-                    updateStreamInstance(input: $input) {
-                        streamInstanceID
-                        streamID
+                mutation UpdateTableInstance($input: UpdateTableInstanceInput!) {
+                    updateTableInstance(input: $input) {
+                        tableInstanceID
+                        tableID
                         createdOn
                         version
                         madePrimaryOn
@@ -413,7 +413,7 @@ class Streams(_ResourceBase):
                 }
             """,
         )
-        return result["updateStreamInstance"]
+        return result["updateTableInstance"]
 
     async def delete_instance(self, instance_id):
         self._before_mutation()
@@ -422,9 +422,9 @@ class Streams(_ResourceBase):
                 "instanceID": instance_id,
             },
             query="""
-                mutation deleteStreamInstance($instanceID: UUID!) {
-                    deleteStreamInstance(instanceID: $instanceID)
+                mutation deleteTableInstance($instanceID: UUID!) {
+                    deleteTableInstance(instanceID: $instanceID)
                 }
             """,
         )
-        return result["deleteStreamInstance"]
+        return result["deleteTableInstance"]

@@ -21,7 +21,7 @@ def _get_client() -> Client:
 
 
 async def consume(
-    stream_path: str,
+    table_path: str,
     cb: ConsumerCallback,
     version: int = None,
     replay_only: bool = False,
@@ -32,17 +32,17 @@ async def consume(
     max_concurrency: int = 1,
 ):
     """
-    Shorthand for creating a client, creating a stream consumer, replaying the stream's history and
+    Shorthand for creating a client, creating a table consumer, replaying the table's history and
     subscribing to changes.
 
     Args:
-        stream_path (str):
-            Path to the stream to subscribe to. The consumer will subscribe to the stream's
+        table_path (str):
+            Path to the table to subscribe to. The consumer will subscribe to the table's
             primary version.
         cb (async def fn(record)):
             Async function for processing a record.
         version (int):
-            The instance version to use for stream. If not set, uses the primary instance.
+            The instance version to use for table. If not set, uses the primary instance.
         replay_only (bool):
             If true, will not read changes, but only replay historical records.
             Defaults to False.
@@ -67,7 +67,7 @@ async def consume(
     if subscription_path is not None:
         await client.start()
     consumer = await client.consumer(
-        stream_path=stream_path,
+        table_path=table_path,
         version=version,
         subscription_path=subscription_path,
     )
@@ -85,7 +85,7 @@ async def consume(
 
 
 async def load_full(
-    stream_path: str,
+    table_path: str,
     version: int = None,
     filter: str = None,
     to_dataframe=True,
@@ -95,13 +95,13 @@ async def load_full(
     warn_max=True,
 ) -> Iterable[Mapping]:
     """
-    Shorthand for creating a client, finding a stream, and reading (filtered) records from it.
+    Shorthand for creating a client, finding a table, and reading (filtered) records from it.
 
     Args:
-        stream_path (str):
-            The path to the stream in the format of "USERNAME/PROJECT/STREAM"
+        table_path (str):
+            The path to the table in the format of "USERNAME/PROJECT/TABLE"
         version (int):
-            The instance version to read from. If not set, defaults to the stream's primary
+            The instance version to read from. If not set, defaults to the table's primary
             instance.
         filter (str):
             A filter to apply to the index. Filters allow you to quickly
@@ -125,18 +125,18 @@ async def load_full(
             the function returned without loading the full result. Defaults to true.
     """
     client = _get_client()
-    stream = await client.find_stream(stream_path)
+    table = await client.find_table(table_path)
     if version is None:
-        instance = stream.primary_instance
+        instance = table.primary_instance
         if not instance:
-            raise Exception(f"stream {stream_path} doesn't have a primary instance")
+            raise Exception(f"table {table_path} doesn't have a primary instance")
     else:
-        instance = await stream.find_instance(version)
-    if stream.use_index:
+        instance = await table.find_instance(version)
+    if table.use_index:
         cursor = await instance.query_index(filter=filter)
     elif filter is not None:
         raise ValueError(
-            f"cannot use filter for {stream_path} because it doesn't have indexing enabled"
+            f"cannot use filter for {table_path} because it doesn't have indexing enabled"
         )
     else:
         cursor = await instance.query_log()
@@ -168,7 +168,7 @@ async def query_warehouse(
             The analytical SQL query to run. To learn about the query language,
             see https://about.beneath.dev/docs/reading-writing-data/warehouse-queries/.
         analyze (bool):
-            If true, analyzes the query and returns info about referenced streams
+            If true, analyzes the query and returns info about referenced tables
             and expected bytes scanned, but doesn't actually run the query.
         max_bytes_scanned (int):
             Sets a limit on the number of bytes the query can scan.
@@ -207,41 +207,41 @@ async def query_warehouse(
 
 
 async def write_full(
-    stream_path: str,
+    table_path: str,
     records: Union[Iterable[dict], pd.DataFrame],
     key: Union[str, List[str]] = None,
     description: str = None,
     recreate_on_schema_change=False,
 ):
     """
-    Shorthand for creating a client, inferring a stream schema, creating a stream, and writing
-    data to the stream. It wraps ``Client.write_full``. Calling ``write_full`` multiple times
-    for the same stream, will create and write to multiple versions, but will not append data
+    Shorthand for creating a client, inferring a table schema, creating a table, and writing
+    data to the table. It wraps ``Client.write_full``. Calling ``write_full`` multiple times
+    for the same table, will create and write to multiple versions, but will not append data
     an existing version.
 
     Args:
-        stream_path (str):
-            The (desired) path to the stream in the format of "USERNAME/PROJECT/STREAM".
+        table_path (str):
+            The (desired) path to the table in the format of "USERNAME/PROJECT/TABLE".
             The project must already exist.
         records (list(dict) | pandas.DataFrame):
             The full dataset to write, either as a list of records or as a Pandas DataFrame.
-            This function uses ``beneath.infer_avro`` to infer a schema for the stream based
+            This function uses ``beneath.infer_avro`` to infer a schema for the table based
             on the records.
         key (str | list(str)):
-            The fields to use as the stream's key. If not set, will default to the dataframe
+            The fields to use as the table's key. If not set, will default to the dataframe
             index if ``records`` is a Pandas DataFrame, or add a column of incrementing numbers
             if ``records`` is a list.
         description (str):
-            A description for the stream.
+            A description for the table.
         recreate_on_schema_change (bool):
-            If true, and there's an existing stream at ``stream_path`` with a schema that is
+            If true, and there's an existing table at ``table_path`` with a schema that is
             incompatible with the inferred schema for ``records``, it will delete the existing
-            stream and create a new one instead of throwing an error. Defaults to false.
+            table and create a new one instead of throwing an error. Defaults to false.
     """
     client = _get_client()
     await client.start()
     await client.write_full(
-        stream_path=stream_path,
+        table_path=table_path,
         records=records,
         key=key,
         description=description,
@@ -250,37 +250,37 @@ async def write_full(
     await client.stop()
 
 
-def generate_stream_pipeline(
+def generate_table_pipeline(
     generate_fn: AsyncGenerateFn,
-    output_stream_path: str,
-    output_stream_schema: str,
+    output_table_path: str,
+    output_table_schema: str,
 ):
     p = Pipeline(parse_args=True)
     t1 = p.generate(generate_fn)
-    p.write_stream(t1, stream_path=output_stream_path, schema=output_stream_schema)
+    p.write_table(t1, table_path=output_table_path, schema=output_table_schema)
     p.main()
 
 
-def derive_stream_pipeline(
-    input_stream_path: str,
+def derive_table_pipeline(
+    input_table_path: str,
     apply_fn: AsyncApplyFn,
-    output_stream_path: str,
-    output_stream_schema: str,
+    output_table_path: str,
+    output_table_schema: str,
     max_concurrency: int = None,
 ):
     p = Pipeline(parse_args=True)
-    t1 = p.read_stream(input_stream_path)
+    t1 = p.read_table(input_table_path)
     t2 = p.apply(t1, fn=apply_fn, max_concurrency=max_concurrency)
-    p.write_stream(t2, stream_path=output_stream_path, schema=output_stream_schema)
+    p.write_table(t2, table_path=output_table_path, schema=output_table_schema)
     p.main()
 
 
-def consume_stream_pipeline(
-    input_stream_path: str,
+def consume_table_pipeline(
+    input_table_path: str,
     consume_fn: AsyncApplyFn,
     max_concurrency: int = None,
 ):
     p = Pipeline(parse_args=True)
-    t1 = p.read_stream(input_stream_path)
+    t1 = p.read_table(input_table_path)
     p.apply(t1, fn=consume_fn, max_concurrency=max_concurrency)
     p.main()

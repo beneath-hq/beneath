@@ -14,25 +14,25 @@ from typing import Awaitable, Callable, Iterable
 from beneath.checkpointer import Checkpointer
 from beneath.config import DEFAULT_READ_BATCH_SIZE
 from beneath.cursor import Cursor
-from beneath.instance import StreamInstance
-from beneath.utils import StreamQualifier
+from beneath.instance import TableInstance
+from beneath.utils import TableQualifier
 
 ConsumerCallback = Callable[[Mapping], Awaitable]
 
 
 class Consumer:
     """
-    Consumers are used to replay/subscribe to a stream. If the consumer is initialized with a
+    Consumers are used to replay/subscribe to a table. If the consumer is initialized with a
     project and subscription name, it will checkpoint its progress to avoid reprocessing the
     same data every time the process starts.
     """
 
-    instance: StreamInstance
-    """ The stream instance the consumer is subscribed to """
+    instance: TableInstance
+    """ The table instance the consumer is subscribed to """
 
     cursor: Cursor
     """
-    The cursor used to replay and subscribe the stream.
+    The cursor used to replay and subscribe the table.
     You can use it to get the current state of the the underlying
     replay and changes cursors.
     """
@@ -40,28 +40,28 @@ class Consumer:
     def __init__(
         self,
         client: Client,
-        stream_qualifier: StreamQualifier,
+        table_qualifier: TableQualifier,
         batch_size: int = DEFAULT_READ_BATCH_SIZE,
         version: int = None,
         checkpointer: Checkpointer = None,
         subscription_name: str = None,
     ):
         self._client = client
-        self._stream_qualifier = stream_qualifier
+        self._table_qualifier = table_qualifier
         self._version = version
         self._batch_size = batch_size
         self._checkpointer = checkpointer
         self._subscription_name = subscription_name
 
     async def _init(self):
-        stream = await self._client.find_stream(stream_path=str(self._stream_qualifier))
+        table = await self._client.find_table(table_path=str(self._table_qualifier))
         if self._version is not None:
-            self.instance = await stream.find_instance(version=self._version)
+            self.instance = await table.find_instance(version=self._version)
         else:
-            self.instance = stream.primary_instance
+            self.instance = table.primary_instance
             if not self.instance:
                 raise ValueError(
-                    f"Cannot consume stream {self._stream_qualifier}"
+                    f"Cannot consume table {self._table_qualifier}"
                     " because it doesn't have a primary instance"
                 )
         await self._init_cursor()
@@ -72,7 +72,7 @@ class Consumer:
 
     async def replay(self, cb: ConsumerCallback, max_concurrency: int = 1):
         """
-        Calls the callback with every historical record in the stream in the order they were
+        Calls the callback with every historical record in the table in the order they were
         written. Returns when all historical records have been processed.
 
         Args:
@@ -92,7 +92,7 @@ class Consumer:
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True
+        Replays the table and subscribes for new changes (runs forever unless stop_when_idle=True
         or the instance is finalized).
         Calls the callback for every record.
 
@@ -127,7 +127,7 @@ class Consumer:
         stop_when_idle: bool = False,
     ):
         """
-        Replays the stream and subscribes for new changes (runs forever unless stop_when_idle=True
+        Replays the table and subscribes for new changes (runs forever unless stop_when_idle=True
         or the instance is finalized).
         Yields every record (or batch if batches=True).
 
@@ -149,8 +149,8 @@ class Consumer:
         if not changes_only:
             if self.cursor.replay_cursor:
                 self._client.logger.info(
-                    "Replaying stream '%s' (version %i)",
-                    self._stream_qualifier,
+                    "Replaying table '%s' (version %i)",
+                    self._table_qualifier,
                     self.instance.version,
                 )
             async for batch in self._run_replay():
@@ -164,15 +164,15 @@ class Consumer:
 
         if stop_when_idle or self.instance.is_final:
             self._client.logger.info(
-                "Consuming changes for stream '%s' (version %i)",
-                self._stream_qualifier,
+                "Consuming changes for table '%s' (version %i)",
+                self._table_qualifier,
                 self.instance.version,
             )
             it = self._run_delta()
         else:
             self._client.logger.info(
-                "Subscribed to changes for stream '%s' (version %i)",
-                self._stream_qualifier,
+                "Subscribed to changes for table '%s' (version %i)",
+                self._table_qualifier,
                 self.instance.version,
             )
             it = self._run_subscribe()
@@ -184,9 +184,9 @@ class Consumer:
                     yield record
         if self.instance.is_final:
             self._client.logger.info(
-                "Stopped consuming changes for stream '%s' (version %i) because it has been"
+                "Stopped consuming changes for table '%s' (version %i) because it has been"
                 " finalized",
-                self._stream_qualifier,
+                self._table_qualifier,
                 self.instance.version,
             )
 
@@ -200,7 +200,7 @@ class Consumer:
         if not reset and self._checkpointer:
             state = await self._checkpointer.get(self._subscription_cursor_key)
             if state:
-                self.cursor = self.instance.stream.restore_cursor(
+                self.cursor = self.instance.table.restore_cursor(
                     replay_cursor=state.get("replay"),
                     changes_cursor=state.get("changes"),
                 )

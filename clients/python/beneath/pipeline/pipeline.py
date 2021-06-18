@@ -47,17 +47,17 @@ class Generate(Transform):
             yield records
 
 
-class ReadStream(Transform):
+class ReadTable(Transform):
     def __init__(
         self,
         pipeline: Pipeline,
-        stream_path: str,
+        table_path: str,
         batch_size: int = config.DEFAULT_READ_BATCH_SIZE,
     ):
         super().__init__(pipeline)
-        self.stream_path = stream_path
+        self.table_path = table_path
         self.batch_size = batch_size
-        self.qualifier = self.pipeline._add_input_stream(stream_path)
+        self.qualifier = self.pipeline._add_input_table(table_path)
 
     async def process(self, incoming_records: Iterable[Mapping]):
         assert incoming_records is None
@@ -94,19 +94,19 @@ class Apply(Transform):
                     yield [batch]
 
 
-class WriteStream(Transform):
+class WriteTable(Transform):
     def __init__(
         self,
         pipeline: Pipeline,
-        stream_path: str,
+        table_path: str,
         schema: str = None,
         schema_kind: str = "GraphQL",
         description: str = None,
         retention: timedelta = None,
     ):
         super().__init__(pipeline)
-        self.qualifier = self.pipeline._add_output_stream(
-            stream_path,
+        self.qualifier = self.pipeline._add_output_table(
+            table_path,
             schema=schema,
             schema_kind=schema_kind,
             description=description,
@@ -128,11 +128,11 @@ class WriteStream(Transform):
 class Pipeline(BasePipeline):
     """
     Pipelines are a construct built on top of the Beneath primitives to manage the reading of input
-    streams, creation of output streams, data generation and derivation logic, and more.
+    tables, creation of output tables, data generation and derivation logic, and more.
 
     This simple implementation supports four combinatorial operations: ``generate``,
-    ``read_stream``, ``apply``, and ``write_stream``. It's suitable for generating streams,
-    consuming streams, and one-to-N derivation of one stream to another. It's not currently
+    ``read_table``, ``apply``, and ``write_table``. It's suitable for generating tables,
+    consuming tables, and one-to-N derivation of one table to another. It's not currently
     suitable for advanced aggregation or multi-machine parallel processing.
 
     It supports (light) stateful transformations via a key-value based `checkpointer`, which is
@@ -144,11 +144,11 @@ class Pipeline(BasePipeline):
         strategy (Strategy):
             The processing strategy to apply when action="test" or action="run"
         version (int):
-            The version number for output streams. Incrementing the version number will cause
-            the pipeline to create new output stream instances and replay input streams.
+            The version number for output tables. Incrementing the version number will cause
+            the pipeline to create new output table instances and replay input tables.
         service_path (str):
             Path for a service to create for the pipeline when action="stage". The service will
-            be assigned correct permissions for reading input streams and writing to output streams
+            be assigned correct permissions for reading input tables and writing to output tables
             and checkpoints. The service can be used to create a secret for deploying the pipeline
             to production.
         service_read_quota (int):
@@ -170,7 +170,7 @@ class Pipeline(BasePipeline):
 
         # pipeline.py
 
-        # This pipeline generates a stream `ticks` with a record for every minute
+        # This pipeline generates a table `ticks` with a record for every minute
         # since 1st Jan 2021.
 
         # To test locally:
@@ -209,9 +209,9 @@ class Pipeline(BasePipeline):
             p.description = "Pipeline that emits a tick for every minute since 1st Jan 2021"
 
             ticks = p.generate(ticker)
-            p.write_stream(
+            p.write_table(
                 ticks,
-                stream_path="ticks",
+                table_path="ticks",
                 schema='''
                     type Tick @schema {
                         time: Timestamp! @key
@@ -245,15 +245,15 @@ class Pipeline(BasePipeline):
         self._initial.append(transform)
         return transform
 
-    def read_stream(self, stream_path: str) -> Transform:
+    def read_table(self, table_path: str) -> Transform:
         """
-        Pipeline step for consuming the primary instance of a stream.
+        Pipeline step for consuming the primary instance of a table.
 
         Args:
-            stream_path (str):
-                The stream to consume
+            table_path (str):
+                The table to consume
         """
-        transform = ReadStream(self, stream_path)
+        transform = ReadTable(self, table_path)
         self._initial.append(transform)
         return transform
 
@@ -268,7 +268,7 @@ class Pipeline(BasePipeline):
 
         Args:
             prev_transform (Transform):
-                The pipeline step to apply on. Can be a `generate`, `read_stream`, or other
+                The pipeline step to apply on. Can be a `generate`, `read_table`, or other
                 `apply` step.
             fn (async def fn(record) -> (None | record | [record])):
                 Function applied to each incoming record. Can return ``None``, one record
@@ -278,40 +278,40 @@ class Pipeline(BasePipeline):
         self._dag[prev_transform].append(transform)
         return transform
 
-    def write_stream(
+    def write_table(
         self,
         prev_transform: Transform,
-        stream_path: str,
+        table_path: str,
         schema: str = None,
         description: str = None,
         retention: timedelta = None,
         schema_kind: str = "GraphQL",
     ):
         """
-        Pipeline step that writes incoming records from the previous step to a stream.
+        Pipeline step that writes incoming records from the previous step to a table.
 
         Args:
             prev_transform (Transform):
-                The pipeline step to apply on. Can be a `generate`, `read_stream`, or other
+                The pipeline step to apply on. Can be a `generate`, `read_table`, or other
                 `apply` step.
-            stream_path (str):
-                The stream to output to. If ``schema`` is provided, the stream will be created when
+            table_path (str):
+                The table to output to. If ``schema`` is provided, the table will be created when
                 running the ``stage`` action. If the path doesn't include a username and project
-                name, it will attempt to find or create the stream in the pipeline's service's
+                name, it will attempt to find or create the table in the pipeline's service's
                 project (see ``service_path`` in the constructor).
             schema (str):
-                A GraphQL schema for creating the output stream.
+                A GraphQL schema for creating the output table.
             description (str):
-                A description for the stream (only applicable if schema is set).
+                A description for the table (only applicable if schema is set).
             retention (timedelta):
-                The amount of time to retain written data in the stream. By default, records
+                The amount of time to retain written data in the table. By default, records
                 are saved forever.
             schema_kind (str):
                 The parser to use for ``schema``. Currently must be "GraphQL" (default).
         """
-        transform = WriteStream(
+        transform = WriteTable(
             self,
-            stream_path,
+            table_path,
             schema,
             description=description,
             retention=retention,
@@ -340,13 +340,13 @@ class Pipeline(BasePipeline):
             if not instance.is_primary:
                 await instance.update(make_primary=True)
                 self.logger.info(
-                    "Made version %s of output stream '%s' primary",
+                    "Made version %s of output table '%s' primary",
                     instance.version,
                     qualifier,
                 )
             else:
                 self.logger.info(
-                    "Using existing primary version %s for output stream '%s'",
+                    "Using existing primary version %s for output table '%s'",
                     instance.version,
                     qualifier,
                 )
@@ -359,7 +359,7 @@ class Pipeline(BasePipeline):
             if not instance.is_primary or not instance.is_final:
                 await instance.update(make_primary=True, make_final=True)
                 self.logger.info(
-                    "Made version %s for output stream '%s' final and primary",
+                    "Made version %s for output table '%s' final and primary",
                     instance.version,
                     qualifier,
                 )

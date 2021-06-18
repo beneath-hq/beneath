@@ -6,12 +6,12 @@ import apache_beam as beam
 
 
 class ReadFromBeneath(beam.PTransform):
-    def __init__(self, stream):
-        self.stream = stream
+    def __init__(self, table):
+        self.table = table
 
     def expand(self, pvalue):
-        stream = self.stream
-        query = "select * from `{}`".format(stream.bigquery_table)
+        table = self.table
+        query = "select * from `{}`".format(table.bigquery_table)
         source = beam.io.BigQuerySource(query=query, use_standard_sql=True)
         # can probably get query schema with source.schema
         return pvalue | beam.io.Read(source)

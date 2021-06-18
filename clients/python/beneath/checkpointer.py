@@ -15,8 +15,8 @@ from typing import Any, Dict, Tuple
 import msgpack
 
 from beneath.config import DEFAULT_CHECKPOINT_COMMIT_DELAY_MS
-from beneath.instance import StreamInstance
-from beneath.utils import AIODelayBuffer, StreamQualifier
+from beneath.instance import TableInstance
+from beneath.utils import AIODelayBuffer, TableQualifier
 
 SERVICE_CHECKPOINT_LOG_RETENTION = timedelta(hours=6)
 SERVICE_CHECKPOINT_SCHEMA = """
@@ -29,7 +29,7 @@ SERVICE_CHECKPOINT_SCHEMA = """
 
 class Checkpointer:
     """
-    Checkpointers store (small) key-value records in a meta stream (in the specified project).
+    Checkpointers store (small) key-value records in a meta table (in the specified project).
     They are useful for maintaining consumer and pipeline state, such as the cursor for a
     subscription or the last time a scraper ran.
 
@@ -41,21 +41,21 @@ class Checkpointer:
     Checkpointers are not currently suitable for synchronizing parallel processes.
     """
 
-    instance: StreamInstance
-    """ The meta-stream instance that checkpoints are written to """
+    instance: TableInstance
+    """ The meta-table instance that checkpoints are written to """
 
     def __init__(
         self,
         client: Client,
-        metastream_qualifier: StreamQualifier,
-        metastream_create: bool,
-        metastream_description: str,
+        metatable_qualifier: TableQualifier,
+        metatable_create: bool,
+        metatable_description: str,
     ):
         self.instance = None
         self._client = client
-        self._metastream_qualifier = metastream_qualifier
-        self._metastream_description = metastream_description
-        self._create = metastream_create
+        self._metatable_qualifier = metatable_qualifier
+        self._metatable_description = metatable_description
+        self._create = metatable_create
         self._writer = self._Writer(self)
         self._cache: Dict[str, Any] = {}
 
@@ -94,35 +94,35 @@ class Checkpointer:
 
     async def _start(self):
         if not self.instance:
-            await self._stage_stream()
+            await self._stage_table()
         await self._writer.start()
 
     async def _stop(self):
         await self._writer.stop()
 
-    # CHECKPOINT STREAM
+    # CHECKPOINT TABLE
 
-    async def _stage_stream(self):
+    async def _stage_table(self):
         if self._create or self._client.dry:
-            stream = await self._client.create_stream(
-                stream_path=str(self._metastream_qualifier),
+            table = await self._client.create_table(
+                table_path=str(self._metatable_qualifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
-                description=self._metastream_description,
+                description=self._metatable_description,
                 meta=True,
                 log_retention=SERVICE_CHECKPOINT_LOG_RETENTION,
                 use_warehouse=False,
                 update_if_exists=True,
             )
         else:
-            stream = await self._client.find_stream(stream_path=str(self._metastream_qualifier))
+            table = await self._client.find_table(table_path=str(self._metatable_qualifier))
 
-        if not stream.primary_instance:
-            raise Exception("Expected checkpoints stream to have a primary instance")
-        self.instance = stream.primary_instance
+        if not table.primary_instance:
+            raise Exception("Expected checkpoints table to have a primary instance")
+        self.instance = table.primary_instance
 
         self._client.logger.info(
             "Using '%s' (version %i) for checkpointing",
-            self._metastream_qualifier,
+            self._metatable_qualifier,
             self.instance.version,
         )
 

@@ -44,19 +44,19 @@ class ProjectQualifier:
         return self.organization == other.organization and self.project == other.project
 
 
-class StreamQualifier:
-    def __init__(self, organization: str, project: str, stream: str):
+class TableQualifier:
+    def __init__(self, organization: str, project: str, table: str):
         self.organization = pretty_entity_name(organization)
         self.project = pretty_entity_name(project)
-        self.stream = pretty_entity_name(stream)
+        self.table = pretty_entity_name(table)
 
     @staticmethod
     def from_path(path: str):
-        parts = split_resource("stream", path)
-        return StreamQualifier(parts[0], parts[1], parts[2])
+        parts = split_resource("table", path)
+        return TableQualifier(parts[0], parts[1], parts[2])
 
     def __repr__(self):
-        return f"{self.organization}/{self.project}/stream:{self.stream}"
+        return f"{self.organization}/{self.project}/table:{self.table}"
 
     def __hash__(self):
         return hash(repr(self))
@@ -65,7 +65,7 @@ class StreamQualifier:
         return (
             self.organization == other.organization
             and self.project == other.project
-            and self.stream == other.stream
+            and self.table == other.table
         )
 
 

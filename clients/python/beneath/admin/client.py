@@ -2,7 +2,7 @@ from beneath.admin.organizations import Organizations
 from beneath.admin.projects import Projects
 from beneath.admin.secrets import Secrets
 from beneath.admin.services import Services
-from beneath.admin.streams import Streams
+from beneath.admin.tables import Tables
 from beneath.admin.users import Users
 from beneath.connection import Connection
 
@@ -21,5 +21,5 @@ class AdminClient:
         self.projects = Projects(self.connection, dry=dry)
         self.secrets = Secrets(self.connection, dry=dry)
         self.services = Services(self.connection, dry=dry)
-        self.streams = Streams(self.connection, dry=dry)
+        self.tables = Tables(self.connection, dry=dry)
         self.users = Users(self.connection, dry=dry)

@@ -27,7 +27,7 @@ def parse_pipeline_args():
         "--version",
         type=str,
         default="0",
-        help="the version number to use for the output streams (defaults to 0)",
+        help="the version number to use for the output tables (defaults to 0)",
     )
     parser.add_argument(
         "--read-quota-mb",

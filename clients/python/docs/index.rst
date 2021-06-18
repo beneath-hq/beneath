@@ -14,7 +14,7 @@ Contents:
    :maxdepth: 2
 
    client
-   stream
+   table
    instance
    job
    cursor

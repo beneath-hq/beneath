@@ -1,11 +1,11 @@
-# Allows us to use Stream as a type hint without an import cycle
+# Allows us to use Table as a type hint without an import cycle
 # pylint: disable=wrong-import-position,ungrouped-imports
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from beneath.client import Client
-    from beneath.instance import StreamInstance
+    from beneath.instance import TableInstance
 
 from collections import defaultdict
 from collections.abc import Mapping
@@ -17,7 +17,7 @@ from beneath.proto import gateway_pb2
 from beneath.utils import AIODelayBuffer
 
 InstanceIDAndRecordPB = Tuple[uuid.UUID, gateway_pb2.Record]
-InstanceRecordAndSize = Tuple["StreamInstance", Mapping, int]
+InstanceRecordAndSize = Tuple["TableInstance", Mapping, int]
 
 
 class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
@@ -63,11 +63,11 @@ class Writer(AIODelayBuffer[InstanceIDAndRecordPB]):
         )
 
     # pylint: disable=arguments-differ
-    async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):
+    async def write(self, instance: TableInstance, records: Union[Mapping, Iterable[Mapping]]):
         if isinstance(records, Mapping):
             records = [records]
         for record in records:
-            (pb, size) = instance.stream.schema.record_to_pb(record)
+            (pb, size) = instance.table.schema.record_to_pb(record)
             await super().write(value=(instance.instance_id, pb), size=size)
 
 
@@ -99,8 +99,8 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
         for value in self._records:
             (instance, record, size) = value
             self._client.logger.info(
-                "Flushed record (stream=%s, size=%i bytes): %s",
-                str(instance.stream._qualifier),
+                "Flushed record (table=%s, size=%i bytes): %s",
+                str(instance.table._qualifier),
                 size,
                 record,
             )
@@ -112,10 +112,10 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
         )
 
     # pylint: disable=arguments-differ
-    async def write(self, instance: StreamInstance, records: Union[Mapping, Iterable[Mapping]]):
+    async def write(self, instance: TableInstance, records: Union[Mapping, Iterable[Mapping]]):
         if isinstance(records, Mapping):
             records = [records]
         for record in records:
-            (_, size) = instance.stream.schema.record_to_pb(record)
+            (_, size) = instance.table.schema.record_to_pb(record)
             value: InstanceRecordAndSize = (instance, record, size)
             await super().write(value=value, size=size)
