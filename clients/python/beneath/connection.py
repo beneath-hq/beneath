@@ -67,7 +67,7 @@ class Connection:
 
     def _create_grpc_connection(self):
         self.request_metadata = [("authorization", "Bearer {}".format(self.secret))]
-        insecure = "localhost" in config.BENEATH_GATEWAY_HOST_GRPC
+        insecure = config.DEV
         options = [
             ("grpc.max_receive_message_length", MAX_RECV_MSG_SIZE),
             ("grpc.max_send_message_length", MAX_SEND_MSG_SIZE),

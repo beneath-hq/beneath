@@ -32,6 +32,6 @@ func newVersionOrPanic(str string) *version.Version {
 
 // Specs contains a Spec for each supported client library
 var Specs = map[string]Spec{
-	"beneath-js":     newSpec("1.1.10", "1.1.0", "1.1.0"),
-	"beneath-python": newSpec("1.3.8", "1.3.0", "1.3.0"),
+	"beneath-js":     newSpec("1.2.0", "1.2.0", "1.2.0"),
+	"beneath-python": newSpec("1.4.0", "1.4.0", "1.4.0"),
 }
