@@ -8,15 +8,15 @@ menu:
 weight: 700
 ---
 
-This quickstart builds on the previous one to [train and save a machine learning model]({{< ref "/docs/quick-starts/train-machine-learning-model" >}}). Here we cover the next steps: load the model and apply it to a data stream.
+This quickstart builds on the previous one to [train and save a machine learning model]({{< ref "/docs/quick-starts/train-machine-learning-model" >}}). Here we cover the next steps: load the model and apply it to a table in real-time.
 
-Specifically, we'll load our model from a Beneath checkpoint, and use the Pipeline API to derive a new stream. We'll walk through the pipeline script in sections, but here it is in full: [make_predictions.py](https://github.com/beneath-hq/beneath/blob/master/examples/quick-starts/make_predictions.py)
+Specifically, we'll load our model from a Beneath checkpoint, and use the Pipeline API to derive a new table. We'll walk through the pipeline script in sections, but here it is in full: [make_predictions.py](https://github.com/beneath-hq/beneath/blob/master/examples/quick-starts/make_predictions.py)
 
 If you haven't yet familiarized yourself with Beneath pipelines, you should start with the quickstart [Use the Pipeline API]({{< ref "/docs/quick-starts/use-pipeline-api" >}}).
 
 ## Initialize a Beneath pipeline
 
-At the top of the file, we initialize a Beneath pipeline and define the schema for a new stream of predictions:
+At the top of the file, we initialize a Beneath pipeline and define the schema for a new table of predictions:
 
 ```python
 import beneath
@@ -51,7 +51,7 @@ async def get_clf():
     if _clf is None:
         checkpointer = await p.client.checkpointer(
             project_path="USERNAME/PROJECT_NAME",
-            metastream_name="predictive-model",
+            metatable_name="predictive-model",
         )
 
         s = await checkpointer.get("clf_serialized")
@@ -80,19 +80,19 @@ async def predict_outcome(record):
 
 ## Create the pipeline to make predictions
 
-Here we construct the Beneath pipeline that reads our stream of features, applies the `predict_outcome` function, and outputs the results to a new stream named `predictions`:
+Here we construct the Beneath pipeline that reads our table of features, applies the `predict_outcome` function, and outputs the results to a new table named `predictions`:
 
 ```python
 if __name__ == "__main__":
     p.description = "A pipeline that makes predictions \
-    based on the features stream"
+    based on the features table"
 
-    # consume the features stream
-    features = p.read_stream("USERNAME/PROJECT_NAME/features")
+    # consume the features table
+    features = p.read_table("USERNAME/PROJECT_NAME/features")
 
-    # derive a new stream and write to Beneath
+    # derive a new table and write to Beneath
     predictions = p.apply(features, predict_outcome)
-    p.write_stream(
+    p.write_table(
         predictions,
         "predictions",
         schema=PREDICTIONS_SCHEMA,

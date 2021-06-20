@@ -8,13 +8,13 @@ menu:
 weight: 200
 ---
 
-If you're looking for an introduction to streams in Beneath, head over to the [Concepts]({{< ref "/docs/concepts" >}}) section.
+If you're looking for an introduction to tables in Beneath, head over to the [Concepts]({{< ref "/docs/concepts" >}}) section.
 
 ## Schemas
 
-Every stream in Beneath has a _schema_ and a _key_:
+Every table in Beneath has a _schema_ and a _key_:
 
-- The **schema** defines fields and data types for records in the stream. It is a variant of the [GraphQL](https://graphql.org/learn/schema/) schema definition language.
+- The **schema** defines fields and data types for records in the table. It is a variant of the [GraphQL](https://graphql.org/learn/schema/) schema definition language.
 - The **key** defines one or more fields that uniquely identify the record (also known as a _primary key_ or _unique key_). It is used for log compaction and table indexing.
 
 Here is an example:

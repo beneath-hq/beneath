@@ -1,6 +1,6 @@
 ---
 title: Filtered index lookups
-description: How to quickly retrieve indexed records from streams
+description: How to quickly retrieve indexed records from tables
 menu:
   docs:
     parent: reading-writing-data
@@ -12,7 +12,7 @@ Beneath automatically indexes records for fast lookup and filtering by key. Chec
 
 ## What can you filter?
 
-Indexes in Beneath enable fast (milliseconds) single-key lookup and range-based filtering. The index only contains one record for each key -- if a stream contains multiple records with the same key, the index will contain the most recent record for the key.
+Indexes in Beneath enable fast (milliseconds) single-key lookup and range-based filtering. The index only contains one record for each key -- if a table contains multiple records with the same key, the index will contain the most recent record for the key.
 
 You can only filter records based on their schema key (see [Schema definition]({{< ref "/docs/reading-writing-data/schema-definition" >}})).
 

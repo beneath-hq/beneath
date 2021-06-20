@@ -1,6 +1,6 @@
 ---
 title: Access management
-description: A guide to managing access to streams in Beneath
+description: A guide to managing access to tables in Beneath
 menu:
   docs:
     parent: reading-writing-data
@@ -8,7 +8,7 @@ menu:
 weight: 600
 ---
 
-The gist of access management in Beneath is as follows: [users]({{< ref "/docs/misc/resources.md#users" >}}) and [services]({{< ref "/docs/misc/resources.md#services" >}}) can be granted permissions on resources like streams, projects and organizations. Different resources have different permissions, like `read` and `write` for streams. Additionally, [projects]({{< ref "/docs/misc/resources.md#projects" >}}) can be marked `public`, which lets anyone access their streams.
+The gist of access management in Beneath is as follows: [users]({{< ref "/docs/misc/resources.md#users" >}}) and [services]({{< ref "/docs/misc/resources.md#services" >}}) can be granted permissions on resources like tables, projects and organizations. Different resources have different permissions, like `read` and `write` for tables. Additionally, [projects]({{< ref "/docs/misc/resources.md#projects" >}}) can be marked `public`, which lets anyone access their tables.
 
 You issue and use [secrets]({{< ref "/docs/misc/resources.md#secrets" >}}) to authenticate as a _user_ or a _service_ from your code, notebook, command-line, or similar. _User_ secrets are useful during development to connect to Beneath from your code. _Service_ secrets should be used in production systems or publicly-exposed code to more strictly limit access permissions and monitor usage.
 
@@ -26,7 +26,7 @@ There are three types of secrets:
 
 - **Full (CLI) secrets:** These have full access to your user, and are normally used for command-line authentication
 - **Private read secrets:** These are limited to `view` permissions on all the resources you have access to
-- **Public read secrets:** These are limited to `view` permissions on public projects and streams on Beneath
+- **Public read secrets:** These are limited to `view` permissions on public projects and tables on Beneath
 
 **Never share your user secrets!** You should not share or expose user secrets nor use them in production systems. Use a service secret if you need a secret in a production system or if you need to expose a secret (e.g. in a shared notebook or in your frontend code).
 
@@ -34,9 +34,9 @@ There are three types of secrets:
 
 Services are useful when deploying or publishing code that reads or writes to Beneath. You can control their access permissions, and monitor and limit their usage. Read ["Services"]({{< ref "/docs/misc/resources.md#services" >}}) for more details.
 
-By default, a service cannot read any streams, and you must set all service permissions manually, _including permissions for public streams_ (unlike users).
+By default, a service cannot read any tables, and you must set all service permissions manually, _including permissions for public tables_ (unlike users).
 
-You can create services in the web console or using the CLI. For example, to create a service and grant read and write permissions to a stream from the CLI, run (change or remove the flags depending on your use case):
+You can create services in the web console or using the CLI. For example, to create a service and grant read and write permissions to a table from the CLI, run (change or remove the flags depending on your use case):
 
 ```bash
 beneath service create ORGANIZATION/PROJECT/NEW_SERVICE --read-quota-mb 100 --write-quota-mb 100
@@ -85,9 +85,9 @@ beneath organization update-permissions ORGANIZATION USERNAME --view --create --
 
 The user doesn't have to be a part of the organization in advance.
 
-### Granting a user access to a project and its streams
+### Granting a user access to a project and its tables
 
-In Beneath, _user_ access to streams is managed at the project-level. You cannot grant a user access to only one stream (however, if you need a secret with permissions for just a single stream, use a _service_).
+In Beneath, _user_ access to tables is managed at the project-level. You cannot grant a user access to only one table (however, if you need a secret with permissions for just a single table, use a _service_).
 
 To add a user to a project, use the Beneath CLI to run the following command (change the flags to configure permissions):
 

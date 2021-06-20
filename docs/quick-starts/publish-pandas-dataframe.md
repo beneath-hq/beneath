@@ -38,14 +38,14 @@ Use the Beneath Python SDK to write the data into Beneath. We can optionally pro
 ```python
 import beneath
 await beneath.write_full(
-    stream_path="USERNAME/financial-reference-data/s-and-p-500-constituents",
+    table_path="USERNAME/financial-reference-data/s-and-p-500-constituents",
     records=df,
     key=["symbol"],
     description="The full list of companies in the S&P 500 (updated March 31st, 2021)"
 )
 ```
 
-After loading the data, go take a look at the data in the web console: https://beneath.dev/examples/financial-reference-data/stream:s-and-p-500-constituents
+After loading the data, go take a look at the data in the web console: https://beneath.dev/examples/financial-reference-data/table:s-and-p-500-constituents
 
 ## Give your teammates access
 

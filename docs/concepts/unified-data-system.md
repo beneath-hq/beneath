@@ -8,7 +8,7 @@ menu:
 weight: 100
 ---
 
-Production data science projects often need to integrate several different data technologies to adequately consume and query data. To provide a seamless experience, when you write data to a stream in Beneath, it automatically replicates it to:
+Production data science projects often need to integrate several different data technologies to adequately consume and query data. To provide a seamless experience, when you write data to a table in Beneath, it automatically replicates it to:
 
 - a **streaming log** for replay/subscribe (e.g. to sync or enrich data)
 - a **data warehouse** for analytical (OLAP) queries with SQL (e.g. to build dashboards)
@@ -18,7 +18,7 @@ Beneath lets you access these systems through a single layer of abstraction, so 
 
 ## Streaming log
 
-The streaming log keeps real-time, ordered track of every record written to a stream, allowing you to replay the history of a stream as if you had been subscribed since its beginning, and then stay subscribed for updates _without missing a single change_. If your code is down for a while or only runs periodically, you can get every change that happened in the meantime once you reconnect (it's an _at-least-once guarantee_).
+The streaming log keeps real-time, ordered track of every record written to a table, allowing you to replay the history of a table as if you had been subscribed since its beginning, and then stay subscribed for updates _without missing a single change_. If your code is down for a while or only runs periodically, you can get every change that happened in the meantime once you reconnect (it's an _at-least-once guarantee_).
 
 The streaming log makes many things simpler, like filtering data in real-time, enriching incoming data with machine learning, or synchronizing data to an external system.
 
@@ -26,7 +26,7 @@ The streaming log makes many things simpler, like filtering data in real-time, e
 
 ## Data warehouse
 
-The data warehouse stores records with a focus on analytical processing with SQL, making it ideal for business intelligence and ad-hoc exploration. It's slow for finding individual records, but lets you scan and analyze an entire stream in seconds.
+The data warehouse stores records with a focus on analytical processing with SQL, making it ideal for business intelligence and ad-hoc exploration. It's slow for finding individual records, but lets you scan and analyze an entire table in seconds.
 
 (Systems that serve as a data warehouse are sometimes called a _data lake_ or _OLAP database_, and stand-alone implementations include BigQuery, Snowflake, Redshift and Hive).
 
@@ -34,7 +34,7 @@ The data warehouse stores records with a focus on analytical processing with SQL
 
 The operational data store enables fast, indexed lookups of individual records or specific ranges of records. It allows you to fetch records in milliseconds, thousand of times per second, which is useful when rendering a website or serving an API.
 
-In Beneath, records are currently indexed based on their unique key (see [Streams]({{< ref "/docs/concepts/streams" >}}) for more). For streams that contain multiple records with the same unique key (for example due to updates), the operational data store only indexes the most recent record.
+In Beneath, records are currently indexed based on their unique key (see [Tables]({{< ref "/docs/concepts/tables" >}}) for more). For tables that contain multiple records with the same unique key (for example due to updates), the operational data store only indexes the most recent record.
 
 (While broader categories, _key-value stores_ and _OLTP databases_ often serve as operational data stores, and popular stand-alone implementations include MongoDB, Postgres, Cassandra and Bigtable).
 

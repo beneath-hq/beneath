@@ -9,7 +9,7 @@ The documentation is organized as follows:
 
 - [Quick starts]({{< ref "/docs/quick-starts" >}}). Provides several hands-on tutorials that you can use to get started with Beneath quickly.
 - [Concepts]({{< ref "/docs/concepts" >}}). Explainers for the concepts Beneath builds upon.
-- [Reading & writing data]({{< ref "/docs/reading-writing-data" >}}). Covers creating, reading and writing data streams, including integrations like Python.
+- [Reading & writing data]({{< ref "/docs/reading-writing-data" >}}). Covers creating, reading and writing data tables, including integrations like Python.
 - [Usage & billing]({{< ref "/docs/usage" >}}). Documents how Beneath monitors usage and calculates your monthly bill.
 - [Miscellaneous]({{< ref "/docs/misc" >}}). Contains pages that don't fit elsewhere, such as the FAQ.
 

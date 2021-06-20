@@ -48,60 +48,60 @@ weight: 200
 
 ## Projects
 
-**Definition:** A [project]({{< relref "#projects" >}}) is a collection of [streams]({{< relref "#streams" >}}) and [services]({{< relref "#services" >}}). You can think of them like repositories in Git.
+**Definition:** A [project]({{< relref "#projects" >}}) is a collection of [tables]({{< relref "#tables" >}}) and [services]({{< relref "#services" >}}). You can think of them like repositories in Git.
 
 **Relations:**
 
 - A [project]({{< relref "#projects" >}}) belongs to one [organization]({{< relref "#organizations" >}}).
-- A [project]({{< relref "#projects" >}}) has many (zero or more) [streams]({{< relref "#streams" >}}).
+- A [project]({{< relref "#projects" >}}) has many (zero or more) [tables]({{< relref "#tables" >}}).
 - An [project]({{< relref "#projects" >}}) has many (zero or more) [services]({{< relref "#services" >}}).
 
 **Access management:**
 
 - A [user]({{< relref "#users" >}}) can access a [project]({{< relref "#projects" >}}).
-  - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the contents of the project, including viewing and querying records in its [streams]({{< relref "#streams" >}}).
-  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and edit [streams]({{< relref "#streams" >}}) and [services]({{< relref "#services" >}}) in the project, including writing data directly to (non-derived) [streams]({{< relref "#streams" >}}).
+  - The `view` permission grants the [user]({{< relref "#users" >}}) permission to browse the contents of the project, including viewing and querying records in its [tables]({{< relref "#tables" >}}).
+  - The `create` permission grants the [user]({{< relref "#users" >}}) permission to create and edit [tables]({{< relref "#tables" >}}) and [services]({{< relref "#services" >}}) in the project, including writing data directly to (non-derived) [tables]({{< relref "#tables" >}}).
   - The `admin` permission grants the [user]({{< relref "#users" >}}) permission to add, remove and change permissions for other [users]({{< relref "#users" >}}).
 
 **Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT`
 
 **CLI:** Run `beneath project --help` for details.
 
-## Streams
+## Tables
 
-**Definition:** A [stream]({{< relref "#streams" >}}) is the prototype of a collection of records with a common schema. For more information about [streams]({{< relref "#streams" >}}) and the related [stream instances]({{< relref "#stream-instances" >}}), see [Streams]({{< ref "/docs/concepts/streams" >}}).
+**Definition:** A [table]({{< relref "#tables" >}}) is the prototype of a collection of records with a common schema. For more information about [tables]({{< relref "#tables" >}}) and the related [table instances]({{< relref "#table-instances" >}}), see [Tables]({{< ref "/docs/concepts/tables" >}}).
 
 **Relations:**
 
-- A [stream]({{< relref "#streams" >}}) belongs to one [project]({{< relref "#projects" >}}).
-- A [stream]({{< relref "#streams" >}}) has many (zero or more) [stream instances]({{< relref "#stream-instances" >}}).
+- A [table]({{< relref "#tables" >}}) belongs to one [project]({{< relref "#projects" >}}).
+- A [table]({{< relref "#tables" >}}) has many (zero or more) [table instances]({{< relref "#table-instances" >}}).
 
 **Access management:**
 
-- A [user]({{< relref "#users" >}}) can access a [stream]({{< relref "#streams" >}}) through its permissions for the parent [project]({{< relref "#projects" >}}).
+- A [user]({{< relref "#users" >}}) can access a [table]({{< relref "#tables" >}}) through its permissions for the parent [project]({{< relref "#projects" >}}).
   - The `view` permission on [project]({{< relref "#projects" >}}) grants permission to view and query records.
   - The `create` permission on [project]({{< relref "#projects" >}}) grants permission to write records.
-- A [service]({{< relref "#services" >}}) can access a [stream]({{< relref "#streams" >}}). (Note the difference: [services]({{< relref "#services" >}}) have direct permissions for a [stream]({{< relref "#streams" >}}), while [users]({{< relref "#users" >}}) get indirect permissions on a [project]({{< relref "#projects" >}})-level)
+- A [service]({{< relref "#services" >}}) can access a [table]({{< relref "#tables" >}}). (Note the difference: [services]({{< relref "#services" >}}) have direct permissions for a [table]({{< relref "#tables" >}}), while [users]({{< relref "#users" >}}) get indirect permissions on a [project]({{< relref "#projects" >}})-level)
   - The `read` permission grants the [service]({{< relref "#services" >}}) permission to read and query records.
   - The `write` permission grants the [service]({{< relref "#services" >}}) permission to write records.
 
-**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/stream:STREAM`
+**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/table:STREAM`
 
-**CLI:** Run `beneath stream --help` for details.
+**CLI:** Run `beneath table --help` for details.
 
-## Stream instances
+## Table instances
 
-**Definition:** A [stream instance]({{< relref "#stream-instances" >}}) represents a single version of a [stream]({{< relref "#streams" >}}). For more information, see [Streams]({{< ref "/docs/concepts/streams" >}}).
+**Definition:** A [table instance]({{< relref "#table-instances" >}}) represents a single version of a [table]({{< relref "#tables" >}}). For more information, see [Tables]({{< ref "/docs/concepts/tables" >}}).
 
 **Relations:**
 
-- A [stream instance]({{< relref "#stream-instances" >}}) belongs to one [stream]({{< relref "#streams" >}}).
+- A [table instance]({{< relref "#table-instances" >}}) belongs to one [table]({{< relref "#tables" >}}).
 
-**Access management:** A [stream instance]({{< relref "#stream-instances" >}}) inherits the permissions of its parent [stream]({{< relref "#streams" >}}).
+**Access management:** A [table instance]({{< relref "#table-instances" >}}) inherits the permissions of its parent [table]({{< relref "#tables" >}}).
 
-**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/stream:STREAM` (only shows the primary [stream instance]({{< relref "#stream-instances" >}}))
+**Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/table:STREAM` (only shows the primary [table instance]({{< relref "#table-instances" >}}))
 
-**CLI:** Run `beneath stream instance --help` for details.
+**CLI:** Run `beneath table instance --help` for details.
 
 ## Services
 
@@ -109,11 +109,11 @@ weight: 200
 
 A [service]({{< relref "#services" >}}) has the following properties:
 
-- You grant it custom access permissions (on a stream level) that are not tied to the permissions of a specific user
+- You grant it custom access permissions (on a table level) that are not tied to the permissions of a specific user
 - You can create secrets for the service, which you embed in your code to use Beneath
 - You get usage metrics (reads and writes) for the service
 - You can set usage limits (reads and writes) for the service on a monthly basis
-- You have to explicitly grant permissions to access public streams (unlike [users]({{< relref "#users" >}}), which automatically have access to public streams)
+- You have to explicitly grant permissions to access public tables (unlike [users]({{< relref "#users" >}}), which automatically have access to public tables)
 
 **Relations:**
 
@@ -122,7 +122,7 @@ A [service]({{< relref "#services" >}}) has the following properties:
 
 **Access management:**
 
-- A [service]({{< relref "#services" >}}) can be granted access to a [stream]({{< relref "#streams" >}}).
+- A [service]({{< relref "#services" >}}) can be granted access to a [table]({{< relref "#tables" >}}).
 
 **Console:** Go to `https://beneath.dev/ORGANIZATION/PROJECT/service:SERVICE`
 

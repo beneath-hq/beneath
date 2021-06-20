@@ -74,4 +74,4 @@ await client.stop()
 
 ## Next steps
 
-Your new machine learning model is now saved to Beneath. The next quick start shows how to load the model and apply it to a data stream.
+Your new machine learning model is now saved to Beneath. The next quick start shows how to load the model and apply it to a real-time table.

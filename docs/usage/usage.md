@@ -8,13 +8,13 @@ menu:
 weight: 100
 ---
 
-Beneath tracks stream reads, writes and scans to provide granular usage monitoring and billing.
+Beneath tracks table reads, writes and scans to provide granular usage monitoring and billing.
 
-Every stream, user and service in Beneath has a "Monitoring" tab in the web [console](https://beneath.dev/?noredirect=1) where you can see usage breakdowns, including hour-by-hour usage and quota usage in the current period.
+Every table, user and service in Beneath has a "Monitoring" tab in the web [console](https://beneath.dev/?noredirect=1) where you can see usage breakdowns, including hour-by-hour usage and quota usage in the current period.
 
 ## How usage is calculated
 
-For **reads and writes**, the usage in _bytes_ is calculated as the total [Avro](https://en.wikipedia.org/wiki/Apache_Avro)-encoded bytes transferred. Avro uses a stream's schema to achieve a very compact encoding, which can easily be 80% smaller than JSON. Using Avro-encoded size means you can expect to get a higher mileage out of your Beneath quota than you might expect. For easy comparison, we count the Avro size even for requests that use the JSON-based REST API for streams.
+For **reads and writes**, the usage in _bytes_ is calculated as the total [Avro](https://en.wikipedia.org/wiki/Apache_Avro)-encoded bytes transferred. Avro uses a table's schema to achieve a very compact encoding, which can easily be 80% smaller than JSON. Using Avro-encoded size means you can expect to get a higher mileage out of your Beneath quota than you might expect. For easy comparison, we count the Avro size even for requests that use the JSON-based REST API for tables.
 
 For SQL warehouse query **scans**, the usage depends on the underlying data warehouse, but will typically be calculated based on the number of bytes loaded from a compressed columnar format (so if your query involves fewer columns, it's likely to scan fewer bytes).
 
