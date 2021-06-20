@@ -35,8 +35,8 @@ Next up, we're tackling the data processing and data visualization layers, which
 The snippet below presents a whirlwind tour of the Python API:
 
 ```python
-# Create a new stream
-stream = await client.create_stream("examples/demo/foo", schema="""
+# Create a new table
+table = await client.create_table("examples/demo/foo", schema="""
   type Foo @schema {
     foo: String! @key
     bar: Timestamp
@@ -44,19 +44,19 @@ stream = await client.create_stream("examples/demo/foo", schema="""
 """)
 
 # Write batch or real-time data
-await stream.write(data)
+await table.write(data)
 
 # Load into a dataframe
-df = await beneath.load_full(stream)
+df = await beneath.load_full(table)
 
 # Replay and subscribe to changes
-await beneath.consume(stream, callback, subscription_path="...")
+await beneath.consume(table, callback, subscription_path="...")
 
 # Analyze with SQL
-data = await beneath.query_warehouse(f"SELECT count(*) FROM `{stream}`")
+data = await beneath.query_warehouse(f"SELECT count(*) FROM `{table}`")
 
 # Lookup by key, range or prefix
-data = await stream.query_index(filter={"foo": {"_prefix": "bar"}})
+data = await table.query_index(filter={"foo": {"_prefix": "bar"}})
 ```
 
 The image below shows a screenshot from the Beneath console. Check out the home page for a [demo video](https://about.beneath.dev/).
@@ -103,7 +103,7 @@ We're working on bundling a self-hosted version that you can run locally. If you
   - [ ] Scheduled/triggered SQL queries
   - [ ] Compute sandbox for batch and streaming pipelines
   - [ ] Git-integration for continuous deployments
-  - [ ] DAG view of streams and pipelines for data lineage
+  - [ ] DAG view of tables and pipelines for data lineage
   - [ ] Data app catalog (one-click parameterized deployments)
 - **Data visualization and exploration**
   - [ ] Vega-based charts
@@ -112,13 +112,13 @@ We're working on bundling a self-hosted version that you can run locally. If you
   - [ ] Python notebooks (Jupyter)
 - **Data governance**
   - [x] Web console and CLI for creating and browsing resources
-  - [x] Usage dashboards for streams, services, users and organizations
+  - [x] Usage dashboards for tables, services, users and organizations
   - [x] Usage quota management
   - [x] Granular permissions management
   - [x] Service accounts with custom permissions and quotas
   - [x] API secrets (tokens) that can be issued/revoked
   - [ ] Data search and discovery
-  - [ ] Audit logs as meta-streams
+  - [ ] Audit logs as meta-tables
 - **Data quality management**
   - [ ] Field validation rules, checked on write
   - [ ] Alert triggers
