@@ -56,11 +56,20 @@ func (s *Service) initCache() {
 
 // Get returns a Secret for a token in string representation
 func (c *Cache) Get(ctx context.Context, token secrettoken.Token) models.Secret {
+	// NOTE: explicit nil checks necessary to avoid returning a "typed nil" (where the result != nil)
 	switch token.Flags() {
 	case TokenFlagsUser:
-		return c.userOnce(ctx, token)
+		s := c.userOnce(ctx, token)
+		if s == nil {
+			return nil
+		}
+		return s
 	case TokenFlagsService:
-		return c.serviceOnce(ctx, token)
+		s := c.serviceOnce(ctx, token)
+		if s == nil {
+			return nil
+		}
+		return s
 	default:
 		return nil
 	}
