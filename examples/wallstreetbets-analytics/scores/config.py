@@ -36,14 +36,15 @@ class RetryRequestor(Requestor):
         return await super().request(*args, **kwargs)
 
 
-reddit = Reddit(
-    user_agent=USER_AGENT,
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    username=USERNAME,
-    password=PASSWORD,
-    requestor_class=RetryRequestor,
-)
+def make_reddit():
+    return Reddit(
+        user_agent=USER_AGENT,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        username=USERNAME,
+        password=PASSWORD,
+        requestor_class=RetryRequestor,
+    )
 
 
 def truncate_string(s):

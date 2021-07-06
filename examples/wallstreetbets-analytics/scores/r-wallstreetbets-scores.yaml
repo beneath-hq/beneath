@@ -1,0 +1,49 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: r-wallstreetbets-scores
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:          
+          - name: reddit-scores-scraper
+            image: gcr.io/beneath/examples-reddit-scores-scraper:latest
+            env:
+              - name: BENEATH_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: beneath-secret
+              - name: REDDIT_USER_AGENT
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-user-agent
+              - name: REDDIT_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-client-id
+              - name: REDDIT_CLIENT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-client-secret
+              - name: REDDIT_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-username
+              - name: REDDIT_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-password
+              - name: REDDIT_SUBREDDIT
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-scores-scraper
+                    key: reddit-subreddit

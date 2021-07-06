@@ -1,5 +1,4 @@
 import beneath
-from datetime import datetime
 
 from config import SUBREDDIT
 from generators import posts, comments

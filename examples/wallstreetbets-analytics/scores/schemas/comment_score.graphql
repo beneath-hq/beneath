@@ -1,0 +1,4 @@
+type Score @schema {
+  id: String! @key
+  score: Int!
+}

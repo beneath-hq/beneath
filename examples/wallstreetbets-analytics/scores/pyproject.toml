@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "scores"
+version = "0.1.0"
+description = ""
+authors = ["greenep12 <ericpgreen2@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+beneath = "^1.4.0"
+asyncio = "^3.4.3"
+asyncpraw = "^7.3.0"
+asyncprawcore = "^2.2.0"
+tenacity = "^7.0.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

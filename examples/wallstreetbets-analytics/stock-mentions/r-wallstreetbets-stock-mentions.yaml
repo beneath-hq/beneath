@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r-wallstreetbets-stock-mentions
+  labels:
+    app.kubernetes.io/name: r-wallstreetbets-stock-mentions
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: r-wallstreetbets-stock-mentions
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: r-wallstreetbets-stock-mentions
+    spec:
+      containers:
+        - name: r-wallstreetbets-stock-mentions
+          image: gcr.io/beneath/examples-wallstreetbets-stock-mentions:latest
+          imagePullPolicy: Always
+          args: ["run", "examples/wallstreetbets-analytics/find-stock-mentions"]
+          env:
+            - name: BENEATH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: r-wallstreetbets-stock-mentions
+                  key: beneath-secret
