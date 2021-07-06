@@ -71,7 +71,7 @@ func (s *Service) AuthInterceptor(ctx context.Context) (context.Context, error) 
 	}
 
 	secret := s.SecretService.AuthenticateWithToken(ctx, token)
-	if secret == nil {
+	if secret == nil || reflect.ValueOf(secret).IsNil() {
 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: secret not found")
 	}
 

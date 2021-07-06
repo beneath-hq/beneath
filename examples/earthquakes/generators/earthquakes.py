@@ -1,8 +1,8 @@
 import asyncio
 import aiohttp
-from datetime import datetime
+from datetime import datetime, timedelta
 
-BASE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime="
+BASE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time-asc"
 POLL_SECONDS = 30
 
 # This function does three things:
@@ -21,8 +21,10 @@ async def generate_earthquakes(p):
         while True:
 
             # Construct the query URL from the checkpoint value
-            starttime = datetime.fromtimestamp(checkpoint / 1000.0 + 1).isoformat()
-            URL = BASE_URL + starttime
+            # We fetch at most 7 days of data at a time (the API breaks if the result is +20k rows)
+            starttime = datetime.fromtimestamp(checkpoint / 1000.0 + 1)
+            endtime = starttime + timedelta(days=7)
+            URL = f"{BASE_URL}&starttime={starttime.isoformat()}&endtime={endtime}"
 
             # Submit an asyncrhonous http request to the earthquake API
             async with session.get(URL) as resp:
@@ -35,8 +37,9 @@ async def generate_earthquakes(p):
 
                 # If we've received new data, set a new checkpoint, which is the time of the most recent earthquake
                 if len(data["features"]) > 0:
-                    checkpoint = data["features"][0]["properties"]["time"]
+                    checkpoint = data["features"][-1]["properties"]["time"]
                     await p.checkpoints.set("time", checkpoint)
 
-                # Sleep until next query
-                await asyncio.sleep(POLL_SECONDS)
+                # Sleep until next query (unless we're catching up)
+                if datetime.now() < endtime:
+                    await asyncio.sleep(POLL_SECONDS)

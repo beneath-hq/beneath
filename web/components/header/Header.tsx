@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import React, { FC } from "react";
-import { AppBar, Button, Grid, Link, makeStyles, Toolbar, useMediaQuery, useTheme } from "@material-ui/core";
+import { AppBar, Button, Grid, Hidden, Link, makeStyles, Toolbar } from "@material-ui/core";
 import { Menu as MenuIcon, Add } from "@material-ui/icons";
 
 import useMe from "../../hooks/useMe";
@@ -33,10 +33,7 @@ const useStyles = makeStyles((_) => ({
 const Header: FC = () => {
   const me = useMe();
   const classes = useStyles();
-
-  const theme = useTheme();
   const router = useRouter();
-  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
 
   const createActions = [
     { label: "Create project", href: "/-/create/project" },
@@ -83,31 +80,35 @@ const Header: FC = () => {
           <Toolbar variant="dense">
             {/* Spacer to move the remaining contents to right-hand side */}
             <div className={classes.grow} />
-            {/* Create table/project/etc. button */}
-            {me &&
-              (isMdUp ? (
-                <SplitButton
-                  margin="dense"
-                  className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
-                  color="secondary"
-                  variant="contained"
-                  mainActionIdx={1}
-                  actions={createActions}
-                />
-              ) : (
-                <DropdownButton
-                  className={clsx(classes.rightItem, classes.rightButton)}
-                  color="secondary"
-                  variant="contained"
-                  margin="dense"
-                  actions={createActions}
-                >
-                  <Add />
-                </DropdownButton>
-              ))}
+            {/* Create stream/project/etc. button */}
+            {me && (
+              <>
+                <Hidden smDown>
+                  <SplitButton
+                    margin="dense"
+                    className={clsx(classes.rightItem, classes.rightButton, classes.noWrap)}
+                    color="secondary"
+                    variant="contained"
+                    mainActionIdx={1}
+                    actions={createActions}
+                  />
+                </Hidden>
+                <Hidden mdUp>
+                  <DropdownButton
+                    className={clsx(classes.rightItem, classes.rightButton)}
+                    color="secondary"
+                    variant="contained"
+                    margin="dense"
+                    actions={createActions}
+                  >
+                    <Add />
+                  </DropdownButton>
+                </Hidden>
+              </>
+            )}
             {/* Links (desktop) */}
-            {isMdUp &&
-              linkActions.map((action, idx) => (
+            <Hidden smDown>
+              {linkActions.map((action, idx) => (
                 <Button
                   key={idx}
                   className={clsx(classes.rightItem, classes.rightButton)}
@@ -118,7 +119,7 @@ const Header: FC = () => {
                   {action.label}
                 </Button>
               ))}
-
+            </Hidden>
             {/* Login / Signup button */}
             {!me && router.pathname !== "/" && (
               <Button
@@ -128,12 +129,13 @@ const Header: FC = () => {
                 href="/"
                 color="primary"
               >
-                Sign up / Log in
+                Sign up
+                <Hidden smDown> / Log in</Hidden>
               </Button>
             )}
             {me && <ProfileButton className={classes.rightItem} me={me} />}
             {/* Links (mobile) */}
-            {!isMdUp && (
+            <Hidden mdUp>
               <DropdownButton
                 className={clsx(classes.rightItem, classes.rightButton)}
                 variant="text"
@@ -142,7 +144,7 @@ const Header: FC = () => {
               >
                 <MenuIcon />
               </DropdownButton>
-            )}
+            </Hidden>
           </Toolbar>
         </Grid>
       </Grid>
