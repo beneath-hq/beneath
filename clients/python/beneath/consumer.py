@@ -15,7 +15,7 @@ from beneath.checkpointer import Checkpointer
 from beneath.config import DEFAULT_READ_BATCH_SIZE
 from beneath.cursor import Cursor
 from beneath.instance import TableInstance
-from beneath.utils import TableQualifier
+from beneath.utils import TableIdentifier
 
 ConsumerCallback = Callable[[Mapping], Awaitable]
 
@@ -40,28 +40,28 @@ class Consumer:
     def __init__(
         self,
         client: Client,
-        table_qualifier: TableQualifier,
+        table_identifier: TableIdentifier,
         batch_size: int = DEFAULT_READ_BATCH_SIZE,
         version: int = None,
         checkpointer: Checkpointer = None,
         subscription_name: str = None,
     ):
         self._client = client
-        self._table_qualifier = table_qualifier
+        self._table_identifier = table_identifier
         self._version = version
         self._batch_size = batch_size
         self._checkpointer = checkpointer
         self._subscription_name = subscription_name
 
     async def _init(self):
-        table = await self._client.find_table(table_path=str(self._table_qualifier))
+        table = await self._client.find_table(table_path=str(self._table_identifier))
         if self._version is not None:
             self.instance = await table.find_instance(version=self._version)
         else:
             self.instance = table.primary_instance
             if not self.instance:
                 raise ValueError(
-                    f"Cannot consume table {self._table_qualifier}"
+                    f"Cannot consume table {self._table_identifier}"
                     " because it doesn't have a primary instance"
                 )
         await self._init_cursor()
@@ -150,7 +150,7 @@ class Consumer:
             if self.cursor.replay_cursor:
                 self._client.logger.info(
                     "Replaying table '%s' (version %i)",
-                    self._table_qualifier,
+                    self._table_identifier,
                     self.instance.version,
                 )
             async for batch in self._run_replay():
@@ -165,14 +165,14 @@ class Consumer:
         if stop_when_idle or self.instance.is_final:
             self._client.logger.info(
                 "Consuming changes for table '%s' (version %i)",
-                self._table_qualifier,
+                self._table_identifier,
                 self.instance.version,
             )
             it = self._run_delta()
         else:
             self._client.logger.info(
                 "Subscribed to changes for table '%s' (version %i)",
-                self._table_qualifier,
+                self._table_identifier,
                 self.instance.version,
             )
             it = self._run_subscribe()
@@ -186,7 +186,7 @@ class Consumer:
             self._client.logger.info(
                 "Stopped consuming changes for table '%s' (version %i) because it has been"
                 " finalized",
-                self._table_qualifier,
+                self._table_identifier,
                 self.instance.version,
             )
 

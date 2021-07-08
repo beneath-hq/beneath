@@ -17,7 +17,7 @@ from beneath.consumer import Consumer
 from beneath.instance import TableInstance
 from beneath.job import Job
 from beneath.table import Table
-from beneath.utils import infer_avro, ProjectQualifier, TableQualifier, SubscriptionQualifier
+from beneath.utils import infer_avro, ProjectIdentifier, TableIdentifier, SubscriptionIdentifier
 from beneath.writer import DryWriter, Writer
 
 
@@ -65,8 +65,8 @@ class Client:
             self._writer = Writer(client=self, max_delay_ms=write_delay_ms)
 
         self._start_count = 0
-        self._checkpointers: Dict[ProjectQualifier, Checkpointer] = {}
-        self._consumers: Dict[SubscriptionQualifier, Consumer] = {}
+        self._checkpointers: Dict[ProjectIdentifier, Checkpointer] = {}
+        self._consumers: Dict[SubscriptionIdentifier, Consumer] = {}
 
     @classmethod
     def _get_secret(cls, secret=None):
@@ -108,8 +108,8 @@ class Client:
             path (str):
                 The path to the table in the format of "USERNAME/PROJECT/TABLE"
         """
-        qualifier = TableQualifier.from_path(table_path)
-        table = await Table._make(client=self, qualifier=qualifier)
+        identifier = TableIdentifier.from_path(table_path)
+        table = await Table._make(client=self, identifier=identifier)
         return table
 
     async def create_table(
@@ -150,7 +150,7 @@ class Client:
                 If true and the table already exists, the provided info will be used to update
                 the table (only supports non-breaking schema changes) before returning it.
         """
-        qualifier = TableQualifier.from_path(table_path)
+        identifier = TableIdentifier.from_path(table_path)
         if self.dry:
             data = await self.admin.tables.compile_schema(
                 schema_kind=schema_kind,
@@ -158,14 +158,14 @@ class Client:
             )
             table = await Table._make_dry(
                 client=self,
-                qualifier=qualifier,
+                identifier=identifier,
                 avro_schema=data["canonicalAvroSchema"],
             )
         else:
             data = await self.admin.tables.create(
-                organization_name=qualifier.organization,
-                project_name=qualifier.project,
-                table_name=qualifier.table,
+                organization_name=identifier.organization,
+                project_name=identifier.project,
+                table_name=identifier.table,
                 schema_kind=schema_kind,
                 schema=schema,
                 indexes=indexes,
@@ -184,7 +184,7 @@ class Client:
                 ),
                 update_if_exists=update_if_exists,
             )
-            table = await Table._make(client=self, qualifier=qualifier, admin_data=data)
+            table = await Table._make(client=self, identifier=identifier, admin_data=data)
         return table
 
     @staticmethod
@@ -442,25 +442,25 @@ class Client:
                 An optional description to apply to the checkpoints meta-table. Defaults to a
                 sensible description of checkpointing.
         """
-        project_qualifier = ProjectQualifier.from_path(project_path)
-        qualifier = TableQualifier(
-            organization=project_qualifier.organization,
-            project=project_qualifier.project,
+        project_identifier = ProjectIdentifier.from_path(project_path)
+        identifier = TableIdentifier(
+            organization=project_identifier.organization,
+            project=project_identifier.project,
             table=metatable_name,
         )
 
-        if qualifier not in self._checkpointers:
+        if identifier not in self._checkpointers:
             checkpointer = Checkpointer(
                 client=self,
-                metatable_qualifier=qualifier,
+                metatable_identifier=identifier,
                 metatable_create=metatable_create,
                 metatable_description=metatable_description,
             )
-            self._checkpointers[qualifier] = checkpointer
+            self._checkpointers[identifier] = checkpointer
             if self._start_count != 0:
                 await checkpointer._start()
 
-        checkpointer = self._checkpointers[qualifier]
+        checkpointer = self._checkpointers[identifier]
         if key_prefix:
             checkpointer = PrefixedCheckpointer(checkpointer, key_prefix)
         return checkpointer
@@ -500,32 +500,32 @@ class Client:
                 Only applies if ``subscription_path`` is set and ``checkpointer`` is not set.
                 Passed through to ``client.checkpointer``.
         """
-        table_qualifier = TableQualifier.from_path(table_path)
+        table_identifier = TableIdentifier.from_path(table_path)
         if not subscription_path:
             consumer = Consumer(
                 client=self,
-                table_qualifier=table_qualifier,
+                table_identifier=table_identifier,
                 batch_size=batch_size,
             )
             await consumer._init()
             return consumer
 
-        sub_qualifier = SubscriptionQualifier.from_path(subscription_path)
-        if sub_qualifier not in self._consumers:
+        sub_identifier = SubscriptionIdentifier.from_path(subscription_path)
+        if sub_identifier not in self._consumers:
             if checkpointer is None:
                 checkpointer = await self.checkpointer(
-                    f"{sub_qualifier.organization}/{sub_qualifier.project}",
+                    f"{sub_identifier.organization}/{sub_identifier.project}",
                     metatable_create=metatable_create,
                 )
             consumer = Consumer(
                 client=self,
-                table_qualifier=table_qualifier,
+                table_identifier=table_identifier,
                 version=version,
                 batch_size=batch_size,
                 checkpointer=checkpointer,
-                subscription_name=sub_qualifier.subscription,
+                subscription_name=sub_identifier.subscription,
             )
             await consumer._init()
-            self._consumers[sub_qualifier] = consumer
+            self._consumers[sub_identifier] = consumer
 
-        return self._consumers[sub_qualifier]
+        return self._consumers[sub_identifier]

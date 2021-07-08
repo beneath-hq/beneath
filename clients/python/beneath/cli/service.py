@@ -1,5 +1,5 @@
 from beneath.client import Client
-from beneath.utils import ProjectQualifier, ServiceQualifier, TableQualifier
+from beneath.utils import ProjectIdentifier, ServiceIdentifier, TableIdentifier
 from beneath.cli.utils import (
     async_cmd,
     mb_to_bytes,
@@ -71,7 +71,7 @@ def add_subparser(root):
 
 async def show_list(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     proj = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     services = proj["services"]
     if (services is None) or len(services) == 0:
@@ -83,7 +83,7 @@ async def show_list(args):
 
 async def create(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     result = await client.admin.services.create(
         organization_name=seq.organization,
         project_name=seq.project,
@@ -99,7 +99,7 @@ async def create(args):
 
 async def update(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     result = await client.admin.services.update(
         organization_name=seq.organization,
         project_name=seq.project,
@@ -115,13 +115,13 @@ async def update(args):
 
 async def update_permissions(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     service = await client.admin.services.find_by_organization_project_and_name(
         organization_name=seq.organization,
         project_name=seq.project,
         service_name=seq.service,
     )
-    stq = TableQualifier.from_path(args.table_path)
+    stq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=stq.organization,
         project_name=stq.project,
@@ -138,7 +138,7 @@ async def update_permissions(args):
 
 async def delete(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     service = await client.admin.services.find_by_organization_project_and_name(
         organization_name=seq.organization,
         project_name=seq.project,
@@ -150,7 +150,7 @@ async def delete(args):
 
 async def issue_secret(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     service = await client.admin.services.find_by_organization_project_and_name(
         organization_name=seq.organization,
         project_name=seq.project,
@@ -170,7 +170,7 @@ async def issue_secret(args):
 
 async def list_secrets(args):
     client = Client()
-    seq = ServiceQualifier.from_path(args.service_path)
+    seq = ServiceIdentifier.from_path(args.service_path)
     service = await client.admin.services.find_by_organization_project_and_name(
         organization_name=seq.organization,
         project_name=seq.project,

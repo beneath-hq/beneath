@@ -14,7 +14,7 @@ from beneath import config
 from beneath.cursor import Cursor
 from beneath.instance import TableInstance
 from beneath.schema import Schema
-from beneath.utils import TableQualifier
+from beneath.utils import TableIdentifier
 
 
 class Table:
@@ -52,7 +52,7 @@ class Table:
     """ Whether warehouse queries are supported for this table. """
 
     _client: Client
-    _qualifier: TableQualifier
+    _identifier: TableIdentifier
 
     # INITIALIZATION
 
@@ -61,13 +61,13 @@ class Table:
         self.schema: Schema = None
         self.primary_instance: TableInstance = None
         self._client: Client = None
-        self._qualifier: TableQualifier = None
+        self._identifier: TableIdentifier = None
 
     @classmethod
-    async def _make(cls, client: Client, qualifier: TableQualifier, admin_data=None) -> Table:
+    async def _make(cls, client: Client, identifier: TableIdentifier, admin_data=None) -> Table:
         table = Table()
         table._client = client
-        table._qualifier = qualifier
+        table._identifier = identifier
         if not admin_data:
             # pylint: disable=protected-access
             admin_data = await table._load_admin_data()
@@ -89,12 +89,12 @@ class Table:
     async def _make_dry(
         cls,
         client: Client,
-        qualifier: TableQualifier,
+        identifier: TableIdentifier,
         avro_schema: str,
     ) -> Table:
         table = Table()
         table._client = client
-        table._qualifier = qualifier
+        table._identifier = identifier
         table.table_id = None
         table.schema = Schema(avro_schema)
         table.primary_instance = await table.create_instance(version=0, make_primary=True)
@@ -105,15 +105,15 @@ class Table:
 
     async def _load_admin_data(self):
         return await self._client.admin.tables.find_by_organization_project_and_name(
-            organization_name=self._qualifier.organization,
-            project_name=self._qualifier.project,
-            table_name=self._qualifier.table,
+            organization_name=self._identifier.organization,
+            project_name=self._identifier.project,
+            table_name=self._identifier.table,
         )
 
     # STATE
 
     def __repr__(self):
-        return f'<beneath.table.Table("{config.BENEATH_FRONTEND_HOST}/{self._qualifier}")>'
+        return f'<beneath.table.Table("{config.BENEATH_FRONTEND_HOST}/{self._identifier}")>'
 
     # INSTANCES
 

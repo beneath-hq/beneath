@@ -22,7 +22,7 @@ from beneath.checkpointer import Checkpointer
 from beneath.instance import TableInstance
 from beneath.pipeline.parse_args import parse_pipeline_args
 from beneath.table import Table
-from beneath.utils import ServiceQualifier, TableQualifier
+from beneath.utils import ServiceIdentifier, TableIdentifier
 
 
 class Action(Enum):
@@ -107,11 +107,11 @@ class BasePipeline:
             fn=Strategy,
         )
         self.version = self._arg_or_env("version", version, "BENEATH_PIPELINE_VERSION", fn=int)
-        self.service_qualifier = self._arg_or_env(
+        self.service_identifier = self._arg_or_env(
             "service_path",
             service_path,
             "BENEATH_PIPELINE_SERVICE_PATH",
-            fn=ServiceQualifier.from_path,
+            fn=ServiceIdentifier.from_path,
         )
         self.service_read_quota = self._arg_or_env(
             "service_read_quota",
@@ -142,11 +142,11 @@ class BasePipeline:
         self.description: str = None
         self.disable_checkpoints = disable_checkpoints
 
-        self._inputs: Dict[TableQualifier, Consumer] = {}
-        self._input_qualifiers: Set[TableQualifier] = set()
-        self._outputs: Dict[TableQualifier, TableInstance] = {}
-        self._output_qualifiers: Set[TableQualifier] = set()
-        self._output_kwargs: Dict[TableQualifier, dict] = {}
+        self._inputs: Dict[TableIdentifier, Consumer] = {}
+        self._input_identifiers: Set[TableIdentifier] = set()
+        self._outputs: Dict[TableIdentifier, TableInstance] = {}
+        self._output_identifiers: Set[TableIdentifier] = set()
+        self._output_kwargs: Dict[TableIdentifier, dict] = {}
 
         self._execute_task: asyncio.Task = None
         self._init()
@@ -231,10 +231,10 @@ class BasePipeline:
     async def _execute_test(self):
         await self._stage_checkpointer(create=True)
         await asyncio.gather(
-            *[self._stage_input_table(qualifier) for qualifier in self._input_qualifiers],
+            *[self._stage_input_table(identifier) for identifier in self._input_identifiers],
             *[
-                self._stage_output_table(qualifier=qualifier, create=True)
-                for qualifier in self._output_qualifiers
+                self._stage_output_table(identifier=identifier, create=True)
+                for identifier in self._output_identifiers
             ],
         )
         self.logger.info("Running in TEST mode: Records will be printed, but not saved")
@@ -245,14 +245,14 @@ class BasePipeline:
         self.logger.info("Finished running pipeline")
 
     async def _execute_stage(self):
-        async def _stage_input(qualifier: TableQualifier):
-            await self._stage_input_table(qualifier)
-            consumer = self._inputs[qualifier]
+        async def _stage_input(identifier: TableIdentifier):
+            await self._stage_input_table(identifier)
+            consumer = self._inputs[identifier]
             await self._update_service_permissions(consumer.instance.table, read=True)
 
-        async def _stage_output(qualifier: TableQualifier):
-            await self._stage_output_table(qualifier=qualifier, create=True)
-            instance = self._outputs[qualifier]
+        async def _stage_output(identifier: TableIdentifier):
+            await self._stage_output_table(identifier=identifier, create=True)
+            instance = self._outputs[identifier]
             await self._update_service_permissions(instance.table, write=True)
 
         await self._stage_service(create=True)
@@ -261,18 +261,18 @@ class BasePipeline:
             await self._update_service_permissions(
                 self.checkpoints.instance.table, read=True, write=True
             )
-        await asyncio.gather(*[_stage_input(qualifier) for qualifier in self._input_qualifiers])
-        await asyncio.gather(*[_stage_output(qualifier) for qualifier in self._output_qualifiers])
+        await asyncio.gather(*[_stage_input(identifier) for identifier in self._input_identifiers])
+        await asyncio.gather(*[_stage_output(identifier) for identifier in self._output_identifiers])
         await self.client.stop()
-        self.logger.info("Finished staging pipeline for service '%s'", self.service_qualifier)
+        self.logger.info("Finished staging pipeline for service '%s'", self.service_identifier)
 
     async def _execute_run(self):
         await self._stage_checkpointer(create=False)
         await asyncio.gather(
-            *[self._stage_input_table(qualifier) for qualifier in self._input_qualifiers],
+            *[self._stage_input_table(identifier) for identifier in self._input_identifiers],
             *[
-                self._stage_output_table(qualifier=qualifier, create=False)
-                for qualifier in self._output_qualifiers
+                self._stage_output_table(identifier=identifier, create=False)
+                for identifier in self._output_identifiers
             ],
         )
         self.logger.info("Running in PRODUCTION mode: Records will be saved to Beneath")
@@ -284,12 +284,12 @@ class BasePipeline:
 
     async def _execute_teardown(self):
         await asyncio.gather(
-            *[self._teardown_output_table(qualifier) for qualifier in self._output_qualifiers]
+            *[self._teardown_output_table(identifier) for identifier in self._output_identifiers]
         )
         await self._teardown_checkpointer()
         await self._teardown_service()
         await self.client.stop()
-        self.logger.info("Finished tearing down pipeline for service '%s'", self.service_qualifier)
+        self.logger.info("Finished tearing down pipeline for service '%s'", self.service_identifier)
 
     # STAGING
 
@@ -298,33 +298,33 @@ class BasePipeline:
             description = (
                 self.description
                 if self.description
-                else f"Service for running '{self.service_qualifier.service}' pipeline"
+                else f"Service for running '{self.service_identifier.service}' pipeline"
             )
             admin_data = await self.client.admin.services.create(
-                organization_name=self.service_qualifier.organization,
-                project_name=self.service_qualifier.project,
-                service_name=self.service_qualifier.service,
+                organization_name=self.service_identifier.organization,
+                project_name=self.service_identifier.project,
+                service_name=self.service_identifier.service,
                 description=description,
                 read_quota_bytes=self.service_read_quota,
                 write_quota_bytes=self.service_write_quota,
                 scan_quota_bytes=self.service_scan_quota,
                 update_if_exists=True,
             )
-            self.logger.info("Staged service '%s'", self.service_qualifier)
+            self.logger.info("Staged service '%s'", self.service_identifier)
         else:
             admin_data = await self.client.admin.services.find_by_organization_project_and_name(
-                organization_name=self.service_qualifier.organization,
-                project_name=self.service_qualifier.project,
-                service_name=self.service_qualifier.service,
+                organization_name=self.service_identifier.organization,
+                project_name=self.service_identifier.project,
+                service_name=self.service_identifier.service,
             )
-            self.logger.info("Found service '%s'", self.service_qualifier)
+            self.logger.info("Found service '%s'", self.service_identifier)
         self.service_id = uuid.UUID(hex=admin_data["serviceID"])
 
     async def _teardown_service(self):
         try:
             await self._stage_service(create=False)
             await self.client.admin.services.delete(self.service_id)
-            self.logger.info("Deleted service '%s'", self.service_qualifier)
+            self.logger.info("Deleted service '%s'", self.service_identifier)
         except GraphQLError as e:
             if " not found" in str(e):
                 return
@@ -333,22 +333,22 @@ class BasePipeline:
     async def _stage_checkpointer(self, create: bool):
         if self.disable_checkpoints:
             return
-        metatable_name = self.service_qualifier.service + "-checkpoints"
+        metatable_name = self.service_identifier.service + "-checkpoints"
         self.checkpoints = await self.client.checkpointer(
-            project_path=f"{self.service_qualifier.organization}/{self.service_qualifier.project}",
+            project_path=f"{self.service_identifier.organization}/{self.service_identifier.project}",
             metatable_name=metatable_name,
             metatable_create=create,
             metatable_description=(
-                f"Stores checkpointed state for the '{self.service_qualifier.service}' pipeline"
+                f"Stores checkpointed state for the '{self.service_identifier.service}' pipeline"
             ),
             key_prefix=f"{self.version}:",
         )
         if create:
             self.logger.info(
-                "Staged checkpointer '%s'", self.checkpoints.instance.table._qualifier
+                "Staged checkpointer '%s'", self.checkpoints.instance.table._identifier
             )
         else:
-            self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.table._qualifier)
+            self.logger.info("Found checkpointer '%s'", self.checkpoints.instance.table._identifier)
 
     async def _teardown_checkpointer(self):
         if self.disable_checkpoints:
@@ -357,7 +357,7 @@ class BasePipeline:
             await self._stage_checkpointer(create=False)
             await self.checkpoints.instance.table.delete()
             self.logger.info(
-                "Deleted checkpointer '%s'", self.checkpoints.instance.table._qualifier
+                "Deleted checkpointer '%s'", self.checkpoints.instance.table._identifier
             )
         except GraphQLError as e:
             if " not found" in str(e):
@@ -365,76 +365,76 @@ class BasePipeline:
             raise
 
     def _add_input_table(self, table_path: str):
-        qualifier = TableQualifier.from_path(table_path)
-        self._input_qualifiers.add(qualifier)
-        return qualifier
+        identifier = TableIdentifier.from_path(table_path)
+        self._input_identifiers.add(identifier)
+        return identifier
 
-    async def _stage_input_table(self, qualifier: TableQualifier):
-        if qualifier in self._output_qualifiers:
-            raise ValueError(f"Cannot use table '{qualifier}' as both input and output")
+    async def _stage_input_table(self, identifier: TableIdentifier):
+        if identifier in self._output_identifiers:
+            raise ValueError(f"Cannot use table '{identifier}' as both input and output")
         subscription_path = None
         if not self.disable_checkpoints:
-            subscription_path = f"{self.service_qualifier.organization}/"
-            subscription_path += f"{self.service_qualifier.project}/"
-            subscription_path += self.service_qualifier.service
+            subscription_path = f"{self.service_identifier.organization}/"
+            subscription_path += f"{self.service_identifier.project}/"
+            subscription_path += self.service_identifier.service
         consumer = await self.client.consumer(
-            table_path=str(qualifier),
+            table_path=str(identifier),
             subscription_path=subscription_path,
             checkpointer=self.checkpoints,
         )
-        self._inputs[qualifier] = consumer
+        self._inputs[identifier] = consumer
         self.logger.info(
-            "Using input table '%s' (version: %d)", qualifier, consumer.instance.version
+            "Using input table '%s' (version: %d)", identifier, consumer.instance.version
         )
 
     def _add_output_table(
         self,
         table_path: str,
         **kwargs,
-    ) -> TableQualifier:
+    ) -> TableIdentifier:
         # use service organization and project if "table_path" is just a name
         if "/" not in table_path:
             table_path = (
-                f"{self.service_qualifier.organization}/"
-                + f"{self.service_qualifier.project}/"
+                f"{self.service_identifier.organization}/"
+                + f"{self.service_identifier.project}/"
                 + table_path
             )
-        qualifier = TableQualifier.from_path(table_path)
-        self._output_qualifiers.add(qualifier)
-        self._output_kwargs[qualifier] = kwargs
-        return qualifier
+        identifier = TableIdentifier.from_path(table_path)
+        self._output_identifiers.add(identifier)
+        self._output_kwargs[identifier] = kwargs
+        return identifier
 
-    async def _stage_output_table(self, qualifier: TableQualifier, create: bool):
-        kwargs = self._output_kwargs[qualifier]
+    async def _stage_output_table(self, identifier: TableIdentifier, create: bool):
+        kwargs = self._output_kwargs[identifier]
         create = create and "schema" in kwargs
         if create:
             table = await self.client.create_table(
-                table_path=str(qualifier),
+                table_path=str(identifier),
                 update_if_exists=True,
                 **kwargs,
             )
         else:
-            table = await self.client.find_table(table_path=str(qualifier))
+            table = await self.client.find_table(table_path=str(identifier))
 
         instance = await table.create_instance(version=self.version, update_if_exists=True)
-        self._outputs[qualifier] = instance
+        self._outputs[identifier] = instance
 
         if create:
             self.logger.info(
-                "Staged output table '%s' (using version %s)", qualifier, self.version
+                "Staged output table '%s' (using version %s)", identifier, self.version
             )
         else:
-            self.logger.info("Found output table '%s' (using version %s)", qualifier, self.version)
+            self.logger.info("Found output table '%s' (using version %s)", identifier, self.version)
 
-    async def _teardown_output_table(self, qualifier: TableQualifier):
+    async def _teardown_output_table(self, identifier: TableIdentifier):
         try:
-            kwargs = self._output_kwargs[qualifier]
+            kwargs = self._output_kwargs[identifier]
             if "schema" not in kwargs:
                 return
-            await self._stage_output_table(qualifier=qualifier, create=False)
-            instance = self._outputs[qualifier]
+            await self._stage_output_table(identifier=identifier, create=False)
+            instance = self._outputs[identifier]
             await instance.table.delete()
-            self.logger.info("Deleted output '%s'", qualifier)
+            self.logger.info("Deleted output '%s'", identifier)
         except GraphQLError as e:
             if " not found" in str(e):
                 return
