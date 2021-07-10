@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/pubsub v1.10.1
 	github.com/99designs/gqlgen v0.13.0
 	github.com/alecthomas/participle v0.3.0
+	github.com/alecthomas/participle/v2 v2.0.0-alpha6 // indirect
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/migrations/v7 v7.0.0

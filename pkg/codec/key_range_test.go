@@ -10,7 +10,7 @@ import (
 )
 
 func TestKeyRange1(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": "abc" }`)
+	q, err := queryparse.StringToQuery(`{ "a": "abc" }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a"}}
@@ -26,7 +26,7 @@ func TestKeyRange1(t *testing.T) {
 }
 
 func TestKeyRange2(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100 } }`)
+	q, err := queryparse.StringToQuery(`{ "a": { "_gt": 100 } }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a"}}
@@ -44,7 +44,7 @@ func TestKeyRange2(t *testing.T) {
 }
 
 func TestKeyRange3(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
+	q, err := queryparse.StringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a"}}
@@ -63,7 +63,7 @@ func TestKeyRange3(t *testing.T) {
 }
 
 func TestKeyRange4(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": 100, "b": { "_prefix": "ab" } }`)
+	q, err := queryparse.StringToQuery(`{ "a": 100, "b": { "_prefix": "ab" } }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a", "b"}}
@@ -83,7 +83,7 @@ func TestKeyRange4(t *testing.T) {
 }
 
 func TestKeyRange5(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": { "_prefix": 100 } }`)
+	q, err := queryparse.StringToQuery(`{ "a": { "_prefix": 100 } }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a", "b"}}
@@ -96,7 +96,7 @@ func TestKeyRange5(t *testing.T) {
 }
 
 // func TestKeyRange6(t *testing.T) {
-// 	where, err := queryparse.JSONStringToQuery(`{ "a": { "_eq": 100 } }`)
+// 	where, err := queryparse.StringToQuery(`{ "a": { "_eq": 100 } }`)
 // 	assert.Nil(t, err)
 
 // 	index := testIndex{fields: []string{"a", "b"}}
@@ -106,19 +106,19 @@ func TestKeyRange5(t *testing.T) {
 // 	kr, err := newKeyRange(c, where)
 // 	assert.Nil(t, err)
 
-// 	after, err := queryparse.JSONStringToQuery(`{ "a": 100 }`)
+// 	after, err := queryparse.StringToQuery(`{ "a": 100 }`)
 // 	assert.Nil(t, err)
 // 	kr, err = kr.WithAfter(c, after)
 // 	assert.NotNil(t, err)
 // 	assert.Regexp(t, "after query must include exactly all keys fields and not more", err.Error())
 
-// 	after, err = queryparse.JSONStringToQuery(`{ "a": 100, "b": {"_prefix": "bbb"} }`)
+// 	after, err = queryparse.StringToQuery(`{ "a": 100, "b": {"_prefix": "bbb"} }`)
 // 	assert.Nil(t, err)
 // 	kr, err = kr.WithAfter(c, after)
 // 	assert.NotNil(t, err)
 // 	assert.Regexp(t, "after query cannot use '_prefix' constraint", err.Error())
 
-// 	after, err = queryparse.JSONStringToQuery(`{ "a": 100, "b": "bbb" }`)
+// 	after, err = queryparse.StringToQuery(`{ "a": 100, "b": "bbb" }`)
 // 	assert.Nil(t, err)
 // 	base1 := kr.Base
 // 	kr, err = kr.WithAfter(c, after)
@@ -128,7 +128,7 @@ func TestKeyRange5(t *testing.T) {
 // }
 
 func TestKeyRange7(t *testing.T) {
-	q, err := queryparse.JSONStringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
+	q, err := queryparse.StringToQuery(`{ "a": { "_gt": 100, "_lte": 200 } }`)
 	assert.Nil(t, err)
 
 	index := testIndex{fields: []string{"a", "b"}}
