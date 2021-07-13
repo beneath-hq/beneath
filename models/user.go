@@ -34,6 +34,23 @@ func (u *User) Validate() error {
 	return Validator.Struct(u)
 }
 
+// AuthTicket coordinates an authentication request issued by the CLI
+type AuthTicket struct {
+	_msgpack       struct{}   `msgpack:",omitempty"`
+	AuthTicketID   uuid.UUID  `sql:",pk,type:uuid,default:uuid_generate_v4()"`
+	RequesterName  string     `sql:",notnull" validate:"gte=3,lte=100"`
+	ApproverUserID *uuid.UUID `sql:",type:uuid,on_delete:cascade"`
+	CreatedOn      time.Time  `sql:",default:now()"`
+	UpdatedOn      time.Time  `sql:",default:now()"`
+
+	IssuedSecret *UserSecret `sql:"-"`
+}
+
+// Validate runs validation on the ticket
+func (t *AuthTicket) Validate() error {
+	return Validator.Struct(t)
+}
+
 // ---------------
 // Events
 

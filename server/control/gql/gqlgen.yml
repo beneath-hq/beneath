@@ -46,3 +46,5 @@ models:
     model: github.com/beneath-hq/beneath/models.PermissionsServicesTables
   TableSchemaKind:
     model: github.com/beneath-hq/beneath/models.TableSchemaKind
+  AuthTicket:
+    model: github.com/beneath-hq/beneath/models.AuthTicket

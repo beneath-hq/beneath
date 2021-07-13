@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	AuthTicket() AuthTicketResolver
 	Mutation() MutationResolver
 	OrganizationMember() OrganizationMemberResolver
 	PrivateUser() PrivateUserResolver
@@ -59,6 +60,14 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AuthTicket struct {
+		AuthTicketID      func(childComplexity int) int
+		CreatedOn         func(childComplexity int) int
+		IssuedSecretToken func(childComplexity int) int
+		RequesterName     func(childComplexity int) int
+		UpdatedOn         func(childComplexity int) int
+	}
+
 	CompileSchemaOutput struct {
 		CanonicalAvroSchema func(childComplexity int) int
 		CanonicalIndexes    func(childComplexity int) int
@@ -66,6 +75,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AcceptOrganizationInvite          func(childComplexity int, organizationID uuid.UUID) int
+		CreateAuthTicket                  func(childComplexity int, input CreateAuthTicketInput) int
 		CreateOrganization                func(childComplexity int, name string) int
 		CreateProject                     func(childComplexity int, input CreateProjectInput) int
 		CreateService                     func(childComplexity int, input CreateServiceInput) int
@@ -84,6 +94,7 @@ type ComplexityRoot struct {
 		RevokeServiceSecret               func(childComplexity int, secretID uuid.UUID) int
 		RevokeUserSecret                  func(childComplexity int, secretID uuid.UUID) int
 		TransferProjectToOrganization     func(childComplexity int, projectID uuid.UUID, organizationID uuid.UUID) int
+		UpdateAuthTicket                  func(childComplexity int, input UpdateAuthTicketInput) int
 		UpdateOrganization                func(childComplexity int, organizationID uuid.UUID, name *string, displayName *string, description *string, photoURL *string) int
 		UpdateOrganizationQuotas          func(childComplexity int, organizationID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) int
 		UpdateProject                     func(childComplexity int, input UpdateProjectInput) int
@@ -230,6 +241,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AuthTicketByID                                    func(childComplexity int, authTicketID uuid.UUID) int
 		CompileSchema                                     func(childComplexity int, input CompileSchemaInput) int
 		Empty                                             func(childComplexity int) int
 		ExploreProjects                                   func(childComplexity int) int
@@ -363,6 +375,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type AuthTicketResolver interface {
+	IssuedSecretToken(ctx context.Context, obj *models.AuthTicket) (*NewUserSecret, error)
+}
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
 	CreateOrganization(ctx context.Context, name string) (*PrivateOrganization, error)
@@ -393,6 +408,8 @@ type MutationResolver interface {
 	UpdateUserQuotas(ctx context.Context, userID uuid.UUID, readQuota *int, writeQuota *int, scanQuota *int) (*models.User, error)
 	UpdateUserProjectPermissions(ctx context.Context, userID uuid.UUID, projectID uuid.UUID, view *bool, create *bool, admin *bool) (*models.PermissionsUsersProjects, error)
 	UpdateUserOrganizationPermissions(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, view *bool, create *bool, admin *bool) (*models.PermissionsUsersOrganizations, error)
+	CreateAuthTicket(ctx context.Context, input CreateAuthTicketInput) (*models.AuthTicket, error)
+	UpdateAuthTicket(ctx context.Context, input UpdateAuthTicketInput) (*models.AuthTicket, error)
 }
 type OrganizationMemberResolver interface {
 	OrganizationID(ctx context.Context, obj *models.OrganizationMember) (string, error)
@@ -451,6 +468,7 @@ type QueryResolver interface {
 	GetTableInstanceUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
 	GetTableUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
 	GetUserUsage(ctx context.Context, input GetEntityUsageInput) ([]*Usage, error)
+	AuthTicketByID(ctx context.Context, authTicketID uuid.UUID) (*models.AuthTicket, error)
 }
 type ServiceResolver interface {
 	ServiceID(ctx context.Context, obj *models.Service) (string, error)
@@ -492,6 +510,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "AuthTicket.authTicketID":
+		if e.complexity.AuthTicket.AuthTicketID == nil {
+			break
+		}
+
+		return e.complexity.AuthTicket.AuthTicketID(childComplexity), true
+
+	case "AuthTicket.createdOn":
+		if e.complexity.AuthTicket.CreatedOn == nil {
+			break
+		}
+
+		return e.complexity.AuthTicket.CreatedOn(childComplexity), true
+
+	case "AuthTicket.issuedSecretToken":
+		if e.complexity.AuthTicket.IssuedSecretToken == nil {
+			break
+		}
+
+		return e.complexity.AuthTicket.IssuedSecretToken(childComplexity), true
+
+	case "AuthTicket.requesterName":
+		if e.complexity.AuthTicket.RequesterName == nil {
+			break
+		}
+
+		return e.complexity.AuthTicket.RequesterName(childComplexity), true
+
+	case "AuthTicket.updatedOn":
+		if e.complexity.AuthTicket.UpdatedOn == nil {
+			break
+		}
+
+		return e.complexity.AuthTicket.UpdatedOn(childComplexity), true
+
 	case "CompileSchemaOutput.canonicalAvroSchema":
 		if e.complexity.CompileSchemaOutput.CanonicalAvroSchema == nil {
 			break
@@ -517,6 +570,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AcceptOrganizationInvite(childComplexity, args["organizationID"].(uuid.UUID)), true
+
+	case "Mutation.createAuthTicket":
+		if e.complexity.Mutation.CreateAuthTicket == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAuthTicket_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateAuthTicket(childComplexity, args["input"].(CreateAuthTicketInput)), true
 
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
@@ -728,6 +793,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.TransferProjectToOrganization(childComplexity, args["projectID"].(uuid.UUID), args["organizationID"].(uuid.UUID)), true
+
+	case "Mutation.updateAuthTicket":
+		if e.complexity.Mutation.UpdateAuthTicket == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAuthTicket_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateAuthTicket(childComplexity, args["input"].(UpdateAuthTicketInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -1548,6 +1625,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PublicOrganization.Projects(childComplexity), true
+
+	case "Query.authTicketByID":
+		if e.complexity.Query.AuthTicketByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_authTicketByID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AuthTicketByID(childComplexity, args["authTicketID"].(uuid.UUID)), true
 
 	case "Query.compileSchema":
 		if e.complexity.Query.CompileSchema == nil {
@@ -2980,7 +3069,9 @@ input GetEntityUsageInput {
   until: Time
 }
 `, BuiltIn: false},
-	{Name: "server/control/schema/users.graphql", Input: `# extend type Query {}
+	{Name: "server/control/schema/users.graphql", Input: `extend type Query {
+  authTicketByID(authTicketID: UUID!): AuthTicket!
+}
 
 extend type Mutation {
   registerUserConsent(
@@ -3008,6 +3099,8 @@ extend type Mutation {
     create: Boolean
     admin: Boolean
   ): PermissionsUsersOrganizations!
+  createAuthTicket(input: CreateAuthTicketInput!): AuthTicket!
+  updateAuthTicket(input: UpdateAuthTicketInput!): AuthTicket
 }
 
 type PrivateUser {
@@ -3042,6 +3135,23 @@ type PermissionsUsersOrganizations {
   create: Boolean!
   admin: Boolean!
 }
+
+type AuthTicket {
+  authTicketID: UUID!
+  requesterName: String!
+  issuedSecretToken: NewUserSecret
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+input CreateAuthTicketInput {
+  requesterName: String!
+}
+
+input UpdateAuthTicketInput {
+  authTicketID: UUID!
+  approve: Boolean!
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -3062,6 +3172,21 @@ func (ec *executionContext) field_Mutation_acceptOrganizationInvite_args(ctx con
 		}
 	}
 	args["organizationID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAuthTicket_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateAuthTicketInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateAuthTicketInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateAuthTicketInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3407,6 +3532,21 @@ func (ec *executionContext) field_Mutation_transferProjectToOrganization_args(ct
 		}
 	}
 	args["organizationID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAuthTicket_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdateAuthTicketInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateAuthTicketInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateAuthTicketInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3761,6 +3901,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_authTicketByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["authTicketID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authTicketID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["authTicketID"] = arg0
 	return args, nil
 }
 
@@ -4305,6 +4460,178 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AuthTicket_authTicketID(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AuthTicket",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthTicketID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthTicket_requesterName(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AuthTicket",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequesterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthTicket_issuedSecretToken(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AuthTicket",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.AuthTicket().IssuedSecretToken(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*NewUserSecret)
+	fc.Result = res
+	return ec.marshalONewUserSecret2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐNewUserSecret(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthTicket_createdOn(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AuthTicket",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthTicket_updatedOn(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AuthTicket",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedOn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _CompileSchemaOutput_canonicalAvroSchema(ctx context.Context, field graphql.CollectedField, obj *CompileSchemaOutput) (ret graphql.Marshaler) {
 	defer func() {
@@ -5582,6 +5909,87 @@ func (ec *executionContext) _Mutation_updateUserOrganizationPermissions(ctx cont
 	res := resTmp.(*models.PermissionsUsersOrganizations)
 	fc.Result = res
 	return ec.marshalNPermissionsUsersOrganizations2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐPermissionsUsersOrganizations(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createAuthTicket(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createAuthTicket_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateAuthTicket(rctx, args["input"].(CreateAuthTicketInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuthTicket)
+	fc.Result = res
+	return ec.marshalNAuthTicket2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateAuthTicket(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateAuthTicket_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateAuthTicket(rctx, args["input"].(UpdateAuthTicketInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuthTicket)
+	fc.Result = res
+	return ec.marshalOAuthTicket2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewServiceSecret_secret(ctx context.Context, field graphql.CollectedField, obj *NewServiceSecret) (ret graphql.Marshaler) {
@@ -10271,6 +10679,48 @@ func (ec *executionContext) _Query_getUserUsage(ctx context.Context, field graph
 	return ec.marshalNUsage2ᚕᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUsageᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_authTicketByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_authTicketByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AuthTicketByID(rctx, args["authTicketID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuthTicket)
+	fc.Result = res
+	return ec.marshalNAuthTicket2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -14067,6 +14517,26 @@ func (ec *executionContext) unmarshalInputCompileSchemaInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateAuthTicketInput(ctx context.Context, obj interface{}) (CreateAuthTicketInput, error) {
+	var it CreateAuthTicketInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "requesterName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requesterName"))
+			it.RequesterName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateProjectInput(ctx context.Context, obj interface{}) (CreateProjectInput, error) {
 	var it CreateProjectInput
 	var asMap = obj.(map[string]interface{})
@@ -14519,6 +14989,34 @@ func (ec *executionContext) unmarshalInputGetUsageInput(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateAuthTicketInput(ctx context.Context, obj interface{}) (UpdateAuthTicketInput, error) {
+	var it UpdateAuthTicketInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "authTicketID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authTicketID"))
+			it.AuthTicketID, err = ec.unmarshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "approve":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approve"))
+			it.Approve, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateProjectInput(ctx context.Context, obj interface{}) (UpdateProjectInput, error) {
 	var it UpdateProjectInput
 	var asMap = obj.(map[string]interface{})
@@ -14780,6 +15278,59 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 
 // region    **************************** object.gotpl ****************************
 
+var authTicketImplementors = []string{"AuthTicket"}
+
+func (ec *executionContext) _AuthTicket(ctx context.Context, sel ast.SelectionSet, obj *models.AuthTicket) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authTicketImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthTicket")
+		case "authTicketID":
+			out.Values[i] = ec._AuthTicket_authTicketID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "requesterName":
+			out.Values[i] = ec._AuthTicket_requesterName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "issuedSecretToken":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AuthTicket_issuedSecretToken(ctx, field, obj)
+				return res
+			})
+		case "createdOn":
+			out.Values[i] = ec._AuthTicket_createdOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "updatedOn":
+			out.Values[i] = ec._AuthTicket_updatedOn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var compileSchemaOutputImplementors = []string{"CompileSchemaOutput"}
 
 func (ec *executionContext) _CompileSchemaOutput(ctx context.Context, sel ast.SelectionSet, obj *CompileSchemaOutput) graphql.Marshaler {
@@ -14969,6 +15520,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createAuthTicket":
+			out.Values[i] = ec._Mutation_createAuthTicket(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateAuthTicket":
+			out.Values[i] = ec._Mutation_updateAuthTicket(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16192,6 +16750,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "authTicketByID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_authTicketByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -17038,6 +17610,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuthTicket2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx context.Context, sel ast.SelectionSet, v models.AuthTicket) graphql.Marshaler {
+	return ec._AuthTicket(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuthTicket2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx context.Context, sel ast.SelectionSet, v *models.AuthTicket) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AuthTicket(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -17070,6 +17656,11 @@ func (ec *executionContext) marshalNCompileSchemaOutput2ᚖgithubᚗcomᚋbeneat
 		return graphql.Null
 	}
 	return ec._CompileSchemaOutput(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateAuthTicketInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateAuthTicketInput(ctx context.Context, v interface{}) (CreateAuthTicketInput, error) {
+	res, err := ec.unmarshalInputCreateAuthTicketInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreateProjectInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐCreateProjectInput(ctx context.Context, v interface{}) (CreateProjectInput, error) {
@@ -17821,6 +18412,11 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋsatoriᚋgoᚗuuidᚐUUI
 	return res
 }
 
+func (ec *executionContext) unmarshalNUpdateAuthTicketInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateAuthTicketInput(ctx context.Context, v interface{}) (UpdateAuthTicketInput, error) {
+	res, err := ec.unmarshalInputUpdateAuthTicketInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNUpdateProjectInput2githubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐUpdateProjectInput(ctx context.Context, v interface{}) (UpdateProjectInput, error) {
 	res, err := ec.unmarshalInputUpdateProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -18174,6 +18770,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAuthTicket2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋmodelsᚐAuthTicket(ctx context.Context, sel ast.SelectionSet, v *models.AuthTicket) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AuthTicket(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -18226,6 +18829,13 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 	return graphql.MarshalInt64(*v)
+}
+
+func (ec *executionContext) marshalONewUserSecret2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐNewUserSecret(ctx context.Context, sel ast.SelectionSet, v *NewUserSecret) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NewUserSecret(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPrivateOrganization2ᚖgithubᚗcomᚋbeneathᚑhqᚋbeneathᚋserverᚋcontrolᚋgqlᚐPrivateOrganization(ctx context.Context, sel ast.SelectionSet, v *PrivateOrganization) graphql.Marshaler {
