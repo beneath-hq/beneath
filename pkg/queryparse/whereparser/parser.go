@@ -1,6 +1,7 @@
 package whereparser
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/alecthomas/participle/v2"
@@ -29,8 +30,7 @@ func newParser() *participle.Parser {
 	whereLexer := lexer.Must(stateful.NewSimple([]stateful.Rule{
 		{Name: `Keyword`, Pattern: `(?i)TRUE|FALSE|NULL|IS|AND|STARTS WITH`},
 		{Name: `Ident`, Pattern: `[a-zA-Z_][a-zA-Z0-9_]*`},
-		{Name: `Float`, Pattern: `[-+]?\d*\.\d+([eE][-+]?\d+)?`},
-		{Name: `Int`, Pattern: `[-+]?\d+`},
+		{Name: `Number`, Pattern: `[-+]?\d*\.?\d+([eE][-+]?\d+)?`},
 		{Name: `String`, Pattern: `'[^']*'|"[^"]*"`},
 		{Name: `Operator`, Pattern: `<>|!=|<=|>=|==|&&|[,()=<>&]`},
 		{Name: `whitespace`, Pattern: `\s+`},
@@ -55,11 +55,10 @@ type Condition struct {
 }
 
 type Value struct {
-	Float   *float64 `(  @Float`
-	Int     *int     ` | @Int`
-	String  *string  ` | @String`
-	Boolean *Boolean ` | @("TRUE" | "FALSE")`
-	Null    bool     ` | @"NULL" )`
+	Number  *json.Number `(  @Number`
+	String  *string      ` | @String`
+	Boolean *Boolean     ` | @("TRUE" | "FALSE")`
+	Null    bool         ` | @"NULL" )`
 }
 
 type Boolean bool

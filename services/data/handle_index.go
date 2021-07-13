@@ -56,7 +56,7 @@ func (s *Service) HandleQueryIndex(ctx context.Context, req *QueryIndexRequest) 
 	}
 
 	// get filter
-	where, err := queryparse.JSONStringToQuery(req.Filter)
+	where, err := queryparse.StringToQuery(req.Filter)
 	if err != nil {
 		return nil, newErrorf(http.StatusBadRequest, "couldn't parse 'where': %s", err.Error())
 	}

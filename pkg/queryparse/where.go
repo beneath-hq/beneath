@@ -46,10 +46,8 @@ func WhereStringToQuery(where string) (Query, error) {
 		var arg interface{}
 		if node.Value.String != nil {
 			arg = *node.Value.String
-		} else if node.Value.Float != nil {
-			arg = *node.Value.Float
-		} else if node.Value.Int != nil {
-			arg = *node.Value.Int
+		} else if node.Value.Number != nil {
+			arg = *node.Value.Number
 		} else if node.Value.Boolean != nil {
 			arg = bool(*node.Value.Boolean)
 		} else if node.Value.Null {
