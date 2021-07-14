@@ -16,7 +16,7 @@ import msgpack
 
 from beneath.config import DEFAULT_CHECKPOINT_COMMIT_DELAY_MS
 from beneath.instance import TableInstance
-from beneath.utils import AIODelayBuffer, TableQualifier
+from beneath.utils import AIODelayBuffer, TableIdentifier
 
 SERVICE_CHECKPOINT_LOG_RETENTION = timedelta(hours=6)
 SERVICE_CHECKPOINT_SCHEMA = """
@@ -47,13 +47,13 @@ class Checkpointer:
     def __init__(
         self,
         client: Client,
-        metatable_qualifier: TableQualifier,
+        metatable_identifier: TableIdentifier,
         metatable_create: bool,
         metatable_description: str,
     ):
         self.instance = None
         self._client = client
-        self._metatable_qualifier = metatable_qualifier
+        self._metatable_identifier = metatable_identifier
         self._metatable_description = metatable_description
         self._create = metatable_create
         self._writer = self._Writer(self)
@@ -105,7 +105,7 @@ class Checkpointer:
     async def _stage_table(self):
         if self._create or self._client.dry:
             table = await self._client.create_table(
-                table_path=str(self._metatable_qualifier),
+                table_path=str(self._metatable_identifier),
                 schema=SERVICE_CHECKPOINT_SCHEMA,
                 description=self._metatable_description,
                 meta=True,
@@ -114,7 +114,7 @@ class Checkpointer:
                 update_if_exists=True,
             )
         else:
-            table = await self._client.find_table(table_path=str(self._metatable_qualifier))
+            table = await self._client.find_table(table_path=str(self._metatable_identifier))
 
         if not table.primary_instance:
             raise Exception("Expected checkpoints table to have a primary instance")
@@ -122,7 +122,7 @@ class Checkpointer:
 
         self._client.logger.info(
             "Using '%s' (version %i) for checkpointing",
-            self._metatable_qualifier,
+            self._metatable_identifier,
             self.instance.version,
         )
 

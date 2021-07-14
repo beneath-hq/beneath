@@ -100,7 +100,7 @@ class DryWriter(AIODelayBuffer[InstanceRecordAndSize]):
             (instance, record, size) = value
             self._client.logger.info(
                 "Flushed record (table=%s, size=%i bytes): %s",
-                str(instance.table._qualifier),
+                str(instance.table._identifier),
                 size,
                 record,
             )

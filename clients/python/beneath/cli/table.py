@@ -1,5 +1,5 @@
 from beneath.client import Client
-from beneath.utils import ProjectQualifier, TableQualifier
+from beneath.utils import ProjectIdentifier, TableIdentifier
 from beneath.cli.utils import (
     async_cmd,
     pretty_print_graphql_result,
@@ -91,7 +91,7 @@ def add_subparser(root):
 
 async def show_list(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     if len(project["tables"]) == 0:
         print("There are no tables currently in this project")
@@ -101,7 +101,7 @@ async def show_list(args):
 
 async def show_table(args):
     client = Client()
-    sq = TableQualifier.from_path(args.table_path)
+    sq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=sq.organization,
         project_name=sq.project,
@@ -114,7 +114,7 @@ async def create(args):
     with open(args.file, "r") as f:
         schema = f.read()
     client = Client()
-    sq = TableQualifier.from_path(args.table_path)
+    sq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.create(
         organization_name=sq.organization,
         project_name=sq.project,
@@ -133,7 +133,7 @@ async def create(args):
 
 async def delete(args):
     client = Client()
-    sq = TableQualifier.from_path(args.table_path)
+    sq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=sq.organization,
         project_name=sq.project,
@@ -145,7 +145,7 @@ async def delete(args):
 
 async def instance_list(args):
     client = Client()
-    sq = TableQualifier.from_path(args.table_path)
+    sq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=sq.organization,
         project_name=sq.project,
@@ -157,7 +157,7 @@ async def instance_list(args):
 
 async def instance_create(args):
     client = Client()
-    sq = TableQualifier.from_path(args.table_path)
+    sq = TableIdentifier.from_path(args.table_path)
     table = await client.admin.tables.find_by_organization_project_and_name(
         organization_name=sq.organization,
         project_name=sq.project,

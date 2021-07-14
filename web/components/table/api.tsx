@@ -90,11 +90,8 @@ const buildPythonSetup = (args: TemplateArgs) => {
       <Heading>Setup</Heading>
       <Para>If you've already installed the SDK, you can skip these steps. First, install the library:</Para>
       <CodePaper language="bash" paragraph>{`pip install --upgrade beneath`}</CodePaper>
-      <Para>
-        Now create a command-line (CLI) secret for your local environment from your{" "}
-        <SecretsLink>secrets page</SecretsLink>. Then authenticate your environment with the secret:
-      </Para>
-      <CodePaper language="bash" paragraph>{`beneath auth SECRET`}</CodePaper>
+      <Para>Then authenticate your environment by running:</Para>
+      <CodePaper language="bash" paragraph>{`beneath auth`}</CodePaper>
     </>
   );
 };

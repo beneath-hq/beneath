@@ -74,7 +74,7 @@ class TableInstance:
     # STATE
 
     def __repr__(self):
-        url = f"{config.BENEATH_FRONTEND_HOST}/{self.table._qualifier}/{self.version}"
+        url = f"{config.BENEATH_FRONTEND_HOST}/{self.table._identifier}/{self.version}"
         return f'<beneath.table.TableInstance("{url}")>'
 
     # CONTROL PLANE

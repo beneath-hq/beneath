@@ -27,6 +27,10 @@ type CompileSchemaOutput struct {
 	CanonicalIndexes    string `json:"canonicalIndexes"`
 }
 
+type CreateAuthTicketInput struct {
+	RequesterName string `json:"requesterName"`
+}
+
 type CreateProjectInput struct {
 	OrganizationID uuid.UUID `json:"organizationID"`
 	ProjectName    string    `json:"projectName"`
@@ -131,6 +135,11 @@ type PrivateOrganization struct {
 }
 
 func (PrivateOrganization) IsOrganization() {}
+
+type UpdateAuthTicketInput struct {
+	AuthTicketID uuid.UUID `json:"authTicketID"`
+	Approve      bool      `json:"approve"`
+}
 
 type UpdateProjectInput struct {
 	ProjectID   uuid.UUID `json:"projectID"`

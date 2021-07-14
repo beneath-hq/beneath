@@ -6,12 +6,12 @@ from beneath.utils.aiopoller import AIOPoller
 from beneath.utils.aioticker import AIOTicker
 from beneath.utils.aioworkerpool import AIOWorkerPool
 from beneath.utils.infer_avro import infer_avro
-from beneath.utils.qualifiers import (
+from beneath.utils.identifiers import (
     pretty_entity_name,
-    ProjectQualifier,
-    ServiceQualifier,
-    TableQualifier,
-    SubscriptionQualifier,
+    ProjectIdentifier,
+    ServiceIdentifier,
+    TableIdentifier,
+    SubscriptionIdentifier,
 )
 
 __all__ = [
@@ -19,10 +19,10 @@ __all__ = [
     "AIOPoller",
     "AIOTicker",
     "AIOWorkerPool",
-    "ServiceQualifier",
-    "TableQualifier",
-    "SubscriptionQualifier",
-    "ProjectQualifier",
+    "ServiceIdentifier",
+    "TableIdentifier",
+    "SubscriptionIdentifier",
+    "ProjectIdentifier",
     "pretty_entity_name",
     "infer_avro",
 ]

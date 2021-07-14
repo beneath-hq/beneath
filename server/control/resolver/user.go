@@ -130,3 +130,81 @@ func (r *mutationResolver) UpdateUserOrganizationPermissions(ctx context.Context
 
 	return puo, nil
 }
+
+// AuthTicket returns a gql.AuthTicketResolver
+func (r *Resolver) AuthTicket() gql.AuthTicketResolver { return &authTicketResolver{r} }
+
+type authTicketResolver struct{ *Resolver }
+
+func (r *authTicketResolver) IssuedSecret(ctx context.Context, obj *models.AuthTicket) (*gql.NewUserSecret, error) {
+	if obj.IssuedSecret != nil {
+		return &gql.NewUserSecret{
+			Secret: obj.IssuedSecret,
+			Token:  obj.IssuedSecret.Token.String(),
+		}, nil
+	}
+	return nil, nil
+}
+
+func (r *queryResolver) AuthTicketByID(ctx context.Context, authTicketID uuid.UUID) (*models.AuthTicket, error) {
+	ticket := r.Users.FindAuthTicket(ctx, authTicketID)
+	if ticket == nil {
+		return nil, gqlerror.Errorf("Authentication ticket not found (it was likely denied or timed out)")
+	}
+
+	if ticket.ApproverUserID != nil {
+		secret, err := r.Secrets.CreateUserSecret(ctx, *ticket.ApproverUserID, ticket.RequesterName, false, false)
+		if err != nil {
+			return nil, gqlerror.Errorf("Error creating secret: %s", err.Error())
+		}
+
+		ticket.IssuedSecret = secret
+
+		err = r.Users.DeleteAuthTicket(ctx, ticket)
+		if err != nil {
+			return nil, gqlerror.Errorf("Error creating ticket: %s", err.Error())
+		}
+	}
+
+	return ticket, nil
+}
+
+func (r *mutationResolver) CreateAuthTicket(ctx context.Context, input gql.CreateAuthTicketInput) (*models.AuthTicket, error) {
+	ticket := &models.AuthTicket{
+		RequesterName: input.RequesterName,
+	}
+
+	err := r.Users.CreateAuthTicket(ctx, ticket)
+	if err != nil {
+		return nil, gqlerror.Errorf("Error creating authentication ticket: %s", err.Error())
+	}
+
+	return ticket, nil
+}
+
+func (r *mutationResolver) UpdateAuthTicket(ctx context.Context, input gql.UpdateAuthTicketInput) (*models.AuthTicket, error) {
+	secret := middleware.GetSecret(ctx)
+	if !secret.IsUser() {
+		return nil, gqlerror.Errorf("You must be logged in to approve an authentication ticket")
+	}
+
+	ticket := r.Users.FindAuthTicket(ctx, input.AuthTicketID)
+	if ticket == nil {
+		return nil, gqlerror.Errorf("Authentication ticket not found (it was likely denied or timed out)")
+	}
+
+	if input.Approve {
+		err := r.Users.ApproveAuthTicket(ctx, ticket, secret.GetOwnerID())
+		if err != nil {
+			return nil, gqlerror.Errorf("Error approving authentication ticket: %s", err.Error())
+		}
+	} else {
+		err := r.Users.DeleteAuthTicket(ctx, ticket)
+		if err != nil {
+			return nil, gqlerror.Errorf("Error denying authentication ticket: %s", err.Error())
+		}
+		ticket = nil
+	}
+
+	return ticket, nil
+}

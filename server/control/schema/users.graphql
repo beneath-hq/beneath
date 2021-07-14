@@ -1,4 +1,6 @@
-# extend type Query {}
+extend type Query {
+  authTicketByID(authTicketID: UUID!): AuthTicket!
+}
 
 extend type Mutation {
   registerUserConsent(
@@ -26,6 +28,8 @@ extend type Mutation {
     create: Boolean
     admin: Boolean
   ): PermissionsUsersOrganizations!
+  createAuthTicket(input: CreateAuthTicketInput!): AuthTicket!
+  updateAuthTicket(input: UpdateAuthTicketInput!): AuthTicket
 }
 
 type PrivateUser {
@@ -59,4 +63,21 @@ type PermissionsUsersOrganizations {
   view: Boolean!
   create: Boolean!
   admin: Boolean!
+}
+
+type AuthTicket {
+  authTicketID: UUID!
+  requesterName: String!
+  issuedSecret: NewUserSecret
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+input CreateAuthTicketInput {
+  requesterName: String!
+}
+
+input UpdateAuthTicketInput {
+  authTicketID: UUID!
+  approve: Boolean!
 }

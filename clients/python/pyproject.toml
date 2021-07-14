@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beneath"
-version = "1.4.0"
+version = "1.4.1"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 authors = ["Beneath Systems <hello@beneath.dev>"]
 license = "MIT License"

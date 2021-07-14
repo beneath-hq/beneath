@@ -24,7 +24,7 @@ def split_resource(kind: str, path: str):
     return parts
 
 
-class ProjectQualifier:
+class ProjectIdentifier:
     def __init__(self, organization: str, project: str):
         self.organization = pretty_entity_name(organization)
         self.project = pretty_entity_name(project)
@@ -32,7 +32,7 @@ class ProjectQualifier:
     @staticmethod
     def from_path(path: str):
         parts = split_project(path)
-        return ProjectQualifier(parts[0], parts[1])
+        return ProjectIdentifier(parts[0], parts[1])
 
     def __repr__(self):
         return f"{self.organization}/{self.project}"
@@ -44,7 +44,7 @@ class ProjectQualifier:
         return self.organization == other.organization and self.project == other.project
 
 
-class TableQualifier:
+class TableIdentifier:
     def __init__(self, organization: str, project: str, table: str):
         self.organization = pretty_entity_name(organization)
         self.project = pretty_entity_name(project)
@@ -53,7 +53,7 @@ class TableQualifier:
     @staticmethod
     def from_path(path: str):
         parts = split_resource("table", path)
-        return TableQualifier(parts[0], parts[1], parts[2])
+        return TableIdentifier(parts[0], parts[1], parts[2])
 
     def __repr__(self):
         return f"{self.organization}/{self.project}/table:{self.table}"
@@ -69,7 +69,7 @@ class TableQualifier:
         )
 
 
-class ServiceQualifier:
+class ServiceIdentifier:
     def __init__(self, organization: str, project: str, service: str):
         self.organization = pretty_entity_name(organization)
         self.project = pretty_entity_name(project)
@@ -78,7 +78,7 @@ class ServiceQualifier:
     @staticmethod
     def from_path(path: str):
         parts = split_resource("service", path)
-        return ServiceQualifier(parts[0], parts[1], parts[2])
+        return ServiceIdentifier(parts[0], parts[1], parts[2])
 
     def __repr__(self):
         return f"{self.organization}/{self.project}/service:{self.service}"
@@ -94,7 +94,7 @@ class ServiceQualifier:
         )
 
 
-class SubscriptionQualifier:
+class SubscriptionIdentifier:
     def __init__(self, organization: str, project: str, subscription: str):
         self.organization = pretty_entity_name(organization)
         self.project = pretty_entity_name(project)
@@ -103,7 +103,7 @@ class SubscriptionQualifier:
     @staticmethod
     def from_path(path: str):
         parts = split_resource("subscription", path)
-        return SubscriptionQualifier(parts[0], parts[1], parts[2])
+        return SubscriptionIdentifier(parts[0], parts[1], parts[2])
 
     def __repr__(self):
         return f"{self.organization}/{self.project}/subscription:{self.subscription}"

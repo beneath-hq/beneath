@@ -96,6 +96,11 @@ export interface GetUsageInput {
   until?: ControlTime | null;
 }
 
+export interface UpdateAuthTicketInput {
+  authTicketID: ControlUUID;
+  approve: boolean;
+}
+
 export interface UpdateProjectInput {
   projectID: ControlUUID;
   displayName?: string | null;

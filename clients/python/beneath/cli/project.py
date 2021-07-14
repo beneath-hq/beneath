@@ -1,5 +1,5 @@
 from beneath.client import Client
-from beneath.utils import pretty_entity_name, ProjectQualifier
+from beneath.utils import pretty_entity_name, ProjectIdentifier
 from beneath.cli.utils import async_cmd, pretty_print_graphql_result, str2bool, project_path_help
 
 
@@ -95,7 +95,7 @@ async def list_for_me(args):
 
 async def show(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     result = await client.admin.projects.find_by_organization_and_name(
         organization_name=pq.organization,
         project_name=pq.project,
@@ -105,7 +105,7 @@ async def show(args):
 
 async def create(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     organization = await client.admin.organizations.find_by_name(pq.organization)
     result = await client.admin.projects.create(
         organization_id=organization["organizationID"],
@@ -121,7 +121,7 @@ async def create(args):
 
 async def update(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     result = await client.admin.projects.update(
         project_id=project["projectID"],
@@ -136,7 +136,7 @@ async def update(args):
 
 async def delete(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     result = await client.admin.projects.delete(project_id=project["projectID"])
     pretty_print_graphql_result(result)
@@ -144,7 +144,7 @@ async def delete(args):
 
 async def transfer_organization(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     organization = await client.admin.organizations.find_by_name(args.new_organization)
     result = await client.admin.organizations.transfer_project(
@@ -156,7 +156,7 @@ async def transfer_organization(args):
 
 async def show_member_permissions(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     result = await client.admin.projects.get_member_permissions(project_id=project["projectID"])
     pretty_print_graphql_result(result)
@@ -164,7 +164,7 @@ async def show_member_permissions(args):
 
 async def update_member_permissions(args):
     client = Client()
-    pq = ProjectQualifier.from_path(args.project_path)
+    pq = ProjectIdentifier.from_path(args.project_path)
     project = await client.admin.projects.find_by_organization_and_name(pq.organization, pq.project)
     user = await client.admin.organizations.find_by_name(args.username)
     result = await client.admin.users.update_permissions_for_project(

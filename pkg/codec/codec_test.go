@@ -377,7 +377,7 @@ func TestQueryParse(t *testing.T) {
 	codec, err := New(avroSchema, index1, []Index{index2, index3})
 	assert.Nil(t, err)
 
-	q1, err := queryparse.JSONStringToQuery("")
+	q1, err := queryparse.StringToQuery("")
 	assert.Nil(t, err)
 	idx1, kr1, err := codec.ParseIndexQuery(q1)
 	assert.Nil(t, err)
@@ -386,7 +386,7 @@ func TestQueryParse(t *testing.T) {
 
 	// 0xAAAA = qqo=
 
-	q2, err := queryparse.JSONStringToQuery(`{"two":{"_prefix": "qqo="}}`)
+	q2, err := queryparse.StringToQuery(`{"two":{"_prefix": "qqo="}}`)
 	assert.Nil(t, err)
 	idx2, kr2, err := codec.ParseIndexQuery(q2)
 	assert.Nil(t, err)
@@ -394,7 +394,7 @@ func TestQueryParse(t *testing.T) {
 	assert.True(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xAA, 0xBB}}.Pack()))
 	assert.False(t, kr2.Contains(tuple.Tuple{[]byte{0xAA, 0xBB}}.Pack()))
 
-	q3, err := queryparse.JSONStringToQuery(`{"three": 1000, "two": {"_prefix": "qqo="}}`)
+	q3, err := queryparse.StringToQuery(`{"three": 1000, "two": {"_prefix": "qqo="}}`)
 	assert.Nil(t, err)
 	idx3, kr3, err := codec.ParseIndexQuery(q3)
 	assert.Nil(t, err)
@@ -402,7 +402,7 @@ func TestQueryParse(t *testing.T) {
 	assert.True(t, kr3.Contains(tuple.Tuple{1000, []byte{0xAA, 0xAA, 0xBB}}.Pack()))
 	assert.False(t, kr3.Contains(tuple.Tuple{1000, []byte{0xAA, 0xBB}}.Pack()))
 
-	q4, err := queryparse.JSONStringToQuery(`{"four": 1000}`)
+	q4, err := queryparse.StringToQuery(`{"four": 1000}`)
 	assert.Nil(t, err)
 	_, _, err = codec.ParseIndexQuery(q4)
 	assert.NotNil(t, err)

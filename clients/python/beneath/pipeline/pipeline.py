@@ -57,11 +57,11 @@ class ReadTable(Transform):
         super().__init__(pipeline)
         self.table_path = table_path
         self.batch_size = batch_size
-        self.qualifier = self.pipeline._add_input_table(table_path)
+        self.identifier = self.pipeline._add_input_table(table_path)
 
     async def process(self, incoming_records: Iterable[Mapping]):
         assert incoming_records is None
-        consumer = self.pipeline._inputs[self.qualifier]
+        consumer = self.pipeline._inputs[self.identifier]
         async for batch in consumer.iterate(
             batches=True,
             replay_only=(self.pipeline.strategy == Strategy.batch),
@@ -105,7 +105,7 @@ class WriteTable(Transform):
         retention: timedelta = None,
     ):
         super().__init__(pipeline)
-        self.qualifier = self.pipeline._add_output_table(
+        self.identifier = self.pipeline._add_output_table(
             table_path,
             schema=schema,
             schema_kind=schema_kind,
@@ -114,7 +114,7 @@ class WriteTable(Transform):
         )
 
     async def process(self, incoming_records: Iterable[Mapping]):
-        instance = self.pipeline._outputs[self.qualifier]
+        instance = self.pipeline._outputs[self.identifier]
         await self.pipeline.client.write(
             instance=instance,
             records=incoming_records,
@@ -336,30 +336,30 @@ class Pipeline(BasePipeline):
         # make outputs primary if not batch
         if self.strategy == Strategy.batch:
             return
-        for qualifier, instance in self._outputs.items():
+        for identifier, instance in self._outputs.items():
             if not instance.is_primary:
                 await instance.update(make_primary=True)
                 self.logger.info(
                     "Made version %s of output table '%s' primary",
                     instance.version,
-                    qualifier,
+                    identifier,
                 )
             else:
                 self.logger.info(
                     "Using existing primary version %s for output table '%s'",
                     instance.version,
-                    qualifier,
+                    identifier,
                 )
 
     async def _after_run(self):
         # make outputs primary if batch
         if self.strategy != Strategy.batch:
             return
-        for qualifier, instance in self._outputs.items():
+        for identifier, instance in self._outputs.items():
             if not instance.is_primary or not instance.is_final:
                 await instance.update(make_primary=True, make_final=True)
                 self.logger.info(
                     "Made version %s for output table '%s' final and primary",
                     instance.version,
-                    qualifier,
+                    identifier,
                 )

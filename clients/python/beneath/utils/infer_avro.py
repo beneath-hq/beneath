@@ -52,6 +52,8 @@ def infer_avro(records: Union[List[dict], pd.DataFrame]):
 def _infer_df_fields(df, nested_record_names):
     fields = []
     for key, dtype in df.dtypes.items():
+        if key == "@meta.timestamp":
+            continue
         if dtype is np.dtype("O"):
             inferred_type = _infer_dtype_complex(df, key, nested_record_names)
         else:
