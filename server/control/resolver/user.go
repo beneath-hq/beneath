@@ -136,7 +136,7 @@ func (r *Resolver) AuthTicket() gql.AuthTicketResolver { return &authTicketResol
 
 type authTicketResolver struct{ *Resolver }
 
-func (r *authTicketResolver) IssuedSecretToken(ctx context.Context, obj *models.AuthTicket) (*gql.NewUserSecret, error) {
+func (r *authTicketResolver) IssuedSecret(ctx context.Context, obj *models.AuthTicket) (*gql.NewUserSecret, error) {
 	if obj.IssuedSecret != nil {
 		return &gql.NewUserSecret{
 			Secret: obj.IssuedSecret,

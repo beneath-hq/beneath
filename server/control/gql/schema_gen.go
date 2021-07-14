@@ -61,11 +61,11 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AuthTicket struct {
-		AuthTicketID      func(childComplexity int) int
-		CreatedOn         func(childComplexity int) int
-		IssuedSecretToken func(childComplexity int) int
-		RequesterName     func(childComplexity int) int
-		UpdatedOn         func(childComplexity int) int
+		AuthTicketID  func(childComplexity int) int
+		CreatedOn     func(childComplexity int) int
+		IssuedSecret  func(childComplexity int) int
+		RequesterName func(childComplexity int) int
+		UpdatedOn     func(childComplexity int) int
 	}
 
 	CompileSchemaOutput struct {
@@ -376,7 +376,7 @@ type ComplexityRoot struct {
 }
 
 type AuthTicketResolver interface {
-	IssuedSecretToken(ctx context.Context, obj *models.AuthTicket) (*NewUserSecret, error)
+	IssuedSecret(ctx context.Context, obj *models.AuthTicket) (*NewUserSecret, error)
 }
 type MutationResolver interface {
 	Empty(ctx context.Context) (*string, error)
@@ -524,12 +524,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AuthTicket.CreatedOn(childComplexity), true
 
-	case "AuthTicket.issuedSecretToken":
-		if e.complexity.AuthTicket.IssuedSecretToken == nil {
+	case "AuthTicket.issuedSecret":
+		if e.complexity.AuthTicket.IssuedSecret == nil {
 			break
 		}
 
-		return e.complexity.AuthTicket.IssuedSecretToken(childComplexity), true
+		return e.complexity.AuthTicket.IssuedSecret(childComplexity), true
 
 	case "AuthTicket.requesterName":
 		if e.complexity.AuthTicket.RequesterName == nil {
@@ -3139,7 +3139,7 @@ type PermissionsUsersOrganizations {
 type AuthTicket {
   authTicketID: UUID!
   requesterName: String!
-  issuedSecretToken: NewUserSecret
+  issuedSecret: NewUserSecret
   createdOn: Time!
   updatedOn: Time!
 }
@@ -4531,7 +4531,7 @@ func (ec *executionContext) _AuthTicket_requesterName(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AuthTicket_issuedSecretToken(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthTicket_issuedSecret(ctx context.Context, field graphql.CollectedField, obj *models.AuthTicket) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4549,7 +4549,7 @@ func (ec *executionContext) _AuthTicket_issuedSecretToken(ctx context.Context, f
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AuthTicket().IssuedSecretToken(rctx, obj)
+		return ec.resolvers.AuthTicket().IssuedSecret(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15299,7 +15299,7 @@ func (ec *executionContext) _AuthTicket(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "issuedSecretToken":
+		case "issuedSecret":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -15307,7 +15307,7 @@ func (ec *executionContext) _AuthTicket(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._AuthTicket_issuedSecretToken(ctx, field, obj)
+				res = ec._AuthTicket_issuedSecret(ctx, field, obj)
 				return res
 			})
 		case "createdOn":

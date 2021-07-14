@@ -68,7 +68,7 @@ type PermissionsUsersOrganizations {
 type AuthTicket {
   authTicketID: UUID!
   requesterName: String!
-  issuedSecretToken: NewUserSecret
+  issuedSecret: NewUserSecret
   createdOn: Time!
   updatedOn: Time!
 }
