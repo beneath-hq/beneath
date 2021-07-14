@@ -122,3 +122,44 @@ class Users(_ResourceBase):
             """,
         )
         return result["getUserUsage"]
+
+    async def get_auth_ticket(self, ticket_id):
+        result = await self.conn.query_control(
+            variables={
+                "authTicketID": ticket_id,
+            },
+            query="""
+                query AuthTicketByID($authTicketID: UUID!) {
+                    authTicketByID(authTicketID: $authTicketID) {
+                        authTicketID
+                        requesterName
+                        createdOn
+                        updatedOn
+                        issuedSecret {
+                            token
+                        }
+                    }
+                }
+            """,
+            check_authenticated=False,
+        )
+        return result["authTicketByID"]
+
+    async def create_auth_ticket(self, name):
+        result = await self.conn.query_control(
+            variables={
+                "input": {"requesterName": name},
+            },
+            query="""
+                mutation CreateAuthTicket($input: CreateAuthTicketInput!) {
+                    createAuthTicket(input: $input) {
+                        authTicketID
+                        requesterName
+                        createdOn
+                        updatedOn
+                    }
+                }
+            """,
+            check_authenticated=False,
+        )
+        return result["createAuthTicket"]

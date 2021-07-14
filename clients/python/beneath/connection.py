@@ -33,12 +33,13 @@ class Connection:
     Encapsulates network connectivity to Beneath
     """
 
-    def __init__(self, secret: str):
+    def __init__(self, secret: str = None):
         self.secret = secret
         self.connected = False
         self.request_metadata = None
         self.channel: grpc.aio.Channel = None
         self.stub: gateway_pb2_grpc.GatewayStub = None
+        self.pong: gateway_pb2.PingResponse = None
 
     def __getstate__(self):
         return {"secret": self.secret}
@@ -48,7 +49,7 @@ class Connection:
 
     # GRPC CONNECTIVITY
 
-    async def ensure_connected(self):
+    async def ensure_connected(self, check_authenticated=True):
         """
         Called before each network call (write, query, etc.). May also be called directly.
         On first run, it sets up grpc, sends a ping, checks library version and secret validity.
@@ -56,17 +57,20 @@ class Connection:
         """
         if not self.connected:
             self._create_grpc_connection()
-            try:
-                await self._check_grpc_connection()
-            except grpc.RpcError as exc:
-                # pylint: disable=no-member
-                if exc.code() == grpc.StatusCode.UNAUTHENTICATED:
-                    raise AuthenticationError(exc.details()) from exc
-                raise exc
+            pong = await self._ping()
+            self._check_pong_status(pong)
+            self.pong = pong
             self.connected = True
+        if check_authenticated:
+            if not self.pong.authenticated:
+                raise AuthenticationError(
+                    "You must authenticate with 'beneath auth' or by setting BENEATH_SECRET"
+                )
 
     def _create_grpc_connection(self):
-        self.request_metadata = [("authorization", "Bearer {}".format(self.secret))]
+        self.request_metadata = []
+        if self.secret:
+            self.request_metadata.append(("authorization", "Bearer {}".format(self.secret)))
         insecure = config.DEV
         options = [
             ("grpc.max_receive_message_length", MAX_RECV_MSG_SIZE),
@@ -86,14 +90,6 @@ class Connection:
                 options=options,
             )
         self.stub = gateway_pb2_grpc.GatewayStub(self.channel)
-
-    async def _check_grpc_connection(self):
-        pong = await self._ping()
-        self._check_pong_status(pong)
-        if not pong.authenticated:
-            raise AuthenticationError(
-                "You must authenticate with 'beneath auth' or by setting BENEATH_SECRET"
-            )
 
     @classmethod
     def _check_pong_status(cls, pong: gateway_pb2.PingResponse):
@@ -123,14 +119,16 @@ class Connection:
 
     # CONTROL-PLANE
 
-    async def query_control(self, query, variables):
+    async def query_control(self, query, variables, check_authenticated=True):
         """ Sends a GraphQL query to the control server """
-        await self.ensure_connected()
+        await self.ensure_connected(check_authenticated=check_authenticated)
         for k, v in variables.items():
             if isinstance(v, uuid.UUID):
                 variables[k] = v.hex
         url = f"{config.BENEATH_CONTROL_HOST}/graphql"
-        headers = {"Authorization": f"Bearer {self.secret}"}
+        headers = {}
+        if self.secret:
+            headers["Authorization"] = f"Bearer {self.secret}"
         body = {"query": query, "variables": variables}
         async with aiohttp.ClientSession() as session:
             async with session.post(url=url, headers=headers, json=body) as response:

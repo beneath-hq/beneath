@@ -76,7 +76,7 @@ class Client:
             secret = config.read_secret()
         if not secret:
             raise ValueError(
-                "You must provide a secret (either authenticate with the CLI, set the "
+                "You are not authenticated (either run 'beneath auth' in the CLI, set the "
                 "BENEATH_SECRET environment variable, or pass a secret to the Client constructor)"
             )
         if not isinstance(secret, str):

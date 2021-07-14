@@ -30,8 +30,11 @@ else:
 
 
 def read_secret():
-    with open(_secret_file_path(), "r") as f:
-        return f.read()
+    try:
+        with open(_secret_file_path(), "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
 
 
 def write_secret(secret):
