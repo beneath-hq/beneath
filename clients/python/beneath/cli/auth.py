@@ -13,7 +13,7 @@ def add_subparser(root):
     _auth = root.add_parser(
         "auth",
         help="Login to your Beneath account",
-        description="Opens your browser to authenticate",
+        description="Opens your browser to authenticate your local environment",
     )
     _auth.set_defaults(func=async_cmd(auth))
     _auth.add_argument(
@@ -29,7 +29,7 @@ async def auth(args):
         ticket = await admin.users.create_auth_ticket("Beneath CLI")
         ticket_id = ticket["authTicketID"]
 
-        url = f"{config.BENEATH_FRONTEND_HOST}/-/auth/ticket?ticket={ticket_id}"
+        url = f"{config.BENEATH_FRONTEND_HOST}/-/auth/ticket/{ticket_id}"
         print(f"Opening browser to authenticate...")
         print(f"If your browser does not open, go to: {url}")
         webbrowser.open(url)

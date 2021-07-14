@@ -1,9 +1,8 @@
-import { Button, Container, Grid, makeStyles, Theme, Typography, useMediaQuery, useTheme } from "@material-ui/core";
+import { Button, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
 import { NextPage } from "next";
-import React, { FC, useEffect } from "react";
+import React, { useEffect } from "react";
 
 import { withApollo } from "apollo/withApollo";
-import { Link } from "components/Link";
 import Page from "components/Page";
 import { Paper } from "components/Paper";
 import { useRouter } from "next/router";
@@ -27,7 +26,7 @@ const TicketPage: NextPage = () => {
   const router = useRouter();
   const classes = useStyles();
 
-  const ticketID = typeof router.query.ticket === "string" ? router.query.ticket : "";
+  const ticketID = typeof router.query.id === "string" ? router.query.id : "";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -85,7 +84,7 @@ const TicketPage: NextPage = () => {
         </Typography>
         <Typography variant="body1" gutterBottom>
           <strong>{ticket.requesterName}</strong> is requesting permission to access Beneath on your behalf. It will get
-          full access to your account.
+          full access to your account. You can revoke access at any time from your secrets page.
         </Typography>
         <Typography variant="body1" gutterBottom>
           If you did not explicitly begin this request, then deny it.
