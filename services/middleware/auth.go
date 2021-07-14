@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -60,19 +61,25 @@ func (s *Service) AuthMiddleware(next http.Handler) http.Handler {
 // AuthInterceptor reads bearer token and injects auth into the context of a gRPC call.
 // Errors if no authorization passed (contrary to HTTP).
 func (s *Service) AuthInterceptor(ctx context.Context) (context.Context, error) {
-	tokenStr, err := grpc_auth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
-	}
+	var secret models.Secret
+	secret = &models.AnonymousSecret{}
 
-	token, err := secrettoken.FromString(tokenStr)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
-	}
+	header := metautils.ExtractIncoming(ctx).Get("authorization")
+	if header != "" {
+		tokenStr, err := grpc_auth.AuthFromMD(ctx, "bearer")
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
+		}
 
-	secret := s.SecretService.AuthenticateWithToken(ctx, token)
-	if secret == nil || reflect.ValueOf(secret).IsNil() {
-		return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: secret not found")
+		token, err := secrettoken.FromString(tokenStr)
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: %v", err)
+		}
+
+		secret = s.SecretService.AuthenticateWithToken(ctx, token)
+		if secret == nil || reflect.ValueOf(secret).IsNil() {
+			return nil, grpc.Errorf(codes.Unauthenticated, "authentication error: secret not found")
+		}
 	}
 
 	tags := GetTags(ctx)
