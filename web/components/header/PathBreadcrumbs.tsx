@@ -152,13 +152,18 @@ const makeCrumbs = (router: NextRouter, me: Me_me | null) => {
     return [<Crumb key={0} href="/-/sql" label="SQL Editor" isCurrent={true} />];
   } else if (router.route === "/-/auth") {
     return [<Crumb key={0} href="/-/auth" label="Authentication" isCurrent={true} />];
+  } else if (router.route === "/-/auth/ticket/[id]") {
+    return [<Crumb key={0} href="#" label="Authentication" isCurrent={true} />];
+  } else if (router.route === "/-/auth/ticket/success") {
+    return [<Crumb key={0} href="#" label="Authentication" isCurrent={true} />];
+  } else if (router.route === "/-/auth/ticket/denied") {
+    return [<Crumb key={0} href="#" label="Authentication" isCurrent={true} />];
   } else if (router.route === "/-/welcome") {
     return [<Crumb key={0} href="/-/welcome" label="Welcome" isCurrent={true} />];
   } else if (router.route === "/") {
     return [<Crumb key={0} href="/" label={me ? "Home" : "Welcome"} isCurrent={true} />];
-  } else {
-    return [];
   }
+  return [];
 };
 
 interface CrumbProps {
