@@ -18,24 +18,15 @@ Run the following command at the terminal to install Beneath. You must have Pyth
 pip3 install --upgrade beneath
 ```
 
-## Create a command-line secret
+## Login and authenticate your local environment
 
-To authenticate with Beneath from the command-line, you need a command-line secret:
-
-1. Go to the web [Console](https://beneath.dev/?noredirect=1), and log in or create an account
-2. Navigate to the "Secrets" page by clicking on your profile icon in the top right-hand corner of the screen
-3. Under "Create personal secret", enter a description and create a secret with "Full (CLI)" access
-4. Highlight and copy your secret from the green box
-
-## Authenticate your local environment
-
-Run the following command, replacing `SECRET` with the secret you just obtained from the web console:
+Run the following command to authenticate your local environment. If you do not have a Beneath account, it will automatically guide you to create one:
 
 ```bash
-beneath auth SECRET
+beneath auth
 ```
 
-Now, when you use Beneath on your local machine (such as the CLI or in Python), it will automatically authenticate with this secret.
+Now, when you use Beneath on your local machine (such as the CLI or in Python), it will automatically authenticate your requests. To access Beneath outside of your local environment (e.g. when deploying code to production), see [Access management]({{< ref "/docs/reading-writing-data/access-management.md" >}}) for details.
 
 ## Docs for the CLI
 
