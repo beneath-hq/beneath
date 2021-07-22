@@ -6,9 +6,9 @@ authors = ["Beneath Systems <hello@beneath.dev>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-beneath = "^1.4.0"
-asyncpraw = "^7.1.0"
-asyncprawcore = "^2.0.1"
+beneath = "^1.4.1"
+asyncpraw = "^7.3.1"
+asyncprawcore = "^2.2.1"
 tenacity = "^7.0.0"
 
 [tool.poetry.dev-dependencies]
