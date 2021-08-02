@@ -1,0 +1,20 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: r-wallstreetbets-stock-mentions-rollup-daily
+spec:
+  schedule: "5 0 * * *" # GCP cronjobs use UTC
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: r-wallstreetbets-stock-mentions-rollup-daily
+            image: gcr.io/beneath/examples-wallstreetbets-stock-mentions-rollup-daily:latest
+            env:
+              - name: BENEATH_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-stock-mentions-rollup-daily
+                    key: beneath-secret
+          restartPolicy: OnFailure
