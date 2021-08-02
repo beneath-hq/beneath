@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "stock-mentions"
+name = "sentiment"
 version = "0.1.0"
 description = ""
 authors = ["greenep12 <ericpgreen2@gmail.com>"]
