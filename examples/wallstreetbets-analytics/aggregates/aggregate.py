@@ -2,14 +2,19 @@ import asyncio
 import beneath
 from datetime import datetime, timedelta
 
+from config import BLACKLIST
+
 
 async def main():
     client = beneath.Client()
+    await client.start()
+
+    # TABLE 1: indexed by symbol
     table = await client.find_table(
-        "examples/wallstreetbets-analytics/stock-mentions-rollup-daily"
+        "examples/wallstreetbets-analytics/stock-metrics-24h-by-symbol"
     )
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    mentions = await beneath.query_warehouse(
+    metrics = await beneath.query_warehouse(
         f"""
 with
     vars as (
@@ -69,9 +74,18 @@ full join stock_mentions_comments c on p.symbol = c.symbol and p.day = c.day
 order by symbol, day
 """
     )
+    metrics = metrics.loc[~metrics["symbol"].isin(BLACKLIST)]
+    await table.write(metrics.to_dict("records"))
 
-    await client.start()
-    await table.write(mentions.to_dict("records"))
+    # TABLE 2: indexed by timestamp
+    table = await client.find_table(
+        "examples/wallstreetbets-analytics/stock-metrics-24h-by-timestamp"
+    )
+    metrics["num_mentions_rank"] = metrics.groupby(["day"])["num_mentions"].rank(
+        ascending=False, method="min"
+    )
+    metrics = metrics.loc[metrics["num_mentions_rank"] <= 25]
+    await table.write(metrics.to_dict("records"))
     await client.stop()
 
 
