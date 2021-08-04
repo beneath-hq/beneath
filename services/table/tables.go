@@ -58,7 +58,7 @@ func (s *Service) FindTablesForUser(ctx context.Context, userID uuid.UUID) []*mo
 		Column("table.*", "Project.project_id", "Project.name", "Project.Organization.organization_id", "Project.Organization.name").
 		Join("JOIN permissions_users_projects AS pup ON pup.project_id = \"table\".project_id").
 		Where("pup.user_id = ?", userID).
-		Order("project__organization.name", "project.name", "\"table\".name").
+		Order("project__organization.name", "project.name", "table.name").
 		Limit(200).
 		Select()
 	if err != nil {
