@@ -598,8 +598,8 @@ curl ${url} \\
 curl ${url} \\
   -H "Authorization: Bearer SECRET" \\
   -d type=index \\
-  -d filter='FILTER' \\
   -d limit=25 \\
+  --data-urlencode filter='FILTER' \\
   -G
 `}
       </CodePaper>
