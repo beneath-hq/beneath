@@ -20,7 +20,7 @@ with
     vars as (
         select 
             timestamp("{yesterday}") as date,
-            .05 as sentiment_cutoff,
+            .01 as sentiment_cutoff,
     ),
     stock_mentions_posts_calc_sentiment as (
         select 
