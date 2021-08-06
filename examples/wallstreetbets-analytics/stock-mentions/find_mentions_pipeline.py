@@ -2,6 +2,8 @@ import beneath
 import pandas as pd
 import re
 
+from blacklist import BLACKLIST
+
 MENTIONS_POSTS_SCHEMA = """
     type Mention @schema {
         symbol: String! @key
@@ -30,57 +32,6 @@ MENTIONS_COMMENTS_SCHEMA = """
         length_text: Int!
     }
 """
-
-BLACKLIST = {
-    "FOMO",
-    "DD",
-    "EOD",
-    "TA",
-    "PT",
-    "RSI",
-    "HUGE",
-    "ATH",
-    "USA",
-    "AI",
-    "IMO",
-    "AM",
-    "UK",
-    "BIG",
-    "SO",
-    "OR",
-    "FOR",
-    "ALL",
-    "IT",
-    "BE",
-    "ARE",
-    "NOW",
-    "ON",
-    "ME",
-    "CAN",
-    "VERY",
-    "SI",
-    "TV",
-    "BY",
-    "NEW",
-    "OUT",
-    "LOVE",
-    "GO",
-    "PM",
-    "NEXT",
-    "ANY",
-    "ET",
-    "HAS",
-    "ONE",
-    "PLAY",
-    "LOW",
-    "III",
-    "CASH",
-    "RNG",
-    "GOOD",
-    "REAL",
-    "SEE",
-    "RE",
-}
 
 # rudimentary cache for the stock symbols
 _symbols = None
