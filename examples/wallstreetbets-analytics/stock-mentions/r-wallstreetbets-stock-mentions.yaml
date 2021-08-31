@@ -18,7 +18,7 @@ spec:
         - name: r-wallstreetbets-stock-mentions
           image: gcr.io/beneath/examples-wallstreetbets-stock-mentions:latest
           imagePullPolicy: Always
-          args: ["run", "examples/wallstreetbets-analytics/find-stock-mentions"]
+          args: ["run", "examples/wallstreetbets-analytics/find-stock-mentions", "--version", "1"]
           env:
             - name: BENEATH_SECRET
               valueFrom:
