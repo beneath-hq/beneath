@@ -5,19 +5,20 @@ from asyncprawcore import Requestor
 from tenacity import before_sleep_log, retry, stop_after_attempt, wait_chain, wait_fixed
 
 
-def get_env(var) -> str:
+def get_env(var, required) -> str:
     val = os.environ.get(var)
     if val is None:
-        raise RuntimeError(f"expected value for environment variable {var}")
+        if required:
+            raise RuntimeError(f"expected value for environment variable {var}")
+        return ""
     return val
 
 
-USER_AGENT = get_env("REDDIT_USER_AGENT")
-CLIENT_ID = get_env("REDDIT_CLIENT_ID")
-CLIENT_SECRET = get_env("REDDIT_CLIENT_SECRET")
-USERNAME = get_env("REDDIT_USERNAME")
-PASSWORD = get_env("REDDIT_PASSWORD")
-SUBREDDIT = get_env("REDDIT_SUBREDDIT")
+CLIENT_ID = get_env("REDDIT_CLIENT_ID", required=True)
+CLIENT_SECRET = get_env("REDDIT_CLIENT_SECRET", required=True)
+USERNAME = ""
+PASSWORD = ""
+USER_AGENT = f"Post and comment scores 1.0 (by u/{USERNAME})"
 
 logger = logging.getLogger("redditscraper")
 logger.setLevel(logging.WARNING)
