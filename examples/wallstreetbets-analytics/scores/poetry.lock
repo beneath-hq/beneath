@@ -139,7 +139,7 @@ tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>
 
 [[package]]
 name = "beneath"
-version = "1.4.1"
+version = "1.4.2"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 category = "main"
 optional = false
@@ -474,8 +474,8 @@ attrs = [
     {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
 ]
 beneath = [
-    {file = "beneath-1.4.1-py3-none-any.whl", hash = "sha256:b477dc507b51ba7d1ffff67d05519ca916a6d0a85497cebfe5bb105b8215777d"},
-    {file = "beneath-1.4.1.tar.gz", hash = "sha256:ed8a246286dae55470a8d387da4966fc1c7525fe9315a9da359ce56ff775d20d"},
+    {file = "beneath-1.4.2-py3-none-any.whl", hash = "sha256:7df2ce91c54c4ae1541db24040219b08d5296bc1d1f01f585f8ce43bb86f6bc3"},
+    {file = "beneath-1.4.2.tar.gz", hash = "sha256:e740e57d2c32c43dda0be96a93ebf32188ccf7b7c4cdb688d6e2f02912e2a719"},
 ]
 certifi = [
     {file = "certifi-2021.5.30-py2.py3-none-any.whl", hash = "sha256:50b1e4f8446b06f41be7dd6338db18e0990601dce795c2b1686458aa7e8fa7d8"},
