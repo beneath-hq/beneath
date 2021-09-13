@@ -49,16 +49,5 @@ if __name__ == "__main__":
     )
     print("Created user table.")
 
-    # populate with data
-    cursor.execute(
-        """
-    INSERT INTO users VALUES (1, 'john@test.com', False, now(), now());
-      """
-    )
-    print("Inserted a dummy record.")
-
-    # TODO: insert random records over a time period
-    # TODO: test updates and deletes, too
-
     # close testdb connection
     conn.close()
