@@ -44,13 +44,12 @@ cursor = conn.cursor()
 async def get_changes(p):
     while True:
         cursor.execute(
-            "SELECT data FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);"  # for production
-            # "SELECT data FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL);"  # for testing
+            # "SELECT data FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);"  # for production
+            "SELECT data FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL);"  # for testing
         )
         changes = cursor.fetchall()
         for change in changes:
             data = json.loads(change[0])["change"][0]
-            # TODO: figure out better schema and fan out
             yield {
                 "timestamp": datetime.now(),
                 "operation": data["kind"],
@@ -62,14 +61,42 @@ async def get_changes(p):
         await asyncio.sleep(POLLING_INTERVAL)
 
 
+def filter_for_table(table):
+    async def filter(record):
+        if record["table"] == table:
+            yield record
+
+    return filter
+
+
+def fan_out(p, all_changes, list_of_tables):
+    for table in list_of_tables:
+        table_changes = p.apply(all_changes, filter_for_table(table))
+        # TODO: figure out schemas
+        p.write_table(
+            table_changes,
+            f"{config['beneath']['username']}/{config['beneath']['project']}/{table}-changes",
+            schema=SCHEMA,
+            description=f"Fan-out table ({table}) created by a Postgres CDC service",
+        )
+
+
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True, disable_checkpoints=True)
     p.description = "Postgres CDC"
-    changes = p.generate(get_changes)
+    all_changes = p.generate(get_changes)
+    # Q: should I persist these intermediate results?
+    # reasons yes:
+    # - whenever pg_logical_slot_get_changes() gets called, its cursor advances, so I better capture what it gave me
+    # - if the fan-out fails (due to new table, schema evolution, types, etc), then I'll have captured the changes
+    # reasons no:
+    # - if my fan-out doesn't use table-specific schemas
+    # - on restart, will I write full snapshots anyways?
     p.write_table(
-        changes,
-        f"{config['beneath']['username']}/{config['beneath']['project']}/root",
+        all_changes,
+        f"{config['beneath']['username']}/{config['beneath']['project']}/all-changes",
         schema=SCHEMA,
         description="Table automatically created from a Postgres CDC service",
     )
+    fan_out(p, all_changes, config["postgres"]["tables"])
     p.main()

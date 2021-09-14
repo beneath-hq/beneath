@@ -2,6 +2,7 @@ postgres:
   host:
   username:
   password:
+  tables:
 beneath:
   username:
   project:
