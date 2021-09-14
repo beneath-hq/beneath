@@ -10,9 +10,9 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from cdc import connect_to_db
+from cdc import connect_to_source_db
 
-SLEEP_INTERVAL = 5  # seconds
+SLEEP_INTERVAL = 10  # seconds
 
 # TODO: test updates and deletes, too
 async def stream_records(conn):
@@ -33,5 +33,5 @@ async def stream_records(conn):
 
 
 if __name__ == "__main__":
-    conn = connect_to_db()
+    conn = connect_to_source_db()
     asyncio.run(stream_records(conn))
