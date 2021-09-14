@@ -15,12 +15,10 @@ with open(".development.yaml", "r") as ymlfile:
 POLLING_INTERVAL = 30
 SCHEMA = """
 type Table @schema {
+    table: String! @key
+    operation: String! @key
     timestamp: Timestamp! @key
-    operation: String!
-    table: String!
-    columnnames: String!
-    columntypes: String!
-    columnvalues: String!
+    value: String!
 }
 """
 
@@ -44,20 +42,34 @@ cursor = conn.cursor()
 async def get_changes(p):
     while True:
         cursor.execute(
-            # "SELECT data FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);"  # for production
-            "SELECT data FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL);"  # for testing
-        )
-        changes = cursor.fetchall()
-        for change in changes:
-            data = json.loads(change[0])["change"][0]
-            yield {
-                "timestamp": datetime.now(),
-                "operation": data["kind"],
-                "table": data["table"],
-                "columnnames": str(data["columnnames"]),
-                "columntypes": str(data["columntypes"]),
-                "columnvalues": str(data["columnvalues"]),
-            }
+            "SELECT data FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);"
+        )  # for production
+        # cursor.execute(
+        #     "SELECT data FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL);"
+        # )  # for testing
+        data = cursor.fetchall()
+        for txn in data:
+            # TODO: what is txn[1] for? when does it get used?
+            changes = json.loads(txn[0])["change"]
+            for change in changes:
+                value_dict = {}
+                if change["kind"] == "insert":
+                    value_dict["columnnames"] = change["columnnames"]
+                    value_dict["columntypes"] = change["columntypes"]
+                    value_dict["columnvalues"] = change["columnvalues"]
+                elif change["kind"] == "update":
+                    value_dict["columnnames"] = change["columnnames"]
+                    value_dict["columntypes"] = change["columntypes"]
+                    value_dict["columnvalues"] = change["columnvalues"]
+                    value_dict["oldkeys"] = change["oldkeys"]
+                elif change["kind"] == "delete":
+                    value_dict["oldkeys"] = change["oldkeys"]
+                yield {
+                    "table": change["table"],
+                    "operation": change["kind"],
+                    "timestamp": datetime.now(),
+                    "value": json.dumps(value_dict),
+                }
         await asyncio.sleep(POLLING_INTERVAL)
 
 
