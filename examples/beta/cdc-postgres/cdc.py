@@ -1,7 +1,3 @@
-# resources:
-# https://debezium.io/documentation/reference/0.9/connectors/postgresql.html#how-the-postgresql-connector-works
-# https://dba.stackexchange.com/questions/219397/postgres-logical-replication-for-specific-tables # no answer
-
 import asyncio
 import beneath
 import psycopg2
@@ -25,7 +21,7 @@ type Table @schema {
 
 def connect_to_source_db():
     conn = psycopg2.connect(
-        database="testdb",
+        database=config["postgres"]["database"],
         user=config["postgres"]["username"],
         password=config["postgres"]["password"],
         host=config["postgres"]["host"],
@@ -42,11 +38,8 @@ cursor = conn.cursor()
 async def get_changes(p):
     while True:
         cursor.execute(
-            "SELECT data FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);"
-        )  # for production
-        # cursor.execute(
-        #     "SELECT data FROM pg_logical_slot_peek_changes('test_slot', NULL, NULL);"
-        # )  # for testing
+            f"SELECT data FROM pg_logical_slot_get_changes('{config['postgres']['replication_slot']}', NULL, NULL);"
+        )
         data = cursor.fetchall()
         for txn in data:
             # TODO: what is txn[1] for? when does it get used?
