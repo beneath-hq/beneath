@@ -6,12 +6,12 @@ import sys
 import inspect
 import yaml
 
-# add parent directory to path, so I can import from the cdc.py module
+# add parent directory to path, so I can import from the main.py module
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from cdc import connect_to_source_db
+from main import connect_to_source_db
 
 with open(".development.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
@@ -24,11 +24,24 @@ def create_table(cursor):
     cursor.execute(
         """
     CREATE TABLE users (
-        user_id int,
+        user_id int primary key,
         email text,
         authorized boolean,
         created_on timestamptz, 
         updated_on timestamptz
+    );
+    """
+    )
+
+
+def create_table_compound_pk(cursor):
+    cursor.execute(
+        """
+    CREATE TABLE users (
+        id_1 int,
+        id_2 int,
+        val text,
+        primary key(id_1, id_2)
     );
     """
     )
