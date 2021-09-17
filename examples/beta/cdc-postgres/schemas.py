@@ -42,6 +42,11 @@ def get_schema(cursor, table):
         beneath_column = f"{pg_column[0]}: {convert_pg_type_to_beneath_type(pg_column[1])}{convert_pg_nullable_to_beneath_nullable(pg_column[2])}{convert_pg_pk_to_beneath_pk(pg_column[3])}"
         beneath_columns.append(beneath_column)
 
+    # add metadata columns
+    # TODO: any more?
+    beneath_columns.append("_updated_at: Timestamp!")
+    beneath_columns.append("_deleted_at: Timestamp")
+
     # build Beneath schema
     beneath_schema = "type {} @schema {{\n\t{}\n}}".format(
         table, "\n\t".join(beneath_columns)

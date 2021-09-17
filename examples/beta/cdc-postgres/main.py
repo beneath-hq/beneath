@@ -11,7 +11,7 @@ with open(".development.yaml", "r") as ymlfile:
 
 POLLING_INTERVAL = 5
 SCHEMA = """
-type Table @schema {
+type Change @schema {
     table: String! @key
     timestamp: Timestamp! @key
     operation: String! @key
@@ -29,14 +29,14 @@ def connect_to_source_db():
         port="5432",
     )
     conn.autocommit = True
-    return conn
+    cursor = conn.cursor()
+    return cursor
 
 
-conn = connect_to_source_db()
-cursor = conn.cursor()
+cursor = connect_to_source_db()
 
 
-async def get_changes(p):
+async def get_all_changes(p):
     while True:
         cursor.execute(
             f"""
@@ -49,25 +49,23 @@ async def get_changes(p):
             txn_json = json.loads(txn[0])
             changes = txn_json["change"]
             for change in changes:
-                value_dict = {}
-                if change["kind"] == "insert":
-                    value_dict["columnnames"] = change["columnnames"]
-                    value_dict["columntypes"] = change["columntypes"]
-                    value_dict["columnvalues"] = change["columnvalues"]
-                elif change["kind"] == "update":
-                    value_dict["columnnames"] = change["columnnames"]
-                    value_dict["columntypes"] = change["columntypes"]
-                    value_dict["columnvalues"] = change["columnvalues"]
-                    value_dict["oldkeys"] = change["oldkeys"]
-                elif change["kind"] == "delete":
-                    value_dict["oldkeys"] = change["oldkeys"]
                 yield {
                     "table": change["table"],
                     "timestamp": datetime.strptime(
                         f"{txn_json['timestamp']}00", "%Y-%m-%d %H:%M:%S.%f%z"
                     ),
                     "operation": change["kind"],
-                    "value": json.dumps(value_dict),
+                    "value": json.dumps(
+                        {
+                            k: change.get(k)
+                            for k in (
+                                "columnnames",
+                                "columntypes",
+                                "columnvalues",
+                                "oldkeys",
+                            )
+                        }
+                    ),
                 }
         # TODO: consider checkpointing the LSN (but pg_logical_slot_get_changes() doesn't let us choose LSN position)
         # p.checkpoints.set("nextlsn", txn_json["nextlsn"])
@@ -75,10 +73,30 @@ async def get_changes(p):
 
 
 def filter_for_table(table):
-    async def filter(record):
-        if record["table"] == table:
-            # TODO: convert general CDC record to table-specific schema
-            yield record
+    async def filter(in_record):
+        if in_record["table"] == table:
+
+            # construct out_record
+            if in_record["operation"] in ["insert", "update"]:
+                out_record = dict(
+                    zip(
+                        json.loads(in_record["value"])["columnnames"],
+                        json.loads(in_record["value"])["columnvalues"],
+                    )
+                )
+                out_record["_updated_at"] = in_record["timestamp"]
+            if in_record["operation"] == "delete":
+                # TODO: Problem – required non-key columns. See if there are options to get this data from wal2json.
+                out_record = dict(
+                    zip(
+                        json.loads(in_record["value"])["oldkeys"]["keynames"],
+                        json.loads(in_record["value"])["oldkeys"]["keyvalues"],
+                    )
+                )
+                out_record["_updated_at"] = in_record["timestamp"]
+                out_record["_deleted_at"] = in_record["timestamp"]
+
+            yield out_record
 
     return filter
 
@@ -99,19 +117,12 @@ def fan_out(p, all_changes, list_of_tables):
 if __name__ == "__main__":
     p = beneath.Pipeline(parse_args=True, disable_checkpoints=True)
     p.description = "Postgres CDC"
-    all_changes = p.generate(get_changes)
-    # Q: should I persist these intermediate results?
-    # reasons yes:
-    # - whenever pg_logical_slot_get_changes() gets called, its cursor advances, so I better capture what it gave me
-    # - if the fan-out fails (due to new table, schema evolution, types, etc), then I'll have captured the changes
-    # reasons no:
-    # - if my fan-out doesn't use table-specific schemas
-    # - on restart, will I write full snapshots anyways?
+    all_changes = p.generate(get_all_changes)
     p.write_table(
         all_changes,
         f"{config['beneath']['username']}/{config['beneath']['project']}/all-changes",
         schema=SCHEMA,
-        description="Table automatically created from a Postgres CDC service",
+        description="Raw data captured from a Postgres CDC service",
     )
     fan_out(p, all_changes, config["postgres"]["tables"])
     p.main()
