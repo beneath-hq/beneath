@@ -185,6 +185,11 @@ func (c *Codec) MarshalKey(index Index, record map[string]interface{}) ([]byte, 
 			val = tuple.UUID(uuidVal)
 		}
 
+		// convert int32 because package tuple doesn't support it
+		if int32Val, ok := val.(int32); ok {
+			val = int64(int32Val)
+		}
+
 		t[idx] = val
 	}
 
