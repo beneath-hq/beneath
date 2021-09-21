@@ -10,10 +10,9 @@ from operate_on_source_db import create_table_compound_pk, drop_table
 from schemas import get_schema
 
 if __name__ == "__main__":
-    conn = connect_to_source_db()
-    cursor = conn.cursor()
-    drop_table(cursor)
-    create_table_compound_pk(cursor)
+    cursor = connect_to_source_db()
+    drop_table(cursor, "table1")
+    create_table_compound_pk(cursor, "table1")
 
-    schema = get_schema(cursor, "users")
+    schema = get_schema(cursor, "table1")
     print(schema)

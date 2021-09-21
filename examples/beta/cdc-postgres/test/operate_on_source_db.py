@@ -13,9 +13,6 @@ from main import connect_to_source_db
 with open(".development.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
 
-SLEEP_INTERVAL = 10  # seconds
-OUTPUT_PLUGIN = "pgoutput"  # or "wal2json"
-
 
 def create_table_simple(cursor, table):
     cursor.execute(
@@ -87,8 +84,9 @@ def do_everything_txn(cursor, table):
     )
 
 
+# used for wal2json plugin
+# TODO: update wal2json plugin, so I can include more parameters and get more data. Document the process.
 def get_changes(cursor):
-    # include-pk, 'True'
     cursor.execute(
         f"""
         SELECT data FROM pg_logical_slot_get_changes('{config['postgres']['replication_slot']}', NULL, NULL,
@@ -99,10 +97,23 @@ def get_changes(cursor):
     return changes
 
 
+# used for pgoutput plugin
+# TODO: figure out if I can decode the binary data into useful text data
+# TODO: Debezium somehow decodes the binary. Look into running Debezium in an "embedded" mode (I think that's what Airbyte does).
+def get_binary_changes(cursor):
+    cursor.execute(
+        f"""
+        SELECT data FROM pg_logical_slot_get_binary_changes('{config['postgres']['replication_slot'] + "_pgoutput"}', NULL, NULL,
+        'proto_version', '1', 'publication_names', 'beneath_publication');
+        """
+    )
+    changes = cursor.fetchall()
+    return changes
+
+
 if __name__ == "__main__":
     # setup
-    conn = connect_to_source_db()
-    cursor = conn.cursor()
+    cursor = connect_to_source_db()
     drop_table(cursor, "table1")
     drop_table(cursor, "table2")
     create_table_simple(cursor, "table1")
@@ -111,10 +122,11 @@ if __name__ == "__main__":
     # operate
     insert_simple(cursor, "table1")
     update_simple(cursor, "table1")
-    delete_simple(cursor, "table1")
+    # delete_simple(cursor, "table1")
 
     # inspect
     # print(get_changes(cursor))
+    print(get_binary_changes(cursor))
 
     # cleanup
     # drop_table(cursor, "table1")
