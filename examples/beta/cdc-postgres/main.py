@@ -104,13 +104,14 @@ def filter_for_table(table):
 def fan_out(p, all_changes, list_of_tables):
     # list_of_tables: ["schemaA.table1", "schemaA.table2", "schemaB.table1", ...]
     for schema_table in list_of_tables:
+        schema = schema_table.split(".")[0]
         table = schema_table.split(".")[1]
         table_changes = p.apply(all_changes, filter_for_table(table))
         p.write_table(
             table_changes,
-            f"{config['beneath']['username']}/{config['beneath']['project']}/{table}-changes",
+            f"{config['beneath']['username']}/{config['beneath']['project']}/{config['postgres']['database']}-{schema}-{table}",
             schema=get_schema(cursor, table),
-            description=f"Fan-out table ({table}) created by a Postgres CDC service",
+            description=f"{table} table replicated from Postgres",
         )
 
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
     all_changes = p.generate(get_all_changes)
     p.write_table(
         all_changes,
-        f"{config['beneath']['username']}/{config['beneath']['project']}/all-changes",
+        f"{config['beneath']['username']}/{config['beneath']['project']}/{config['postgres']['database']}-cdc",
         schema=SCHEMA,
         description="Raw data captured from a Postgres CDC service",
     )
