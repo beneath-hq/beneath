@@ -4,7 +4,7 @@ import psycopg2
 import json
 import yaml
 from datetime import datetime
-from schemas import get_schema
+from schemas import get_schema, check_for_and_encode_ts
 
 with open(".development.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
@@ -77,20 +77,27 @@ def filter_for_table(table):
         if in_record["table"] == table:
 
             # construct out_record
+            value_blob = json.loads(in_record["value"])
             if in_record["operation"] in ["insert", "update"]:
-                out_record = dict(
-                    zip(
-                        json.loads(in_record["value"])["columnnames"],
-                        json.loads(in_record["value"])["columnvalues"],
+                # TODO: test more types, might have to do more type conversions
+                out_record = {
+                    col: check_for_and_encode_ts(
+                        value_blob["columntypes"][i], value_blob["columnvalues"][i]
                     )
-                )
+                    for (i, col) in enumerate(value_blob["columnnames"])
+                }
                 out_record["_updated_at"] = in_record["timestamp"]
             if in_record["operation"] == "delete":
-                # TODO: Problem – required non-key columns. See if there are options to get this data from wal2json.
+                # TODO: Handle required non-key columns.
+                # - Option1: Set Replica Identity to FULL for all tables
+                # -- not ideal, since a) requires more user setup and b) passes more data
+                # - Option2: Just generate synthetic data here
+                # -- the row is getting deleted anyways, so doesn't really matter what the values are
+                # print(value_blob)
                 out_record = dict(
                     zip(
-                        json.loads(in_record["value"])["oldkeys"]["keynames"],
-                        json.loads(in_record["value"])["oldkeys"]["keyvalues"],
+                        value_blob["oldkeys"]["keynames"],
+                        value_blob["oldkeys"]["keyvalues"],
                     )
                 )
                 out_record["_updated_at"] = in_record["timestamp"]
@@ -104,13 +111,13 @@ def filter_for_table(table):
 def fan_out(p, all_changes, list_of_tables):
     # list_of_tables: ["schemaA.table1", "schemaA.table2", "schemaB.table1", ...]
     for schema_table in list_of_tables:
-        schema = schema_table.split(".")[0]
+        schema = schema_table.split(".")[0]  # a Postgres "schema" (a namespace)
         table = schema_table.split(".")[1]
         table_changes = p.apply(all_changes, filter_for_table(table))
         p.write_table(
             table_changes,
             f"{config['beneath']['username']}/{config['beneath']['project']}/{config['postgres']['database']}-{schema}-{table}",
-            schema=get_schema(cursor, table),
+            schema=get_schema(cursor, table),  # a Beneath "schema" (type info)
             description=f"{table} table replicated from Postgres",
         )
 

@@ -1,7 +1,11 @@
+from datetime import datetime
+
 # Q: should I somehow leverage code in the Beneath Python client for inferring schema?
 def convert_pg_type_to_beneath_type(pg_type):
     if pg_type == "integer":
-        return "Int32"
+        # change this back to Int32 once I merge the bugfix into the stable branch
+        # return "Int32"
+        return "Int64"
     if pg_type == "timestamp with time zone":
         return "Timestamp"
     if pg_type == "boolean":
@@ -52,3 +56,9 @@ def get_schema(cursor, table):
         table, "\n\t".join(beneath_columns)
     )
     return beneath_schema
+
+
+def check_for_and_encode_ts(type, val):
+    if type == "timestamp with time zone":
+        return datetime.strptime(f"{val}00", "%Y-%m-%d %H:%M:%S.%f%z")
+    return val
