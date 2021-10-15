@@ -14,10 +14,7 @@ public class App {
         final Properties props = new Properties();
         props.setProperty("connector.class", "io.debezium.connector.postgresql.PostgresConnector");
         props.setProperty("name", "postgres-debezium-connector");
-
-        // TODO: implement Beneath offset storage
-        props.setProperty("offset.storage", "org.apache.kafka.connect.storage.FileOffsetBackingStore");
-        props.setProperty("offset.storage.file.filename", "/tmp/offsets.dat");
+        props.setProperty("offset.storage", "dev.beneath.BeneathOffsetBackingStore");
         props.setProperty("offset.flush.interval.ms", "60000");
 
         /* begin connector properties */
