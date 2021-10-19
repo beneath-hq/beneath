@@ -122,7 +122,7 @@
       </plugins>
     </pluginManagement>
 
-    <!-- These plugins outside of "pluginManagement" get run every `mvn install` -->
+    <!-- These plugins outside of <pluginManagement> get run every `mvn install` if their <execution> includes a <phase>  -->
     <plugins>
       <!-- gRPC -->
       <plugin>
@@ -136,6 +136,8 @@
         </configuration>
         <executions>
           <execution>
+            <id>compile-protobuf</id>
+            <phase>generate-sources</phase>
             <goals>
               <goal>compile</goal>
               <goal>compile-custom</goal>
