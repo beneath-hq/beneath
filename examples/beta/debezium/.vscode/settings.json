@@ -1,5 +1,4 @@
 {
-  "maven.view": "flat",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.dependency.syncWithFolderExplorer": true
 }
