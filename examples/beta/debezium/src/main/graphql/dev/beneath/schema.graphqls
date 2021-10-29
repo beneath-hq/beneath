@@ -1,0 +1,471 @@
+type ServiceSecret {
+  serviceSecretID: ID!
+  prefix: String!
+  description: String!
+  service: Service!
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+type PermissionsServicesTables {
+  serviceID: UUID!
+  tableID: UUID!
+  read: Boolean!
+  write: Boolean!
+  table: Table
+}
+
+interface Organization {
+  organizationID: ID!
+  name: String!
+  displayName: String!
+  description: String
+  photoURL: String
+  createdOn: Time!
+  projects: [Project!]!
+  personalUserID: UUID
+}
+
+type NewUserSecret {
+  secret: UserSecret!
+  token: String!
+}
+
+type PrivateOrganization implements Organization {
+  organizationID: ID!
+  name: String!
+  displayName: String!
+  description: String
+  photoURL: String
+  createdOn: Time!
+  updatedOn: Time!
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+  prepaidReadQuota: Int
+  prepaidWriteQuota: Int
+  prepaidScanQuota: Int
+  readUsage: Int!
+  writeUsage: Int!
+  scanUsage: Int!
+  projects: [Project!]!
+  personalUserID: UUID
+  personalUser: PrivateUser
+  permissions: PermissionsUsersOrganizations!
+}
+
+type UserSecret {
+  userSecretID: ID!
+  prefix: String!
+  description: String!
+  readOnly: Boolean!
+  publicOnly: Boolean!
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+input CreateTableInput {
+  organizationName: String!
+  projectName: String!
+  tableName: String!
+  schemaKind: TableSchemaKind!
+  schema: String!
+  indexes: String
+  description: String
+  meta: Boolean
+  allowManualWrites: Boolean
+  useLog: Boolean
+  useIndex: Boolean
+  useWarehouse: Boolean
+  logRetentionSeconds: Int
+  indexRetentionSeconds: Int
+  warehouseRetentionSeconds: Int
+  updateIfExists: Boolean
+}
+
+enum EntityKind {
+  Organization
+  Service
+  TableInstance
+  Table
+  User
+}
+
+input UpdateProjectInput {
+  projectID: UUID!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+type TableInstance {
+  tableInstanceID: ID!
+  table: Table!
+  tableID: UUID!
+  version: Int!
+  createdOn: Time!
+  madePrimaryOn: Time
+  madeFinalOn: Time
+}
+
+enum UsageLabel {
+  Total
+  QuotaMonth
+  Monthly
+  Hourly
+}
+
+input CreateAuthTicketInput {
+  requesterName: String!
+}
+
+type Subscription {
+  empty: String
+}
+
+input CreateProjectInput {
+  organizationID: UUID!
+  projectName: String!
+  displayName: String
+  public: Boolean
+  description: String
+  site: String
+  photoURL: String
+}
+
+type Query {
+  empty: String
+  ping: String!
+  me: PrivateOrganization
+  organizationByName(name: String!): Organization!
+  organizationByID(organizationID: UUID!): Organization!
+  organizationByUserID(userID: UUID!): Organization!
+  organizationMembers(organizationID: UUID!): [OrganizationMember!]!
+  exploreProjects: [Project!]
+  projectsForUser(userID: UUID!): [Project!]
+  projectByOrganizationAndName(organizationName: String!, projectName: String!): Project!
+  projectByID(projectID: UUID!): Project!
+  projectMembers(projectID: UUID!): [ProjectMember!]!
+  secretsForService(serviceID: UUID!): [ServiceSecret!]!
+  secretsForUser(userID: UUID!): [UserSecret!]!
+  serviceByID(serviceID: UUID!): Service!
+  serviceByOrganizationProjectAndName(organizationName: String!, projectName: String!, serviceName: String!): Service!
+  tablePermissionsForService(serviceID: UUID!): [PermissionsServicesTables!]!
+  tableByID(tableID: UUID!): Table!
+  tableByOrganizationProjectAndName(organizationName: String!, projectName: String!, tableName: String!): Table!
+  tableInstanceByOrganizationProjectTableAndVersion(organizationName: String!, projectName: String!, tableName: String!, version: Int!): TableInstance!
+  tableInstanceByTableAndVersion(tableID: UUID!, version: Int!): TableInstance!
+  tableInstancesForTable(tableID: UUID!): [TableInstance!]!
+  tableInstancesByOrganizationProjectAndTableName(organizationName: String!, projectName: String!, tableName: String!): [TableInstance!]!
+  tablesForUser(userID: UUID!): [Table!]!
+  compileSchema(input: CompileSchemaInput!): CompileSchemaOutput!
+  getUsage(input: GetUsageInput!): [Usage!]!
+  getOrganizationUsage(input: GetEntityUsageInput!): [Usage!]!
+  getServiceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getTableInstanceUsage(input: GetEntityUsageInput!): [Usage!]!
+  getTableUsage(input: GetEntityUsageInput!): [Usage!]!
+  getUserUsage(input: GetEntityUsageInput!): [Usage!]!
+  authTicketByID(authTicketID: UUID!): AuthTicket!
+}
+
+input UpdateAuthTicketInput {
+  authTicketID: UUID!
+  approve: Boolean!
+}
+
+type Mutation {
+  empty: String
+  createOrganization(name: String!): PrivateOrganization!
+  updateOrganization(organizationID: UUID!, name: String, displayName: String, description: String, photoURL: String): PrivateOrganization!
+  updateOrganizationQuotas(organizationID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateOrganization!
+  inviteUserToOrganization(userID: UUID!, organizationID: UUID!, view: Boolean!, create: Boolean!, admin: Boolean!): Boolean!
+  acceptOrganizationInvite(organizationID: UUID!): Boolean!
+  leaveBillingOrganization(userID: UUID!): PrivateUser!
+  transferProjectToOrganization(projectID: UUID!, organizationID: UUID!): Project!
+  createProject(input: CreateProjectInput!): Project!
+  updateProject(input: UpdateProjectInput!): Project!
+  deleteProject(input: DeleteProjectInput!): Boolean!
+  issueServiceSecret(serviceID: UUID!, description: String!): NewServiceSecret!
+  issueUserSecret(description: String!, readOnly: Boolean!, publicOnly: Boolean!): NewUserSecret!
+  revokeServiceSecret(secretID: UUID!): Boolean!
+  revokeUserSecret(secretID: UUID!): Boolean!
+  createService(input: CreateServiceInput!): Service!
+  updateService(input: UpdateServiceInput!): Service!
+  updateServiceTablePermissions(serviceID: UUID!, tableID: UUID!, read: Boolean, write: Boolean): PermissionsServicesTables!
+  deleteService(serviceID: UUID!): Boolean!
+  createTable(input: CreateTableInput!): Table!
+  updateTable(input: UpdateTableInput!): Table!
+  deleteTable(tableID: UUID!): Boolean!
+  createTableInstance(input: CreateTableInstanceInput!): TableInstance!
+  updateTableInstance(input: UpdateTableInstanceInput!): TableInstance!
+  deleteTableInstance(instanceID: UUID!): Boolean!
+  registerUserConsent(userID: UUID!, terms: Boolean, newsletter: Boolean): PrivateUser!
+  updateUserQuotas(userID: UUID!, readQuota: Int, writeQuota: Int, scanQuota: Int): PrivateUser!
+  updateUserProjectPermissions(userID: UUID!, projectID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersProjects!
+  updateUserOrganizationPermissions(userID: UUID!, organizationID: UUID!, view: Boolean, create: Boolean, admin: Boolean): PermissionsUsersOrganizations!
+  createAuthTicket(input: CreateAuthTicketInput!): AuthTicket!
+  updateAuthTicket(input: UpdateAuthTicketInput!): AuthTicket
+}
+
+input UpdateTableInput {
+  tableID: UUID!
+  schemaKind: TableSchemaKind
+  schema: String
+  indexes: String
+  description: String
+  allowManualWrites: Boolean
+}
+
+input CreateTableInstanceInput {
+  tableID: UUID!
+  version: Int
+  makePrimary: Boolean
+  updateIfExists: Boolean
+}
+
+type PermissionsUsersOrganizations {
+  userID: UUID!
+  organizationID: UUID!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+}
+
+type ProjectMember {
+  projectID: ID!
+  userID: ID!
+  name: String!
+  displayName: String!
+  photoURL: String
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+}
+
+enum TableSchemaKind {
+  GraphQL
+  Avro
+}
+
+type TableIndex {
+  indexID: ID!
+  fields: [String!]!
+  primary: Boolean!
+  normalize: Boolean!
+}
+
+type PermissionsUsersProjects {
+  userID: UUID!
+  projectID: UUID!
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+}
+
+type PublicOrganization implements Organization {
+  organizationID: ID!
+  name: String!
+  displayName: String!
+  description: String
+  photoURL: String
+  createdOn: Time!
+  projects: [Project!]!
+  personalUserID: UUID
+}
+
+type OrganizationMember {
+  organizationID: ID!
+  userID: ID!
+  billingOrganizationID: UUID!
+  name: String!
+  displayName: String!
+  photoURL: String
+  view: Boolean!
+  create: Boolean!
+  admin: Boolean!
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+}
+
+type Project {
+  projectID: ID!
+  name: String!
+  displayName: String!
+  site: String
+  description: String
+  photoURL: String
+  public: Boolean!
+  organization: PublicOrganization!
+  createdOn: Time!
+  updatedOn: Time!
+  tables: [Table!]!
+  services: [Service!]!
+  permissions: PermissionsUsersProjects!
+}
+
+type NewServiceSecret {
+  secret: ServiceSecret!
+  token: String!
+}
+
+input GetEntityUsageInput {
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
+}
+
+input DeleteProjectInput {
+  projectID: UUID!
+}
+
+input GetUsageInput {
+  entityKind: EntityKind!
+  entityID: UUID!
+  label: UsageLabel!
+  from: Time
+  until: Time
+}
+
+input UpdateTableInstanceInput {
+  tableInstanceID: UUID!
+  makeFinal: Boolean
+  makePrimary: Boolean
+}
+
+type Table {
+  tableID: ID!
+  name: String!
+  description: String
+  createdOn: Time!
+  updatedOn: Time!
+  project: Project!
+  meta: Boolean!
+  allowManualWrites: Boolean!
+  schemaKind: TableSchemaKind!
+  schema: String!
+  avroSchema: String!
+  canonicalAvroSchema: String!
+  canonicalIndexes: String!
+  tableIndexes: [TableIndex!]!
+  useLog: Boolean!
+  useIndex: Boolean!
+  useWarehouse: Boolean!
+  logRetentionSeconds: Int!
+  indexRetentionSeconds: Int!
+  warehouseRetentionSeconds: Int!
+  primaryTableInstance: TableInstance
+  primaryTableInstanceID: UUID
+  instancesCreatedCount: Int!
+  instancesDeletedCount: Int!
+  instancesMadeFinalCount: Int!
+  instancesMadePrimaryCount: Int!
+}
+
+type CompileSchemaOutput {
+  canonicalAvroSchema: String!
+  canonicalIndexes: String!
+}
+
+type Usage {
+  entityID: UUID!
+  label: UsageLabel!
+  time: Time!
+  readOps: Int!
+  readBytes: Int!
+  readRecords: Int!
+  writeOps: Int!
+  writeBytes: Int!
+  writeRecords: Int!
+  scanOps: Int!
+  scanBytes: Int!
+}
+
+type AuthTicket {
+  authTicketID: UUID!
+  requesterName: String!
+  issuedSecret: NewUserSecret
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+scalar UUID
+
+type Service {
+  serviceID: ID!
+  name: String!
+  description: String
+  sourceURL: String
+  project: Project!
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+  createdOn: Time!
+  updatedOn: Time!
+}
+
+input CreateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+  updateIfExists: Boolean
+}
+
+input UpdateServiceInput {
+  organizationName: String!
+  projectName: String!
+  serviceName: String!
+  description: String
+  sourceURL: String
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+}
+
+input CompileSchemaInput {
+  schemaKind: TableSchemaKind!
+  schema: String!
+  indexes: String
+}
+
+type PrivateUser {
+  userID: ID!
+  email: String!
+  createdOn: Time!
+  updatedOn: Time!
+  consentTerms: Boolean!
+  consentNewsletter: Boolean!
+  quotaEpoch: Time!
+  quotaStartTime: Time!
+  quotaEndTime: Time!
+  readQuota: Int
+  writeQuota: Int
+  scanQuota: Int
+  billingOrganizationID: UUID!
+  billingOrganization: PublicOrganization!
+}
+
+scalar Time
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}

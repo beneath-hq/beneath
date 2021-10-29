@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'maven-publish'
     id "com.google.protobuf" version "0.8.17"
+    id "com.apollographql.apollo" version "2.5.10"
 }
 
 repositories {
@@ -16,10 +16,12 @@ dependencies {
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    
+    implementation("com.apollographql.apollo:apollo-runtime:2.5.10")
 
     implementation 'io.debezium:debezium-connector-postgres:1.7.0.CR2'
     implementation 'io.debezium:debezium-embedded:1.7.0.CR2'
-    implementation 'com.google.code.gson:gson:2.8.8'
+    
     testImplementation 'junit:junit:4.11'
 }
 
@@ -41,8 +43,9 @@ protobuf {
 sourceSets {
   main {
     java {
-        srcDir 'build/generated/source/proto/main/java'
-        srcDir 'build/generated/source/proto/main/grpc'
+        srcDir "$buildDir/generated/source/proto/main/java"
+        srcDir "$buildDir/generated/source/proto/main/grpc"
+        srcDir "$buildDir/generated/source/apollo/main/service"
     }
   }
 }
