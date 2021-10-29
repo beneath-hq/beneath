@@ -11,8 +11,8 @@ import dev.beneath.TableByOrganizationProjectAndNameQuery.TableByOrganizationPro
 import dev.beneath.client.Connection;
 
 public class Tables extends BaseResource {
-  Tables(Connection connection) {
-    super(connection);
+  Tables(Connection connection, Boolean dry) {
+    super(connection, dry);
   }
 
   public CompletableFuture<TableByOrganizationProjectAndName> findByOrganizationProjectAndName(String organizationName,

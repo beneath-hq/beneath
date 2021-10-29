@@ -11,9 +11,9 @@ public class AdminClient {
   public Connection connection;
   public Tables tables;
 
-  public AdminClient(Connection connection) {
+  public AdminClient(Connection connection, Boolean dry) {
     this.connection = connection;
-    this.tables = new Tables(this.connection);
+    this.tables = new Tables(this.connection, dry);
 
     this.connection.createGraphQlConnection();
   }
