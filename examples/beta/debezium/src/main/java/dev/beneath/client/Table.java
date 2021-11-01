@@ -36,7 +36,7 @@ public class Table {
       adminData = table.loadAdminData();
     }
     table.tableId = UUID.fromString(adminData.tableID());
-    table.schema = new Schema(adminData.avroSchema()); // TODO: create schema class
+    table.schema = new Schema(adminData.avroSchema());
     if (adminData.primaryTableInstance() != null) {
       table.primaryInstance = TableInstance.make(client, table, adminData.primaryTableInstance());
     }
