@@ -1,10 +1,16 @@
 package dev.beneath.client;
 
+import java.io.IOException;
+
 import com.apollographql.apollo.ApolloClient;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Encapsulates network connectivity to Beneath
@@ -95,8 +101,20 @@ public class Connection {
 
   // CONTROL PLANE
 
+  // Q: Where is the best place to put this interceptor? Keep as an inner class?
+  // Or move outside?
+  private class AuthorizationInterceptor implements Interceptor {
+    @Override
+    public Response intercept(Interceptor.Chain chain) throws IOException {
+      Request request = chain.request().newBuilder().addHeader("Authorization", String.format("Bearer %s", secret))
+          .build();
+      return chain.proceed(request);
+    }
+  }
+
   public void createGraphQlConnection() {
-    this.apolloClient = ApolloClient.builder().serverUrl(BENEATH_CONTROL_HOST).build();
+    this.apolloClient = ApolloClient.builder().serverUrl(BENEATH_CONTROL_HOST)
+        .okHttpClient(new OkHttpClient.Builder().addInterceptor(new AuthorizationInterceptor()).build()).build();
   }
 
 }
