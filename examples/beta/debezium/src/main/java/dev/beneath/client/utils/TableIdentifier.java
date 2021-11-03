@@ -15,4 +15,9 @@ public class TableIdentifier {
     String[] parts = Utils.splitResource("table", path);
     return new TableIdentifier(parts[0], parts[1], parts[2]);
   }
+
+  @Override
+  public String toString() {
+    return String.format("%s/%s/table:%s", this.organization, this.project, this.table);
+  }
 }

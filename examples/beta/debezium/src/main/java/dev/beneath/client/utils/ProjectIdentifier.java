@@ -8,4 +8,9 @@ public class ProjectIdentifier {
     this.organization = organization;
     this.project = project;
   }
+
+  @Override
+  public String toString() {
+    return String.format("%s/%s", this.organization, this.project);
+  }
 }
