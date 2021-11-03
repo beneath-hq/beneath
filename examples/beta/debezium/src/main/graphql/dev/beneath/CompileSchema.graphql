@@ -1,0 +1,6 @@
+query CompileSchema($input: CompileSchemaInput!) {
+  compileSchema(input: $input) {
+    canonicalAvroSchema
+    canonicalIndexes
+  }
+}

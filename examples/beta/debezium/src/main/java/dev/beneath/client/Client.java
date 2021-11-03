@@ -1,9 +1,12 @@
 package dev.beneath.client;
 
-import java.util.concurrent.CompletableFuture;
-
+import dev.beneath.CompileSchemaQuery.CompileSchema;
+import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.client.admin.AdminClient;
 import dev.beneath.client.utils.TableIdentifier;
+import dev.beneath.type.CompileSchemaInput;
+import dev.beneath.type.CreateTableInput;
+import dev.beneath.type.TableSchemaKind;
 
 /**
  * The main class for interacting with Beneath. Data-related features (like
@@ -34,11 +37,37 @@ public class Client {
   public Client(String secret, Boolean dry, Integer writeDelayMs) {
     connection = new Connection(secret);
     adminClient = new AdminClient(connection, dry);
+    this.dry = dry;
   }
 
   public Table findTable(String tablePath) throws Exception {
     TableIdentifier identifier = TableIdentifier.fromPath(tablePath);
-    Table table = Table.make(this, identifier, null);
+    Table table = Table.make(this, identifier);
+    return table;
+  }
+
+  // TODO: Too many method parameters – use custom types, a builder, method
+  // overloading, other?
+  // TODO: Retention types should be the Java equivalent of Python's "timedelta".
+  // Then fix in the CreateTableInputBuilder
+  public Table createTable(String tablePath, String schema, String description, Boolean meta, Boolean useIndex,
+      Boolean useWarehouse, Integer retention, Integer logRetention, Integer indexRetention, Integer warehouseRetention,
+      TableSchemaKind schemaKind, String indexes, Boolean updateIfExists) throws Exception {
+    Table table;
+    TableIdentifier identifier = TableIdentifier.fromPath(tablePath);
+    if (this.dry) {
+      CompileSchema data = this.adminClient.tables
+          .compileSchema(CompileSchemaInput.builder().schemaKind(schemaKind).schema(schema).build()).get();
+      table = Table.makeDry(this, identifier, data.canonicalAvroSchema());
+    } else {
+      // omitting indexes for now
+      CreateTable data = this.adminClient.tables.create(CreateTableInput.builder()
+          .organizationName(identifier.organization).projectName(identifier.project).tableName(identifier.table)
+          .schemaKind(schemaKind).schema(schema).description(description).meta(meta).useIndex(useIndex)
+          .useWarehouse(useWarehouse).logRetentionSeconds(logRetention).indexRetentionSeconds(indexRetention)
+          .warehouseRetentionSeconds(warehouseRetention).updateIfExists(updateIfExists).build()).get();
+      table = Table.make(this, identifier, data);
+    }
     return table;
   }
 }
