@@ -26,8 +26,6 @@ public class Table {
   private Client client;
   private TableIdentifier identifier;
 
-  private static final String BENEATH_FRONTEND_HOST = "http://host.docker.internal:3000";
-
   Table() {
   }
 
@@ -107,7 +105,7 @@ public class Table {
 
   @Override
   public String toString() {
-    return String.format("<beneath.table.Table(\"%s/%s\")>", BENEATH_FRONTEND_HOST, this.identifier.toString());
+    return String.format("<beneath.table.Table(\"%s/%s\")>", Config.BENEATH_FRONTEND_HOST, this.identifier.toString());
   }
 
   // INSTANCES

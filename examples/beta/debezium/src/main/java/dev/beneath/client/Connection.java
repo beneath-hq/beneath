@@ -25,14 +25,6 @@ public class Connection {
   private PingResponse pong;
   public ApolloClient apolloClient;
 
-  // TODO: move constants to a config file
-  private static final Boolean CONFIG_DEVELOPMENT = true;
-  private static final String JAVA_CLIENT_ID = "beneath-java";
-  private static final String JAVA_CLIENT_VERSION = "0.0.1";
-  private static final String BENEATH_CONTROL_HOST = "http://host.docker.internal:4000/graphql";
-  // private String BENEATH_GATEWAY_HOST = "http://host.docker.internal:5000";
-  // private String BENEATH_GATEWAY_HOST_GRPC = "host.docker.internal:50051";
-
   public Connection(String secret) {
     this.secret = secret;
     this.connected = false;
@@ -77,7 +69,7 @@ public class Connection {
   }
 
   private static void checkPongStatus(PingResponse pong) throws Exception {
-    if (CONFIG_DEVELOPMENT) {
+    if (Config.DEV) {
       return;
     }
     if (pong.getVersionStatus() == "warning") {
@@ -85,14 +77,14 @@ public class Connection {
     } else if (pong.getVersionStatus() == "deprecated") {
       throw new Exception(
           String.format("This version (%s) of the Beneath java library is out-of-date (recommended: %s).",
-              JAVA_CLIENT_VERSION, pong.getRecommendedVersion()));
+              Config.JAVA_CLIENT_VERSION, pong.getRecommendedVersion()));
     }
   }
 
   // TODO: make this an async function
   private PingResponse ping() {
-    PingRequest request = PingRequest.newBuilder().setClientId(JAVA_CLIENT_ID).setClientVersion(JAVA_CLIENT_VERSION)
-        .build();
+    PingRequest request = PingRequest.newBuilder().setClientId(Config.JAVA_CLIENT_ID)
+        .setClientVersion(Config.JAVA_CLIENT_VERSION).build();
 
     PingResponse response = this.blockingStub.ping(request);
 
@@ -113,7 +105,7 @@ public class Connection {
   }
 
   public void createGraphQlConnection() {
-    this.apolloClient = ApolloClient.builder().serverUrl(BENEATH_CONTROL_HOST)
+    this.apolloClient = ApolloClient.builder().serverUrl(Config.BENEATH_CONTROL_HOST)
         .okHttpClient(new OkHttpClient.Builder().addInterceptor(new AuthorizationInterceptor()).build()).build();
   }
 
