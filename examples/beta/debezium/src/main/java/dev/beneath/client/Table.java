@@ -24,7 +24,7 @@ public class Table {
   public Boolean useIndex;
   public Boolean useWarehouse;
   private Client client;
-  private TableIdentifier identifier;
+  public TableIdentifier identifier;
 
   Table() {
   }

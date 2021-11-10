@@ -78,7 +78,7 @@ public abstract class AIODelayBuffer<T> {
 
     // check value is within acceptable record size
     if (size > this.maxRecordSize) {
-      throw new Exception(String.format("Value exceeds maximum record size (size=%i, max_record_size=%i, value=%s)",
+      throw new Exception(String.format("Value exceeds maximum record size (size=%d, max_record_size=%d, value=%s)",
           size, this.maxRecordSize, value));
     }
 
@@ -92,7 +92,7 @@ public abstract class AIODelayBuffer<T> {
       loops += 1;
       if (loops > 5) {
         System.out.println(String
-            .format("Unfortunate scheduling blocked write to buffer %i times (try to limit concurrent writes)", loops));
+            .format("Unfortunate scheduling blocked write to buffer %d times (try to limit concurrent writes)", loops));
       }
     }
 
@@ -113,8 +113,10 @@ public abstract class AIODelayBuffer<T> {
           System.out.println("Interrupted the task.");
         }
       });
-      this.delayedFlushTask = CompletableFuture.runAsync(() -> this.delayedFlush());
-      this.delayedFlushTask.completeExceptionally(new Exception("Error in buffer flush background loop"));
+      this.delayedFlushTask = CompletableFuture.runAsync(() -> this.delayedFlush()).exceptionally(e -> {
+        System.out.println(String.format("Error in buffer flush background loop: %s", e.getMessage()));
+        return null;
+      });
     }
 
     return this.delayedFlushTask;
