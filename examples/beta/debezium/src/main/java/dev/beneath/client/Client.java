@@ -1,8 +1,15 @@
 package dev.beneath.client;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.avro.generic.GenericRecord;
+
 import dev.beneath.CompileSchemaQuery.CompileSchema;
 import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.client.admin.AdminClient;
+import dev.beneath.client.utils.ProjectIdentifier;
 import dev.beneath.client.utils.TableIdentifier;
 import dev.beneath.type.CompileSchemaInput;
 import dev.beneath.type.CreateTableInput;
@@ -33,11 +40,24 @@ public class Client {
   public Connection connection;
   public AdminClient adminClient;
   public Boolean dry;
+  private Integer startCount;
+  private Map<ProjectIdentifier, Checkpointer> checkpointers;
+  private DryWriter dryWriter;
+  private Writer writer;
 
-  public Client(String secret, Boolean dry, Integer writeDelayMs) {
-    connection = new Connection(secret);
-    adminClient = new AdminClient(connection, dry);
+  public Client(String secret, Boolean dry, Integer writeDelayMs) throws Exception {
+    this.connection = new Connection(secret);
+    this.adminClient = new AdminClient(connection, dry);
     this.dry = dry;
+
+    if (dry) {
+      this.dryWriter = new DryWriter(this, writeDelayMs);
+    } else {
+      this.writer = new Writer(this, writeDelayMs);
+    }
+
+    this.startCount = 0;
+    this.checkpointers = new HashMap<ProjectIdentifier, Checkpointer>();
   }
 
   public Table findTable(String tablePath) throws Exception {
@@ -69,5 +89,79 @@ public class Client {
       table = Table.make(this, identifier, data);
     }
     return table;
+  }
+
+  // WRITING
+
+  /**
+   * Opens the client for writes. Can be called multiple times, but make sure to
+   * call ``stop`` correspondingly.
+   */
+  public void start() throws Exception {
+    this.startCount += 1;
+    if (this.startCount != 1) {
+      return;
+    }
+
+    this.connection.ensureConnected();
+    if (dry) {
+      this.dryWriter.start();
+    } else {
+      this.writer.start();
+    }
+
+    for (Checkpointer checkpointer : this.checkpointers.values()) {
+      checkpointer.start();
+    }
+  }
+
+  /**
+   * Closes the client for writes, ensuring buffered writes are flushed. If
+   * ``start`` was called multiple times, only the last corresponding call to
+   * ``stop`` triggers a flush.
+   */
+  public void stop() throws Exception {
+    if (this.startCount == 0) {
+      throw new Exception("Called stop more times than start");
+    }
+
+    if (this.startCount == 1) {
+      for (Checkpointer checkpointer : this.checkpointers.values()) {
+        checkpointer.stop();
+      }
+      this.writer.stop();
+    }
+
+    this.startCount -= 1;
+  }
+
+  /**
+   * Writes one or more records to ``instance``. By default, writes are buffered
+   * for up to ``write_delay_ms`` milliseconds before being transmitted to the
+   * server. See the Client constructor for details.
+   * 
+   * To enabled writes, make sure to call ``start`` on the client (and ``stop``
+   * before terminating).
+   * 
+   * Args: instance (TableInstance): The instance to write to. You can also call
+   * ``instance.write`` as a convenience wrapper. records: The records to write.
+   * Can be a single record (dict) or a list of records (iterable of dict).
+   */
+  public void write(TableInstance instance, List<GenericRecord> records) throws Exception {
+    if (this.startCount == 0) {
+      throw new Exception("Cannot call write because the client is stopped");
+    }
+    if (dry) {
+      this.dryWriter.write(instance, records);
+    } else {
+      this.writer.write(instance, records);
+    }
+  }
+
+  /**
+   * Forces the client to flush buffered writes without stopping
+   */
+  public void forceFlush() throws Exception {
+    this.writer.forceFlush();
   }
 }

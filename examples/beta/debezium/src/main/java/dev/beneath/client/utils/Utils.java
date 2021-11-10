@@ -1,9 +1,12 @@
 package dev.beneath.client.utils;
 
+import java.nio.ByteBuffer;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class Utils {
-  static public String[] splitResource(String kind, String path) throws Exception {
+  public static String[] splitResource(String kind, String path) throws Exception {
     String[] parts = StringUtils.strip(path, "/").split("/");
     if (parts.length != 3) {
       throw new Exception(String.format("path must have the format 'ORGANIZATION/PROJECT/%s", kind.toUpperCase()));
@@ -20,5 +23,12 @@ public class Utils {
       parts[2] = subparts[1];
     }
     return parts;
+  }
+
+  public static byte[] uuidToBytes(UUID uuid) {
+    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
+    return bb.array();
   }
 }

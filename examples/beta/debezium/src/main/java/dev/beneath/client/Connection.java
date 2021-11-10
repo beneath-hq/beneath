@@ -124,4 +124,13 @@ public class Connection {
     this.apolloClient = ApolloClient.builder().serverUrl(Config.BENEATH_CONTROL_HOST)
         .okHttpClient(new OkHttpClient.Builder().addInterceptor(new ControlPlaneAuthInterceptor()).build()).build();
   }
+
+  // DATA PLANE
+
+  public WriteResponse write(InstanceRecords instanceRecords) throws Exception {
+    this.ensureConnected();
+    WriteRequest request = WriteRequest.newBuilder().addInstanceRecords(instanceRecords).build();
+    WriteResponse response = this.blockingStub.write(request);
+    return response;
+  }
 }
