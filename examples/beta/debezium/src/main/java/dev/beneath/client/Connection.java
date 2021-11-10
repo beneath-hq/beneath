@@ -4,9 +4,15 @@ import java.io.IOException;
 
 import com.apollographql.apollo.ApolloClient;
 
+import io.grpc.CallOptions;
 import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.Metadata.Key;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,8 +43,22 @@ public class Connection {
 
   // GRPC CONNECTIVITY
 
+  public class DataPlaneAuthInterceptor implements ClientInterceptor {
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(final MethodDescriptor<ReqT, RespT> methodDescriptor,
+        final CallOptions callOptions, final Channel channel) {
+      return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+          channel.newCall(methodDescriptor, callOptions)) {
+        @Override
+        public void start(final Listener<RespT> responseListener, final Metadata headers) {
+          headers.put(Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER), String.format("Bearer %s", secret));
+          super.start(responseListener, headers);
+        }
+      };
+    }
+  }
+
   // TODO: make this an async function
-  public void ensureConnected(Boolean check_authenticated) throws Exception {
+  public void ensureConnected() throws Exception {
     if (!connected) {
       createGrpcConnection("host.docker.internal", 50051);
       PingResponse pong = ping();
@@ -46,25 +66,21 @@ public class Connection {
       this.pong = pong;
       connected = true;
     }
-    if (check_authenticated) {
-      if (!this.pong.getAuthenticated()) {
-        throw new AuthenticationException("You must authenticate with 'beneath auth' or by setting BENEATH_SECRET");
-      }
+    if (!this.pong.getAuthenticated()) {
+      throw new AuthenticationException("You must authenticate with 'beneath auth' or by setting BENEATH_SECRET");
     }
   }
 
   private void createGrpcConnection(String host, Integer port) {
     Boolean insecure = true;
     if (insecure) {
-      this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+      this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext()
+          .intercept(new DataPlaneAuthInterceptor()).build();
     } else {
-      // TODO: create a secure channel
+      this.channel = ManagedChannelBuilder.forAddress(host, port).intercept(new DataPlaneAuthInterceptor()).build();
     }
-
-    // TODO: pass in requestMetadata (look at a "ClientInterceptor")
     this.blockingStub = GatewayGrpc.newBlockingStub(this.channel).withCompression("gzip");
     this.asyncStub = GatewayGrpc.newStub(this.channel).withCompression("gzip");
-
     this.connected = true;
   }
 
@@ -95,7 +111,7 @@ public class Connection {
 
   // Q: Where is the best place to put this interceptor? Keep as an inner class?
   // Or move outside?
-  private class AuthorizationInterceptor implements Interceptor {
+  private class ControlPlaneAuthInterceptor implements Interceptor {
     @Override
     public Response intercept(Interceptor.Chain chain) throws IOException {
       Request request = chain.request().newBuilder().addHeader("Authorization", String.format("Bearer %s", secret))
@@ -106,7 +122,6 @@ public class Connection {
 
   public void createGraphQlConnection() {
     this.apolloClient = ApolloClient.builder().serverUrl(Config.BENEATH_CONTROL_HOST)
-        .okHttpClient(new OkHttpClient.Builder().addInterceptor(new AuthorizationInterceptor()).build()).build();
+        .okHttpClient(new OkHttpClient.Builder().addInterceptor(new ControlPlaneAuthInterceptor()).build()).build();
   }
-
 }
