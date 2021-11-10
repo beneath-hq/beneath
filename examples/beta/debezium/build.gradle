@@ -10,19 +10,22 @@ repositories {
 
 def grpcVersion = '1.40.1'
 def protocVersion = '3.17.2'
+def debeziumVersion = '1.7.0.CR2'
 
 dependencies {
+    implementation "org.apache.avro:avro:1.11.0"
+
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     
-    implementation("com.apollographql.apollo:apollo-runtime:2.5.10")
+    implementation "com.apollographql.apollo:apollo-runtime:2.5.10"
 
-    implementation 'io.debezium:debezium-connector-postgres:1.7.0.CR2'
-    implementation 'io.debezium:debezium-embedded:1.7.0.CR2'
+    implementation "io.debezium:debezium-connector-postgres:${debeziumVersion}"
+    implementation "io.debezium:debezium-embedded:${debeziumVersion}"
     
-    testImplementation 'junit:junit:4.11'
+    testImplementation "junit:junit:4.11"
 }
 
 group = 'dev.beneath'
