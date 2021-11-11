@@ -1,5 +1,7 @@
 package dev.beneath.client.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ProjectIdentifier {
   public String organization;
   public String project;
@@ -9,8 +11,21 @@ public class ProjectIdentifier {
     this.project = project;
   }
 
+  public static ProjectIdentifier fromPath(String path) throws Exception {
+    String[] parts = splitProject(path);
+    return new ProjectIdentifier(parts[0], parts[1]);
+  }
+
   @Override
   public String toString() {
     return String.format("%s/%s", this.organization, this.project);
+  }
+
+  static private String[] splitProject(String path) throws Exception {
+    String[] parts = StringUtils.strip(path, "/").split("/");
+    if (parts.length != 2) {
+      throw new Exception("path must have the format \"ORGANIZATION/PROJECT\"");
+    }
+    return parts;
   }
 }
