@@ -17,7 +17,7 @@ public class Utils {
       if (subparts.length != 2) {
         throw new Exception(String.format("cannot parse %s path component '%s'", kind, third));
       }
-      if (subparts[0].toLowerCase() != kind) {
+      if (!kind.equals(subparts[0].toLowerCase())) {
         throw new Exception(String.format("expected %s, got '%s'", kind, third));
       }
       parts[2] = subparts[1];
