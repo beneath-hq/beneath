@@ -1,9 +1,12 @@
 package dev.beneath.client;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import com.apollographql.apollo.ApolloClient;
+import com.google.protobuf.ByteString;
 
+import dev.beneath.client.utils.Utils;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -11,8 +14,8 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.Metadata.Key;
+import io.grpc.MethodDescriptor;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -130,7 +133,20 @@ public class Connection {
   public WriteResponse write(InstanceRecords instanceRecords) throws Exception {
     this.ensureConnected();
     WriteRequest request = WriteRequest.newBuilder().addInstanceRecords(instanceRecords).build();
-    WriteResponse response = this.blockingStub.write(request);
-    return response;
+    return this.blockingStub.write(request);
+  }
+
+  public QueryIndexResponse queryIndex(UUID instanceId, String filter) throws Exception {
+    this.ensureConnected();
+    ByteString instanceIdByteString = ByteString.copyFrom(Utils.uuidToBytes(instanceId));
+    QueryIndexRequest request = QueryIndexRequest.newBuilder().setInstanceId(instanceIdByteString).setPartitions(1)
+        .setFilter(filter).build();
+    return this.blockingStub.queryIndex(request);
+  }
+
+  public ReadResponse read(ByteString cursor, Integer limit) throws Exception {
+    this.ensureConnected();
+    ReadRequest request = ReadRequest.newBuilder().setCursor(cursor).setLimit(limit).build();
+    return this.blockingStub.read(request);
   }
 }

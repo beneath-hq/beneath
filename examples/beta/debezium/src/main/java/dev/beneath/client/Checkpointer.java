@@ -61,6 +61,48 @@ public class Checkpointer {
   }
 
   /**
+   * Gets a checkpointed value
+   * 
+   * @throws Exception
+   */
+  public Object get(String key) throws Exception {
+    return this.get(key, null);
+  }
+
+  /**
+   * Gets a checkpointed value
+   * 
+   * @throws Exception
+   */
+  public Object get(String key, Object defaultValue) throws Exception {
+    if (this.cache.containsKey(key)) {
+      return this.cache.get(key);
+    }
+
+    if (this.client.dry) {
+      return defaultValue;
+    }
+
+    String filter = String.format("{\"key\": \"%s\"}", key);
+    Cursor cursor = this.instance.queryIndex(filter);
+
+    Object value = defaultValue;
+    GenericRecord record = cursor.readOne();
+    if (record != null) {
+      byte[] bytes = ((ByteBuffer) record.get("value")).array();
+      value = objectMapper.readValue(bytes, Object.class);
+    }
+
+    // checking self._cache again because of awaits (and we'd rather serve a recent
+    // local set)
+    if (!this.cache.containsKey(key)) {
+      this.cache.put(key, value);
+    }
+
+    return this.cache.get(key);
+  }
+
+  /**
    * Sets a checkpoint value. Value will be encoded with msgpack.
    */
   public void set(String key, Object value) throws Exception {

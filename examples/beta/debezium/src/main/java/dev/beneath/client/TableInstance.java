@@ -2,6 +2,8 @@ package dev.beneath.client;
 
 import java.util.UUID;
 
+import com.google.protobuf.ByteString;
+
 import dev.beneath.CreateTableMutation;
 import dev.beneath.TableByOrganizationProjectAndNameQuery;
 import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
@@ -85,5 +87,40 @@ public class TableInstance {
     this.version = adminData.version();
     this.isFinal = adminData.madeFinalOn() != null;
     this.isPrimary = adminData.madePrimaryOn() != null;
+  }
+
+  // READING RECORDS
+
+  /**
+   * Queries a sorted index of the records written to the table. The index
+   * contains the newest record for each record key (see the table's schema for
+   * the key). Returns a cursor for paging through the index.
+   * 
+   * @throws Exception
+   */
+  public Cursor queryIndex() throws Exception {
+    return queryIndex("");
+  }
+
+  /**
+   * Queries a sorted index of the records written to the table. The index
+   * contains the newest record for each record key (see the table's schema for
+   * the key). Returns a cursor for paging through the index.
+   * 
+   * Args: filter (str): A filter to apply to the index. Filters allow you to
+   * quickly find specific record(s) in the index based on the record key. For
+   * details on the filter syntax, see
+   * https://about.beneath.dev/docs/reading-writing-data/index-filters/.
+   */
+  public Cursor queryIndex(String filter) throws Exception {
+    // handle dry case
+    if (this.instanceId == null) {
+      throw new Exception("cannot query a dry instance");
+    }
+    QueryIndexResponse response = this.client.connection.queryIndex(this.instanceId, filter);
+    assert response.getReplayCursorsCount() <= 1 && response.getChangeCursorsCount() <= 1;
+    ByteString replay = response.getReplayCursorsCount() > 0 ? response.getReplayCursors(0) : null;
+    ByteString changes = response.getChangeCursorsCount() > 0 ? response.getChangeCursors(0) : null;
+    return new Cursor(this.client.connection, this.table.schema, replay, changes);
   }
 }

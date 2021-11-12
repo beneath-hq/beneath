@@ -38,7 +38,7 @@ public class Schema {
 
   public GenericRecord pbToRecord(Record pb) throws Exception {
     GenericRecord record = this.decodeAvro(pb.getAvroData().toByteArray());
-    record.put("@meta.timestamp", "not yet implemented");
+    // record.put("@meta.timestamp", "not yet implemented");
     return record;
   }
 
