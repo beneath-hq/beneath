@@ -41,7 +41,7 @@ public class Client {
   public AdminClient adminClient;
   public Boolean dry;
   private Integer startCount;
-  private Map<ProjectIdentifier, Checkpointer> checkpointers;
+  private Map<TableIdentifier, Checkpointer> checkpointers;
   private DryWriter dryWriter;
   private Writer writer;
 
@@ -57,7 +57,7 @@ public class Client {
     }
 
     this.startCount = 0;
-    this.checkpointers = new HashMap<ProjectIdentifier, Checkpointer>();
+    this.checkpointers = new HashMap<TableIdentifier, Checkpointer>();
   }
 
   public Table findTable(String tablePath) throws Exception {
@@ -164,4 +164,62 @@ public class Client {
   public void forceFlush() throws Exception {
     this.writer.forceFlush();
   }
+
+  // CHECKPOINTERS
+
+  /**
+   * Returns a checkpointer for the given project. Checkpointers store (small)
+   * key-value records useful for maintaining consumer and pipeline state. State
+   * is stored in a meta-table called "checkpoints" in the given project.
+   * 
+   * Args: project_path (str): Path to the project in which to store the
+   * checkpointer's state
+   * 
+   * @throws Exception
+   */
+  public Checkpointer checkpointer(String projectPath) throws Exception {
+    return checkpointer(projectPath, null, "checkpoints", true,
+        "Stores checkpointed state for consumers, pipelines, and more");
+  }
+
+  /**
+   * Returns a checkpointer for the given project. Checkpointers store (small)
+   * key-value records useful for maintaining consumer and pipeline state. State
+   * is stored in a meta-table called "checkpoints" in the given project.
+   * 
+   * Args: project_path (str): Path to the project in which to store the
+   * checkpointer's state key_prefix (str): If set, any ``get`` or ``set`` call on
+   * the checkpointer will prepend the prefix to the key. metatable_name (str):
+   * Name of the meta table in which to save checkpointed data metatable_create
+   * (bool): If true, the checkpointer will create the checkpoints meta-table if
+   * it does not already exists. If false, the checkpointer will throw an
+   * exception if the meta-table does not already exist. Defaults to True.
+   * metatable_description (str): An optional description to apply to the
+   * checkpoints meta-table. Defaults to a sensible description of checkpointing.
+   * 
+   * @throws Exception
+   */
+  public Checkpointer checkpointer(String projectPath, String keyPrefix, String metatableName, Boolean metatableCreate,
+      String metatableDescription) throws Exception {
+    ProjectIdentifier projectIdentifier = ProjectIdentifier.fromPath(projectPath);
+    TableIdentifier identifier = new TableIdentifier(projectIdentifier.organization, projectIdentifier.project,
+        metatableName);
+
+    if (!this.checkpointers.containsKey(identifier)) {
+      Checkpointer checkpointer = new Checkpointer(this, identifier, metatableCreate, metatableDescription);
+      this.checkpointers.put(identifier, checkpointer);
+      if (this.startCount != 0) {
+        checkpointer.start();
+      }
+    }
+
+    Checkpointer checkpointer = this.checkpointers.get(identifier);
+    // TODO: implement PrefixedCheckpointer class
+    // if (keyPrefix != null) {
+    // checkpointer = PrefixedCheckpointer(checkpointer, keyPrefix);
+    // }
+
+    return checkpointer;
+  }
+
 }

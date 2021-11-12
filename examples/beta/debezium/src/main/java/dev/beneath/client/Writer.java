@@ -25,8 +25,8 @@ public class Writer extends AIODelayBuffer<InstanceIdAndRecordPb> {
 
   protected Writer(Client client, Integer maxDelayMs) {
     super(maxDelayMs, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_COUNT);
-    this.records = ArrayListMultimap.create();
     this.client = client;
+    this.records = ArrayListMultimap.create();
     this.total = 0;
   }
 

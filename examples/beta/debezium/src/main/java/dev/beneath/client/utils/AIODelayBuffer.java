@@ -26,7 +26,7 @@ public abstract class AIODelayBuffer<T> {
   private CompletableFuture<Void> delayTask;
   private CompletableFuture<Void> delayedFlushTask;
 
-  private Boolean running;
+  public Boolean running;
   private Boolean flushing;
   private Integer bufferSize;
   private Integer bufferCount;
