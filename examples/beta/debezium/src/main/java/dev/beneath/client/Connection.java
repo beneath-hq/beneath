@@ -33,6 +33,7 @@ public class Connection {
   private Metadata requestMetadata;
   private Channel channel;
   private GatewayGrpc.GatewayBlockingStub blockingStub;
+  // TODO: make relevant functions async
   private GatewayGrpc.GatewayStub asyncStub;
   private PingResponse pong;
   public ApolloClient apolloClient;
@@ -65,7 +66,6 @@ public class Connection {
     }
   }
 
-  // TODO: make this an async function
   public void ensureConnected() throws Exception {
     if (!connected) {
       createGrpcConnection("host.docker.internal", 50051);
@@ -106,7 +106,6 @@ public class Connection {
     }
   }
 
-  // TODO: make this an async function
   private PingResponse ping() {
     PingRequest request = PingRequest.newBuilder().setClientId(Config.JAVA_CLIENT_ID)
         .setClientVersion(Config.JAVA_CLIENT_VERSION).build();
@@ -118,8 +117,6 @@ public class Connection {
 
   // CONTROL PLANE
 
-  // Q: Where is the best place to put this interceptor? Keep as an inner class?
-  // Or move outside?
   private class ControlPlaneAuthInterceptor implements Interceptor {
     @Override
     public Response intercept(Interceptor.Chain chain) throws IOException {
