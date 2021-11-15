@@ -6,6 +6,9 @@ import java.util.UUID;
 import com.apollographql.apollo.ApolloClient;
 import com.google.protobuf.ByteString;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.beneath.client.utils.Utils;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -33,6 +36,8 @@ public class Connection {
   private GatewayGrpc.GatewayStub asyncStub;
   private PingResponse pong;
   public ApolloClient apolloClient;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
 
   public Connection(String secret) {
     this.secret = secret;
@@ -92,7 +97,8 @@ public class Connection {
       return;
     }
     if (pong.getVersionStatus() == "warning") {
-      // TODO: emit warning
+      LOGGER.warn("This version ({}) of the Beneath java library will soon be deprecated (recommended: {}).",
+          Config.JAVA_CLIENT_VERSION, pong.getRecommendedVersion());
     } else if (pong.getVersionStatus() == "deprecated") {
       throw new Exception(
           String.format("This version (%s) of the Beneath java library is out-of-date (recommended: %s).",
