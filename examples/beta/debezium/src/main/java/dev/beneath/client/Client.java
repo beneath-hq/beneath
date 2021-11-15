@@ -51,7 +51,7 @@ public class Client {
     this.dry = dry;
 
     if (dry) {
-      this.dryWriter = new DryWriter(this, writeDelayMs);
+      this.dryWriter = new DryWriter(writeDelayMs);
     } else {
       this.writer = new Writer(this, writeDelayMs);
     }

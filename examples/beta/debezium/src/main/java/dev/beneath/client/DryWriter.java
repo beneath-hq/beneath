@@ -15,15 +15,13 @@ import dev.beneath.client.utils.AIODelayBuffer;
  * at once
  */
 public class DryWriter extends AIODelayBuffer<InstanceRecordAndSize> {
-  private Client client;
   private List<InstanceRecordAndSize> records;
   private Integer total;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DryWriter.class);
 
-  protected DryWriter(Client client, Integer maxDelayMs) {
+  protected DryWriter(Integer maxDelayMs) {
     super(maxDelayMs, Config.MAX_RECORD_SIZE_BYTES, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_COUNT);
-    this.client = client;
     this.total = 0;
     this.records = new ArrayList<InstanceRecordAndSize>();
   }
