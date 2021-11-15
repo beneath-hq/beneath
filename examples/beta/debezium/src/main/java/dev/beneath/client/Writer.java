@@ -10,6 +10,8 @@ import com.google.common.collect.Multimap;
 import com.google.protobuf.ByteString;
 
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dev.beneath.client.utils.AIODelayBuffer;
 import dev.beneath.client.utils.Utils;
@@ -22,6 +24,8 @@ public class Writer extends AIODelayBuffer<InstanceIdAndRecordPb> {
   private Client client;
   private Multimap<UUID, Record> records;
   private Integer total;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(Writer.class);
 
   protected Writer(Client client, Integer maxDelayMs) {
     super(maxDelayMs, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_COUNT);
@@ -58,8 +62,7 @@ public class Writer extends AIODelayBuffer<InstanceIdAndRecordPb> {
       count += values.size();
     }
     this.total += count;
-    System.out.println(String.format("Flushed %d records to %d instances (%d total during session)", count,
-        this.records.size(), this.total));
+    LOGGER.info("Flushed {} records to {} instances ({} total during session)", count, this.records.size(), this.total);
   }
 
   public void write(TableInstance instance, List<GenericRecord> records) throws Exception {

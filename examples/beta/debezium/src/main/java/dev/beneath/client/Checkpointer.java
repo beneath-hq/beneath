@@ -14,6 +14,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dev.beneath.client.utils.AIODelayBuffer;
 import dev.beneath.client.utils.TableIdentifier;
@@ -48,6 +50,7 @@ public class Checkpointer {
       value: Bytes
       }
       """;
+  private static final Logger LOGGER = LoggerFactory.getLogger(Checkpointer.class);
 
   public Checkpointer(Client client, TableIdentifier metatableIdentifier, Boolean metatableCreate,
       String metatableDescription) {
@@ -142,9 +145,7 @@ public class Checkpointer {
     }
     this.instance = table.primaryInstance;
 
-    // TODO: use a logger to emit this message
-    System.out.print(String.format("Using '%s' (version %d) for checkpointing", this.metatableIdentifer.toString(),
-        this.instance.version));
+    LOGGER.info("Using '{}' (version {}) for checkpointing", this.metatableIdentifer.toString(), this.instance.version);
   }
 
   // CHECKPOINT WRITER

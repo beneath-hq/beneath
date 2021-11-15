@@ -2,6 +2,9 @@ package dev.beneath.client.utils;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * AIODelayBuffer provides a means of buffering and flushing data based on the
  * size of buffered values or time passed since the first value was written to
@@ -30,6 +33,8 @@ public abstract class AIODelayBuffer<T> {
   private Boolean flushing;
   private Integer bufferSize;
   private Integer bufferCount;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AIODelayBuffer.class);
 
   protected AIODelayBuffer(Integer maxDelayMs, Integer maxRecordSize, Integer maxBufferSize, Integer maxBufferCount) {
     this.maxDelay = maxDelayMs / 1000;
@@ -91,8 +96,7 @@ public abstract class AIODelayBuffer<T> {
       this.forceFlush();
       loops += 1;
       if (loops > 5) {
-        System.out.println(String
-            .format("Unfortunate scheduling blocked write to buffer %d times (try to limit concurrent writes)", loops));
+        LOGGER.warn("Unfortunate scheduling blocked write to buffer %d times (try to limit concurrent writes)", loops);
       }
     }
 
@@ -110,11 +114,11 @@ public abstract class AIODelayBuffer<T> {
         try {
           Thread.sleep(maxDelay);
         } catch (Exception e) {
-          System.out.println("Interrupted the task.");
+          LOGGER.error("Interrupted the task.");
         }
       });
       this.delayedFlushTask = CompletableFuture.runAsync(() -> this.delayedFlush()).exceptionally(e -> {
-        System.out.println(String.format("Error in buffer flush background loop: %s", e.getMessage()));
+        LOGGER.error("Error in buffer flush background loop: %s", e.getMessage());
         return null;
       });
     }

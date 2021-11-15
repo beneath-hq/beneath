@@ -1,6 +1,8 @@
 package dev.beneath.client;
 
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,8 @@ public class DryWriter extends AIODelayBuffer<InstanceRecordAndSize> {
   private Client client;
   private List<InstanceRecordAndSize> records;
   private Integer total;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DryWriter.class);
 
   protected DryWriter(Client client, Integer maxDelayMs) {
     super(maxDelayMs, Config.MAX_RECORD_SIZE_BYTES, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_COUNT);
@@ -38,14 +42,13 @@ public class DryWriter extends AIODelayBuffer<InstanceRecordAndSize> {
 
   @Override
   protected void flush() {
-    // TODO: use a real logger
-    System.out.println(String.format("Flushing %d buffered records", this.records.size()));
+    LOGGER.info("Flushing {} buffered records", this.records.size());
     for (InstanceRecordAndSize r : records) {
-      System.out.println(String.format("Flushed record (table=%s, size=%d bytes): %s",
-          r.instance.table.identifier.toString(), r.size, r.record));
+      LOGGER.info("Flushed record (table={}, size={} bytes): {}", r.instance.table.identifier.toString(), r.size,
+          r.record);
       this.total += 1;
     }
-    System.out.println(String.format("Flushed %d records (%d total during session)", this.records.size(), this.total));
+    LOGGER.info("Flushed {} records ({} total during session)", this.records.size(), this.total);
   }
 
   public void write(TableInstance instance, List<GenericRecord> records) throws Exception {
