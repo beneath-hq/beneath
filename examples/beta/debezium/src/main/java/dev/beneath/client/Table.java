@@ -10,7 +10,7 @@ import dev.beneath.type.CreateTableInstanceInput;
 
 /**
  * Represents a data-plane connection to a table. To find or create a table, see
- * :class:`beneath.Client`.
+ * :class:`beneath.BeneathClient`.
  * 
  * Use it to get a TableInstance, which you can query, replay, subscribe and
  * write to. Learn more about tables and instances at
@@ -23,7 +23,7 @@ public class Table {
   public Boolean useLog;
   public Boolean useIndex;
   public Boolean useWarehouse;
-  private Client client;
+  private BeneathClient client;
   public TableIdentifier identifier;
 
   Table() {
@@ -33,7 +33,7 @@ public class Table {
 
   // TODO: Review these methods. Too much method overloading? Should I follow the
   // "Builder" pattern?
-  public static Table make(Client client, TableIdentifier identifier) throws Exception {
+  public static Table make(BeneathClient client, TableIdentifier identifier) throws Exception {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -50,8 +50,8 @@ public class Table {
   }
 
   // overloaded method to include "adminData"
-  public static Table make(Client client, TableIdentifier identifier, TableByOrganizationProjectAndName adminData)
-      throws Exception {
+  public static Table make(BeneathClient client, TableIdentifier identifier,
+      TableByOrganizationProjectAndName adminData) throws Exception {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -67,7 +67,7 @@ public class Table {
   }
 
   // overload method to accommodate "CreateTable" type
-  public static Table make(Client client, TableIdentifier identifier, CreateTable adminData) throws Exception {
+  public static Table make(BeneathClient client, TableIdentifier identifier, CreateTable adminData) throws Exception {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -82,7 +82,7 @@ public class Table {
     return table;
   }
 
-  public static Table makeDry(Client client, TableIdentifier identifier, String avroSchema) throws Exception {
+  public static Table makeDry(BeneathClient client, TableIdentifier identifier, String avroSchema) throws Exception {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;

@@ -21,13 +21,13 @@ import dev.beneath.client.utils.Utils;
  * at once
  */
 public class Writer extends AIODelayBuffer<InstanceIdAndRecordPb> {
-  private Client client;
+  private BeneathClient client;
   private Multimap<UUID, Record> records;
   private Integer total;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Writer.class);
 
-  protected Writer(Client client, Integer maxDelayMs) {
+  protected Writer(BeneathClient client, Integer maxDelayMs) {
     super(maxDelayMs, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_BYTES, Config.MAX_BATCH_SIZE_COUNT);
     this.client = client;
     this.records = ArrayListMultimap.create();

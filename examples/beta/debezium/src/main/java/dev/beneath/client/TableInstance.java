@@ -19,13 +19,13 @@ public class TableInstance {
   public Boolean isFinal;
   public Boolean isPrimary;
   public Integer version;
-  private Client client;
+  private BeneathClient client;
 
   public TableInstance() {
   }
 
   // TODO: this should probably follow the "Builder" pattern
-  public static TableInstance make(Client client, Table table, CreateTableInstance adminData) {
+  public static TableInstance make(BeneathClient client, Table table, CreateTableInstance adminData) {
     TableInstance instance = new TableInstance();
     instance.client = client;
     instance.table = table;
@@ -35,7 +35,8 @@ public class TableInstance {
 
   // overloaded method to accommodate the
   // "CreateTableMutation.PrimaryTableInstance" type
-  public static TableInstance make(Client client, Table table, CreateTableMutation.PrimaryTableInstance adminData) {
+  public static TableInstance make(BeneathClient client, Table table,
+      CreateTableMutation.PrimaryTableInstance adminData) {
     TableInstance instance = new TableInstance();
     instance.client = client;
     instance.table = table;
@@ -45,7 +46,7 @@ public class TableInstance {
 
   // overloaded method to accommodate the
   // "TableByOrganizationProjectAndNameQuery.PrimaryTableInstance" type
-  public static TableInstance make(Client client, Table table,
+  public static TableInstance make(BeneathClient client, Table table,
       TableByOrganizationProjectAndNameQuery.PrimaryTableInstance adminData) {
     TableInstance instance = new TableInstance();
     instance.client = client;
@@ -54,7 +55,7 @@ public class TableInstance {
     return instance;
   }
 
-  public static TableInstance makeDry(Client client, Table table, Integer version, Boolean makePrimary) {
+  public static TableInstance makeDry(BeneathClient client, Table table, Integer version, Boolean makePrimary) {
     TableInstance instance = new TableInstance();
     instance.client = client;
     instance.table = table;

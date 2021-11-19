@@ -36,7 +36,7 @@ import dev.beneath.type.TableSchemaKind;
  */
 public class Checkpointer {
   public TableInstance instance;
-  private Client client;
+  private BeneathClient client;
   private TableIdentifier metatableIdentifer;
   private String metatableDescription;
   private Boolean create;
@@ -52,7 +52,7 @@ public class Checkpointer {
       """;
   private static final Logger LOGGER = LoggerFactory.getLogger(Checkpointer.class);
 
-  public Checkpointer(Client client, TableIdentifier metatableIdentifier, Boolean metatableCreate,
+  public Checkpointer(BeneathClient client, TableIdentifier metatableIdentifier, Boolean metatableCreate,
       String metatableDescription) {
     this.client = client;
     this.metatableIdentifer = metatableIdentifier;

@@ -18,8 +18,8 @@ import dev.beneath.type.TableSchemaKind;
 /**
  * The main class for interacting with Beneath. Data-related features (like
  * defining tables and reading/writing data) are implemented directly on
- * `Client`, while control-plane features (like creating projects) are isolated
- * in the `admin` member.
+ * `BeneathClient`, while control-plane features (like creating projects) are
+ * isolated in the `admin` member.
  * 
  * Args: secret (str): A beneath secret to use for authentication. If not set,
  * uses the ``BENEATH_SECRET`` environment variable, and if that is not set
@@ -36,7 +36,7 @@ import dev.beneath.type.TableSchemaKind;
  * second (1000 ms). Writing records in batches reduces the number of requests,
  * which leads to lower cost (Beneath charges at least 1kb per request).
  */
-public class Client {
+public class BeneathClient {
   public Connection connection;
   public AdminClient adminClient;
   public Boolean dry;
@@ -45,7 +45,7 @@ public class Client {
   private DryWriter dryWriter;
   private Writer writer;
 
-  public Client(String secret, Boolean dry, Integer writeDelayMs) throws Exception {
+  public BeneathClient(String secret, Boolean dry, Integer writeDelayMs) throws Exception {
     this.connection = new Connection(secret);
     this.adminClient = new AdminClient(connection, dry);
     this.dry = dry;
@@ -138,7 +138,7 @@ public class Client {
   /**
    * Writes one or more records to ``instance``. By default, writes are buffered
    * for up to ``write_delay_ms`` milliseconds before being transmitted to the
-   * server. See the Client constructor for details.
+   * server. See the BeneathClient constructor for details.
    * 
    * To enabled writes, make sure to call ``start`` on the client (and ``stop``
    * before terminating).
