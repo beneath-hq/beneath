@@ -1,5 +1,6 @@
 package dev.beneath.client;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,19 +66,15 @@ public class Checkpointer {
 
   /**
    * Gets a checkpointed value
-   * 
-   * @throws Exception
    */
-  public Object get(String key) throws Exception {
+  public Object get(String key) {
     return this.get(key, null);
   }
 
   /**
    * Gets a checkpointed value
-   * 
-   * @throws Exception
    */
-  public Object get(String key, Object defaultValue) throws Exception {
+  public Object get(String key, Object defaultValue) {
     if (this.cache.containsKey(key)) {
       return this.cache.get(key);
     }
@@ -93,7 +90,11 @@ public class Checkpointer {
     GenericRecord record = cursor.readOne();
     if (record != null) {
       byte[] bytes = ((ByteBuffer) record.get("value")).array();
-      value = objectMapper.readValue(bytes, Object.class);
+      try {
+				value = objectMapper.readValue(bytes, Object.class);
+			} catch (IOException e) {
+        throw new RuntimeException(e);
+			}
     }
 
     // checking self._cache again because of awaits (and we'd rather serve a recent
@@ -108,9 +109,9 @@ public class Checkpointer {
   /**
    * Sets a checkpoint value. Value will be encoded with msgpack.
    */
-  public void set(String key, Object value) throws Exception {
+  public void set(String key, Object value) {
     if (!this.writer.running) {
-      throw new Exception("Cannot call 'set' on checkpointer because the client is stopped");
+      throw new RuntimeException("Cannot call 'set' on checkpointer because the client is stopped");
     }
     this.cache.put(key, value);
     this.writer.write(key, value);
@@ -118,20 +119,20 @@ public class Checkpointer {
 
   // START/STOP (called by client)
 
-  public void start() throws Exception {
+  public void start() {
     if (this.instance == null) {
       this.stageTable();
     }
     this.writer.start();
   }
 
-  public void stop() throws Exception {
+  public void stop() {
     this.writer.stop();
   }
 
   // CHECKPOINT TABLE
 
-  private void stageTable() throws Exception {
+  private void stageTable() {
     Table table;
     if (this.create || this.client.dry) {
       table = this.client.createTable(this.metatableIdentifer.toString(), SERVICE_CHECKPOINT_SCHEMA,
@@ -141,7 +142,7 @@ public class Checkpointer {
       table = this.client.findTable(this.metatableIdentifer.toString());
     }
     if (table.primaryInstance == null) {
-      throw new Exception("Expected checkpoints table to have a primary instance");
+      throw new RuntimeException("Expected checkpoints table to have a primary instance");
     }
     this.instance = table.primaryInstance;
 
@@ -210,7 +211,7 @@ public class Checkpointer {
       }
     }
 
-    public void write(String key, Object checkpoint) throws Exception {
+    public void write(String key, Object checkpoint) {
       CheckpointKeyValue checkpointKeyValue = new CheckpointKeyValue(key, checkpoint);
       super.write(checkpointKeyValue, 0);
     }

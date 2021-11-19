@@ -11,7 +11,7 @@ public class ProjectIdentifier {
     this.project = project;
   }
 
-  public static ProjectIdentifier fromPath(String path) throws Exception {
+  public static ProjectIdentifier fromPath(String path) {
     String[] parts = splitProject(path);
     return new ProjectIdentifier(parts[0], parts[1]);
   }
@@ -21,10 +21,10 @@ public class ProjectIdentifier {
     return String.format("%s/%s", this.organization, this.project);
   }
 
-  static private String[] splitProject(String path) throws Exception {
+  static private String[] splitProject(String path) {
     String[] parts = StringUtils.strip(path, "/").split("/");
     if (parts.length != 2) {
-      throw new Exception("path must have the format \"ORGANIZATION/PROJECT\"");
+      throw new RuntimeException("path must have the format \"ORGANIZATION/PROJECT\"");
     }
     return parts;
   }

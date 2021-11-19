@@ -1,6 +1,7 @@
 package dev.beneath.client;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
 import dev.beneath.CreateTableMutation.CreateTable;
@@ -33,7 +34,7 @@ public class Table {
 
   // TODO: Review these methods. Too much method overloading? Should I follow the
   // "Builder" pattern?
-  public static Table make(BeneathClient client, TableIdentifier identifier) throws Exception {
+  public static Table make(BeneathClient client, TableIdentifier identifier) {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -51,7 +52,7 @@ public class Table {
 
   // overloaded method to include "adminData"
   public static Table make(BeneathClient client, TableIdentifier identifier,
-      TableByOrganizationProjectAndName adminData) throws Exception {
+      TableByOrganizationProjectAndName adminData) {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -67,7 +68,7 @@ public class Table {
   }
 
   // overload method to accommodate "CreateTable" type
-  public static Table make(BeneathClient client, TableIdentifier identifier, CreateTable adminData) throws Exception {
+  public static Table make(BeneathClient client, TableIdentifier identifier, CreateTable adminData) {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -82,7 +83,7 @@ public class Table {
     return table;
   }
 
-  public static Table makeDry(BeneathClient client, TableIdentifier identifier, String avroSchema) throws Exception {
+  public static Table makeDry(BeneathClient client, TableIdentifier identifier, String avroSchema) {
     Table table = new Table();
     table.client = client;
     table.identifier = identifier;
@@ -95,10 +96,16 @@ public class Table {
     return table;
   }
 
-  private TableByOrganizationProjectAndName loadAdminData() throws Exception {
-    return this.client.adminClient.tables
-        .findByOrganizationProjectAndName(this.identifier.organization, this.identifier.project, this.identifier.table)
-        .get();
+  private TableByOrganizationProjectAndName loadAdminData() {
+    TableByOrganizationProjectAndName table;
+    try {
+			table = this.client.adminClient.tables
+			    .findByOrganizationProjectAndName(this.identifier.organization, this.identifier.project, this.identifier.table)
+			    .get();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
+    return table;
   }
 
   // STATE
@@ -110,14 +117,19 @@ public class Table {
 
   // INSTANCES
 
-  public TableInstance createInstance(Integer version, Boolean makePrimary, Boolean updateIfExists) throws Exception {
+  public TableInstance createInstance(Integer version, Boolean makePrimary, Boolean updateIfExists) {
     TableInstance instance;
     // handle real and dry cases
     if (this.tableId != null) {
-      CreateTableInstance adminData = this.client.adminClient.tables
-          .createInstance(CreateTableInstanceInput.builder().tableID(this.tableId.toString()).version(version)
-              .makePrimary(makePrimary).updateIfExists(updateIfExists).build())
-          .get();
+      CreateTableInstance adminData;
+      try {
+        adminData = this.client.adminClient.tables
+            .createInstance(CreateTableInstanceInput.builder().tableID(this.tableId.toString()).version(version)
+                .makePrimary(makePrimary).updateIfExists(updateIfExists).build())
+            .get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
       instance = TableInstance.make(this.client, this, adminData);
     } else {
       instance = TableInstance.makeDry(this.client, this, version, makePrimary);

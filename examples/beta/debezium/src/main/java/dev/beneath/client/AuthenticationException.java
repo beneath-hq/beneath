@@ -1,7 +1,9 @@
 package dev.beneath.client;
 
-class AuthenticationException extends Exception {
-  // Error returned for failed authentication
+/**
+ * Error returned for failed authentication
+ */
+class AuthenticationException extends RuntimeException {
   AuthenticationException(String message) {
     super(message);
   }

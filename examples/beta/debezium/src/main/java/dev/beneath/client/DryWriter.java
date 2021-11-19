@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 
 import dev.beneath.client.utils.AIODelayBuffer;
 
@@ -49,11 +50,15 @@ public class DryWriter extends AIODelayBuffer<InstanceRecordAndSize> {
     LOGGER.info("Flushed {} records ({} total during session)", this.records.size(), this.total);
   }
 
-  public void write(TableInstance instance, List<GenericRecord> records) throws Exception {
+  public void write(TableInstance instance, List<GenericRecord> records) {
     for (GenericRecord record : records) {
       Entry<Record, Integer> tuple = instance.table.schema.recordToPb(record);
       InstanceRecordAndSize value = new InstanceRecordAndSize(instance, record, tuple.getValue());
-      super.write(value, tuple.getValue()).get();
+      try {
+        super.write(value, tuple.getValue()).get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }

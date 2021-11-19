@@ -1,6 +1,7 @@
 package dev.beneath.client.utils;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +56,14 @@ public abstract class AIODelayBuffer<T> {
 
   protected abstract void flush();
 
-  public void start() throws Exception {
+  public void start() {
     if (this.running) {
-      throw new Exception("Already called start");
+      throw new RuntimeException("Already called start");
     }
     this.running = true;
   }
 
-  public void stop() throws Exception {
+  public void stop() {
     this.running = false;
     this.forceFlush();
   }
@@ -75,16 +76,17 @@ public abstract class AIODelayBuffer<T> {
    * 
    * task = buffer.write(value=..., size=..).get(); task.get()
    */
-  public CompletableFuture<Void> write(T value, Integer size) throws Exception {
+  public CompletableFuture<Void> write(T value, Integer size) {
     // check open
     if (this.running == false) {
-      throw new Exception("Cannot call write because the buffer is closed");
+      throw new RuntimeException("Cannot call write because the buffer is closed");
     }
 
     // check value is within acceptable record size
     if (size > this.maxRecordSize) {
-      throw new Exception(String.format("Value exceeds maximum record size (size=%d, max_record_size=%d, value=%s)",
-          size, this.maxRecordSize, value));
+      throw new RuntimeException(
+          String.format("Value exceeds maximum record size (size=%d, max_record_size=%d, value=%s)", size,
+              this.maxRecordSize, value));
     }
 
     // trigger/wait for flush if a) a flush is in progress, or b) value would cause
@@ -126,14 +128,18 @@ public abstract class AIODelayBuffer<T> {
     return this.delayedFlushTask;
   }
 
-  public void forceFlush() throws Exception {
+  public void forceFlush() {
     // cancel the delay
     if (this.delayTask != null) {
       this.delayTask.cancel(true);
     }
     // proceed with flush
     if (this.delayedFlushTask != null) {
-      this.delayedFlushTask.get();
+      try {
+        this.delayedFlushTask.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

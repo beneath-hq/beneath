@@ -3,6 +3,7 @@ package dev.beneath.client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.avro.generic.GenericRecord;
 
@@ -45,7 +46,7 @@ public class BeneathClient {
   private DryWriter dryWriter;
   private Writer writer;
 
-  public BeneathClient(String secret, Boolean dry, Integer writeDelayMs) throws Exception {
+  public BeneathClient(String secret, Boolean dry, Integer writeDelayMs) {
     this.connection = new Connection(secret);
     this.adminClient = new AdminClient(connection, dry);
     this.dry = dry;
@@ -60,7 +61,7 @@ public class BeneathClient {
     this.checkpointers = new HashMap<TableIdentifier, Checkpointer>();
   }
 
-  public Table findTable(String tablePath) throws Exception {
+  public Table findTable(String tablePath) {
     TableIdentifier identifier = TableIdentifier.fromPath(tablePath);
     Table table = Table.make(this, identifier);
     return table;
@@ -72,20 +73,30 @@ public class BeneathClient {
   // Then fix in the CreateTableInputBuilder
   public Table createTable(String tablePath, String schema, String description, Boolean meta, Boolean useIndex,
       Boolean useWarehouse, Integer retention, Integer logRetention, Integer indexRetention, Integer warehouseRetention,
-      TableSchemaKind schemaKind, String indexes, Boolean updateIfExists) throws Exception {
+      TableSchemaKind schemaKind, String indexes, Boolean updateIfExists) {
     Table table;
     TableIdentifier identifier = TableIdentifier.fromPath(tablePath);
     if (this.dry) {
-      CompileSchema data = this.adminClient.tables
-          .compileSchema(CompileSchemaInput.builder().schemaKind(schemaKind).schema(schema).build()).get();
+      CompileSchema data;
+      try {
+        data = this.adminClient.tables
+            .compileSchema(CompileSchemaInput.builder().schemaKind(schemaKind).schema(schema).build()).get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       table = Table.makeDry(this, identifier, data.canonicalAvroSchema());
     } else {
       // omitting indexes for now
-      CreateTable data = this.adminClient.tables.create(CreateTableInput.builder()
-          .organizationName(identifier.organization).projectName(identifier.project).tableName(identifier.table)
-          .schemaKind(schemaKind).schema(schema).description(description).meta(meta).useIndex(useIndex)
-          .useWarehouse(useWarehouse).logRetentionSeconds(logRetention).indexRetentionSeconds(indexRetention)
-          .warehouseRetentionSeconds(warehouseRetention).updateIfExists(updateIfExists).build()).get();
+      CreateTable data;
+      try {
+        data = this.adminClient.tables.create(CreateTableInput.builder().organizationName(identifier.organization)
+            .projectName(identifier.project).tableName(identifier.table).schemaKind(schemaKind).schema(schema)
+            .description(description).meta(meta).useIndex(useIndex).useWarehouse(useWarehouse)
+            .logRetentionSeconds(logRetention).indexRetentionSeconds(indexRetention)
+            .warehouseRetentionSeconds(warehouseRetention).updateIfExists(updateIfExists).build()).get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       table = Table.make(this, identifier, data);
     }
     return table;
@@ -97,7 +108,7 @@ public class BeneathClient {
    * Opens the client for writes. Can be called multiple times, but make sure to
    * call ``stop`` correspondingly.
    */
-  public void start() throws Exception {
+  public void start() {
     this.startCount += 1;
     if (this.startCount != 1) {
       return;
@@ -120,9 +131,9 @@ public class BeneathClient {
    * ``start`` was called multiple times, only the last corresponding call to
    * ``stop`` triggers a flush.
    */
-  public void stop() throws Exception {
+  public void stop() {
     if (this.startCount == 0) {
-      throw new Exception("Called stop more times than start");
+      throw new RuntimeException("Called stop more times than start");
     }
 
     if (this.startCount == 1) {
@@ -147,9 +158,9 @@ public class BeneathClient {
    * ``instance.write`` as a convenience wrapper. records: The records to write.
    * Can be a single record (dict) or a list of records (iterable of dict).
    */
-  public void write(TableInstance instance, List<GenericRecord> records) throws Exception {
+  public void write(TableInstance instance, List<GenericRecord> records) {
     if (this.startCount == 0) {
-      throw new Exception("Cannot call write because the client is stopped");
+      throw new RuntimeException("Cannot call write because the client is stopped");
     }
     if (dry) {
       this.dryWriter.write(instance, records);
@@ -161,7 +172,7 @@ public class BeneathClient {
   /**
    * Forces the client to flush buffered writes without stopping
    */
-  public void forceFlush() throws Exception {
+  public void forceFlush() {
     this.writer.forceFlush();
   }
 
@@ -174,10 +185,8 @@ public class BeneathClient {
    * 
    * Args: project_path (str): Path to the project in which to store the
    * checkpointer's state
-   * 
-   * @throws Exception
    */
-  public Checkpointer checkpointer(String projectPath) throws Exception {
+  public Checkpointer checkpointer(String projectPath) {
     return checkpointer(projectPath, null, "checkpoints", true,
         "Stores checkpointed state for consumers, pipelines, and more");
   }
@@ -196,11 +205,9 @@ public class BeneathClient {
    * exception if the meta-table does not already exist. Defaults to True.
    * metatable_description (str): An optional description to apply to the
    * checkpoints meta-table. Defaults to a sensible description of checkpointing.
-   * 
-   * @throws Exception
    */
   public Checkpointer checkpointer(String projectPath, String keyPrefix, String metatableName, Boolean metatableCreate,
-      String metatableDescription) throws Exception {
+      String metatableDescription) {
     ProjectIdentifier projectIdentifier = ProjectIdentifier.fromPath(projectPath);
     TableIdentifier identifier = new TableIdentifier(projectIdentifier.organization, projectIdentifier.project,
         metatableName);

@@ -1,6 +1,7 @@
 package dev.beneath.client;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,34 +30,43 @@ public class Schema {
   }
 
   // TODO: what's the best way to return a tuple?
-  public Entry<Record, Integer> recordToPb(GenericRecord record) throws Exception {
+  public Entry<Record, Integer> recordToPb(GenericRecord record) {
     byte[] avro = this.encodeAvro(record);
     Integer timestamp = extractRecordTimestamp(record);
     Record pb = Record.newBuilder().setAvroData(ByteString.copyFrom(avro)).setTimestamp(timestamp).build();
     return Map.entry(pb, pb.getSerializedSize());
   }
 
-  public GenericRecord pbToRecord(Record pb) throws Exception {
+  public GenericRecord pbToRecord(Record pb) {
     GenericRecord record = this.decodeAvro(pb.getAvroData().toByteArray());
     // record.put("@meta.timestamp", "not yet implemented");
     return record;
   }
 
-  private byte[] encodeAvro(GenericRecord record) throws Exception {
+  private byte[] encodeAvro(GenericRecord record) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
     DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(this.parsedAvro);
-    writer.write(record, encoder);
-    encoder.flush();
-    out.close();
+    try {
+      writer.write(record, encoder);
+      encoder.flush();
+      out.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     byte[] serializedBytes = out.toByteArray();
     return serializedBytes;
   }
 
-  private GenericRecord decodeAvro(byte[] data) throws Exception {
+  private GenericRecord decodeAvro(byte[] data) {
     DatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(this.parsedAvro);
     Decoder decoder = DecoderFactory.get().binaryDecoder(data, null);
-    GenericRecord record = reader.read(null, decoder);
+    GenericRecord record;
+    try {
+      record = reader.read(null, decoder);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return record;
   }
 

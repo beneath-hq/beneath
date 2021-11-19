@@ -27,10 +27,8 @@ public class Cursor {
 
   /**
    * Returns the first record or None if the cursor is empty
-   * 
-   * @throws Exception
    */
-  public GenericRecord readOne() throws Exception {
+  public GenericRecord readOne() {
     List<GenericRecord> batch = this.readNext(1);
     if (batch != null) {
       for (GenericRecord record : batch) {
@@ -42,10 +40,8 @@ public class Cursor {
 
   /**
    * Returns a new page of results and advances the replay cursor
-   * 
-   * @throws Exception
    */
-  public List<GenericRecord> readNext(Integer limit) throws Exception {
+  public List<GenericRecord> readNext(Integer limit) {
     List<Record> batch = this.readNextReplay(limit);
     if (batch.size() == 0) {
       return null;
@@ -57,7 +53,7 @@ public class Cursor {
     return records;
   }
 
-  private List<Record> readNextReplay(Integer limit) throws Exception {
+  private List<Record> readNextReplay(Integer limit) {
     if (this.replayCursor == null) {
       return null;
     }

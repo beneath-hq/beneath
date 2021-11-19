@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,10 +30,7 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
 
   // TODO: preferably, make the BeneathClient a parameter in the constructor
   public BeneathOffsetBackingStore() {
-    try {
-      this.client = new BeneathClient(DebeziumConfig.BENEATH_SECRET, false, Config.DEFAULT_WRITE_DELAY_MS);
-    } catch (Exception e) {
-    }
+    this.client = new BeneathClient(DebeziumConfig.BENEATH_SECRET, false, Config.DEFAULT_WRITE_DELAY_MS);
   }
 
   /**
@@ -41,12 +39,8 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   @Override
   public void start() {
     LOGGER.info("Starting BeneathOffsetBackingStore");
-    try {
-      this.checkpointer = client.checkpointer(DebeziumConfig.BENEATH_PROJECT_PATH);
-      client.start();
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to setup the Beneath checkpointer", e);
-    }
+    this.checkpointer = client.checkpointer(DebeziumConfig.BENEATH_PROJECT_PATH);
+    client.start();
     LOGGER.info("Finished reading offsets topic and starting BeneathOffsetBackingStore");
   }
 
@@ -57,13 +51,9 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   @Override
   public void stop() {
     LOGGER.info("Stopping BeneathOffsetBackingStore");
-    try {
-      // We only flush the client; we don't stop it. Because this is just the offset
-      // store and we'll want to keep the client up for non-offset activity.
-      client.forceFlush();
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to flush offsets to Beneath");
-    }
+    // We only flush the client; we don't stop it. Because this is just the offset
+    // store and we'll want to keep the client up for non-offset activity.
+    client.forceFlush();
     LOGGER.info("Stopped BeneathOffsetBackingStore");
   }
 
@@ -78,15 +68,11 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
     CompletableFuture<Map<ByteBuffer, ByteBuffer>> future = new CompletableFuture<Map<ByteBuffer, ByteBuffer>>();
     Map<ByteBuffer, ByteBuffer> offsets = new HashMap<>();
     for (ByteBuffer key : keys) {
-      try {
-        String keyString = byteBufferToString(key);
-        keyString = convertJsonKeyToCustomKey(keyString);
-        byte[] valueBytes = (byte[]) this.checkpointer.get(keyString);
-        ByteBuffer value = valueBytes != null ? ByteBuffer.wrap(valueBytes) : null;
-        offsets.put(key, value);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      String keyString = byteBufferToString(key);
+      keyString = convertJsonKeyToCustomKey(keyString);
+      byte[] valueBytes = (byte[]) this.checkpointer.get(keyString);
+      ByteBuffer value = valueBytes != null ? ByteBuffer.wrap(valueBytes) : null;
+      offsets.put(key, value);
     }
     future.complete(offsets);
     return future;
@@ -102,17 +88,13 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   @Override
   public Future<Void> set(Map<ByteBuffer, ByteBuffer> values, Callback<Void> callback) {
     for (Entry<ByteBuffer, ByteBuffer> offset : values.entrySet()) {
-      try {
-        // Beneath requires that checkpoint keys are strings.
-        String keyString = byteBufferToString(offset.getKey());
-        // By default, Debezium offset keys are JSON. Because Beneath doesn't currently
-        // support JSON keys, we convert the key to a Beneath-friendly format.
-        keyString = convertJsonKeyToCustomKey(keyString);
-        byte[] value = offset.getValue().array();
-        this.checkpointer.set(keyString, value);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      // Beneath requires that checkpoint keys are strings.
+      String keyString = byteBufferToString(offset.getKey());
+      // By default, Debezium offset keys are JSON. Because Beneath doesn't currently
+      // support JSON keys, we convert the key to a Beneath-friendly format.
+      keyString = convertJsonKeyToCustomKey(keyString);
+      byte[] value = offset.getValue().array();
+      this.checkpointer.set(keyString, value);
     }
 
     // TODO: what's the point of the return future? should I use the callback
@@ -134,8 +116,13 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
     return new String(byteBuffer.array(), StandardCharsets.UTF_8);
   }
 
-  private String convertJsonKeyToCustomKey(String keyString) throws Exception {
-    JsonNode jsonNode = new ObjectMapper().readTree(keyString);
+  private String convertJsonKeyToCustomKey(String keyString) {
+    JsonNode jsonNode;
+    try {
+      jsonNode = new ObjectMapper().readTree(keyString);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
     String name = jsonNode.get("payload").get(0).asText();
     String databaseServerName = jsonNode.get("payload").get(1).get("server").asText();
     return String.format("%s:%s:offset", name, databaseServerName);

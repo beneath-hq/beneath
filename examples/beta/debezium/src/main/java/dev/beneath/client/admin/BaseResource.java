@@ -11,9 +11,9 @@ public abstract class BaseResource {
     this.dry = dry;
   }
 
-  protected void beforeMutation() throws Exception {
+  protected void beforeMutation() {
     if (this.dry) {
-      throw new Exception("Cannot run mutation on a client where dry=True");
+      throw new RuntimeException("Cannot run mutation on a client where dry=True");
     }
   }
 }

@@ -66,7 +66,7 @@ public class Connection {
     }
   }
 
-  public void ensureConnected() throws Exception {
+  public void ensureConnected() {
     if (!connected) {
       createGrpcConnection("host.docker.internal", 50051);
       PingResponse pong = ping();
@@ -92,7 +92,7 @@ public class Connection {
     this.connected = true;
   }
 
-  private static void checkPongStatus(PingResponse pong) throws Exception {
+  private static void checkPongStatus(PingResponse pong) {
     if (Config.DEV) {
       return;
     }
@@ -100,7 +100,7 @@ public class Connection {
       LOGGER.warn("This version ({}) of the Beneath java library will soon be deprecated (recommended: {}).",
           Config.JAVA_CLIENT_VERSION, pong.getRecommendedVersion());
     } else if (pong.getVersionStatus() == "deprecated") {
-      throw new Exception(
+      throw new RuntimeException(
           String.format("This version (%s) of the Beneath java library is out-of-date (recommended: %s).",
               Config.JAVA_CLIENT_VERSION, pong.getRecommendedVersion()));
     }
@@ -133,13 +133,13 @@ public class Connection {
 
   // DATA PLANE
 
-  public WriteResponse write(InstanceRecords instanceRecords) throws Exception {
+  public WriteResponse write(InstanceRecords instanceRecords) {
     this.ensureConnected();
     WriteRequest request = WriteRequest.newBuilder().addInstanceRecords(instanceRecords).build();
     return this.blockingStub.write(request);
   }
 
-  public QueryIndexResponse queryIndex(UUID instanceId, String filter) throws Exception {
+  public QueryIndexResponse queryIndex(UUID instanceId, String filter) {
     this.ensureConnected();
     ByteString instanceIdByteString = ByteString.copyFrom(Utils.uuidToBytes(instanceId));
     QueryIndexRequest request = QueryIndexRequest.newBuilder().setInstanceId(instanceIdByteString).setPartitions(1)
@@ -147,7 +147,7 @@ public class Connection {
     return this.blockingStub.queryIndex(request);
   }
 
-  public ReadResponse read(ByteString cursor, Integer limit) throws Exception {
+  public ReadResponse read(ByteString cursor, Integer limit) {
     this.ensureConnected();
     ReadRequest request = ReadRequest.newBuilder().setCursor(cursor).setLimit(limit).build();
     return this.blockingStub.read(request);

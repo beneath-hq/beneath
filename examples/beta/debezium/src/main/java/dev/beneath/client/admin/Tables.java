@@ -26,7 +26,7 @@ public class Tables extends BaseResource {
   }
 
   public CompletableFuture<TableByOrganizationProjectAndName> findByOrganizationProjectAndName(String organizationName,
-      String projectName, String tableName) throws Exception {
+      String projectName, String tableName) {
     final CompletableFuture<TableByOrganizationProjectAndName> future = new CompletableFuture<TableByOrganizationProjectAndName>();
 
     TableByOrganizationProjectAndNameQuery query = TableByOrganizationProjectAndNameQuery.builder()
@@ -49,7 +49,7 @@ public class Tables extends BaseResource {
     return future;
   }
 
-  public CompletableFuture<CompileSchema> compileSchema(CompileSchemaInput input) throws Exception {
+  public CompletableFuture<CompileSchema> compileSchema(CompileSchemaInput input) {
     final CompletableFuture<CompileSchema> future = new CompletableFuture<CompileSchema>();
 
     CompileSchemaQuery query = CompileSchemaQuery.builder().input(input).build();
@@ -71,7 +71,7 @@ public class Tables extends BaseResource {
     return future;
   }
 
-  public CompletableFuture<CreateTable> create(CreateTableInput input) throws Exception {
+  public CompletableFuture<CreateTable> create(CreateTableInput input) {
     this.beforeMutation();
     final CompletableFuture<CreateTable> future = new CompletableFuture<CreateTable>();
 
@@ -100,7 +100,7 @@ public class Tables extends BaseResource {
     return future;
   }
 
-  public CompletableFuture<CreateTableInstance> createInstance(CreateTableInstanceInput input) throws Exception {
+  public CompletableFuture<CreateTableInstance> createInstance(CreateTableInstanceInput input) {
     this.beforeMutation();
     final CompletableFuture<CreateTableInstance> future = new CompletableFuture<CreateTableInstance>();
 

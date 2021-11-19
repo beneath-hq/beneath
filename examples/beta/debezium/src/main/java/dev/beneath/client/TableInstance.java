@@ -96,10 +96,8 @@ public class TableInstance {
    * Queries a sorted index of the records written to the table. The index
    * contains the newest record for each record key (see the table's schema for
    * the key). Returns a cursor for paging through the index.
-   * 
-   * @throws Exception
    */
-  public Cursor queryIndex() throws Exception {
+  public Cursor queryIndex() {
     return queryIndex("");
   }
 
@@ -113,10 +111,10 @@ public class TableInstance {
    * details on the filter syntax, see
    * https://about.beneath.dev/docs/reading-writing-data/index-filters/.
    */
-  public Cursor queryIndex(String filter) throws Exception {
+  public Cursor queryIndex(String filter) {
     // handle dry case
     if (this.instanceId == null) {
-      throw new Exception("cannot query a dry instance");
+      throw new RuntimeException("cannot query a dry instance");
     }
     QueryIndexResponse response = this.client.connection.queryIndex(this.instanceId, filter);
     assert response.getReplayCursorsCount() <= 1 && response.getChangeCursorsCount() <= 1;

@@ -11,7 +11,7 @@ public class TableIdentifier {
     this.table = table;
   }
 
-  public static TableIdentifier fromPath(String path) throws Exception {
+  public static TableIdentifier fromPath(String path) {
     String[] parts = Utils.splitResource("table", path);
     return new TableIdentifier(parts[0], parts[1], parts[2]);
   }

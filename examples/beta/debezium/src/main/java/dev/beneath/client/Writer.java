@@ -65,7 +65,7 @@ public class Writer extends AIODelayBuffer<InstanceIdAndRecordPb> {
     LOGGER.info("Flushed {} records to {} instances ({} total during session)", count, this.records.size(), this.total);
   }
 
-  public void write(TableInstance instance, List<GenericRecord> records) throws Exception {
+  public void write(TableInstance instance, List<GenericRecord> records) {
     for (GenericRecord record : records) {
       Entry<Record, Integer> tuple = instance.table.schema.recordToPb(record);
       InstanceIdAndRecordPb value = new InstanceIdAndRecordPb(instance.instanceId, tuple.getKey());
