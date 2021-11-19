@@ -97,9 +97,13 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
       this.checkpointer.set(keyString, value);
     }
 
-    // TODO: what's the point of the return future? should I use the callback
-    // parameter for anything?
-    return new CompletableFuture<Void>();
+    // This has no effect, but it explicitly shows the `callback` param exists
+    callback.onCompletion(null, null);
+
+    // Return a future to satisfy the interface
+    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    future.complete(null); // prevents the Debezium Engine from logging a "Timed out" error message
+    return future;
   }
 
   /**
