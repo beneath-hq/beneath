@@ -38,7 +38,7 @@ import dev.beneath.type.TableSchemaKind;
 public class Checkpointer {
   public TableInstance instance;
   private BeneathClient client;
-  private TableIdentifier metatableIdentifer;
+  private TableIdentifier metatableIdentifier;
   private String metatableDescription;
   private Boolean create;
   private Writer writer;
@@ -56,7 +56,7 @@ public class Checkpointer {
   public Checkpointer(BeneathClient client, TableIdentifier metatableIdentifier, Boolean metatableCreate,
       String metatableDescription) {
     this.client = client;
-    this.metatableIdentifer = metatableIdentifier;
+    this.metatableIdentifier = metatableIdentifier;
     this.metatableDescription = metatableDescription;
     this.create = metatableCreate;
     this.writer = new Writer(this);
@@ -91,10 +91,10 @@ public class Checkpointer {
     if (record != null) {
       byte[] bytes = ((ByteBuffer) record.get("value")).array();
       try {
-				value = objectMapper.readValue(bytes, Object.class);
-			} catch (IOException e) {
+        value = objectMapper.readValue(bytes, Object.class);
+      } catch (IOException e) {
         throw new RuntimeException(e);
-			}
+      }
     }
 
     // checking self._cache again because of awaits (and we'd rather serve a recent
@@ -135,18 +135,19 @@ public class Checkpointer {
   private void stageTable() {
     Table table;
     if (this.create || this.client.dry) {
-      table = this.client.createTable(this.metatableIdentifer.toString(), SERVICE_CHECKPOINT_SCHEMA,
+      table = this.client.createTable(this.metatableIdentifier.toString(), SERVICE_CHECKPOINT_SCHEMA,
           this.metatableDescription, true, true, false, 0, SERVICE_CHECKPOINT_LOG_RETENTION, 0, null,
           TableSchemaKind.GRAPHQL, "", true);
     } else {
-      table = this.client.findTable(this.metatableIdentifer.toString());
+      table = this.client.findTable(this.metatableIdentifier.toString());
     }
     if (table.primaryInstance == null) {
       throw new RuntimeException("Expected checkpoints table to have a primary instance");
     }
     this.instance = table.primaryInstance;
 
-    LOGGER.info("Using '{}' (version {}) for checkpointing", this.metatableIdentifer.toString(), this.instance.version);
+    LOGGER.info("Using '{}' (version {}) for checkpointing", this.metatableIdentifier.toString(),
+        this.instance.version);
   }
 
   // CHECKPOINT WRITER
