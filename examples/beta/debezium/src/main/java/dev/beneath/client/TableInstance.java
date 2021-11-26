@@ -1,12 +1,15 @@
 package dev.beneath.client;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.google.protobuf.ByteString;
 
+import org.apache.avro.generic.GenericRecord;
+
+import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
 import dev.beneath.CreateTableMutation;
 import dev.beneath.TableByOrganizationProjectAndNameQuery;
-import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
 
 /**
  * Represents an instance of a Table, i.e. a specific version that you can
@@ -121,5 +124,14 @@ public class TableInstance {
     ByteString replay = response.getReplayCursorsCount() > 0 ? response.getReplayCursors(0) : null;
     ByteString changes = response.getChangeCursorsCount() > 0 ? response.getChangeCursors(0) : null;
     return new Cursor(this.client.connection, this.table.schema, replay, changes);
+  }
+
+  // WRITING RECORDS
+
+  /**
+   * Convenience wrapper for `Client.write`
+   */
+  public void write(List<GenericRecord> records) {
+    this.client.write(this, records);
   }
 }
