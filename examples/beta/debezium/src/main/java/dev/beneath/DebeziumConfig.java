@@ -9,5 +9,5 @@ public class DebeziumConfig {
   public static final String DATABASE_PASSWORD = "";
   public static final String DATABASE_DBNAME = "testdb";
   public static final String TABLE_INCLUDE_LIST = "public.table1, public.table2, public.table3";
-  public static final String DATABASE_SERVER_NAME = "test";
+  public static final String DATABASE_SERVER_NAME = "testserver";
 }
