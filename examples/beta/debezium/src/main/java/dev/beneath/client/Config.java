@@ -6,6 +6,7 @@ public class Config {
   public static final String JAVA_CLIENT_ID = "beneath-java";
   public static final String JAVA_CLIENT_VERSION = "0.0.1";
 
+  public static final Integer DEFAULT_READ_BATCH_SIZE = 1000;
   public static final Integer DEFAULT_WRITE_DELAY_MS = 1000;
   public static final Integer DEFAULT_CHECKPOINT_COMMIT_DELAY_MS = 30000;
   public static final Integer MAX_RECORD_SIZE_BYTES = 8192;

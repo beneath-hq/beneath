@@ -96,6 +96,34 @@ public class TableInstance {
   // READING RECORDS
 
   /**
+   * Queries the table's log, returning a cursor for replaying every record
+   * written to the instance or for subscribing to new changes records in the
+   * table.
+   */
+  public Cursor queryLog() {
+    return queryLog(false);
+  }
+
+  /**
+   * Queries the table's log, returning a cursor for replaying every record
+   * written to the instance or for subscribing to new changes records in the
+   * table.
+   * 
+   * Args: peek (bool): If true, returns a cursor for the most recent records and
+   * lets you page through the log in reverse order.
+   */
+  public Cursor queryLog(Boolean peek) {
+    if (this.instanceId == null) {
+      throw new RuntimeException("cannot query a dry instance");
+    }
+    QueryLogResponse response = this.client.connection.queryLog(this.instanceId, peek);
+    assert response.getReplayCursorsCount() <= 1 && response.getChangeCursorsCount() <= 1;
+    ByteString replay = response.getReplayCursorsCount() > 0 ? response.getReplayCursors(0) : null;
+    ByteString changes = response.getChangeCursorsCount() > 0 ? response.getChangeCursors(0) : null;
+    return new Cursor(this.client.connection, this.table.schema, replay, changes);
+  }
+
+  /**
    * Queries a sorted index of the records written to the table. The index
    * contains the newest record for each record key (see the table's schema for
    * the key). Returns a cursor for paging through the index.

@@ -11,6 +11,7 @@ import dev.beneath.CompileSchemaQuery.CompileSchema;
 import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.client.admin.AdminClient;
 import dev.beneath.client.utils.ProjectIdentifier;
+import dev.beneath.client.utils.SubscriptionIdentifier;
 import dev.beneath.client.utils.TableIdentifier;
 import dev.beneath.client.utils.Utils;
 import dev.beneath.type.CompileSchemaInput;
@@ -44,6 +45,7 @@ public class BeneathClient {
   public Boolean dry;
   private Integer startCount;
   private Map<TableIdentifier, Checkpointer> checkpointers;
+  private Map<SubscriptionIdentifier, Consumer> consumers;
   private DryWriter dryWriter;
   private Writer writer;
 
@@ -60,6 +62,7 @@ public class BeneathClient {
 
     this.startCount = 0;
     this.checkpointers = new HashMap<TableIdentifier, Checkpointer>();
+    this.consumers = new HashMap<SubscriptionIdentifier, Consumer>();
   }
 
   public Table findTable(String tablePath) {
@@ -233,4 +236,24 @@ public class BeneathClient {
     return checkpointer;
   }
 
+  // CONSUMERS
+
+  /**
+   * Creates a consumer for the given table. Consumers make it easy to replay the
+   * history of a table and/or subscribe to new changes.
+   */
+  public Consumer consumer(String tablePath, String subscriptionPath, Checkpointer checkpointer) {
+    TableIdentifier tableIdentifier = TableIdentifier.fromPath(tablePath);
+    // if (subscriptionPath == null) {}
+
+    SubscriptionIdentifier subIdentifier = SubscriptionIdentifier.fromPath(subscriptionPath);
+    if (!this.consumers.containsKey(subIdentifier)) {
+      // if (checkpointer == null) {}
+      Consumer consumer = new Consumer(this, tableIdentifier, subscriptionPath, checkpointer);
+      consumer.init();
+      this.consumers.put(subIdentifier, consumer);
+    }
+
+    return this.consumers.get(subIdentifier);
+  }
 }

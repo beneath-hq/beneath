@@ -139,6 +139,14 @@ public class Connection {
     return this.blockingStub.write(request);
   }
 
+  public QueryLogResponse queryLog(UUID instanceId, Boolean peek) {
+    this.ensureConnected();
+    ByteString instanceIdByteString = ByteString.copyFrom(Utils.uuidToBytes(instanceId));
+    QueryLogRequest request = QueryLogRequest.newBuilder().setInstanceId(instanceIdByteString).setPartitions(1)
+        .setPeek(peek).build();
+    return this.blockingStub.queryLog(request);
+  }
+
   public QueryIndexResponse queryIndex(UUID instanceId, String filter) {
     this.ensureConnected();
     ByteString instanceIdByteString = ByteString.copyFrom(Utils.uuidToBytes(instanceId));

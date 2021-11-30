@@ -3,6 +3,8 @@ package dev.beneath.client;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import com.google.protobuf.ByteString;
+
 import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
 import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
@@ -99,12 +101,11 @@ public class Table {
   private TableByOrganizationProjectAndName loadAdminData() {
     TableByOrganizationProjectAndName table;
     try {
-			table = this.client.adminClient.tables
-			    .findByOrganizationProjectAndName(this.identifier.organization, this.identifier.project, this.identifier.table)
-			    .get();
-		} catch (InterruptedException | ExecutionException e) {
-			throw new RuntimeException(e);
-		}
+      table = this.client.adminClient.tables.findByOrganizationProjectAndName(this.identifier.organization,
+          this.identifier.project, this.identifier.table).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
     return table;
   }
 
@@ -127,9 +128,9 @@ public class Table {
             .createInstance(CreateTableInstanceInput.builder().tableID(this.tableId.toString()).version(version)
                 .makePrimary(makePrimary).updateIfExists(updateIfExists).build())
             .get();
-        } catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       instance = TableInstance.make(this.client, this, adminData);
     } else {
       instance = TableInstance.makeDry(this.client, this, version, makePrimary);
@@ -138,5 +139,16 @@ public class Table {
       this.primaryInstance = instance;
     }
     return instance;
+  }
+
+  // CURSORS
+
+  /**
+   * Restores a cursor previously obtained by querying one of the table's
+   * instances. You must provide the cursor bytes, which can be found as
+   * properties of the Cursor object.
+   */
+  public Cursor restoreCursor(ByteString replayCursor, ByteString changesCursor) {
+    return new Cursor(this.client.connection, this.schema, replayCursor, changesCursor);
   }
 }
