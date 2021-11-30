@@ -6,6 +6,14 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 public class Utils {
+  public static String formatEntityName(String name) {
+    return name.replace("-", "_").toLowerCase();
+  }
+
+  public static String prettyEntityName(String name) {
+    return name.replace("_", "-").toLowerCase();
+  }
+
   public static String[] splitResource(String kind, String path) {
     String[] parts = StringUtils.strip(path, "/").split("/");
     if (parts.length != 3) {

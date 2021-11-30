@@ -16,6 +16,7 @@ import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.TableByOrganizationProjectAndNameQuery;
 import dev.beneath.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
 import dev.beneath.client.Connection;
+import dev.beneath.client.utils.Utils;
 import dev.beneath.type.CompileSchemaInput;
 import dev.beneath.type.CreateTableInput;
 import dev.beneath.type.CreateTableInstanceInput;
@@ -30,7 +31,8 @@ public class Tables extends BaseResource {
     final CompletableFuture<TableByOrganizationProjectAndName> future = new CompletableFuture<TableByOrganizationProjectAndName>();
 
     TableByOrganizationProjectAndNameQuery query = TableByOrganizationProjectAndNameQuery.builder()
-        .organizationName(organizationName).projectName(projectName).tableName(tableName).build();
+        .organizationName(Utils.formatEntityName(organizationName)).projectName(Utils.formatEntityName(projectName))
+        .tableName(Utils.formatEntityName(tableName)).build();
 
     ApolloCall.Callback<TableByOrganizationProjectAndNameQuery.Data> callback = new ApolloCall.Callback<TableByOrganizationProjectAndNameQuery.Data>() {
       @Override

@@ -12,6 +12,7 @@ import dev.beneath.CreateTableMutation.CreateTable;
 import dev.beneath.client.admin.AdminClient;
 import dev.beneath.client.utils.ProjectIdentifier;
 import dev.beneath.client.utils.TableIdentifier;
+import dev.beneath.client.utils.Utils;
 import dev.beneath.type.CompileSchemaInput;
 import dev.beneath.type.CreateTableInput;
 import dev.beneath.type.TableSchemaKind;
@@ -89,11 +90,14 @@ public class BeneathClient {
       // omitting indexes for now
       CreateTable data;
       try {
-        data = this.adminClient.tables.create(CreateTableInput.builder().organizationName(identifier.organization)
-            .projectName(identifier.project).tableName(identifier.table).schemaKind(schemaKind).schema(schema)
-            .description(description).meta(meta).useIndex(useIndex).useWarehouse(useWarehouse)
-            .logRetentionSeconds(logRetention).indexRetentionSeconds(indexRetention)
-            .warehouseRetentionSeconds(warehouseRetention).updateIfExists(updateIfExists).build()).get();
+        data = this.adminClient.tables
+            .create(CreateTableInput.builder().organizationName(Utils.formatEntityName(identifier.organization))
+                .projectName(Utils.formatEntityName(identifier.project))
+                .tableName(Utils.formatEntityName(identifier.table)).schemaKind(schemaKind).schema(schema)
+                .description(description).meta(meta).useIndex(useIndex).useWarehouse(useWarehouse)
+                .logRetentionSeconds(logRetention).indexRetentionSeconds(indexRetention)
+                .warehouseRetentionSeconds(warehouseRetention).updateIfExists(updateIfExists).build())
+            .get();
       } catch (InterruptedException | ExecutionException e) {
         throw new RuntimeException(e);
       }

@@ -6,9 +6,9 @@ public class TableIdentifier {
   public String table;
 
   public TableIdentifier(String organization, String project, String table) {
-    this.organization = organization;
-    this.project = project;
-    this.table = table;
+    this.organization = Utils.prettyEntityName(organization);
+    this.project = Utils.prettyEntityName(project);
+    this.table = Utils.prettyEntityName(table);
   }
 
   public static TableIdentifier fromPath(String path) {
