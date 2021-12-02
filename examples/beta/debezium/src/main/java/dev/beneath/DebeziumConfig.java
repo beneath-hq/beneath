@@ -3,6 +3,7 @@ package dev.beneath;
 public class DebeziumConfig {
   public static final String BENEATH_SECRET = "7HsGdXeNUygRtsZKcLGmutouBz83Fp6ksfmW3LyG2GUa";
   public static final String BENEATH_PROJECT_PATH = "ericpgreen2/debezium";
+  public static final String BENEATH_DEBEZIUM_ROOT_TABLE_PATH = BENEATH_PROJECT_PATH + "/postgres_changes";
   public static final String DATABASE_HOSTNAME = "host.docker.internal";
   public static final String DATABASE_PORT = "5432";
   public static final String DATABASE_USER = "ericgreen";
