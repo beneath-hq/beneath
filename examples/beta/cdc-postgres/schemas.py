@@ -1,64 +1,65 @@
-from datetime import datetime
+import json
 
-# Q: should I somehow leverage code in the Beneath Python client for inferring schema?
+
 def convert_pg_type_to_beneath_type(pg_type):
-    if pg_type == "integer":
+    if pg_type == "int32":
         # change this back to Int32 once I merge the bugfix into the stable branch
         # return "Int32"
         return "Int64"
-    if pg_type == "timestamp with time zone":
-        return "Timestamp"
+    if pg_type == "string":
+        return "String"
     if pg_type == "boolean":
         return "Boolean"
-    if pg_type == "text":
-        return "String"
+    if pg_type == "bytes":
+        return "Bytes"
     raise Exception(f"Unrecognized type '{pg_type}' – need to implement")
 
 
 def convert_pg_nullable_to_beneath_nullable(pg_nullable):
-    if pg_nullable == "NO":
+    if pg_nullable == False:
         return "!"
     return ""
 
 
-def convert_pg_pk_to_beneath_pk(pg_pk):
-    if pg_pk:
-        return " @key"
+def convert_pg_pk_to_beneath_pk(key_schema, pg_field):
+    for key in key_schema:
+        if key["field"] == pg_field:
+            return " @key"
     return ""
 
 
-def get_schema(cursor, table):
+def makeKeyForCheckpointedSchema(record):
+    database = record["source_db"]
+    namespace = record["source_schema"]
+    table = record["source_table"]
+    return f"{database}:{namespace}:{table}:schema"
+
+
+async def get_schema(client, project_path, record):
     # get Postgres schema
-    cursor.execute(
-        f"""
-      SELECT c.column_name, c.data_type, is_nullable,
-      CASE WHEN EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.constraint_column_usage k WHERE c.table_name = k.table_name and k.column_name = c.column_name)
-          THEN true ELSE false END as primary_key
-      FROM INFORMATION_SCHEMA.COLUMNS c 
-      WHERE c.table_name='{table}';
-      """
+    checkpoints = await client.checkpointer(
+        project_path=project_path,
+        metatable_name="checkpoints",
     )
-    pg_schema = cursor.fetchall()
+    await client.start()
+    dbz_schema_as_string = await checkpoints.get(makeKeyForCheckpointedSchema(record))
 
     # transpile Postgres schema langugage into Beneath schema langugage
+    dbz_schema = json.loads(dbz_schema_as_string)
+    key_schema = json.loads(dbz_schema["keySchema"])
+    value_schema = json.loads(dbz_schema["valueSchema"])
     beneath_columns = []
-    for pg_column in pg_schema:
-        beneath_column = f"{pg_column[0]}: {convert_pg_type_to_beneath_type(pg_column[1])}{convert_pg_nullable_to_beneath_nullable(pg_column[2])}{convert_pg_pk_to_beneath_pk(pg_column[3])}"
+    for pg_column in value_schema:
+        beneath_column = f"{pg_column['field']}: {convert_pg_type_to_beneath_type(pg_column['type'])}{convert_pg_nullable_to_beneath_nullable(pg_column['optional'])}{convert_pg_pk_to_beneath_pk(key_schema, pg_column['field'])}"
         beneath_columns.append(beneath_column)
 
     # add metadata columns
-    # TODO: any more?
     beneath_columns.append("_updated_at: Timestamp!")
     beneath_columns.append("_deleted_at: Timestamp")
 
     # build Beneath schema
     beneath_schema = "type {} @schema {{\n\t{}\n}}".format(
-        table, "\n\t".join(beneath_columns)
+        record["source_table"], "\n\t".join(beneath_columns)
     )
+
     return beneath_schema
-
-
-def check_for_and_encode_ts(type, val):
-    if type == "timestamp with time zone":
-        return datetime.strptime(f"{val}00", "%Y-%m-%d %H:%M:%S.%f%z")
-    return val

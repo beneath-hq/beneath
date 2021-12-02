@@ -5,6 +5,3 @@ postgres:
   database:
   tables:
   replication_slot:
-beneath:
-  username:
-  project:
