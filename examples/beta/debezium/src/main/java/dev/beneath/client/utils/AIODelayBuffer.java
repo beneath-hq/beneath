@@ -98,7 +98,8 @@ public abstract class AIODelayBuffer<T> {
       this.forceFlush();
       loops += 1;
       if (loops > 5) {
-        LOGGER.warn("Unfortunate scheduling blocked write to buffer %d times (try to limit concurrent writes)", loops);
+        LOGGER.warn(String
+            .format("Unfortunate scheduling blocked write to buffer %d times (try to limit concurrent writes)", loops));
       }
     }
 
