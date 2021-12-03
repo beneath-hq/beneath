@@ -69,3 +69,4 @@ python main.py teardown username/project/service
 - Embedded Debezium docs: https://debezium.io/documentation/reference/1.6/development/engine.html
 - Airbyte's approach: https://opensource.com/article/21/8/database-replication-open-source
 - Airbyte's demo: https://www.youtube.com/watch?v=NMODvLgZvuE&ab_channel=Airbyte
+- Fivetran's pgoutput configuration docs: https://fivetran.com/docs/databases/postgresql/setup-guide#logicalreplicationwiththepluginprivatepreview
