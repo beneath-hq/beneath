@@ -6,7 +6,8 @@ authors = ["greenep12 <ericpgreen2@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-beneath = "^1.4.2"
+# beneath = "^1.4.2" # use this in production
+beneath = { path = "../../../clients/python", develop = true } # use this in development
 PyYAML = "^5.4.1"
 asyncio = "^3.4.3"
 DateTime = "^4.3"

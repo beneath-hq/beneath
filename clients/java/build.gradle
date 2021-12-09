@@ -1,21 +1,29 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id "com.google.protobuf" version "0.8.17"
     id "com.apollographql.apollo" version "2.5.10"
 }
+
+group = 'dev.beneath'
+version = '1.0.0-SNAPSHOT' // TODO: drop "SNAPSHOT" when stable
+description = 'Java client for Beneath (https://beneath.dev)'
+java.sourceCompatibility = JavaVersion.VERSION_16
 
 repositories {
     mavenCentral()
 }
 
+def jacksonVersion = '2.13.0'
 def grpcVersion = '1.40.1'
 def protocVersion = '3.17.2'
-def debeziumVersion = '1.7.0.CR2'
 
 dependencies {
     implementation "org.slf4j:slf4j-log4j12:1.7.32"
 
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.13.0"
+    implementation "org.apache.commons:commons-lang3:3.12.0"
+
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "org.msgpack:jackson-dataformat-msgpack:0.9.0"
     implementation "org.apache.avro:avro:1.11.0"
 
@@ -25,18 +33,7 @@ dependencies {
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     
     implementation "com.apollographql.apollo:apollo-runtime:2.5.10"
-
-    implementation "io.debezium:debezium-api:${debeziumVersion}"
-    implementation "io.debezium:debezium-embedded:${debeziumVersion}"
-    implementation "io.debezium:debezium-connector-postgres:${debeziumVersion}"
-    
-    testImplementation "junit:junit:4.11"
 }
-
-group = 'dev.beneath'
-version = '1.0-SNAPSHOT'
-description = 'debezium'
-java.sourceCompatibility = JavaVersion.VERSION_16
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }

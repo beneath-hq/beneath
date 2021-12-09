@@ -30,7 +30,7 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
 
   // TODO: preferably, make the BeneathClient a parameter in the constructor
   public BeneathOffsetBackingStore() {
-    this.client = new BeneathClient(DebeziumConfig.BENEATH_SECRET, false, Config.DEFAULT_WRITE_DELAY_MS);
+    this.client = new BeneathClient(BeneathConfig.BENEATH_SECRET, false, Config.DEFAULT_WRITE_DELAY_MS);
   }
 
   /**
@@ -39,7 +39,7 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   @Override
   public void start() {
     LOGGER.info("Starting BeneathOffsetBackingStore");
-    this.checkpointer = client.checkpointer(DebeziumConfig.BENEATH_PROJECT_PATH);
+    this.checkpointer = client.checkpointer(BeneathConfig.BENEATH_PROJECT_PATH);
     client.start();
     LOGGER.info("Finished reading offsets topic and starting BeneathOffsetBackingStore");
   }

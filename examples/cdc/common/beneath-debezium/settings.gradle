@@ -1,0 +1,3 @@
+rootProject.name = 'beneath-debezium'
+
+includeBuild '../../../../clients/java'
