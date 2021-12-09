@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.postgres;
 
 import dev.beneath.client.BeneathClient;
 import dev.beneath.client.Config;

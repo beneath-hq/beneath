@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.common;
 
 public class BeneathConfig {
   public static final String DATABASE_DBNAME = "testdb";

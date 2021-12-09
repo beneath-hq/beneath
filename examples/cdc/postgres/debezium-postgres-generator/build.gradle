@@ -12,7 +12,7 @@ repositories {
 }
 
 application {
-    mainClass = 'dev.beneath.App'
+    mainClass = 'dev.beneath.cdc.postgres.App'
 }
 
 def debeziumVersion = '1.7.0.CR2'

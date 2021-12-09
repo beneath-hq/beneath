@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.common;
 
 import java.util.function.Consumer;
 

@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.postgres;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,7 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.beneath.cdc.common.DbzRecordSchema;
 import dev.beneath.client.BeneathClient;
 import dev.beneath.client.Checkpointer;
 import dev.beneath.client.Table;
@@ -115,7 +116,7 @@ public class BeneathDebeziumEngine {
         /* engine properties */
         props.setProperty("name", "debezium-postgres-connector");
         props.setProperty("connector.class", "io.debezium.connector.postgresql.PostgresConnector");
-        props.setProperty("offset.storage", "dev.beneath.BeneathOffsetBackingStore");
+        props.setProperty("offset.storage", "dev.beneath.cdc.common.BeneathOffsetBackingStore");
         props.setProperty("offset.flush.interval.ms", "1000");
 
         /* connector properties */

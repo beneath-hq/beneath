@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.postgres;
 
 public class DebeziumConfig {
   public static final String DATABASE_HOSTNAME = "host.docker.internal";

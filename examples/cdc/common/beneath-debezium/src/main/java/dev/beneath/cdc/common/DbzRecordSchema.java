@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.common;
 
 public class DbzRecordSchema {
   private String keySchema;

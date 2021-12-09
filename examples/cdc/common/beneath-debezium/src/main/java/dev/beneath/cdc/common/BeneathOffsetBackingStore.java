@@ -1,4 +1,4 @@
-package dev.beneath;
+package dev.beneath.cdc.common;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
