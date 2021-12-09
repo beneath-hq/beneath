@@ -4,7 +4,7 @@ public class Config {
   public static final Boolean DEV = true;
 
   public static final String JAVA_CLIENT_ID = "beneath-java";
-  public static final String JAVA_CLIENT_VERSION = "0.0.1";
+  public static final String JAVA_CLIENT_VERSION = "0.1.0";
 
   public static final Integer DEFAULT_READ_BATCH_SIZE = 1000;
   public static final Integer DEFAULT_WRITE_DELAY_MS = 1000;
