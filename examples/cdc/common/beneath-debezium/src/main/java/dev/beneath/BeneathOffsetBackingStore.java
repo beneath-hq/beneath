@@ -9,9 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.kafka.connect.runtime.WorkerConfig;
 import org.apache.kafka.connect.storage.OffsetBackingStore;
@@ -22,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import dev.beneath.client.BeneathClient;
 import dev.beneath.client.Checkpointer;
 import dev.beneath.client.Config;
+import dev.beneath.client.utils.JsonUtils;
 
 public class BeneathOffsetBackingStore implements OffsetBackingStore {
   private static final Logger LOGGER = LoggerFactory.getLogger(BeneathOffsetBackingStore.class);
@@ -121,12 +120,7 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   }
 
   private String convertJsonKeyToCustomKey(String keyString) {
-    JsonNode jsonNode;
-    try {
-      jsonNode = new ObjectMapper().readTree(keyString);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    JsonNode jsonNode = JsonUtils.deserialize(keyString, JsonNode.class);
     String name = jsonNode.get("payload").get(0).asText();
     String databaseServerName = jsonNode.get("payload").get(1).get("server").asText();
     return String.format("%s:%s:offset", name, databaseServerName);
