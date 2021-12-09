@@ -24,7 +24,6 @@ dependencies {
     implementation "org.slf4j:slf4j-log4j12:1.7.32"
 
     implementation "com.fasterxml.jackson.core:jackson-databind:2.13.0"
-    implementation "org.msgpack:jackson-dataformat-msgpack:0.9.0"
     implementation "org.apache.avro:avro:1.11.0"
 
     implementation "io.debezium:debezium-api:${debeziumVersion}"
