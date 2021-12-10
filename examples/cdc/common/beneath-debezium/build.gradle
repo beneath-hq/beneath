@@ -5,7 +5,7 @@ plugins {
 group = 'dev.beneath'
 version = '1.0.0-SNAPSHOT' // TODO: drop "SNAPSHOT" when stable
 description = 'Beneath as a storage backend for the Debezium Engine'
-java.sourceCompatibility = JavaVersion.VERSION_16
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()

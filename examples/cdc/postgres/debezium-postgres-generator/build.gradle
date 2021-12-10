@@ -5,7 +5,7 @@ plugins {
 group = 'dev.beneath'
 version = '1.0.0-SNAPSHOT' // TODO: drop snapshot when stable
 description = 'Use the Debezium Engine to stream changes from Postgres to Beneath'
-java.sourceCompatibility = JavaVersion.VERSION_16
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
