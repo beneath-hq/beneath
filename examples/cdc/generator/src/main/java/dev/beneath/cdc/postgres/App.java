@@ -1,11 +1,10 @@
 package dev.beneath.cdc.postgres;
 
 import dev.beneath.client.BeneathClient;
-import dev.beneath.client.Config;
 
 public class App {
     public static void main(String[] args) {
-        BeneathClient client = new BeneathClient(DebeziumConfig.BENEATH_SECRET, false, Config.DEFAULT_WRITE_DELAY_MS);
+        BeneathClient client = new BeneathClient(CdcConfig.BENEATH_SECRET, false, CdcConfig.DEFAULT_WRITE_DELAY_MS);
         BeneathDebeziumEngine engine = new BeneathDebeziumEngine(client);
         engine.start();
     }

@@ -1,0 +1,3 @@
+rootProject.name = 'cdc-generator'
+
+includeBuild '../../../clients/java'

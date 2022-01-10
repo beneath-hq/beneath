@@ -62,10 +62,10 @@ public class BeneathDebeziumEngine {
     private TableInstance instance;
     private boolean create;
 
-    BeneathDebeziumEngine(BeneathClient client) {
+    public BeneathDebeziumEngine(BeneathClient client) {
         this.client = client;
-        this.checkpointer = client.checkpointer(DebeziumConfig.BENEATH_PROJECT_PATH);
-        this.rootTableIdentifier = TableIdentifier.fromPath(DebeziumConfig.BENEATH_DEBEZIUM_ROOT_TABLE_PATH);
+        this.checkpointer = client.checkpointer(CdcConfig.BENEATH_PROJECT_PATH);
+        this.rootTableIdentifier = TableIdentifier.fromPath(CdcConfig.BENEATH_DEBEZIUM_ROOT_TABLE_PATH);
         this.tableDescription = "Records streamed from Postgres through Debezium";
         this.create = true;
     };
@@ -75,6 +75,7 @@ public class BeneathDebeziumEngine {
         OffsetCommitPolicy offsetPolicy = new OffsetCommitPolicy.AlwaysCommitOffsetPolicy();
 
         this.client.start();
+        // TODO: stageBeneathProject();
         stageBeneathTable();
 
         // Create the engine with this configuration ...
@@ -120,14 +121,14 @@ public class BeneathDebeziumEngine {
         props.setProperty("offset.flush.interval.ms", "1000");
 
         /* connector properties */
-        props.setProperty("database.hostname", DebeziumConfig.DATABASE_HOSTNAME);
-        props.setProperty("database.port", DebeziumConfig.DATABASE_PORT);
-        props.setProperty("database.user", DebeziumConfig.DATABASE_USER);
-        props.setProperty("database.password", DebeziumConfig.DATABASE_PASSWORD);
-        props.setProperty("database.dbname", DebeziumConfig.DATABASE_DBNAME);
-        props.setProperty("table.include.list", DebeziumConfig.TABLE_INCLUDE_LIST);
+        props.setProperty("database.hostname", CdcConfig.DATABASE_HOSTNAME);
+        props.setProperty("database.port", CdcConfig.DATABASE_PORT);
+        props.setProperty("database.user", CdcConfig.DATABASE_USER);
+        props.setProperty("database.password", CdcConfig.DATABASE_PASSWORD);
+        props.setProperty("database.dbname", CdcConfig.DATABASE_DBNAME);
+        props.setProperty("table.include.list", CdcConfig.TABLE_INCLUDE_LIST);
         props.setProperty("plugin.name", "pgoutput");
-        props.setProperty("database.server.name", DebeziumConfig.DATABASE_SERVER_NAME);
+        props.setProperty("database.server.name", CdcConfig.DATABASE_SERVER_NAME);
 
         // future optimization: set this to false to significantly decrease inbound
         // bandwidth costs; likely requires optimistically writing to Beneath and, on

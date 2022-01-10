@@ -15,7 +15,7 @@ async def main():
 
     # get project path
     me = await client.admin.organizations.find_me()
-    PROJECT_PATH = f"{me['name']}/debezium-postgres-{config['postgres']['database']}"
+    PROJECT_PATH = f"{me['name']}/cdc-postgres-{config['postgres']['database']}"
 
     consumer = await client.consumer(
         f"{PROJECT_PATH}/raw-changes",

@@ -1,5 +1,0 @@
-rootProject.name = 'debezium-postgres-generator'
-
-includeBuild '../../../../clients/java'
-
-includeBuild '../../common/beneath-debezium'
