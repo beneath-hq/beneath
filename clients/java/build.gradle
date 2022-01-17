@@ -27,7 +27,6 @@ def protocVersion = '3.17.2'
 
 dependencies {
     implementation "org.slf4j:slf4j-log4j12:1.7.32"
-
     implementation "org.apache.commons:commons-lang3:3.12.0"
 
     implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
@@ -83,6 +82,30 @@ publishing {
     publications {
         main(MavenPublication) {
             from components.java
+            pom {
+                name = "dev.beneath:beneath"
+                description = "Java client for Beneath (https://beneath.dev)"
+                url = "https://beneath.dev"
+                licenses {
+                    license {
+                        name = "MIT"
+                        url = "https://opensource.org/licenses/MIT"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "Eric Green"
+                        email = "eric@beneath.dev"
+                        organization = "Beneath Systems"
+                        organizationUrl = "https://beneath.dev"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/beneath-hq/beneath.git"
+                    developerConnection = "scm:git:git@github.com:beneath-hq/beneath.git"
+                    url = "https://github.com/beneath-hq/beneath"
+                }
+            }
         }
     }
     repositories {
