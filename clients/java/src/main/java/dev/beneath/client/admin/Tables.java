@@ -7,19 +7,19 @@ import com.apollographql.apollo.api.Error;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 
-import dev.beneath.CompileSchemaQuery;
-import dev.beneath.CompileSchemaQuery.CompileSchema;
-import dev.beneath.CreateTableInstanceMutation;
-import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
-import dev.beneath.CreateTableMutation;
-import dev.beneath.CreateTableMutation.CreateTable;
-import dev.beneath.TableByOrganizationProjectAndNameQuery;
-import dev.beneath.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
+import dev.beneath.client.CompileSchemaQuery;
+import dev.beneath.client.CompileSchemaQuery.CompileSchema;
+import dev.beneath.client.CreateTableInstanceMutation;
+import dev.beneath.client.CreateTableInstanceMutation.CreateTableInstance;
+import dev.beneath.client.CreateTableMutation;
+import dev.beneath.client.CreateTableMutation.CreateTable;
+import dev.beneath.client.TableByOrganizationProjectAndNameQuery;
+import dev.beneath.client.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
 import dev.beneath.client.Connection;
 import dev.beneath.client.utils.Utils;
-import dev.beneath.type.CompileSchemaInput;
-import dev.beneath.type.CreateTableInput;
-import dev.beneath.type.CreateTableInstanceInput;
+import dev.beneath.client.type.CompileSchemaInput;
+import dev.beneath.client.type.CreateTableInput;
+import dev.beneath.client.type.CreateTableInstanceInput;
 
 public class Tables extends BaseResource {
   Tables(Connection connection, Boolean dry) {

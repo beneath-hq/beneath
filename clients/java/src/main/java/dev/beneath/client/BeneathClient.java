@@ -7,16 +7,16 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.avro.generic.GenericRecord;
 
-import dev.beneath.CompileSchemaQuery.CompileSchema;
-import dev.beneath.CreateTableMutation.CreateTable;
+import dev.beneath.client.CompileSchemaQuery.CompileSchema;
+import dev.beneath.client.CreateTableMutation.CreateTable;
 import dev.beneath.client.admin.AdminClient;
 import dev.beneath.client.utils.ProjectIdentifier;
 import dev.beneath.client.utils.SubscriptionIdentifier;
 import dev.beneath.client.utils.TableIdentifier;
 import dev.beneath.client.utils.Utils;
-import dev.beneath.type.CompileSchemaInput;
-import dev.beneath.type.CreateTableInput;
-import dev.beneath.type.TableSchemaKind;
+import dev.beneath.client.type.CompileSchemaInput;
+import dev.beneath.client.type.CreateTableInput;
+import dev.beneath.client.type.TableSchemaKind;
 
 /**
  * The main class for interacting with Beneath. Data-related features (like

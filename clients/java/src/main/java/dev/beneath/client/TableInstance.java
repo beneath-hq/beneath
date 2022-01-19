@@ -7,9 +7,7 @@ import com.google.protobuf.ByteString;
 
 import org.apache.avro.generic.GenericRecord;
 
-import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
-import dev.beneath.CreateTableMutation;
-import dev.beneath.TableByOrganizationProjectAndNameQuery;
+import dev.beneath.client.CreateTableInstanceMutation.CreateTableInstance;
 
 /**
  * Represents an instance of a Table, i.e. a specific version that you can

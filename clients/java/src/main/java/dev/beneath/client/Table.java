@@ -5,11 +5,11 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.protobuf.ByteString;
 
-import dev.beneath.CreateTableInstanceMutation.CreateTableInstance;
-import dev.beneath.CreateTableMutation.CreateTable;
-import dev.beneath.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
+import dev.beneath.client.CreateTableInstanceMutation.CreateTableInstance;
+import dev.beneath.client.CreateTableMutation.CreateTable;
+import dev.beneath.client.TableByOrganizationProjectAndNameQuery.TableByOrganizationProjectAndName;
 import dev.beneath.client.utils.TableIdentifier;
-import dev.beneath.type.CreateTableInstanceInput;
+import dev.beneath.client.type.CreateTableInstanceInput;
 
 /**
  * Represents a data-plane connection to a table. To find or create a table, see

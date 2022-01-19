@@ -22,7 +22,7 @@ import dev.beneath.client.Table;
 import dev.beneath.client.TableInstance;
 import dev.beneath.client.utils.JsonUtils;
 import dev.beneath.client.utils.TableIdentifier;
-import dev.beneath.type.TableSchemaKind;
+import dev.beneath.client.type.TableSchemaKind;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import dev.beneath.client.utils.AIODelayBuffer;
 import dev.beneath.client.utils.TableIdentifier;
-import dev.beneath.type.TableSchemaKind;
+import dev.beneath.client.type.TableSchemaKind;
 
 /**
  * Checkpointers store (small) key-value records in a meta table (in the
