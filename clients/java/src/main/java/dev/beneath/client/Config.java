@@ -6,7 +6,9 @@ public class Config {
   public static final Boolean DEV = Arrays.asList("dev", "development").contains(System.getenv("BENEATH_ENV"));
 
   public static final String JAVA_CLIENT_ID = "beneath-java";
-  public static final String JAVA_CLIENT_VERSION = "0.1.0";
+  // TODO: Pull the version from the build.gradle file. See:
+  // https://stackoverflow.com/questions/33020069/how-to-get-version-attribute-from-a-gradle-build-to-be-included-in-runtime-swing
+  public static final String JAVA_CLIENT_VERSION = "1.0.1";
 
   public static final Integer DEFAULT_READ_BATCH_SIZE = 1000;
   public static final Integer DEFAULT_WRITE_DELAY_MS = 1000;
