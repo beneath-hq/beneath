@@ -11,14 +11,10 @@ repositories {
     mavenCentral()
 }
 
-application {
-    mainClass = 'dev.beneath.cdc.App'
-}
-
 def debeziumVersion = '1.7.0.CR2'
 
 dependencies {
-    implementation "dev.beneath:beneath:0.1.0-SNAPSHOT"
+    implementation "dev.beneath:beneath:1.0.0"
 
     implementation "org.slf4j:slf4j-log4j12:1.7.32"
 
@@ -28,4 +24,20 @@ dependencies {
     implementation "io.debezium:debezium-api:${debeziumVersion}"
     implementation "io.debezium:debezium-embedded:${debeziumVersion}"
     implementation "io.debezium:debezium-connector-postgres:${debeziumVersion}"
+}
+
+def mainKlass = "dev.beneath.cdc.postgres.App"
+
+application {
+    mainClass = mainKlass
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+    manifest {
+        attributes "Main-Class": mainKlass
+    }
 }
