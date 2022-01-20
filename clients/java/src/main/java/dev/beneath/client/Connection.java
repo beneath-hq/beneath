@@ -68,7 +68,7 @@ public class Connection {
 
   public void ensureConnected() {
     if (!connected) {
-      createGrpcConnection("host.docker.internal", 50051);
+      createGrpcConnection(Config.BENEATH_GATEWAY_HOST_GRPC);
       PingResponse pong = ping();
       checkPongStatus(pong);
       this.pong = pong;
@@ -79,13 +79,13 @@ public class Connection {
     }
   }
 
-  private void createGrpcConnection(String host, Integer port) {
-    Boolean insecure = true;
+  private void createGrpcConnection(String target) {
+    Boolean insecure = Config.DEV;
     if (insecure) {
-      this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext()
+      this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext()
           .intercept(new DataPlaneAuthInterceptor()).build();
     } else {
-      this.channel = ManagedChannelBuilder.forAddress(host, port).intercept(new DataPlaneAuthInterceptor()).build();
+      this.channel = ManagedChannelBuilder.forTarget(target).intercept(new DataPlaneAuthInterceptor()).build();
     }
     this.blockingStub = GatewayGrpc.newBlockingStub(this.channel).withCompression("gzip");
     this.asyncStub = GatewayGrpc.newStub(this.channel).withCompression("gzip");
