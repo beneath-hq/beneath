@@ -1,0 +1,20 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: r-wallstreetbets-stock-metrics-24h
+spec:
+  schedule: "5 0 * * *" # GCP cronjobs use UTC
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: r-wallstreetbets-stock-metrics-24h
+            image: gcr.io/beneath/examples-wallstreetbets-stock-metrics-24h:latest
+            env:
+              - name: BENEATH_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: r-wallstreetbets-stock-metrics-24h
+                    key: beneath-secret
+          restartPolicy: OnFailure

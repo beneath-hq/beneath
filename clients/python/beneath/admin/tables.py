@@ -203,8 +203,8 @@ class Tables(_ResourceBase):
                 "version": version,
             },
             query="""
-                query TableInstanceForTable($tableID: UUID!) {
-                    tableInstanceForTable(tableID: $tableID) {
+                query TableInstanceByTableAndVersion($tableID: UUID!, $version: Int!) {
+                    tableInstanceByTableAndVersion(tableID: $tableID, version: $version) {
                         tableInstanceID
                         tableID
                         createdOn
@@ -215,7 +215,7 @@ class Tables(_ResourceBase):
                 }
             """,
         )
-        return result["tableInstancesForTable"]
+        return result["tableInstanceByTableAndVersion"]
 
     async def find_instances(self, table_id):
         result = await self.conn.query_control(

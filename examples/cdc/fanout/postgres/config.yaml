@@ -1,0 +1,7 @@
+postgres:
+  host:
+  username:
+  password:
+  database:
+  tables:
+  replication_slot:

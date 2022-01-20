@@ -1,0 +1,10 @@
+mutation CreateTableInstance($input: CreateTableInstanceInput!) {
+    createTableInstance(input: $input) {
+        tableInstanceID
+        tableID
+        createdOn
+        version
+        madePrimaryOn
+        madeFinalOn
+    }
+}

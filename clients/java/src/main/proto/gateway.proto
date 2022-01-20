@@ -1,0 +1,122 @@
+syntax = "proto3";
+package gateway.v1;
+option java_multiple_files = true;
+option java_package = "dev.beneath.client";
+option java_outer_classname = "GatewayProto";
+
+message Record {
+  bytes avro_data = 1;
+  int64 timestamp = 2;
+}
+
+message InstanceRecords {
+  bytes instance_id = 1;
+  repeated Record records = 2;
+}
+
+message WarehouseJob {
+  enum Status {
+    PENDING = 0;
+    RUNNING = 1;
+    DONE = 2;
+  }
+  bytes job_id = 1;
+  Status status = 2;
+  string error = 3;
+  string result_avro_schema = 4;
+  repeated bytes replay_cursors = 5;
+  repeated bytes referenced_instance_ids = 6;
+  int64 bytes_scanned = 7;
+  int64 result_size_bytes = 8;
+  int64 result_size_records = 9;
+}
+
+service Gateway {
+  rpc Ping(PingRequest) returns (PingResponse) {}
+  rpc Write(WriteRequest) returns (WriteResponse) {}
+  rpc QueryLog(QueryLogRequest) returns (QueryLogResponse) {}
+  rpc QueryIndex(QueryIndexRequest) returns (QueryIndexResponse) {}
+  rpc QueryWarehouse(QueryWarehouseRequest) returns (QueryWarehouseResponse) {}
+  rpc PollWarehouseJob(PollWarehouseJobRequest) returns (PollWarehouseJobResponse) {}
+  rpc Read(ReadRequest) returns (ReadResponse) {}
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
+}
+
+message PingRequest {
+  string client_id = 1;
+  string client_version = 2;
+}
+
+message PingResponse {
+  bool authenticated = 1;
+  string version_status = 2;
+  string recommended_version = 3;
+}
+
+message WriteRequest {
+  repeated InstanceRecords instance_records = 1;
+}
+
+message WriteResponse {
+  bytes write_id = 1;
+}
+
+message QueryLogRequest {
+  bytes instance_id = 1;
+  int32 partitions = 2;
+  bool  peek = 3;
+}
+
+message QueryLogResponse {
+  repeated bytes replay_cursors = 1;
+  repeated bytes change_cursors = 2;
+}
+
+message QueryIndexRequest {
+  bytes  instance_id = 1;
+  int32  partitions  = 2;
+  string filter      = 3;
+}
+
+message QueryIndexResponse {
+  repeated bytes replay_cursors = 1;
+  repeated bytes change_cursors = 2;
+}
+
+message QueryWarehouseRequest {
+  string query = 1;
+  int32  partitions = 2;
+  bool   dry_run = 3;
+  int32  timeout_ms = 4;
+  int64  max_bytes_scanned = 5;
+}
+
+message QueryWarehouseResponse {
+  WarehouseJob job = 1;
+}
+
+message PollWarehouseJobRequest {
+  bytes job_id = 1;
+}
+
+message PollWarehouseJobResponse {
+  WarehouseJob job = 1;
+}
+
+message ReadRequest {
+  bytes cursor = 2;
+  int32 limit  = 3;
+}
+
+message ReadResponse {
+  repeated Record records = 1;
+  bytes next_cursor = 2;
+}
+
+message SubscribeRequest {
+  bytes cursor = 2;
+}
+
+message SubscribeResponse {
+  bytes write_id = 1;
+}

@@ -1,34 +1,38 @@
 # `deployments/kube/`
+
 ​
 This file should keep a complete log of configuration of the Kubernetes cluster. Our ambition is that after configuring the cluster, we should not have to directly modify Kubernetes from the command-line – everything should happen through helm deployments triggered from Gitlab.
 ​​
+
 ### ingress
+
 ​
 Nginx ingress handles load balancing and routing.
 ​
 Create an external IP in Google Cloud:
 ​
-    gcloud compute addresses create beneath-ip-1 --project=beneath --region=us-east1
+gcloud compute addresses create beneath-ip-1 --project=beneath --region=us-east1
 
 [Install Helm 3](https://helm.sh/docs/intro/install/) if you don't already have it installed. Make sure you are not using Helm 2!
 ​
 Add ingress-nginx charts to Helm:
 ​
-    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    helm repo update
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
 ​
 Create namespace for ingress:
 ​
-    kubectl create namespace nginx
+kubectl create namespace nginx
 
 Create nginx ingress in cluster. (Change `loadBalancerIP` to the external IP you just provisioned.)
 ​
-    helm upgrade --wait --install --namespace nginx ingress-nginx ingress-nginx/ingress-nginx --set controller.service.loadBalancerIP="35.231.110.138" --set controller.service.externalTrafficPolicy=Local
+helm upgrade --wait --install --namespace nginx ingress-nginx ingress-nginx/ingress-nginx --set controller.service.loadBalancerIP="35.231.110.138" --set controller.service.externalTrafficPolicy=Local
 
-NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want to watch the world burn. We use the *former*, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
+NOTE: There are two different NGINX ingress implementations, [ingress-nginx](https://github.com/kubernetes/ingress-nginx) and [nginx-ingress](https://github.com/nginxinc/kubernetes-ingress). Some men just want to watch the world burn. We use the _former_, make sure always to refer to the [correct documentation](https://kubernetes.github.io/ingress-nginx/)!
 ​
+
 ### cert-manager
-​
+
 Cert-manager automatically handles TLS (HTTPS) for all public-facing ingresses. We run it in the `cert-manager` namespace, but it can issue certificates for ingresses in all namespaces.
 
 Refer to https://cert-manager.io/docs/installation/kubernetes/ for up-to-date instructions.
@@ -37,19 +41,20 @@ Add helm repo:
 
     helm repo add jetstack https://charts.jetstack.io
     helm repo update
+
 ​
 Create namespace:
 
     kubectl create namespace cert-manager
-    
+
 Deploy cert-manager:
 
-    kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.crds.yaml
-    helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.0
+    kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5.4/cert-manager.crds.yaml
+    helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.5.4
 
 Create cluster-wide issuer:
 
-    kubectl apply -n cert-manager -f cert-manager/cluster-issuer-prod.yaml 
+    kubectl apply -n cert-manager -f cert-manager/cluster-issuer-prod.yaml
 
 ### Optional: test progress
 
@@ -62,10 +67,11 @@ Remember to delete it:
     kubectl delete -f test/test-resources.yaml
 
 ### Create production namespace
+
 ​
 Create the production namespace like this:
 ​
-    kubectl create namespace production
+kubectl create namespace production
 
 ### Backend config file
 
@@ -102,7 +108,7 @@ The Helm charts relies on the existance of a service account in `key.json` in th
 
 For admin purposes, we sometimes need to connect to the postgres database. We do so as the `postgres` user with:
 
-  gcloud sql connect beneath-postgres-1 -u postgres
+gcloud sql connect beneath-postgres-1 -u postgres
 
 All resources (tables, views, sequences, etc.) should be created and owned by the `control` user. For example, running `\dt TABLE_NAME` must always reveal `control` as the `owner`.
 

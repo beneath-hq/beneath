@@ -1,0 +1,56 @@
+query TableByOrganizationProjectAndName($organizationName: String!, $projectName: String!, $tableName: String!) {
+    tableByOrganizationProjectAndName(
+      organizationName: $organizationName
+      projectName: $projectName
+      tableName: $tableName
+    ) {
+      tableID
+      name
+      description
+      createdOn
+      updatedOn
+      project {
+        projectID
+        name
+        public
+        organization {
+          organizationID
+          name
+        }
+        permissions {
+          view
+          create
+          admin
+        }
+      }
+      schemaKind
+      schema
+      avroSchema
+      tableIndexes {
+        indexID
+        fields
+        primary
+        normalize
+      }
+      meta
+      allowManualWrites
+      useLog
+      useIndex
+      useWarehouse
+      logRetentionSeconds
+      indexRetentionSeconds
+      warehouseRetentionSeconds
+      primaryTableInstanceID
+      primaryTableInstance {
+        tableInstanceID
+        createdOn
+        version
+        madePrimaryOn
+        madeFinalOn
+      }
+      instancesCreatedCount
+      instancesDeletedCount
+      instancesMadeFinalCount
+      instancesMadePrimaryCount
+    }
+  }

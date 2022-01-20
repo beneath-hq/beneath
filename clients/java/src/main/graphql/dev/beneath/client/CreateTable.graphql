@@ -1,0 +1,41 @@
+mutation CreateTable($input: CreateTableInput!) {
+  createTable(input: $input) {
+      tableID
+      name
+      description
+      createdOn
+      updatedOn
+      project {
+          projectID
+          name
+      }
+      schemaKind
+      schema
+      avroSchema
+      tableIndexes {
+          fields
+          primary
+          normalize
+      }
+      meta
+      allowManualWrites
+      useLog
+      useIndex
+      useWarehouse
+      logRetentionSeconds
+      indexRetentionSeconds
+      warehouseRetentionSeconds
+      primaryTableInstanceID
+      primaryTableInstance {
+          tableInstanceID
+          createdOn
+          version
+          madePrimaryOn
+          madeFinalOn
+      }
+      instancesCreatedCount
+      instancesDeletedCount
+      instancesMadeFinalCount
+      instancesMadePrimaryCount
+  }
+}

@@ -90,7 +90,7 @@ python-versions = "*"
 
 [[package]]
 name = "beneath"
-version = "1.4.0"
+version = "1.4.1"
 description = "Python client and CLI for Beneath (https://beneath.dev/)"
 category = "main"
 optional = false
@@ -1017,8 +1017,8 @@ backcall = [
     {file = "backcall-0.2.0.tar.gz", hash = "sha256:5cbdbf27be5e7cfadb448baf0aa95508f91f2bbc6c6437cd9cd06e2a4c215e1e"},
 ]
 beneath = [
-    {file = "beneath-1.4.0-py3-none-any.whl", hash = "sha256:1863e3369aa51047f8e68e33426651d3ae255b3aea445b7e04ad95b6e316b5a3"},
-    {file = "beneath-1.4.0.tar.gz", hash = "sha256:e0fa6b5ffb481565f1e0c99e3c8e97dcaaa2f3c891a08e008fc901aed7c363fa"},
+    {file = "beneath-1.4.1-py3-none-any.whl", hash = "sha256:b477dc507b51ba7d1ffff67d05519ca916a6d0a85497cebfe5bb105b8215777d"},
+    {file = "beneath-1.4.1.tar.gz", hash = "sha256:ed8a246286dae55470a8d387da4966fc1c7525fe9315a9da359ce56ff775d20d"},
 ]
 bleach = [
     {file = "bleach-3.3.0-py2.py3-none-any.whl", hash = "sha256:6123ddc1052673e52bab52cdc955bcb57a015264a1c57d37bea2f6b817af0125"},

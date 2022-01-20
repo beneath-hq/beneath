@@ -1,0 +1,123 @@
+plugins {
+    id 'java-library'
+    id "com.google.protobuf" version "0.8.17"
+    id "com.apollographql.apollo" version "2.5.10"
+    id 'maven-publish'
+    id 'signing'
+}
+
+group = 'dev.beneath'
+archivesBaseName = "beneath"
+version = '1.0.1'
+description = 'Java client for Beneath (https://beneath.dev)'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+def jacksonVersion = '2.13.0'
+def grpcVersion = '1.40.1'
+def protocVersion = '3.17.2'
+
+dependencies {
+    implementation "org.slf4j:slf4j-log4j12:1.7.32"
+    implementation "org.apache.commons:commons-lang3:3.12.0"
+
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "org.msgpack:jackson-dataformat-msgpack:0.9.0"
+    implementation "org.apache.avro:avro:1.11.0"
+
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    
+    implementation "com.apollographql.apollo:apollo-runtime:2.5.10"
+}
+
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
+    plugins {
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+    }
+    generateProtoTasks {
+        all()*.plugins { grpc {} }
+    }
+}
+
+sourceSets {
+  main {
+    java {
+        srcDir "$buildDir/generated/source/proto/main/java"
+        srcDir "$buildDir/generated/source/proto/main/grpc"
+        srcDir "$buildDir/generated/source/apollo/main/service"
+    }
+  }
+}
+
+sourcesJar {
+    dependsOn ':generateProto'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications
+}
+
+publishing {
+    publications {
+        main(MavenPublication) {
+            from components.java
+            pom {
+                name = "dev.beneath:beneath"
+                description = "Java client for Beneath (https://beneath.dev)"
+                url = "https://beneath.dev"
+                licenses {
+                    license {
+                        name = "MIT"
+                        url = "https://opensource.org/licenses/MIT"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "Eric Green"
+                        email = "eric@beneath.dev"
+                        organization = "Beneath Systems"
+                        organizationUrl = "https://beneath.dev"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/beneath-hq/beneath.git"
+                    developerConnection = "scm:git:git@github.com:beneath-hq/beneath.git"
+                    url = "https://github.com/beneath-hq/beneath"
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name "OSSRH"
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
+            }
+            if(project.version.endsWith('-SNAPSHOT')) {
+                url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            } else {
+                url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            }
+        }
+    }
+}

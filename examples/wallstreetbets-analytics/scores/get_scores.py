@@ -45,11 +45,15 @@ async def get_scores(kind):
         client = beneath.Client()
         await client.start()
 
-        table = await client.create_table(
-            table_path=f"{PROJECT_PATH}/r-wallstreetbets-{kind}-scores",
-            schema=get_schema(kind),
-            description=f"Scores for {kind} on r/wallstreetbets. Fetched from Reddit {POLL_DELAY.days} days after posting.",
-            update_if_exists=True,
+        # only used for first run:
+        # table = await client.create_table(
+        #     table_path=f"{PROJECT_PATH}/r-wallstreetbets-{kind}-scores",
+        #     schema=get_schema(kind),
+        #     description=f"Scores for {kind} on r/wallstreetbets. Fetched from Reddit {POLL_DELAY.days} days after posting.",
+        #     update_if_exists=True,
+        # )
+        table = await client.find_table(
+            f"{PROJECT_PATH}/r-wallstreetbets-{kind}-scores"
         )
         instance = table.primary_instance
 

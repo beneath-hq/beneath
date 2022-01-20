@@ -6,8 +6,9 @@ authors = ["greenep12 <ericpgreen2@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-beneath = "^1.4.0"
+beneath = "^1.4.1"
 plotly = "^5.0.0"
+chart-studio = "1.1.0"
 
 [tool.poetry.dev-dependencies]
 jupyter = "^1.0.0"
