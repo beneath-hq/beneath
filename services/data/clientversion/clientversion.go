@@ -34,5 +34,5 @@ func newVersionOrPanic(str string) *version.Version {
 var Specs = map[string]Spec{
 	"beneath-js":     newSpec("1.2.0", "1.2.0", "1.2.0"),
 	"beneath-python": newSpec("1.4.2", "1.4.0", "1.4.0"),
-	"beneath-java":   newSpec("0.1.0", "0.1.0", "0.1.0"),
+	"beneath-java":   newSpec("1.0.2", "1.0.0", "1.0.0"),
 }
