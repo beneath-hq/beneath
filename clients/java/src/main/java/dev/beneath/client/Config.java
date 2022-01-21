@@ -29,7 +29,7 @@ public class Config {
       BENEATH_GATEWAY_HOST_GRPC = "host.docker.internal:50051";
     } else {
       BENEATH_FRONTEND_HOST = "https://beneath.dev";
-      BENEATH_CONTROL_HOST = "https://control.beneath.dev";
+      BENEATH_CONTROL_HOST = "https://control.beneath.dev/graphql";
       BENEATH_GATEWAY_HOST = "https://data.beneath.dev";
       BENEATH_GATEWAY_HOST_GRPC = "grpc.data.beneath.dev";
     }
