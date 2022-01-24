@@ -6,17 +6,22 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dev.beneath.client.CompileSchemaQuery.CompileSchema;
+import dev.beneath.client.CreateProjectMutation.CreateProject;
 import dev.beneath.client.CreateTableMutation.CreateTable;
+import dev.beneath.client.OrganizationByNameQuery.OrganizationByName;
 import dev.beneath.client.admin.AdminClient;
+import dev.beneath.client.type.CompileSchemaInput;
+import dev.beneath.client.type.CreateProjectInput;
+import dev.beneath.client.type.CreateTableInput;
+import dev.beneath.client.type.TableSchemaKind;
 import dev.beneath.client.utils.ProjectIdentifier;
 import dev.beneath.client.utils.SubscriptionIdentifier;
 import dev.beneath.client.utils.TableIdentifier;
 import dev.beneath.client.utils.Utils;
-import dev.beneath.client.type.CompileSchemaInput;
-import dev.beneath.client.type.CreateTableInput;
-import dev.beneath.client.type.TableSchemaKind;
 
 /**
  * The main class for interacting with Beneath. Data-related features (like
@@ -49,6 +54,8 @@ public class BeneathClient {
   private DryWriter dryWriter;
   private Writer writer;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(BeneathClient.class);
+
   public BeneathClient(String secret, Boolean dry, Integer writeDelayMs) {
     this.connection = new Connection(secret);
     this.adminClient = new AdminClient(connection, dry);
@@ -64,6 +71,52 @@ public class BeneathClient {
     this.checkpointers = new HashMap<TableIdentifier, Checkpointer>();
     this.consumers = new HashMap<SubscriptionIdentifier, Consumer>();
   }
+
+  // FINDING AND STAGING PROJECTS
+
+  public CreateProject createProject(String organizationName, String projectName, Boolean public_, String description,
+      String site) {
+    OrganizationByName organization;
+    try {
+      organization = this.adminClient.organizations
+          .findByName(organizationName).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    CreateProject project;
+    try {
+      project = this.adminClient.projects
+          .create(CreateProjectInput.builder().organizationID(organization.organizationID())
+              .projectName(projectName).public_(public_)
+              .description(description)
+              .site(site).build())
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    return project;
+  }
+
+  public void stageProject(String organizationName, String projectName, Boolean public_, String description,
+      String site) {
+    try {
+      this.adminClient.projects
+          .findByOrganizationAndName(organizationName, projectName).get();
+      LOGGER.info("Using existing project '{}/{}'", organizationName, projectName);
+    } catch (Exception e) {
+      if (e.getMessage().contains(String.format("Project %s/%s not found", organizationName, projectName))) {
+        LOGGER.info("Project '{}/{}' not found", organizationName, projectName);
+        this.createProject(organizationName, projectName, public_, description, site);
+        LOGGER.info("Created a new project '{}/{}'", organizationName, projectName);
+        return;
+      }
+      throw new RuntimeException(e);
+    }
+  }
+
+  // FINDING AND STAGING TABLES
 
   public Table findTable(String tablePath) {
     TableIdentifier identifier = TableIdentifier.fromPath(tablePath);

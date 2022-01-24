@@ -1,0 +1,25 @@
+query ProjectByOrganizationAndName(
+    $organizationName: String!
+    $projectName: String!
+) {
+    projectByOrganizationAndName(
+        organizationName: $organizationName
+        projectName: $projectName
+    ) {
+        projectID
+        name
+        displayName
+        site
+        description
+        photoURL
+        public
+        createdOn
+        updatedOn
+        tables {
+            name
+        }
+        services {
+            name
+        }
+    }
+}

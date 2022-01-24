@@ -1,0 +1,57 @@
+query OrganizationByName($name: String!) {
+  organizationByName(name: $name) {
+    organizationID
+    name
+    displayName
+    description
+    photoURL
+    createdOn
+    projects {
+      projectID
+      name
+      displayName
+      description
+      photoURL
+      public
+    }
+    personalUserID
+    ... on PrivateOrganization {
+      updatedOn
+      quotaStartTime
+      quotaEndTime
+      prepaidReadQuota
+      prepaidWriteQuota
+      prepaidScanQuota
+      readQuota
+      writeQuota
+      scanQuota
+      readUsage
+      writeUsage
+      scanUsage
+      personalUser {
+        userID
+        email
+        consentTerms
+        consentNewsletter
+        createdOn
+        updatedOn
+        quotaStartTime
+        quotaEndTime
+        readQuota
+        writeQuota
+        scanQuota
+        billingOrganizationID
+        billingOrganization {
+          organizationID
+          name
+          displayName
+        }
+      }
+      permissions {
+        view
+        create
+        admin
+      }
+    }
+  }
+}
