@@ -38,7 +38,7 @@ public class BeneathOffsetBackingStore implements OffsetBackingStore {
   @Override
   public void start() {
     LOGGER.info("Starting BeneathOffsetBackingStore");
-    this.checkpointer = client.checkpointer(CdcConfig.BENEATH_PROJECT_PATH);
+    this.checkpointer = client.checkpointer(CdcConfig.BENEATH_USERNAME + "/" + CdcConfig.BENEATH_PROJECT_NAME);
     client.start();
     LOGGER.info("Finished reading offsets topic and starting BeneathOffsetBackingStore");
   }

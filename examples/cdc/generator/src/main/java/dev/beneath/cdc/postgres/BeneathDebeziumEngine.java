@@ -63,8 +63,9 @@ public class BeneathDebeziumEngine {
 
     public BeneathDebeziumEngine(BeneathClient client) {
         this.client = client;
-        this.checkpointer = client.checkpointer(CdcConfig.BENEATH_PROJECT_PATH);
-        this.rootTableIdentifier = TableIdentifier.fromPath(CdcConfig.BENEATH_DEBEZIUM_ROOT_TABLE_PATH);
+        this.checkpointer = client.checkpointer(CdcConfig.BENEATH_USERNAME + "/" + CdcConfig.BENEATH_PROJECT_NAME);
+        this.rootTableIdentifier = new TableIdentifier(CdcConfig.BENEATH_USERNAME, CdcConfig.BENEATH_PROJECT_NAME,
+                CdcConfig.BENEATH_DEBEZIUM_ROOT_TABLE_NAME);
     };
 
     public void start() {

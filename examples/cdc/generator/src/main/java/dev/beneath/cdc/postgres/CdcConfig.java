@@ -10,7 +10,8 @@ public class CdcConfig {
   public static final String DATABASE_SERVER_NAME = System.getenv("DATABASE_SERVER_NAME");
   public static final String BENEATH_SECRET = System.getenv("BENEATH_SECRET");
   public static final String BENEATH_USERNAME = System.getenv("BENEATH_USERNAME");
-  public static final String BENEATH_PROJECT_PATH = BENEATH_USERNAME + "/cdc-postgres-" + DATABASE_DBNAME;
-  public static final String BENEATH_DEBEZIUM_ROOT_TABLE_PATH = BENEATH_PROJECT_PATH + "/raw_changes";
+  public static final String BENEATH_PROJECT_NAME = "cdc_postgres_" + DATABASE_DBNAME;
+  public static final String BENEATH_DEBEZIUM_ROOT_TABLE_NAME = "raw_changes";
+
   public static final Integer DEFAULT_WRITE_DELAY_MS = 1000;
 }
