@@ -4,6 +4,7 @@ plugins {
     id "com.apollographql.apollo" version "2.5.10"
     id 'maven-publish'
     id 'signing'
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 }
 
 group = 'dev.beneath'
@@ -106,18 +107,15 @@ publishing {
             }
         }
     }
+}
+
+nexusPublishing {
     repositories {
-        maven {
-            name "OSSRH"
-            credentials {
-                username = ossrhUsername
-                password = ossrhPassword
-            }
-            if(project.version.endsWith('-SNAPSHOT')) {
-                url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-            } else {
-                url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            }
+        sonatype {
+            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            username = ossrhUsername
+            password = ossrhPassword
         }
     }
 }
