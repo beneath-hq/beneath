@@ -1,12 +1,10 @@
+import os
 import json
 import asyncio
 import beneath
-from beneath.connection import GraphQLError
-import yaml
 from schemas import get_schema
 
-with open(file=".development.yaml", mode="r", encoding="utf8") as ymlfile:
-    config = yaml.safe_load(ymlfile)
+DATABASE_DBNAME = os.getenv("DATABASE_DBNAME")
 
 
 async def main():
@@ -15,7 +13,7 @@ async def main():
 
     # get project path
     me = await client.admin.organizations.find_me()
-    PROJECT_PATH = f"{me['name']}/cdc-postgres-{config['postgres']['database']}"
+    PROJECT_PATH = f"{me['name']}/cdc-postgres-{DATABASE_DBNAME}"
 
     consumer = await client.consumer(
         f"{PROJECT_PATH}/raw-changes",
