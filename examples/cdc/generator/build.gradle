@@ -14,7 +14,7 @@ repositories {
 def debeziumVersion = '1.7.0.CR2'
 
 dependencies {
-    implementation "dev.beneath:beneath:1.0.1"
+    implementation "dev.beneath:beneath:1.0.2"
 
     implementation "org.slf4j:slf4j-log4j12:1.7.32"
 
