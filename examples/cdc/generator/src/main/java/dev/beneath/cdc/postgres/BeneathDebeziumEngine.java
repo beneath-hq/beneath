@@ -12,24 +12,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import dev.beneath.cdc.common.DbzRecordSchema;
 import dev.beneath.client.BeneathClient;
 import dev.beneath.client.Checkpointer;
 import dev.beneath.client.Table;
 import dev.beneath.client.TableInstance;
+import dev.beneath.client.type.TableSchemaKind;
 import dev.beneath.client.utils.JsonUtils;
 import dev.beneath.client.utils.TableIdentifier;
-import dev.beneath.client.type.TableSchemaKind;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.engine.spi.OffsetCommitPolicy;
 
 public class BeneathDebeziumEngine {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BeneathDebeziumEngine.class);
     // each connector generates a unique "source" field, so this schema is unique to
     // the postgres connector
     private static final String DEBEZIUM_PG_TABLE_SCHEMA = """
@@ -53,33 +50,30 @@ public class BeneathDebeziumEngine {
                 after: String!
             }
             """;
+    private static final String PROJECT_DESCRIPTION = "Automatically created by the Beneath CDC Service.";
+    private static final String PROJECT_SITE = "https://github.com/beneath-hq/beneath/tree/master/examples/cdc";
+    private static final String TABLE_DESCRIPTION = "Records streamed from Postgres through Debezium";
+
     private BeneathClient client;
     private Checkpointer checkpointer;
     private TableIdentifier rootTableIdentifier;
-    private String tableDescription;
     private Schema avroSchema;
-    private DebeziumEngine<ChangeEvent<String, String>> engine;
     private TableInstance instance;
-    private boolean create;
+    private DebeziumEngine<ChangeEvent<String, String>> engine;
 
     public BeneathDebeziumEngine(BeneathClient client) {
         this.client = client;
         this.checkpointer = client.checkpointer(CdcConfig.BENEATH_PROJECT_PATH);
         this.rootTableIdentifier = TableIdentifier.fromPath(CdcConfig.BENEATH_DEBEZIUM_ROOT_TABLE_PATH);
-        this.tableDescription = "Records streamed from Postgres through Debezium";
-        this.create = true;
     };
 
     public void start() {
-        Properties properties = getProperties();
+        stageBeneathResources();
+        Properties dbzProperties = getDebeziumProperties();
         OffsetCommitPolicy offsetPolicy = new OffsetCommitPolicy.AlwaysCommitOffsetPolicy();
 
-        this.client.start();
-        // TODO: stageBeneathProject();
-        stageBeneathTable();
-
         // Create the engine with this configuration ...
-        engine = DebeziumEngine.create(Json.class).using(properties).using(offsetPolicy)
+        engine = DebeziumEngine.create(Json.class).using(dbzProperties).using(offsetPolicy)
                 .notifying((dbzRecords, committer) -> {
                     List<GenericRecord> beneathRecords = new ArrayList<GenericRecord>();
                     for (ChangeEvent<String, String> r : dbzRecords) {
@@ -111,7 +105,18 @@ public class BeneathDebeziumEngine {
         // Engine is stopped when the main code is finished
     }
 
-    private Properties getProperties() {
+    private void stageBeneathResources() {
+        this.client.stageProject(CdcConfig.BENEATH_USERNAME, CdcConfig.BENEATH_PROJECT_NAME, false,
+                BeneathDebeziumEngine.PROJECT_DESCRIPTION, BeneathDebeziumEngine.PROJECT_SITE);
+        Table table = this.client.stageTable(this.rootTableIdentifier.toString(), DEBEZIUM_PG_TABLE_SCHEMA,
+                BeneathDebeziumEngine.TABLE_DESCRIPTION, false, true, true, 0, 0, 0, 0, TableSchemaKind.GRAPHQL, "",
+                true);
+        this.instance = table.primaryInstance;
+        this.avroSchema = new Schema.Parser().parse(this.instance.table.schema.parsedAvro.toString());
+        this.client.start(); // starts the checkpointer
+    }
+
+    private Properties getDebeziumProperties() {
         final Properties props = new Properties();
 
         /* engine properties */
@@ -136,23 +141,6 @@ public class BeneathDebeziumEngine {
         props.setProperty("converter.schemas.enable", "True");
 
         return props;
-    }
-
-    private void stageBeneathTable() {
-        Table table;
-        if (this.create || this.client.dry) {
-            table = this.client.createTable(this.rootTableIdentifier.toString(), DEBEZIUM_PG_TABLE_SCHEMA,
-                    this.tableDescription, false, true, true, 0, 0, 0, 0, TableSchemaKind.GRAPHQL, "", true);
-        } else {
-            table = this.client.findTable(this.rootTableIdentifier.toString());
-        }
-        if (table.primaryInstance == null) {
-            throw new RuntimeException("Expected the debezium table to have a primary instance");
-        }
-        this.instance = table.primaryInstance;
-        this.avroSchema = new Schema.Parser().parse(this.instance.table.schema.parsedAvro.toString());
-
-        LOGGER.info("Using '{}' (version {}) for debezium", this.rootTableIdentifier.toString(), this.instance.version);
     }
 
     private DbzRecordSchema getDbzRecordSchema(JsonNode key, JsonNode value) {
