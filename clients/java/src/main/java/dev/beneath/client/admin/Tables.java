@@ -37,7 +37,13 @@ public class Tables extends BaseResource {
     ApolloCall.Callback<TableByOrganizationProjectAndNameQuery.Data> callback = new ApolloCall.Callback<TableByOrganizationProjectAndNameQuery.Data>() {
       @Override
       public void onResponse(Response<TableByOrganizationProjectAndNameQuery.Data> response) {
-        future.complete(response.getData().tableByOrganizationProjectAndName());
+        try {
+          future.complete(response.getData().tableByOrganizationProjectAndName());
+        } catch (Exception e) {
+          Error firstErr = response.getErrors().get(0);
+          future.completeExceptionally(new GraphQLException(String.format("%s (path: %s)", firstErr.getMessage(),
+              firstErr.getCustomAttributes().get("path").toString())));
+        }
       }
 
       @Override

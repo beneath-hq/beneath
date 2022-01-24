@@ -162,6 +162,31 @@ public class BeneathClient {
     return table;
   }
 
+  public Table stageTable(String tablePath, String schema, String description, Boolean meta, Boolean useIndex,
+      Boolean useWarehouse, Integer retention, Integer logRetention, Integer indexRetention, Integer warehouseRetention,
+      TableSchemaKind schemaKind, String indexes, Boolean updateIfExists) {
+
+    Table table;
+    try {
+      table = this.findTable(tablePath);
+    } catch (Exception e) {
+      if (e.getMessage().contains("not found")) {
+        LOGGER.info("Table '{}' not found", tablePath);
+        table = this.createTable(tablePath, schema, description, meta, useIndex, useWarehouse, retention, logRetention,
+            indexRetention, warehouseRetention, schemaKind, indexes, updateIfExists);
+        LOGGER.info("Created a new table '{}'", tablePath);
+      } else {
+        throw new RuntimeException(e);
+      }
+    }
+
+    if (table.primaryInstance == null) {
+      throw new RuntimeException("Expected the table to have a primary instance");
+    }
+    LOGGER.info("Using table '{}' (version {})", tablePath, table.primaryInstance.version);
+    return table;
+  }
+
   // WRITING
 
   /**
