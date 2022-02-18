@@ -2,7 +2,7 @@ import os
 import json
 import asyncio
 import beneath
-from schemas import get_schema
+from postgres.schemas import get_schema
 
 DATABASE_DBNAME = os.getenv("DATABASE_DBNAME")
 
