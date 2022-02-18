@@ -2,6 +2,7 @@
 .settings
 .classpath
 .gradle
-.env
+.env.dev
+.env.test
 build
 bin
